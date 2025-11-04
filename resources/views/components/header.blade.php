@@ -7,8 +7,6 @@
   <div class="container mx-auto flex justify-between items-center py-4 px-6">
     <a href="{{ url('/') }}" class="text-2xl font-bold tracking-wide">CalaiaPH</a>
 
-    <nav class="space-x-4">
-      <button 
     <nav class="hidden md:flex space-x-6">
       <a href="{{ url('/') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'home' ? 'border-b-2 border-[#8f5d54]' : '' }}">Home</a>
       <a href="{{ url('/daytour') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}">Day Tour</a>
@@ -19,18 +17,28 @@
       <a href="{{ url('/farm') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}">Our Farm</a>
     </nav>
 
-    <nav class="flex space-x-4">
-      <button
-        @click="showLogin = true"
-        class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150">
-        Log In
-      </button>
-      <button
-        @click="showSignup = true"
-        class="bg-[#8f5d54] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#8f5d54]/90 transition-all shadow-md">
-        Sign Up
-      </button>
-    </nav>
+    <nav class="space-x-4">
+      @auth
+        <form method="POST" action="{{ route('logout') }}" class="inline">
+          @csrf
+          <button 
+            type="submit"
+            class="bg-[#8f5d54] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#8f5d54]/90 transition-all shadow-md">
+            Log Out
+          </button>
+        </form>
+      @else
+        <button 
+          @click="showLogin = true"
+          class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150">
+          Log In
+        </button>
+        <button 
+          @click="showSignup = true"
+          class="bg-[#8f5d54] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#8f5d54]/90 transition-all shadow-md">
+          Sign Up
+        </button>
+      @endauth
     </nav>
 
     <div class="md:hidden" x-data="{ open: false }">
@@ -52,6 +60,8 @@
     </div>
   </div>
 
+
+  
   <!-- ✅ SIGN UP MODAL -->
   <div 
     x-show="showSignup"
