@@ -57,3 +57,28 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+php artisan migrate               # Run all migrations
+php artisan migrate:rollback      # Rollback last migration
+php artisan migrate:refresh       # Reset and re-run migrations
+php artisan migrate:fresh --seed  # Drop tables and reseed
+php artisan db:seed               # Run seeders only
+
+php artisan make:model ModelName            # Create a model
+php artisan make:model ModelName -mcf       # Model + Migration + Controller + Factory
+php artisan make:controller ControllerName  # Create a controller
+php artisan make:migration create_table_name_table  # Create a migration
+php artisan make:seeder SeederName          # Create a seeder
+
+php artisan breeze:install   # Install Laravel Breeze
+php artisan ui bootstrap --auth  # (For Laravel UI-based auth)
+
+php artisan optimize:clear   # Clear all caches
+php artisan config:clear     # Clear config cache
+php artisan config:cache     # Cache configuration
+php artisan route:clear      # Clear route cache
+
+php artisan serve            # Start local dev server
+php artisan route:list       # List all routes
+php artisan env              # Show current environment
+php artisan queue:failed     # List failed jobs
