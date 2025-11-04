@@ -1,11 +1,9 @@
-@props(['active' => 'home'])
-
-<header
-  x-data="{ showLogin: false, showSignup: false, signupSuccess: false }"
-  class="bg-white text-[#8f5d54] shadow-lg sticky top-0 z-50"
+<header 
+  x-data="{ showLogin: false, showSignup: false, signupSuccess: false }" 
+  class="bg-blue-600 text-white shadow-lg sticky top-0 z-50"
 >
   <div class="container mx-auto flex justify-between items-center py-4 px-6">
-    <a href="{{ url('/') }}" class="text-2xl font-bold tracking-wide">CalaiaPH</a>
+    <h1 class="text-2xl font-bold tracking-wide">CalaiaPH</h1>
 
     <nav class="space-x-4">
     @auth
@@ -19,49 +17,18 @@
       </form>
     @else
       <button 
-    <nav class="hidden md:flex space-x-6">
-      <a href="{{ url('/') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'home' ? 'border-b-2 border-[#8f5d54]' : '' }}">Home</a>
-      <a href="{{ url('/daytour') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}">Day Tour</a>
-      <a href="{{ url('/staycation') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}">Where to Stay</a>
-      <a href="{{ url('/activities') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}">What to Do</a>
-      <a href="{{ url('/dining') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}">Food & Beverage</a>
-      <a href="{{ url('/groups') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'groups' ? 'border-b-2 border-[#8f5d54]' : '' }}">Special Events</a>
-      <a href="{{ url('/farm') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}">Our Farm</a>
-    </nav>
-
-    <nav class="flex space-x-4">
-      <button
         @click="showLogin = true"
-        class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150">
+        class="hover:text-gray-200 font-medium transition-all duration-150">
         Log In
       </button>
-      <button
+      <button 
         @click="showSignup = true"
-        class="bg-[#8f5d54] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#8f5d54]/90 transition-all shadow-md">
+        class="bg-white text-blue-600 px-5 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-all shadow-md">
         Sign Up
       </button>
     @endauth
 </nav>
 
-    </nav>
-
-    <div class="md:hidden" x-data="{ open: false }">
-      <button @click="open = !open" class="text-[#8f5d54] p-4">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          <path x-show="open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
-      <div x-show="open" x-transition class="bg-[#8f5d54] px-4 py-2">
-        <a href="{{ url('/') }}" class="block py-2 text-white uppercase {{ $active === 'home' ? 'border-b border-white' : '' }}">Home</a>
-        <a href="{{ url('/daytour') }}" class="block py-2 text-white uppercase {{ $active === 'daytour' ? 'border-b border-white' : '' }}">Day Tour</a>
-        <a href="{{ url('/staycation') }}" class="block py-2 text-white uppercase {{ $active === 'staycation' ? 'border-b border-white' : '' }}">Where to Stay</a>
-        <a href="{{ url('/activities') }}" class="block py-2 text-white uppercase {{ $active === 'activities' ? 'border-b border-white' : '' }}">What to Do</a>
-        <a href="{{ url('/dining') }}" class="block py-2 text-white uppercase {{ $active === 'dining' ? 'border-b border-white' : '' }}">Food & Beverage</a>
-        <a href="{{ url('/groups') }}" class="block py-2 text-white uppercase {{ $active === 'groups' ? 'border-b border-white' : '' }}">Special Events</a>
-        <a href="{{ url('/farm') }}" class="block py-2 text-white uppercase {{ $active === 'farm' ? 'border-b border-white' : '' }}">Our Farm</a>
-      </div>
-    </div>
   </div>
 
   <!-- ✅ SIGN UP MODAL -->
