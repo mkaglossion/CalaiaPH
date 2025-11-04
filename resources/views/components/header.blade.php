@@ -17,17 +17,56 @@
       <a href="{{ url('/farm') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}">Our Farm</a>
     </nav>
 
-    <nav class="space-x-4">
+    <nav class="space-x-4 relative" x-data="{ open: false }">
       @auth
-        <form method="POST" action="{{ route('logout') }}" class="inline">
-          @csrf
+        <!-- User Menu -->
+        <div class="relative inline-block text-left">
           <button 
-            type="submit"
-            class="bg-[#8f5d54] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#8f5d54]/90 transition-all shadow-md">
-            Log Out
+            @click="open = !open" 
+            class="flex items-center space-x-2 focus:outline-none"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" 
+               fill="none" viewBox="0 0 24 24" 
+               stroke-width="2" stroke="currentColor" 
+               class="w-6 h-6 text-[#8f5d54]">
+            <path stroke-linecap="round" stroke-linejoin="round" 
+                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z" />
+          </svg>
           </button>
-        </form>
+
+          <!-- Dropdown Menu -->
+          <div 
+            x-show="open" 
+            @click.away="open = false"
+            x-transition
+            class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+          >
+            <a 
+              href="{{ route('profile.show') }}" 
+              class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+              Profile
+            </a>
+
+            @if (Auth::user()->user_type === 'admin')
+              <a 
+                href="{{ route('admin.dashboard') }}" 
+                class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                Admin Panel
+              </a>
+            @endif
+
+            <form method="POST" action="{{ route('logout') }}">
+              @csrf
+              <button 
+                type="submit"
+                class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                Log Out
+              </button>
+            </form>
+          </div>
+        </div>
       @else
+        <!-- Guest Buttons -->
         <button 
           @click="showLogin = true"
           class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150">
@@ -40,6 +79,8 @@
         </button>
       @endauth
     </nav>
+
+
 
     <div class="md:hidden" x-data="{ open: false }">
       <button @click="open = !open" class="text-[#8f5d54] p-4">
