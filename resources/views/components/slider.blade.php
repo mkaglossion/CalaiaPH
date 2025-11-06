@@ -10,7 +10,7 @@
         <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
           <div class="text-center px-4">
             <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham;">{{ $image->title }}</h2>
-            <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'vila zilka seriff', serif; font-style: italic;">Experience the beauty of nature</p>
+            <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'vila zilka seriff', serif; font-style: italic;">{{ $image->description ?? 'Experience the beauty of nature' }}</p>
           </div>
         </div>
       </div>

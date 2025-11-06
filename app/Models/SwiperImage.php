@@ -9,5 +9,5 @@ class SwiperImage extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'image_path'];
+    protected $fillable = ['title', 'description', 'image_path', 'page'];
 }

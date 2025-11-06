@@ -2,40 +2,39 @@
 
 <div class="max-w-7xl mx-auto p-4 relative z-10 -mt-20">
     <div class="bg-white rounded-xl shadow-lg p-6" x-data="{ activeTab: 'room' }">
-        <!-- Tabs and Special Arrangements -->
-        <div class="flex justify-between items-center mb-4">
-            <div class="flex bg-gray-100 rounded-lg p-1">
-                <button
-                    @click="activeTab = 'room'; $refs.bookingType.value = 'room'"
-                    :class="activeTab === 'room' ? 'bg-[#8f5d54] text-white shadow-sm' : 'text-gray-600 hover:text-[#8f5d54]'"
-                    class="px-6 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2"
-                >
-                    <i class="bi bi-house-door"></i>
-                    Room
-                </button>
-                <button
-                    @click="activeTab = 'day-visit'; $refs.bookingType.value = 'day-visit'"
-                    :class="activeTab === 'day-visit' ? 'bg-[#8f5d54] text-white shadow-sm' : 'text-gray-600 hover:text-[#8f5d54]'"
-                    class="px-6 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2"
-                >
-                    <i class="bi bi-sun"></i>
-                    Day Visit
-                </button>
-                <button
-                    @click="activeTab = 'overnight'; $refs.bookingType.value = 'overnight'"
-                    :class="activeTab === 'overnight' ? 'bg-[#8f5d54] text-white shadow-sm' : 'text-gray-600 hover:text-[#8f5d54]'"
-                    class="px-6 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2"
-                >
-                    <i class="bi bi-moon"></i>
-                    Overnight
-                </button>
-            </div>
 
-            <!-- Special Arrangements Text -->
-            <div class="text-sm text-gray-600">
-                Special Arrangements, Group Bookings – Please message us
-                <a href="https://m.me/410774518796277" class="text-blue-500 hover:underline font-medium" target="_blank" rel="noopener noreferrer">here</a>
-            </div>
+        <!-- Special Arrangements Text -->
+        <div class="text-sm text-gray-600 text-center mb-4">
+            Special Arrangements, Group Bookings – Please message us
+            <a href="https://m.me/410774518796277" class="text-blue-500 hover:underline font-medium" target="_blank" rel="noopener noreferrer">here</a>
+        </div>
+        
+       <!-- Tabs -->
+        <div class="flex bg-gray-100 rounded-lg p-1 mb-4">
+            <button
+                @click="activeTab = 'room'; $refs.bookingType.value = 'room'"
+                :class="activeTab === 'room' ? 'bg-[#8f5d54] text-white shadow-sm' : 'text-gray-600 hover:text-[#8f5d54]'"
+                class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
+            >
+                <i class="bi bi-house-door"></i>
+                <span>Room</span>
+            </button>
+            <button
+                @click="activeTab = 'day-visit'; $refs.bookingType.value = 'day-visit'"
+                :class="activeTab === 'day-visit' ? 'bg-[#8f5d54] text-white shadow-sm' : 'text-gray-600 hover:text-[#8f5d54]'"
+                class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
+            >
+                <i class="bi bi-sun"></i>
+                <span>Day Visit</span>
+            </button>
+            <button
+                @click="activeTab = 'overnight'; $refs.bookingType.value = 'overnight'"
+                :class="activeTab === 'overnight' ? 'bg-[#8f5d54] text-white shadow-sm' : 'text-gray-600 hover:text-[#8f5d54]'"
+                class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
+            >
+                <i class="bi bi-moon"></i>
+                <span>Overnight</span>
+            </button>
         </div>
 
         <!-- Divider -->

@@ -16,12 +16,23 @@ use App\Http\Controllers\Admin\AdminReportsController;
 use App\Http\Controllers\Admin\AdminPagesController;
 use App\Http\Controllers\Admin\SwiperImageController;
 use App\Http\Controllers\Admin\HomeController;
+use App\Http\Controllers\WeatherController;
+use App\Http\Controllers\PagesController;
 
 // ========== Public Route ==========
 Route::get('/', function () {
     $images = \App\Models\SwiperImage::where('page', 'home')->get();
     return view('home', compact('images'));
 });
+
+Route::get('/daytour', [PagesController::class, 'daytour'])->name('daytour');
+Route::get('/staycation', [PagesController::class, 'staycation'])->name('staycation');
+Route::get('/activities', [PagesController::class, 'activities'])->name('activities');
+Route::get('/dining', [PagesController::class, 'dining'])->name('dining');
+Route::get('/groups', [PagesController::class, 'groups'])->name('groups');
+Route::get('/farm', [PagesController::class, 'farm'])->name('farm');
+
+Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show');
 
 // ========== Auth Routes ==========
 Route::post('/register-step-one', [RegisterController::class, 'registerStepOne']);
