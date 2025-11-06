@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PagesController;
+use App\Http\Controllers\WeatherController;
 
 // Admin Controllers
 use App\Http\Controllers\Admin\AdminDashboardController;
@@ -15,27 +17,26 @@ use App\Http\Controllers\Admin\AdminActivitiesController;
 use App\Http\Controllers\Admin\AdminReportsController;
 use App\Http\Controllers\Admin\AdminPagesController;
 
-use App\Http\Controllers\Admin\SwiperImageController; 
-use App\Http\Controllers\Admin\DaytourSwiperImageController; 
-use App\Http\Controllers\Admin\StaySwiperImageController; 
+use App\Http\Controllers\Admin\SwiperImageController;
+use App\Http\Controllers\Admin\DaytourSwiperImageController;
+use App\Http\Controllers\Admin\StaySwiperImageController;
 use App\Http\Controllers\Admin\DoSwiperImageController;
 use App\Http\Controllers\Admin\FoodSwiperImageController;
 use App\Http\Controllers\Admin\SpecialSwiperImageController;
 use App\Http\Controllers\Admin\FarmSwiperImageController;
 
 use App\Http\Controllers\Admin\HomeController;
-use App\Http\Controllers\Admin\DaytourController;
-use App\Http\Controllers\Admin\StayController;
-use App\Http\Controllers\Admin\DoController;
-use App\Http\Controllers\Admin\FoodController;
-use App\Http\Controllers\Admin\SpecialController;
-use App\Http\Controllers\Admin\FarmController;
-
 
 // ========== Public Route ==========
-Route::get('/', function () {
-    return view('home');
-});
+Route::get('/home', [PagesController::class, 'home'])->name('home');
+Route::get('/daytour', [PagesController::class, 'daytour'])->name('daytour');
+Route::get('/staycation', [PagesController::class, 'staycation'])->name('staycation');
+Route::get('/activities', [PagesController::class, 'activities'])->name('activities');
+Route::get('/dining', [PagesController::class, 'dining'])->name('dining');
+Route::get('/groups', [PagesController::class, 'groups'])->name('groups');
+Route::get('/farm', [PagesController::class, 'farm'])->name('farm');
+
+Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show');
 
 // ========== Auth Routes ==========
 Route::post('/register-step-one', [RegisterController::class, 'registerStepOne']);
@@ -73,13 +74,13 @@ Route::prefix('admin')->group(function () {
     Route::prefix('/pages')->group(function () {
         // 🏠 Admin Home Page with Swiper CRUD
         Route::get('/home', [HomeController::class, 'index'])->name('admin.pages.home');
-        Route::get('/day-tour', [DaytourController::class, 'index'])->name('admin.pages.daytour');
-        Route::get('/where-to-stay', [StayController::class, 'index'])->name('admin.pages.wheretostay');
-        Route::get('/what-to-do', [DoController::class, 'index'])->name('admin.pages.whattodo');
-        Route::get('/food-and-beverage', [FoodController::class, 'index'])->name('admin.pages.foodandbeverage');
-        Route::get('/special-events', [SpecialController::class, 'index'])->name('admin.pages.specialevents');
-        Route::get('/our-farm', [FarmController::class, 'index'])->name('admin.pages.ourfarm');
 
+        Route::get('/day-tour', [AdminPagesController::class, 'dayTour'])->name('admin.pages.daytour');
+        Route::get('/where-to-stay', [AdminPagesController::class, 'whereToStay'])->name('admin.pages.wheretostay');
+        Route::get('/what-to-do', [AdminPagesController::class, 'whatToDo'])->name('admin.pages.whattodo');
+        Route::get('/food-and-beverage', [AdminPagesController::class, 'foodAndBeverage'])->name('admin.pages.foodandbeverage');
+        Route::get('/special-events', [AdminPagesController::class, 'specialEvents'])->name('admin.pages.specialevents');
+        Route::get('/our-farm', [AdminPagesController::class, 'ourFarm'])->name('admin.pages.ourfarm');
     });
 
     // 🖼️ Swiper Images CRUD

@@ -1,55 +1,56 @@
 @props(['active' => 'home'])
 
 <header
-  x-data="{ showLogin: false, showSignup: false, signupSuccess: false }"
-  class="bg-white text-[#8f5d54] shadow-lg sticky top-0 z-50"
+  x-data="{ showLogin: false, showSignup: false, signupSuccess: false, open: false }"
+  x-init="$watch('open', value => document.body.style.overflow = value ? 'hidden' : '')"
+  class="bg-white text-[A] shadow-lg sticky top-0 z-50"
 >
   <div class="container mx-auto flex justify-between items-center py-4 px-6">
-    <a href="{{ url('/') }}" class="text-2xl font-bold tracking-wide">CalaiaPH</a>
+    <a href="{{ url('/') }}" class="text-2xl font-bold tracking-wide text-[#8f5d54]">CalaiaPH</a>
 
     <nav class="hidden md:flex space-x-6">
-      <a href="{{ url('/') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'home' ? 'border-b-2 border-[#8f5d54]' : '' }}">Home</a>
-      <a href="{{ url('/daytour') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}">Day Tour</a>
-      <a href="{{ url('/staycation') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}">Where to Stay</a>
-      <a href="{{ url('/activities') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}">What to Do</a>
-      <a href="{{ url('/dining') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}">Food & Beverage</a>
-      <a href="{{ url('/groups') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'groups' ? 'border-b-2 border-[#8f5d54]' : '' }}">Special Events</a>
-      <a href="{{ url('/farm') }}" class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}">Our Farm</a>
+      <a href="{{ url('/') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'home' ? 'border-b-2 border-[#8f5d54]' : '' }}">Home</a>
+      <a href="{{ url('/daytour') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}">Day Tour</a>
+      <a href="{{ url('/staycation') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}">Where to Stay</a>
+      <a href="{{ url('/activities') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}">What to Do</a>
+      <a href="{{ url('/dining') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}">Food & Beverage</a>
+      <a href="{{ url('/groups') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'groups' ? 'border-b-2 border-[#8f5d54]' : '' }}">Special Events</a>
+      <a href="{{ url('/farm') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}">Our Farm</a>
     </nav>
 
-    <nav class="space-x-4 relative" x-data="{ open: false }">
+    <nav class="hidden md:flex space-x-4 relative" x-data="{ open: false }">
       @auth
         <!-- User Menu -->
         <div class="relative inline-block text-left">
-          <button 
-            @click="open = !open" 
+          <button
+            @click="open = !open"
             class="flex items-center space-x-2 focus:outline-none"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" 
-               fill="none" viewBox="0 0 24 24" 
-               stroke-width="2" stroke="currentColor" 
+            <svg xmlns="http://www.w3.org/2000/svg"
+               fill="none" viewBox="0 0 24 24"
+               stroke-width="2" stroke="currentColor"
                class="w-6 h-6 text-[#8f5d54]">
-            <path stroke-linecap="round" stroke-linejoin="round" 
+            <path stroke-linecap="round" stroke-linejoin="round"
                   d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z" />
           </svg>
           </button>
 
           <!-- Dropdown Menu -->
-          <div 
-            x-show="open" 
+          <div
+            x-show="open"
             @click.away="open = false"
             x-transition
             class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
           >
-            <a 
-              href="{{ route('profile.show') }}" 
+            <a
+              href="{{ route('profile.show') }}"
               class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
               Profile
             </a>
 
             @if (Auth::user()->user_type === 'admin')
-              <a 
-                href="{{ route('admin.dashboard') }}" 
+              <a
+                href="{{ route('admin.dashboard') }}"
                 class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
                 Admin Panel
               </a>
@@ -57,7 +58,7 @@
 
             <form method="POST" action="{{ route('logout') }}">
               @csrf
-              <button 
+              <button
                 type="submit"
                 class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
                 Log Out
@@ -67,12 +68,12 @@
         </div>
       @else
         <!-- Guest Buttons -->
-        <button 
+        <button
           @click="showLogin = true"
-          class="hover:text-[#8f5d54]/80 font-medium transition-all duration-150">
+          class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150">
           Log In
         </button>
-        <button 
+        <button
           @click="showSignup = true"
           class="bg-[#8f5d54] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#8f5d54]/90 transition-all shadow-md">
           Sign Up
@@ -82,21 +83,45 @@
 
 
 
-    <div class="md:hidden" x-data="{ open: false }">
+    <div class="md:hidden">
       <button @click="open = !open" class="text-[#8f5d54] p-4">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           <path x-show="open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
       </button>
-      <div x-show="open" x-transition class="bg-[#8f5d54] px-4 py-2">
-        <a href="{{ url('/') }}" class="block py-2 text-white uppercase {{ $active === 'home' ? 'border-b border-white' : '' }}">Home</a>
-        <a href="{{ url('/daytour') }}" class="block py-2 text-white uppercase {{ $active === 'daytour' ? 'border-b border-white' : '' }}">Day Tour</a>
-        <a href="{{ url('/staycation') }}" class="block py-2 text-white uppercase {{ $active === 'staycation' ? 'border-b border-white' : '' }}">Where to Stay</a>
-        <a href="{{ url('/activities') }}" class="block py-2 text-white uppercase {{ $active === 'activities' ? 'border-b border-white' : '' }}">What to Do</a>
-        <a href="{{ url('/dining') }}" class="block py-2 text-white uppercase {{ $active === 'dining' ? 'border-b border-white' : '' }}">Food & Beverage</a>
-        <a href="{{ url('/groups') }}" class="block py-2 text-white uppercase {{ $active === 'groups' ? 'border-b border-white' : '' }}">Special Events</a>
-        <a href="{{ url('/farm') }}" class="block py-2 text-white uppercase {{ $active === 'farm' ? 'border-b border-white' : '' }}">Our Farm</a>
+      <div
+        x-show="open"
+        @click.away="open = false"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 -translate-y-2"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 -translate-y-2"
+        class="fixed top-16 left-0 right-0 bg-white px-4 py-2 z-50 shadow-lg"
+      >
+        <a href="{{ url('/') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'home' ? 'border-b border-[#8f5d54]' : '' }}">Home</a>
+        <a href="{{ url('/daytour') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'daytour' ? 'border-b border-[#8f5d54]' : '' }}">Day Tour</a>
+        <a href="{{ url('/staycation') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'staycation' ? 'border-b border-[#8f5d54]' : '' }}">Where to Stay</a>
+        <a href="{{ url('/activities') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'activities' ? 'border-b border-[#8f5d54]' : '' }}">What to Do</a>
+        <a href="{{ url('/dining') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'dining' ? 'border-b border-[#8f5d54]' : '' }}">Food & Beverage</a>
+        <a href="{{ url('/groups') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'groups' ? 'border-b border-[#8f5d54]' : '' }}">Special Events</a>
+        <a href="{{ url('/farm') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'farm' ? 'border-b border-[#8f5d54]' : '' }}">Our Farm</a>
+
+        @auth
+          <a href="{{ route('profile.show') }}" @click="open = false" class="block py-2 text-[#8f5d54] border-t border-[#8f5d54]/20 mt-2 pt-2">Profile</a>
+          @if (Auth::user()->user_type === 'admin')
+            <a href="{{ route('admin.dashboard') }}" @click="open = false" class="block py-2 text-[#8f5d54]">Admin Panel</a>
+          @endif
+          <form method="POST" action="{{ route('logout') }}" @submit="open = false">
+            @csrf
+            <button type="submit" class="block py-2 text-[#8f5d54] w-full text-left">Log Out</button>
+          </form>
+        @else
+          <button @click="showLogin = true; open = false" class="block py-2 text-[#8f5d54] border-t border-[#8f5d54]/20 mt-2 pt-2">Log In</button>
+          <button @click="showSignup = true; open = false" class="block py-2 text-white bg-[#8f5d54] px-4 py-1 rounded mt-2">Sign Up</button>
+        @endauth
       </div>
     </div>
   </div>
