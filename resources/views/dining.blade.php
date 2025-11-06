@@ -55,7 +55,6 @@
           </div>
         </div>
       </div>
-      <div class="swiper-pagination hidden sm:block" aria-label="Slider pagination"></div>
     </div>
 
     {{-- Swiper JS --}}

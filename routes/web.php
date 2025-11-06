@@ -27,6 +27,11 @@ use App\Http\Controllers\Admin\FarmSwiperImageController;
 
 use App\Http\Controllers\Admin\HomeController;
 
+// ========== Root Route ==========
+Route::get('/', function () {
+    return redirect('/home');
+});
+
 // ========== Public Route ==========
 Route::get('/home', [PagesController::class, 'home'])->name('home');
 Route::get('/daytour', [PagesController::class, 'daytour'])->name('daytour');

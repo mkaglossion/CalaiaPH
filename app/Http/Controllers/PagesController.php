@@ -7,6 +7,12 @@ use Illuminate\Http\Request;
 
 class PagesController extends Controller
 {
+    public function home()
+    {
+        $images = SwiperImage::where('page', 'home')->get();
+        return view('home', compact('images'));
+    }
+
     public function daytour()
     {
         $images = SwiperImage::where('page', 'daytour')->get();
