@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\HomeController as PublicHomeController;
 
 // Admin Controllers
 use App\Http\Controllers\Admin\AdminDashboardController;
@@ -19,7 +18,10 @@ use App\Http\Controllers\Admin\SwiperImageController;
 use App\Http\Controllers\Admin\HomeController;
 
 // ========== Public Route ==========
-Route::get('/', [PublicHomeController::class, 'index']);
+Route::get('/', function () {
+    $images = \App\Models\SwiperImage::where('page', 'home')->get();
+    return view('home', compact('images'));
+});
 
 // ========== Auth Routes ==========
 Route::post('/register-step-one', [RegisterController::class, 'registerStepOne']);
@@ -59,6 +61,9 @@ Route::prefix('admin')->group(function () {
         Route::get('/home', [HomeController::class, 'index'])->name('admin.pages.home');
 
         Route::get('/day-tour', [AdminPagesController::class, 'dayTour'])->name('admin.pages.daytour');
+        Route::post('/day-tour', [AdminPagesController::class, 'storeDayTour'])->name('admin.pages.daytour.store');
+        Route::put('/day-tour/{id}', [AdminPagesController::class, 'updateDayTour'])->name('admin.pages.daytour.update');
+        Route::delete('/day-tour/{id}', [AdminPagesController::class, 'destroyDayTour'])->name('admin.pages.daytour.destroy');
         Route::get('/where-to-stay', [AdminPagesController::class, 'whereToStay'])->name('admin.pages.wheretostay');
         Route::get('/what-to-do', [AdminPagesController::class, 'whatToDo'])->name('admin.pages.whattodo');
         Route::get('/food-and-beverage', [AdminPagesController::class, 'foodAndBeverage'])->name('admin.pages.foodandbeverage');

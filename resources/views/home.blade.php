@@ -7,11 +7,15 @@
     @vite(['resources/css/app.css'])
     <title>CalaiaPH</title>
   </head>
-  <body class="bg-gray-100">
+  <body class="bg-white-100">
     <x-header active="home" />
     {{-- Hero Slider --}}
     <x-slider :images="$images" />
-    <div class="flex flex-col items-center justify-center min-h-screen">
+     {{-- Check Availability --}}
+     <x-check-availability />
+    {{-- Event Experience --}}
+    <x-event-experience />
+    <div class="flex flex-col items-center justify-center">
         @if (session('success'))
             <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded relative" role="alert">
                 {{ session('success') }}
