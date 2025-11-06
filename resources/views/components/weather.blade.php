@@ -1,6 +1,6 @@
-<section class="rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm overflow-hidden text-slate-800">
+<section class="rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm overflow-hidden text-slate-800 max-w-4xl mx-auto my-12">
   <!-- Header Section with Gradient -->
-  <div class="bg-white text-black p-6 border-b border-gray-200">
+  <div class="bg-white text-black p-4 border-b border-gray-200">
     <div class="flex items-center justify-between mb-2">
       <h1 class="text-2xl font-bold">Weather Forecast</h1>
       <div class="inline-flex items-center gap-2 text-gray-600">
@@ -26,7 +26,7 @@
     </div>
 
     <!-- Weather Details -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 text-center">
+    <div class="flex justify-center gap-30 mt-6 text-center flex-wrap">
       <div>
         <div class="text-sm opacity-80">Feels like</div>
         <div class="font-semibold text-lg">{{ $data['now']['feels_like'] }}°C</div>
@@ -43,14 +43,14 @@
   </div>
   
   <!-- Hourly Forecast -->
-  <div class="p-6">
+  <div class="p-4">
     <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
       <i class="fas fa-clock text-amber-500"></i>
       Hourly Forecast
     </h2>
 
     <div class="overflow-x-auto">
-      <div class="flex space-x-4 min-w-max">
+      <div class="flex space-x-4 min-w-max lg:w-full lg:justify-center gap-8">
         @foreach($data['hourly'] as $hour)
         <div class="text-center min-w-[80px]">
           <div class="font-medium text-gray-700 text-sm">{{ $hour['time'] }}</div>
@@ -63,7 +63,7 @@
   </div>
   
   <!-- Weather Tips -->
-  <div class="bg-blue-50 p-6 border-t border-blue-100">
+  <div class="bg-blue-50 p-4 border-t border-blue-100">
     <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
       <i class="fas fa-lightbulb text-cyan-600"></i>
       Weather Tips For Your Visit

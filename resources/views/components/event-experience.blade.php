@@ -53,19 +53,16 @@
         @foreach($sections as $i => $section)
             <div class="flex flex-col {{ $i % 2 === 1 ? 'lg:flex-row-reverse' : 'lg:flex-row' }} items-center gap-8 mb-16">
                 <div class="w-full lg:w-1/2">
-                    <img src="{{ asset($section['imagePath']) }}" alt="{{ $section['title'] }}" class="w-full h-64 object-cover rounded-lg shadow-lg">
+                    <img src="{{ asset($section['imagePath']) }}" alt="{{ $section['title'] }}" class="w-full h-80 object-cover rounded-lg shadow-lg">
                 </div>
-                <div class="w-full lg:w-1/2 {{ $i % 2 === 1 ? 'lg:text-right' : 'lg:text-left' }} text-center">
+                <div class="w-full lg:w-1/2 lg:text-left text-center">
                     <h2 class="text-3xl font-bold text-[#8f5d54] mb-4">{{ $section['title'] }}</h2>
                     <h3 class="text-xl font-semibold text-[#8f5d54] mb-4">{{ $section['heading'] }}</h3>
                     <p class="text-[#8f5d54] mb-4 leading-relaxed">{{ $section['description1'] }}</p>
                     <p class="text-[#8f5d54] mb-6 leading-relaxed">{{ $section['description2'] }}</p>
                     <a href="{{ $section['linkPath'] }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-[#8f5d54] hover:bg-[#8f5d54]/90 transition-colors duration-300">
-                        Learn More
-                        <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                        </svg>
-                    </a>
+                       Learn More
+                   </a>
                 </div>
             </div>
         @endforeach
