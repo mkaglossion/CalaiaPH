@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\HomeController as PublicHomeController;
 
 // Admin Controllers
 use App\Http\Controllers\Admin\AdminDashboardController;
@@ -18,9 +19,7 @@ use App\Http\Controllers\Admin\SwiperImageController;
 use App\Http\Controllers\Admin\HomeController;
 
 // ========== Public Route ==========
-Route::get('/', function () {
-    return view('home');
-});
+Route::get('/', [PublicHomeController::class, 'index']);
 
 // ========== Auth Routes ==========
 Route::post('/register-step-one', [RegisterController::class, 'registerStepOne']);
