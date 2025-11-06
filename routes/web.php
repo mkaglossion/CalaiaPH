@@ -91,4 +91,8 @@ Route::prefix('admin')->group(function () {
     Route::resource('special-swiper-images', SpecialSwiperImageController::class)->only(['index', 'store', 'destroy']);
     Route::resource('farm-swiper-images', FarmSwiperImageController::class)->only(['index', 'store', 'destroy']);
 
+    // Test CRUD
+    Route::resource('day-tour-texts', \App\Http\Controllers\Admin\DayTourTextController::class)->only(['index', 'store', 'update', 'destroy']);
+
+
 });
