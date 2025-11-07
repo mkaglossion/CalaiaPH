@@ -56,15 +56,13 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
 
 // ========== Helper Function for Admin Auth ==========
-if (!function_exists('adminRoute')) {
-    function adminRoute($uri, $controller, $name) {
-        Route::get($uri, function () use ($controller) {
-            if (!Auth::check() || Auth::user()->user_type !== 'admin') {
-                abort(403, 'Unauthorized access.');
-            }
-            return app($controller)->index();
-        })->name($name);
-    }
+function adminRoute($uri, $controller, $name) {
+    Route::get($uri, function () use ($controller) {
+        if (!Auth::check() || Auth::user()->user_type !== 'admin') {
+            abort(403, 'Unauthorized access.');
+        }
+        return app($controller)->index();
+    })->name($name);
 }
 
 // ========== Admin Routes ==========
