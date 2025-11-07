@@ -24,37 +24,37 @@
 
     <div class="swiper mySwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
       <div class="swiper-wrapper">
-        <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-          <img src="{{ asset('assets/images/carousel/archery.jpg') }}" alt="Activities Slide 1" class="w-full h-full object-cover object-center" loading="lazy">
-          <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-          <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-            <div class="text-center px-4">
-              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham; text-transform: uppercase; font-size: 3.5rem;">Adventure Activities</h2>
-              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'vila zilka seriff', serif; font-style: italic; font-size: 1.2rem;">Thrilling experiences</p>
+        @forelse ($swiperImages as $image)
+          <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
+            <img 
+              src="{{ asset('storage/' . $image->image_path) }}" 
+              alt="{{ $image->title ?? 'Slide Image' }}" 
+              class="w-full h-full object-cover object-center" 
+              loading="lazy"
+            >
+            <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
+            <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
+              <div class="text-center px-4">
+                @if($image->title)
+                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase" 
+                      style="font-family: gotham; font-size: 3.5rem;">
+                    {{ $image->title }}
+                  </h2>
+                @endif
+                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" 
+                  style="font-family: 'vila zilka serif', serif; font-style: italic; font-size: 1.2rem;">
+                  Experience the beauty of nature
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-          <img src="{{ asset('assets/images/carousel/atv.jpg') }}" alt="Activities Slide 2" class="w-full h-full object-cover object-center" loading="lazy">
-          <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-          <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-            <div class="text-center px-4">
-              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham; text-transform: uppercase; font-size: 3.5rem;">ATV Rides</h2>
-              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'vila zilka seriff', serif; font-style: italic; font-size: 1.2rem;">Explore the terrain</p>
-            </div>
+        @empty
+          <div class="swiper-slide flex items-center justify-center bg-gray-200 text-gray-600">
+            <p>No images available</p>
           </div>
-        </div>
-        <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-          <img src="{{ asset('assets/images/carousel/biking-4.jpg') }}" alt="Activities Slide 3" class="w-full h-full object-cover object-center" loading="lazy">
-          <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-          <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-            <div class="text-center px-4">
-              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham; text-transform: uppercase; font-size: 3.5rem;">Biking Trails</h2>
-              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'vila zilka seriff', serif; font-style: italic; font-size: 1.2rem;">Pedal through nature</p>
-            </div>
-          </div>
-        </div>
+        @endforelse
       </div>
+      <div class="swiper-pagination hidden sm:block" aria-label="Slider pagination"></div>
     </div>
 
     {{-- Swiper JS --}}
