@@ -25,6 +25,14 @@ use App\Http\Controllers\Admin\FoodSwiperImageController;
 use App\Http\Controllers\Admin\SpecialSwiperImageController;
 use App\Http\Controllers\Admin\FarmSwiperImageController;
 
+use App\Http\Controllers\Admin\HomeTextController;
+use App\Http\Controllers\Admin\DayTourTextController;
+use App\Http\Controllers\Admin\StayTextController;
+use App\Http\Controllers\Admin\DoTextController;
+use App\Http\Controllers\Admin\FoodTextController;
+use App\Http\Controllers\Admin\SpecialTextController;
+use App\Http\Controllers\Admin\FarmTextController;
+
 use App\Http\Controllers\Admin\HomeController;
 
 // ========== Root Route ==========
@@ -78,7 +86,7 @@ Route::prefix('admin')->group(function () {
     // Pages Submenu
     Route::prefix('/pages')->group(function () {
         // 🏠 Admin Home Page with Swiper CRUD
-        Route::get('/home', [HomeController::class, 'index'])->name('admin.pages.home');
+        Route::get('/home', [AdminPagesController::class, 'home'])->name('admin.pages.home');
 
         Route::get('/day-tour', [AdminPagesController::class, 'dayTour'])->name('admin.pages.daytour');
         Route::get('/where-to-stay', [AdminPagesController::class, 'whereToStay'])->name('admin.pages.wheretostay');
@@ -98,7 +106,13 @@ Route::prefix('admin')->group(function () {
     Route::resource('farm-swiper-images', FarmSwiperImageController::class)->only(['index', 'store', 'destroy']);
 
     // Test CRUD
-    Route::resource('day-tour-texts', \App\Http\Controllers\Admin\DayTourTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('home-texts', HomeTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('day-tour-texts', DayTourTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('stay-texts', StayTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('do-texts', DoTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('food-texts', FoodTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('special-texts', SpecialTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('farm-texts', FarmTextController::class)->only(['index', 'store', 'update', 'destroy']);
 
 
 });
