@@ -47,7 +47,11 @@
               </div>
             </div>
           </div>
-        </div>
+        @empty
+          <div class="swiper-slide flex items-center justify-center bg-gray-200 text-gray-600">
+            <p>No images available</p>
+          </div>
+        @endforelse
         <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
           <img src="{{ asset('assets/images/carousel/biking-4.jpg') }}" alt="Activities Slide 3" class="w-full h-full object-cover object-center" loading="lazy">
           <div class="absolute inset-0 bg-black opacity-40 z-10"></div>

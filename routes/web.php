@@ -103,7 +103,9 @@ Route::prefix('admin')->group(function () {
     });
 
     // 🖼️ Swiper Images CRUD
-    Route::resource('swiper-images', SwiperImageController::class)->only(['index', 'store', 'destroy']);
+    Route::get('swiper-images', [SwiperImageController::class, 'index'])->name('swiper-images.index');
+    Route::post('swiper-images', [SwiperImageController::class, 'store'])->name('swiper-images.store');
+    Route::delete('swiper-images/{swiperImage}', [SwiperImageController::class, 'destroy'])->name('swiper-images.destroy');
     Route::resource('day-tour-swiper-images', DaytourSwiperImageController::class)->only(['index', 'store', 'destroy']);
     Route::resource('stay-swiper-images', StaySwiperImageController::class)->only(['index', 'store', 'destroy']);
     Route::resource('do-swiper-images', DoSwiperImageController::class)->only(['index', 'store', 'destroy']);

@@ -1,19 +1,15 @@
 <!doctype html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>CalaiaPH - Home</title>
-    
-     {{-- Stylesheets --}}
     @vite(['resources/css/app.css'])
+    <title>CalaiaPH</title>
     <link href="https://fonts.googleapis.com/css2?family=Vila+Zilka+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-</head>
-  <body class="bg-gray-100">
+  </head>
+  <body class="bg-white-100">
       <div class="flex flex-col items-center justify-center px-4">
         @if (session('success'))
             <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">
@@ -23,7 +19,10 @@
       </div>
     <x-header active="home" />
     {{-- Hero Slider --}}
-    <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
+    {{-- Swiper CSS --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+    <div class="swiper mySwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
       <div class="swiper-wrapper">
         @forelse ($swiperImages as $image)
           <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
@@ -55,34 +54,55 @@
           </div>
         @endforelse
       </div>
+      <div class="swiper-pagination hidden sm:block" aria-label="Slider pagination"></div>
     </div>
 
 
     {{-- Swiper JS --}}
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    @verbatim
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Initialize hero swiper
-      const heroSwiper = new Swiper('.heroSwiper', {
+      const swiper = new Swiper('.mySwiper', {
+        autoplay: {
+          delay: 3000,
+          disableOnInteraction: false,
+        },
         loop: true,
         effect: 'fade',
         fadeEffect: {
           crossFade: true
         },
+        pagination: {
+          el: '.swiper-pagination',
+          clickable: true,
+        },
         keyboard: {
           enabled: true,
-        },
-        autoplay: {
-          delay: 5000,
-          disableOnInteraction: false,
+          onlyInViewport: false,
         },
         a11y: {
           prevSlideMessage: 'Previous slide',
           nextSlideMessage: 'Next slide',
+          firstSlideMessage: 'This is the first slide',
+          lastSlideMessage: 'This is the last slide',
+          paginationBulletMessage: 'Go to slide {{index}}',
         },
       });
     });
     </script>
+    @endverbatim
+     {{-- Check Availability --}}
+     <x-check-availability />
+    {{-- Event Experience --}}
+    <x-event-experience />
+    {{-- Feature Cards --}}
+    <x-feature-cards />
+     {{-- Weather Forecast--}}
+    <x-weather />
+    {{-- Footer --}}
+    <x-footer />
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   </body>
 </html>

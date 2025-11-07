@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DayTourSwiperImage;
 use Illuminate\Http\Request;
 
 class DayTourController extends Controller
 {
     public function index()
     {
+        $swiperImages = DayTourSwiperImage::all();
+
         $packages = [
             [
                 'title' => 'Adventure Package',
@@ -88,6 +91,6 @@ class DayTourController extends Controller
             ]
         ];
 
-        return view('daytour', compact('packages'));
+        return view('daytour', compact('packages', 'swiperImages'));
     }
 }

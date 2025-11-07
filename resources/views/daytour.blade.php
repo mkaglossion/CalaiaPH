@@ -21,42 +21,95 @@
       <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg max-w-md w-full text-center shadow-sm" role="alert">
         {{ session('success') }}
       </div>
-    <x-header active="daytour" />
-    {{-- Hero Slider --}}
+  @endif
+  <x-header active="daytour" />
+  {{-- Hero Slider --}}
     {{-- Swiper CSS --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
-    <div class="swiper mySwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
-      <div class="swiper-wrapper">
+    <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
+    <div class="swiper-wrapper">
         @forelse ($swiperImages as $image)
-          <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-            <img 
+        <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
+          <img
               src="{{ asset('storage/' . $image->image_path) }}" 
               alt="{{ $image->title ?? 'Slide Image' }}" 
-              class="w-full h-full object-cover object-center" 
-              loading="lazy"
-            >
-            <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-            <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-              <div class="text-center px-4">
+            class="w-full h-full object-cover object-center"
+            loading="lazy"
+          >
+          <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
+          <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
+            <div class="text-center px-4">
                 @if($image->title)
                   <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase" 
                       style="font-family: gotham; font-size: 3.5rem;">
                     {{ $image->title }}
-                  </h2>
+              </h2>
                 @endif
                 <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" 
                   style="font-family: 'vila zilka serif', serif; font-style: italic; font-size: 1.2rem;">
                   Experience the beauty of nature
-                </p>
-              </div>
+              </p>
             </div>
           </div>
-        @empty
-          <div class="swiper-slide flex items-center justify-center bg-gray-200 text-gray-600">
-            <p>No images available</p>
+        </div>
+      @endforeach
+    </div>
+  </div>
+
+  {{-- Day Tour Packages Section --}}
+  <main class="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-gray-50 to-gray-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {{-- Section Header --}}
+      <div class="text-center mb-12 md:mb-16">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 font-gotham">
+          Choose Your Adventure
+        </h2>
+        <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          Discover the perfect day tour experience tailored to your interests. From thrilling adventures to peaceful nature escapes, we have something for everyone.
+        </p>
+      </div>
+
+      {{-- Packages Section --}}
+      <x-daytour-cards :packages="$packages ?? []" />
+    </div>
+  </main>
+
+  {{-- Dynamic Details Modal --}}
+  <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-2 md:p-4 pt-16 md:pt-4 hidden z-50">
+    <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[95vh] md:max-h-[90vh] flex flex-col border border-gray-300 mx-2 sm:mx-4">
+      {{-- Modal Header --}}
+      <div class="p-4 md:p-6 border-b border-gray-300 flex-shrink-0">
+        <div class="flex justify-between items-center">
+          <h3 id="detailsModalLabel" class="text-xl md:text-2xl font-bold text-gray-800"></h3>
+          <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" onclick="closeModal()" aria-label="Close modal">
+            <i class="bi bi-x-lg text-xl md:text-2xl"></i>
+          </button>
+        </div>
+      </div>
+
+      {{-- Modal Body --}}
+      <div class="p-4 md:p-6 flex-1 overflow-y-auto" id="detailsModalBody">
+        {{-- Swiper Carousel --}}
+        <div class="swiper packageSwiper mb-4 md:mb-6 rounded-2xl overflow-hidden">
+          <div class="swiper-wrapper" id="swiperWrapper"></div>
+          {{-- Navigation arrows --}}
+          <div class="swiper-button-next !w-8 !h-8 md:!w-12 md:!h-12 !-mt-6 md:!-mt-6" style="color: white;"></div>
+          <div class="swiper-button-prev !w-8 !h-8 md:!w-12 md:!h-12 !-mt-6 md:!-mt-6" style="color: white;"></div>
+          {{-- Pagination --}}
+          <div class="swiper-pagination !bottom-2"></div>
+        </div>
+        {{-- Package Details --}}
+        <div id="packageDetails" class="space-y-3"></div>
+
+        {{-- Package Price --}}
+        <div id="packagePrice" class="mt-4 p-4 bg-gradient-to-r from-[#8f5d54] to-[#a0675a] text-white rounded-xl text-center shadow-lg">
+          <div class="flex items-center justify-center mb-1">
+            <i class="bi bi-tag-fill text-lg mr-2"></i>
+            <span class="text-xs font-medium uppercase tracking-wide">Starting from</span>
           </div>
-        @endforelse
+          <p class="text-lg md:text-xl font-bold font-gotham" id="priceDisplay"></p>
+        </div>
       </div>
 
       {{-- Modal Footer --}}
@@ -217,27 +270,5 @@
     }
   });
   </script>
-
-  <style>
-  .font-gotham {
-    font-family: 'Gotham', sans-serif;
-  }
-  .font-vila-zilka {
-    font-family: 'Vila Zilka Serif', serif;
-  }
-
-  /* Swiper custom styles */
-  .swiper-button-next,
-  .swiper-button-prev {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 50%;
-    padding: 8px;
-  }
-  .swiper-button-next:after,
-  .swiper-button-prev:after {
-    font-size: 16px;
-    font-weight: bold;
-  }
-  </style>
 </body>
 </html>
