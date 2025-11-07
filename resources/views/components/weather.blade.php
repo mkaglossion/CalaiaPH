@@ -26,7 +26,7 @@
     </div>
 
     <!-- Weather Details -->
-    <div class="flex justify-center gap-30 mt-6 text-center flex-wrap">
+    <div class="grid grid-cols-3 gap-4 lg:gap-2 mt-6 text-center">
       <div>
         <div class="text-sm opacity-80">Feels like</div>
         <div class="font-semibold text-lg">{{ $data['now']['feels_like'] }}°C</div>
