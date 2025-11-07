@@ -3,49 +3,56 @@
 namespace App\Http\Controllers;
 
 use App\Models\SwiperImage;
+use App\Models\DayTourSwiperImage;
+use App\Models\DoSwiperImage;
+use App\Models\FarmSwiperImage;
+use App\Models\FoodSwiperImage;
+use App\Models\SpecialSwiperImage;
+use App\Models\StaySwiperImage;
+
 use Illuminate\Http\Request;
 
 class PagesController extends Controller
 {
     public function home()
     {
-        $images = SwiperImage::where('page', 'home')->get();
-        return view('home', compact('images'));
+        $swiperImages  = SwiperImage::all();
+        return view('home', compact('swiperImages'));
     }
 
     public function daytour()
     {
-        $images = SwiperImage::where('page', 'daytour')->get();
-        return view('daytour', compact('images'));
+        $swiperImages = DayTourSwiperImage::all();
+        return view('daytour', compact('swiperImages'));
     }
 
     public function staycation()
     {
-        $images = SwiperImage::where('page', 'staycation')->get();
-        return view('staycation', compact('images'));
+        $swiperImages = StaySwiperImage::all();
+        return view('staycation', compact('swiperImages'));
     }
 
     public function activities()
     {
-        $images = SwiperImage::where('page', 'activities')->get();
-        return view('activities', compact('images'));
+        $swiperImages = DoSwiperImage::all();
+        return view('activities', compact('swiperImages'));
     }
 
     public function dining()
     {
-        $images = SwiperImage::where('page', 'dining')->get();
-        return view('dining', compact('images'));
+        $swiperImages = FoodSwiperImage::all();
+        return view('dining', compact('swiperImages'));
     }
 
     public function groups()
     {
-        $images = SwiperImage::where('page', 'groups')->get();
-        return view('groups', compact('images'));
+        $swiperImages = SpecialSwiperImage::all();
+        return view('groups', compact('swiperImages'));
     }
 
     public function farm()
     {
-        $images = SwiperImage::where('page', 'farm')->get();
-        return view('farm', compact('images'));
+        $swiperImages = FarmSwiperImage::all();
+        return view('farm', compact('swiperImages'));
     }
 }
