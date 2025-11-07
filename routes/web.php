@@ -34,6 +34,8 @@ use App\Http\Controllers\Admin\SpecialTextController;
 use App\Http\Controllers\Admin\FarmTextController;
 
 use App\Http\Controllers\Admin\HomeController;
+use App\Http\Controllers\DayTourController;
+use App\Http\Controllers\BookingController;
 
 // ========== Root Route ==========
 Route::get('/', function () {
@@ -42,7 +44,7 @@ Route::get('/', function () {
 
 // ========== Public Route ==========
 Route::get('/home', [PagesController::class, 'home'])->name('home');
-Route::get('/daytour', [PagesController::class, 'daytour'])->name('daytour');
+Route::get('/daytour', [DayTourController::class, 'index'])->name('daytour');
 Route::get('/staycation', [PagesController::class, 'staycation'])->name('staycation');
 Route::get('/activities', [PagesController::class, 'activities'])->name('activities');
 Route::get('/dining', [PagesController::class, 'dining'])->name('dining');
@@ -50,6 +52,10 @@ Route::get('/groups', [PagesController::class, 'groups'])->name('groups');
 Route::get('/farm', [PagesController::class, 'farm'])->name('farm');
 
 Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show');
+
+// Booking Routes
+Route::get('/booking', [BookingController::class, 'create'])->name('booking.create');
+Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
 
 // ========== Auth Routes ==========
 Route::post('/register-step-one', [RegisterController::class, 'registerStepOne']);

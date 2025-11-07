@@ -10,7 +10,7 @@
         <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
           <div class="text-center px-4">
             <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham;">{{ $image->title }}</h2>
-            <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'vila zilka seriff', serif; font-style: italic;">{{ $image->description ?? 'Experience the beauty of nature' }}</p>
+            <p class="text-base sm:text-lg md:text-xl lg:text-2xl uppercase italic font-vila-zilka">{{ $image->description ?? 'Experience the beauty of nature' }}</p>
           </div>
         </div>
       </div>
@@ -18,19 +18,19 @@
       <div class="swiper-slide bg-gray-800 text-white flex items-center justify-center min-h-full">
         <div class="text-center px-4">
           <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham;">Welcome to CalaiaPH</h2>
-          <p class="text-sm sm:text-base md:text-lg lg:text-xl" style="font-family: 'vila zilka seriff', serif; font-style: italic;">Experience the beauty of nature</p>
+          <p class="text-base sm:text-lg md:text-xl lg:text-2xl uppercase italic font-vila-zilka">Experience the beauty of nature</p>
         </div>
       </div>
       <div class="swiper-slide bg-gray-700 text-white flex items-center justify-center min-h-full">
         <div class="text-center px-4">
           <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham;">Adventure Awaits</h2>
-          <p class="text-sm sm:text-base md:text-lg lg:text-xl" style="font-family: 'vila zilka seriff', serif; font-style: italic;">Discover exciting activities</p>
+          <p class="text-base sm:text-lg md:text-xl lg:text-2xl uppercase italic font-vila-zilka">Discover exciting activities</p>
         </div>
       </div>
       <div class="swiper-slide bg-gray-600 text-white flex items-center justify-center min-h-full">
         <div class="text-center px-4">
           <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham;">Relax and Unwind</h2>
-          <p class="text-sm sm:text-base md:text-lg lg:text-xl" style="font-family: 'vila zilka seriff', serif; font-style: italic;">Perfect staycation destination</p>
+          <p class="text-base sm:text-lg md:text-xl lg:text-2xl uppercase italic font-vila-zilka">Perfect staycation destination</p>
         </div>
       </div>
     @endforelse

@@ -6,8 +6,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @vite(['resources/css/app.css'])
     <title>CalaiaPH - Groups</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vila+Zilka+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   </head>
   <body class="bg-white-100">
       <div class="flex flex-col items-center justify-center px-4">
@@ -19,10 +21,7 @@
       </div>
     <x-header active="groups" />
     {{-- Hero Slider --}}
-    {{-- Swiper CSS --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-
-    <div class="swiper mySwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
+    <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
       <div class="swiper-wrapper">
         @forelse ($swiperImages as $image)
           <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
@@ -59,38 +58,25 @@
     {{-- Swiper JS --}}
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
-    @verbatim
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-      const swiper = new Swiper('.mySwiper', {
-        autoplay: {
-          delay: 3000,
-          disableOnInteraction: false,
-        },
+      // Initialize hero swiper
+      const heroSwiper = new Swiper('.heroSwiper', {
         loop: true,
         effect: 'fade',
         fadeEffect: {
           crossFade: true
         },
-        pagination: {
-          el: '.swiper-pagination',
-          clickable: true,
-        },
         keyboard: {
           enabled: true,
-          onlyInViewport: false,
         },
         a11y: {
           prevSlideMessage: 'Previous slide',
           nextSlideMessage: 'Next slide',
-          firstSlideMessage: 'This is the first slide',
-          lastSlideMessage: 'This is the last slide',
-          paginationBulletMessage: 'Go to slide {{index}}',
         },
       });
     });
     </script>
-    @endverbatim
     {{-- Footer --}}
     <x-footer />
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
