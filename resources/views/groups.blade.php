@@ -6,8 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @vite(['resources/css/app.css'])
     <title>CalaiaPH - Groups</title>
-    <link href="https://fonts.googleapis.com/css2?family=Vila+Zilka+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   </head>
   <body class="bg-white-100">
       <div class="flex flex-col items-center justify-center px-4">
@@ -55,7 +55,6 @@
           </div>
         </div>
       </div>
-      <div class="swiper-pagination hidden sm:block" aria-label="Slider pagination"></div>
     </div>
 
     {{-- Swiper JS --}}
