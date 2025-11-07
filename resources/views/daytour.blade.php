@@ -24,36 +24,35 @@
 
     <div class="swiper mySwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
       <div class="swiper-wrapper">
-        <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-          <img src="{{ asset('assets/images/carousel/slides CALAIA-01.png') }}" alt="Day Tour Slide 1" class="w-full h-full object-cover object-center" loading="lazy">
-          <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-          <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-            <div class="text-center px-4">
-              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham; text-transform: uppercase; font-size: 3.5rem;">Day Tour Adventures</h2>
-              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'vila zilka seriff', serif; font-style: italic; font-size: 1.2rem;">Explore the ranch</p>
+        @forelse ($swiperImages as $image)
+          <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
+            <img 
+              src="{{ asset('storage/' . $image->image_path) }}" 
+              alt="{{ $image->title ?? 'Slide Image' }}" 
+              class="w-full h-full object-cover object-center" 
+              loading="lazy"
+            >
+            <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
+            <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
+              <div class="text-center px-4">
+                @if($image->title)
+                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase" 
+                      style="font-family: gotham; font-size: 3.5rem;">
+                    {{ $image->title }}
+                  </h2>
+                @endif
+                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" 
+                  style="font-family: 'vila zilka serif', serif; font-style: italic; font-size: 1.2rem;">
+                  Experience the beauty of nature
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-          <img src="{{ asset('assets/images/carousel/slides CALAIA-02.png') }}" alt="Day Tour Slide 2" class="w-full h-full object-cover object-center" loading="lazy">
-          <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-          <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-            <div class="text-center px-4">
-              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham; text-transform: uppercase; font-size: 3.5rem;">Guided Tours</h2>
-              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'vila zilka seriff', serif; font-style: italic; font-size: 1.2rem;">Discover nature's beauty</p>
-            </div>
+        @empty
+          <div class="swiper-slide flex items-center justify-center bg-gray-200 text-gray-600">
+            <p>No images available</p>
           </div>
-        </div>
-        <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-          <img src="{{ asset('assets/images/carousel/slides CALAIA-03.png') }}" alt="Day Tour Slide 3" class="w-full h-full object-cover object-center" loading="lazy">
-          <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-          <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-            <div class="text-center px-4">
-              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham; text-transform: uppercase; font-size: 3.5rem;">Memorable Experiences</h2>
-              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'vila zilka seriff', serif; font-style: italic; font-size: 1.2rem;">Create lasting memories</p>
-            </div>
-          </div>
-        </div>
+        @endforelse
       </div>
       <div class="swiper-pagination hidden sm:block" aria-label="Slider pagination"></div>
     </div>

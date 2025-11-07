@@ -25,36 +25,35 @@
 
     <div class="swiper mySwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
       <div class="swiper-wrapper">
-        <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-          <img src="{{ asset('assets/images/carousel/our-farm.jpg') }}" alt="Farm Slide 1" class="w-full h-full object-cover object-center" loading="lazy">
-          <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-          <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-            <div class="text-center px-4">
-              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham; text-transform: uppercase; font-size: 3.5rem;">Our Farm</h2>
-              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'vila zilka seriff', serif; font-style: italic; font-size: 1.2rem;">Sustainable living</p>
+        @forelse ($swiperImages as $image)
+          <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
+            <img 
+              src="{{ asset('storage/' . $image->image_path) }}" 
+              alt="{{ $image->title ?? 'Slide Image' }}" 
+              class="w-full h-full object-cover object-center" 
+              loading="lazy"
+            >
+            <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
+            <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
+              <div class="text-center px-4">
+                @if($image->title)
+                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase" 
+                      style="font-family: gotham; font-size: 3.5rem;">
+                    {{ $image->title }}
+                  </h2>
+                @endif
+                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" 
+                  style="font-family: 'vila zilka serif', serif; font-style: italic; font-size: 1.2rem;">
+                  Experience the beauty of nature
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-          <img src="{{ asset('assets/images/carousel/our-farm2.jpg') }}" alt="Farm Slide 2" class="w-full h-full object-cover object-center" loading="lazy">
-          <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-          <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-            <div class="text-center px-4">
-              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham; text-transform: uppercase; font-size: 3.5rem;">Organic Produce</h2>
-              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'vila zilka seriff', serif; font-style: italic; font-size: 1.2rem;">Fresh from the earth</p>
-            </div>
+        @empty
+          <div class="swiper-slide flex items-center justify-center bg-gray-200 text-gray-600">
+            <p>No images available</p>
           </div>
-        </div>
-        <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-          <img src="{{ asset('assets/images/carousel/organic.png') }}" alt="Farm Slide 3" class="w-full h-full object-cover object-center" loading="lazy">
-          <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-          <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-            <div class="text-center px-4">
-              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham; text-transform: uppercase; font-size: 3.5rem;">Farm Life</h2>
-              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'vila zilka seriff', serif; font-style: italic; font-size: 1.2rem;">Connect with nature</p>
-            </div>
-          </div>
-        </div>
+        @endforelse
       </div>
     </div>
 

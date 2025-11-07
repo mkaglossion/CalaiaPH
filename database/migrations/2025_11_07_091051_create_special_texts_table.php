@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('swiper_images', function (Blueprint $table) {
-            $table->string('page')->default('home')->after('image_path');
+        Schema::create('special_texts', function (Blueprint $table) {
+            $table->id();
+            $table->string('label')->unique(); // e.g., 'hero_title', 'about_text'
+            $table->text('text')->nullable();  // actual editable content
+            $table->timestamps();
         });
     }
 
@@ -21,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('swiper_images', function (Blueprint $table) {
-            $table->dropColumn('page');
-        });
+        Schema::dropIfExists('special_texts');
     }
 };
