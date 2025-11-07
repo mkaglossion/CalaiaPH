@@ -18,7 +18,7 @@ class DoSwiperImageController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'image' => 'required|image|max:5120',
+            'image' => 'required|image|max:20480',
             'title' => 'nullable|string|max:255',
         ]);
 
