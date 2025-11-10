@@ -4,11 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="description" content="Explore exciting day tours at CalaiaPH. From adventure packages to family fun, discover thrilling outdoor activities and nature experiences tailored for every group.">
+  <meta name="keywords" content="day tours, adventure packages, outdoor activities, nature tours, CalaiaPH, family fun, group activities">
+  <meta name="author" content="CalaiaPH">
   <title>CalaiaPH - Day Tour</title>
 
   {{-- Stylesheets --}}
   @vite(['resources/css/app.css'])
-  <link href="https://fonts.googleapis.com/css2?family=Vila+Zilka+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Vilaka+Modern+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
@@ -27,7 +30,7 @@
     {{-- Swiper CSS --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
-    <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
+    <div class="swiper on heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
     <div class="swiper-wrapper">
         @forelse ($swiperImages as $image)
         <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
@@ -46,10 +49,10 @@
                     {{ $image->title }}
               </h2>
                 @endif
-                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" 
-                  style="font-family: 'vila zilka serif', serif; font-style: italic; font-size: 1.2rem;">
+                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
+                  style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
                   Experience the beauty of nature
-              </p>
+                </p>
             </div>
           </div>
         </div>
@@ -62,7 +65,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {{-- Section Header --}}
       <div class="text-center mb-12 md:mb-16">
-        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 font-gotham">
+        <h2 class="text-3xl font-bold text-[#8f5d54] mb-4 uppercase">
           Choose Your Adventure
         </h2>
         <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
@@ -245,11 +248,11 @@
 
   function getPackagePrice(packageName) {
     const prices = {
-      'Adventure Package': '₱1,500',
-      'Family Fun Package': '₱2,000',
-      'Nature Experience': '₱1,200'
+      'Adventure Package': 'PHP 1,500 per person',
+      'Family Fun Package': 'PHP 2,000 per family',
+      'Nature Experience': 'PHP 1,200 per person'
     };
-    return prices[packageName] || '₱0';
+    return prices[packageName] || 'PHP 0';
   }
 
   function bookTour(packageName, price) {

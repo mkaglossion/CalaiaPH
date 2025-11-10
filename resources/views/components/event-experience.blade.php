@@ -51,7 +51,7 @@
                     <img src="{{ asset($section['imagePath']) }}" alt="{{ $section['title'] }}" class="w-full h-80 object-cover rounded-lg shadow-lg">
                 </div>
                 <div class="w-full lg:w-1/2 lg:text-left text-center flex flex-col justify-center py-4 px-2 h-95">
-                    <h2 class="text-3xl font-bold text-[#8f5d54] mb-4">{{ $section['title'] }}</h2>
+                    <h2 class="text-3xl font-bold text-[#8f5d54] mb-4 uppercase">{{ $section['title'] }}</h2>
                     <p class="text-[#8f5d54] mb-4 leading-relaxed text-justify">{{ $section['description1'] }}</p>
                     <p class="text-[#8f5d54] mb-6 leading-relaxed text-justify">{{ $section['description2'] }}</p>
                     <a href="{{ $section['linkPath'] }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-[#8f5d54] hover:bg-[#8f5d54]/90 transition-colors duration-300 self-start lg:self-start">

@@ -4,9 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="description" content="Discover thrilling outdoor activities at CalaiaPH. From biking trails to adventure sports, experience the best of nature-based recreation and team-building activities.">
+    <meta name="keywords" content="outdoor activities, biking trails, adventure sports, team building, nature recreation, CalaiaPH, Philippines activities">
+    <meta name="author" content="CalaiaPH">
     @vite(['resources/css/app.css'])
     <title>CalaiaPH - Activities</title>
-    <link href="https://fonts.googleapis.com/css2?family=Vila+Zilka+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Vilaka+Modern+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
@@ -40,8 +43,8 @@
                     {{ $image->title }}
                   </h2>
                 @endif
-                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" 
-                  style="font-family: 'vila zilka serif', serif; font-style: italic; font-size: 1.2rem;">
+                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
+                  style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
                   Experience the beauty of nature
                 </p>
               </div>
@@ -58,7 +61,7 @@
           <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
             <div class="text-center px-4">
               <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4" style="font-family: gotham; text-transform: uppercase; font-size: 3.5rem;">Biking Trails</h2>
-              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'vila zilka seriff', serif; font-style: italic; font-size: 1.2rem;">Pedal through nature</p>
+              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">Pedal through nature</p>
             </div>
           </div>
         </div>

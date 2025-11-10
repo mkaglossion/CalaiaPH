@@ -4,9 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="description" content="Welcome to CalaiaPH, your ultimate destination for farm stays, day tours, and outdoor adventures. Experience nature, relaxation, and unforgettable memories.">
+    <meta name="keywords" content="farm stay, day tours, outdoor activities, nature retreat, CalaiaPH, Philippines farm experience">
+    <meta name="author" content="CalaiaPH">
     @vite(['resources/css/app.css'])
     <title>CalaiaPH</title>
-    <link href="https://fonts.googleapis.com/css2?family=Vila+Zilka+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Vilaka+Modern+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   </head>
   <body class="bg-white-100">
@@ -41,8 +44,8 @@
                     {{ $image->title }}
                   </h2>
                 @endif
-                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" 
-                  style="font-family: 'vila zilka serif', serif; font-style: italic; font-size: 1.2rem;">
+                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
+                  style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
                   Experience the beauty of nature
                 </p>
               </div>

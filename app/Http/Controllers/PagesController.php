@@ -17,42 +17,49 @@ class PagesController extends Controller
     public function home()
     {
         $swiperImages  = SwiperImage::all();
-        return view('home', compact('swiperImages'));
+        $active = 'home';
+        return view('home', compact('swiperImages', 'active'));
     }
 
     public function daytour()
     {
         $swiperImages = DayTourSwiperImage::all();
-        return view('daytour', compact('swiperImages'));
+        $active = 'daytour';
+        return view('daytour', compact('swiperImages', 'active'));
     }
 
     public function staycation()
     {
         $swiperImages = StaySwiperImage::all();
-        return view('staycation', compact('swiperImages'));
+        $active = 'staycation';
+        return view('staycation', compact('swiperImages', 'active'));
     }
 
     public function activities()
     {
         $swiperImages = DoSwiperImage::all();
-        return view('activities', compact('swiperImages'));
+        $active = 'activities';
+        return view('activities', compact('swiperImages', 'active'));
     }
 
     public function dining()
     {
         $swiperImages = FoodSwiperImage::all();
-        return view('dining', compact('swiperImages'));
+        $active = 'dining';
+        return view('dining', compact('swiperImages', 'active'));
     }
 
     public function groups()
     {
         $swiperImages = SpecialSwiperImage::all();
-        return view('groups', compact('swiperImages'));
+        $active = 'groups';
+        return view('groups', compact('swiperImages', 'active'));
     }
 
     public function farm()
     {
         $swiperImages = FarmSwiperImage::all();
-        return view('farm', compact('swiperImages'));
+        $active = 'farm';
+        return view('farm', compact('swiperImages', 'active'));
     }
 }

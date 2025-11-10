@@ -4,9 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="description" content="Plan unforgettable group experiences at CalaiaPH. Perfect for corporate retreats, family reunions, and team-building activities in a beautiful farm setting.">
+    <meta name="keywords" content="group activities, corporate retreats, team building, family reunions, CalaiaPH groups, Philippines group events">
+    <meta name="author" content="CalaiaPH">
     @vite(['resources/css/app.css'])
     <title>CalaiaPH - Groups</title>
-    <link href="https://fonts.googleapis.com/css2?family=Vila+Zilka+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Vilaka+Modern+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
@@ -40,8 +43,8 @@
                     {{ $image->title }}
                   </h2>
                 @endif
-                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" 
-                  style="font-family: 'vila zilka serif', serif; font-style: italic; font-size: 1.2rem;">
+                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
+                  style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
                   Experience the beauty of nature
                 </p>
               </div>
