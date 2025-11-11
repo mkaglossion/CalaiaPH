@@ -9,7 +9,6 @@
     <meta name="author" content="CalaiaPH">
     @vite(['resources/css/app.css'])
     <title>CalaiaPH</title>
-    <link href="https://fonts.googleapis.com/css2?family=Vilaka+Modern+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   </head>
   <body class="bg-white-100">

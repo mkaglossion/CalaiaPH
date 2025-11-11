@@ -214,43 +214,43 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-              <input x-ref="first_name" type="text" placeholder="John"
+              <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+              <input x-ref="first_name" id="first_name" name="first_name" type="text" placeholder="John" autocomplete="given-name"
                 class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 required>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-              <input x-ref="last_name" type="text" placeholder="Doe"
+              <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+              <input x-ref="last_name" id="last_name" name="last_name" type="text" placeholder="Doe" autocomplete="family-name"
                 class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 required>
             </div>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-            <input x-ref="email" type="email" placeholder="example@email.com"
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <input x-ref="email" id="email" name="email" type="email" placeholder="example@email.com" autocomplete="email"
               class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               required>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-            <input x-ref="username" type="text" placeholder="myusername"
+            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+            <input x-ref="username" id="username" name="username" type="text" placeholder="myusername" autocomplete="username"
               class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               required>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input x-ref="password" type="password" placeholder="********"
+              <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <input x-ref="password" id="password" name="password" type="password" placeholder="********"
                 class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 required>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-              <input x-ref="password_confirmation" type="password" placeholder="********"
+              <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+              <input x-ref="password_confirmation" id="password_confirmation" name="password_confirmation" type="password" placeholder="********"
                 class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 required>
             </div>
@@ -303,14 +303,14 @@
       <form method="POST" action="/login" class="space-y-4">
         @csrf
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-          <input type="text" name="username" placeholder="Enter your username"
+          <label for="login_username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+          <input type="text" id="login_username" name="username" placeholder="Enter your username" autocomplete="username"
             class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             required>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input type="password" name="password" placeholder="Enter your password"
+          <label for="login_password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <input type="password" id="login_password" name="password" placeholder="Enter your password"
             class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             required>
         </div>

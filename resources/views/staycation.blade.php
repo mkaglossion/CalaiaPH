@@ -10,16 +10,17 @@
   <title>CalaiaPH - Staycation</title>
 
   {{-- Stylesheets --}}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   @vite(['resources/css/app.css'])
-  <link href="https://fonts.googleapis.com/css2?family=Vilaka+Modern+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 </head>
 
 <body class="bg-white">
-  {{-- Success Message --}}
+   <x-header active="staycation" />
+
+   {{-- Success Message --}}
   @if (session('success'))
     <div class="container-fluid py-3">
       <div class="row justify-content-center">
@@ -36,52 +37,63 @@
     </div>
   @endif
 
-  <x-header active="staycation" />
 
   {{-- Hero Swiper --}}
-  <section class="hero-section" style="position: relative;">
-    <div class="swiper mySwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
-      <div class="swiper-wrapper">
-        @forelse ($swiperImages as $image)
-          <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-            <img
-              src="{{ asset('storage/' . $image->image_path) }}"
-              alt="{{ $image->title ?? 'Slide Image' }}"
-              class="w-full h-full object-cover object-center"
-              loading="lazy"
-            >
-            <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-            <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-              <div class="text-center px-4">
-                @if($image->title)
-                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase"
-                      style="font-family: gotham; font-size: 3.5rem;">
-                    {{ $image->title }}
-                  </h2>
-                @endif
-                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase text-center"
-                  style="font-family: 'Crimson Text', serif; font-style: italic; font-size: 1.2rem;">
-                  Experience the beauty of nature
-                </p>
-              </div>
+  <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
+    <div class="swiper-wrapper">
+      @forelse ($swiperImages as $image)
+        <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
+          <img
+            src="{{ asset('storage/' . $image->image_path) }}"
+            alt="{{ $image->title ?? 'Slide Image' }}"
+            class="w-full h-full object-cover object-center"
+            loading="lazy"
+          >
+          <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
+          <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
+            <div class="text-center px-4">
+              @if($image->title)
+                <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase"
+                    style="font-family: Gotham, sans-serif; font-size: 3.5rem;">
+                  {{ $image->title }}
+                </h2>
+              @endif
+              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
+                 style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
+                Experience the beauty of nature
+              </p>
             </div>
           </div>
-        @empty
-          <div class="swiper-slide flex items-center justify-center bg-gray-200 text-gray-600">
-            <p>No images available</p>
+        </div>
+      @empty
+        {{-- Optional fallback slide if there are no images --}}
+        <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
+          <img
+            src="{{ asset('assets/images/carousel/staycation.png') }}"
+            alt="Staycation"
+            class="w-full h-full object-cover object-center"
+            loading="lazy"
+          >
+          <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
+          <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
+            <div class="text-center px-4">
+              <h2 class="text-4xl font-bold mb-4 uppercase" style="font-family: Gotham, sans-serif;">Staycation</h2>
+              <p class="text-xl uppercase" style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
+                Experience the beauty of nature
+              </p>
+            </div>
           </div>
-        @endforelse
-      </div>
+        </div>
+      @endforelse
     </div>
-  </section>
-
+  </div>
 
   {{-- Staycation Options Section --}}
   <main class="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-gray-50 to-gray-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {{-- Section Header --}}
       <div class="text-center mb-12 md:mb-16">
-        <h2 class="text-3xl font-bold text-[#8f5d54] mb-4 uppercase">
+        <h2 class="text-3xl font-bold text-[#8f5d54] mb-4 uppercase" style="font-family: Gotham, sans-serif;">
           Choose Your Stay
         </h2>
         <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
@@ -91,115 +103,38 @@
 
       {{-- Features Components --}}
       @php
-        $glampingFeatures = [
-          'Luxury Amenities',
-          'Premium Linens',
-          'Private Fire Pit',
-          'Scenic Views',
-          'Guided Farm Tour'
-        ];
-        $campingFeatures = [
-          'ATV Ride (30 minutes)',
-          'Nature Trail Walk',
-          'Team Building Games',
-          'Lunch Included',
-          'Shared Facilities'
+        $accommodations = [
+          [
+            'title' => 'Glamping',
+            'image' => asset('assets/images/carousel/Glamping-1.jpg'),
+            'alt' => 'Luxury glamping tent exterior with comfortable amenities',
+            'features' => [
+              'Luxury Amenities',
+              'Premium Linens',
+              'Private Fire Pit',
+              'Scenic Views',
+              'Guided Farm Tour'
+            ],
+            'modal' => 'glampingModal'
+          ],
+          [
+            'title' => 'Camping',
+            'image' => asset('assets/images/carousel/staycation.png'),
+            'alt' => 'Traditional camping area with tent setup',
+            'features' => [
+              'ATV Ride (30 minutes)',
+              'Nature Trail Walk',
+              'Team Building Games',
+              'Lunch Included',
+              'Shared Facilities'
+            ],
+            'modal' => 'campingOptionsModal'
+          ]
         ];
       @endphp
 
       {{-- Accommodation Cards --}}
-      <section class="row g-4 g-md-5 justify-content-center" aria-labelledby="accommodation-heading">
-        <div class="col-12">
-          <h2 id="accommodation-heading" class="visually-hidden">Available accommodation options</h2>
-        </div>
-
-        {{-- Glamping Card --}}
-        <div class="col-12 col-md-5">
-          <article class="card h-100 border-0 overflow-hidden"
-                    style="box-shadow:0 8px 18px rgba(0,0,0,.08);">
-            {{-- Inset image --}}
-            <div class="px-4 pt-4">
-              <div class="position-relative overflow-hidden shadow-sm">
-                <img src="{{ asset('assets/images/carousel/Glamping-1.jpg') }}"
-                     alt="Luxury glamping tent exterior with comfortable amenities"
-                     class="w-100" style="height:260px; object-fit:cover;">
-              </div>
-            </div>
-
-            <div class="card-body px-5 pb-5 pt-4">
-              <h3 class="text-center fw-bold mb-3 text-uppercase"
-                  style="letter-spacing:.02em; color:#8f5d54; font-family:gotham;">
-                Glamping
-              </h3>
-
-              {{-- thin divider like mock --}}
-              <div class="mx-auto mb-3" style="height:1px; width:100%; background:#e7eddc;"></div>
-
-              <ul class="list-unstyled text-center mb-4">
-                @foreach($glampingFeatures as $feature)
-                  <li class="mb-2" style="font-size:.82rem; color:#8f5d54; text-transform:uppercase; letter-spacing:.02em;">
-                    {{ $feature }}
-                  </li>
-                @endforeach
-              </ul>
-
-              <div class="d-flex justify-content-center">
-                <button type="button"
-                        class="btn px-4 py-2 rounded-pill fw-semibold"
-                        style="background:#8f5d54; color:#fff; font-size:.85rem;"
-                        data-bs-toggle="modal" data-bs-target="#glampingModal"
-                        onmouseover="this.style.backgroundColor='#a0675a'"
-                        onmouseout="this.style.backgroundColor='#8f5d54'">
-                  LEARN MORE
-                </button>
-              </div>
-            </div>
-          </article>
-        </div>
-
-        {{-- Camping Card --}}
-        <div class="col-12 col-md-5">
-          <article class="card h-100 border-0 overflow-hidden"
-                    style="box-shadow:0 8px 18px rgba(0,0,0,.08);">
-            {{-- Inset image --}}
-            <div class="px-4 pt-4">
-              <div class="position-relative overflow-hidden shadow-sm">
-                <img src="{{ asset('assets/images/carousel/staycation.png') }}"
-                     alt="Traditional camping area with tent setup"
-                     class="w-100" style="height:260px; object-fit:cover;">
-              </div>
-            </div>
-
-            <div class="card-body px-5 pb-5 pt-4">
-              <h3 class="text-center fw-bold mb-3 text-uppercase"
-                  style="letter-spacing:.02em; color:#8f5d54; font-family:gotham;">
-                Camping
-              </h3>
-
-              <div class="mx-auto mb-3" style="height:1px; width:100%; background:#e7eddc;"></div>
-
-              <ul class="list-unstyled text-center mb-4">
-                @foreach($campingFeatures as $feature)
-                  <li class="mb-2" style="font-size:.82rem; color:#8f5d54; text-transform:uppercase; letter-spacing:.02em;">
-                    {{ $feature }}
-                  </li>
-                @endforeach
-              </ul>
-
-              <div class="d-flex justify-content-center">
-                <button type="button"
-                        class="btn px-4 py-2 rounded-pill fw-semibold"
-                        style="background:#8f5d54; color:#fff; font-size:.85rem;"
-                        data-bs-toggle="modal" data-bs-target="#campingOptionsModal"
-                        onmouseover="this.style.backgroundColor='#a0675a'"
-                        onmouseout="this.style.backgroundColor='#8f5d54'">
-                  LEARN MORE
-                </button>
-              </div>
-            </div>
-          </article>
-        </div>
-      </section>
+      <x-staycation-cards :accommodations="$accommodations" />
     </div>
   </main>
 
@@ -383,7 +318,6 @@
         <div class="modal-header border-0 pb-0">
           <h2 class="modal-title h3 fw-bold" id="campingOptionsModalLabel" style="color: #8f5d54; font-family: 'Gotham', sans-serif;">
             <i class="bi bi-campground me-2" aria-hidden="true"></i>Camping Options
-          </h2>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close modal"></button>
         </div>
         <div class="modal-body pt-3">
@@ -714,7 +648,7 @@
                           <span class="text-white fw-bold text-center"
                                 id="vr-counter"
                                 style="min-width: 60px;"
-                                aria-live="polite">1 / 5</span>
+                                aria-live="polite">-</span>
                           <button class="btn btn-outline-light btn-sm"
                                   id="vr-next"
                                   type="button"
@@ -786,6 +720,9 @@
     </div>
   </div>
 
+  {{-- Footer --}}
+  <x-footer />
+
   {{-- Scripts --}}
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
@@ -838,7 +775,7 @@
             console.warn('Swiper not yet available; will attempt after window.load.');
             return;
           }
-          new Swiper('.mySwiper', {
+          new Swiper('.heroSwiper', {
             autoplay: { delay: 3000, disableOnInteraction: false },
             loop: true,
             effect: 'fade',
@@ -868,14 +805,11 @@
     function initializeAccommodationCards() {
       const accommodationCards = document.querySelectorAll('article.card');
       accommodationCards.forEach(card => {
-        const overlay = card.querySelector('.bg-gradient-to-t');
         card.addEventListener('mouseenter', function () {
           this.style.transform = 'translateY(-8px)';
-          if (overlay) overlay.style.opacity = '1';
         });
         card.addEventListener('mouseleave', function () {
           this.style.transform = 'translateY(0)';
-          if (overlay) overlay.style.opacity = '0';
         });
       });
     }
@@ -1316,8 +1250,6 @@
 </script>
 
 
-  {{-- Footer --}}
-  <x-footer />
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </body>
 </html>

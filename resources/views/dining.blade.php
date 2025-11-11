@@ -9,7 +9,6 @@
     <meta name="author" content="CalaiaPH">
     @vite(['resources/css/app.css'])
     <title>CalaiaPH - Dining</title>
-    <link href="https://fonts.googleapis.com/css2?family=Vilaka+Modern+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
@@ -65,6 +64,10 @@
     document.addEventListener('DOMContentLoaded', function () {
       // Initialize hero swiper
       const heroSwiper = new Swiper('.heroSwiper', {
+        autoplay: {
+          delay: 3000,
+          disableOnInteraction: false,
+        },
         loop: true,
         effect: 'fade',
         fadeEffect: {
