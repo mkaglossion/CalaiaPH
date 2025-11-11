@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="Visit our beautiful farm at CalaiaPH. Learn about sustainable farming, enjoy farm tours, and experience the source of our fresh, organic produce firsthand.">
-    <meta name="keywords" content="organic farm, sustainable farming, farm tours, fresh produce, CalaiaPH farm, Philippines agriculture, farm visit">
+    <meta name="keywords" content="organic farm, sustainFable farming, farm tours, fresh produce, CalaiaPH farm, Philippines agriculture, farm visit">
     <meta name="author" content="CalaiaPH">
     @vite(['resources/css/app.css'])
     <title>CalaiaPH - Farm</title>
@@ -60,144 +60,144 @@
       </div>
     </div>
 
-    <main id="main">
+    <main id="main" class="bg-gray-50">
       {{-- SECTION: Our Sustainable Farming --}}
-      <section class="container mx-auto px-4 py-10">
-        <div class="text-center mb-10">
-          <h2 class="font-bold mb-2"
-              style="color:#97655A; font-family:gotham, sans-serif; font-size:clamp(1.6rem,3vw,2.1rem);">
-            Our Sustainable Farming
-          </h2>
-          <p class="mx-auto text-gray-700" style="max-width:760px;">
-            Discover how we raise livestock and grow produce with respect for nature and animal welfare
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-          {{-- Left image --}}
-          <img
-            src="{{ asset('assets/images/carousel/animal and wellness.jpg') }}"
-            alt="Free-range livestock"
-            class="w-full h-[260px] sm:h-[320px] md:h-[360px] object-cover rounded-xl shadow"
-          >
-          {{-- Right text --}}
-          <div class="lg:pl-6">
-            <h3 class="mb-3 font-bold"
-                style="color:#97655A; font-family:gotham, sans-serif; font-size:clamp(1.25rem,2.6vw,1.75rem);">
-              Ethically Raised Livestock
-            </h3>
-            <p class="text-gray-700 mb-5">
-              Our animals live as nature intended: with plenty of space to roam, fresh air, and a natural diet free from antibiotics and growth hormones.
+      <section class="py-16 bg-white" aria-labelledby="sustainable-farming-heading">
+        <div class="container mx-auto px-4 max-w-7xl">
+          <header class="text-center mb-12">
+            <h2 id="sustainable-farming-heading" class="text-3xl md:text-4xl font-bold text-[#8f5d54] mb-4 font-gotham">
+              Our Sustainable Farming
+            </h2>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              Discover how we raise livestock and grow produce with respect for nature and animal welfare
             </p>
-            <ul class="space-y-3">
-              @foreach ([
-                'Pasture-raised with daily access to open fields',
-                'No antibiotics or hormones — ever',
-                'Non-GMO, locally-sourced feed',
-                'Humane treatment with low-stress handling',
-              ] as $item)
-              <li class="flex items-start">
-                <span class="flex items-center justify-center rounded-full mr-3 mt-1"
-                      style="width:24px;height:24px;background-color:rgba(151,101,90,.10);">
-                  <i class="fas fa-check" style="color:#97655A; font-size:12px;"></i>
-                </span>
-                <span class="text-sm sm:text-base text-gray-700">{{ $item }}</span>
-              </li>
-              @endforeach
-            </ul>
-          </div>
-        </div>
+          </header>
 
-        {{-- Meat Cards --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-          @foreach ([
-            ['img'=>'our-farm.jpg','title'=>'Grass-Fed Beef','desc'=>"100% grass-fed and grass-finished diet; higher in healthy Omega-3s."],
-            ['img'=>'our-farm2.jpg','title'=>'Heritage Pork','desc'=>"Small groups with room to root and explore for superior flavor and texture."],
-            ['img'=>'organic.png','title'=>'Pasture Lamb','desc'=>"Grazed on diverse pastures for naturally complex flavor."],
-          ] as $c)
-          <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-            <img src="{{ asset('assets/images/carousel/'.$c['img']) }}" alt="{{ $c['title'] }}"
-                 class="w-full h-48 object-cover rounded-lg mb-4">
-            <h4 class="font-semibold mb-1" style="color:#97655A;">{{ $c['title'] }}</h4>
-            <p class="text-gray-700 mb-3">{{ $c['desc'] }}</p>
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-medium" style="color:#97655A;">Available seasonally</span>
-              <i class="fas fa-leaf text-sm" style="color:#28a745;"></i>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
+            <figure class="order-2 lg:order-1">
+              <img
+                src="{{ asset('assets/images/carousel/animal and wellness.jpg') }}"
+                alt="Free-range livestock grazing in open pastures at Calaia farm"
+                class="w-full h-80 md:h-96 object-cover rounded-2xl shadow-lg"
+                loading="lazy"
+              >
+              <figcaption class="sr-only">Free-range livestock in natural environment</figcaption>
+            </figure>
+
+            <div class="order-1 lg:order-2">
+              <h3 class="text-2xl font-bold text-[#8f5d54] mb-6 font-gotham">
+                Ethically Raised Livestock
+              </h3>
+              <p class="text-gray-700 mb-8 leading-relaxed">
+                Our animals live as nature intended: with plenty of space to roam, fresh air, and a natural diet free from antibiotics and growth hormones.
+              </p>
+              <ul class="space-y-4" role="list">
+                @foreach ([
+                  'Pasture-raised with daily access to open fields',
+                  'No antibiotics or hormones — ever',
+                  'Non-GMO, locally-sourced feed',
+                  'Humane treatment with low-stress handling',
+                ] as $item)
+                <li class="flex items-start">
+                  <div class="flex-shrink-0 w-6 h-6 bg-[#8f5d54]/10 rounded-full flex items-center justify-center mt-0.5 mr-4">
+                    <i class="fas fa-check text-[#8f5d54] text-xs" aria-hidden="true"></i>
+                  </div>
+                  <span class="text-gray-700">{{ $item }}</span>
+                </li>
+                @endforeach
+              </ul>
             </div>
           </div>
-          @endforeach
+
+          {{-- Meat Products Grid --}}
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            @foreach ([
+              ['img'=>'our-farm.jpg','title'=>'Grass-Fed Beef','desc'=>'100% grass-fed and grass-finished diet; higher in healthy Omega-3s.'],
+              ['img'=>'our-farm2.jpg','title'=>'Heritage Pork','desc'=>'Small groups with room to root and explore for superior flavor and texture.'],
+              ['img'=>'organic.png','title'=>'Pasture Lamb','desc'=>'Grazed on diverse pastures for naturally complex flavor.'],
+            ] as $product)
+            <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300">
+              <img src="{{ asset('assets/images/carousel/'.$product['img']) }}" alt="{{ $product['title'] }} product"
+                   class="w-full h-48 object-cover rounded-xl mb-4" loading="lazy">
+              <h4 class="text-xl font-semibold text-[#8f5d54] mb-2">{{ $product['title'] }}</h4>
+              <p class="text-gray-600 mb-4 leading-relaxed">{{ $product['desc'] }}</p>
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-[#8f5d54]">Available seasonally</span>
+                <i class="fas fa-leaf text-green-500" aria-hidden="true"></i>
+              </div>
+            </article>
+            @endforeach
+          </div>
         </div>
       </section>
 
       {{-- SECTION: Fresh From Our Fields --}}
-      <section class="py-12" style="background:#FFF;">
-        <div class="container mx-auto px-4">
-          <div class="text-center mb-10">
-            <h2 class="font-bold mb-2"
-                style="color:#97655A; font-family:gotham, sans-serif; font-size:clamp(1.6rem,3vw,2.1rem);">
+      <section class="py-16 bg-gradient-to-br from-green-50 to-emerald-50" aria-labelledby="fresh-fields-heading">
+        <div class="container mx-auto px-4 max-w-7xl">
+          <header class="text-center mb-12">
+            <h2 id="fresh-fields-heading" class="text-3xl md:text-4xl font-bold text-[#8f5d54] mb-4 font-gotham">
               Fresh From Our Fields
             </h2>
-            <p class="mx-auto text-gray-700" style="max-width:760px;">
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
               Seasonal, pesticide-free produce grown with care for flavor and nutrition.
             </p>
-          </div>
+          </header>
 
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {{-- Vegetable Garden card --}}
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <img src="{{ asset('assets/images/carousel/organic1.jpg') }}" alt="Vegetable garden"
-                     class="w-full h-40 md:h-full object-cover rounded-lg md:col-span-1">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            {{-- Vegetable Garden --}}
+            <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <img src="{{ asset('assets/images/carousel/organic1.jpg') }}" alt="Lush vegetable garden with various organic produce"
+                     class="w-full h-48 md:h-full object-cover rounded-xl md:col-span-1" loading="lazy">
                 <div class="md:col-span-2">
-                  <h3 class="font-semibold mb-1" style="color:#97655A;">Vegetable Garden</h3>
-                  <p class="text-gray-700 mb-3">
+                  <h3 class="text-xl font-semibold text-[#8f5d54] mb-3">Vegetable Garden</h3>
+                  <p class="text-gray-600 mb-4 leading-relaxed">
                     We grow over 50 varieties of vegetables using organic methods and natural amendments like compost and cover crops.
                   </p>
-                  <h4 class="font-semibold mb-1" style="color:#97655A;">In Season Now:</h4>
-                  <p class="text-gray-700 mb-3">Heirloom tomatoes, rainbow chard, zucchini, garlic, kale, peppers, eggplant</p>
-                  <a href="#contact" class="inline-flex items-center font-medium" style="color:#97655A;">
-                    Get our harvest schedule <i class="fas fa-chevron-right text-xs ml-2"></i>
+                  <h4 class="font-semibold text-[#8f5d54] mb-2">In Season Now:</h4>
+                  <p class="text-gray-700 mb-4">Heirloom tomatoes, rainbow chard, zucchini, garlic, kale, peppers, eggplant</p>
+                  <a href="#contact" class="inline-flex items-center text-[#8f5d54] hover:text-[#8f5d54]-dark font-medium transition-colors">
+                    Get our harvest schedule <i class="fas fa-chevron-right text-xs ml-2" aria-hidden="true"></i>
                   </a>
                 </div>
               </div>
-            </div>
+            </article>
 
-            {{-- Orchard Fruits card --}}
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <img src="{{ asset('assets/images/carousel/Calaia-26.jpg') }}" alt="Orchard fruits"
-                     class="w-full h-40 md:h-full object-cover rounded-lg md:col-span-1">
+            {{-- Orchard Fruits --}}
+            <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <img src="{{ asset('assets/images/carousel/Calaia-26.jpg') }}" alt="Fruit orchard with trees in bloom"
+                     class="w-full h-48 md:h-full object-cover rounded-xl md:col-span-1" loading="lazy">
                 <div class="md:col-span-2">
-                  <h3 class="font-semibold mb-1" style="color:#97655A;">Orchard Fruits</h3>
-                  <p class="text-gray-700 mb-3">
+                  <h3 class="text-xl font-semibold text-[#8f5d54] mb-3">Orchard Fruits</h3>
+                  <p class="text-gray-600 mb-4 leading-relaxed">
                     Our heritage fruit trees are grown without chemical sprays, allowing natural ecosystems to maintain balance.
                   </p>
-                  <h4 class="font-semibold mb-1" style="color:#97655A;">Coming Soon:</h4>
-                  <p class="text-gray-700 mb-3">Apples, pears, peaches, plums, cherries, persimmons</p>
-                  <a href="#contact" class="inline-flex items-center font-medium" style="color:#97655A;">
-                    Join our fruit CSA <i class="fas fa-chevron-right text-xs ml-2"></i>
+                  <h4 class="font-semibold text-[#8f5d54] mb-2">Coming Soon:</h4>
+                  <p class="text-gray-700 mb-4">Apples, pears, peaches, plums, cherries, persimmons</p>
+                  <a href="#contact" class="inline-flex items-center text-[#8f5d54] hover:text-[#8f5d54]-dark font-medium transition-colors">
+                    Join our fruit CSA <i class="fas fa-chevron-right text-xs ml-2" aria-hidden="true"></i>
                   </a>
                 </div>
               </div>
-            </div>
+            </article>
           </div>
 
-          {{-- Growing with Nature icons --}}
-          <div class="bg-white rounded-xl shadow-sm p-6 md:p-8 border border-gray-100">
-            <h3 class="text-center font-bold mb-6" style="color:#97655A;">Growing with Nature</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {{-- Growing with Nature --}}
+          <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-8 md:p-12">
+            <h3 class="text-2xl font-bold text-center text-[#8f5d54] mb-8 font-gotham">Growing with Nature</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
               @foreach ([
                 ['icon'=>'bi-flower1','title'=>'Soil First','text'=>'We build our soil health through composting, cover crops, and minimal tillage.'],
                 ['icon'=>'bi-tree-fill','title'=>'Biodiversity','text'=>'Companion planting and diverse ecosystems keep plants healthy naturally.'],
                 ['icon'=>'bi-brightness-high-fill','title'=>'Seasonal Focus','text'=>'We grow what thrives in our climate without forcing seasons.'],
-              ] as $i)
+              ] as $feature)
               <div class="text-center">
-                <div class="mx-auto mb-3 rounded-full flex items-center justify-center"
-                     style="width:64px;height:64px;background-color:rgba(151,101,90,.10);">
-                  <i class="bi {{ $i['icon'] }} text-2xl" style="color:#97655A;"></i>
+                <div class="w-16 h-16 bg-[#8f5d54]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i class="bi {{ $feature['icon'] }} text-2xl text-[#8f5d54]" aria-hidden="true"></i>
                 </div>
-                <h4 class="font-semibold mb-1">{{ $i['title'] }}</h4>
-                <p class="text-gray-700">{{ $i['text'] }}</p>
+                <h4 class="text-lg font-semibold text-[#8f5d54] mb-2">{{ $feature['title'] }}</h4>
+                <p class="text-gray-600 leading-relaxed">{{ $feature['text'] }}</p>
               </div>
               @endforeach
             </div>
@@ -206,186 +206,213 @@
       </section>
 
       {{-- SECTION: Farm Experiences --}}
-      <section class="py-12" style="background:#FAF6F2;">
-        <div class="container mx-auto px-4">
-          <div class="text-center mb-10">
-            <h2 class="font-bold mb-2"
-                style="color:#97655A; font-family:gotham, sans-serif; font-size:clamp(1.6rem,3vw,2.1rem);">
+      <section class="py-16 bg-white" aria-labelledby="farm-experiences-heading">
+        <div class="container mx-auto px-4 max-w-7xl">
+          <header class="text-center mb-12">
+            <h2 id="farm-experiences-heading" class="text-3xl md:text-4xl font-bold text-[#8f5d54] mb-4 font-gotham">
               Farm Experiences
             </h2>
-            <p class="mx-auto text-gray-700" style="max-width:760px;">
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
               Connect with your food and learn about sustainable agriculture through hands-on activities
             </p>
-          </div>
+          </header>
 
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {{-- Card 1 --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              <img src="{{ asset('assets/images/carousel/animal and wellness.jpg') }}"
-                   alt="Animal Feeding Experience"
-                   class="w-full h-44 object-cover rounded-lg mb-4">
-              <h4 class="font-semibold mb-1" style="color:#97655A;">Animal Feeding Experience</h4>
-              <p class="text-gray-700 mb-3">Hands-on feeding with guidance from our farmers. Perfect for families and school groups.</p>
-              <div class="flex items-center text-sm mb-2" style="color:#97655A;">
-                <i class="far fa-clock mr-2"></i> Weekends 9AM–2PM
-              </div>
-              <div class="flex items-center text-sm mb-4 text-gray-700">
-                <i class="fas fa-users mr-2" style="color:#97655A;"></i> Groups up to 20 people
-              </div>
-              <a href="#contact"
-                 class="w-full inline-flex items-center justify-center border rounded-md px-4 py-2 font-medium"
-                 style="border-color:#97655A; color:#97655A;">
-                Reserve Your Spot
-              </a>
-            </div>
-
-            {{-- Card 2 --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              <img src="{{ asset('assets/images/carousel/organic1.jpg') }}"
-                   alt="Harvest Days"
-                   class="w-full h-44 object-cover rounded-lg mb-4">
-              <h4 class="font-semibold mb-1" style="color:#97655A;">Harvest Days</h4>
-              <p class="text-gray-700 mb-3">Join seasonal harvests and take home fresh-picked produce. Learn traditional techniques.</p>
-              <div class="flex items-center text-sm mb-2" style="color:#97655A;">
-                <i class="far fa-clock mr-2"></i> Morning hours, seasonal
-              </div>
-              <div class="flex items-center text-sm mb-4 text-gray-700">
-                <i class="fas fa-seedling mr-2" style="color:#97655A;"></i> Take home your harvest
-              </div>
-              <a href="#contact"
-                 class="w-full inline-flex items-center justify-center border rounded-md px-4 py-2 font-medium"
-                 style="border-color:#97655A; color:#97655A;">
-                 Learn More
-              </a>
-            </div>
-
-            {{-- Card 3 --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {{-- Experience Cards --}}
+            @foreach ([
+              [
+                'img' => 'animal and wellness.jpg',
+                'title' => 'Animal Feeding Experience',
+                'desc' => 'Hands-on feeding with guidance from our farmers. Perfect for families and school groups.',
+                'time' => 'Weekends 9AM–2PM',
+                'capacity' => 'Groups up to 20 people',
+                'icon' => 'people',
+                'cta' => 'Reserve Your Spot'
+              ],
+              [
+                'img' => 'organic1.jpg',
+                'title' => 'Harvest Days',
+                'desc' => 'Join seasonal harvests and take home fresh-picked produce. Learn traditional techniques.',
+                'time' => 'Morning hours, seasonal',
+                'capacity' => 'Take home your harvest',
+                'icon' => 'flower1',
+                'cta' => 'Learn More'
+              ],
+              [
+                'img' => 'games-grounds4.jpg',
+                'title' => 'Farm Tours',
+                'desc' => 'See regenerative agriculture first-hand—learn about soil health & biodiversity.',
+                'time' => 'By appointment',
+                'capacity' => 'Educational content included',
+                'icon' => 'mortarboard',
+                'cta' => 'Schedule Tour',
+                'badge' => 'Guided Tour'
+              ]
+            ] as $experience)
+            <article class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group">
               <div class="relative">
-                <img src="{{ asset('assets/images/carousel/games-grounds4.jpg') }}"
-                     alt="Farm Tours"
-                     class="w-full h-44 object-cover rounded-lg mb-4">
-                <span class="absolute top-3 right-3 inline-flex items-center gap-1 text-white text-xs px-2 py-1 rounded"
-                      style="background: rgba(0,0,0,.55);">
-                  <i class="fas fa-route mr-1"></i> Guided Tour
+                <img src="{{ asset('assets/images/carousel/'.$experience['img']) }}"
+                     alt="{{ $experience['title'] }} at Calaia farm"
+                     class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
+                @if(isset($experience['badge']))
+                <span class="absolute top-4 right-4 bg-black/70 text-white text-xs px-3 py-1 rounded-full font-medium">
+                  <i class="fas fa-route mr-1" aria-hidden="true"></i> {{ $experience['badge'] }}
                 </span>
+                @endif
               </div>
-              <h4 class="font-semibold mb-1" style="color:#97655A;">Farm Tours</h4>
-              <p class="text-gray-700 mb-3">See regenerative agriculture first-hand—learn about soil health & biodiversity.</p>
-              <div class="flex items-center text-sm mb-2" style="color:#97655A;">
-                <i class="far fa-clock mr-2"></i> By appointment
+              <div class="p-6">
+                <h4 class="text-xl font-semibold text-[#8f5d54] mb-3">{{ $experience['title'] }}</h4>
+                <p class="text-gray-600 mb-4 leading-relaxed">{{ $experience['desc'] }}</p>
+                <div class="space-y-2 mb-6">
+                  <div class="flex items-center text-sm text-[#8f5d54]">
+                    <i class="far fa-clock mr-2" aria-hidden="true"></i> {{ $experience['time'] }}
+                  </div>
+                  <div class="flex items-center text-sm text-gray-600">
+                    <i class="bi bi-{{ $experience['icon'] }} mr-2 text-[#8f5d54]" aria-hidden="true"></i> {{ $experience['capacity'] }}
+                  </div>
+                </div>
+                <a href="#contact"
+                   class="w-full inline-flex items-center justify-center border-2 border-[#8f5d54] text-[#8f5d54] hover:bg-[#8f5d54] hover:text-white rounded-xl px-6 py-3 font-medium transition-all duration-300">
+                  {{ $experience['cta'] }}
+                </a>
               </div>
-              <div class="flex items-center text-sm mb-4 text-gray-700">
-                <i class="fas fa-graduation-cap mr-2" style="color:#97655A;"></i> Educational content included
-              </div>
-              <a href="#contact"
-                 class="w-full inline-flex items-center justify-center border rounded-md px-4 py-2 font-medium"
-                 style="border-color:#97655A; color:#97655A;">
-                 Schedule Tour
-              </a>
-            </div>
+            </article>
+            @endforeach
           </div>
         </div>
       </section>
 
       {{-- SECTION: Visit or Contact Us --}}
-      <section id="contact" class="py-12" style="background:#FFF;">
-        <div class="container mx-auto px-4">
-          <div class="text-center mb-10">
-            <h2 class="font-bold mb-2"
-                style="color:#97655A; font-family:gotham, sans-serif; font-size:clamp(1.6rem,3vw,2.1rem);">
+      <section id="contact" class="py-16 bg-gradient-to-br from-primary/5 to-primary/10" aria-labelledby="contact-heading">
+        <div class="container mx-auto px-4 max-w-7xl">
+          <header class="text-center mb-12">
+            <h2 id="contact-heading" class="text-3xl md:text-4xl font-bold text-[#8f5d54] mb-4 font-gotham">
               Visit or Contact Us
             </h2>
-            <p class="mx-auto text-gray-700" style="max-width:760px;">
-              We’d love to hear from you about visiting, volunteering, or partnership opportunities.
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              We'd love to hear from you about visiting, volunteering, or partnership opportunities.
             </p>
-          </div>
+          </header>
 
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {{-- Form --}}
-            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-              <h3 class="font-semibold mb-4" style="color:#97655A;">Send an Inquiry</h3>
-              <form method="POST" action="{{ route('contact.submit') }}" class="space-y-4">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {{-- Contact Form --}}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+              <h3 class="text-2xl font-semibold text-[#8f5d54] mb-6">Send a Message</h3>
+              <form method="POST" action="{{ route('contact.submit') }}" class="space-y-6" role="form" aria-label="Contact form">
                 @csrf
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input name="name" required placeholder="Full Name"
-                         class="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2"
-                         style="--tw-ring-color:#97655A"/>
-                  <input name="email" type="email" required placeholder="Email Address"
-                         class="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2"
-                         style="--tw-ring-color:#97655A"/>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                    <input id="name" name="name" type="text" required
+                           class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
+                           placeholder="Your full name">
+                  </div>
+                  <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                    <input id="email" name="email" type="email" required
+                           class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
+                           placeholder="your@email.com">
+                  </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input name="phone" placeholder="Phone"
-                         class="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2"
-                         style="--tw-ring-color:#97655A"/>
-                  <select name="subject" class="w-full border border-gray-200 rounded-md px-3 py-2 text-gray-600 focus:outline-none focus:ring-2"
-                          style="--tw-ring-color:#97655A">
-                    <option value="" selected disabled>Select an option</option>
-                    <option>Visit</option>
-                    <option>Experience Booking</option>
-                    <option>Partnership</option>
-                    <option>Other</option>
-                  </select>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                    <input id="phone" name="phone" type="tel"
+                           class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
+                           placeholder="+63 XXX XXX XXXX">
+                  </div>
+                  <div>
+                    <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                    <select id="subject" name="subject"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors bg-white">
+                      <option value="" selected disabled>Select an option</option>
+                      <option value="Visit">Visit</option>
+                      <option value="Experience Booking">Experience Booking</option>
+                      <option value="Partnership">Partnership</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
                 </div>
-                <textarea name="message" rows="4" placeholder="Message"
-                          class="w-full border border-gray-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2"
-                          style="--tw-ring-color:#97655A"></textarea>
-
+                <div>
+                  <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                  <textarea id="message" name="message" rows="5"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors resize-vertical"
+                            placeholder="Tell us about your inquiry..."></textarea>
+                </div>
                 <button type="submit"
-                        class="w-full rounded-md px-4 py-2 font-medium text-white"
-                        style="background:#97655A;">
+                        class="w-full bg-[#8f5d54] hover:bg-[#7a4f46] text-white font-medium py-3 px-6 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:ring-offset-2">
                   Send Message
                 </button>
               </form>
             </div>
 
-            {{-- Side info --}}
-            <div class="space-y-6">
-              <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                <h3 class="font-semibold mb-4" style="color:#97655A;">Visit Our Farm</h3>
-                <ul class="space-y-3 text-gray-700">
-                  <li class="flex">
-                    <i class="fa fa-location-dot mt-1 mr-3" style="color:#97655A;"></i>
-                    Purok 3, Brgy. Buso-buso, Calaca, Philippines
+            {{-- Contact Information --}}
+            <div class="space-y-8">
+              <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                <h3 class="text-2xl font-semibold text-[#8f5d54] mb-6">Visit Our Farm</h3>
+                <ul class="space-y-4" role="list">
+                  <li class="flex items-start">
+                    <i class="fa fa-location-dot text-[#8f5d54] mt-1 mr-4 flex-shrink-0" aria-hidden="true"></i>
+                    <div>
+                      <span class="font-medium text-gray-900">Address</span>
+                      <address class="text-gray-600 not-italic">Purok 3, Brgy. Buso-buso, Calaca, Philippines</address>
+                    </div>
                   </li>
-                  <li class="flex">
-                    <i class="fa fa-phone mt-1 mr-3" style="color:#97655A;"></i>
-                    +63 905 129 4741
+                  <li class="flex items-center">
+                    <i class="fa fa-phone text-[#8f5d54] mr-4 flex-shrink-0" aria-hidden="true"></i>
+                    <div>
+                      <span class="font-medium text-gray-900">Phone</span>
+                      <a href="tel:+639051294741" class="text-gray-600 hover:text-[#8f5d54] transition-colors">+63 905 129 4741</a>
+                    </div>
                   </li>
-                  <li class="flex">
-                    <i class="fa fa-envelope mt-1 mr-3" style="color:#97655A;"></i>
-                    <a href="mailto:calaia@calaia.com" class="hover:underline">calaia@calaia.com</a>
+                  <li class="flex items-center">
+                    <i class="fa fa-envelope text-[#8f5d54] mr-4 flex-shrink-0" aria-hidden="true"></i>
+                    <div>
+                      <span class="font-medium text-gray-900">Email</span>
+                      <a href="mailto:calaia@calaia.com" class="text-gray-600 hover:text-[#8f5d54] transition-colors">calaia@calaia.com</a>
+                    </div>
                   </li>
-                  <li class="flex">
-                    <i class="fa fa-clock mt-1 mr-3" style="color:#97655A;"></i>
-                    Monday–Saturday: 9AM – 3PM
+                  <li class="flex items-start">
+                    <i class="fa fa-clock text-[#8f5d54] mt-1 mr-4 flex-shrink-0" aria-hidden="true"></i>
+                    <div>
+                      <span class="font-medium text-gray-900">Hours</span>
+                      <span class="text-gray-600 block">Monday–Saturday: 9AM – 3PM</span>
+                    </div>
                   </li>
-                  <li class="flex items-center gap-3">
-                    <span class="font-medium">Follow us</span>
-                    <a href="#" aria-label="Instagram" class="text-gray-600 hover:text-gray-800"><i class="fab fa-instagram"></i></a>
-                    <a href="#" aria-label="Facebook" class="text-gray-600 hover:text-gray-800"><i class="fab fa-facebook"></i></a>
-                    <a href="#" aria-label="Messenger" class="text-gray-600 hover:text-gray-800"><i class="fab fa-facebook-messenger"></i></a>
+                  <li class="flex items-center gap-4 pt-2">
+                    <span class="font-medium text-gray-900">Follow us</span>
+                    <div class="flex gap-3">
+                      <a href="#" aria-label="Follow us on Instagram" class="text-gray-500 hover:text-[#8f5d54] transition-colors">
+                        <i class="fab fa-instagram text-xl" aria-hidden="true"></i>
+                      </a>
+                      <a href="#" aria-label="Follow us on Facebook" class="text-gray-500 hover:text-[#8f5d54] transition-colors">
+                        <i class="fab fa-facebook text-xl" aria-hidden="true"></i>
+                      </a>
+                      <a href="#" aria-label="Contact us on Messenger" class="text-gray-500 hover:text-[#8f5d54] transition-colors">
+                        <i class="fab fa-facebook-messenger text-xl" aria-hidden="true"></i>
+                      </a>
+                    </div>
                   </li>
                 </ul>
               </div>
 
-              <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                <h3 class="font-semibold mb-3" style="color:#97655A;">Location and Directions</h3>
-                <div class="rounded-lg overflow-hidden mb-3">
+              <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                <h3 class="text-2xl font-semibold text-[#8f5d54] mb-6">Location & Directions</h3>
+                <div class="rounded-xl overflow-hidden mb-6 shadow-md">
                   <iframe
                     src="https://www.google.com/maps?q=Calaca%20Nature%20Park&output=embed"
-                    class="w-full h-56 border-0"
+                    class="w-full h-64 border-0"
                     loading="lazy"
+                    title="Calaia Farm Location Map"
                   ></iframe>
                 </div>
-                <h4 class="font-semibold mb-1" style="color:#97655A;">Getting Here</h4>
-                <p class="text-gray-700">
+                <h4 class="text-lg font-semibold text-[#8f5d54] mb-3">Getting Here</h4>
+                <p class="text-gray-600 mb-4 leading-relaxed">
                   Calaia Nature Park is located in Calaca, Batangas along the main road near Sitio Calas from the town proper of Calaca.
                 </p>
-                <a href="https://maps.google.com" target="_blank" class="inline-flex items-center font-medium mt-2"
-                   style="color:#97655A;">
-                  Get Directions with Google Maps <i class="fas fa-chevron-right text-xs ml-2"></i>
+                <a href="https://maps.google.com" target="_blank" rel="noopener"
+                   class="inline-flex items-center text-[#8f5d54] hover:text-[#8f5d54]-dark font-medium transition-colors">
+                  Get Directions with Google Maps <i class="fas fa-chevron-right text-xs ml-2" aria-hidden="true"></i>
                 </a>
               </div>
             </div>
