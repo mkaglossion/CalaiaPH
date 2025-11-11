@@ -29,32 +29,32 @@
 
       <nav class="mt-4 space-y-1">
 
-        {{-- Dashboard --}}
+        <!-- {{-- Dashboard --}}
         <a 
           class="flex items-center gap-3 px-6 py-2 transition 
           {{ request()->routeIs('admin.dashboard') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
           <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
           <span>Dashboard</span>
-        </a>
+        </a> -->
 
-        {{-- Manage Users --}}
+        <!-- {{-- Manage Users --}}
         <a 
           class="flex items-center gap-3 px-6 py-2 transition 
           {{ request()->routeIs('admin.users') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
           <i data-lucide="users" class="w-5 h-5"></i>
           <span>Manage Users</span>
-        </a>
+        </a> -->
 
-        {{-- Bookings --}}
+        <!-- {{-- Bookings --}}
         <a 
           class="flex items-center gap-3 px-6 py-2 transition 
           {{ request()->routeIs('admin.bookings') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
           <i data-lucide="calendar-days" class="w-5 h-5"></i>
           <span>Bookings</span>
-        </a>
+        </a> -->
 
         {{-- Staycations --}}
-        <a 
+        <a href="{{ route('admin.staycations') }}"  
           class="flex items-center gap-3 px-6 py-2 transition 
           {{ request()->routeIs('admin.staycations') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
           <i data-lucide="bed-double" class="w-5 h-5"></i>
@@ -67,6 +67,14 @@
           {{ request()->routeIs('admin.activities') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
           <i data-lucide="mountain" class="w-5 h-5"></i>
           <span>Activities</span>
+        </a>
+
+        {{-- Menu --}}
+        <a href="{{ route('admin.menus') }}" 
+          class="flex items-center gap-3 px-6 py-2 transition 
+          {{ request()->routeIs('admin.menus') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
+          <i data-lucide="utensils" class="w-5 h-5"></i>
+          <span>Menu</span>
         </a>
 
         {{-- Pages (Dropdown) --}}
