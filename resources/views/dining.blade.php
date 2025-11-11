@@ -3,61 +3,206 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="Savor delicious farm-to-table dining experiences at CalaiaPH. Enjoy fresh, organic meals made from our farm produce in a beautiful natural setting.">
-    <meta name="keywords" content="farm-to-table dining, organic meals, fresh produce, CalaiaPH dining, Philippines farm food, restaurant">
-    <meta name="author" content="CalaiaPH">
+
+    {{-- Basic SEO --}}
+    <meta name="description" content="Calaia Farm — Food & Beverage: Set menus, special menus, and snack bar options for groups and families." />
+    <meta name="keywords" content="Calaia Farm, CalaiaPH, food, beverage, set menus, special menus, snack bar, farm to table" />
+    <meta name="author" content="CalaiaPH" />
+
+    <title>CalaiaPH - Food & Beverage</title>
+
+    {{-- Tailwind via Vite --}}
     @vite(['resources/css/app.css'])
-    <title>CalaiaPH - Dining</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    {{-- Icons / Swiper --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   </head>
-  <body class="bg-white-100">
-      <div class="flex flex-col items-center justify-center px-4">
-        @if (session('success'))
-            <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">
-                {{ session('success') }}
-            </div>
-        @endif
-      </div>
+
+  <body class="bg-white text-gray-900 antialiased">
     <x-header active="dining" />
-    {{-- Hero Slider --}}
-    <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
-      <div class="swiper-wrapper">
-        @forelse ($swiperImages as $image)
-          <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-            <img 
-              src="{{ asset('storage/' . $image->image_path) }}" 
-              alt="{{ $image->title ?? 'Slide Image' }}" 
-              class="w-full h-full object-cover object-center" 
-              loading="lazy"
-            >
-            <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-            <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-              <div class="text-center px-4">
-                @if($image->title)
-                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase" 
-                      style="font-family: gotham; font-size: 3.5rem;">
-                    {{ $image->title }}
-                  </h2>
-                @endif
-                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
-                  style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
-                  Experience the beauty of nature
-                </p>
+
+    <div class="min-h-screen">
+
+      {{-- Hero Slider (matches dining.blade.php exactly) --}}
+      <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
+        <div class="swiper-wrapper">
+          @forelse ($swiperImages as $image)
+            <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
+              <img 
+                src="{{ asset('storage/' . $image->image_path) }}" 
+                alt="{{ $image->title ?? 'Slide Image' }}" 
+                class="w-full h-full object-cover object-center" 
+                loading="lazy"
+              >
+              <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
+              <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
+                <div class="text-center px-4">
+                  @if($image->title)
+                    <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase" 
+                        style="font-family: gotham; font-size: 3.5rem;">
+                      {{ $image->title }}
+                    </h2>
+                  @endif
+                  <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
+                    style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
+                    Experience the beauty of nature
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        @empty
-          <div class="swiper-slide flex items-center justify-center bg-gray-200 text-gray-600">
-            <p>No images available</p>
-          </div>
-        @endforelse
+          @empty
+            <div class="swiper-slide flex items-center justify-center bg-gray-200 text-gray-600">
+              <p>No images available</p>
+            </div>
+          @endforelse
+        </div>
       </div>
+
+      {{-- CARDS SECTION (updated to match mock) --}}
+      <section id="set-menu" class="container mx-auto px-4 py-12">
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+
+          {{-- Card 1 --}}
+          <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100">
+            {{-- inset image frame --}}
+            <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10">
+              <img
+                src="{{ asset('images/carousel/SET MEALS2.jpg') }}"
+                alt="Set Menus"
+                class="w-full h-48 sm:h-56 md:h-64 object-cover"
+                loading="lazy"
+              >
+            </div>
+
+            <div class="px-6 pb-6 pt-1 text-center">
+              <h6 class="text-base sm:text-lg font-semibold uppercase tracking-wide mb-3"
+                  style="color:#97655A;">
+                Set Menus
+              </h6>
+
+              <button
+                data-title="Set Menu"
+                data-details='["Ready-made meals for families, couples, or groups","Breakfast, lunch, and dinner options"]'
+                data-images='["{{ asset('images/carousel/SET MEALS2.jpg') }}","{{ asset('images/carousel/SET MEALS.jpg') }}","{{ asset('images/carousel/menu1.jpg') }}"]'
+                onclick="openModal(this)"
+                class="inline-flex items-center justify-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:shadow-md transition-transform duration-150 hover:-translate-y-0.5"
+                style="background-color:#97655A; color:#fff;">
+                LEARN MORE
+              </button>
+            </div>
+          </div>
+
+          {{-- Card 2 --}}
+          <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100">
+            <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10">
+              <img
+                src="{{ asset('images/carousel/menu1.jpg') }}"
+                alt="Special Menus"
+                class="w-full h-48 sm:h-56 md:h-64 object-cover"
+                loading="lazy"
+              >
+            </div>
+
+            <div class="px-6 pb-6 pt-1 text-center">
+              <h6 class="text-base sm:text-lg font-semibold uppercase tracking-wide mb-3"
+                  style="color:#97655A;">
+                Special Menus
+              </h6>
+
+              <button
+                data-title="Special Menus"
+                data-details='["Harvest Your Own – Pick and cook farm-fresh ingredients","Cochinillo – Whole roast pig (pre-order required)"]'
+                data-images='["{{ asset('images/carousel/menu1.jpg') }}","{{ asset('images/carousel/menu2.jpg') }}","{{ asset('images/carousel/menu4.jpg') }}"]'
+                onclick="openModal(this)"
+                class="inline-flex items-center justify-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:shadow-md transition-transform duration-150 hover:-translate-y-0.5"
+                style="background-color:#97655A; color:#fff;">
+                LEARN MORE
+              </button>
+            </div>
+          </div>
+
+          {{-- Card 3 --}}
+          <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100">
+            <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10">
+              <img
+                src="{{ asset('images/carousel/menu3.jpg') }}"
+                alt="Snack Bar"
+                class="w-full h-48 sm:h-56 md:h-64 object-cover"
+                loading="lazy"
+              >
+            </div>
+
+            <div class="px-6 pb-6 pt-1 text-center">
+              <h6 class="text-base sm:text-lg font-semibold uppercase tracking-wide mb-3"
+                  style="color:#97655A;">
+                Snack Bar
+              </h6>
+
+              <button
+                data-title="Snack Bar"
+                data-details='["All-day light snacks and drinks","Includes smoothies, juice, sandwiches, and more"]'
+                data-images='["{{ asset('images/carousel/menu3.jpg') }}","{{ asset('images/carousel/menu1.jpg') }}","{{ asset('images/carousel/menu4.jpg') }}"]'
+                onclick="openModal(this)"
+                class="inline-flex items-center justify-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:shadow-md transition-transform duration-150 hover:-translate-y-0.5"
+                style="background-color:#97655A; color:#fff;">
+                LEARN MORE
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {{-- FLOATING BUTTONS (optional component) --}}
+      {{-- <x-floating-buttons /> --}}
+
+      {{-- Dynamic Details Modal --}}
+      <div id="detailsModal" class="fixed inset-0 bg-transparent flex items-center justify-center p-2 md:p-4 pt-16 md:pt-4 hidden z-50">
+        <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[95vh] md:max-h-[90vh] flex flex-col border border-gray-300 mx-2 sm:mx-4">
+          {{-- Modal Header --}}
+          <div class="p-4 md:p-6 border-b border-gray-300 flex-shrink-0">
+            <div class="flex justify-between items-center">
+              <h3 id="detailsModalLabel" class="text-xl md:text-2xl font-bold text-gray-800"></h3>
+              <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" onclick="closeModal()" aria-label="Close modal">
+                <i class="bi bi-x-lg text-xl md:text-2xl"></i>
+              </button>
+            </div>
+          </div>
+
+          {{-- Modal Body --}}
+          <div class="p-4 md:p-6 flex-1 overflow-y-auto" id="detailsModalBody">
+            {{-- Swiper Carousel --}}
+            <div class="swiper packageSwiper mb-4 md:mb-6 rounded-2xl overflow-hidden">
+              <div class="swiper-wrapper" id="swiperWrapper"></div>
+              {{-- Navigation arrows --}}
+              <div class="swiper-button-next !w-8 !h-8 md:!w-12 md:!h-12 !-mt-6 md:!-mt-6" style="color: white;"></div>
+              <div class="swiper-button-prev !w-8 !h-8 md:!w-12 md:!h-12 !-mt-6 md:!-mt-6" style="color: white;"></div>
+              {{-- Pagination --}}
+              <div class="swiper-pagination !bottom-2"></div>
+            </div>
+            {{-- Package Details --}}
+            <div id="packageDetails" class="space-y-3"></div>
+          </div>
+
+          {{-- Modal Footer --}}
+          <div class="p-4 md:p-6 border-t border-gray-300 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4 justify-center flex-shrink-0">
+            <button type="button" id="bookNowBtn" class="bg-[#97655A] text-white px-6 py-3 rounded-2xl hover:bg-[#a0675a] transition-colors duration-300 w-full md:w-auto font-semibold">
+              Book Now
+            </button>
+            <button type="button" onclick="closeModal()" class="bg-gray-500 text-white px-6 py-3 rounded-2xl hover:bg-gray-600 transition-colors duration-300 w-full md:w-auto font-semibold">
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
 
-    {{-- Swiper JS --}}
+    <x-footer />
+
+    {{-- Scripts --}}
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     <script>
@@ -82,9 +227,103 @@
         },
       });
     });
+
+    let packageSwiper = null;
+    let lastFocusedElement = null;
+
+    function openModal(button) {
+      const title = button.dataset.title;
+      const details = JSON.parse(button.dataset.details);
+      const images = JSON.parse(button.dataset.images);
+      viewDetails(title, details, images);
+    }
+
+    function viewDetails(title, descriptionParagraphs, imageUrls) {
+      // Destroy previous swiper instance if exists
+      if (packageSwiper) {
+        packageSwiper.destroy();
+        packageSwiper = null;
+      }
+
+      // Build carousel slides
+      const swiperWrapper = document.getElementById('swiperWrapper');
+      swiperWrapper.innerHTML = imageUrls.map((url, index) => `
+        <div class="swiper-slide">
+          <img src="${url}" class="w-full h-64 md:h-96 object-cover" alt="${title} - Image ${index + 1}" loading="lazy">
+        </div>
+      `).join('');
+
+      // Build package details
+      const packageDetails = document.getElementById('packageDetails');
+      packageDetails.innerHTML = descriptionParagraphs.map(p => `
+        <p class="flex items-start text-gray-700">
+          <i class="bi bi-check-circle-fill text-[#97655A] mr-3 mt-1 flex-shrink-0"></i>
+          <span class="flex-1">${p}</span>
+        </p>
+      `).join('');
+
+      // Update modal title
+      document.getElementById('detailsModalLabel').textContent = `${title} Details`;
+
+      // Initialize package swiper
+      packageSwiper = new Swiper('.packageSwiper', {
+        slidesPerView: 1,
+        spaceBetween: 0,
+        loop: false,
+        navigation: {
+          nextEl: '.swiper-button-next',
+          prevEl: '.swiper-button-prev',
+        },
+        pagination: {
+          el: '.swiper-pagination',
+          clickable: true,
+          renderBullet: function (index, className) {
+            return `<span class="${className} !w-6 !h-1 !bg-white !opacity-50 !rounded-none !mx-1"></span>`;
+          },
+        },
+      });
+
+      // Set up book now button
+      document.getElementById('bookNowBtn').onclick = function() {
+        window.location.href = '{{ url("/booking") }}';
+      };
+
+      // Show modal
+      const modal = document.getElementById('detailsModal');
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+
+      // Focus management for accessibility
+      modal.focus();
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('detailsModal');
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+
+      if (packageSwiper) {
+        packageSwiper.destroy();
+        packageSwiper = null;
+      }
+
+      if (lastFocusedElement) {
+        lastFocusedElement.focus();
+      }
+    }
+
+    // Close modal on outside click and Escape key
+    document.getElementById('detailsModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && !document.getElementById('detailsModal').classList.contains('hidden')) {
+        closeModal();
+      }
+    });
     </script>
-    {{-- Footer --}}
-    <x-footer />
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   </body>
 </html>

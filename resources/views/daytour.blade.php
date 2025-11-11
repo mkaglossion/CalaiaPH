@@ -78,7 +78,7 @@
   </main>
 
   {{-- Dynamic Details Modal --}}
-  <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-2 md:p-4 pt-16 md:pt-4 hidden z-50">
+  <div id="detailsModal" class="fixed inset-0 bg-transparent flex items-center justify-center p-2 md:p-4 pt-16 md:pt-4 hidden z-50">
     <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[95vh] md:max-h-[90vh] flex flex-col border border-gray-300 mx-2 sm:mx-4">
       {{-- Modal Header --}}
       <div class="p-4 md:p-6 border-b border-gray-300 flex-shrink-0">

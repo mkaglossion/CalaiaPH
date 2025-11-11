@@ -36,6 +36,7 @@ use App\Http\Controllers\Admin\FarmTextController;
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\DayTourController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ContactController;
 
 // ========== Root Route ==========
 Route::get('/', function () {
@@ -50,6 +51,7 @@ Route::get('/activities', [PagesController::class, 'activities'])->name('activit
 Route::get('/dining', [PagesController::class, 'dining'])->name('dining');
 Route::get('/groups', [PagesController::class, 'groups'])->name('groups');
 Route::get('/farm', [PagesController::class, 'farm'])->name('farm');
+Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
 
 Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show');
 
