@@ -95,9 +95,8 @@ Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show')
 // ========== Admin Routes ==========
 Route::prefix('admin')->group(function () {
     // Main Sections
-    // Main Sections using adminRoute
-    // adminRoute('/dashboard', AdminController::class, 'admin.dashboard', 'dashboard');
-    // adminRoute('/users', AdminController::class, 'admin.users', 'users');
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/users', [AdminUsersController::class, 'index'])->name('admin.users');
     // adminRoute('/bookings', AdminController::class, 'admin.bookings', 'bookings');
     // adminRoute('/staycations', AdminController::class, 'admin.staycations', 'staycations');
     // adminRoute('/activities', AdminController::class, 'admin.activities', 'activity');
