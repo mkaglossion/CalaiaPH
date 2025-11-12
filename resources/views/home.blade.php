@@ -11,7 +11,7 @@
     <title>CalaiaPH</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   </head>
-  <body class="bg-white-100">
+    <body class="bg-[#f5efe7]">
       <div class="flex flex-col items-center justify-center px-4">
         @if (session('success'))
             <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">

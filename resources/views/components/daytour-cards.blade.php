@@ -28,13 +28,13 @@
         {{-- Body --}}
         <div class="px-8 pt-6 pb-8">
           {{-- Title --}}
-          <h3 class="text-3xl font-bold text-[#8f5d54] mb-4 uppercase text-center">
-            @if($package['title'] === 'Nature Experience')
-              NATURE<br>EXPERIENCE
-            @else
-              {{ strtoupper($package['title']) }}
-            @endif
-          </h3>
+           <h3 class="mb-4 text-3xl font-extrabold uppercase tracking-wide text-center" style="color:#97655A;">
+             @if($package['title'] === 'Nature Experience')
+               NATURE<br>EXPERIENCE
+             @else
+               {{ strtoupper($package['title']) }}
+             @endif
+           </h3>
 
 
           {{-- Divider (subtle sage like the mock) --}}
