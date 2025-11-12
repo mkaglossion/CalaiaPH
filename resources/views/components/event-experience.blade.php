@@ -1,4 +1,4 @@
-<section class="py-12 bg-white">
+<section class="py-12 bg-[#f5efe7]">
     <div class="max-w-7xl mx-auto px-3 px-lg-5">
         @php
         $sections = [

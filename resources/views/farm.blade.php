@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   </head>
-  <body class="bg-white-100">
+  <body class="bg-[#f5efe7]">
     {{-- Flash --}}
     <div class="flex flex-col items-center justify-center px-4">
       @if (session('success'))
@@ -60,9 +60,9 @@
       </div>
     </div>
 
-    <main id="main" class="bg-gray-50">
+    <main id="main" class="">
       {{-- SECTION: Our Sustainable Farming --}}
-      <section class="py-16 bg-white" aria-labelledby="sustainable-farming-heading">
+      <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="sustainable-farming-heading">
         <div class="container mx-auto px-4 max-w-7xl">
           <header class="text-center mb-12">
             <h2 id="sustainable-farming-heading" class="text-3xl md:text-4xl font-bold text-[#8f5d54] mb-4 font-gotham">

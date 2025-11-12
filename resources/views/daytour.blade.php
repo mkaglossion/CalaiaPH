@@ -60,17 +60,17 @@
   </div>
 
   {{-- Day Tour Packages Section --}}
-  <main class="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-gray-50 to-gray-100">
+  <main class="py-12 md:py-16 lg:py-20" style="background-color: #f5efe7;">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {{-- Section Header --}}
-      <div class="text-center mb-12 md:mb-16">
+      <!--<div class="text-center mb-12 md:mb-16">
         <h2 class="text-3xl font-bold text-[#8f5d54] mb-4 uppercase">
           Choose Your Adventure
         </h2>
         <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
           Discover the perfect day tour experience tailored to your interests. From thrilling adventures to peaceful nature escapes, we have something for everyone.
         </p>
-      </div>
+      </div>-->
 
       {{-- Packages Section --}}
       <x-daytour-cards :packages="$packages ?? []" />
@@ -93,13 +93,19 @@
       {{-- Modal Body --}}
       <div class="p-4 md:p-6 flex-1 overflow-y-auto" id="detailsModalBody">
         {{-- Swiper Carousel --}}
-        <div class="swiper packageSwiper mb-4 md:mb-6 rounded-2xl overflow-hidden">
+        <div class="swiper relative packageSwiper mb-4 md:mb-6 rounded-2xl overflow-hidden" data-swiper="modal">
           <div class="swiper-wrapper" id="swiperWrapper"></div>
-          {{-- Navigation arrows --}}
-          <div class="swiper-button-next !w-8 !h-8 md:!w-12 md:!h-12 !-mt-6 md:!-mt-6" style="color: white;"></div>
-          <div class="swiper-button-prev !w-8 !h-8 md:!w-12 md:!h-12 !-mt-6 md:!-mt-6" style="color: white;"></div>
-          {{-- Pagination --}}
-          <div class="swiper-pagination !bottom-2"></div>
+          <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-prev>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button type="button" aria-label="Next slide" class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-next>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
         </div>
         {{-- Package Details --}}
         <div id="packageDetails" class="space-y-3"></div>
@@ -205,20 +211,27 @@
     // Initialize package swiper
     packageSwiper = new Swiper('.packageSwiper', {
       slidesPerView: 1,
-      spaceBetween: 0,
       loop: true,
-      navigation: {
-        nextEl: '.swiper-button-next',
-        prevEl: '.swiper-button-prev',
-      },
-      pagination: {
-        el: '.swiper-pagination',
-        clickable: true,
-        renderBullet: function (index, className) {
-          return `<span class="${className} !w-6 !h-1 !bg-white !opacity-50 !rounded-none !mx-1"></span>`;
-        },
-      },
+      navigation: { nextEl: '[data-custom-next]', prevEl: '[data-custom-prev]' },
     });
+
+    // Custom dots
+    const dotsEl = document.querySelector('[data-custom-dots]');
+    const numSlides = imageUrls.length;
+    function updateDots() {
+      dotsEl.innerHTML = '';
+      for(let i=0; i<numSlides; i++){
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'h-2.5 rounded-full ' + (i === packageSwiper.realIndex ? 'bg-[#a97464] w-4' : 'bg-[#c8a89f] w-2.5');
+        b.setAttribute('role','tab');
+        b.setAttribute('aria-label', `Go to slide ${i+1}`);
+        b.addEventListener('click', ()=> packageSwiper.slideToLoop(i));
+        dotsEl.appendChild(b);
+      }
+    }
+    updateDots();
+    packageSwiper.on('slideChange', updateDots);
 
     // Set up book now button
     document.getElementById('bookNowBtn').onclick = function() {
