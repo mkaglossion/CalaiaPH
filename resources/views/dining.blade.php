@@ -70,24 +70,23 @@
               <img
                 src="{{ asset('images/carousel/SET MEALS2.jpg') }}"
                 alt="Set Menus"
-                class="w-full h-48 sm:h-56 md:h-64 object-cover"
+                class="w-full h-64 sm:h-72 md:h-80 object-cover"
                 loading="lazy"
               >
             </div>
 
             <div class="px-6 pb-6 pt-1 text-center">
-              <h6 class="text-base sm:text-lg font-semibold uppercase tracking-wide mb-3"
-                  style="color:#97655A;">
-                Set Menus
-              </h6>
+              <h3 class="my-4 text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">
+                ADVENTURE PACKAGE
+              </h3>
 
               <button
-                data-title="Set Menu"
+                data-title="ADVENTURE PACKAGE"
                 data-details='["Ready-made meals for families, couples, or groups","Breakfast, lunch, and dinner options"]'
                 data-images='["{{ asset('images/carousel/SET MEALS2.jpg') }}","{{ asset('images/carousel/SET MEALS.jpg') }}","{{ asset('images/carousel/menu1.jpg') }}"]'
                 onclick="openModal(this)"
-                class="inline-flex items-center justify-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:shadow-md transition-transform duration-150 hover:-translate-y-0.5"
-                style="background-color:#97655A; color:#fff;">
+                class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4"
+                style="background:#97655A;color:#ffffff;">
                 LEARN MORE
               </button>
             </div>
@@ -99,24 +98,23 @@
               <img
                 src="{{ asset('images/carousel/menu1.jpg') }}"
                 alt="Special Menus"
-                class="w-full h-48 sm:h-56 md:h-64 object-cover"
+                class="w-full h-64 sm:h-72 md:h-80 object-cover"
                 loading="lazy"
               >
             </div>
 
             <div class="px-6 pb-6 pt-1 text-center">
-              <h6 class="text-base sm:text-lg font-semibold uppercase tracking-wide mb-3"
-                  style="color:#97655A;">
-                Special Menus
-              </h6>
+              <h3 class="my-4 text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">
+                FAMILY FUN PACKAGE
+              </h3>
 
               <button
-                data-title="Special Menus"
+                data-title="FAMILY FUN PACKAGE"
                 data-details='["Harvest Your Own – Pick and cook farm-fresh ingredients","Cochinillo – Whole roast pig (pre-order required)"]'
                 data-images='["{{ asset('images/carousel/menu1.jpg') }}","{{ asset('images/carousel/menu2.jpg') }}","{{ asset('images/carousel/menu4.jpg') }}"]'
                 onclick="openModal(this)"
-                class="inline-flex items-center justify-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:shadow-md transition-transform duration-150 hover:-translate-y-0.5"
-                style="background-color:#97655A; color:#fff;">
+                class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4"
+                style="background:#97655A;color:#ffffff;">
                 LEARN MORE
               </button>
             </div>
@@ -128,24 +126,23 @@
               <img
                 src="{{ asset('images/carousel/menu3.jpg') }}"
                 alt="Snack Bar"
-                class="w-full h-48 sm:h-56 md:h-64 object-cover"
+                class="w-full h-64 sm:h-72 md:h-80 object-cover"
                 loading="lazy"
               >
             </div>
 
             <div class="px-6 pb-6 pt-1 text-center">
-              <h6 class="text-base sm:text-lg font-semibold uppercase tracking-wide mb-3"
-                  style="color:#97655A;">
-                Snack Bar
-              </h6>
+              <h3 class="my-4 text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">
+                NATURE EXPERIENCE
+              </h3>
 
               <button
-                data-title="Snack Bar"
+                data-title="NATURE EXPERIENCE"
                 data-details='["All-day light snacks and drinks","Includes smoothies, juice, sandwiches, and more"]'
                 data-images='["{{ asset('images/carousel/menu3.jpg') }}","{{ asset('images/carousel/menu1.jpg') }}","{{ asset('images/carousel/menu4.jpg') }}"]'
                 onclick="openModal(this)"
-                class="inline-flex items-center justify-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:shadow-md transition-transform duration-150 hover:-translate-y-0.5"
-                style="background-color:#97655A; color:#fff;">
+                class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4"
+                style="background:#97655A;color:#ffffff;">
                 LEARN MORE
               </button>
             </div>
