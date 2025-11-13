@@ -17,25 +17,25 @@ class FoodTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:day_tour_texts,label',
+            'label' => 'nullable|string|max:255',
             'text' => 'nullable|string',
         ]);
 
         FoodText::create($request->only(['label', 'text']));
 
-        return response()->json(['message' => 'Text content added successfully.']);
+        return response()->json();
     }
 
     public function update(Request $request, FoodText $FoodText)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:day_tour_texts,label,' . $FoodText->id,
+            'label' => 'nullable|string|max:255|unique:food_texts,label,' . $FoodText->id,
             'text' => 'nullable|string',
         ]);
 
         $FoodText->update($request->only(['label', 'text']));
 
-        return response()->json(['message' => 'Text content updated successfully.']);
+        return response()->json();
     }
 
     public function destroy(FoodText $FoodText)
@@ -45,4 +45,3 @@ class FoodTextController extends Controller
         return redirect()->back()->with('success', 'Text content deleted successfully.');
     }
 }
-

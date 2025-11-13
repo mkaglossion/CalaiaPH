@@ -1,23 +1,53 @@
 @props(['active' => 'home'])
 
 <header
-  x-data="{ showLogin: false, showSignup: false, signupSuccess: false, open: false }"
-  x-init="$watch('open', value => document.body.style.overflow = value ? 'hidden' : '')"
-  class="bg-white text-[A] shadow-lg sticky top-0 z-50"
+  x-data="{ open: false }"
+  x-init="
+    Alpine.store('modals', { showLogin: false, showSignup: false, signupSuccess: false });
+    $watch('open', value => document.body.style.overflow = value ? 'hidden' : '')
+  "
+  class="bg-[#f6f0eb] text-[#8f5d54] shadow-lg sticky top-0 z-50"
 >
-  <div class="container mx-auto flex justify-between items-center py-4 px-6">
-    <a href="{{ url('/') }}" class="text-2xl font-bold tracking-wide text-[#8f5d54]">CalaiaPH</a>
+  <div class="container mx-auto flex items-center justify-between py-4 px-4 md:py-6 md:px-6 text-center">
 
-    <nav class="hidden md:flex space-x-6">
-      <a href="{{ url('/') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'home' ? 'border-b-2 border-[#8f5d54]' : '' }}">Home</a>
-      <a href="{{ url('/daytour') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}">Day Tour</a>
-      <a href="{{ url('/staycation') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}">Where to Stay</a>
-      <a href="{{ url('/activities') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}">What to Do</a>
-      <a href="{{ url('/dining') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}">Food & Beverage</a>
-      <a href="{{ url('/groups') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'groups' ? 'border-b-2 border-[#8f5d54]' : '' }}">Special Events</a>
-      <a href="{{ url('/farm') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}">Our Farm</a>
+    {{-- MOBILE LOGO LEFT --}}
+    <div class="md:hidden">
+      <a href="{{ url('/') }}">
+        <div class="bg-[#f6f0eb] w-20 h-20 rounded-full flex items-center justify-center shadow-md overflow-hidden">
+          <img
+            src="{{ asset('assets/logo/CALAIA LOGO RUST.png') }}"
+            alt="CALAIA LOGO RUST"
+            class="w-[70%] h-[70%] object-contain"
+          >
+        </div>
+      </a>
+    </div>
+
+    {{-- DESKTOP LOGO --}}
+    <div x-show="!$store.modals.showLogin && !$store.modals.showSignup" class="hidden md:block fixed -top-4 -left-4 z-50">
+      <a href="{{ url('/') }}">
+        <div class="bg-[#f6f0eb] w-56 h-56 rounded-full flex items-center justify-center shadow-md overflow-hidden">
+          <img
+            src="{{ asset('assets/logo/CALAIA LOGO RUST.png') }}"
+            alt="CALAIA LOGO RUST"
+            class="w-[65%] h-[65%] object-contain"
+          >
+        </div>
+      </a>
+    </div>
+
+    {{-- MAIN NAV CENTER --}}
+    <nav class="hidden md:flex flex-1 justify-center space-x-6 text-center">
+      <a href="{{ url('/') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'home' ? 'border-b-2 border-[#8f5d54]' : '' }}">Home</a>
+      <a href="{{ url('/daytour') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}">Day Tour</a>
+      <a href="{{ url('/staycation') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}">Where to Stay</a>
+      <a href="{{ url('/activities') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}">What to Do</a>
+      <a href="{{ url('/dining') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}">Food & Beverage</a>
+      <a href="{{ url('/groups') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'groups' ? 'border-b-2 border-[#8f5d54]' : '' }}">Special Events</a>
+      <a href="{{ url('/farm') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}">Our Farm</a>
     </nav>
 
+    {{-- DESKTOP USER / GUEST BUTTONS RIGHT --}}
     <nav class="hidden md:flex space-x-4 relative" x-data="{ open: false }">
       @auth
         <!-- User Menu -->
@@ -69,20 +99,19 @@
       @else
         <!-- Guest Buttons -->
         <button
-          @click="showLogin = true"
+          @click="$store.modals.showLogin = true"
           class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150">
           Log In
         </button>
         <button
-          @click="showSignup = true"
+          @click="$store.modals.showSignup = true"
           class="bg-[#8f5d54] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#8f5d54]/90 transition-all shadow-md">
           Sign Up
         </button>
       @endauth
     </nav>
 
-
-
+    {{-- MOBILE MENU BUTTON --}}
     <div class="md:hidden">
       <button @click="open = !open" class="text-[#8f5d54] p-4">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +128,7 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100 translate-y-0"
         x-transition:leave-end="opacity-0 -translate-y-2"
-        class="fixed top-16 left-0 right-0 bg-white px-4 py-2 z-50 shadow-lg"
+        class="fixed top-16 left-0 right-0 bg-white px-4 py-2 z-50 shadow-lg text-center"
       >
         <a href="{{ url('/') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'home' ? 'border-b border-[#8f5d54]' : '' }}">Home</a>
         <a href="{{ url('/daytour') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'daytour' ? 'border-b border-[#8f5d54]' : '' }}">Day Tour</a>
@@ -119,32 +148,30 @@
             <button type="submit" class="block py-2 text-[#8f5d54] w-full text-left">Log Out</button>
           </form>
         @else
-          <button @click="showLogin = true; open = false" class="block py-2 text-[#8f5d54] border-t border-[#8f5d54]/20 mt-2 pt-2">Log In</button>
-          <button @click="showSignup = true; open = false" class="block py-2 text-white bg-[#8f5d54] px-4 py-1 rounded mt-2">Sign Up</button>
+          <button @click="$store.modals.showLogin = true; open = false" class="block py-2 text-[#8f5d54] border-t border-[#8f5d54]/20 mt-2 pt-2">Log In</button>
+          <button @click="$store.modals.showSignup = true; open = false" class="block py-2 text-white bg-[#8f5d54] px-4 py-1 rounded mt-2">Sign Up</button>
         @endauth
       </div>
     </div>
   </div>
 
-
-  
-  <!-- ✅ SIGN UP MODAL -->
-  <div 
-    x-show="showSignup"
+  {{-- SIGN UP MODAL --}}
+  <div
+    x-show="$store.modals.showSignup"
     x-transition
-    @click.self="showSignup = false"
+    @click.self="$store.modals.showSignup = false"
     x-cloak
     class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
   >
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-gray-800 relative">
-      <button 
-        @click="showSignup = false"
+      <button
+        @click="$store.modals.showSignup = false"
         class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition">
         ✕
       </button>
 
       <!-- STEP 1 FORM -->
-      <template x-if="!signupSuccess">
+      <template x-if="!$store.modals.signupSuccess">
         <form 
           id="signupForm"
           class="space-y-5"
@@ -159,7 +186,6 @@
               password_confirmation: $refs.password_confirmation.value,
             };
 
-            // Optional loading indicator
             $el.querySelector('button[type=submit]').innerText = 'Sending...';
             $el.querySelector('button[type=submit]').disabled = true;
 
@@ -174,7 +200,6 @@
               body: JSON.stringify(formData)
             })
             .then(async res => {
-              // handle redirect or non-JSON responses
               let data;
               try {
                 data = await res.json();
@@ -184,13 +209,12 @@
 
               if (res.ok) {
                 if (data.message || data.success) {
-                  signupSuccess = true;
+                  $store.modals.signupSuccess = true;
                 } else {
                   alert('Something went wrong.');
                 }
               } else if (data.errors) {
-                // Laravel validation error response
-                const errorMessages = Object.values(data.errors).flat().join('\\n');
+                const errorMessages = Object.values(data.errors).flat().join('\n');
                 alert(errorMessages);
               } else {
                 alert(data.message || 'Request failed.');
@@ -201,7 +225,6 @@
               alert('Error sending request.');
             })
             .finally(() => {
-              // restore button
               const btn = $el.querySelector('button[type=submit]');
               btn.innerText = 'Sign Up';
               btn.disabled = false;
@@ -263,20 +286,20 @@
 
           <p class="text-center text-sm text-gray-500 mt-3">
             Already have an account? 
-            <a href="#" @click.prevent="showSignup = false; showLogin = true" class="text-blue-600 hover:underline font-medium">Log in</a>
+            <a href="#" @click.prevent="$store.modals.showSignup = false; $store.modals.showLogin = true" class="text-blue-600 hover:underline font-medium">Log in</a>
           </p>
         </form>
       </template>
 
       <!-- STEP 2 SUCCESS -->
-      <template x-if="signupSuccess">
+      <template x-if="$store.modals.signupSuccess">
         <div class="text-center py-6">
           <h2 class="text-2xl font-semibold text-blue-600 mb-3">Verify Your Email</h2>
           <p class="text-gray-600 mb-6 text-sm leading-relaxed">
             We've sent a verification link to your email. Please check your inbox and click the link to activate your account.
           </p>
-          <button 
-            @click="showSignup = false; signupSuccess = false;" 
+          <button
+            @click="$store.modals.showSignup = false; $store.modals.signupSuccess = false;"
             class="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md">
             Got It
           </button>
@@ -285,17 +308,17 @@
     </div>
   </div>
 
-  <!-- ✅ LOGIN MODAL -->
-  <div 
-    x-show="showLogin"
+  <!-- LOGIN MODAL -->
+  <div
+    x-show="$store.modals.showLogin"
     x-transition
-    @click.self="showLogin = false"
+    @click.self="$store.modals.showLogin = false"
     x-cloak
     class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
   >
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-gray-800 relative">
-      <button 
-        @click="showLogin = false"
+      <button
+        @click="$store.modals.showLogin = false"
         class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition">
         ✕
       </button>
@@ -321,7 +344,7 @@
       </form>
       <p class="text-center text-sm text-gray-500 mt-3">
         Don’t have an account? 
-        <a href="#" @click.prevent="showLogin = false; showSignup = true" class="text-blue-600 hover:underline font-medium">Sign up</a>
+        <a href="#" @click.prevent="$store.modals.showLogin = false; $store.modals.showSignup = true" class="text-blue-600 hover:underline font-medium">Sign up</a>
       </p>
     </div>
   </div>

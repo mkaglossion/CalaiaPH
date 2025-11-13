@@ -4,11 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="Welcome to CalaiaPH, your ultimate destination for farm stays, day tours, and outdoor adventures. Experience nature, relaxation, and unforgettable memories.">
-    <meta name="keywords" content="farm stay, day tours, outdoor activities, nature retreat, CalaiaPH, Philippines farm experience">
+    <meta name="description" content="{{ $texts['description'] ?? 'Welcome to CalaiaPH, your ultimate destination for farm stays, day tours, and outdoor adventures. Experience nature, relaxation, and unforgettable memories.' }}">
+    <meta name="keywords" content="{{ $texts['keywords'] ?? 'farm stay, day tours, outdoor activities, nature retreat, CalaiaPH, Philippines farm experience' }}">
     <meta name="author" content="CalaiaPH">
     @vite(['resources/css/app.css'])
-    <title>CalaiaPH</title>
+    <title>{{ $texts['title'] ?? 'CalaiaPH' }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   </head>
     <body class="bg-[#f5efe7]">
@@ -26,35 +26,50 @@
 
     <div class="swiper mySwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
       <div class="swiper-wrapper">
-        @forelse ($swiperImages as $image)
+        @if(count($swiperImages) > 0)
+          @php $texts_array = array_values($texts); $labels_array = array_keys($texts); @endphp
+          @foreach($swiperImages as $index => $image)
           <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-            <img 
-              src="{{ asset('storage/' . $image->image_path) }}" 
-              alt="{{ $image->title ?? 'Slide Image' }}" 
-              class="w-full h-full object-cover object-center" 
+            <img
+              src="{{ asset('storage/' . $image->image_path) }}"
+              alt="{{ $image->title ?? 'Slide Image' }}"
+              class="w-full h-full object-cover object-center"
               loading="lazy"
             >
             <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
             <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
               <div class="text-center px-4">
-                @if($image->title)
-                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase" 
+                @if(isset($texts_array[$index]))
+                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase"
                       style="font-family: gotham; font-size: 3.5rem;">
-                    {{ $image->title }}
+                    {{ ucfirst($labels_array[$index]) }}
                   </h2>
+                  <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
+                    style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
+                    {{ $texts_array[$index] }}
+                  </p>
                 @endif
+              </div>
+            </div>
+          </div>
+          @endforeach
+        @endif
+        @if(count($swiperImages) == 0 && (!$texts || count($texts) == 0))
+          <div class="swiper-slide relative flex items-center justify-center bg-gray-200 overflow-hidden">
+            <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
+              <div class="text-center px-4">
+                <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase"
+                    style="font-family: gotham; font-size: 3.5rem;">
+                  No Content Available
+                </h2>
                 <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
                   style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
-                  Experience the beauty of nature
+                  Images and texts will be added soon
                 </p>
               </div>
             </div>
           </div>
-        @empty
-          <div class="swiper-slide flex items-center justify-center bg-gray-200 text-gray-600">
-            <p>No images available</p>
-          </div>
-        @endforelse
+        @endif
       </div>
       <div class="swiper-pagination hidden sm:block" aria-label="Slider pagination"></div>
     </div>
@@ -95,6 +110,7 @@
     });
     </script>
     @endverbatim
+
      {{-- Check Availability --}}
      <x-check-availability />
     {{-- Event Experience --}}

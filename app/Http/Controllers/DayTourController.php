@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DayTourSwiperImage;
+use App\Models\DayTourText;
 use Illuminate\Http\Request;
 
 class DayTourController extends Controller
@@ -10,6 +11,9 @@ class DayTourController extends Controller
     public function index()
     {
         $swiperImages = DayTourSwiperImage::all();
+        $texts = DayTourText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($text, $label) {
+            return [strtolower($label) => $text];
+        })->toArray();
 
         $packages = [
             [
@@ -91,6 +95,6 @@ class DayTourController extends Controller
             ]
         ];
 
-        return view('daytour', compact('packages', 'swiperImages'));
+        return view('daytour', compact('packages', 'swiperImages', 'texts'));
     }
 }

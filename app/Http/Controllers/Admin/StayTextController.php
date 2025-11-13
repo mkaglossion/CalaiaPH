@@ -17,25 +17,25 @@ class StayTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:stay_texts,label',
+            'label' => 'nullable|string|max:255|unique:stay_texts,label',
             'text' => 'nullable|string',
         ]);
 
         StayText::create($request->only(['label', 'text']));
 
-        return response()->json(['message' => 'Text content added successfully.']);
+        return response()->json();
     }
 
     public function update(Request $request, StayText $StayText)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:stay_texts,label,' . $StayText->id,
+            'label' => 'nullable|string|max:255|unique:stay_texts,label,' . $StayText->id,
             'text' => 'nullable|string',
         ]);
 
         $StayText->update($request->only(['label', 'text']));
 
-        return response()->json(['message' => 'Text content updated successfully.']);
+        return response()->json();
     }
 
     public function destroy(StayText $StayText)
@@ -45,4 +45,3 @@ class StayTextController extends Controller
         return redirect()->back()->with('success', 'Text content deleted successfully.');
     }
 }
-
