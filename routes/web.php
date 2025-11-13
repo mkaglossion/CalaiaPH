@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\ActivitySwiperImageController;
 use App\Http\Controllers\Admin\StaycationSwiperImageController;
 use App\Http\Controllers\Admin\MenuSwiperImageController;
 use App\Http\Controllers\Admin\EventSwiperImageController;
+use App\Http\Controllers\Admin\FarmInfoSwiperImageController;
 
 use App\Http\Controllers\Admin\HomeTextController;
 use App\Http\Controllers\Admin\DayTourTextController;
@@ -41,6 +42,7 @@ use App\Http\Controllers\Admin\ActivityTextController;
 use App\Http\Controllers\Admin\StaycationTextController;
 use App\Http\Controllers\Admin\MenuTextController;
 use App\Http\Controllers\Admin\EventTextController;
+use App\Http\Controllers\Admin\FarmInfoTextController;
 
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\DayTourController;
@@ -51,6 +53,7 @@ use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\StaycationController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\EventController;
+use App\Http\Controllers\Admin\FarmInfoController;
 
 // ========== Root Route ==========
 Route::get('/', function () {
@@ -107,6 +110,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.staycations');
     Route::get('/menus', [AdminController::class, 'menu'])->name('admin.menus');
     Route::get('/events', [AdminController::class, 'event'])->name('admin.events');
+    Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farmInfos');
     // adminRoute('/reports', AdminController::class, 'admin.reports', 'reports');
 
     // Pages Submenu
@@ -158,8 +162,13 @@ Route::prefix('admin')->group(function () {
     Route::resource('menu-image', MenuSwiperImageController::class)->only(['index', 'store', 'destroy']);
     Route::resource('menu-text', MenuTextController::class)->only(['store', 'update', 'destroy']);
 
-     // event CRUD
+    // event CRUD
     Route::resource('event-list', EventController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('event-image', EventSwiperImageController::class)->only(['index', 'store', 'destroy']);
     Route::resource('event-text', EventTextController::class)->only(['store', 'update', 'destroy']);
+
+    // farmInfo CRUD
+    Route::resource('farmInfo-list', FarmInfoController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('farmInfo-image', FarmInfoSwiperImageController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
 });

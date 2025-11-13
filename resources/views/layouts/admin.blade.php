@@ -85,6 +85,14 @@
           <span>Event</span>
         </a>
 
+        {{-- Farm --}}
+        <a href="{{ route('admin.farmInfos') }}"  
+          class="flex items-center gap-3 px-6 py-2 transition 
+          {{ request()->routeIs('admin.farmInfos') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
+          <i data-lucide="sprout" class="w-5 h-5"></i>
+          <span>Farm</span> 
+        </a>
+
         {{-- Pages (Dropdown) --}}
         <div 
         class="space-y-1"
