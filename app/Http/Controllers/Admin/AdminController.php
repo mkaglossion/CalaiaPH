@@ -12,6 +12,9 @@ use App\Models\StaycationText;
 use App\Models\Menu;
 use App\Models\MenuSwiperImage;
 use App\Models\MenuText;
+use App\Models\Event;
+use App\Models\EventSwiperImage;
+use App\Models\EventText;
 
 
 class AdminController extends Controller
@@ -38,5 +41,13 @@ class AdminController extends Controller
         $images = MenuSwiperImage::all();
         $texts = MenuText::all();
         return view('admin.menus', compact('menus', 'images', 'texts'));
+    }
+
+    public function event()
+    {
+        $events = Event::all();
+        $images = EventSwiperImage::all();
+        $texts = EventText::all();
+        return view('admin.events', compact('events', 'images', 'texts'));
     }
 }
