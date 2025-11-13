@@ -17,7 +17,7 @@ class HomeTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:home_texts,label',
+            'label' => 'nullable|string|max:255|unique:home_texts,label',
             'text' => 'nullable|string',
         ]);
 
@@ -29,7 +29,7 @@ class HomeTextController extends Controller
     public function update(Request $request, HomeText $HomeText)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:home_texts,label,' . $HomeText->id,
+            'label' => 'nullable|string|max:255|unique:home_texts,label,' . $HomeText->id,
             'text' => 'nullable|string',
         ]);
 

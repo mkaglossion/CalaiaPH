@@ -17,25 +17,25 @@ class FarmTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:farm_texts,label',
+            'label' => 'nullable|string|max:255|unique:farm_texts,label',
             'text' => 'nullable|string',
         ]);
 
         FarmText::create($request->only(['label', 'text']));
 
-        return response()->json(['message' => 'Text content added successfully.']);
+        return response()->json();
     }
 
     public function update(Request $request, FarmText $FarmText)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:farm_texts,label,' . $FarmText->id,
+            'label' => 'nullable|string|max:255|unique:farm_texts,label,' . $FarmText->id,
             'text' => 'nullable|string',
         ]);
 
         $FarmText->update($request->only(['label', 'text']));
 
-        return response()->json(['message' => 'Text content updated successfully.']);
+        return response()->json();
     }
 
     public function destroy(FarmText $FarmText)
@@ -45,4 +45,3 @@ class FarmTextController extends Controller
         return redirect()->back()->with('success', 'Text content deleted successfully.');
     }
 }
-

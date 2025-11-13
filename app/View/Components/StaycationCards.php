@@ -4,16 +4,16 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class DaytourCards extends Component
+class StaycationCards extends Component
 {
-    public $packages;
+    public $accommodations;
 
     /**
      * Create a new component instance.
      */
-    public function __construct($packages = [])
+    public function __construct($accommodations = [])
     {
-        $this->packages = $packages;
+        $this->accommodations = $accommodations;
     }
 
     /**
@@ -21,6 +21,6 @@ class DaytourCards extends Component
      */
     public function render()
     {
-        return view('components.daytour-cards');
+        return view('components.staycation-cards');
     }
 }

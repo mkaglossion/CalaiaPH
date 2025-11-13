@@ -45,6 +45,7 @@ use App\Http\Controllers\Admin\EventTextController;
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\DayTourController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ContactController;
 
 use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\StaycationController;
@@ -64,6 +65,7 @@ Route::get('/activities', [PagesController::class, 'activities'])->name('activit
 Route::get('/dining', [PagesController::class, 'dining'])->name('dining');
 Route::get('/groups', [PagesController::class, 'groups'])->name('groups');
 Route::get('/farm', [PagesController::class, 'farm'])->name('farm');
+Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
 
 Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show');
 
@@ -96,9 +98,8 @@ Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show')
 // ========== Admin Routes ==========
 Route::prefix('admin')->group(function () {
     // Main Sections
-    // Main Sections using adminRoute
-    // adminRoute('/dashboard', AdminController::class, 'admin.dashboard', 'dashboard');
-    // adminRoute('/users', AdminController::class, 'admin.users', 'users');
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/users', [AdminUsersController::class, 'index'])->name('admin.users');
     // adminRoute('/bookings', AdminController::class, 'admin.bookings', 'bookings');
     // adminRoute('/staycations', AdminController::class, 'admin.staycations', 'staycations');
     // adminRoute('/activities', AdminController::class, 'admin.activities', 'activity');

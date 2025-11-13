@@ -17,25 +17,25 @@ class SpecialTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:special_texts,label',
+            'label' => 'nullable|string|max:255|unique:special_texts,label',
             'text' => 'nullable|string',
         ]);
 
         SpecialText::create($request->only(['label', 'text']));
 
-        return response()->json(['message' => 'Text content added successfully.']);
+        return response()->json();
     }
 
     public function update(Request $request, SpecialText $SpecialText)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:special_texts,label,' . $SpecialText->id,
+            'label' => 'nullable|string|max:255|unique:special_texts,label,' . $SpecialText->id,
             'text' => 'nullable|string',
         ]);
 
         $SpecialText->update($request->only(['label', 'text']));
 
-        return response()->json(['message' => 'Text content updated successfully.']);
+        return response()->json();
     }
 
     public function destroy(SpecialText $SpecialText)
@@ -45,4 +45,3 @@ class SpecialTextController extends Controller
         return redirect()->back()->with('success', 'Text content deleted successfully.');
     }
 }
-

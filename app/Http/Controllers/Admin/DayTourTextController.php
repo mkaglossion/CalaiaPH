@@ -17,7 +17,7 @@ class DayTourTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:day_tour_texts,label',
+            'label' => 'nullable|string|max:255|unique:day_tour_texts,label',
             'text' => 'nullable|string',
         ]);
 
@@ -29,7 +29,7 @@ class DayTourTextController extends Controller
     public function update(Request $request, DayTourText $dayTourText)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:day_tour_texts,label,' . $dayTourText->id,
+            'label' => 'nullable|string|max:255|unique:day_tour_texts,label,' . $dayTourText->id,
             'text' => 'nullable|string',
         ]);
 

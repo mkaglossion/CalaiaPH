@@ -4,11 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="description" content="Explore exciting day tours at CalaiaPH. From adventure packages to family fun, discover thrilling outdoor activities and nature experiences tailored for every group.">
+  <meta name="keywords" content="day tours, adventure packages, outdoor activities, nature tours, CalaiaPH, family fun, group activities">
+  <meta name="author" content="CalaiaPH">
   <title>CalaiaPH - Day Tour</title>
 
   {{-- Stylesheets --}}
   @vite(['resources/css/app.css'])
-  <link href="https://fonts.googleapis.com/css2?family=Vila+Zilka+Serif:ital@0;1&family=Gotham:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
@@ -23,60 +25,178 @@
       </div>
   @endif
   <x-header active="daytour" />
-  {{-- Hero Slider --}}
+    {{-- Hero Slider --}}
     {{-- Swiper CSS --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
-    <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
+    <div class="swiper on heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
     <div class="swiper-wrapper">
-        @forelse ($swiperImages as $image)
+        @if(count($swiperImages) > 0)
+          @php $texts_array = array_values($texts); $labels_array = array_keys($texts); @endphp
+          @foreach($swiperImages as $index => $image)
         <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
           <img
-              src="{{ asset('storage/' . $image->image_path) }}" 
-              alt="{{ $image->title ?? 'Slide Image' }}" 
+              src="{{ asset('storage/' . $image->image_path) }}"
+              alt="{{ $image->title ?? 'Slide Image' }}"
             class="w-full h-full object-cover object-center"
             loading="lazy"
           >
           <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
           <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
             <div class="text-center px-4">
-                @if($image->title)
-                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase" 
+                @if(isset($texts_array[$index]))
+                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase"
                       style="font-family: gotham; font-size: 3.5rem;">
-                    {{ $image->title }}
-              </h2>
+                    {{ ucfirst($labels_array[$index]) }}
+                  </h2>
+                  <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
+                    style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
+                    {{ $texts_array[$index] }}
+                  </p>
                 @endif
-                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" 
-                  style="font-family: 'vila zilka serif', serif; font-style: italic; font-size: 1.2rem;">
-                  Experience the beauty of nature
+            </div>
+          </div>
+        </div>
+          @endforeach
+        @else
+        <div class="swiper-slide relative flex items-center justify-center bg-gray-200 overflow-hidden">
+          <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
+            <div class="text-center px-4">
+              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase"
+                  style="font-family: gotham; font-size: 3.5rem;">
+                No Image Available
+              </h2>
+              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
+                style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
+                Images will be added soon
               </p>
             </div>
           </div>
         </div>
-      @endforeach
+        @endif
     </div>
   </div>
 
   {{-- Day Tour Packages Section --}}
-  <main class="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-gray-50 to-gray-100">
+  <main class="py-12 md:py-16 lg:py-20" style="background-color: #f5efe7;">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {{-- Section Header --}}
-      <div class="text-center mb-12 md:mb-16">
-        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 font-gotham">
+      <!--<div class="text-center mb-12 md:mb-16">
+        <h2 class="text-3xl font-bold text-[#8f5d54] mb-4 uppercase">
           Choose Your Adventure
         </h2>
         <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
           Discover the perfect day tour experience tailored to your interests. From thrilling adventures to peaceful nature escapes, we have something for everyone.
         </p>
-      </div>
+      </div>-->
 
       {{-- Packages Section --}}
-      <x-daytour-cards :packages="$packages ?? []" />
+      {{-- Day Tour Cards Component (matches mock) --}}
+      @php
+        // Title → price text to mirror your getPackagePrice() map
+        $priceMap = [
+          'Adventure Package'  => 'PHP 1,500 per person',
+          'Family Fun Package' => 'PHP 2,000 per family',
+          'Nature Experience'  => 'PHP 1,200 per person',
+        ];
+      @endphp
+
+      <div class="space-y-16">
+        {{-- Packages Grid --}}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
+          @foreach($packages as $package)
+            <div class="bg-white rounded-[28px] shadow-lg border border-gray-200 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group">
+              {{-- Inset framed image --}}
+              <div class="px-5 pt-5">
+                <div class="relative overflow-hidden ring-1 ring-black/5 shadow-sm bg-white">
+                  <img
+                    src="{{ asset($package['image']) }}"
+                    class="h-64 md:h-72 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                    alt="{{ $package['title'] }} package"
+                    loading="lazy"
+                  >
+                </div>
+              </div>
+
+              {{-- Body --}}
+              <div class="px-8 pt-6 pb-8">
+                {{-- Title --}}
+                 <h3 class="mb-4 text-3xl font-extrabold uppercase tracking-wide text-center" style="color:#97655A;">
+                   @if($package['title'] === 'Nature Experience')
+                     NATURE<br>EXPERIENCE
+                   @else
+                     {{ strtoupper($package['title']) }}
+                   @endif
+                 </h3>
+
+
+                {{-- Divider (subtle sage like the mock) --}}
+                <div class="h-px w-full bg-[#dfe6d5] mb-5"></div>
+
+                {{-- Features (compact, centered list) --}}
+                <ul class="space-y-3 mb-7 text-center">
+                  @foreach($package['features'] as $feature)
+                    <li class="text-xs md:text-sm tracking-wide"
+                        style="color:#8f5d54; font-family:gotham;">
+                      {{ strtoupper($feature) }}
+                    </li>
+                  @endforeach
+                </ul>
+
+                {{-- CTA --}}
+                <div class="flex justify-center">
+                  <button
+                    type="button"
+                    class="px-6 py-2.5 rounded-full text-white text-xs md:text-sm font-semibold tracking-wider shadow
+                           transition-all duration-300 hover:-translate-y-0.5"
+                    style="background-color:#8f5d54;"
+                    onmouseover="this.style.backgroundColor='#a0675a'"
+                    onmouseout="this.style.backgroundColor='#8f5d54'"
+                    data-title="{{ $package['title'] }}"
+                    data-details='@json($package["details"])'
+                    data-gallery='@json(array_map(fn($img) => asset($img), $package["gallery"]))'
+                  >
+                    LEARN MORE
+                  </button>
+                </div>
+              </div>
+            </div>
+          @endforeach
+        </div>
+
+        {{-- Information Section (kept; slight polish to match palette) --}}
+        <div class="bg-gradient-to-r from-[#6b9691] to-[#7ba08a] text-white rounded-3xl p-8 md:p-10 shadow-xl">
+          <div class="text-center mb-8">
+            <h4 class="text-2xl md:text-3xl font-bold mb-4 flex items-center justify-center"
+                style="font-family:gotham;">
+              <i class="bi bi-info-circle-fill mr-3 text-3xl"></i>
+              Important Information
+            </h4>
+            <p class="text-lg/7 opacity-90">Everything you need to know before your visit</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            @foreach([
+              ['icon' => 'bi-clock',           'text' => 'Operating hours: 8:00 AM - 5:00 PM daily'],
+              ['icon' => 'bi-calendar-check',  'text' => 'Advance booking recommended for guaranteed slots'],
+              ['icon' => 'bi-person',          'text' => 'Children under 3 years old enter for free'],
+              ['icon' => 'bi-people',          'text' => 'Group discounts available for 10+ persons'],
+              ['icon' => 'bi-backpack',        'text' => 'Wear comfy clothing and footwear for outdoor activities'],
+              ['icon' => 'bi-cup-straw',       'text' => 'Food and beverages available for purchase on site'],
+            ] as $info)
+              <div class="flex items-start bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all duration-300">
+                <i class="bi {{ $info['icon'] }} text-xl mr-4 mt-1 flex-shrink-0"></i>
+                <span class="text-sm md:text-base leading-relaxed">{{ $info['text'] }}</span>
+              </div>
+            @endforeach
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 
   {{-- Dynamic Details Modal --}}
-  <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-2 md:p-4 pt-16 md:pt-4 hidden z-50">
+  <div id="detailsModal" class="fixed inset-0 bg-transparent flex items-center justify-center p-2 md:p-4 pt-16 md:pt-4 hidden z-50">
     <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[95vh] md:max-h-[90vh] flex flex-col border border-gray-300 mx-2 sm:mx-4">
       {{-- Modal Header --}}
       <div class="p-4 md:p-6 border-b border-gray-300 flex-shrink-0">
@@ -91,13 +211,19 @@
       {{-- Modal Body --}}
       <div class="p-4 md:p-6 flex-1 overflow-y-auto" id="detailsModalBody">
         {{-- Swiper Carousel --}}
-        <div class="swiper packageSwiper mb-4 md:mb-6 rounded-2xl overflow-hidden">
+        <div class="swiper relative packageSwiper mb-4 md:mb-6 rounded-2xl overflow-hidden" data-swiper="modal">
           <div class="swiper-wrapper" id="swiperWrapper"></div>
-          {{-- Navigation arrows --}}
-          <div class="swiper-button-next !w-8 !h-8 md:!w-12 md:!h-12 !-mt-6 md:!-mt-6" style="color: white;"></div>
-          <div class="swiper-button-prev !w-8 !h-8 md:!w-12 md:!h-12 !-mt-6 md:!-mt-6" style="color: white;"></div>
-          {{-- Pagination --}}
-          <div class="swiper-pagination !bottom-2"></div>
+          <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-prev>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button type="button" aria-label="Next slide" class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-next>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
         </div>
         {{-- Package Details --}}
         <div id="packageDetails" class="space-y-3"></div>
@@ -135,6 +261,10 @@
   document.addEventListener('DOMContentLoaded', function () {
     // Initialize hero swiper
     const heroSwiper = new Swiper('.heroSwiper', {
+      autoplay: {
+        delay: 3000,
+        disableOnInteraction: false,
+      },
       loop: true,
       effect: 'fade',
       fadeEffect: {
@@ -199,20 +329,27 @@
     // Initialize package swiper
     packageSwiper = new Swiper('.packageSwiper', {
       slidesPerView: 1,
-      spaceBetween: 0,
       loop: true,
-      navigation: {
-        nextEl: '.swiper-button-next',
-        prevEl: '.swiper-button-prev',
-      },
-      pagination: {
-        el: '.swiper-pagination',
-        clickable: true,
-        renderBullet: function (index, className) {
-          return `<span class="${className} !w-6 !h-1 !bg-white !opacity-50 !rounded-none !mx-1"></span>`;
-        },
-      },
+      navigation: { nextEl: '[data-custom-next]', prevEl: '[data-custom-prev]' },
     });
+
+    // Custom dots
+    const dotsEl = document.querySelector('[data-custom-dots]');
+    const numSlides = imageUrls.length;
+    function updateDots() {
+      dotsEl.innerHTML = '';
+      for(let i=0; i<numSlides; i++){
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'h-2.5 rounded-full ' + (i === packageSwiper.realIndex ? 'bg-[#a97464] w-4' : 'bg-[#c8a89f] w-2.5');
+        b.setAttribute('role','tab');
+        b.setAttribute('aria-label', `Go to slide ${i+1}`);
+        b.addEventListener('click', ()=> packageSwiper.slideToLoop(i));
+        dotsEl.appendChild(b);
+      }
+    }
+    updateDots();
+    packageSwiper.on('slideChange', updateDots);
 
     // Set up book now button
     document.getElementById('bookNowBtn').onclick = function() {
@@ -245,11 +382,11 @@
 
   function getPackagePrice(packageName) {
     const prices = {
-      'Adventure Package': '₱1,500',
-      'Family Fun Package': '₱2,000',
-      'Nature Experience': '₱1,200'
+      'Adventure Package': 'PHP 1,500 per person',
+      'Family Fun Package': 'PHP 2,000 per family',
+      'Nature Experience': 'PHP 1,200 per person'
     };
-    return prices[packageName] || '₱0';
+    return prices[packageName] || 'PHP 0';
   }
 
   function bookTour(packageName, price) {

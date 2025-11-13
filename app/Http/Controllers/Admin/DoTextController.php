@@ -17,25 +17,25 @@ class DoTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:do_texts,label',
+            'label' => 'nullable|string|max:255|unique:do_texts,label',
             'text' => 'nullable|string',
         ]);
 
         DoText::create($request->only(['label', 'text']));
 
-        return response()->json(['message' => 'Text content added successfully.']);
+        return response()->json();
     }
 
     public function update(Request $request, DoText $DoText)
     {
         $request->validate([
-            'label' => 'required|string|max:255|unique:do_texts,label,' . $DoText->id,
+            'label' => 'nullable|string|max:255|unique:do_texts,label,' . $DoText->id,
             'text' => 'nullable|string',
         ]);
 
         $DoText->update($request->only(['label', 'text']));
 
-        return response()->json(['message' => 'Text content updated successfully.']);
+        return response()->json();
     }
 
     public function destroy(DoText $DoText)
@@ -45,4 +45,3 @@ class DoTextController extends Controller
         return redirect()->back()->with('success', 'Text content deleted successfully.');
     }
 }
-

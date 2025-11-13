@@ -4,7 +4,7 @@
 
 @section('content')
 <div
-    x-data="activityComponent()"
+    x-data="activityComponent(@js($texts), @js($activities))"
 
 >
     <hr class="my-6">
@@ -427,15 +427,15 @@
 </div>
 
 <script>
-function activityComponent() {
+function activityComponent(texts, activities) {
     return {
         showModal: false,
         showActivityModal: false,
         showTextModal: false,
         editMode: false,
         editModeActivity: false,
-        texts: @js($texts),
-        activities: @js($activities),
+        texts,
+        activities,
         form: { id: null, name: '', label: '', text: '' },
 
         resetForm() {
@@ -474,7 +474,7 @@ function activityComponent() {
             formData.append('content', this.form.text);
             formData.append('activity_id', this.form.activity_id); // make sure this is populated
 
-            let url = '{{ route('activity-text.store') }}';
+            let url = "{{ route('activity-text.store') }}";
 
             if (this.editMode && this.form.id) {
                 url = `/admin/activity-text/${this.form.id}`;
@@ -520,7 +520,7 @@ function activityComponent() {
             const formData = new FormData();
             formData.append('name', this.form.name);
 
-            let url = '{{ route('activity-list.store') }}';
+            let url = "{{ route('activity-list.store') }}";
             if (this.editModeActivity && this.form.id) {
                 url = `/admin/activity-list/${this.form.id}`;
                 formData.append('_method', 'PUT');
