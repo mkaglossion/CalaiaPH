@@ -171,7 +171,7 @@
           'title' => 'Mini Kalesa (up to 160 total lbs)',
           'description' => 'Charming mini carriage ride for kids and light adults. (temp)',
           'images' => [
-            asset('assets/images/carousel/slides CALAIA-01.png'),
+            asset('assets/images/carousel/minikalesa.jpg'),
             asset('assets/images/carousel/slide-n-go2.jpg'),
             asset('assets/images/carousel/activities-1.jpg'),
           ],

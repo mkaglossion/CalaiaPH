@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\DayTourSwiperImage;
 use Illuminate\Support\Facades\Storage;
 
-class DaytourSwiperImageController extends Controller
+class DayTourSwiperImageController extends Controller
 {
     public function index()
     {

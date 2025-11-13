@@ -82,7 +82,7 @@
             {{-- inset image frame --}}
             <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10">
               <img
-                src="{{ asset('images/carousel/SET MEALS2.jpg') }}"
+                src="{{ asset('images/carousel/SET MENUS2.JPG') }}"
                 alt="Set Menus"
                 class="w-full h-64 sm:h-72 md:h-80 object-cover"
                 loading="lazy"
@@ -97,7 +97,7 @@
               <button
                 data-title="ADVENTURE PACKAGE"
                 data-details='["Ready-made meals for families, couples, or groups","Breakfast, lunch, and dinner options"]'
-                data-images='["{{ asset('images/carousel/SET MEALS2.jpg') }}","{{ asset('images/carousel/SET MEALS.jpg') }}","{{ asset('images/carousel/menu1.jpg') }}"]'
+                data-images='["{{ asset('images/carousel/SET MENUS2.JPG') }}","{{ asset('images/carousel/SET MEALS.jpg') }}","{{ asset('images/carousel/menu1.jpg') }}"]'
                 onclick="openModal(this)"
                 class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4"
                 style="background:#97655A;color:#ffffff;">
