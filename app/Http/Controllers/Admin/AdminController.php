@@ -15,6 +15,9 @@ use App\Models\MenuText;
 use App\Models\Event;
 use App\Models\EventSwiperImage;
 use App\Models\EventText;
+use App\Models\FarmInfo;
+use App\Models\FarmInfoSwiperImage;
+use App\Models\FarmInfoText;
 
 
 class AdminController extends Controller
@@ -49,5 +52,13 @@ class AdminController extends Controller
         $images = EventSwiperImage::all();
         $texts = EventText::all();
         return view('admin.events', compact('events', 'images', 'texts'));
+    }
+
+    public function farmInfo()
+    {
+        $farmInfos = FarmInfo::all();
+        $images = FarmInfoSwiperImage::all();
+        $texts = FarmInfoText::all();
+        return view('admin.farmInfos', compact('farmInfos', 'images', 'texts'));
     }
 }
