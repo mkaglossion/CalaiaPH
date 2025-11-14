@@ -250,6 +250,8 @@
     </div>
   </div>
 
+  {{-- Floating Buttons --}}
+  <x-floating-buttons />
   {{-- Footer --}}
   <x-footer />
 

@@ -349,6 +349,8 @@
     </div>
     {{-- ===== End Modal ===== --}}
 
+    {{-- Floating Buttons --}}
+    <x-floating-buttons />
     {{-- Activities Carousel Data --}}
     <script type="application/json" id="slides-data">
       {!! json_encode($slidesForJs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}

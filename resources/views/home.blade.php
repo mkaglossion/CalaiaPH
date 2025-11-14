@@ -118,9 +118,11 @@
     {{-- Feature Cards --}}
     <x-feature-cards />
      {{-- Weather Forecast--}}
-    <x-weather />
-    {{-- Footer --}}
-    <x-footer />
+     <x-weather />
+     {{-- Floating Buttons --}}
+     <x-floating-buttons />
+     {{-- Footer --}}
+     <x-footer />
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   </body>
 </html>

@@ -118,8 +118,8 @@
       <!-- ================= Glamping Options Modal ================= -->
       <div x-show="glampingOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="closeGlampingModal()" @click.self="closeGlampingModal()" style="display:none;">
         <div class="w-full max-w-6xl rounded-2xl bg-white shadow-xl overflow-auto max-h-[90vh]">
-          <div class="flex items-center justify-between px-6 py-4 border-b">
-            <h3 class="text-lg font-semibold" style="color:#97655A"><i class="bi bi-stars me-2"></i>Glamping Options</h3>
+          <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color: rgba(128,128,128,0.3);">
+            <h3 class="text-2xl font-bold" style="color:#97655A"><i class="bi bi-stars me-2"></i>Glamping Options</h3>
             <button class="p-2 rounded hover:bg-gray-100" @click="closeGlampingModal()"><i class="bi bi-x-lg"></i></button>
           </div>
 
@@ -132,6 +132,7 @@
                   <div class="swiper-wrapper">
                     <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/staycation.png') }}" class="w-full h-64 object-cover" alt="Standard Glamping 1"></div>
                     <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/staycation.png') }}" class="w-full h-64 object-cover" alt="Standard Glamping 2"></div>
+                    <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/Glamping-1.jpg') }}" class="w-full h-64 object-cover" alt="Standard Glamping 3"></div>
                   </div>
                   <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-prev>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -146,7 +147,7 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="font-bold" style="color:#16a34a">₱1,200/night (4 pax, Weekday • Weekend)</p>
+                  <p class="text-xl font-bold" style="color:#16a34a">Starts at ₱1,200/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Standard</span>
                 </div>
                 <h6 class="font-semibold">Features</h6>
@@ -173,6 +174,7 @@
                   <div class="swiper-wrapper">
                     <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/staycation.png') }}" class="w-full h-64 object-cover" alt="Premium Glamping 1"></div>
                     <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/staycation.png') }}" class="w-full h-64 object-cover" alt="Premium Glamping 2"></div>
+                    <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/Glamping-1.jpg') }}" class="w-full h-64 object-cover" alt="Premium Glamping 3"></div>
                   </div>
                   <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-prev>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -187,7 +189,7 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="font-bold" style="color:#16a34a">₱5,500/night (Sun–Thu) • ₱6,500/night (Fri–Sat)</p>
+                  <p class="text-xl font-bold" style="color:#16a34a">Starts at ₱5,500 - ₱6,500/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Exclusive</span>
                 </div>
                 <h6 class="font-semibold">Features</h6>
@@ -207,7 +209,7 @@
             </div>
           </div>
 
-          <div class="px-6 py-4 border-t flex justify-end">
+          <div class="px-6 py-4 border-t flex justify-end" style="border-color: rgba(128,128,128,0.3);">
             <button type="button" @click="closeGlampingModal()" class="bg-gray-500 text-white px-6 py-3 rounded-2xl hover:bg-gray-600 transition-colors duration-300 w-full md:w-auto font-semibold">Close</button>
           </div>
         </div>
@@ -216,8 +218,8 @@
       <!-- ================= Camping Options Modal ================= -->
       <div x-show="campingOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="closeCampingModal()" @click.self="closeCampingModal()" style="display:none;">
         <div class="w-full max-w-6xl rounded-2xl bg-white shadow-xl overflow-auto max-h-[90vh]">
-          <div class="flex items-center justify-between px-4 md:px-6 py-4 border-b">
-            <h3 class="text-lg font-semibold" style="color:#97655A"><i class="bi bi-tent me-2"></i>Camping Options</h3>
+          <div class="flex items-center justify-between px-4 md:px-6 py-4 border-b" style="border-color: rgba(128,128,128,0.3);">
+            <h3 class="text-2xl font-bold" style="color:#97655A"><i class="bi bi-house me-2"></i>Camping Options</h3>
             <button class="p-2 rounded hover:bg-gray-100" @click="closeCampingModal()"><i class="bi bi-x-lg"></i></button>
           </div>
 
@@ -230,6 +232,7 @@
                   <div class="swiper-wrapper">
                     <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/Glamping-1.jpg') }}" class="w-full h-64 object-cover" alt="Dome 1"></div>
                     <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/Glamping-2.jpg') }}" class="w-full h-64 object-cover" alt="Dome 2"></div>
+                    <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/staycation.png') }}" class="w-full h-64 object-cover" alt="Dome 3"></div>
                   </div>
                   <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-prev>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -244,7 +247,7 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="font-bold" style="color:#16a34a">₱1,200/night</p>
+                  <p class="text-xl font-bold" style="color:#16a34a">Starts at ₱1,200/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Comfort</span>
                 </div>
                 <h6 class="font-semibold">Features</h6>
@@ -268,6 +271,7 @@
                   <div class="swiper-wrapper">
                     <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/staycation.png') }}" class="w-full h-64 object-cover" alt="Bell 1"></div>
                     <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/slide2.jpg') }}" class="w-full h-64 object-cover" alt="Bell 2"></div>
+                    <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/Glamping-1.jpg') }}" class="w-full h-64 object-cover" alt="Bell 3"></div>
                   </div>
                   <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-prev>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -282,7 +286,7 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="font-bold" style="color:#16a34a">₱1,800/night</p>
+                  <p class="text-xl font-bold" style="color:#16a34a">Starts at ₱1,800/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Spacious</span>
                 </div>
                 <h6 class="font-semibold">Features</h6>
@@ -306,6 +310,7 @@
                   <div class="swiper-wrapper">
                     <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/BYOT-2.jpg') }}" class="w-full h-64 object-cover" alt="BYOT 1"></div>
                     <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/slide2.jpg') }}" class="w-full h-64 object-cover" alt="BYOT 2"></div>
+                    <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/staycation.png') }}" class="w-full h-64 object-cover" alt="BYOT 3"></div>
                   </div>
                   <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-prev>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -320,7 +325,7 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="font-bold" style="color:#16a34a">₱800/night</p>
+                  <p class="text-xl font-bold" style="color:#16a34a">Starts at ₱800/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dcfce7;color:#166534">Budget</span>
                 </div>
                 <h6 class="font-semibold">Features</h6>
@@ -338,12 +343,13 @@
 
             <!-- Car Camping -->
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#f59e0b;color:#111827"><h4 class="font-semibold flex items-center gap-2"><i class="bi bi-car-front-fill"></i>Car Camping</h4></div>
+              <div class="px-4 py-2" style="background:#f59e0b;color:white"><h4 class="font-semibold flex items-center gap-2"><i class="bi bi-car-front-fill"></i>Car Camping</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
                     <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/Car-camping3.jpg') }}" class="w-full h-64 object-cover" alt="Car 1"></div>
                     <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/slide2.jpg') }}" class="w-full h-64 object-cover" alt="Car 2"></div>
+                    <div class="swiper-slide"><img src="{{ asset('assets/images/carousel/BYOT-2.jpg') }}" class="w-full h-64 object-cover" alt="Car 3"></div>
                   </div>
                   <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-prev>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -358,7 +364,7 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="font-bold" style="color:#16a34a">₱1,500/night</p>
+                  <p class="text-xl font-bold" style="color:#16a34a">Starts at ₱1,500/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#fef3c7;color:#7c2d12">Convenient</span>
                 </div>
                 <h6 class="font-semibold">Features</h6>
@@ -375,7 +381,7 @@
             </div>
 
           </div>
-          <div class="px-4 md:px-6 py-4 border-t flex justify-end">
+          <div class="px-4 md:px-6 py-4 border-t flex justify-end" style="border-color: rgba(128,128,128,0.3);">
             <button type="button" @click="closeCampingModal()" class="bg-gray-500 text-white px-6 py-3 rounded-2xl hover:bg-gray-600 transition-colors duration-300 w-full md:w-auto font-semibold">Close</button>
           </div>
         </div>
@@ -439,6 +445,8 @@
 
     </main>
 
+    {{-- Floating Buttons --}}
+    <x-floating-buttons />
     <x-footer />
 
     <!-- ================= Scripts ================= -->
@@ -682,7 +690,7 @@
               });
               // Custom dots
               const dotsEl = el.parentElement.querySelector('[data-custom-dots]');
-              const numSlides = 2; // Each modal swiper has 2 slides
+              const numSlides = 3; // Each modal swiper has 3 slides
               function updateDots() {
                 dotsEl.innerHTML = '';
                 for(let i=0; i<numSlides; i++){
