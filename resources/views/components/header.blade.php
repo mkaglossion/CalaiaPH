@@ -128,15 +128,15 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100 translate-y-0"
         x-transition:leave-end="opacity-0 -translate-y-2"
-        class="fixed top-16 left-0 right-0 bg-white px-4 py-2 z-50 shadow-lg text-center"
+        class="fixed top-16 left-0 right-0 bg-white px-4 py-2 z-50 shadow-lg text-left"
       >
-        <a href="{{ url('/') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'home' ? 'border-b border-[#8f5d54]' : '' }}">Home</a>
-        <a href="{{ url('/daytour') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'daytour' ? 'border-b border-[#8f5d54]' : '' }}">Day Tour</a>
-        <a href="{{ url('/staycation') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'staycation' ? 'border-b border-[#8f5d54]' : '' }}">Where to Stay</a>
-        <a href="{{ url('/activities') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'activities' ? 'border-b border-[#8f5d54]' : '' }}">What to Do</a>
-        <a href="{{ url('/dining') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'dining' ? 'border-b border-[#8f5d54]' : '' }}">Food & Beverage</a>
-        <a href="{{ url('/groups') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'groups' ? 'border-b border-[#8f5d54]' : '' }}">Special Events</a>
-        <a href="{{ url('/farm') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'farm' ? 'border-b border-[#8f5d54]' : '' }}">Our Farm</a>
+        <a href="{{ url('/') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'home' ? 'border-b-2 border-[#8f5d54]' : '' }}">Home</a>
+        <a href="{{ url('/daytour') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}">Day Tour</a>
+        <a href="{{ url('/staycation') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}">Where to Stay</a>
+        <a href="{{ url('/activities') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}">What to Do</a>
+        <a href="{{ url('/dining') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}">Food & Beverage</a>
+        <a href="{{ url('/groups') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'groups' ? 'border-b-2 border-[#8f5d54]' : '' }}">Special Events</a>
+        <a href="{{ url('/farm') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}">Our Farm</a>
 
         @auth
           <a href="{{ route('profile.show') }}" @click="open = false" class="block py-2 text-[#8f5d54] border-t border-[#8f5d54]/20 mt-2 pt-2">Profile</a>
@@ -149,7 +149,7 @@
           </form>
         @else
           <button @click="$store.modals.showLogin = true; open = false" class="block py-2 text-[#8f5d54] border-t border-[#8f5d54]/20 mt-2 pt-2">Log In</button>
-          <button @click="$store.modals.showSignup = true; open = false" class="block py-2 text-white bg-[#8f5d54] px-4 py-1 rounded mt-2">Sign Up</button>
+          <button @click="$store.modals.showSignup = true; open = false" class="block py-2 text-white bg-[#8f5d54] px-4 py-2 rounded mt-2">Sign Up</button>
         @endauth
       </div>
     </div>
@@ -323,7 +323,7 @@
         ✕
       </button>
       <h2 class="text-2xl font-semibold mb-4 text-center text-blue-600">Log In</h2>
-      <form method="POST" action="/login" class="space-y-4">
+      <form method="POST" action="{{ route('login.submit') }}" class="space-y-4">
         @csrf
         <div>
           <label for="login_username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>

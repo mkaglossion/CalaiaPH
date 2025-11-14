@@ -7,7 +7,7 @@
     <title>CalaiaPH - Staycation</title>
     @vite(['resources/css/app.css'])
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <!-- Pannellum CSS (VR) -->
@@ -26,7 +26,7 @@
     <x-header active="staycation" />
 
     <!-- ================= Hero Slider ================= -->
-    <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
+    <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]" data-slides-count="{{ count($swiperImages) }}">
       <div class="swiper-wrapper">
         @if(count($swiperImages) > 0)
           @php $texts_array = array_values($texts); $labels_array = array_keys($texts); @endphp
@@ -37,8 +37,8 @@
             <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
               <div class="text-center px-4">
                 @if(isset($texts_array[$index]))
-                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase" style="font-family:gotham; font-size:3.5rem;">{{ ucfirst($labels_array[$index]) }}</h2>
-                  <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase" style="font-family:'Vila Zilka Serif', serif; font-style:italic; font-size:1.2rem;">{{ $texts_array[$index] }}</p>
+                  <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 uppercase" style="font-family:gotham;">{{ ucfirst($labels_array[$index]) }}</h2>
+                  <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase" style="font-family:'Vila Zilka Serif', serif; font-style:italic;">{{ $texts_array[$index] }}</p>
                 @endif
               </div>
             </div>
@@ -48,12 +48,12 @@
           <div class="swiper-slide relative flex items-center justify-center bg-gray-200 overflow-hidden">
             <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
               <div class="text-center px-4">
-                <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase"
-                    style="font-family: gotham; font-size: 3.5rem;">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 uppercase"
+                    style="font-family: gotham;">
                   No Image Available
                 </h2>
-                <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
-                  style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
+                <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
+                  style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
                   Images will be added soon
                 </p>
               </div>
@@ -76,9 +76,9 @@
               <img src="{{ asset('assets/images/carousel/Glamping-1.jpg') }}" alt="Glamping Tent" class="h-56 sm:h-64 w-full object-cover">
             </div>
             <div class="px-4 py-7 text-center">
-              <h3 class="mb-4 text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">Glamping Tent</h3>
+              <h3 class="mb-4 text-2xl md:text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">Glamping Tent</h3>
               <div class="mx-auto my-4 h-px w-full" style="background:#dce8d6;"></div>
-              <ul class="space-y-2 text-[12px] uppercase tracking-widest" style="color:#8f6a60;">
+              <ul class="space-y-2 text-sm md:text-[12px] uppercase tracking-widest" style="color:#8f6a60;">
                 <li>LUXURY TENT SETUP</li>
                 <li>GOURMET LUNCH SERVICE</li>
                 <li>PRIVATE ATV EXPERIENCE</li>
@@ -97,9 +97,9 @@
               <img src="{{ asset('assets/images/carousel/BYOT-2.jpg') }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover">
             </div>
             <div class="px-4 py-7 text-center">
-              <h3 class="mb-4 text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">Camping</h3>
+              <h3 class="mb-4 text-2xl md:text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">Camping</h3>
               <div class="mx-auto my-4 h-px w-full" style="background:#dce8d6;"></div>
-              <ul class="space-y-2 text-[12px] uppercase tracking-widest" style="color:#8f6a60;">
+              <ul class="space-y-2 text-sm md:text-[12px] uppercase tracking-widest" style="color:#8f6a60;">
                 <li>TENT SETUP ASSISTANCE</li>
                 <li>CAMPFIRE BUILDING</li>
                 <li>STARGAZING SESSION</li>
@@ -119,14 +119,14 @@
       <div x-show="glampingOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="closeGlampingModal()" @click.self="closeGlampingModal()" style="display:none;">
         <div class="w-full max-w-6xl rounded-2xl bg-white shadow-xl overflow-auto max-h-[90vh]">
           <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color: rgba(128,128,128,0.3);">
-            <h3 class="text-2xl font-bold" style="color:#97655A"><i class="bi bi-stars me-2"></i>Glamping Options</h3>
+            <h3 class="text-xl md:text-2xl font-bold" style="color:#97655A"><i class="bi bi-stars me-2"></i>Glamping Options</h3>
             <button class="p-2 rounded hover:bg-gray-100" @click="closeGlampingModal()"><i class="bi bi-x-lg"></i></button>
           </div>
 
           <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Standard -->
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="font-semibold flex items-center gap-2"><i class="bi bi-house-fill"></i> Standard</h4></div>
+              <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-house-fill"></i> Standard</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -141,16 +141,16 @@
                   </button>
                   <button type="button" aria-label="Next slide" class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-next>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M9 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-xl font-bold" style="color:#16a34a">Starts at ₱1,200/night</p>
+                  <p class="text-lg md:text-xl font-bold" style="color:#16a34a">Starts at ₱1,200/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Standard</span>
                 </div>
-                <h6 class="font-semibold">Features</h6>
+                <h6 class="text-base md:text-lg font-semibold">Features</h6>
                 <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   <li class="px-3 py-2 bg-gray-50 rounded">Shared bathroom facilities</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Double bed</li>
@@ -168,7 +168,7 @@
 
             <!-- Premium -->
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#3b82f6;color:white"><h4 class="font-semibold flex items-center gap-2"><i class="bi bi-star-fill"></i> Premium</h4></div>
+              <div class="px-4 py-2" style="background:#3b82f6;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-star-fill"></i> Premium</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -189,10 +189,10 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-xl font-bold" style="color:#16a34a">Starts at ₱5,500 - ₱6,500/night</p>
+                  <p class="text-lg md:text-xl font-bold" style="color:#16a34a">Starts at ₱5,500 - ₱6,500/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Exclusive</span>
                 </div>
-                <h6 class="font-semibold">Features</h6>
+                <h6 class="text-base md:text-lg font-semibold">Features</h6>
                 <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   <li class="px-3 py-2 bg-gray-50 rounded">Towels &amp; care kits</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">A/C &amp; Wi-Fi ready</li>
@@ -219,14 +219,14 @@
       <div x-show="campingOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="closeCampingModal()" @click.self="closeCampingModal()" style="display:none;">
         <div class="w-full max-w-6xl rounded-2xl bg-white shadow-xl overflow-auto max-h-[90vh]">
           <div class="flex items-center justify-between px-4 md:px-6 py-4 border-b" style="border-color: rgba(128,128,128,0.3);">
-            <h3 class="text-2xl font-bold" style="color:#97655A"><i class="bi bi-house me-2"></i>Camping Options</h3>
+            <h3 class="text-xl md:text-2xl font-bold" style="color:#97655A"><i class="bi bi-house me-2"></i>Camping Options</h3>
             <button class="p-2 rounded hover:bg-gray-100" @click="closeCampingModal()"><i class="bi bi-x-lg"></i></button>
           </div>
 
           <div class="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             <!-- Dome Tent -->
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#3b82f6;color:white"><h4 class="font-semibold flex items-center gap-2"><i class="bi bi-tent"></i>Dome Tent</h4></div>
+              <div class="px-4 py-2" style="background:#3b82f6;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-tent"></i>Dome Tent</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -247,10 +247,10 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-xl font-bold" style="color:#16a34a">Starts at ₱1,200/night</p>
+                  <p class="text-lg md:text-xl font-bold" style="color:#16a34a">Starts at ₱1,200/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Comfort</span>
                 </div>
-                <h6 class="font-semibold">Features</h6>
+                <h6 class="text-base md:text-lg font-semibold">Features</h6>
                 <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   <li class="px-3 py-2 bg-gray-50 rounded">4-person capacity</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Sleeping mats included</li>
@@ -265,7 +265,7 @@
 
             <!-- Bell Tent -->
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="font-semibold flex items-center gap-2"><i class="bi bi-house-fill"></i>Bell Tent</h4></div>
+              <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-house-fill"></i>Bell Tent</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -286,10 +286,10 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-xl font-bold" style="color:#16a34a">Starts at ₱1,800/night</p>
+                  <p class="text-lg md:text-xl font-bold" style="color:#16a34a">Starts at ₱1,800/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Spacious</span>
                 </div>
-                <h6 class="font-semibold">Features</h6>
+                <h6 class="text-base md:text-lg font-semibold">Features</h6>
                 <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   <li class="px-3 py-2 bg-gray-50 rounded">Up to 6 guests</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Luxury canvas tent</li>
@@ -304,7 +304,7 @@
 
             <!-- BYOT -->
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#22c55e;color:white"><h4 class="font-semibold flex items-center gap-2"><i class="bi bi-backpack"></i>BYOT</h4></div>
+              <div class="px-4 py-2" style="background:#22c55e;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-backpack"></i>BYOT</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -325,10 +325,10 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-xl font-bold" style="color:#16a34a">Starts at ₱800/night</p>
+                  <p class="text-lg md:text-xl font-bold" style="color:#16a34a">Starts at ₱800/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dcfce7;color:#166534">Budget</span>
                 </div>
-                <h6 class="font-semibold">Features</h6>
+                <h6 class="text-base md:text-lg font-semibold">Features</h6>
                 <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   <li class="px-3 py-2 bg-gray-50 rounded">Bring your own tent</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Spacious camping spot</li>
@@ -343,7 +343,7 @@
 
             <!-- Car Camping -->
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#f59e0b;color:white"><h4 class="font-semibold flex items-center gap-2"><i class="bi bi-car-front-fill"></i>Car Camping</h4></div>
+              <div class="px-4 py-2" style="background:#f59e0b;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-car-front-fill"></i>Car Camping</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -364,10 +364,10 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-xl font-bold" style="color:#16a34a">Starts at ₱1,500/night</p>
+                  <p class="text-lg md:text-xl font-bold" style="color:#16a34a">Starts at ₱1,500/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#fef3c7;color:#7c2d12">Convenient</span>
                 </div>
-                <h6 class="font-semibold">Features</h6>
+                <h6 class="text-base md:text-lg font-semibold">Features</h6>
                 <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   <li class="px-3 py-2 bg-gray-50 rounded">Park next to your campsite</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Electrical hookup available</li>
@@ -666,9 +666,10 @@
         if(!window.Swiper) return;
         const hero = document.querySelector('.heroSwiper');
         if(!hero) return;
+        const slidesCount = parseInt(hero.dataset.slidesCount);
         try {
           new Swiper(hero, {
-            loop: true,
+            loop: slidesCount > 1,
             effect: 'fade',
             fadeEffect: { crossFade: true },
             keyboard: { enabled: true },
