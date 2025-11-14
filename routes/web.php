@@ -43,6 +43,8 @@ use App\Http\Controllers\Admin\StaycationTextController;
 use App\Http\Controllers\Admin\MenuTextController;
 use App\Http\Controllers\Admin\EventTextController;
 use App\Http\Controllers\Admin\FarmInfoTextController;
+use App\Http\Controllers\Admin\DayPackageTextController;
+
 
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\DayTourController;
@@ -54,6 +56,8 @@ use App\Http\Controllers\Admin\StaycationController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\FarmInfoController;
+use App\Http\Controllers\Admin\DayTourController as AdminDayTourController;
+
 
 // ========== Root Route ==========
 Route::get('/', function () {
@@ -111,6 +115,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/menus', [AdminController::class, 'menu'])->name('admin.menus');
     Route::get('/events', [AdminController::class, 'event'])->name('admin.events');
     Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farmInfos');
+    Route::get('/day', [AdminController::class, 'dayTour'])->name('admin.day');
     // adminRoute('/reports', AdminController::class, 'admin.reports', 'reports');
 
     // Pages Submenu
@@ -171,4 +176,8 @@ Route::prefix('admin')->group(function () {
     Route::resource('farmInfo-list', FarmInfoController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('farmInfo-image', FarmInfoSwiperImageController::class)->only(['index', 'store', 'destroy']);
     Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
+
+    Route::resource('day-tours', AdminDayTourController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('day-text', DayPackageTextController::class)->only(['index', 'store', 'update', 'destroy']);
+
 });

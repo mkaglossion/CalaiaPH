@@ -18,6 +18,8 @@ use App\Models\EventText;
 use App\Models\FarmInfo;
 use App\Models\FarmInfoSwiperImage;
 use App\Models\FarmInfoText;
+use App\Models\DayTour;
+use App\Models\DayPackageText;
 
 
 class AdminController extends Controller
@@ -60,5 +62,13 @@ class AdminController extends Controller
         $images = FarmInfoSwiperImage::all();
         $texts = FarmInfoText::all();
         return view('admin.farmInfos', compact('farmInfos', 'images', 'texts'));
+    }
+
+    public function dayTour()
+    {
+        $tours  = DayTour::with('activities')->get(); // get all packages with activities
+        $texts = DayPackageText::all();
+        $activities = Activity::all(); // list of all activities for selection
+        return view('admin.days', compact('tours', 'texts', 'activities'));
     }
 }

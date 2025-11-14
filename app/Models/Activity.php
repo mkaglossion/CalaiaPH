@@ -17,4 +17,10 @@ class Activity extends Model
     {
         return $this->hasMany(ActivityText::class);
     }
+
+    // 🔥 Reverse relation for Day Tour Packages
+    public function dayTours()
+    {
+        return $this->belongsToMany(DayTour::class, 'day_tour_activity');
+    }
 }
