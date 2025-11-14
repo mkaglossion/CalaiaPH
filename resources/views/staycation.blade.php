@@ -94,7 +94,7 @@
           <!-- Card: Camping -->
           <article class="relative mx-auto w-full max-w-md rounded-[22px] bg-white p-5" style="box-shadow:0 10px 16px rgba(0,0,0,0.08);">
             <div class="rounded-xl ring-1 ring-black/5 shadow-sm bg-white overflow-hidden">
-              <img src="{{ asset('assets/images/carousel/Car-camping3.jpg') }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover">
+              <img src="{{ asset('assets/images/carousel/BYOT-2.jpg') }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover">
             </div>
             <div class="px-4 py-7 text-center">
               <h3 class="mb-4 text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">Camping</h3>
