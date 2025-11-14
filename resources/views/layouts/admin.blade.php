@@ -93,6 +93,14 @@
           <span>Farm</span> 
         </a>
 
+        {{-- Day Tour --}}
+        <a href="{{ route('admin.day') }}"  
+          class="flex items-center gap-3 px-6 py-2 transition 
+          {{ request()->routeIs('admin.day') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
+          <i data-lucide="sun" class="w-5 h-5"></i>
+          <span>Day tour</span> 
+        </a>
+
         {{-- Pages (Dropdown) --}}
         <div 
         class="space-y-1"
