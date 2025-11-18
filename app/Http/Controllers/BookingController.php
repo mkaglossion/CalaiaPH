@@ -171,4 +171,161 @@ class BookingController extends Controller
             'inventory'           => $remainingPerDateArray, // optional
         ]);
     }
+
+    public function staycation(Request $request)
+    {
+        // Handle POST request to set dates
+        if ($request->isMethod('post')) {
+            $request->validate([
+                'check_in' => 'required|date|after:yesterday',
+                'check_out' => 'required|date|after:check_in',
+            ]);
+
+            $booking = session('booking', []);
+            $booking['checkin'] = $request->check_in;
+            $booking['checkout'] = $request->check_out;
+            $booking['booking_type'] = 'staycation';
+            $booking['completed_steps'] = [1]; // Mark step 1 as completed
+            $booking['current_step'] = 1;
+            $booking['timestamp'] = now()->timestamp;
+            session(['booking' => $booking]);
+
+            // Redirect to GET version to display the page
+            return redirect()->route('booking.staycation');
+        }
+
+        // Hardcoded staycations data with appropriate images
+        $staycations = [
+            [
+                'id' => 1,
+                'name' => 'Standard Glamping',
+                'type' => 'glamping',
+                'capacity' => 2,
+                'adults' => 2,
+                'children' => 0,
+                'price' => 1200,
+                'image' => asset('assets/images/carousel/Glamping-1.jpg'),
+            ],
+            [
+                'id' => 2,
+                'name' => 'Premium Glamping',
+                'type' => 'glamping',
+                'capacity' => 4,
+                'adults' => 4,
+                'children' => 2,
+                'price' => 5500,
+                'image' => asset('assets/images/carousel/Glamping-1.jpg'),
+            ],
+            [
+                'id' => 3,
+                'name' => 'Dome Tent',
+                'type' => 'camping',
+                'capacity' => 2,
+                'adults' => 2,
+                'children' => 0,
+                'price' => 1200,
+                'image' => asset('assets/images/carousel/Car-camping3.jpg'),
+            ],
+            [
+                'id' => 4,
+                'name' => 'Bell Tent',
+                'type' => 'camping',
+                'capacity' => 4,
+                'adults' => 4,
+                'children' => 2,
+                'price' => 1800,
+                'image' => asset('assets/images/carousel/Car-camping3.jpg'),
+            ],
+            [
+                'id' => 5,
+                'name' => 'BYOT',
+                'type' => 'camping',
+                'capacity' => 4,
+                'adults' => 4,
+                'children' => 2,
+                'price' => 800,
+                'image' => asset('assets/images/carousel/BYOT-2.jpg'),
+            ],
+            [
+                'id' => 6,
+                'name' => 'Car Camping',
+                'type' => 'camping',
+                'capacity' => 4,
+                'adults' => 4,
+                'children' => 2,
+                'price' => 1500,
+                'image' => asset('assets/images/carousel/Car-camping3.jpg'),
+            ],
+        ];
+
+        // Get accommodation data from session or default
+        $accommodationData = session('accommodation_data', []);
+
+        // Check availability if dates are selected
+        $availability = [];
+        $booking = session('booking', []);
+        $checkinDate = $booking['checkin'] ?? null;
+        $checkoutDate = $booking['checkout'] ?? null;
+
+        if ($checkinDate && $checkoutDate) {
+            $staycationIds = array_column($staycations, 'id');
+            // Call the checkAvailability method internally
+            $availability = $this->checkAvailabilityInternal($checkinDate, $checkoutDate, $staycationIds);
+        }
+
+        return view('booking.staycation', compact('staycations', 'accommodationData', 'availability'));
+    }
+
+    private function checkAvailabilityInternal($checkin, $checkout, $staycationIds)
+    {
+        // For now, assume all staycations are available since no booking system yet
+        $available = [];
+        foreach ($staycationIds as $id) {
+            $available[$id] = [
+                'available' => true,
+                'text' => 'Available for booking'
+            ];
+        }
+        return $available;
+    }
+
+    public function selectDates(Request $request)
+    {
+        $request->validate([
+            'checkin' => 'required|date|after:today',
+            'checkout' => 'required|date|after:checkin',
+        ]);
+
+        $booking = session('booking', []);
+        $booking['checkin'] = $request->checkin;
+        $booking['checkout'] = $request->checkout;
+        $booking['completed_steps'] = [1]; // Mark step 1 as completed
+        session(['booking' => $booking]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dates selected successfully.',
+        ]);
+    }
+
+    public function checkAvailability(Request $request)
+    {
+        $request->validate([
+            'checkin' => 'required|date',
+            'checkout' => 'required|date|after:checkin',
+            'staycation_ids' => 'required|array',
+            'staycation_ids.*' => 'integer',
+        ]);
+
+        $checkin = $request->checkin;
+        $checkout = $request->checkout;
+        $staycationIds = $request->staycation_ids;
+
+        $available = $this->checkAvailabilityInternal($checkin, $checkout, $staycationIds);
+
+        return response()->json([
+            'available' => $available,
+            'message' => 'Availability checked successfully.',
+        ]);
+    }
 }

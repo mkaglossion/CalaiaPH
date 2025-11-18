@@ -63,7 +63,7 @@
         <!-- Divider -->
         <hr class="mb-6 border-gray-300">
 
-        <form method="POST" action="{{ url('/booking') }}" novalidate>
+        <form id="booking-form" method="POST" :action="formAction" novalidate>
         @csrf
         <input type="hidden" name="type" x-ref="type" value="room">
 
@@ -194,6 +194,7 @@
     function bookingWidget(config = {}) {
         return {
             activeTab: 'room',
+            formAction: '{{ url("/booking/staycation") }}',
             fpRange: null,
             availabilityText: '',
             staySummary: '',
@@ -213,6 +214,13 @@
             setTab(type) {
                 this.activeTab = type;
                 this.$refs.type.value = type;
+
+                // Update form action based on tab
+                if (type === 'room') {
+                    this.formAction = '{{ url("/booking/staycation") }}';
+                } else {
+                    this.formAction = '{{ url("/booking") }}';
+                }
 
                 if (type === 'day-visit' || type === 'overnight') {
                     if (this.$refs.checkOut) this.$refs.checkOut.value = '';
@@ -293,6 +301,11 @@
 
                         self.updateAvailabilityText();
                         self.updateStaySummary();
+
+                        // Auto-submit if room tab and dates selected
+                        if (self.activeTab === 'room' && self.$refs.checkOut && self.$refs.checkOut.value) {
+                            document.getElementById('booking-form').submit();
+                        }
                     }
                 });
 

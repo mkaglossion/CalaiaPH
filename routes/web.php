@@ -75,6 +75,9 @@ Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show')
 // Booking Routes
 Route::get('/booking', [BookingController::class, 'create'])->name('booking.create');
 Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
+Route::match(['GET', 'POST'], '/booking/staycation', [BookingController::class, 'staycation'])->name('booking.staycation');
+Route::post('/booking/select-dates', [BookingController::class, 'selectDates'])->name('booking.selectDates');
+Route::post('/booking/check-availability', [BookingController::class, 'checkAvailability'])->name('booking.checkAvailability');
 Route::get('/booking/payment', [BookingController::class, 'payment'])->name('booking.payment');
 Route::post('/booking/process-payment', [BookingController::class, 'processPayment'])->name('booking.processPayment');
 Route::get('/booking/widget', [BookingController::class, 'widget'])->name('booking.widget');
