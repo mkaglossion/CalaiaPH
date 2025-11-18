@@ -10,14 +10,46 @@ class BookingController extends Controller
 {
     public function create(Request $request)
     {
-        $type = $request->get('type');
-        $package = $request->get('package');
-        $price = $request->get('price');
+        $type = $request->get('type', 'day-visit');
+        $allowedTypes = ['day-visit', 'room', 'overnight'];
+        if (!in_array($type, $allowedTypes)) {
+            $type = 'day-visit';
+        }
+
+        $package = $request->get('package', 'Day Visit Package');
+        $price = $request->get('price', '1000');
 
         // Clean the price to remove currency symbols and get numeric value
         $price = preg_replace('/[^\d.]/', '', $price);
 
-        return view('booking.reservation', compact('type', 'package', 'price'));
+        // Get capacities and inventory for calendar
+        $settings = (object) [
+            'day_visit_capacity' => 10,
+            'room_capacity' => 5,
+            'overnight_capacity' => 3,
+        ];
+
+        $defaultInventory = [
+            'day-visit' => [
+                '2025-11-20' => 8,
+                '2025-11-21' => 5,
+                '2025-11-22' => 10,
+            ],
+            'room' => [
+                '2025-11-20' => 3,
+                '2025-11-21' => 2,
+                '2025-11-22' => 5,
+            ],
+            'overnight' => [
+                '2025-11-20' => 2,
+                '2025-11-21' => 1,
+                '2025-11-22' => 3,
+            ],
+        ];
+
+        $inventory = session('inventory', $defaultInventory);
+
+        return view('booking.reservation', compact('type', 'package', 'price', 'settings', 'inventory'));
     }
 
     public function store(Request $request)
@@ -30,20 +62,113 @@ class BookingController extends Controller
             'booking_date' => 'required|date|after:today',
             'guests' => 'required|integer|min:1|max:50',
             'special_requests' => 'nullable|string|max:1000',
-            'type' => 'required|string',
+            'type' => 'required|string|in:day-visit,room,overnight',
             'package' => 'required|string',
             'price' => 'required|numeric',
         ]);
 
-        // Here you would typically save to database
-        // For now, we'll just send a confirmation email
+        // Get current inventory from session
+        $defaultInventory = [
+            'day-visit' => ['2025-11-20' => 8, '2025-11-21' => 5, '2025-11-22' => 10],
+            'room' => ['2025-11-20' => 3, '2025-11-21' => 2, '2025-11-22' => 5],
+            'overnight' => ['2025-11-20' => 2, '2025-11-21' => 1, '2025-11-22' => 3],
+        ];
+        $inventory = session('inventory', $defaultInventory);
+
+        // Get booking type and date
+        $type = $request->input('type'); // 'room', 'day-visit', or 'overnight'
+        $date = $validated['booking_date'];
+
+        // Check availability
+        if (!isset($inventory[$type][$date]) || $inventory[$type][$date] <= 0) {
+            return redirect()->back()->with('error', 'No availability for the selected date and type.');
+        }
+
+        // Deduct inventory for the booked date
+        if (isset($inventory[$type][$date])) {
+            $inventory[$type][$date] = max(0, $inventory[$type][$date] - 1);
+            session(['inventory' => $inventory]);
+        }
+
+        // Store booking data in session for payment
+        session(['booking_data' => $validated]);
+
+        // Redirect to payment page
+        return redirect()->route('booking.payment');
+    }
+
+    public function payment()
+    {
+        $bookingData = session('booking_data');
+
+        if (!$bookingData) {
+            return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
+        }
+
+        return view('booking.payment', compact('bookingData'));
+    }
+
+    public function processPayment(Request $request)
+    {
+        $bookingData = session('booking_data');
+
+        if (!$bookingData) {
+            return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
+        }
+
+        // Simulate payment processing
+        // In real implementation, integrate with payment gateway
 
         try {
-            Mail::to($validated['email'])->send(new BookingConfirmation($validated));
+            // Send confirmation email
+            Mail::to($bookingData['email'])->send(new BookingConfirmation($bookingData));
 
-            return redirect()->back()->with('success', 'Booking request submitted successfully! We will contact you soon.');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to submit booking. Please try again.');
+            // Clear session
+            session()->forget('booking_data');
+
+            return redirect()->route('home')->with('success', 'Payment successful! Booking confirmed. Check your email for details.');
+        } catch (\Exception) {
+            return redirect()->back()->with('error', 'Payment failed. Please try again.');
         }
+    }
+
+    public function widget()
+    {
+        // Assuming settings are stored in a Settings model or config
+        // For now, using placeholder values
+        $settings = (object) [
+            'day_visit_capacity' => 10,
+            'room_capacity' => 5,
+            'overnight_capacity' => 3,
+        ];
+
+        // Default static inventory for demo
+        $defaultInventory = [
+            'day-visit' => [
+                '2025-11-20' => 8, // 8 out of 10 available
+                '2025-11-21' => 5,
+                '2025-11-22' => 10, // fully available
+            ],
+            'room' => [
+                '2025-11-20' => 3, // 3 out of 5 available
+                '2025-11-21' => 2,
+                '2025-11-22' => 5,
+            ],
+            'overnight' => [
+                '2025-11-20' => 2, // 2 out of 3 available
+                '2025-11-21' => 1,
+                '2025-11-22' => 3,
+            ],
+        ];
+
+        // Get inventory from session, or use default
+        $remainingPerDateArray = session('inventory', $defaultInventory);
+
+        return view('booking.widget', [
+            'dayVisitCapacity'    => $settings->day_visit_capacity,
+            'roomCapacity'        => $settings->room_capacity,
+            'overnightCapacity'   => $settings->overnight_capacity,
+            'inventory'           => $remainingPerDateArray, // optional
+        ]);
     }
 }

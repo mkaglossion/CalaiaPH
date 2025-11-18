@@ -75,6 +75,13 @@ Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show')
 // Booking Routes
 Route::get('/booking', [BookingController::class, 'create'])->name('booking.create');
 Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
+Route::get('/booking/payment', [BookingController::class, 'payment'])->name('booking.payment');
+Route::post('/booking/process-payment', [BookingController::class, 'processPayment'])->name('booking.processPayment');
+Route::get('/booking/widget', [BookingController::class, 'widget'])->name('booking.widget');
+Route::get('/booking/reset-inventory', function () {
+    session()->forget('inventory');
+    return redirect('/booking/widget')->with('success', 'Inventory reset!');
+})->name('booking.reset-inventory');
 
 // ========== Auth Routes ==========
 Route::post('/register-step-one', [RegisterController::class, 'registerStepOne']);
