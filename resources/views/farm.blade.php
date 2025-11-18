@@ -9,7 +9,7 @@
     <meta name="author" content="CalaiaPH">
     @vite(['resources/css/app.css'])
     <title>CalaiaPH - Farm</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   </head>
@@ -26,7 +26,7 @@
     <x-header active="farm" />
 
     {{-- Hero Slider (dining-style) --}}
-    <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
+    <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]" data-slides-count="{{ count($swiperImages) }}">
       <div class="swiper-wrapper">
         @if(count($swiperImages) > 0)
           @php $texts_array = array_values($texts); $labels_array = array_keys($texts); @endphp
@@ -435,6 +435,8 @@
       </section>
     </main>
 
+    {{-- Floating Buttons --}}
+    <x-floating-buttons />
   {{-- Footer --}}
   <x-footer />
 
@@ -442,9 +444,10 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function () {
+        const slidesCount = parseInt(document.querySelector('.heroSwiper').dataset.slidesCount);
         const heroSwiper = new Swiper('.heroSwiper', {
           autoplay: { delay: 3000, disableOnInteraction: false },
-          loop: true,
+          loop: slidesCount > 1,
           effect: 'fade',
           fadeEffect: { crossFade: true },
           keyboard: { enabled: true },

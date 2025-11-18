@@ -216,6 +216,8 @@
 
     </div>
 
+    {{-- Floating Buttons --}}
+    <x-floating-buttons />
     <x-footer />
 
     {{-- Scripts --}}

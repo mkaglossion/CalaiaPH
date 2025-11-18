@@ -1,18 +1,41 @@
-@props(['active' => 'room'])
+@props([
+    'active' => 'room',
+    // galing Admin Panel (per day capacity)
+    'dayVisitCapacity' => null,
+    'roomCapacity' => null,
+    'overnightCapacity' => null,
+    // optional: per-date remaining slots (array from backend)
+    // [
+    //   'day-visit' => ['2025-11-20' => 5, ...],
+    //   'room'      => ['2025-11-20' => 2, ...],
+    //   'overnight' => ['2025-11-20' => 1, ...],
+    // ]
+    'inventory' => null,
+])
 
 <div class="max-w-7xl mx-auto p-4 relative z-10 -mt-20">
-    <div class="bg-white rounded-xl shadow-lg p-6" x-data="{ activeTab: 'room' }">
+    <div
+        class="bg-white rounded-xl shadow-lg p-6"
+        x-data='bookingWidget({
+            dayVisitCapacity: @json($dayVisitCapacity),
+            roomCapacity: @json($roomCapacity),
+            overnightCapacity: @json($overnightCapacity),
+            inventory: @json($inventory ?? ["day-visit" => (object)[], "room" => (object)[], "overnight" => (object)[]]),
+        })'
+        x-init="initDatepickers()"
+        x-cloak
+    >
 
         <!-- Special Arrangements Text -->
         <div class="text-sm text-gray-600 text-center mb-4">
             Special Arrangements, Group Bookings – Please message us
             <a href="https://m.me/410774518796277" class="text-blue-500 hover:underline font-medium" target="_blank" rel="noopener noreferrer">here</a>
         </div>
-        
+
        <!-- Tabs -->
         <div class="flex bg-gray-100 rounded-lg p-1 mb-4">
             <button
-                @click="activeTab = 'room'; $refs.bookingType.value = 'room'"
+                @click="setTab('room')"
                 :class="activeTab === 'room' ? 'bg-[#8f5d54] text-white shadow-sm' : 'text-gray-600 hover:text-[#8f5d54]'"
                 class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
             >
@@ -20,7 +43,7 @@
                 <span>Room</span>
             </button>
             <button
-                @click="activeTab = 'day-visit'; $refs.bookingType.value = 'day-visit'"
+                @click="setTab('day-visit')"
                 :class="activeTab === 'day-visit' ? 'bg-[#8f5d54] text-white shadow-sm' : 'text-gray-600 hover:text-[#8f5d54]'"
                 class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
             >
@@ -28,7 +51,7 @@
                 <span>Day Visit</span>
             </button>
             <button
-                @click="activeTab = 'overnight'; $refs.bookingType.value = 'overnight'"
+                @click="setTab('overnight')"
                 :class="activeTab === 'overnight' ? 'bg-[#8f5d54] text-white shadow-sm' : 'text-gray-600 hover:text-[#8f5d54]'"
                 class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
             >
@@ -41,39 +64,55 @@
         <hr class="mb-6 border-gray-300">
 
         <form method="POST" action="{{ url('/booking') }}" novalidate>
-            <input type="hidden" name="booking_type" x-ref="bookingType" value="room">
-            @csrf
-            
+        @csrf
+        <input type="hidden" name="type" x-ref="type" value="room">
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <!-- Check-in / Visit Date -->
                 <div :class="activeTab === 'day-visit' ? 'md:col-span-2' : 'md:col-span-1'">
                     <label for="check_in" class="block text-sm font-medium text-gray-700 mb-2" x-text="activeTab === 'day-visit' ? 'Visit Date' : 'Check-in'">
                     </label>
-                    <input
-                        type="text"
-                        name="check_in"
-                        id="check_in"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none transition-colors text-sm"
-                        placeholder="Select date"
-                        required
-                        readonly
-                    >
+
+                    <div class="relative">
+                        <input
+                            type="text"
+                            name="check_in"
+                            id="check_in"
+                            x-ref="checkIn"
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none transition-colors text-sm hover:border-[#8f5d54]/70 hover:bg-gray-50"
+                            placeholder="Select date"
+                            required
+                            readonly
+                        >
+                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="bi bi-calendar3"></i>
+                        </div>
+                    </div>
+
+                    <!-- Availability text -->
+                    <p class="text-xs text-gray-500 mt-1" x-show="availabilityText" x-text="availabilityText"></p>
                 </div>
 
-                <!-- Check-out -->
+                <!-- Check-out (ROOM + OVERNIGHT, pero iba behavior) -->
                 <div x-show="activeTab !== 'day-visit'" class="md:col-span-1">
                     <label for="check_out" class="block text-sm font-medium text-gray-700 mb-2">
                         Check-out
                     </label>
-                    <input
-                        type="text"
-                        name="check_out"
-                        id="check_out"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none transition-colors text-sm"
-                        placeholder="Select date"
-                        :required="activeTab !== 'day-visit'"
-                        readonly
-                    >
+                    <div class="relative">
+                        <input
+                            type="text"
+                            name="check_out"
+                            id="check_out"
+                            x-ref="checkOut"
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none transition-colors text-sm hover:border-[#8f5d54]/70 hover:bg-gray-50"
+                            placeholder="Select date"
+                            :required="activeTab === 'room'"
+                            readonly
+                        >
+                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="bi bi-calendar3"></i>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Button -->
@@ -87,9 +126,285 @@
                         Search
                     </button>
                 </div>
+
+                <!-- Stay summary row: full width, aligned with grid -->
+                <div
+                    class="mt-2 text-xs md:text-sm text-gray-700 col-span-1 md:col-span-3"
+                    x-show="staySummary || activeTab === 'overnight'"
+                >
+                    <div class="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-3">
+                        <!-- e.g. "2 days and 1 night" -->
+                        <span x-show="staySummary" x-text="staySummary"></span>
+
+                        <!-- Overnight helper text -->
+                        <span
+                            x-show="activeTab === 'overnight'"
+                            class="text-[11px] md:text-xs text-gray-500"
+                        >
+                            Overnight stay is fixed for 1 night. Check-out is automatically set to the next day.
+                        </span>
+                    </div>
+                </div>
             </div>
         </form>
     </div>
 </div>
 
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+{{-- Flatpickr CSS --}}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<style>
+    .flatpickr-day.flatpickr-disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        text-decoration: line-through;
+    }
+
+    .flatpickr-day.today {
+        border-color: #8f5d54;
+    }
+
+    .flatpickr-day.selected,
+    .flatpickr-day.startRange,
+    .flatpickr-day.endRange {
+        background: #8f5d54;
+        border-color: #8f5d54;
+        color: #ffffff;
+    }
+
+    .flatpickr-day.inRange {
+        background: rgba(143, 93, 84, 0.12);
+    }
+
+    .flatpickr-day.weekend {
+        background-color: #8f5d54;
+        border-color: #8f5d54;
+        color: #ffffff;
+        border-radius: 9999px;
+    }
+
+    [x-cloak] { display: none !important; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    function bookingWidget(config = {}) {
+        return {
+            activeTab: 'room',
+            fpRange: null,
+            availabilityText: '',
+            staySummary: '',
+
+            // capacities galing Admin Panel (per day)
+            dayVisitCapacity: config.dayVisitCapacity ?? null,
+            roomCapacity: config.roomCapacity ?? null,
+            overnightCapacity: config.overnightCapacity ?? null,
+
+            // remaining slots per date per type (puwedeng i-override ng backend)
+            inventory: config.inventory ?? {
+                'day-visit': {},
+                'room': {},
+                'overnight': {}
+            },
+
+            setTab(type) {
+                this.activeTab = type;
+                this.$refs.type.value = type;
+
+                if (type === 'day-visit' || type === 'overnight') {
+                    if (this.$refs.checkOut) this.$refs.checkOut.value = '';
+                }
+
+                if (this.fpRange) {
+                    if (type === 'day-visit' || type === 'overnight') {
+                        this.fpRange.set('mode', 'single');
+                    } else {
+                        this.fpRange.set('mode', 'range');
+                    }
+                }
+
+                if (type === 'overnight') {
+                    this.updateOvernightStay();
+                }
+
+                this.updateAvailabilityText();
+                this.updateStaySummary();
+            },
+
+            initDatepickers() {
+                const today = new Date();
+                const self = this;
+
+                this.fpRange = flatpickr(this.$refs.checkIn, {
+                    mode: 'range',
+                    dateFormat: 'Y-m-d',
+                    minDate: today,
+                    disableMobile: true,
+                    onDayCreate(selectedDates, dateStr, instance, dayElem) {
+                        self.markWeekends(dayElem);
+                    },
+                    onOpen(selectedDates, dateStr, instance) {
+                        if (self.activeTab === 'day-visit' || self.activeTab === 'overnight') {
+                            instance.set('mode', 'single');
+                        } else {
+                            instance.set('mode', 'range');
+                        }
+                    },
+                    onChange(selectedDates, dateStr, instance) {
+                        // DAY VISIT
+                        if (self.activeTab === 'day-visit') {
+                            if (selectedDates.length > 0) {
+                                const inStr = instance.formatDate(selectedDates[0], 'Y-m-d');
+                                self.$refs.checkIn.value = inStr;
+                            }
+                            if (self.$refs.checkOut) self.$refs.checkOut.value = '';
+                            self.updateAvailabilityText();
+                            self.updateStaySummary();
+                            return;
+                        }
+
+                        // OVERNIGHT = single + auto +1 day
+                        if (self.activeTab === 'overnight') {
+                            if (selectedDates.length > 0) {
+                                const inStr = instance.formatDate(selectedDates[0], 'Y-m-d');
+                                self.$refs.checkIn.value = inStr;
+                                self.updateOvernightStay();
+                            }
+                            self.updateAvailabilityText();
+                            self.updateStaySummary();
+                            return;
+                        }
+
+                        // ROOM = range
+                        if (selectedDates.length > 0) {
+                            const inStr = instance.formatDate(selectedDates[0], 'Y-m-d');
+                            self.$refs.checkIn.value = inStr;
+                        }
+
+                        if (selectedDates.length > 1 && self.$refs.checkOut) {
+                            const outStr = instance.formatDate(selectedDates[1], 'Y-m-d');
+                            self.$refs.checkOut.value = outStr;
+                        } else if (self.$refs.checkOut) {
+                            self.$refs.checkOut.value = '';
+                        }
+
+                        self.updateAvailabilityText();
+                        self.updateStaySummary();
+                    }
+                });
+
+                if (this.activeTab === 'day-visit' || this.activeTab === 'overnight') {
+                    this.fpRange.set('mode', 'single');
+                } else {
+                    this.fpRange.set('mode', 'range');
+                }
+            },
+
+            markWeekends(dayElem) {
+                if (!dayElem || !dayElem.dateObj) return;
+                const date = dayElem.dateObj;
+                const day = date.getDay();
+                if (day === 0 || day === 6) {
+                    dayElem.classList.add('weekend');
+                }
+            },
+
+            updateAvailabilityText() {
+                const date = this.$refs.checkIn.value;
+                if (!date) {
+                    this.availabilityText = '';
+                    return;
+                }
+
+                const type = this.activeTab;
+                const typeInventory = this.inventory[type] || {};
+                const remaining = typeInventory[date];
+
+                const capacityMap = {
+                    'day-visit': this.dayVisitCapacity,
+                    'room': this.roomCapacity,
+                    'overnight': this.overnightCapacity,
+                };
+                const capacity = capacityMap[type] ?? null;
+
+                if (remaining === 0) {
+                    this.availabilityText = 'Fully booked na po for this date.';
+                } else if (typeof remaining === 'number') {
+                    if (capacity !== null) {
+                        const used = capacity - remaining;
+                        this.availabilityText = `${remaining} slot(s) remaining out of ${capacity} (booked ${used}).`;
+                    } else {
+                        this.availabilityText = `${remaining} slot(s) remaining for this date.`;
+                    }
+                } else if (capacity !== null) {
+                    // may base capacity pero wala pang per-date data
+                    this.availabilityText = `Up to ${capacity} slot(s) available per day.`;
+                } else {
+                    this.availabilityText = '';
+                }
+            },
+
+            updateOvernightStay() {
+                if (this.activeTab !== 'overnight') return;
+
+                const checkInVal = this.$refs.checkIn.value;
+                if (!checkInVal) {
+                    if (this.$refs.checkOut) this.$refs.checkOut.value = '';
+                    return;
+                }
+
+                const start = new Date(checkInVal + 'T00:00:00');
+                const end = new Date(start.getTime() + 1 * 24 * 60 * 60 * 1000);
+
+                const yyyy = end.getFullYear();
+                const mm = String(end.getMonth() + 1).padStart(2, '0');
+                const dd = String(end.getDate()).padStart(2, '0');
+                const outStr = `${yyyy}-${mm}-${dd}`;
+
+                if (this.$refs.checkOut) {
+                    this.$refs.checkOut.value = outStr;
+                }
+            },
+
+            updateStaySummary() {
+                const checkInVal = this.$refs.checkIn.value;
+                const checkOutVal = this.$refs.checkOut ? this.$refs.checkOut.value : '';
+
+                if (!checkInVal) {
+                    this.staySummary = '';
+                    return;
+                }
+
+                if (this.activeTab === 'day-visit') {
+                    this.staySummary = 'Day visit only';
+                    return;
+                }
+
+                if (!checkOutVal) {
+                    this.staySummary = '';
+                    return;
+                }
+
+                const start = new Date(checkInVal + 'T00:00:00');
+                const end   = new Date(checkOutVal + 'T00:00:00');
+                const diffMs = end - start;
+
+                if (diffMs <= 0) {
+                    this.staySummary = '';
+                    return;
+                }
+
+                const nights = diffMs / (1000 * 60 * 60 * 24);
+                const days   = nights + 1;
+
+                const dayLabel   = days === 1 ? 'day' : 'days';
+                const nightLabel = nights === 1 ? 'night' : 'nights';
+
+                this.staySummary = `${days} ${dayLabel} and ${nights} ${nightLabel}`;
+            }
+        }
+    }
+</script>

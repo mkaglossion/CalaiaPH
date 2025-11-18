@@ -9,7 +9,7 @@
     <meta name="author" content="CalaiaPH">
     @vite(['resources/css/app.css'])
     <title>{{ $texts['title'] ?? 'CalaiaPH' }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
   </head>
     <body class="bg-[#f5efe7]">
       <div class="flex flex-col items-center justify-center px-4">
@@ -24,7 +24,7 @@
     {{-- Swiper CSS --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
-    <div class="swiper mySwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
+    <div class="swiper mySwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]" data-slides-count="{{ count($swiperImages) }}">
       <div class="swiper-wrapper">
         @if(count($swiperImages) > 0)
           @php $texts_array = array_values($texts); $labels_array = array_keys($texts); @endphp
@@ -78,15 +78,18 @@
     {{-- Swiper JS --}}
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
+    @php $paginationMessage = 'Go to slide {{index}}'; @endphp
+
     @verbatim
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+      const slidesCount = parseInt(document.querySelector('.mySwiper').dataset.slidesCount);
       const swiper = new Swiper('.mySwiper', {
         autoplay: {
           delay: 3000,
           disableOnInteraction: false,
         },
-        loop: true,
+        loop: slidesCount > 1,
         effect: 'fade',
         fadeEffect: {
           crossFade: true
@@ -104,7 +107,7 @@
           nextSlideMessage: 'Next slide',
           firstSlideMessage: 'This is the first slide',
           lastSlideMessage: 'This is the last slide',
-          paginationBulletMessage: 'Go to slide {{index}}',
+          paginationBulletMessage: '{{ $paginationMessage }}',
         },
       });
     });
@@ -118,9 +121,11 @@
     {{-- Feature Cards --}}
     <x-feature-cards />
      {{-- Weather Forecast--}}
-    <x-weather />
-    {{-- Footer --}}
-    <x-footer />
+     <x-weather />
+     {{-- Floating Buttons --}}
+     <x-floating-buttons />
+     {{-- Footer --}}
+     <x-footer />
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   </body>
 </html>
