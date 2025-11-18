@@ -448,11 +448,15 @@
         accommodationElements.forEach((accEl, index) => {
             const selectedStaycation = accEl.querySelector('.selected-staycation');
             if (selectedStaycation && selectedStaycation.dataset.staycation) {
-                const staycation = JSON.parse(selectedStaycation.dataset.staycation);
-                selectedAccommodations.push({
-                    accommodation_index: index,
-                    staycation: staycation
-                });
+                try {
+                    const staycation = JSON.parse(selectedStaycation.dataset.staycation);
+                    selectedAccommodations.push({
+                        accommodation_index: index,
+                        staycation: staycation
+                    });
+                } catch (error) {
+                    console.error('Error parsing selected staycation data:', error);
+                }
             }
         });
 
@@ -605,8 +609,13 @@
             if (e.target.classList.contains('select-staycation-modal')) {
                 const staycationData = e.target.dataset.staycation;
                 if (staycationData) {
-                    const staycation = JSON.parse(staycationData);
-                    selectStaycationFromModal(staycation);
+                    try {
+                        const staycation = JSON.parse(staycationData);
+                        selectStaycationFromModal(staycation);
+                    } catch (error) {
+                        console.error('Error parsing staycation data:', error);
+                        showToast('Error selecting staycation option', 'error');
+                    }
                 }
             }
         });
