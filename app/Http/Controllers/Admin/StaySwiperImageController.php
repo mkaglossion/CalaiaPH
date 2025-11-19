@@ -22,13 +22,18 @@ class StaySwiperImageController extends Controller
             'title' => 'nullable|string|max:255',
         ]);
 
-        // Store the image
-        $path = $request->file('image')->store('swiper_images', 'public');
+       // Upload image to Cloudinary
+        $filePath = $request->file('image')->getRealPath();
+        $uploadResult = Cloudinary::uploadApi()->upload($filePath);
+
+        $uploadedFileUrl = $uploadResult['secure_url']; // Cloudinary secure URL
+        $publicId = $uploadResult['public_id']; // Store this if you want to delete later
 
         // Save to DB
         StaySwiperImage::create([
             'title' => $validated['title'] ?? null,
-            'image_path' => $path,
+            'image_path' => $uploadedFileUrl, // store Cloudinary URL
+            'public_id' => $publicId, // optional column in your DB for deletion
         ]);
 
         return response()->json(['message' => 'Image uploaded successfully!']);
@@ -37,7 +42,10 @@ class StaySwiperImageController extends Controller
 
     public function destroy(StaySwiperImage $StaySwiperImage)
     {
-        Storage::disk('public')->delete($StaySwiperImage->image_path);
+         // Delete from Cloudinary if public_id is stored
+        if ($StaySwiperImage->public_id ?? false) {
+            Cloudinary::uploadApi()->destroy($StaySwiperImage->public_id);
+        }
         $StaySwiperImage->delete();
 
         return redirect()->back()->with('success', 'Image deleted successfully!');

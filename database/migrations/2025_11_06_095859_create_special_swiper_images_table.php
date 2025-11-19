@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title')->nullable();
             $table->string('image_path');
+            $table->text('public_id');
             $table->timestamps();
         });
     }

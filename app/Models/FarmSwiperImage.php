@@ -9,5 +9,5 @@ class FarmSwiperImage extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'image_path'];
+    protected $fillable = ['title', 'image_path', 'public_id'];
 }

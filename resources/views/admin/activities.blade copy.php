@@ -40,7 +40,7 @@
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-2">{{ $index + 1 }}</td>
                         <td class="px-4 py-2">
-                            <img src="{{ asset('storage/' . $img->image_path) }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
+                            <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
                         </td>
                         <td class="px-4 py-2">{{ $img->title ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ $img->created_at->format('Y-m-d') }}</td>
