@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\FoodSwiperImage;
 use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+
 
 class FoodSwiperImageController extends Controller
 {
@@ -22,13 +24,18 @@ class FoodSwiperImageController extends Controller
             'title' => 'nullable|string|max:255',
         ]);
 
-        // Store the image
-        $path = $request->file('image')->store('swiper_images', 'public');
+        // Upload image to Cloudinary
+        $filePath = $request->file('image')->getRealPath();
+        $uploadResult = Cloudinary::uploadApi()->upload($filePath);
+
+        $uploadedFileUrl = $uploadResult['secure_url']; // Cloudinary secure URL
+        $publicId = $uploadResult['public_id']; // Store this if you want to delete later
 
         // Save to DB
         FoodSwiperImage::create([
             'title' => $validated['title'] ?? null,
-            'image_path' => $path,
+            'image_path' => $uploadedFileUrl, // store Cloudinary URL
+            'public_id' => $publicId,
         ]);
 
         return response()->json(['message' => 'Image uploaded successfully!']);
@@ -37,7 +44,10 @@ class FoodSwiperImageController extends Controller
 
     public function destroy(FoodSwiperImage $FoodSwiperImage)
     {
-        Storage::disk('public')->delete($FoodSwiperImage->image_path);
+        if ($FoodSwiperImage->public_id ?? false) {
+            Cloudinary::uploadApi()->destroy($FoodSwiperImage->public_id);
+        }
+
         $FoodSwiperImage->delete();
 
         return redirect()->back()->with('success', 'Image deleted successfully!');

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EventSwiperImage extends Model
 {
-    protected $fillable = ['event_id', 'title', 'image_path'];
+    protected $fillable = ['event_id', 'title', 'image_path', 'public_id'];
 
     public function event()
     {

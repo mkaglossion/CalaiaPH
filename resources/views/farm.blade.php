@@ -33,7 +33,7 @@
           @foreach($swiperImages as $index => $image)
           <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
             <img
-              src="{{ asset('storage/' . $image->image_path) }}"
+              src="{{ $image->image_path }}"
               alt="{{ $image->title ?? 'Slide Image' }}"
               class="w-full h-full object-cover object-center"
               loading="lazy"

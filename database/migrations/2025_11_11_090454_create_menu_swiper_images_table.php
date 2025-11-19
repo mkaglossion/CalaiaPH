@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('menu_id')->constrained('menus')->onDelete('cascade');
             $table->string('image_path');
             $table->string('title');
+            $table->text('public_id');
             $table->timestamps();
         });
     }

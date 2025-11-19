@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->foreignId('activity_id')->constrained('activities')->onDelete('cascade');
             $table->string('image_path');
             $table->string('title');
+            $table->text('public_id');
             $table->timestamps();
         });
     }

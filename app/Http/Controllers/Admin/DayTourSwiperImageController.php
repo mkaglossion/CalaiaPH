@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\DayTourSwiperImage;
 use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class DayTourSwiperImageController extends Controller
 {
@@ -22,13 +23,18 @@ class DayTourSwiperImageController extends Controller
             'title' => 'nullable|string|max:255',
         ]);
 
-        // Store the image
-        $path = $request->file('image')->store('swiper_images', 'public');
+        // Upload image to Cloudinary
+        $filePath = $request->file('image')->getRealPath();
+        $uploadResult = Cloudinary::uploadApi()->upload($filePath);
+
+        $uploadedFileUrl = $uploadResult['secure_url']; // Cloudinary secure URL
+        $publicId = $uploadResult['public_id'];
 
         // Save to DB
         DayTourSwiperImage::create([
             'title' => $validated['title'] ?? null,
-            'image_path' => $path,
+            'image_path' => $uploadedFileUrl, // store Cloudinary URL
+            'public_id' => $publicId,
         ]);
 
         return response()->json(['message' => 'Image uploaded successfully!']);
@@ -37,7 +43,9 @@ class DayTourSwiperImageController extends Controller
 
     public function destroy(DayTourSwiperImage $DayTourSwiperImage)
     {
-        Storage::disk('public')->delete($DayTourSwiperImage->image_path);
+        if ($DayTourSwiperImage->public_id ?? false) {
+            Cloudinary::uploadApi()->destroy($DayTourSwiperImage->public_id);
+        }
         $DayTourSwiperImage->delete();
 
         return redirect()->back()->with('success', 'Image deleted successfully!');

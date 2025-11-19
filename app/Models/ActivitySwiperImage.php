@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ActivitySwiperImage extends Model
 {
-    protected $fillable = ['activity_id', 'title', 'image_path'];
+    protected $fillable = ['activity_id', 'title', 'image_path', 'public_id'];
 
     public function activity()
     {
