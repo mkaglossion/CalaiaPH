@@ -12,6 +12,10 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
 
+@php
+$backUrl = route('booking.staycation');
+@endphp
+
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
   {{-- Header --}}
   <x-header active="staycation-activities"/>
@@ -194,7 +198,7 @@
             <div class="mt-6 space-y-3">
               <button
                 type="button"
-                onclick="window.history.back()"
+                onclick="window.location.href = '{{ $backUrl }}';"
                 class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
               >
                 <i class="bi bi-arrow-left"></i>

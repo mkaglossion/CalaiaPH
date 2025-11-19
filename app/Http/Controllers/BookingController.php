@@ -369,24 +369,36 @@ class BookingController extends Controller
 
     public function staycation(Request $request)
     {
-        // Handle POST request to set dates
+        // Handle POST request to set dates and accommodations
         if ($request->isMethod('post')) {
             $request->validate([
-                'check_in' => 'required|date|after:yesterday',
-                'check_out' => 'required|date|after:check_in',
+                'check_in' => 'sometimes|date|after:yesterday',
+                'check_out' => 'sometimes|date|after:check_in',
+                'accommodations' => 'sometimes|array',
             ]);
 
             $booking = session('booking', []);
-            $booking['checkin'] = $request->check_in;
-            $booking['checkout'] = $request->check_out;
-            $booking['booking_type'] = 'staycation';
-            $booking['completed_steps'] = [1]; // Mark step 1 as completed
-            $booking['current_step'] = 1;
-            $booking['timestamp'] = now()->timestamp;
+            if ($request->has('check_in') && $request->has('check_out')) {
+                $booking['checkin'] = $request->check_in;
+                $booking['checkout'] = $request->check_out;
+                $booking['booking_type'] = 'staycation';
+                $booking['completed_steps'] = [1]; // Mark step 1 as completed
+                $booking['current_step'] = 1;
+                $booking['timestamp'] = now()->timestamp;
+            }
+            if ($request->has('accommodations')) {
+                $booking['accommodations'] = $request->input('accommodations', []);
+                $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [2]));
+                $booking['current_step'] = 2;
+            }
             session(['booking' => $booking]);
 
-            // Redirect to GET version to display the page
-            return redirect()->route('booking.staycation');
+            // Redirect based on request
+            if ($request->input('proceed_to_activities')) {
+                return redirect()->route('booking.staycationActivities');
+            } else {
+                return redirect()->route('booking.staycation');
+            }
         }
 
         // Hardcoded staycations data with appropriate images

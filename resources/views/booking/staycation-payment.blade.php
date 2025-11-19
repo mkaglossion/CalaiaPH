@@ -12,6 +12,10 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
 
+@php
+$backUrl = route('booking.staycationActivities');
+@endphp
+
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
   {{-- Header --}}
   <x-header active="staycation" />
@@ -171,33 +175,92 @@
               <div class="bg-gray-50 rounded-xl p-4 sm:p-6">
                 <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center">
                   <i class="bi bi-person-circle mr-2 text-[#8f5d54]"></i>
-                  Customer Information
+                  Personal Information
                 </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  {{-- First Name --}}
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <div class="bg-white px-3 py-2 rounded-lg border border-gray-200 text-gray-900">
-                      Guest User
-                    </div>
+                    <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">
+                      First Name <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="first_name"
+                      name="first_name"
+                      value=""
+                      autocomplete="given-name"
+                      class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
+                      placeholder="Juan"
+                    >
                   </div>
+
+                  {{-- Last Name --}}
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <div class="bg-white px-3 py-2 rounded-lg border border-gray-200 text-gray-900">
-                      guest@example.com
-                    </div>
+                    <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">
+                      Last Name <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="last_name"
+                      name="last_name"
+                      value=""
+                      autocomplete="family-name"
+                      class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
+                      placeholder="Dela Cruz"
+                    >
                   </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4 sm:mt-6">
+                  {{-- Email --}}
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <div class="bg-white px-3 py-2 rounded-lg border border-gray-200 text-gray-900">
-                      +63 XXX XXX XXXX
-                    </div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value=""
+                      autocomplete="email"
+                      class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
+                      placeholder="you@example.com"
+                    >
                   </div>
+
+                  {{-- Phone --}}
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Special Requests</label>
-                    <div class="bg-white px-3 py-2 rounded-lg border border-gray-200 text-gray-900 min-h-[40px]">
-                      None
-                    </div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value=""
+                      autocomplete="tel"
+                      class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
+                      placeholder="+63 9XX XXX XXXX"
+                    >
                   </div>
+                </div>
+
+                {{-- Special Requests --}}
+                <div class="mt-4 sm:mt-6">
+                  <label for="special_requests" class="block text-sm font-medium text-gray-700 mb-2">
+                    Special Requests (Optional)
+                  </label>
+                  <textarea
+                    id="special_requests"
+                    name="special_requests"
+                    rows="4"
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
+                    placeholder="Any special requirements, celebrations, or notes..."
+                  ></textarea>
+                  <p class="mt-1 text-xs text-gray-400">
+                    Example: "Vegan meal options", "Birthday surprise setup", or accessibility needs.
+                  </p>
                 </div>
               </div>
 
@@ -315,8 +378,8 @@
                 </div>
               </div>
 
-              {{-- Pay Now Button --}}
-              <div class="pt-4">
+              {{-- Action Buttons --}}
+              <div class="pt-4 space-y-3">
                 <button
                   type="submit"
                   class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold text-white shadow-lg shadow-[#8f5d54]/20 hover:bg-[#a0675a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-all duration-300 transform hover:-translate-y-0.5"
@@ -327,6 +390,16 @@
                     ₱{{ number_format($accommodationTotal + $activitiesTotal, 2) }}
                   </span>
                 </button>
+
+                <button
+                  type="button"
+                  onclick="window.location.href = '{{ $backUrl }}';"
+                  class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
+                >
+                  <i class="bi bi-arrow-left mr-2"></i>
+                  Back to Activities
+                </button>
+
                 <p class="mt-3 text-xs sm:text-sm text-center text-gray-500">
                   Your payment is secured with 256-bit SSL encryption. By proceeding, you agree to our terms of service.
                 </p>

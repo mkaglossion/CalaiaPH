@@ -1008,7 +1008,33 @@
     }
 
     function proceedToActivities() {
-        // Simply redirect to activities page - session will be updated server-side
-        window.location.href = '{{ route("booking.staycationActivities") }}';
+        // Send POST request to save accommodations and proceed
+        fetch('{{ route("booking.staycation") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                accommodations: window.selectedAccommodations,
+                proceed_to_activities: true
+            })
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                return response.json();
+            }
+        })
+        .then(data => {
+            if (data && data.success) {
+                window.location.href = '{{ route("booking.staycationActivities") }}';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error saving accommodations. Please try again.');
+        });
     }
 </script>
