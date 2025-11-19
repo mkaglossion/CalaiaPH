@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use App\Mail\BookingConfirmation;
 
 class BookingController extends Controller
@@ -90,11 +91,163 @@ class BookingController extends Controller
             session(['inventory' => $inventory]);
         }
 
-        // Store booking data in session for payment
+        // Store booking data in session for activities
         session(['booking_data' => $validated]);
 
-        // Redirect to payment page
-        return redirect()->route('booking.payment');
+        // Redirect to activities page
+        return redirect()->route('booking.activities');
+    }
+
+    public function activities()
+    {
+        $bookingData = session('booking_data');
+
+        if (!$bookingData) {
+            return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
+        }
+
+        // Hardcoded activities for demo
+        $activities = [
+            [
+                'id' => 1,
+                'name' => 'Farm Tour',
+                'description' => 'Guided tour of our organic farm, learning about sustainable farming practices.',
+                'duration' => '2 hours',
+                'price' => 500,
+                'availability' => 'Available',
+            ],
+            [
+                'id' => 2,
+                'name' => 'Cooking Workshop',
+                'description' => 'Hands-on cooking class using fresh, organic ingredients from our farm.',
+                'duration' => '3 hours',
+                'price' => 1200,
+                'availability' => 'Available',
+            ],
+            [
+                'id' => 3,
+                'name' => 'Biking Adventure',
+                'description' => 'Explore the scenic trails around the farm on our mountain bikes.',
+                'duration' => '1.5 hours',
+                'price' => 300,
+                'availability' => 'Limited spots',
+            ],
+            [
+                'id' => 4,
+                'name' => 'Photography Session',
+                'description' => 'Professional photography session capturing the beauty of our farm.',
+                'duration' => '2 hours',
+                'price' => 800,
+                'availability' => 'Available',
+            ],
+        ];
+
+        return view('booking.activities', compact('bookingData', 'activities'));
+    }
+
+    public function storeActivities(Request $request)
+    {
+        $request->validate([
+            'activities' => 'required|array',
+            'activities.*.id' => 'required|string',
+            'activities.*.name' => 'required|string',
+            'activities.*.price' => 'required|numeric',
+            'activities.*.type' => 'required|string|in:predefined',
+        ]);
+
+        $bookingData = session('booking_data');
+
+        if (!$bookingData) {
+            return response()->json(['success' => false, 'message' => 'No booking data found.'], 400);
+        }
+
+        // Store selected activities in session
+        session(['selected_activities' => $request->activities]);
+
+        return response()->json(['success' => true, 'message' => 'Activities saved successfully.']);
+    }
+
+    public function staycationActivities()
+    {
+        $booking = session('booking', []);
+
+        if (empty($booking['checkin']) || empty($booking['checkout']) || empty($booking['accommodations'])) {
+            return redirect()->route('booking.staycation')->with('error', 'Please complete accommodation selection first.');
+        }
+
+        // Hardcoded activities for demo
+        $activities = [
+            [
+                'id' => 1,
+                'name' => 'Farm Tour',
+                'description' => 'Guided tour of our organic farm, learning about sustainable farming practices.',
+                'duration' => '2 hours',
+                'price' => 500,
+                'availability' => 'Available',
+            ],
+            [
+                'id' => 2,
+                'name' => 'Cooking Workshop',
+                'description' => 'Hands-on cooking class using fresh, organic ingredients from our farm.',
+                'duration' => '3 hours',
+                'price' => 1200,
+                'availability' => 'Available',
+            ],
+            [
+                'id' => 3,
+                'name' => 'Biking Adventure',
+                'description' => 'Explore the scenic trails around the farm on our mountain bikes.',
+                'duration' => '1.5 hours',
+                'price' => 300,
+                'availability' => 'Limited spots',
+            ],
+            [
+                'id' => 4,
+                'name' => 'Photography Session',
+                'description' => 'Professional photography session capturing the beauty of our farm.',
+                'duration' => '2 hours',
+                'price' => 800,
+                'availability' => 'Available',
+            ],
+        ];
+
+        return view('booking.staycation-activities', compact('booking', 'activities'));
+    }
+
+    public function storeStaycationActivities(Request $request)
+    {
+        $request->validate([
+            'activities' => 'required|array',
+            'activities.*.id' => 'required|string',
+            'activities.*.name' => 'required|string',
+            'activities.*.price' => 'required|numeric',
+            'activities.*.type' => 'required|string|in:predefined,custom',
+        ]);
+
+        $booking = session('booking', []);
+
+        if (empty($booking)) {
+            return response()->json(['success' => false, 'message' => 'No booking data found.'], 400);
+        }
+
+        // Store selected activities in session
+        $booking['selected_activities'] = $request->activities;
+        $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [3]));
+        $booking['current_step'] = 4;
+        session(['booking' => $booking]);
+
+        return response()->json(['success' => true, 'message' => 'Activities saved successfully.']);
+    }
+
+    public function staycationPayment()
+    {
+        $booking = session('booking', []);
+
+        if (empty($booking['checkin']) || empty($booking['checkout']) || empty($booking['accommodations'])) {
+            return redirect()->route('booking.staycation')->with('error', 'Please complete your staycation booking first.');
+        }
+
+        return view('booking.staycation-payment', compact('booking'));
     }
 
     public function payment()
@@ -108,27 +261,69 @@ class BookingController extends Controller
         return view('booking.payment', compact('bookingData'));
     }
 
-    public function processPayment(Request $request)
+    public function confirmation()
     {
         $bookingData = session('booking_data');
+        $selectedActivities = session('selected_activities', []);
+        $grandTotal = ($bookingData['price'] ?? 0) + collect($selectedActivities)->sum('price');
 
         if (!$bookingData) {
             return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
         }
 
-        // Simulate payment processing
-        // In real implementation, integrate with payment gateway
+        // Clear session data after showing confirmation
+        session()->forget(['booking_data', 'selected_activities']);
 
-        try {
-            // Send confirmation email
-            Mail::to($bookingData['email'])->send(new BookingConfirmation($bookingData));
+        return view('booking.confirmation', compact('bookingData', 'selectedActivities', 'grandTotal'));
+    }
 
-            // Clear session
-            session()->forget('booking_data');
+    public function processPayment(Request $request)
+    {
+        $request->validate([
+            'payment_method' => 'required|in:gcash,paymaya,bank',
+            'terms' => 'accepted',
+        ]);
 
-            return redirect()->route('home')->with('success', 'Payment successful! Booking confirmed. Check your email for details.');
-        } catch (\Exception) {
-            return redirect()->back()->with('error', 'Payment failed. Please try again.');
+        $bookingData = session('booking_data');
+        $staycationBooking = session('booking', []);
+
+        if (!$bookingData && empty($staycationBooking)) {
+            return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
+        }
+
+        // Determine booking type
+        $isStaycation = !empty($staycationBooking) && isset($staycationBooking['booking_type']) && $staycationBooking['booking_type'] === 'staycation';
+
+        if ($isStaycation) {
+            // Handle staycation booking
+            $selectedActivities = $staycationBooking['selected_activities'] ?? [];
+
+            try {
+                // Send confirmation email for staycation
+                // For now, we'll use the same mail class but could create a separate one
+                Mail::to('guest@example.com')->send(new BookingConfirmation($staycationBooking, $selectedActivities));
+
+                // Clear session
+                session()->forget('booking');
+
+                return redirect()->route('home')->with('success', 'Staycation payment successful! Booking confirmed. Check your email for details.');
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', 'Payment failed. Please try again.');
+            }
+        } else {
+            // Handle regular booking
+            $selectedActivities = session('selected_activities', []);
+
+            try {
+                // Send confirmation email with activities
+                Mail::to($bookingData['email'])->send(new BookingConfirmation($bookingData, $selectedActivities));
+            } catch (\Exception $e) {
+                // Log the error but continue to confirmation
+                Log::error('Email sending failed: ' . $e->getMessage());
+            }
+
+            // Redirect to confirmation page
+            return redirect()->route('booking.confirmation');
         }
     }
 
