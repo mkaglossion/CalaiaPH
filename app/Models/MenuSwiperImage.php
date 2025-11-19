@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class MenuSwiperImage extends Model
 {
-    protected $fillable = ['menu_id', 'title', 'image_path'];
+    protected $fillable = ['menu_id', 'title', 'image_path', 'public_id'];
 
     public function menu()
     {

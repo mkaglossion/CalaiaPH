@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class StaycationSwiperImage extends Model
 {
-    protected $fillable = ['staycation_id', 'title', 'image_path'];
+    protected $fillable = ['staycation_id', 'title', 'image_path', 'public_id'];
 
     public function staycation()
     {

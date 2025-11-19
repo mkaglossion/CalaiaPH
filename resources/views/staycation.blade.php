@@ -32,7 +32,7 @@
           @php $texts_array = array_values($texts); $labels_array = array_keys($texts); @endphp
           @foreach($swiperImages as $index => $image)
           <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-            <img src="{{ asset('storage/' . $image->image_path) }}" alt="{{ $image->title ?? 'Slide Image' }}" class="w-full h-full object-cover object-center" loading="lazy">
+            <img src="{{ $image->image_path }}" alt="{{ $image->title ?? 'Slide Image' }}" class="w-full h-full object-cover object-center" loading="lazy">
             <div class="absolute inset-0 bg-black/40 z-10"></div>
             <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
               <div class="text-center px-4">
