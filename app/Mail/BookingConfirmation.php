@@ -14,13 +14,15 @@ class BookingConfirmation extends Mailable
     use Queueable, SerializesModels;
 
     public $bookingData;
+    public $selectedActivities;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($bookingData)
+    public function __construct($bookingData, $selectedActivities = [])
     {
         $this->bookingData = $bookingData;
+        $this->selectedActivities = $selectedActivities;
     }
 
     /**
@@ -42,6 +44,7 @@ class BookingConfirmation extends Mailable
             view: 'emails.booking-confirmation',
             with: [
                 'bookingData' => $this->bookingData,
+                'selectedActivities' => $this->selectedActivities,
             ],
         );
     }

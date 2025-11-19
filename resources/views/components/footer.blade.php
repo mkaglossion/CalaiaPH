@@ -1,9 +1,9 @@
 <footer class="bg-[#8f5d54] text-white mt-0">
   <!-- Social Media Banner -->
-  <div class="bg-[#7a4d44] py-6">
+  <div class="bg-[#7a4d44] py-4">
     <div class="max-w-7xl mx-auto px-6">
       <div class="flex flex-col justify-center items-center">
-        <div class="text-center mb-4">
+        <div class="text-center mb-3">
           <span class="text-lg font-semibold">Get connected with us on social networks:</span>
         </div>
         <div class="flex space-x-4">
@@ -29,22 +29,22 @@
   </div>
 
   <!-- Main Footer Content -->
-  <div class="py-12">
+  <div class="py-8">
     <div class="max-w-7xl mx-auto px-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Company Info -->
         <div class="text-center md:text-left">
-          <h3 class="text-2xl font-bold uppercase mb-4">CALAIA FARM</h3>
+          <h3 class="text-2xl font-bold uppercase mb-3">CALAIA FARM</h3>
           <p class="text-gray-200 leading-relaxed">
-            Your perfect getaway destination for relaxation and adventure. 
+            Your perfect getaway destination for relaxation and adventure.
             Experience nature at its finest in Calaca, Batangas.
           </p>
         </div>
 
         <!-- Quick Links -->
         <div class="text-center md:text-left">
-          <h3 class="text-xl font-semibold uppercase mb-4">EXPLORE</h3>
-          <ul class="space-y-2">
+          <h3 class="text-xl font-semibold uppercase mb-3">EXPLORE</h3>
+          <ul class="space-y-1">
             <li><a href="{{ url('/') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Home</a></li>
             <li><a href="{{ url('/daytour') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Day Tour</a></li>
             <li><a href="{{ url('/staycation') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Where to Stay</a></li>
@@ -57,8 +57,8 @@
 
         <!-- Useful Links -->
         <div class="text-center md:text-left">
-          <h3 class="text-xl font-semibold uppercase mb-4">INFORMATION</h3>
-          <ul class="space-y-2">
+          <h3 class="text-xl font-semibold uppercase mb-3">INFORMATION</h3>
+          <ul class="space-y-1">
             <li><a href="{{ url('/our-story') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Our Story</a></li>
             <li><a href="{{ url('/sustainability') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Sustainability</a></li>
             <li><a href="{{ url('/services') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Our Services</a></li>
@@ -68,8 +68,8 @@
 
         <!-- Contact Info -->
         <div class="text-center md:text-left">
-          <h3 class="text-xl font-semibold uppercase mb-4">CONTACT</h3>
-          <div class="space-y-3">
+          <h3 class="text-xl font-semibold uppercase mb-3">CONTACT</h3>
+          <div class="space-y-2">
             <div class="flex items-center justify-center md:justify-start">
               <i class="bi bi-geo-alt-fill mr-3 text-gray-200"></i>
               <span class="text-gray-200">Calaca, Batangas, Philippines</span>
@@ -95,9 +95,9 @@
       </div>
 
       <!-- Policies Section -->
-      <div class="mt-8 pt-8 border-t border-white/20">
+      <div class="mt-6 pt-6 border-t border-white/20">
         <div class="text-center">
-          <h3 class="text-lg font-semibold uppercase mb-4">POLICIES & TERMS</h3>
+          <h3 class="text-lg font-semibold uppercase mb-3">POLICIES & TERMS</h3>
           <div class="flex flex-wrap justify-center gap-6">
             <a href="{{ url('/privacy-notice') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-sm">
               Privacy Notice
@@ -116,7 +116,7 @@
       </div>
 
       <!-- Copyright -->
-      <div class="mt-8 pt-6 border-t border-white/20">
+      <div class="mt-6 pt-4 border-t border-white/20">
         <p class="text-center text-gray-200 text-sm">
           &copy; {{ date('Y') }} CALAIA FARM. ALL RIGHTS RESERVED.
         </p>

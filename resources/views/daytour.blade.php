@@ -45,12 +45,12 @@
           <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
             <div class="text-center px-4">
                 @if(isset($texts_array[$index]))
-                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase"
-                      style="font-family: gotham; font-size: 3.5rem;">
+                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
+                      style="font-family: gotham;">
                     {{ ucfirst($labels_array[$index]) }}
                   </h2>
-                  <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
-                    style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
+                  <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
+                    style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
                     {{ $texts_array[$index] }}
                   </p>
                 @endif
@@ -62,12 +62,12 @@
         <div class="swiper-slide relative flex items-center justify-center bg-gray-200 overflow-hidden">
           <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
             <div class="text-center px-4">
-              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 uppercase"
-                  style="font-family: gotham; font-size: 3.5rem;">
+              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
+                  style="font-family: gotham;">
                 No Image Available
               </h2>
-              <p class="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl uppercase"
-                style="font-family: 'Vilaka Modern Serif', serif; font-style: italic; font-size: 1.2rem;">
+              <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
+                style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
                 Images will be added soon
               </p>
             </div>

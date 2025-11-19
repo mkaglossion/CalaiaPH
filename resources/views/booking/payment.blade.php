@@ -19,7 +19,7 @@
   {{-- Progress Indicator --}}
   <div class="bg-white shadow-sm border-b border-gray-100">
     <div class="max-w-7xl mx-auto px-4 py-3">
-      <div class="flex items-center justify-center space-x-4 max-w-md mx-auto">
+      <div class="flex items-center justify-center space-x-2 sm:space-x-4 max-w-md sm:max-w-lg mx-auto">
         {{-- Step 1: Details --}}
         <div class="flex items-center text-green-600">
           <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-2">
@@ -30,20 +30,30 @@
 
         <div class="flex-1 h-px bg-gray-300"></div>
 
-        {{-- Step 2: Payment --}}
+        {{-- Step 2: Activities --}}
+        <div class="flex items-center text-green-600">
+          <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-2">
+            <i class="bi bi-check-circle-fill text-sm"></i>
+          </div>
+          <span class="text-sm font-medium">Activities</span>
+        </div>
+
+        <div class="flex-1 h-px bg-gray-300"></div>
+
+        {{-- Step 3: Payment --}}
         <div class="flex flex-col items-center text-[#8f5d54]">
           <div class="w-8 h-8 bg-[#8f5d54] text-white rounded-full flex items-center justify-center text-sm font-bold mb-1">
-            2
+            3
           </div>
           <span class="text-sm font-medium">Payment</span>
         </div>
 
         <div class="flex-1 h-px bg-gray-300"></div>
 
-        {{-- Step 3: Confirmation --}}
+        {{-- Step 4: Confirmation --}}
         <div class="flex flex-col items-center text-gray-400">
           <div class="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-sm font-bold mb-1">
-            3
+            4
           </div>
           <span class="text-sm font-medium">Confirmation</span>
         </div>
@@ -97,7 +107,41 @@
                 </span>
               </div>
 
-              <hr class="my-3 border-dashed border-gray-200">
+              @php
+                $selectedActivities = session('selected_activities', []);
+                $activitiesTotal = 0;
+                foreach ($selectedActivities as $activity) {
+                    $activitiesTotal += $activity['price'];
+                }
+                $grandTotal = ($bookingData['price'] ?? 0) + $activitiesTotal;
+              @endphp
+
+              @if (!empty($selectedActivities))
+                <hr class="my-3 border-dashed border-gray-200">
+
+                <div class="space-y-2">
+                  <p class="font-medium text-gray-700">Selected Activities:</p>
+                  @foreach ($selectedActivities as $activity)
+                    <div class="flex justify-between gap-4 pl-4">
+                      <span class="text-gray-600">{{ $activity['name'] }}</span>
+                      <span class="text-right font-semibold text-[#8f5d54]">
+                        ₱{{ number_format($activity['price'], 2) }}
+                      </span>
+                    </div>
+                  @endforeach
+                </div>
+
+                <hr class="my-3 border-dashed border-gray-200">
+
+                <div class="flex justify-between gap-4 font-semibold">
+                  <span class="text-gray-900">Total</span>
+                  <span class="text-right text-[#8f5d54]">
+                    ₱{{ number_format($grandTotal, 2) }}
+                  </span>
+                </div>
+              @else
+                <hr class="my-3 border-dashed border-gray-200">
+              @endif
 
               <div class="flex justify-between gap-4">
                 <span class="font-medium text-gray-500">Guest Name</span>
@@ -332,7 +376,7 @@
                   <i class="bi bi-lock-fill mr-2"></i>
                   <span>Complete Payment</span>
                   <span class="font-bold ml-2">
-                    ₱{{ number_format((float) ($bookingData['price'] ?? 0), 2) }}
+                    ₱{{ number_format($grandTotal, 2) }}
                   </span>
                 </button>
                 <p class="mt-3 text-xs sm:text-sm text-center text-gray-500">
@@ -358,5 +402,6 @@
       font-family: 'Vila Zilka Serif', ui-serif, Georgia, 'Times New Roman', serif;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </body>
 </html>

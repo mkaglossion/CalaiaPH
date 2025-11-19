@@ -19,7 +19,7 @@
   {{-- Progress Indicator --}}
   <div class="bg-white shadow-sm border-b border-gray-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex items-center justify-center space-x-2 sm:space-x-4 max-w-sm sm:max-w-md mx-auto">
+      <div class="flex items-center justify-center space-x-2 sm:space-x-4 max-w-md sm:max-w-lg mx-auto">
         {{-- Step 1: Details (current) --}}
         <div class="flex flex-col items-center text-[#8f5d54]">
           <div class="w-6 h-6 sm:w-8 sm:h-8 bg-[#8f5d54] text-white rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
@@ -30,20 +30,30 @@
 
         <div class="flex-1 h-px bg-gray-300"></div>
 
-        {{-- Step 2: Payment --}}
+        {{-- Step 2: Activities --}}
         <div class="flex flex-col items-center text-gray-400">
           <div class="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
             2
+          </div>
+          <span class="text-xs sm:text-sm font-medium text-center">Activities</span>
+        </div>
+
+        <div class="flex-1 h-px bg-gray-300"></div>
+
+        {{-- Step 3: Payment --}}
+        <div class="flex flex-col items-center text-gray-400">
+          <div class="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
+            3
           </div>
           <span class="text-xs sm:text-sm font-medium text-center">Payment</span>
         </div>
 
         <div class="flex-1 h-px bg-gray-300"></div>
 
-        {{-- Step 3: Confirmation --}}
+        {{-- Step 4: Confirmation --}}
         <div class="flex flex-col items-center text-gray-300">
           <div class="w-6 h-6 sm:w-8 sm:h-8 bg-gray-100 text-gray-500 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
-            3
+            4
           </div>
           <span class="text-xs sm:text-sm font-medium text-center">Confirmation</span>
         </div>
@@ -290,12 +300,12 @@
                   class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold text-white shadow-lg shadow-[#8f5d54]/20 hover:bg-[#a0675a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-all duration-300 transform hover:-translate-y-0.5"
                 >
                   <i class="bi bi-arrow-right-circle mr-2"></i>
-                  <span>Continue to Payment</span>
+                  <span>Proceed to Activities</span>
                 </button>
                 <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p class="text-xs sm:text-sm text-blue-700 text-center">
                     <i class="bi bi-info-circle mr-1"></i>
-                    You won't be charged yet. You'll review your booking before completing payment.
+                    Optional activities can enhance your experience. You can skip them if preferred.
                   </p>
                 </div>
               </div>
@@ -423,6 +433,7 @@
               }
           }
       });
-  </script>
-</body>
+   </script>
+   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+ </body>
 </html>

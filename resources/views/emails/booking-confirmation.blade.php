@@ -29,6 +29,15 @@
                 <p><strong>Type:</strong> {{ ucfirst($bookingData['type']) }}</p>
                 <p><strong>Package:</strong> {{ $bookingData['package'] }}</p>
                 <p><strong>Price:</strong> ₱{{ number_format((float)$bookingData['price']) }}</p>
+                @if(!empty($selectedActivities))
+                <p><strong>Selected Activities:</strong></p>
+                <ul>
+                    @foreach($selectedActivities as $activity)
+                    <li>{{ $activity['name'] }} - ₱{{ number_format($activity['price']) }}</li>
+                    @endforeach
+                </ul>
+                <p><strong>Total Price:</strong> ₱{{ number_format((float)$bookingData['price'] + collect($selectedActivities)->sum('price')) }}</p>
+                @endif
                 <p><strong>Preferred Date:</strong> {{ \Carbon\Carbon::parse($bookingData['booking_date'])->format('F j, Y') }}</p>
                 <p><strong>Number of Guests:</strong> {{ $bookingData['guests'] }}</p>
                 @if($bookingData['special_requests'])
