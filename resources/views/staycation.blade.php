@@ -78,7 +78,7 @@
             <div class="px-4 py-7 text-center">
               <h3 class="mb-4 text-2xl md:text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">Glamping Tent</h3>
               <div class="mx-auto my-4 h-px w-full" style="background:#dce8d6;"></div>
-              <ul class="space-y-2 text-sm md:text-[12px] uppercase tracking-widest" style="color:#8f6a60;">
+              <ul class="space-y-2 text-base md:text-lg uppercase tracking-widest" style="color:#8f6a60; font-family: 'Vila Zilka Serif', serif;">
                 <li>LUXURY TENT SETUP</li>
                 <li>GOURMET LUNCH SERVICE</li>
                 <li>PRIVATE ATV EXPERIENCE</li>
@@ -99,7 +99,7 @@
             <div class="px-4 py-7 text-center">
               <h3 class="mb-4 text-2xl md:text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">Camping</h3>
               <div class="mx-auto my-4 h-px w-full" style="background:#dce8d6;"></div>
-              <ul class="space-y-2 text-sm md:text-[12px] uppercase tracking-widest" style="color:#8f6a60;">
+              <ul class="space-y-2 text-base md:text-lg uppercase tracking-widest" style="color:#8f6a60; font-family: 'Vila Zilka Serif', serif;">
                 <li>TENT SETUP ASSISTANCE</li>
                 <li>CAMPFIRE BUILDING</li>
                 <li>STARGAZING SESSION</li>
@@ -119,14 +119,14 @@
       <div x-show="glampingOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="closeGlampingModal()" @click.self="closeGlampingModal()" style="display:none;">
         <div class="w-full max-w-6xl rounded-2xl bg-white shadow-xl overflow-auto max-h-[90vh]">
           <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color: rgba(128,128,128,0.3);">
-            <h3 class="text-xl md:text-2xl font-bold" style="color:#97655A"><i class="bi bi-stars me-2"></i>Glamping Options</h3>
+            <h3 class="text-2xl md:text-3xl font-bold" style="color:#97655A; font-family: gotham;"><i class="bi bi-stars me-2"></i>Glamping Options</h3>
             <button class="p-2 rounded hover:bg-gray-100" @click="closeGlampingModal()"><i class="bi bi-x-lg"></i></button>
           </div>
 
           <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Standard -->
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-house-fill"></i> Standard</h4></div>
+              <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Vila Zilka Serif', serif;"><i class="bi bi-house-fill"></i> Standard</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -147,11 +147,11 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-lg md:text-xl font-bold" style="color:#16a34a">Starts at ₱1,200/night</p>
+                  <p class="text-xl md:text-2xl font-bold" style="color:#16a34a; font-family: 'Vila Zilka Serif', serif;">Starts at ₱1,200/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Standard</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">Shared bathroom facilities</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Double bed</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Electricity and heating</li>
@@ -168,7 +168,7 @@
 
             <!-- Premium -->
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#3b82f6;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-star-fill"></i> Premium</h4></div>
+              <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Vila Zilka Serif', serif;"><i class="bi bi-star-fill"></i> Premium</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -189,11 +189,11 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-lg md:text-xl font-bold" style="color:#16a34a">Starts at ₱5,500 - ₱6,500/night</p>
+                  <p class="text-xl md:text-2xl font-bold" style="color:#16a34a; font-family: 'Vila Zilka Serif', serif;">Starts at ₱5,500 - ₱6,500/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Exclusive</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">Towels &amp; care kits</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">A/C &amp; Wi-Fi ready</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Picnic table &amp; fire pit</li>
@@ -202,7 +202,7 @@
                   <li class="px-3 py-2 bg-gray-50 rounded">28 m² • 4 single beds</li>
                 </ul>
                 <div class="flex gap-2">
-                  <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#3b82f6" @click="book('{{ url('/booking/staycation?type=staycation&package=Premium%20Glamping&price=5500') }}')">Book Now</button>
+                  <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#00848d" @click="book('{{ url('/booking/staycation?type=staycation&package=Premium%20Glamping&price=5500') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('glamping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
                 </div>
               </div>
@@ -219,14 +219,14 @@
       <div x-show="campingOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="closeCampingModal()" @click.self="closeCampingModal()" style="display:none;">
         <div class="w-full max-w-6xl rounded-2xl bg-white shadow-xl overflow-auto max-h-[90vh]">
           <div class="flex items-center justify-between px-4 md:px-6 py-4 border-b" style="border-color: rgba(128,128,128,0.3);">
-            <h3 class="text-xl md:text-2xl font-bold" style="color:#97655A"><i class="bi bi-house me-2"></i>Camping Options</h3>
+            <h3 class="text-2xl md:text-3xl font-bold" style="color:#97655A; font-family: gotham;"><i class="bi bi-house me-2"></i>Camping Options</h3>
             <button class="p-2 rounded hover:bg-gray-100" @click="closeCampingModal()"><i class="bi bi-x-lg"></i></button>
           </div>
 
           <div class="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             <!-- Dome Tent -->
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#3b82f6;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-tent"></i>Dome Tent</h4></div>
+              <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Vila Zilka Serif', serif;"><i class="bi bi-tent"></i>Dome Tent</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -247,17 +247,17 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-lg md:text-xl font-bold" style="color:#16a34a">Starts at ₱1,200/night</p>
+                  <p class="text-xl md:text-2xl font-bold" style="color:#16a34a; font-family: 'Vila Zilka Serif', serif;">Starts at ₱1,200/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Comfort</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">4-person capacity</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Sleeping mats included</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Access to shared bathroom</li>
                 </ul>
                 <div class="flex gap-2">
-                  <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#3b82f6" @click="book('{{ url('/booking/staycation?type=camping&package=Dome%20Tent&price=1200') }}')">Book Now</button>
+                  <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#00848d" @click="book('{{ url('/booking/staycation?type=camping&package=Dome%20Tent&price=1200') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('camping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
                 </div>
               </div>
@@ -265,7 +265,7 @@
 
             <!-- Bell Tent -->
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-house-fill"></i>Bell Tent</h4></div>
+              <div class="px-4 py-2" style="background:#7a7d52;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-house-fill"></i>Bell Tent</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -286,17 +286,17 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-lg md:text-xl font-bold" style="color:#16a34a">Starts at ₱1,800/night</p>
+                  <p class="text-xl md:text-2xl font-bold" style="color:#16a34a; font-family: 'Vila Zilka Serif', serif;">Starts at ₱1,800/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Spacious</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">Up to 6 guests</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Luxury canvas tent</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Shared bathroom</li>
                 </ul>
                 <div class="flex gap-2">
-                  <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#16a34a" @click="book('{{ url('/booking/staycation?type=camping&package=Bell%20Tent&price=1800') }}')">Book Now</button>
+                  <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#7a7d52" @click="book('{{ url('/booking/staycation?type=camping&package=Bell%20Tent&price=1800') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('camping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
                 </div>
               </div>
@@ -304,7 +304,7 @@
 
             <!-- BYOT -->
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#22c55e;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-backpack"></i>BYOT</h4></div>
+              <div class="px-4 py-2" style="background:#843c23;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-backpack"></i>BYOT</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -325,17 +325,17 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-lg md:text-xl font-bold" style="color:#16a34a">Starts at ₱800/night</p>
+                  <p class="text-xl md:text-2xl font-bold" style="color:#16a34a; font-family: 'Vila Zilka Serif', serif;">Starts at ₱800/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dcfce7;color:#166534">Budget</span>
                 </div>
-                <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <h6 class="text-lg md:text-xl font-semibold" style="font-family: 'Vila Zilka Serif', serif;">Features</h6>
+                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">Bring your own tent</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Spacious camping spot</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Access to shared bathroom</li>
                 </ul>
                 <div class="flex gap-2">
-                  <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#6b7280" @click="book('{{ url('/booking/staycation?type=camping&package=BYOT&price=800') }}')">Book Now</button>
+                  <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#843c23" @click="book('{{ url('/booking/staycation?type=camping&package=BYOT&price=800') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('camping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
                 </div>
               </div>
@@ -343,7 +343,7 @@
 
             <!-- Car Camping -->
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#f59e0b;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-car-front-fill"></i>Car Camping</h4></div>
+              <div class="px-4 py-2" style="background:#db8636;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-car-front-fill"></i>Car Camping</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -364,17 +364,17 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-lg md:text-xl font-bold" style="color:#16a34a">Starts at ₱1,500/night</p>
+                  <p class="text-xl md:text-2xl font-bold" style="color:#16a34a; font-family: 'Vila Zilka Serif', serif;">Starts at ₱1,500/night</p>
                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#fef3c7;color:#7c2d12">Convenient</span>
                 </div>
-                <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <h6 class="text-xl md:text-2xl font-semibold" style="font-family: 'Vila Zilka Serif', serif;">Features</h6>
+                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">Park next to your campsite</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Electrical hookup available</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Access to shared bathroom</li>
                 </ul>
                 <div class="flex gap-2">
-                  <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#f59e0b" @click="book('{{ url('/booking/staycation?type=camping&package=Car%20Camping&price=1500') }}')">Book Now</button>
+                  <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#db8636" @click="book('{{ url('/booking/staycation?type=camping&package=Car%20Camping&price=1500') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('camping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
                 </div>
               </div>
