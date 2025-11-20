@@ -450,7 +450,18 @@
             let total = 0;
             Object.values(accommodations).forEach(acc => {
                 if (acc && acc.staycation && acc.staycation.price) {
-                    total += acc.staycation.price * nights;
+                    let price = acc.staycation.price;
+                    let quantity = acc.guests || 1;
+
+                    // For BYOT and Car Camping, multiply price by quantity
+                    const isBYOT = acc.staycation.name.toLowerCase().includes('byot');
+                    const isCarCamping = acc.staycation.name.toLowerCase().includes('car camping');
+
+                    if (isBYOT || isCarCamping) {
+                        price = price * quantity;
+                    }
+
+                    total += price * nights;
                 }
             });
             return total;
@@ -639,6 +650,11 @@
         const staycation = accommodation.staycation;
         const guests = accommodation.guests || 1;
 
+        // Calculate display price (considering quantity for BYOT/Car Camping)
+        const isBYOT = staycation.name.toLowerCase().includes('byot');
+        const isCarCamping = staycation.name.toLowerCase().includes('car camping');
+        const displayPrice = (isBYOT || isCarCamping) ? staycation.price * guests : staycation.price;
+
         // Remove existing display for this index
         const existingDisplay = container.querySelector(`.accommodation-display[data-index="${index}"]`);
         if (existingDisplay) {
@@ -657,9 +673,9 @@
                          class="w-12 h-12 rounded-lg object-cover">
                     <div>
                         <h4 class="font-semibold text-gray-900">ACCOMMODATION ${parseInt(index) + 1}: ${staycation.name}</h4>
-                        <p class="text-sm text-gray-600">₱ ${staycation.price.toLocaleString()}/night</p>
+                        <p class="text-sm text-gray-600">₱ ${displayPrice.toLocaleString()}/night</p>
                         <p class="text-xs text-gray-500">Capacity: ${staycation.capacity} guests</p>
-                        <p class="text-xs text-gray-500">Guests: ${guests}</p>
+                        <p class="text-xs text-gray-500">${isBYOT ? 'BYOT' : isCarCamping ? 'Vehicles' : 'Guests'}: ${guests}</p>
                     </div>
                 </div>
                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${staycation.type === 'glamping' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">

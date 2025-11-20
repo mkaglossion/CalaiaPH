@@ -12,6 +12,15 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
 
+@php
+// For staycation confirmation
+if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations'])) {
+   $totalGuests = collect($bookingData['accommodations'])->sum('guests');
+   $nights = !empty($bookingData['checkin']) && !empty($bookingData['checkout']) ?
+       \Carbon\Carbon::parse($bookingData['checkout'])->diffInDays(\Carbon\Carbon::parse($bookingData['checkin'])) : 0;
+}
+@endphp
+
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
   {{-- Header --}}
   <x-header active="confirmation"/>
@@ -82,54 +91,147 @@
         <div class="bg-gray-50 rounded-xl p-6 mb-6 text-left">
           <h2 class="text-xl font-semibold text-gray-900 mb-4">Booking Details</h2>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span class="font-medium text-gray-500">Booking Type:</span>
-              <span class="ml-2 text-gray-900">{{ ucfirst($bookingData['type'] ?? '') }}</span>
+          @if(isset($isStaycation) && $isStaycation)
+            {{-- Staycation Booking Details --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span class="font-medium text-gray-500">Booking Type:</span>
+                <span class="ml-2 text-gray-900">Staycation</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Check-in:</span>
+                <span class="ml-2 text-gray-900">
+                  @if (!empty($bookingData['checkin']))
+                    {{ \Carbon\Carbon::parse($bookingData['checkin'])->format('M d, Y') }}
+                  @endif
+                </span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Check-out:</span>
+                <span class="ml-2 text-gray-900">
+                  @if (!empty($bookingData['checkout']))
+                    {{ \Carbon\Carbon::parse($bookingData['checkout'])->format('M d, Y') }}
+                  @endif
+                </span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Nights:</span>
+                <span class="ml-2 text-gray-900">
+                  @if (!empty($bookingData['checkin']) && !empty($bookingData['checkout']))
+                    {{ \Carbon\Carbon::parse($bookingData['checkout'])->diffInDays(\Carbon\Carbon::parse($bookingData['checkin'])) }}
+                  @endif
+                </span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Guests:</span>
+                <span class="ml-2 text-gray-900">{{ $totalGuests }}</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Name:</span>
+                <span class="ml-2 text-gray-900">{{ ($customerInfo['first_name'] ?? '') . ' ' . ($customerInfo['last_name'] ?? '') }}</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Email:</span>
+                <span class="ml-2 text-gray-900">{{ $customerInfo['email'] ?? '' }}</span>
+              </div>
             </div>
-            <div>
-              <span class="font-medium text-gray-500">Package:</span>
-              <span class="ml-2 text-gray-900">{{ $bookingData['package'] ?? '' }}</span>
-            </div>
-            <div>
-              <span class="font-medium text-gray-500">Date:</span>
-              <span class="ml-2 text-gray-900">
-                @if (!empty($bookingData['booking_date']))
-                  {{ \Carbon\Carbon::parse($bookingData['booking_date'])->format('M d, Y') }}
-                @endif
-              </span>
-            </div>
-            <div>
-              <span class="font-medium text-gray-500">Guests:</span>
-              <span class="ml-2 text-gray-900">{{ $bookingData['guests'] ?? '' }}</span>
-            </div>
-            <div>
-              <span class="font-medium text-gray-500">Name:</span>
-              <span class="ml-2 text-gray-900">{{ ($bookingData['first_name'] ?? '') . ' ' . ($bookingData['last_name'] ?? '') }}</span>
-            </div>
-            <div>
-              <span class="font-medium text-gray-500">Email:</span>
-              <span class="ml-2 text-gray-900">{{ $bookingData['email'] ?? '' }}</span>
-            </div>
-          </div>
 
-          @if (!empty($selectedActivities))
+            @if (!empty($bookingData['accommodations']))
+              <div class="mt-4 pt-4 border-t border-gray-200">
+                <h3 class="font-medium text-gray-900 mb-2">Selected Accommodations:</h3>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  @foreach ($bookingData['accommodations'] as $accommodation)
+                    @if (!empty($accommodation['staycation']))
+                      <li>• {{ $accommodation['staycation']['name'] }}
+                        @if(str_contains(strtolower($accommodation['staycation']['name']), 'byot') || str_contains(strtolower($accommodation['staycation']['name']), 'car camping'))
+                          ({{ $accommodation['guests'] }} {{ str_contains(strtolower($accommodation['staycation']['name']), 'byot') ? 'BYOT' : 'Vehicles' }})
+                        @endif
+                        - ₱{{ number_format($accommodation['staycation']['price'] * ($accommodation['guests'] ?? 1), 2) }}/night
+                      </li>
+                    @endif
+                  @endforeach
+                </ul>
+              </div>
+            @endif
+
+            @if (!empty($selectedActivities))
+              <div class="mt-4 pt-4 border-t border-gray-200">
+                <h3 class="font-medium text-gray-900 mb-2">Selected Activities:</h3>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  @foreach ($selectedActivities as $activity)
+                    <li>• {{ $activity['name'] }} ({{ $activity['guests'] }} guests) - ₱{{ number_format($activity['price'] * $activity['guests'], 2) }}</li>
+                  @endforeach
+                </ul>
+              </div>
+            @endif
+
             <div class="mt-4 pt-4 border-t border-gray-200">
-              <h3 class="font-medium text-gray-900 mb-2">Selected Activities:</h3>
-              <ul class="text-sm text-gray-600 space-y-1">
-                @foreach ($selectedActivities as $activity)
-                  <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }}</li>
-                @endforeach
-              </ul>
+              <div class="space-y-2">
+                <div class="flex justify-between items-center text-sm">
+                  <span>Accommodation Total:</span>
+                  <span>₱{{ number_format($bookingData['final_totals']['accommodation_total'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <span>Activities Total:</span>
+                  <span>₱{{ number_format($bookingData['final_totals']['activities_total'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
+                  <span>Total Amount Paid:</span>
+                  <span class="text-[#8f5d54]">₱{{ number_format($grandTotal, 2) }}</span>
+                </div>
+              </div>
+            </div>
+          @else
+            {{-- Regular Booking Details --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span class="font-medium text-gray-500">Booking Type:</span>
+                <span class="ml-2 text-gray-900">{{ ucfirst($bookingData['type'] ?? '') }}</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Package:</span>
+                <span class="ml-2 text-gray-900">{{ $bookingData['package'] ?? '' }}</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Date:</span>
+                <span class="ml-2 text-gray-900">
+                  @if (!empty($bookingData['booking_date']))
+                    {{ \Carbon\Carbon::parse($bookingData['booking_date'])->format('M d, Y') }}
+                  @endif
+                </span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Guests:</span>
+                <span class="ml-2 text-gray-900">{{ $bookingData['guests'] ?? '' }}</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Name:</span>
+                <span class="ml-2 text-gray-900">{{ ($bookingData['first_name'] ?? '') . ' ' . ($bookingData['last_name'] ?? '') }}</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Email:</span>
+                <span class="ml-2 text-gray-900">{{ $bookingData['email'] ?? '' }}</span>
+              </div>
+            </div>
+
+            @if (!empty($selectedActivities))
+              <div class="mt-4 pt-4 border-t border-gray-200">
+                <h3 class="font-medium text-gray-900 mb-2">Selected Activities:</h3>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  @foreach ($selectedActivities as $activity)
+                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }}</li>
+                  @endforeach
+                </ul>
+              </div>
+            @endif
+
+            <div class="mt-4 pt-4 border-t border-gray-200">
+              <div class="flex justify-between items-center text-lg font-semibold">
+                <span>Total Amount Paid:</span>
+                <span class="text-[#8f5d54]">₱{{ number_format($grandTotal, 2) }}</span>
+              </div>
             </div>
           @endif
-
-          <div class="mt-4 pt-4 border-t border-gray-200">
-            <div class="flex justify-between items-center text-lg font-semibold">
-              <span>Total Amount Paid:</span>
-              <span class="text-[#8f5d54]">₱{{ number_format($grandTotal, 2) }}</span>
-            </div>
-          </div>
         </div>
 
         {{-- Next Steps --}}
