@@ -248,6 +248,12 @@
                     </div>
                   </div>
                 </div>
+                {{-- Hidden inputs for form submission --}}
+                <input type="hidden" name="first_name" value="{{ $bookingData['first_name'] ?? '' }}">
+                <input type="hidden" name="last_name" value="{{ $bookingData['last_name'] ?? '' }}">
+                <input type="hidden" name="email" value="{{ $bookingData['email'] ?? '' }}">
+                <input type="hidden" name="phone" value="{{ $bookingData['phone'] ?? '' }}">
+                <input type="hidden" name="special_requests" value="{{ $bookingData['special_requests'] ?? '' }}">
               </div>
 
               {{-- Payment Method --}}
