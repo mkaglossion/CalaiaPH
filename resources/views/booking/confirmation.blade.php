@@ -307,8 +307,8 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
         <div class="mt-8 pt-6 border-t border-gray-200">
           <p class="text-sm text-gray-500 mb-2">Need assistance?</p>
           <p class="text-sm text-gray-600">
-            Contact us at <a href="mailto:info@calaia.ph" class="text-[#8f5d54] hover:underline">info@calaia.ph</a>
-            or call <span class="font-medium">+63 XXX XXX XXXX</span>
+            Contact us at <a href="mailto:calaia.ph@gmail.com" class="text-[#8f5d54] hover:underline">calaia.ph@gmail.com</a>
+            or call <span class="font-medium">+63 905 129 4741</span>
           </p>
         </div>
       </div>
@@ -352,6 +352,11 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
 
       .bg-gray-50 {
         background: white !important;
+      }
+
+      /* Hide actions section */
+      .flex.flex-col.sm\\:flex-row.gap-4.justify-center {
+        display: none !important;
       }
     }
   </style>

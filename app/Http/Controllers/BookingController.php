@@ -392,13 +392,18 @@ class BookingController extends Controller
             // Handle staycation booking
             $selectedActivities = $staycationBooking['selected_activities'] ?? [];
 
+            // Add payment details to booking data for receipt
+            $staycationBooking['payment_method'] = $request->payment_method;
+            $staycationBooking['payment_date'] = now();
+            $staycationBooking['transaction_id'] = 'TXN-' . strtoupper(uniqid());
+
             try {
-                // Send confirmation email for staycation using form data
+                // Send receipt email for staycation using form data
                 $customerEmail = $request->email ?? 'guest@example.com';
                 Mail::to($customerEmail)->send(new BookingConfirmation($staycationBooking, $selectedActivities));
             } catch (\Exception $e) {
                 // Log the error but continue to confirmation
-                Log::error('Staycation payment email failed: ' . $e->getMessage());
+                Log::error('Staycation receipt email failed: ' . $e->getMessage());
             }
 
             // Store booking data for confirmation page
@@ -426,12 +431,17 @@ class BookingController extends Controller
             // Handle regular booking
             $selectedActivities = session('selected_activities', []);
 
+            // Add payment details to booking data for receipt
+            $bookingData['payment_method'] = $request->payment_method;
+            $bookingData['payment_date'] = now();
+            $bookingData['transaction_id'] = 'TXN-' . strtoupper(uniqid());
+
             try {
-                // Send confirmation email with activities
+                // Send receipt email with activities
                 Mail::to($bookingData['email'])->send(new BookingConfirmation($bookingData, $selectedActivities));
             } catch (\Exception $e) {
                 // Log the error but continue to confirmation
-                Log::error('Email sending failed: ' . $e->getMessage());
+                Log::error('Receipt email sending failed: ' . $e->getMessage());
             }
 
             // Redirect to confirmation page
