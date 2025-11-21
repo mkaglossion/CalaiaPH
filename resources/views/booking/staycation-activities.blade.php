@@ -204,7 +204,7 @@ $accommodationTotal = collect($booking['accommodations'] ?? [])->sum(function($a
                                 @foreach($booking['accommodations'] as $index => $accommodation)
                                     @if(!empty($accommodation) && !empty($accommodation['staycation']))
                                         <div class="text-xs text-gray-600">
-                                            ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} selected
+                                            ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($accommodation['staycation']['price']) }}/night ({{ $accommodation['guests'] }} guests)
                                         </div>
                                     @endif
                                 @endforeach
@@ -412,8 +412,27 @@ $accommodationTotal = collect($booking['accommodations'] ?? [])->sum(function($a
 
       // Skip button
       document.getElementById('skip-btn').addEventListener('click', function() {
-        // Proceed to payment without activities
-        window.location.href = '{{ route("booking.staycationPayment") }}';
+        // Store empty activities and proceed to payment
+        fetch('{{ route("booking.storeStaycationActivities") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({ activities: [] })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            window.location.href = '{{ route("booking.staycationPayment") }}';
+          } else {
+            showToast('Error saving. Please try again.', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('Error saving. Please try again.', 'error');
+        });
       });
 
       // Confirm button

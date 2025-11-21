@@ -153,6 +153,7 @@ class BookingController extends Controller
             'activities.*.id' => 'required|string',
             'activities.*.name' => 'required|string',
             'activities.*.price' => 'required|numeric',
+            'activities.*.guests' => 'required|integer|min:1',
             'activities.*.type' => 'required|string|in:predefined',
         ]);
 
@@ -218,7 +219,7 @@ class BookingController extends Controller
     public function storeStaycationActivities(Request $request)
     {
         $request->validate([
-            'activities' => 'required|array',
+            'activities' => 'array',
             'activities.*.id' => 'required|string',
             'activities.*.name' => 'required|string',
             'activities.*.price' => 'required|numeric',
@@ -333,7 +334,9 @@ class BookingController extends Controller
         // Handle regular booking
         $bookingData = session('booking_data');
         $selectedActivities = session('selected_activities', []);
-        $grandTotal = ($bookingData['price'] ?? 0) + collect($selectedActivities)->sum('price');
+        $grandTotal = ($bookingData['price'] ?? 0) + collect($selectedActivities)->sum(function($activity) {
+            return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+        });
 
         if (!$bookingData) {
             return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
@@ -375,32 +378,32 @@ class BookingController extends Controller
                 // Send confirmation email for staycation using form data
                 $customerEmail = $request->email ?? 'guest@example.com';
                 Mail::to($customerEmail)->send(new BookingConfirmation($staycationBooking, $selectedActivities));
-
-                // Store booking data for confirmation page
-                $grandTotal = ($staycationBooking['final_totals']['accommodation_total'] ?? 0) + ($staycationBooking['final_totals']['activities_total'] ?? 0);
-
-                // Store confirmation data in session
-                session([
-                    'staycation_booking_data' => $staycationBooking,
-                    'staycation_selected_activities' => $selectedActivities,
-                    'staycation_grand_total' => $grandTotal,
-                    'staycation_customer_info' => [
-                        'first_name' => $request->first_name,
-                        'last_name' => $request->last_name,
-                        'email' => $request->email,
-                        'phone' => $request->phone,
-                        'special_requests' => $request->special_requests,
-                    ]
-                ]);
-
-                // Clear session
-                session()->forget('booking');
-
-                return redirect()->route('booking.confirmation')->with('success', 'Staycation payment successful! Booking confirmed. Check your email for details.');
             } catch (\Exception $e) {
+                // Log the error but continue to confirmation
                 Log::error('Staycation payment email failed: ' . $e->getMessage());
-                return redirect()->back()->with('error', 'Payment failed. Please try again.');
             }
+
+            // Store booking data for confirmation page
+            $grandTotal = ($staycationBooking['final_totals']['accommodation_total'] ?? 0) + ($staycationBooking['final_totals']['activities_total'] ?? 0);
+
+            // Store confirmation data in session
+            session([
+                'staycation_booking_data' => $staycationBooking,
+                'staycation_selected_activities' => $selectedActivities,
+                'staycation_grand_total' => $grandTotal,
+                'staycation_customer_info' => [
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'email' => $request->email,
+                    'phone' => $request->phone,
+                    'special_requests' => $request->special_requests,
+                ]
+            ]);
+
+            // Clear session
+            session()->forget('booking');
+
+            return redirect()->route('booking.confirmation')->with('success', 'Staycation payment successful! Booking confirmed. Check your email for details.');
         } else {
             // Handle regular booking
             $selectedActivities = session('selected_activities', []);
@@ -569,6 +572,19 @@ class BookingController extends Controller
             $staycationIds = array_column($staycations, 'id');
             // Call the checkAvailability method internally
             $availability = $this->checkAvailabilityInternal($checkinDate, $checkoutDate, $staycationIds);
+        }
+
+        // Pre-select accommodation if package is provided in query params
+        if ($request->has('package')) {
+            $packageName = urldecode($request->get('package'));
+            $selectedStaycation = collect($staycations)->firstWhere('name', $packageName);
+            if ($selectedStaycation) {
+                $booking['accommodations'][0] = [
+                    'staycation' => $selectedStaycation,
+                    'guests' => $selectedStaycation['adults'] ?? 2, // Default to adults count
+                ];
+                session(['booking' => $booking]);
+            }
         }
 
         return view('booking.staycation', compact('staycations', 'accommodationData', 'availability'));

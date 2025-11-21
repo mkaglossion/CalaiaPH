@@ -147,8 +147,8 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: 'Vila Zilka Serif', serif;">Starts at ₱1,200/night</p>
-                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Standard</span>
+                   <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: gotham;">Starts at ₱1,200/night</p>
+                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Standard</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
                 <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
@@ -189,8 +189,8 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: 'Vila Zilka Serif', serif;">Starts at ₱5,500 - ₱6,500/night</p>
-                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Exclusive</span>
+                   <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: gotham;">Starts at ₱5,500 - ₱6,500/night</p>
+                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Exclusive</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
                 <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
@@ -247,8 +247,8 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: 'Vila Zilka Serif', serif;">Starts at ₱1,200/night</p>
-                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Comfort</span>
+                   <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: gotham;">Starts at ₱1,200/night</p>
+                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Comfort</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
                 <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
@@ -286,8 +286,8 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: 'Vila Zilka Serif', serif;">Starts at ₱1,800/night</p>
-                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Spacious</span>
+                   <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: gotham;">Starts at ₱1,800/night</p>
+                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Spacious</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
                 <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
@@ -325,8 +325,8 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: 'Vila Zilka Serif', serif;">Starts at ₱800/night</p>
-                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dcfce7;color:#166534">Budget</span>
+                   <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: gotham;">Starts at ₱800/night</p>
+                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dcfce7;color:#166534">Budget</span>
                 </div>
                 <h6 class="text-lg md:text-xl font-semibold" style="font-family: 'Vila Zilka Serif', serif;">Features</h6>
                 <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
@@ -364,8 +364,8 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                  <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: 'Vila Zilka Serif', serif;">Starts at ₱1,500/night</p>
-                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#fef3c7;color:#7c2d12">Convenient</span>
+                   <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: gotham;">Starts at ₱1,500/night</p>
+                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#fef3c7;color:#7c2d12">Convenient</span>
                 </div>
                 <h6 class="text-xl md:text-2xl font-semibold" style="font-family: 'Vila Zilka Serif', serif;">Features</h6>
                 <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">

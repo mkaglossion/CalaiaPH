@@ -106,7 +106,7 @@
           <h2 class="flex items-start gap-3 font-extrabold uppercase leading-tight tracking-wide mb-6"
               style="font-family: Gotham, sans-serif; color:#a97464; font-size: clamp(20px, 2.1vw + 14px, 32px);">
             <span class="w-2 rounded-sm bg-[#a97464] mt-1" aria-hidden="true"></span>
-            <span class="block">Enhance your stay with our fun-filled activities.</span>
+            <span class="block">Enhance your stay with our special events.</span>
           </h2>
 
           {{-- Two-panel Activities Carousel --}}

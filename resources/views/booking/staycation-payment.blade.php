@@ -377,7 +377,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                                 @foreach($booking['accommodations'] as $index => $accommodation)
                                     @if(!empty($accommodation) && !empty($accommodation['staycation']))
                                         <div class="text-xs text-gray-600">
-                                            ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} selected
+                                            ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($accommodation['staycation']['price']) }}/night ({{ $accommodation['guests'] }} guests)
                                         </div>
                                     @endif
                                 @endforeach

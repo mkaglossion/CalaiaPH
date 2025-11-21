@@ -487,7 +487,9 @@
                     const summaryItem = document.createElement('div');
                     summaryItem.className = 'text-xs text-gray-600';
                     const accommodationNumber = parseInt(index) + 1;
-                    summaryItem.textContent = `ACCOMMODATION ${accommodationNumber}: ${accommodation.staycation.name} selected`;
+                    const price = accommodation.staycation.price;
+                    const guests = accommodation.guests;
+                    summaryItem.textContent = `ACCOMMODATION ${accommodationNumber}: ${accommodation.staycation.name} - ₱${price.toLocaleString()}/night (${guests} guests)`;
                     summaryContainer.appendChild(summaryItem);
                 }
             });
@@ -617,7 +619,7 @@
         document.querySelectorAll('.accom-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const index = this.dataset.index;
-                
+
                 // Update active tab styling
                 document.querySelectorAll('.accom-btn').forEach(b => {
                     b.classList.remove('bg-gray-900', 'text-white', 'border-gray-900');
@@ -639,6 +641,15 @@
                 } else {
                     showToast('At least one accommodation is required', 'error');
                 }
+            });
+        });
+    }
+
+    function initializeRemoveSelectedButtons() {
+        document.querySelectorAll('.remove-selected-accom').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const index = this.dataset.index;
+                window.removeAccommodation(index);
             });
         });
     }
@@ -678,9 +689,12 @@
                         <p class="text-xs text-gray-500">${isBYOT ? 'BYOT' : isCarCamping ? 'Vehicles' : 'Guests'}: ${guests}</p>
                     </div>
                 </div>
-                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${staycation.type === 'glamping' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
-                    ${staycation.type.toUpperCase()}
-                </span>
+                <div class="flex items-center space-x-2">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${staycation.type === 'glamping' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
+                        ${staycation.type.toUpperCase()}
+                    </span>
+                    <button class="remove-selected-accom text-red-500 hover:text-red-700 text-lg font-bold" data-index="${index}" title="Remove this accommodation">×</button>
+                </div>
             </div>
         `;
 
@@ -1016,6 +1030,9 @@
 
         // Display the selected accommodation
         displaySelectedAccommodation(accommodationIndex, window.selectedAccommodations[accommodationIndex]);
+
+        // Initialize remove buttons for selected accommodations
+        initializeRemoveSelectedButtons();
 
         // Update booking summary
         window.updateBookingSummary();

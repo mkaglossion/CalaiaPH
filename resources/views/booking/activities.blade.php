@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
 
-<body class="bg-gray-50 font-sans antialiased min-h-screen">
+<body class="bg-gray-50 font-sans antialiased min-h-screen" data-total-guests="{{ session('booking_data.guests', 1) }}">
   {{-- Header --}}
   <x-header active="activities"/>
 
@@ -192,6 +192,9 @@
       const selectedActivities = [];
       let totalCost = 0;
 
+      // Get total guests from data attribute
+      const totalGuests = parseInt(document.body.dataset.totalGuests) || 1;
+
       // Handle pre-defined activity checkboxes
       document.querySelectorAll('.activity-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
@@ -200,12 +203,12 @@
           const activityPrice = parseFloat(this.dataset.price);
 
           if (this.checked) {
-            selectedActivities.push({ id: activityId, name: activityName, price: activityPrice, type: 'predefined' });
-            totalCost += activityPrice;
+            selectedActivities.push({ id: activityId, name: activityName, price: activityPrice, guests: totalGuests, type: 'predefined' });
+            totalCost += activityPrice * totalGuests;
           } else {
             const index = selectedActivities.findIndex(a => a.id === activityId && a.type === 'predefined');
             if (index > -1) {
-              totalCost -= selectedActivities[index].price;
+              totalCost -= selectedActivities[index].price * selectedActivities[index].guests;
               selectedActivities.splice(index, 1);
             }
           }
@@ -233,16 +236,33 @@
             item.innerHTML = `
               <div class="flex-1">
                 <p class="text-sm font-medium text-gray-900">${activity.name}</p>
-                ${activity.type === 'custom' ? `<p class="text-xs text-gray-500">${activity.description}</p>` : ''}
+                <div class="mt-2">
+                  <label class="block text-xs text-gray-600 mb-1">Number of Guests</label>
+                  <input type="number" class="activity-guests w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent" value="${activity.guests}" min="1" max="${totalGuests}" data-activity-id="${activity.id}">
+                </div>
+                ${activity.type === 'custom' ? `<p class="text-xs text-gray-500 mt-1">${activity.description}</p>` : ''}
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-sm font-semibold text-[#8f5d54]">₱${activity.price.toFixed(2)}</span>
+                <span class="text-sm font-semibold text-[#8f5d54]">₱${(activity.price * activity.guests).toFixed(2)}</span>
                 <button type="button" class="text-red-500 hover:text-red-700" onclick="removeActivity('${activity.id}')">
                   <i class="bi bi-x"></i>
                 </button>
               </div>
             `;
             container.appendChild(item);
+
+            // Add event listener for guest input
+            const guestInput = item.querySelector('.activity-guests');
+            guestInput.addEventListener('input', function() {
+              const newGuests = parseInt(this.value) || 1;
+              const index = selectedActivities.findIndex(a => a.id === activity.id);
+              if (index > -1) {
+                const oldGuests = selectedActivities[index].guests;
+                selectedActivities[index].guests = newGuests;
+                totalCost += (newGuests - oldGuests) * activity.price;
+                updateSummary();
+              }
+            });
           });
           confirmBtn.disabled = false;
         }
@@ -254,7 +274,7 @@
       window.removeActivity = function(id) {
         const index = selectedActivities.findIndex(a => a.id === id);
         if (index > -1) {
-          totalCost -= selectedActivities[index].price;
+          totalCost -= selectedActivities[index].price * selectedActivities[index].guests;
           selectedActivities.splice(index, 1);
           updateSummary();
         }
