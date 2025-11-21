@@ -70,28 +70,46 @@
             x-show="open"
             @click.away="open = false"
             x-transition
-            class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+            class="absolute right-0 mt-2 w-48 lg:w-55 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
           >
             <a
               href="{{ route('profile.show') }}"
               class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
-              Profile
+              <i class="bi bi-person me-2"></i>My Profile
+            </a>
+
+            <a
+              href="/booking/staycation"
+              class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+              <i class="bi bi-calendar-check me-2"></i>Book Now
+            </a>
+
+            <a
+              href="{{ route('booking.history') }}"
+              class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+              <i class="bi bi-calendar-event me-2"></i>My Bookings
             </a>
 
             @if (Auth::user()->user_type === 'admin')
               <a
                 href="{{ route('admin.dashboard') }}"
                 class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
-                Admin Panel
+                 <i class="bi bi-gear me-2"></i>Go to Admin Panel
               </a>
             @endif
+
+            <a
+              href="{{ route('checkinout') }}"
+              class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+              <i class="bi bi-person-check me-2"></i>Check-in / Check-out
+            </a>
 
             <form method="POST" action="{{ route('logout') }}">
               @csrf
               <button
                 type="submit"
                 class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
-                Log Out
+                <i class="bi bi-box-arrow-right me-2"></i>Log Out
               </button>
             </form>
           </div>
@@ -139,16 +157,31 @@
         <a href="{{ url('/farm') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}">Our Farm</a>
 
         @auth
-          <a href="{{ route('profile.show') }}" @click="open = false" class="block py-2 text-[#8f5d54] border-t border-[#8f5d54]/20 mt-2 pt-2">Profile</a>
+          <a href="{{ route('profile.show') }}" @click="open = false" class="block py-2 text-gray-700 border-t border-[#8f5d54]/20 mt-2 pt-2">
+            <i class="bi bi-person me-2"></i>Profile
+          </a>
+          <a href="/booking/staycation" @click="open = false" class="block py-2 text-gray-700">
+            <i class="bi bi-calendar-check me-2"></i>Book Now
+          </a>
+          <a href="{{ route('booking.history') }}" @click="open = false" class="block py-2 text-gray-700">
+            <i class="bi bi-calendar-event me-2"></i>My Bookings
+          </a>
           @if (Auth::user()->user_type === 'admin')
-            <a href="{{ route('admin.dashboard') }}" @click="open = false" class="block py-2 text-[#8f5d54]">Admin Panel</a>
+            <a href="{{ route('admin.dashboard') }}" @click="open = false" class="block py-2 text-gray-700">
+              <i class="bi bi-gear me-2"></i>Admin Panel
+            </a>
           @endif
+          <a href="{{ route('checkinout') }}" @click="open = false" class="block py-2 text-gray-700">
+            <i class="bi bi-person-check me-2"></i>Check-in / Check-out
+          </a>
           <form method="POST" action="{{ route('logout') }}" @submit="open = false">
             @csrf
-            <button type="submit" class="block py-2 text-[#8f5d54] w-full text-left">Log Out</button>
+            <button type="submit" class="block py-2 text-gray-700 w-full text-left">
+              <i class="bi bi-box-arrow-right me-2"></i>Log Out
+            </button>
           </form>
         @else
-          <button @click="$store.modals.showLogin = true; open = false" class="block py-2 text-[#8f5d54] border-t border-[#8f5d54]/20 mt-2 pt-2">Log In</button>
+          <button @click="$store.modals.showLogin = true; open = false" class="block py-2 text-gray-700 border-t border-[#8f5d54]/20 mt-2 pt-2">Log In</button>
           <button @click="$store.modals.showSignup = true; open = false" class="block py-2 text-white bg-[#8f5d54] px-4 py-2 rounded mt-2">Sign Up</button>
         @endauth
       </div>
@@ -349,3 +382,4 @@
     </div>
   </div>
 </header>
+

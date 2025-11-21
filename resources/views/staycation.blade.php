@@ -70,10 +70,10 @@
         <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
 
           <!-- Card: Glamping Tent -->
-          <article class="relative mx-auto w-full max-w-md rounded-[22px] bg-white p-5" style="box-shadow:0 10px 16px rgba(0,0,0,0.08);">
+          <article class="relative mx-auto w-full max-w-md rounded-[22px] bg-white p-5 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2" style="box-shadow:0 10px 16px rgba(0,0,0,0.08);">
             <div class="rounded-xl bg-white overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
               <!-- image frame placeholder -->
-              <img src="{{ asset('assets/images/carousel/Glamping-1.jpg') }}" alt="Glamping Tent" class="h-56 sm:h-64 w-full object-cover">
+              <img src="{{ asset('assets/images/carousel/Glamping-1.jpg') }}" alt="Glamping Tent" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
             </div>
             <div class="px-4 py-7 text-center">
               <h3 class="mb-4 text-2xl md:text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">Glamping Tent</h3>
@@ -92,9 +92,9 @@
           </article>
 
           <!-- Card: Camping -->
-          <article class="relative mx-auto w-full max-w-md rounded-[22px] bg-white p-5" style="box-shadow:0 10px 16px rgba(0,0,0,0.08);">
+          <article class="relative mx-auto w-full max-w-md rounded-[22px] bg-white p-5 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2" style="box-shadow:0 10px 16px rgba(0,0,0,0.08);">
             <div class="rounded-xl ring-1 ring-black/5 shadow-sm bg-white overflow-hidden">
-              <img src="{{ asset('assets/images/carousel/BYOT-2.jpg') }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover">
+              <img src="{{ asset('assets/images/carousel/BYOT-2.jpg') }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
             </div>
             <div class="px-4 py-7 text-center">
               <h3 class="mb-4 text-2xl md:text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">Camping</h3>

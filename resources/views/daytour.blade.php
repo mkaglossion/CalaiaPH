@@ -134,17 +134,16 @@
                 <div class="h-px w-full bg-[#dfe6d5] mb-5"></div>
 
                 {{-- Features (compact, centered list) --}}
-                <ul class="space-y-3 mb-7 text-center">
+                <ul class="space-y-2 text-base md:text-lg uppercase tracking-widest text-center" style="color:#8f6a60; font-family: 'Vila Zilka Serif', serif;">
                   @foreach($package['features'] as $feature)
-                    <li class="text-xs md:text-sm tracking-wide"
-                        style="color:#8f5d54; font-family:gotham;">
+                    <li>
                       {{ strtoupper($feature) }}
                     </li>
                   @endforeach
                 </ul>
 
                 {{-- CTA --}}
-                <div class="flex justify-center">
+                <div class="mt-7 flex justify-center">
                   <button
                     type="button"
                     class="px-6 py-2.5 rounded-full text-white text-xs md:text-sm font-semibold tracking-wider shadow
