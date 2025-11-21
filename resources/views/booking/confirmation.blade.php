@@ -140,13 +140,49 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
               <div class="mt-4 pt-4 border-t border-gray-200">
                 <h3 class="font-medium text-gray-900 mb-2">Selected Accommodations:</h3>
                 <ul class="text-sm text-gray-600 space-y-1">
+                  @php
+                  $checkin = !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin']) : null;
+                  $checkout = !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout']) : null;
+                  $nights = $checkin && $checkout ? $checkout->diffInDays($checkin) : 0;
+                  @endphp
                   @foreach ($bookingData['accommodations'] as $accommodation)
                     @if (!empty($accommodation['staycation']))
+                      @php
+                      $quantity = $accommodation['guests'] ?? 1;
+                      $name = strtolower($accommodation['staycation']['name']);
+                      $isBYOT = str_contains($name, 'byot');
+                      $isCarCamping = str_contains($name, 'car camping');
+                      $totalPrice = 0;
+
+                      if ($checkin && $checkout && (str_contains($name, 'standard') || str_contains($name, 'premium'))) {
+                          $current = clone $checkin;
+                          while ($current < $checkout) {
+                              $day = (int)$current->format('w');
+                              $isWeekend = $day === 5 || $day === 6;
+                              $basePrice = 0;
+                              if (str_contains($name, 'standard')) {
+                                  $basePrice = $isWeekend ? 6000 : 4800;
+                              } elseif (str_contains($name, 'premium')) {
+                                  $basePrice = $isWeekend ? 7200 : 5760;
+                              }
+                              $extraGuests = max(0, $quantity - 4);
+                              $totalPrice += $basePrice + ($extraGuests * 400);
+                              $current->modify('+1 day');
+                          }
+                      } elseif ($checkin && $checkout && (str_contains($name, 'bell') || str_contains($name, 'dome'))) {
+                          $totalPrice = 3000 * $nights;
+                      } elseif ($checkin && $checkout && ($isBYOT || $isCarCamping)) {
+                          $totalPrice = 300 * $quantity * $nights;
+                      } else {
+                          $totalPrice = $accommodation['staycation']['price'] * $quantity * $nights;
+                      }
+
+                      @endphp
                       <li>• {{ $accommodation['staycation']['name'] }}
-                        @if(str_contains(strtolower($accommodation['staycation']['name']), 'byot') || str_contains(strtolower($accommodation['staycation']['name']), 'car camping'))
-                          ({{ $accommodation['guests'] }} {{ str_contains(strtolower($accommodation['staycation']['name']), 'byot') ? 'BYOT' : 'Vehicles' }})
+                        @if($isBYOT || $isCarCamping)
+                          ({{ $accommodation['guests'] }} {{ $isBYOT ? 'BYOT' : 'Vehicles' }})
                         @endif
-                        - ₱{{ number_format($accommodation['staycation']['price'] * ($accommodation['guests'] ?? 1), 2) }}/night
+                        - ₱{{ number_format($totalPrice, 2) }}
                       </li>
                     @endif
                   @endforeach
@@ -286,6 +322,37 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
   <style>
     .font-vila-zilka {
       font-family: 'Vila Zilka Serif', ui-serif, Georgia, 'Times New Roman', serif;
+    }
+
+    @media print {
+      @page {
+        size: legal;
+        margin: 0.5in;
+      }
+
+      /* Hide header and footer */
+      x-header, x-footer, header, footer {
+        display: none !important;
+      }
+
+      /* Hide progress indicator */
+      .bg-white.shadow-sm.border-b.border-gray-100 {
+        display: none !important;
+      }
+
+      body {
+        background: white !important;
+      }
+
+      main {
+        page-break-inside: avoid;
+        max-height: 13in; /* Legal height minus margins */
+        overflow: hidden;
+      }
+
+      .bg-gray-50 {
+        background: white !important;
+      }
     }
   </style>
 

@@ -60,20 +60,42 @@ if ($bookingType === 'staycation') {
     }
 }
 
-// Calculate accommodation total for JavaScript (matching backend logic)
-$accommodationTotal = collect($booking['accommodations'] ?? [])->sum(function($acc) use ($nights) {
-    if (!empty($acc) && !empty($acc['staycation'])) {
-        $price = $acc['staycation']['price'];
-        $quantity = $acc['guests'] ?? 1;
-        $isBYOT = str_contains(strtolower($acc['staycation']['name']), 'byot');
-        $isCarCamping = str_contains(strtolower($acc['staycation']['name']), 'car camping');
-        if ($isBYOT || $isCarCamping) {
-            $price = $price * $quantity;
+// Calculate accommodation total with dynamic pricing
+$accommodationTotal = 0;
+if ($datesSelected) {
+    $start = new DateTime($checkinDate);
+    $end = new DateTime($checkoutDate);
+
+    foreach ($booking['accommodations'] ?? [] as $acc) {
+        if (!empty($acc) && !empty($acc['staycation'])) {
+            $quantity = $acc['guests'] ?? 1;
+            $name = strtolower($acc['staycation']['name']);
+            $isBYOT = str_contains($name, 'byot');
+            $isCarCamping = str_contains($name, 'car camping');
+
+            if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
+                $current = clone $start;
+                while ($current < $end) {
+                    $day = (int)$current->format('w'); // 0=Sun, 6=Sat
+                    $isWeekend = $day === 5 || $day === 6; // Fri=5, Sat=6
+                    $basePrice = 0;
+                    if (str_contains($name, 'standard')) {
+                        $basePrice = $isWeekend ? 6000 : 4800;
+                    } elseif (str_contains($name, 'premium')) {
+                        $basePrice = $isWeekend ? 7200 : 5760;
+                    }
+                    $extraGuests = max(0, $quantity - 4);
+                    $accommodationTotal += $basePrice + ($extraGuests * 400);
+                    $current->modify('+1 day');
+                }
+            } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
+                $accommodationTotal += 3000 * $nights;
+            } elseif ($isBYOT || $isCarCamping) {
+                $accommodationTotal += 300 * $quantity * $nights;
+            }
         }
-        return $price * $nights;
     }
-    return 0;
-});
+}
 @endphp
 
 <body class="bg-[#f5efe7]">
@@ -201,10 +223,44 @@ $accommodationTotal = collect($booking['accommodations'] ?? [])->sum(function($a
                         </div>
                         <div class="mt-2 space-y-1">
                             @if(!empty($booking['accommodations']))
+                                @php
+                                $start = new DateTime($checkinDate);
+                                $end = new DateTime($checkoutDate);
+                                @endphp
                                 @foreach($booking['accommodations'] as $index => $accommodation)
                                     @if(!empty($accommodation) && !empty($accommodation['staycation']))
+                                        @php
+                                        $quantity = $accommodation['guests'] ?? 1;
+                                        $name = strtolower($accommodation['staycation']['name']);
+                                        $isBYOT = str_contains($name, 'byot');
+                                        $isCarCamping = str_contains($name, 'car camping');
+                                        $totalPrice = 0;
+
+                                        if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
+                                            $current = clone $start;
+                                            while ($current < $end) {
+                                                $day = (int)$current->format('w');
+                                                $isWeekend = $day === 5 || $day === 6;
+                                                $basePrice = 0;
+                                                if (str_contains($name, 'standard')) {
+                                                    $basePrice = $isWeekend ? 6000 : 4800;
+                                                } elseif (str_contains($name, 'premium')) {
+                                                    $basePrice = $isWeekend ? 7200 : 5760;
+                                                }
+                                                $extraGuests = max(0, $quantity - 4);
+                                                $totalPrice += $basePrice + ($extraGuests * 400);
+                                                $current->modify('+1 day');
+                                            }
+                                        } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
+                                            $totalPrice = 3000 * $nights;
+                                        } elseif ($isBYOT || $isCarCamping) {
+                                            $totalPrice = 300 * $quantity * $nights;
+                                        }
+
+                                        $avgPrice = $nights > 0 ? round($totalPrice / $nights) : $accommodation['staycation']['price'];
+                                        @endphp
                                         <div class="text-xs text-gray-600">
-                                            ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($accommodation['staycation']['price']) }}/night ({{ $accommodation['guests'] }} guests)
+                                            ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($avgPrice) }}/night ({{ $accommodation['guests'] }} guests)
                                         </div>
                                     @endif
                                 @endforeach

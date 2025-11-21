@@ -220,7 +220,7 @@
               <div class="bg-gray-50 rounded-xl p-4 sm:p-6">
                 <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center">
                   <i class="bi bi-person-circle mr-2 text-[#8f5d54]"></i>
-                  Customer Information
+                  Personal Information
                 </h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>

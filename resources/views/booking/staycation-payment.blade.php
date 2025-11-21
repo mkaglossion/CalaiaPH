@@ -36,16 +36,48 @@ $nights = $datesSelected ? \Carbon\Carbon::parse($checkoutDate)->diffInDays(\Car
 // Calculate total guests
 $totalGuests = collect($booking['accommodations'])->sum('guests');
 
-// Get final totals from session (calculated in activities page)
-$finalTotals = $booking['final_totals'] ?? [
-    'accommodation_total' => 0,
-    'activities_total' => 0,
-    'grand_total' => 0
-];
+// Calculate accommodation total dynamically
+$accommodationTotal = 0;
+if ($datesSelected) {
+    $start = new DateTime($checkinDate);
+    $end = new DateTime($checkoutDate);
 
-$accommodationTotal = $finalTotals['accommodation_total'];
-$activitiesTotal = $finalTotals['activities_total'];
+    foreach ($booking['accommodations'] ?? [] as $acc) {
+        if (!empty($acc) && !empty($acc['staycation'])) {
+            $quantity = $acc['guests'] ?? 1;
+            $name = strtolower($acc['staycation']['name']);
+            $isBYOT = str_contains($name, 'byot');
+            $isCarCamping = str_contains($name, 'car camping');
+
+            if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
+                $current = clone $start;
+                while ($current < $end) {
+                    $day = (int)$current->format('w');
+                    $isWeekend = $day === 5 || $day === 6;
+                    $basePrice = 0;
+                    if (str_contains($name, 'standard')) {
+                        $basePrice = $isWeekend ? 6000 : 4800;
+                    } elseif (str_contains($name, 'premium')) {
+                        $basePrice = $isWeekend ? 7200 : 5760;
+                    }
+                    $extraGuests = max(0, $quantity - 4);
+                    $accommodationTotal += $basePrice + ($extraGuests * 400);
+                    $current->modify('+1 day');
+                }
+            } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
+                $accommodationTotal += 3000 * $nights;
+            } elseif ($isBYOT || $isCarCamping) {
+                $accommodationTotal += 300 * $quantity * $nights;
+            }
+        }
+    }
+}
+
+// Get activities total from session
 $selectedActivities = $booking['selected_activities'] ?? [];
+$activitiesTotal = collect($selectedActivities)->sum(function($activity) {
+    return ($activity['price'] ?? 0) * ($activity['guests'] ?? 0);
+});
 @endphp
 
 <body class="bg-[#f5efe7]">
@@ -374,10 +406,44 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                         </div>
                         <div class="mt-2 space-y-1">
                             @if(!empty($booking['accommodations']))
+                                @php
+                                $start = new DateTime($checkinDate);
+                                $end = new DateTime($checkoutDate);
+                                @endphp
                                 @foreach($booking['accommodations'] as $index => $accommodation)
                                     @if(!empty($accommodation) && !empty($accommodation['staycation']))
+                                        @php
+                                        $quantity = $accommodation['guests'] ?? 1;
+                                        $name = strtolower($accommodation['staycation']['name']);
+                                        $isBYOT = str_contains($name, 'byot');
+                                        $isCarCamping = str_contains($name, 'car camping');
+                                        $totalPrice = 0;
+
+                                        if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
+                                            $current = clone $start;
+                                            while ($current < $end) {
+                                                $day = (int)$current->format('w');
+                                                $isWeekend = $day === 5 || $day === 6;
+                                                $basePrice = 0;
+                                                if (str_contains($name, 'standard')) {
+                                                    $basePrice = $isWeekend ? 6000 : 4800;
+                                                } elseif (str_contains($name, 'premium')) {
+                                                    $basePrice = $isWeekend ? 7200 : 5760;
+                                                }
+                                                $extraGuests = max(0, $quantity - 4);
+                                                $totalPrice += $basePrice + ($extraGuests * 400);
+                                                $current->modify('+1 day');
+                                            }
+                                        } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
+                                            $totalPrice = 3000 * $nights;
+                                        } elseif ($isBYOT || $isCarCamping) {
+                                            $totalPrice = 300 * $quantity * $nights;
+                                        }
+
+                                        $avgPrice = $nights > 0 ? round($totalPrice / $nights) : $accommodation['staycation']['price'];
+                                        @endphp
                                         <div class="text-xs text-gray-600">
-                                            ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($accommodation['staycation']['price']) }}/night ({{ $accommodation['guests'] }} guests)
+                                            ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($avgPrice) }}/night ({{ $accommodation['guests'] }} guests)
                                         </div>
                                     @endif
                                 @endforeach

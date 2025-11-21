@@ -55,7 +55,7 @@
                     <p class="text-[#8f5d54] mb-4 leading-relaxed text-lg text-left">{{ $section['description1'] }}</p>
                     <p class="text-[#8f5d54] mb-6 leading-relaxed text-lg text-left">{{ $section['description2'] }}</p>
                     <a href="{{ $section['linkPath'] }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-[#8f5d54] hover:bg-[#8f5d54]/90 transition-colors duration-300 self-center lg:self-start">
-                       Learn More
+                       LEARN MORE
                     </a>
                 </div>
             </div>
