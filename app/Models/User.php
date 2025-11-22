@@ -24,6 +24,9 @@ class User extends Authenticatable
         'mobile_number',
         'username',
         'password',
+        'address',
+        'zip_code',
+        'date_of_birth',
     ];
 
 
@@ -42,6 +45,18 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
+    protected $appends = ['name', 'phone'];
+
+    public function getNameAttribute()
+    {
+        return trim($this->first_name . ' ' . $this->last_name);
+    }
+
+    public function getPhoneAttribute()
+    {
+        return $this->mobile_number;
+    }
+
     protected function casts(): array
     {
         return [

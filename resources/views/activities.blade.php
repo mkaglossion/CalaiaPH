@@ -123,7 +123,7 @@
                        style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,.35) 85%);"></div>
                   <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
                     <span class="bg-[#a97464] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-[9px] px-3 leading-none cursor-pointer"></span>
-                    <a class="text-white/90 text-[15px] tracking-[.08em] uppercase no-underline hover:underline cursor-pointer">Learn more >></a>
+                    <a class="text-white text-[14px] tracking-[.08em] uppercase py-[9px] px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
                   </div>
                 </article>
 
@@ -136,7 +136,7 @@
                        style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,.35) 85%);"></div>
                   <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
                     <span class="bg-[#a97464] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-[9px] px-3 leading-none cursor-pointer"></span>
-                    <a class="text-white/90 text-[15px] tracking-[.08em] uppercase no-underline hover:underline cursor-pointer">Learn more >></a>
+                    <a class="text-white text-[14px] tracking-[.08em] uppercase py-[9px] px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
                   </div>
                 </article>
               </div>

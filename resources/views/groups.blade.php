@@ -106,7 +106,7 @@
           <h2 class="flex items-start gap-3 font-extrabold uppercase leading-tight tracking-wide mb-6"
               style="font-family: Gotham, sans-serif; color:#a97464; font-size: clamp(20px, 2.1vw + 14px, 32px);">
             <span class="w-2 rounded-sm bg-[#a97464] mt-1" aria-hidden="true"></span>
-            <span class="block">Enhance your stay with our fun-filled activities.</span>
+            <span class="block">Enhance your stay with our special events.</span>
           </h2>
 
           {{-- Two-panel Activities Carousel --}}
@@ -150,7 +150,7 @@
                        style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,.35) 85%);"></div>
                   <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
                     <span class="bg-[#a97464] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-[9px] px-3 leading-none cursor-pointer"></span>
-                    <a class="text-white/90 text-[15px] tracking-[.08em] uppercase no-underline hover:underline cursor-pointer">Learn more >></a>
+                    <a class="text-white text-[14px] tracking-[.08em] uppercase py-[9px] px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
                   </div>
                 </article>
 
@@ -163,7 +163,7 @@
                        style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,.35) 85%);"></div>
                   <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
                     <span class="bg-[#a97464] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-[9px] px-3 leading-none cursor-pointer"></span>
-                    <a class="text-white/90 text-[15px] tracking-[.08em] uppercase no-underline hover:underline cursor-pointer">Learn more >></a>
+                    <a class="text-white text-[14px] tracking-[.08em] uppercase py-[9px] px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
                   </div>
                 </article>
               </div>

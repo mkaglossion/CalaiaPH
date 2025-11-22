@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
   <meta charset="utf-8" />
@@ -12,218 +12,327 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
 
-<body class="bg-gray-50 font-sans antialiased min-h-screen">
-  {{-- Header --}}
-  <x-header active="staycation-activities"/>
+@php
+$backUrl = route('booking.staycation');
 
-  {{-- Progress Indicator --}}
-  <div class="bg-white shadow-sm border-b border-gray-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex items-center justify-center space-x-2 sm:space-x-4 max-w-md sm:max-w-lg mx-auto">
-        {{-- Step 1: Booking --}}
-        <div class="flex flex-col items-center text-green-600">
-          <div class="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
-            <i class="bi bi-check-circle-fill text-sm"></i>
+// Initialize / read booking session
+$booking = session('booking', [
+    'checkin'        => null,
+    'checkout'       => null,
+    'accommodations' => [],
+    'booking_type'   => 'general',
+    'timestamp'      => now()->timestamp,
+    'completed_steps'=> [],
+    'current_step'   => 1,
+]);
+
+$bookingType  = $booking['booking_type'] ?? 'general';
+$stepNumber   = '1'; // landing page
+$totalSteps   = $bookingType === 'staycation' ? '3' : '4';
+$backLink     = url('/home');
+
+$completedSteps  = $booking['completed_steps'] ?? [];
+$step1Completed  = in_array(1, $completedSteps);
+
+$checkinDate  = $booking['checkin'] ?? null;
+$checkoutDate = $booking['checkout'] ?? null;
+$datesSelected = !empty($checkinDate) && !empty($checkoutDate);
+
+// Calculate nights
+$nights = 0;
+if ($datesSelected) {
+    $start = new DateTime($checkinDate);
+    $end = new DateTime($checkoutDate);
+    $diff = $start->diff($end);
+    $nights = $diff->days;
+}
+
+// Calculate total guests
+$totalGuests = collect($booking['accommodations'])->sum('guests');
+
+// Check if accommodations are selected
+$accommodationsSelected = !empty($booking['accommodations']) && count(array_filter($booking['accommodations'])) > 0;
+
+// For staycation, adjust step display
+if ($bookingType === 'staycation') {
+    if ($accommodationsSelected) {
+        $stepNumber = '1'; // Show as step 1 (completed booking)
+    }
+}
+
+// Calculate accommodation total with dynamic pricing
+$accommodationTotal = 0;
+if ($datesSelected) {
+    $start = new DateTime($checkinDate);
+    $end = new DateTime($checkoutDate);
+
+    foreach ($booking['accommodations'] ?? [] as $acc) {
+        if (!empty($acc) && !empty($acc['staycation'])) {
+            $quantity = $acc['guests'] ?? 1;
+            $name = strtolower($acc['staycation']['name']);
+            $isBYOT = str_contains($name, 'byot');
+            $isCarCamping = str_contains($name, 'car camping');
+
+            if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
+                $current = clone $start;
+                while ($current < $end) {
+                    $day = (int)$current->format('w'); // 0=Sun, 6=Sat
+                    $isWeekend = $day === 5 || $day === 6; // Fri=5, Sat=6
+                    $basePrice = 0;
+                    if (str_contains($name, 'standard')) {
+                        $basePrice = $isWeekend ? 6000 : 4800;
+                    } elseif (str_contains($name, 'premium')) {
+                        $basePrice = $isWeekend ? 7200 : 5760;
+                    }
+                    $extraGuests = max(0, $quantity - 4);
+                    $accommodationTotal += $basePrice + ($extraGuests * 400);
+                    $current->modify('+1 day');
+                }
+            } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
+                $accommodationTotal += 3000 * $nights;
+            } elseif ($isBYOT || $isCarCamping) {
+                $accommodationTotal += 300 * $quantity * $nights;
+            }
+        }
+    }
+}
+@endphp
+
+<body class="bg-[#f5efe7]">
+    <div class="flex flex-col items-center justify-center px-4">
+      @if (session('success'))
+          <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">
+              {{ session('success') }}
           </div>
-          <span class="text-xs sm:text-sm font-medium text-center">Booking</span>
-        </div>
-
-        <div class="flex-1 h-px bg-gray-300"></div>
-
-        {{-- Step 2: Activities (current) --}}
-        <div class="flex flex-col items-center text-[#8f5d54]">
-          <div class="w-6 h-6 sm:w-8 sm:h-8 bg-[#8f5d54] text-white rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
-            2
-          </div>
-          <span class="text-xs sm:text-sm font-medium text-center">Activities</span>
-        </div>
-
-        <div class="flex-1 h-px bg-gray-300"></div>
-
-        {{-- Step 3: Payment --}}
-        <div class="flex flex-col items-center text-gray-400">
-          <div class="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
-            3
-          </div>
-          <span class="text-xs sm:text-sm font-medium text-center">Payment</span>
-        </div>
-      </div>
+      @endif
     </div>
-  </div>
+    <x-header active="booking" />
+    <div class="min-h-screen">
 
-  {{-- Activities Selection --}}
-  <main class="py-6 sm:py-8 md:py-12 lg:py-16 min-h-[70vh]">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8">
-        {{-- Title --}}
-        <header class="mb-6 sm:mb-8 text-center">
-          <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">
-            CalaiaPH Staycation Booking
-          </p>
-          <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#8f5d54] font-vila-zilka">
-            Select or Add Activities
-          </h1>
-          <p class="mt-2 text-sm sm:text-base text-gray-500 max-w-2xl mx-auto px-2">
-            Enhance your staycation experience with these optional activities. Choose from our curated experiences or add your own custom activity.
-          </p>
-        </header>
+<div class="pt-6 md:pt-12" data-accommodation-total="{{ $accommodationTotal }}" data-total-guests="{{ $totalGuests }}" data-nights="{{ $nights }}">
+    {{-- Header --}}
+    <div class="text-center mb-10">
+        <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Select Staycation Activities</h1>
+        <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
+        <p class="text-gray-500">Enhance your staycation experience with optional activities</p>
+    </div>
 
-        <div class="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] items-start">
-          {{-- Activities List --}}
-          <section aria-labelledby="activities-heading">
-            <h2 id="activities-heading" class="sr-only">Available Activities</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10 py-6">
+        {{-- Main content --}}
+        <div class="lg:col-span-2">
+            <div class="flex flex-col">
+                {{-- Step indicator --}}
+                <small class="text-gray-500 text-sm mb-2">
+                    Step 2 of 3: Select Activities
+                </small>
 
-            {{-- Pre-defined Activities --}}
-            <div class="mb-8">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4">Pre-defined Activities</h3>
-              <div class="grid gap-4 sm:grid-cols-2">
-                @foreach($activities as $activity)
-                <div class="bg-gray-50 rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow">
-                  <div class="flex items-start space-x-3">
-                    <input
-                      type="checkbox"
-                      id="activity-{{ $activity['id'] }}"
-                      name="activities[]"
-                      value="{{ $activity['id'] }}"
-                      class="activity-checkbox mt-1 text-[#8f5d54] focus:ring-[#8f5d54]"
-                      data-price="{{ $activity['price'] }}"
-                      data-name="{{ $activity['name'] }}"
-                    >
-                    <div class="flex-1">
-                      <label for="activity-{{ $activity['id'] }}" class="cursor-pointer">
-                        <h4 class="font-semibold text-gray-900">{{ $activity['name'] }}</h4>
-                        <p class="text-sm text-gray-600 mt-1">{{ $activity['description'] }}</p>
-                        <div class="flex items-center justify-between mt-2">
-                          <span class="text-sm text-gray-500">
-                            <i class="bi bi-clock mr-1"></i>{{ $activity['duration'] }}
-                          </span>
-                          <span class="font-semibold text-[#8f5d54]">₱{{ number_format($activity['price'], 2) }}</span>
-                        </div>
-                        <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                          {{ $activity['availability'] }}
-                        </span>
-                      </label>
+                {{-- Navigation --}}
+                <div class="flex items-end justify-between my-3">
+                    <a href="{{ $backUrl }}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                        <i class="bi bi-arrow-left mr-2"></i>
+                        Back
+                    </a>
+
+                    <div class="flex items-center gap-2">
+                        @if (session()->has('user.is_guest') && session('user.is_guest'))
+                            <span
+                                class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-white shadow"
+                                style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: 1px solid rgba(255,255,255,.2);">
+                                <i class="bi bi-person mr-1 text-sm"></i> Guest Mode
+                            </span>
+                        @endif
                     </div>
+                </div>
+
+                {{-- Activities Selection --}}
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8">
+                    {{-- Activities List --}}
+                    <section aria-labelledby="activities-heading">
+                        <h2 id="activities-heading" class="sr-only">Available Activities</h2>
+
+                        {{-- Pre-defined Activities --}}
+                        <div class="mb-8">
+                          <h3 class="text-lg font-semibold text-gray-800 mb-4">Pre-defined Activities</h3>
+                          <div class="grid gap-4 sm:grid-cols-2">
+                            @foreach($activities as $activity)
+                            <div class="bg-gray-50 rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow">
+                              <div class="flex items-start space-x-3">
+                                <input
+                                  type="checkbox"
+                                  id="activity-{{ $activity['id'] }}"
+                                  name="activities[]"
+                                  value="{{ $activity['id'] }}"
+                                  class="activity-checkbox mt-1 text-[#8f5d54] focus:ring-[#8f5d54]"
+                                  data-price="{{ $activity['price'] }}"
+                                  data-name="{{ $activity['name'] }}"
+                                >
+                                <div class="flex-1">
+                                  <label for="activity-{{ $activity['id'] }}" class="cursor-pointer">
+                                    <h4 class="font-semibold text-gray-900">{{ $activity['name'] }}</h4>
+                                    <p class="text-sm text-gray-600 mt-1">{{ $activity['description'] }}</p>
+                                    <div class="flex items-center justify-between mt-2">
+                                      <span class="text-sm text-gray-500">
+                                        <i class="bi bi-clock mr-1"></i>{{ $activity['duration'] }}
+                                      </span>
+                                      <span class="font-semibold text-[#8f5d54]">₱{{ number_format($activity['price'], 2) }}</span>
+                                    </div>
+                                    <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                      {{ $activity['availability'] }}
+                                    </span>
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+                            @endforeach
+                          </div>
+                        </div>
+
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        {{-- Sidebar: booking summary --}}
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl shadow-md p-6 sticky top-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Booking Summary</h3>
+
+                @if($datesSelected)
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Check-in:</span>
+                            <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkinDate)->format('M j, Y') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Check-out:</span>
+                            <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkoutDate)->format('M j, Y') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Nights:</span>
+                            <span class="text-sm font-medium">{{ $nights }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Guests:</span>
+                            <span class="text-sm font-medium">{{ $totalGuests }}</span>
+                        </div>
+                        <hr class="my-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Accommodations:</span>
+                            <span class="text-sm font-medium">{{ count(array_filter($booking['accommodations'] ?? [])) }} selected</span>
+                        </div>
+                        <div class="mt-2 space-y-1">
+                            @if(!empty($booking['accommodations']))
+                                @php
+                                $start = new DateTime($checkinDate);
+                                $end = new DateTime($checkoutDate);
+                                @endphp
+                                @foreach($booking['accommodations'] as $index => $accommodation)
+                                    @if(!empty($accommodation) && !empty($accommodation['staycation']))
+                                        @php
+                                        $quantity = $accommodation['guests'] ?? 1;
+                                        $name = strtolower($accommodation['staycation']['name']);
+                                        $isBYOT = str_contains($name, 'byot');
+                                        $isCarCamping = str_contains($name, 'car camping');
+                                        $totalPrice = 0;
+
+                                        if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
+                                            $current = clone $start;
+                                            while ($current < $end) {
+                                                $day = (int)$current->format('w');
+                                                $isWeekend = $day === 5 || $day === 6;
+                                                $basePrice = 0;
+                                                if (str_contains($name, 'standard')) {
+                                                    $basePrice = $isWeekend ? 6000 : 4800;
+                                                } elseif (str_contains($name, 'premium')) {
+                                                    $basePrice = $isWeekend ? 7200 : 5760;
+                                                }
+                                                $extraGuests = max(0, $quantity - 4);
+                                                $totalPrice += $basePrice + ($extraGuests * 400);
+                                                $current->modify('+1 day');
+                                            }
+                                        } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
+                                            $totalPrice = 3000 * $nights;
+                                        } elseif ($isBYOT || $isCarCamping) {
+                                            $totalPrice = 300 * $quantity * $nights;
+                                        }
+
+                                        $avgPrice = $nights > 0 ? round($totalPrice / $nights) : $accommodation['staycation']['price'];
+                                        @endphp
+                                        <div class="text-xs text-gray-600">
+                                            ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($avgPrice) }}/night ({{ $accommodation['guests'] }} guests)
+                                        </div>
+                                    @endif
+                                @endforeach
+                            @endif
+                        </div>
+                        <div class="flex justify-between items-center text-lg font-bold pt-2 border-t border-gray-200">
+                            <span>Accommodation Total:</span>
+                            <span>₱ {{ number_format($accommodationTotal) }}</span>
+                        </div>
+                    </div>
+                @else
+                    <p class="text-sm text-gray-500 mb-6">Please select your dates to see the booking summary.</p>
+                @endif
+
+                <hr class="my-4">
+
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Selected Activities</h3>
+
+                <div id="selected-activities" class="space-y-3 mb-4">
+                  <!-- Selected activities will be added here -->
+                </div>
+
+                <div class="border-t border-gray-200 pt-4">
+                  <div class="flex justify-between items-center text-lg font-bold">
+                    <span>Activities Total:</span>
+                    <span id="total-cost">₱ 0.00</span>
                   </div>
                 </div>
-                @endforeach
-              </div>
-            </div>
 
-            {{-- Add Custom Activity --}}
-            <div class="bg-gray-50 rounded-xl p-4 sm:p-6">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                <i class="bi bi-plus-circle mr-2 text-[#8f5d54]"></i>
-                Add Custom Activity
-              </h3>
+                <div class="border-t border-gray-200 pt-4 mt-4">
+                  <div class="flex justify-between items-center text-xl font-bold text-[#8f5d54]">
+                    <span>Grand Total:</span>
+                    <span id="grand-total">₱ {{ number_format($accommodationTotal) }}</span>
+                  </div>
+                </div>
 
-              <div class="space-y-4">
-                <div>
-                  <label for="custom_name" class="block text-sm font-medium text-gray-700 mb-2">
-                    Activity Name
-                  </label>
-                  <input
-                    type="text"
-                    id="custom_name"
-                    name="custom_name"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
-                    placeholder="e.g., Private Yoga Session"
+                <div class="mt-6 space-y-3">
+                  <button
+                    type="button"
+                    id="skip-btn"
+                    class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
                   >
-                </div>
+                    Skip
+                  </button>
 
-                <div>
-                  <label for="custom_description" class="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    id="custom_description"
-                    name="custom_description"
-                    rows="3"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
-                    placeholder="Brief description of the activity"
-                  ></textarea>
-                </div>
-
-                <div>
-                  <label for="custom_cost" class="block text-sm font-medium text-gray-700 mb-2">
-                    Estimated Cost (₱)
-                  </label>
-                  <input
-                    type="number"
-                    id="custom_cost"
-                    name="custom_cost"
-                    min="0"
-                    step="0.01"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
-                    placeholder="0.00"
+                  <button
+                    type="button"
+                    id="confirm-btn"
+                    class="w-full bg-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled
                   >
+                    Confirm and Proceed
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  id="add-custom-btn"
-                  class="inline-flex items-center gap-2 rounded-lg bg-[#8f5d54] px-4 py-2 text-sm font-semibold text-white hover:bg-[#a0675a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
-                >
-                  <i class="bi bi-plus"></i>
-                  Add to Selection
-                </button>
-              </div>
             </div>
-          </section>
-
-          {{-- Summary Sidebar --}}
-          <section
-            aria-labelledby="summary-heading"
-            class="bg-gray-50 rounded-xl border border-gray-100 p-4 sm:p-5 md:p-6 lg:sticky lg:top-4 order-2 lg:order-1"
-          >
-            <h2 id="summary-heading" class="text-base sm:text-lg font-semibold text-gray-900 mb-4">
-              Selected Activities
-            </h2>
-
-            <div id="selected-activities" class="space-y-3 mb-4">
-              <!-- Selected activities will be added here -->
-            </div>
-
-            <div class="border-t border-gray-200 pt-4">
-              <div class="flex justify-between items-center text-lg font-semibold">
-                <span>Total:</span>
-                <span id="total-cost" class="text-[#8f5d54]">₱0.00</span>
-              </div>
-            </div>
-
-            <div class="mt-6 space-y-3">
-              <button
-                type="button"
-                onclick="window.history.back()"
-                class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
-              >
-                <i class="bi bi-arrow-left"></i>
-                Back
-              </button>
-
-              <button
-                type="button"
-                id="skip-btn"
-                class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
-              >
-                Skip
-              </button>
-
-              <button
-                type="button"
-                id="confirm-btn"
-                class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#8f5d54] px-4 py-2 text-sm font-semibold text-white hover:bg-[#a0675a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled
-              >
-                Confirm and Proceed
-                <i class="bi bi-arrow-right"></i>
-              </button>
-            </div>
-          </section>
         </div>
-      </div>
     </div>
-  </main>
+</div>
+
+{{-- Toast --}}
+<div class="toast fixed bottom-4 right-4 flex items-center text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden"
+     role="alert" aria-live="assertive" aria-atomic="true">
+   <div class="flex items-center w-full">
+      <div class="toast-body text-sm flex-1"></div>
+      <button type="button"
+              class="ml-3 text-white text-xs font-semibold uppercase tracking-wide btn-close"
+              data-bs-dismiss="toast"
+              aria-label="Close">
+         ✕
+      </button>
+   </div>
+</div>
 
   {{-- Footer --}}
   <x-footer />
@@ -241,60 +350,42 @@
       const selectedActivities = [];
       let totalCost = 0;
 
-      // Handle pre-defined activity checkboxes
-      document.querySelectorAll('.activity-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-          const activityId = this.value;
-          const activityName = this.dataset.name;
-          const activityPrice = parseFloat(this.dataset.price);
+      // Get data from attributes
+      const container = document.querySelector('.pt-6.md\\:pt-12');
+      const accommodationTotal = parseFloat(container.dataset.accommodationTotal) || 0;
+      const totalGuests = parseInt(container.dataset.totalGuests) || 0;
+      const nights = parseInt(container.dataset.nights) || 0;
 
-          if (this.checked) {
-            selectedActivities.push({ id: activityId, name: activityName, price: activityPrice, type: 'predefined' });
-            totalCost += activityPrice;
-          } else {
-            const index = selectedActivities.findIndex(a => a.id === activityId && a.type === 'predefined');
-            if (index > -1) {
-              totalCost -= selectedActivities[index].price;
-              selectedActivities.splice(index, 1);
-            }
+    // Handle activity checkboxes
+    document.querySelectorAll('.activity-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        const activityId = this.value;
+        const activityName = this.dataset.name;
+        const activityPrice = parseFloat(this.dataset.price);
+
+        if (this.checked) {
+          selectedActivities.push({ id: activityId, name: activityName, price: activityPrice, guests: totalGuests, type: 'predefined' });
+          totalCost += activityPrice * totalGuests;
+          showToast(`${activityName} added to selection`, 'success');
+        } else {
+          const index = selectedActivities.findIndex(a => a.id === activityId);
+          if (index > -1) {
+            totalCost -= selectedActivities[index].price * selectedActivities[index].guests;
+            selectedActivities.splice(index, 1);
+            showToast(`${activityName} removed from selection`, 'info');
           }
-
-          updateSummary();
-        });
-      });
-
-      // Handle add custom activity
-      document.getElementById('add-custom-btn').addEventListener('click', function() {
-        const name = document.getElementById('custom_name').value.trim();
-        const description = document.getElementById('custom_description').value.trim();
-        const cost = parseFloat(document.getElementById('custom_cost').value) || 0;
-
-        if (!name || !description || cost <= 0) {
-          alert('Please fill in all fields with valid values.');
-          return;
         }
-
-        selectedActivities.push({
-          id: 'custom-' + Date.now(),
-          name: name,
-          price: cost,
-          type: 'custom',
-          description: description
-        });
-        totalCost += cost;
-
-        // Clear form
-        document.getElementById('custom_name').value = '';
-        document.getElementById('custom_description').value = '';
-        document.getElementById('custom_cost').value = '';
 
         updateSummary();
       });
+    });
+
 
       // Update summary display
       function updateSummary() {
         const container = document.getElementById('selected-activities');
         const totalElement = document.getElementById('total-cost');
+        const grandTotalElement = document.getElementById('grand-total');
         const confirmBtn = document.getElementById('confirm-btn');
 
         container.innerHTML = '';
@@ -309,37 +400,95 @@
             item.innerHTML = `
               <div class="flex-1">
                 <p class="text-sm font-medium text-gray-900">${activity.name}</p>
-                ${activity.type === 'custom' ? `<p class="text-xs text-gray-500">${activity.description}</p>` : ''}
+                <div class="mt-2">
+                  <label class="block text-xs text-gray-600 mb-1">Number of Guests</label>
+                  <input type="number" class="activity-guests w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent" value="${activity.guests}" min="1" max="${totalGuests}" data-activity-id="${activity.id}">
+                </div>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-sm font-semibold text-[#8f5d54]">₱${activity.price.toFixed(2)}</span>
+                <span class="text-sm font-semibold text-[#8f5d54]">₱${(activity.price * activity.guests).toFixed(2)}</span>
                 <button type="button" class="text-red-500 hover:text-red-700" onclick="removeActivity('${activity.id}')">
                   <i class="bi bi-x"></i>
                 </button>
               </div>
             `;
             container.appendChild(item);
+
+            // Add event listener for guest input
+            const guestInput = item.querySelector('.activity-guests');
+            guestInput.addEventListener('input', function() {
+              const newGuests = parseInt(this.value) || 1;
+              const index = selectedActivities.findIndex(a => a.id === activity.id);
+              if (index > -1) {
+                const oldGuests = selectedActivities[index].guests;
+                selectedActivities[index].guests = newGuests;
+                totalCost += (newGuests - oldGuests) * activity.price;
+                updateSummary();
+              }
+            });
           });
           confirmBtn.disabled = false;
         }
 
         totalElement.textContent = `₱${totalCost.toFixed(2)}`;
+
+        // Calculate grand total (accommodation total + activities total)
+        const grandTotal = accommodationTotal + totalCost;
+        if (grandTotalElement) {
+          grandTotalElement.textContent = `₱${grandTotal.toFixed(2)}`;
+        }
       }
 
       // Remove activity
       window.removeActivity = function(id) {
         const index = selectedActivities.findIndex(a => a.id === id);
         if (index > -1) {
-          totalCost -= selectedActivities[index].price;
+          const activityName = selectedActivities[index].name;
+          totalCost -= selectedActivities[index].price * totalGuests;
           selectedActivities.splice(index, 1);
           updateSummary();
+          showToast(`${activityName} removed from selection`, 'info');
         }
       };
 
+      // Toast function
+      function showToast(message, type = 'info') {
+        const toastEl = document.querySelector('.toast');
+        if (toastEl) {
+          const toastBody = toastEl.querySelector('.toast-body');
+          if (toastBody) {
+            toastBody.textContent = message;
+          }
+          toastEl.classList.remove('hidden');
+          setTimeout(() => {
+            toastEl.classList.add('hidden');
+          }, 3000);
+        }
+      }
+
       // Skip button
       document.getElementById('skip-btn').addEventListener('click', function() {
-        // Proceed to payment without activities
-        window.location.href = '{{ route("booking.staycationPayment") }}';
+        // Store empty activities and proceed to payment
+        fetch('{{ route("booking.storeStaycationActivities") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({ activities: [] })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            window.location.href = '{{ route("booking.staycationPayment") }}';
+          } else {
+            showToast('Error saving. Please try again.', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('Error saving. Please try again.', 'error');
+        });
       });
 
       // Confirm button
@@ -358,12 +507,12 @@
           if (data.success) {
             window.location.href = '{{ route("booking.staycationPayment") }}';
           } else {
-            alert('Error saving activities. Please try again.');
+            showToast('Error saving activities. Please try again.', 'error');
           }
         })
         .catch(error => {
           console.error('Error:', error);
-          alert('Error saving activities. Please try again.');
+          showToast('Error saving activities. Please try again.', 'error');
         });
       });
     });

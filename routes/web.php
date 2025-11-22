@@ -88,7 +88,7 @@ Route::match(['GET', 'POST'], '/booking/staycation', [BookingController::class, 
 Route::post('/booking/select-dates', [BookingController::class, 'selectDates'])->name('booking.selectDates');
 Route::post('/booking/check-availability', [BookingController::class, 'checkAvailability'])->name('booking.checkAvailability');
 Route::get('/booking/payment', [BookingController::class, 'payment'])->name('booking.payment');
-Route::post('/booking/process-payment', [BookingController::class, 'processPayment'])->name('booking.processPayment');
+Route::post('/booking/payment', [BookingController::class, 'processPayment'])->name('booking.processPayment');
 Route::get('/booking/confirmation', [BookingController::class, 'confirmation'])->name('booking.confirmation');
 Route::get('/booking/widget', [BookingController::class, 'widget'])->name('booking.widget');
 Route::get('/booking/reset-inventory', function () {
@@ -103,10 +103,26 @@ Route::get('/set-credentials/{token}', [RegisterController::class, 'showSetCrede
 Route::post('/set-credentials/{token}', [RegisterController::class, 'setCredentials']);
 Route::get('/verify-email/{token}', [RegisterController::class, 'verifyEmail'])->name('verify.email');
 
+Route::get('/login', function () { return redirect('/'); })->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/booking/history', function () {
+        // TODO: Implement booking history logic
+        $bookings = []; // Fetch user's bookings from database
+        return view('booking_history', compact('bookings'));
+    })->name('booking.history');
+
+    Route::get('/checkinout', function () {
+        // TODO: Implement check-in/out logic
+        $activeBookings = []; // Fetch user's active bookings that can be checked in/out
+        return view('checkinout', compact('activeBookings'));
+    })->name('checkinout');
+});
 
 
 // // ========== Helper Function for Admin Auth ==========

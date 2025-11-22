@@ -78,13 +78,13 @@
         <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
 
           {{-- Card 1 --}}
-          <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100">
+          <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
             {{-- inset image frame --}}
             <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10">
               <img
                 src="{{ asset('images/carousel/SET MENUS2.JPG') }}"
                 alt="Set Menus"
-                class="w-full h-64 sm:h-72 md:h-80 object-cover"
+                class="w-full h-64 sm:h-72 md:h-80 object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                 loading="lazy"
               >
             </div>
@@ -107,12 +107,12 @@
           </div>
 
           {{-- Card 2 --}}
-          <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100">
+          <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
             <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10">
               <img
                 src="{{ asset('images/carousel/menu1.jpg') }}"
                 alt="Special Menus"
-                class="w-full h-64 sm:h-72 md:h-80 object-cover"
+                class="w-full h-64 sm:h-72 md:h-80 object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                 loading="lazy"
               >
             </div>
@@ -135,12 +135,12 @@
           </div>
 
           {{-- Card 3 --}}
-          <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100">
+          <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
             <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10">
               <img
                 src="{{ asset('images/carousel/menu3.jpg') }}"
                 alt="Snack Bar"
-                class="w-full h-64 sm:h-72 md:h-80 object-cover"
+                class="w-full h-64 sm:h-72 md:h-80 object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                 loading="lazy"
               >
             </div>

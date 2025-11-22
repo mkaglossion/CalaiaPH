@@ -20,7 +20,7 @@
             <i class="bi bi-messenger text-2xl"></i>
           </a>
           <!-- Email -->
-          <a href="mailto:info@calaiafarm.com" class="text-white hover:text-gray-200 hover:scale-110 transition-all duration-300 p-2 rounded-full hover:bg-white/10" aria-label="Email us">
+          <a href="mailto:calaia.ph@gmail.com" class="text-white hover:text-gray-200 hover:scale-110 transition-all duration-300 p-2 rounded-full hover:bg-white/10" aria-label="Email us">
             <i class="bi bi-envelope-fill text-2xl"></i>
           </a>
         </div>
@@ -42,9 +42,12 @@
         </div>
 
         <!-- Quick Links -->
-        <div class="text-center md:text-left">
-          <h3 class="text-xl font-semibold uppercase mb-3">EXPLORE</h3>
-          <ul class="space-y-1">
+        <div class="text-left">
+          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center" onclick="toggleSection(this)">
+            <span>EXPLORE</span>
+            <i class="bi bi-plus md:hidden"></i>
+          </h3>
+          <ul class="space-y-1 hidden md:block">
             <li><a href="{{ url('/') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Home</a></li>
             <li><a href="{{ url('/daytour') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Day Tour</a></li>
             <li><a href="{{ url('/staycation') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Where to Stay</a></li>
@@ -56,9 +59,12 @@
         </div>
 
         <!-- Useful Links -->
-        <div class="text-center md:text-left">
-          <h3 class="text-xl font-semibold uppercase mb-3">INFORMATION</h3>
-          <ul class="space-y-1">
+        <div class="text-left">
+          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center" onclick="toggleSection(this)">
+            <span>INFORMATION</span>
+            <i class="bi bi-plus md:hidden"></i>
+          </h3>
+          <ul class="space-y-1 hidden md:block">
             <li><a href="{{ url('/our-story') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Our Story</a></li>
             <li><a href="{{ url('/sustainability') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Sustainability</a></li>
             <li><a href="{{ url('/services') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Our Services</a></li>
@@ -67,23 +73,26 @@
         </div>
 
         <!-- Contact Info -->
-        <div class="text-center md:text-left">
-          <h3 class="text-xl font-semibold uppercase mb-3">CONTACT</h3>
-          <div class="space-y-2">
+        <div class="text-left">
+          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center" onclick="toggleSection(this)">
+            <span>CONTACT</span>
+            <i class="bi bi-plus md:hidden"></i>
+          </h3>
+          <div class="space-y-2 hidden md:block">
             <div class="flex items-center justify-center md:justify-start">
               <i class="bi bi-geo-alt-fill mr-3 text-gray-200"></i>
               <span class="text-gray-200">Calaca, Batangas, Philippines</span>
             </div>
             <div class="flex items-center justify-center md:justify-start">
               <i class="bi bi-envelope-fill mr-3 text-gray-200"></i>
-              <a href="mailto:info@calaiafarm.com" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">
-                info@calaiafarm.com
+              <a href="mailto:calaia.ph@gmail.com" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">
+                calaia.ph@gmail.com
               </a>
             </div>
             <div class="flex items-center justify-center md:justify-start">
               <i class="bi bi-telephone-fill mr-3 text-gray-200"></i>
-              <a href="tel:+639491394912" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">
-                +63 949 139 4912
+              <a href="tel:+639051294741" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">
+                +63 905 129 4741
               </a>
             </div>
             <div class="flex items-center justify-center md:justify-start">
@@ -123,4 +132,19 @@
       </div>
     </div>
   </div>
+
+  <script>
+    function toggleSection(header) {
+      const content = header.nextElementSibling;
+      const icon = header.querySelector('i');
+      content.classList.toggle('hidden');
+      if (content.classList.contains('hidden')) {
+        icon.classList.remove('bi-dash');
+        icon.classList.add('bi-plus');
+      } else {
+        icon.classList.remove('bi-plus');
+        icon.classList.add('bi-dash');
+      }
+    }
+  </script>
 </footer>
