@@ -14,6 +14,8 @@
 
 @php
 // For staycation confirmation
+$totalGuests = 0;
+$nights = 0;
 if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations'])) {
    $totalGuests = collect($bookingData['accommodations'])->sum('guests');
    $nights = !empty($bookingData['checkin']) && !empty($bookingData['checkout']) ?

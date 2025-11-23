@@ -13,7 +13,11 @@ class BookingController extends Controller
     public function create(Request $request)
     {
         $type = $request->get('type', 'day-visit');
-        $allowedTypes = ['day-visit', 'room', 'overnight'];
+        $allowedTypes = ['day-visit', 'room', 'overnight', 'daytour'];
+        // Map 'daytour' to 'day-visit' for consistency
+        if ($type === 'daytour') {
+            $type = 'day-visit';
+        }
         if (!in_array($type, $allowedTypes)) {
             $type = 'day-visit';
         }
@@ -61,7 +65,7 @@ class BookingController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
-            'booking_date' => 'required|date|after:today',
+            'booking_date' => 'required|date|after:yesterday',
             'guests' => 'required|integer|min:1|max:50',
             'special_requests' => 'nullable|string|max:1000',
             'type' => 'required|string|in:day-visit,room,overnight',
@@ -81,8 +85,8 @@ class BookingController extends Controller
         $type = $request->input('type'); // 'room', 'day-visit', or 'overnight'
         $date = $validated['booking_date'];
 
-        // Check availability
-        if (!isset($inventory[$type][$date]) || $inventory[$type][$date] <= 0) {
+        // Check availability - for demo, assume available if not in inventory
+        if (isset($inventory[$type][$date]) && $inventory[$type][$date] <= 0) {
             return redirect()->back()->with('error', 'No availability for the selected date and type.');
         }
 
@@ -400,10 +404,13 @@ class BookingController extends Controller
             try {
                 // Send receipt email for staycation using form data
                 $customerEmail = $request->email ?? 'guest@example.com';
+                Log::info('Sending staycation confirmation email to: ' . $customerEmail);
                 Mail::to($customerEmail)->send(new BookingConfirmation($staycationBooking, $selectedActivities));
+                Log::info('Staycation confirmation email sent successfully to: ' . $customerEmail);
             } catch (\Exception $e) {
                 // Log the error but continue to confirmation
                 Log::error('Staycation receipt email failed: ' . $e->getMessage());
+                Log::error('Staycation email error details: ', ['email' => $customerEmail, 'booking' => $staycationBooking]);
             }
 
             // Store booking data for confirmation page
@@ -438,10 +445,13 @@ class BookingController extends Controller
 
             try {
                 // Send receipt email with activities
+                Log::info('Sending regular booking confirmation email to: ' . $bookingData['email']);
                 Mail::to($bookingData['email'])->send(new BookingConfirmation($bookingData, $selectedActivities));
+                Log::info('Regular booking confirmation email sent successfully to: ' . $bookingData['email']);
             } catch (\Exception $e) {
                 // Log the error but continue to confirmation
                 Log::error('Receipt email sending failed: ' . $e->getMessage());
+                Log::error('Regular booking email error details: ', ['email' => $bookingData['email'], 'booking' => $bookingData]);
             }
 
             // Redirect to confirmation page
