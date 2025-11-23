@@ -10,6 +10,12 @@ use DateTime;
 
 class BookingController extends Controller
 {
+    public function debugSession()
+    {
+        // Dump the entire session
+        dd(session()->all());
+    }
+
     public function create(Request $request)
     {
         $type = $request->get('type', 'day-visit');

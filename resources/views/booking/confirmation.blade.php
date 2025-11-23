@@ -15,11 +15,32 @@
 @php
 // For staycation confirmation
 if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations'])) {
-   $totalGuests = collect($bookingData['accommodations'])->sum('guests');
-   $nights = !empty($bookingData['checkin']) && !empty($bookingData['checkout']) ?
-       \Carbon\Carbon::parse($bookingData['checkout'])->diffInDays(\Carbon\Carbon::parse($bookingData['checkin'])) : 0;
+    $totalGuests = collect($bookingData['accommodations'])->sum('guests');
+
+    $nights = 0;
+
+  if (!empty($bookingData['checkin']) && !empty($bookingData['checkout'])) {
+      $checkin = \Carbon\Carbon::parse($bookingData['checkin'])->startOfDay();
+      $checkout = \Carbon\Carbon::parse($bookingData['checkout'])->startOfDay();
+
+      // Make sure checkout >= checkin
+      if ($checkout->lt($checkin)) {
+          $temp = $checkin;
+          $checkin = $checkout;
+          $checkout = $temp;
+      }
+
+      // diffInDays always positive
+      $nights = $checkout->diffInDays($checkin);
+
+      // Edge case: if someone books same day, count as 1 night
+      if ($nights === 0) {
+          $nights = 1;
+      }
+  }
 }
 @endphp
+
 
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
   {{-- Header --}}
@@ -116,11 +137,7 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
               </div>
               <div>
                 <span class="font-medium text-gray-500">Nights:</span>
-                <span class="ml-2 text-gray-900">
-                  @if (!empty($bookingData['checkin']) && !empty($bookingData['checkout']))
-                    {{ \Carbon\Carbon::parse($bookingData['checkout'])->diffInDays(\Carbon\Carbon::parse($bookingData['checkin'])) }}
-                  @endif
-                </span>
+                  <span class="ml-2 text-gray-900">{{ $nights ?? 0 }}</span>
               </div>
               <div>
                 <span class="font-medium text-gray-500">Guests:</span>
