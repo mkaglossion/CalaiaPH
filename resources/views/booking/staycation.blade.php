@@ -202,16 +202,16 @@
                                 </p>
 
                                 @if($glampingCount > 0)
-                                    <p class="text-lg font-semibold mb-1"
-                                       style="color: #7a7d52;">
-                                        Starts at ₱6,000/night
-                                    </p>
-                                    <p class="text-base text-gray-500 mb-6">
-                                        {{ $glampingCount }} {{ Str::plural('option', $glampingCount) }} available
-                                    </p>
-                                @else
-                                    <p class="text-base text-gray-400 mb-6">No glamping options available.</p>
-                                @endif
+                                     <p class="text-lg font-semibold mb-1"
+                                        style="color: #7a7d52;">
+                                         Starts at ₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)
+                                     </p>
+                                     <p class="text-base text-gray-500 mb-6">
+                                         {{ $glampingCount }} {{ Str::plural('option', $glampingCount) }} available
+                                     </p>
+                                 @else
+                                     <p class="text-base text-gray-400 mb-6">No glamping options available.</p>
+                                 @endif
 
                                 <button
                                     type="button"
@@ -259,16 +259,16 @@
                                 </p>
 
                                 @if($campingCount > 0)
-                                    <p class="text-lg font-semibold mb-1"
-                                       style="color: #7a7d52;">
-                                        Starts at ₱300/night
-                                    </p>
-                                    <p class="text-base text-gray-500 mb-6">
-                                        {{ $campingCount }} {{ Str::plural('option', $campingCount) }} available
-                                    </p>
-                                @else
-                                    <p class="text-base text-gray-400 mb-6">No camping options available.</p>
-                                @endif
+                                     <p class="text-lg font-semibold mb-1"
+                                        style="color: #7a7d52;">
+                                         Starts at ₱300/night (BYOT/Car Camping)<br>• ₱3,000/night (Bell/Dome Tents)
+                                     </p>
+                                     <p class="text-base text-gray-500 mb-6">
+                                         {{ $campingCount }} {{ Str::plural('option', $campingCount) }} available
+                                     </p>
+                                 @else
+                                     <p class="text-base text-gray-400 mb-6">No camping options available.</p>
+                                 @endif
 
                                 <button
                                     type="button"
@@ -828,17 +828,20 @@ window.updateBookingSummary = function() {
 
     function getPriceDisplay(staycation) {
         const lowerName = staycation.name.toLowerCase();
+        let price;
         if (lowerName.includes('standard')) {
-            return 'Starts at ₱6,000/night (Weekends: Fri.-Sat.) • ₱4,800/night (Weekdays: Sun.-Thu.)';
+            price = '₱4,800/night (Weekdays: Sun.-Thu.)<br>• ₱6,000/night (Weekends: Fri.-Sat.)';
         } else if (lowerName.includes('premium')) {
-            return 'Starts at ₱7,200/night (Weekends: Fri.-Sat.) • ₱5,760/night (Weekdays: Sun.-Thu.)';
+            price = '₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)';
         } else if (lowerName.includes('bell') || lowerName.includes('dome')) {
-            return 'Starts at ₱3,000/tent/night';
+            price = 'Starts at ₱3,000/tent/night';
         } else if (lowerName.includes('byot') || lowerName.includes('car')) {
-            return 'Starts at ₱300/tent or camp space + ₱500/pax overnight fee';
+            price = 'Starts at ₱300/tent or camp space + ₱500/pax overnight fee';
         } else {
-            return 'Starts at ₱ ' + staycation.price.toLocaleString() + '/night';
+            price = 'Starts at ₱ ' + staycation.price.toLocaleString() + '/night';
         }
+        console.log('getPriceDisplay for', staycation.name, ':', price);
+        return price;
     }
 
     function getFeaturesList(name) {
@@ -846,7 +849,7 @@ window.updateBookingSummary = function() {
         if (lowerName.includes('standard')) {
             return `
                 <li>• With Private Toilet & Bath</li>
-                <li>• Air-conditioned 25 sqm tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
+                <li>• Tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
                 <li>• Assigned heated shower with soap, shampoo & toilet with bidet (approx. 10 meters from tent)</li>
                 <li>• Access to Wi-Fi</li>
                 <li>• Private picnic table and fire pit/grill</li>
@@ -858,7 +861,7 @@ window.updateBookingSummary = function() {
         } else if (lowerName.includes('premium')) {
             return `
                 <li>• With Private Toilet & Bath</li>
-                <li>• Air-conditioned 25 sqm tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
+                <li>• Tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
                 <li>• Exclusive heated shower with soap, shampoo & toilet with bidet, located right beside the tent</li>
                 <li>• Access to Wi-Fi</li>
                 <li>• Private picnic table and fire pit/grill</li>
