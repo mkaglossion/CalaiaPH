@@ -118,8 +118,8 @@
      <x-check-availability />
     {{-- Event Experience --}}
     <x-event-experience />
-    {{-- Feature Cards --}}
-    <x-feature-cards />
+    {{-- Testimonials --}}
+    <x-testimonials-cards />
      {{-- Weather Forecast--}}
      <x-weather />
      {{-- Floating Buttons --}}

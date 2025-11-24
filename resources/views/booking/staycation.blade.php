@@ -97,6 +97,107 @@
     $campingDescription  = 'Traditional camping experiences with vehicle access and natural settings.';
 @endphp
 
+@php
+$galleryData = [
+    'glamping-standard' => [
+        'images' => [
+            asset('assets/images/carousel/Glamping-1.jpg'),
+            asset('assets/images/carousel/wheretostay.jpg'),
+            asset('assets/images/carousel/Calaia-26.jpg'),
+            asset('assets/images/carousel/our-farm.jpg'),
+            asset('assets/images/carousel/our-farm2.jpg'),
+            asset('assets/images/carousel/f&b.jpg'),
+            asset('assets/images/carousel/menu1.jpg'),
+            asset('assets/images/carousel/menu3.jpg'),
+            asset('assets/images/carousel/organic.png'),
+            asset('assets/images/carousel/organic1.jpg'),
+            asset('assets/images/carousel/farm.jpg'),
+            asset('assets/images/carousel/activities-1.jpg')
+        ]
+    ],
+    'glamping-premium' => [
+        'images' => [
+            asset('assets/images/carousel/Glamping-1.jpg'),
+            asset('assets/images/carousel/wheretostay.jpg'),
+            asset('assets/images/carousel/Calaia-26.jpg'),
+            asset('assets/images/carousel/our-farm.jpg'),
+            asset('assets/images/carousel/our-farm2.jpg'),
+            asset('assets/images/carousel/f&b.jpg'),
+            asset('assets/images/carousel/menu1.jpg'),
+            asset('assets/images/carousel/menu3.jpg'),
+            asset('assets/images/carousel/organic.png'),
+            asset('assets/images/carousel/organic1.jpg'),
+            asset('assets/images/carousel/farm.jpg'),
+            asset('assets/images/carousel/activities-1.jpg')
+        ]
+    ],
+    'camping-dome' => [
+        'images' => [
+            asset('assets/images/carousel/BYOT-2.jpg'),
+            asset('assets/images/carousel/Car-camping3.jpg'),
+            asset('assets/images/carousel/bonfire-5.jpg'),
+            asset('assets/images/carousel/biking-4.jpg'),
+            asset('assets/images/carousel/games-grounds4.jpg'),
+            asset('assets/images/carousel/go-cart2.jpg'),
+            asset('assets/images/carousel/minikalesa.jpg'),
+            asset('assets/images/carousel/animal and wellness.jpg'),
+            asset('assets/images/carousel/groups.jpg'),
+            asset('assets/images/carousel/whattodo.jpg'),
+            asset('assets/images/carousel/SET MEALS2.jpg'),
+            asset('assets/images/carousel/f&b.jpg')
+        ]
+    ],
+    'camping-bell' => [
+        'images' => [
+            asset('assets/images/carousel/BYOT-2.jpg'),
+            asset('assets/images/carousel/Car-camping3.jpg'),
+            asset('assets/images/carousel/bonfire-5.jpg'),
+            asset('assets/images/carousel/biking-4.jpg'),
+            asset('assets/images/carousel/games-grounds4.jpg'),
+            asset('assets/images/carousel/go-cart2.jpg'),
+            asset('assets/images/carousel/minikalesa.jpg'),
+            asset('assets/images/carousel/animal and wellness.jpg'),
+            asset('assets/images/carousel/groups.jpg'),
+            asset('assets/images/carousel/whattodo.jpg'),
+            asset('assets/images/carousel/SET MEALS2.jpg'),
+            asset('assets/images/carousel/f&b.jpg')
+        ]
+    ],
+    'camping-byot' => [
+        'images' => [
+            asset('assets/images/carousel/BYOT-2.jpg'),
+            asset('assets/images/carousel/Car-camping3.jpg'),
+            asset('assets/images/carousel/bonfire-5.jpg'),
+            asset('assets/images/carousel/biking-4.jpg'),
+            asset('assets/images/carousel/games-grounds4.jpg'),
+            asset('assets/images/carousel/go-cart2.jpg'),
+            asset('assets/images/carousel/minikalesa.jpg'),
+            asset('assets/images/carousel/animal and wellness.jpg'),
+            asset('assets/images/carousel/groups.jpg'),
+            asset('assets/images/carousel/whattodo.jpg'),
+            asset('assets/images/carousel/SET MEALS2.jpg'),
+            asset('assets/images/carousel/f&b.jpg')
+        ]
+    ],
+    'camping-car' => [
+        'images' => [
+            asset('assets/images/carousel/BYOT-2.jpg'),
+            asset('assets/images/carousel/Car-camping3.jpg'),
+            asset('assets/images/carousel/bonfire-5.jpg'),
+            asset('assets/images/carousel/biking-4.jpg'),
+            asset('assets/images/carousel/games-grounds4.jpg'),
+            asset('assets/images/carousel/go-cart2.jpg'),
+            asset('assets/images/carousel/minikalesa.jpg'),
+            asset('assets/images/carousel/animal and wellness.jpg'),
+            asset('assets/images/carousel/groups.jpg'),
+            asset('assets/images/carousel/whattodo.jpg'),
+            asset('assets/images/carousel/SET MEALS2.jpg'),
+            asset('assets/images/carousel/f&b.jpg')
+        ]
+    ]
+];
+@endphp
+
 @if (!$step1Completed || !$datesSelected)
     <script>
         window.location.href = "{{ $backLink }}";
@@ -543,11 +644,41 @@
                     </div>
                 </div>
             </div>
+          </div>
         </div>
-    </div>
-</div>
-
-    {{-- Toast --}}
+      </div>
+    
+      {{-- Gallery Modal --}}
+      <div id="gallery-modal" class="fixed inset-0 hidden z-50" role="dialog" aria-modal="true" aria-labelledby="gallery-modal-title">
+        <div class="flex items-center justify-center min-h-screen px-4">
+          <!-- Backdrop -->
+          <div class="absolute inset-0 transition-opacity duration-300" onclick="closeGallery()"></div>
+    
+          <!-- Modal content -->
+          <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden border border-gray-200 relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="gallery-modal-content">
+            <div class="p-6">
+              <div class="flex justify-between items-center mb-6">
+                <h2 id="gallery-modal-title" class="text-2xl font-bold text-gray-900">Photo Gallery</h2>
+                <button type="button" class="text-gray-400 hover:text-gray-600 text-3xl font-light leading-none focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" onclick="closeGallery()" style="line-height: 1;">
+                  ×
+                </button>
+              </div>
+    
+              <div class="flex items-center justify-center h-96 bg-black">
+                <img id="gallery-image" class="max-w-full max-h-full object-contain" alt="Gallery image">
+              </div>
+    
+              <div class="flex items-center justify-center gap-4 p-4 border-t">
+                <button class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" onclick="galleryPrev()"><i class="bi bi-chevron-left"></i> Prev</button>
+                <span id="gallery-counter" class="px-3 py-2 rounded-md text-gray-700 font-semibold">1 / 3</span>
+                <button class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" onclick="galleryNext()">Next <i class="bi bi-chevron-right"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+      {{-- Toast --}}
     <div class="toast fixed bottom-4 right-4 flex items-center text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden z-60"
          role="alert" aria-live="assertive" aria-atomic="true">
         <div class="flex items-center w-full">
@@ -571,6 +702,9 @@
     window.ROOT_DIR = el.dataset.rootDir;
     window.accommodationData = JSON.parse(el.dataset.accommodationData || '[]');
     window.selectedAccommodations = {}; // Store selected accommodations by index
+    window.galleryData = <?php echo json_encode($galleryData); ?>;
+    window.galleryImages = [];
+    window.galleryCurrentIndex = 0;
 
     // Global booking functions
     window.FeeCalculator = {
@@ -1053,6 +1187,14 @@
             let isBYOT = staycation.name.toLowerCase().includes('byot');
             let isCarCamping = staycation.name.toLowerCase().includes('car camping');
 
+            let option = '';
+            if (staycation.name.toLowerCase().includes('standard')) option = 'standard';
+            else if (staycation.name.toLowerCase().includes('premium')) option = 'premium';
+            else if (staycation.name.toLowerCase().includes('dome')) option = 'dome';
+            else if (staycation.name.toLowerCase().includes('bell')) option = 'bell';
+            else if (staycation.name.toLowerCase().includes('byot')) option = 'byot';
+            else if (staycation.name.toLowerCase().includes('car')) option = 'car';
+
             if (isBYOT) {
                 inputLabel = 'How many BYOT?';
                 inputPlaceholder = '0';
@@ -1151,6 +1293,13 @@
                                 onclick="alert('VR Preview coming soon!')">
                                 <i class="fas fa-vr-cardboard mr-2"></i>
                                 VR Preview
+                            </button>
+                        </div>
+                        <div class="mt-2">
+                            <button class="w-full inline-flex justify-center items-center rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition px-3 py-2"
+                                onclick="openGallery('${category}', '${option}')">
+                                <i class="bi bi-images mr-2"></i>
+                                Photo Gallery
                             </button>
                         </div>
                     </div>
@@ -1562,6 +1711,69 @@
             console.error('Error:', error);
             alert('Error saving accommodations. Please try again.');
         });
+    }
+
+    // Gallery functions
+    function openGallery(type, option) {
+        const key = type + '-' + option;
+        const data = window.galleryData[key];
+        if (data) {
+            window.galleryImages = data.images;
+            window.galleryCurrentIndex = 0;
+            showGalleryModal();
+        }
+    }
+
+    function closeGallery() {
+        hideGalleryModal();
+    }
+
+    function galleryPrev() {
+        if (window.galleryCurrentIndex > 0) {
+            window.galleryCurrentIndex--;
+            updateGalleryImage();
+        }
+    }
+
+    function galleryNext() {
+        if (window.galleryCurrentIndex < window.galleryImages.length - 1) {
+            window.galleryCurrentIndex++;
+            updateGalleryImage();
+        }
+    }
+
+    function showGalleryModal() {
+        const modal = document.getElementById('gallery-modal');
+        const modalContent = document.getElementById('gallery-modal-content');
+        if (modal && modalContent) {
+            updateGalleryImage();
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+    }
+
+    function hideGalleryModal() {
+        const modal = document.getElementById('gallery-modal');
+        const modalContent = document.getElementById('gallery-modal-content');
+        if (modal && modalContent) {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+    }
+
+    function updateGalleryImage() {
+        const img = document.getElementById('gallery-image');
+        const counter = document.getElementById('gallery-counter');
+        if (img && window.galleryImages.length > 0) {
+            img.src = window.galleryImages[window.galleryCurrentIndex];
+            counter.textContent = (window.galleryCurrentIndex + 1) + ' / ' + window.galleryImages.length;
+        }
     }
 </script>
 

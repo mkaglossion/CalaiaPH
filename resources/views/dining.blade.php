@@ -91,11 +91,14 @@
 
             <div class="px-6 pb-6 pt-1 text-center">
               <h3 class="my-4 text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">
-                ADVENTURE PACKAGE
+                SET MENUS
               </h3>
+              <p class="small mb-2" style="color:#97655A;">
+                SET MENUS ARE AVAILABLE FOR GROUPS AND FAMILIES.
+              </p>
 
               <button
-                data-title="ADVENTURE PACKAGE"
+                data-title="SET MENUS"
                 data-details='["Ready-made meals for families, couples, or groups","Breakfast, lunch, and dinner options"]'
                 data-images='["{{ asset('images/carousel/SET MENUS2.JPG') }}","{{ asset('images/carousel/SET MEALS.jpg') }}","{{ asset('images/carousel/menu1.jpg') }}"]'
                 onclick="openModal(this)"
@@ -119,11 +122,14 @@
 
             <div class="px-6 pb-6 pt-1 text-center">
               <h3 class="my-4 text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">
-                FAMILY FUN PACKAGE
+                SPECIAL MENUS
               </h3>
+              <p class="mb-2" style="color:#97655A;">
+                SPECIAL MENUS ARE AVAILABLE FOR GROUPS AND FAMILIES.
+              </p>
 
               <button
-                data-title="FAMILY FUN PACKAGE"
+                data-title="SPECIAL MENUS"
                 data-details='["Harvest Your Own – Pick and cook farm-fresh ingredients","Cochinillo – Whole roast pig (pre-order required)"]'
                 data-images='["{{ asset('images/carousel/menu1.jpg') }}","{{ asset('images/carousel/menu2.jpg') }}","{{ asset('images/carousel/menu4.jpg') }}"]'
                 onclick="openModal(this)"
@@ -147,11 +153,14 @@
 
             <div class="px-6 pb-6 pt-1 text-center">
               <h3 class="my-4 text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">
-                NATURE EXPERIENCE
+                SNACK BAR
               </h3>
+              <p class="small mb-2" style="color:#97655A;">
+                SNACK BAR IS AVAILABLE FOR GROUPS AND FAMILIES.
+              </p>
 
               <button
-                data-title="NATURE EXPERIENCE"
+                data-title="SNACK BAR"
                 data-details='["All-day light snacks and drinks","Includes smoothies, juice, sandwiches, and more"]'
                 data-images='["{{ asset('images/carousel/menu3.jpg') }}","{{ asset('images/carousel/menu1.jpg') }}","{{ asset('images/carousel/menu4.jpg') }}"]'
                 onclick="openModal(this)"

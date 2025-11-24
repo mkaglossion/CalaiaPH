@@ -147,7 +147,7 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                   <p class="text-base sm:text-lg md:text-xl lg:text-2xl font-bold leading-tight" style="color:#7a7d52; font-family: gotham;">₱5,600/night (avg.)</p>
+                   <p class="text-base sm:text-lg md:text-xl lg:text-2xl font-bold leading-tight" style="color:#7a7d52; font-family: gotham;">Start at ₱4,800/night (Weekdays: Sun.-Thu.)<br>₱6,000/night (Weekends: Fri.-Sat.)</p>
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Standard</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
@@ -163,8 +163,11 @@
                   <li class="px-3 py-2 bg-gray-50 rounded">Pet-friendly*</li>
                 </ul>
                 <div class="flex gap-2">
-                  <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#6b7280" @click="book('{{ url('/booking/staycation?type=staycation&package=Standard%20Glamping&price=5600') }}')">Book Now</button>
+                  <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#6b7280" @click="book('{{ url('/booking/staycation?type=staycation&package=Standard%20Glamping&price=4800') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('glamping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
+                </div>
+                <div class="mt-2">
+                  <button type="button" class="w-full rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openGallery('glamping', 'standard')"><i class="bi bi-images me-1"></i>Photo Gallery</button>
                 </div>
               </div>
             </div>
@@ -210,6 +213,9 @@
                 <div class="flex gap-2">
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#00848d" @click="book('{{ url('/booking/staycation?type=staycation&package=Premium%20Glamping&price=5500') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('glamping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
+                </div>
+                <div class="mt-2">
+                  <button type="button" class="w-full rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openGallery('glamping', 'premium')"><i class="bi bi-images me-1"></i>Photo Gallery</button>
                 </div>
               </div>
             </div>
@@ -269,6 +275,9 @@
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#00848d" @click="book('{{ url('/booking/staycation?type=camping&package=Dome%20Tent&price=1200') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('camping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
                 </div>
+                <div class="mt-2">
+                  <button type="button" class="w-full rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openGallery('camping', 'dome')"><i class="bi bi-images me-1"></i>Photo Gallery</button>
+                </div>
               </div>
             </div>
 
@@ -311,6 +320,9 @@
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#7a7d52" @click="book('{{ url('/booking/staycation?type=camping&package=Bell%20Tent&price=1800') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('camping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
                 </div>
+                <div class="mt-2">
+                  <button type="button" class="w-full rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openGallery('camping', 'bell')"><i class="bi bi-images me-1"></i>Photo Gallery</button>
+                </div>
               </div>
             </div>
 
@@ -350,6 +362,9 @@
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#843c23" @click="book('{{ url('/booking/staycation?type=camping&package=BYOT&price=800') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('camping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
                 </div>
+                <div class="mt-2">
+                  <button type="button" class="w-full rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openGallery('camping', 'byot')"><i class="bi bi-images me-1"></i>Photo Gallery</button>
+                </div>
               </div>
             </div>
 
@@ -388,6 +403,9 @@
                 <div class="flex gap-2">
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#db8636" @click="book('{{ url('/booking/staycation?type=camping&package=Car%20Camping&price=1500') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('camping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
+                </div>
+                <div class="mt-2">
+                  <button type="button" class="w-full rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openGallery('camping', 'car')"><i class="bi bi-images me-1"></i>Photo Gallery</button>
                 </div>
               </div>
             </div>
@@ -455,6 +473,30 @@
         </div>
       </div>
 
+      <!-- ================= Photo Gallery Modal ================= -->
+      <div x-show="galleryOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/80" @keydown.escape.window="closeGallery()" @click.self="closeGallery()" style="display:none;">
+        <div class="relative w-full max-w-4xl mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
+          <!-- Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b">
+            <h3 class="font-semibold"><i class="bi bi-images me-2"></i>Photo Gallery</h3>
+            <button class="p-2 rounded hover:bg-gray-100" @click="closeGallery()"><i class="bi bi-x-lg"></i></button>
+          </div>
+
+          <!-- Image Viewer -->
+          <div class="flex items-center justify-center h-96 bg-black">
+            <img x-show="galleryImages.length > 0" :src="galleryImages[galleryCurrentIndex]" class="max-w-full max-h-full object-contain" :alt="'Gallery image ' + (galleryCurrentIndex + 1)">
+            <div x-show="galleryImages.length === 0" class="text-white">No images available</div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="flex items-center justify-center gap-4 p-4 border-t">
+            <button class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" @click="galleryPrev()" :disabled="galleryCurrentIndex === 0"><i class="bi bi-chevron-left"></i> Prev</button>
+            <span x-text="' ' + (galleryCurrentIndex + 1) + ' / ' + galleryImages.length"></span>
+            <button class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" @click="galleryNext()" :disabled="galleryCurrentIndex === galleryImages.length - 1">Next <i class="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+
     </main>
 
     {{-- Floating Buttons --}}
@@ -482,6 +524,107 @@
     ];
     @endphp
 
+    @php
+    $galleryData = [
+        'glamping-standard' => [
+            'images' => [
+                asset('assets/images/carousel/Glamping-1.jpg'),
+                asset('assets/images/carousel/wheretostay.jpg'),
+                asset('assets/images/carousel/Calaia-26.jpg'),
+                asset('assets/images/carousel/our-farm.jpg'),
+                asset('assets/images/carousel/our-farm2.jpg'),
+                asset('assets/images/carousel/f&b.jpg'),
+                asset('assets/images/carousel/menu1.jpg'),
+                asset('assets/images/carousel/menu3.jpg'),
+                asset('assets/images/carousel/organic.png'),
+                asset('assets/images/carousel/organic1.jpg'),
+                asset('assets/images/carousel/farm.jpg'),
+                asset('assets/images/carousel/activities-1.jpg')
+            ]
+        ],
+        'glamping-premium' => [
+            'images' => [
+                asset('assets/images/carousel/Glamping-1.jpg'),
+                asset('assets/images/carousel/wheretostay.jpg'),
+                asset('assets/images/carousel/Calaia-26.jpg'),
+                asset('assets/images/carousel/our-farm.jpg'),
+                asset('assets/images/carousel/our-farm2.jpg'),
+                asset('assets/images/carousel/f&b.jpg'),
+                asset('assets/images/carousel/menu1.jpg'),
+                asset('assets/images/carousel/menu3.jpg'),
+                asset('assets/images/carousel/organic.png'),
+                asset('assets/images/carousel/organic1.jpg'),
+                asset('assets/images/carousel/farm.jpg'),
+                asset('assets/images/carousel/activities-1.jpg')
+            ]
+        ],
+        'camping-dome' => [
+            'images' => [
+                asset('assets/images/carousel/BYOT-2.jpg'),
+                asset('assets/images/carousel/Car-camping3.jpg'),
+                asset('assets/images/carousel/bonfire-5.jpg'),
+                asset('assets/images/carousel/biking-4.jpg'),
+                asset('assets/images/carousel/games-grounds4.jpg'),
+                asset('assets/images/carousel/go-cart2.jpg'),
+                asset('assets/images/carousel/minikalesa.jpg'),
+                asset('assets/images/carousel/animal and wellness.jpg'),
+                asset('assets/images/carousel/groups.jpg'),
+                asset('assets/images/carousel/whattodo.jpg'),
+                asset('assets/images/carousel/SET MEALS2.jpg'),
+                asset('assets/images/carousel/f&b.jpg')
+            ]
+        ],
+        'camping-bell' => [
+            'images' => [
+                asset('assets/images/carousel/BYOT-2.jpg'),
+                asset('assets/images/carousel/Car-camping3.jpg'),
+                asset('assets/images/carousel/bonfire-5.jpg'),
+                asset('assets/images/carousel/biking-4.jpg'),
+                asset('assets/images/carousel/games-grounds4.jpg'),
+                asset('assets/images/carousel/go-cart2.jpg'),
+                asset('assets/images/carousel/minikalesa.jpg'),
+                asset('assets/images/carousel/animal and wellness.jpg'),
+                asset('assets/images/carousel/groups.jpg'),
+                asset('assets/images/carousel/whattodo.jpg'),
+                asset('assets/images/carousel/SET MEALS2.jpg'),
+                asset('assets/images/carousel/f&b.jpg')
+            ]
+        ],
+        'camping-byot' => [
+            'images' => [
+                asset('assets/images/carousel/BYOT-2.jpg'),
+                asset('assets/images/carousel/Car-camping3.jpg'),
+                asset('assets/images/carousel/bonfire-5.jpg'),
+                asset('assets/images/carousel/biking-4.jpg'),
+                asset('assets/images/carousel/games-grounds4.jpg'),
+                asset('assets/images/carousel/go-cart2.jpg'),
+                asset('assets/images/carousel/minikalesa.jpg'),
+                asset('assets/images/carousel/animal and wellness.jpg'),
+                asset('assets/images/carousel/groups.jpg'),
+                asset('assets/images/carousel/whattodo.jpg'),
+                asset('assets/images/carousel/SET MEALS2.jpg'),
+                asset('assets/images/carousel/f&b.jpg')
+            ]
+        ],
+        'camping-car' => [
+            'images' => [
+                asset('assets/images/carousel/BYOT-2.jpg'),
+                asset('assets/images/carousel/Car-camping3.jpg'),
+                asset('assets/images/carousel/bonfire-5.jpg'),
+                asset('assets/images/carousel/biking-4.jpg'),
+                asset('assets/images/carousel/games-grounds4.jpg'),
+                asset('assets/images/carousel/go-cart2.jpg'),
+                asset('assets/images/carousel/minikalesa.jpg'),
+                asset('assets/images/carousel/animal and wellness.jpg'),
+                asset('assets/images/carousel/groups.jpg'),
+                asset('assets/images/carousel/whattodo.jpg'),
+                asset('assets/images/carousel/SET MEALS2.jpg'),
+                asset('assets/images/carousel/f&b.jpg')
+            ]
+        ]
+    ];
+    @endphp
+
     <!-- ================= Scripts ================= -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
@@ -490,6 +633,7 @@
     <!-- Pass PHP data to JavaScript -->
     <script>
       window.vrData = <?php echo json_encode($vrData); ?>;
+      window.galleryData = <?php echo json_encode($galleryData); ?>;
     </script>
 
     <script>
@@ -504,6 +648,11 @@
           vrCurrentIndex: 0,
           vrData: {},
           pannellumViewer: null,
+          galleryOpen: false,
+          galleryType: '',
+          galleryOption: '',
+          galleryImages: [],
+          galleryCurrentIndex: 0,
           book(url){ window.location.href = url; },
           openModal(which){
             if(which==='glamping') this.glampingOpen = true; else this.campingOpen = true;
@@ -585,6 +734,28 @@
           updateVRInfo(){
             document.getElementById('vr-info-title').textContent = this.vrData.images[this.vrCurrentIndex].title;
             document.getElementById('vr-info-description').textContent = this.vrData.images[this.vrCurrentIndex].desc;
+          },
+          openGallery(type, option){
+            this.galleryType = type;
+            this.galleryOption = option;
+            const data = this.getGalleryData(type + '-' + option);
+            this.galleryImages = data.images || [];
+            this.galleryCurrentIndex = 0;
+            this.galleryOpen = true;
+            document.body.style.overflow = 'hidden';
+          },
+          closeGallery(){
+            this.galleryOpen = false;
+            document.body.style.overflow = '';
+          },
+          galleryPrev(){
+            if(this.galleryCurrentIndex > 0) this.galleryCurrentIndex--;
+          },
+          galleryNext(){
+            if(this.galleryCurrentIndex < this.galleryImages.length - 1) this.galleryCurrentIndex++;
+          },
+          getGalleryData(key){
+            return window.galleryData[key] || {};
           }
         }
       }

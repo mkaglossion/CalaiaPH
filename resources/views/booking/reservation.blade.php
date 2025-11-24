@@ -367,7 +367,7 @@
       {!! json_encode([
           'day-visit' => $settings->day_visit_capacity ?? 10,
           'room' => $settings->room_capacity ?? 5,
-          'overnight' => $settings->overnight_capacity ?? 3
+          'special-event' => $settings->overnight_capacity ?? 3
       ]) !!}
   </script>
   <script type="application/json" id="inventory-data">
