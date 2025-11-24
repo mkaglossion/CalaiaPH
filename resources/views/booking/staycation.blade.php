@@ -202,16 +202,16 @@
                                 </p>
 
                                 @if($glampingCount > 0)
-                                    <p class="text-lg font-semibold mb-1"
-                                       style="color: #7a7d52;">
-                                        Starts at ₱6,000/night
-                                    </p>
-                                    <p class="text-base text-gray-500 mb-6">
-                                        {{ $glampingCount }} {{ Str::plural('option', $glampingCount) }} available
-                                    </p>
-                                @else
-                                    <p class="text-base text-gray-400 mb-6">No glamping options available.</p>
-                                @endif
+                                     <p class="text-lg font-semibold mb-1"
+                                        style="color: #7a7d52;">
+                                         Starts at ₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)
+                                     </p>
+                                     <p class="text-base text-gray-500 mb-6">
+                                         {{ $glampingCount }} {{ Str::plural('option', $glampingCount) }} available
+                                     </p>
+                                 @else
+                                     <p class="text-base text-gray-400 mb-6">No glamping options available.</p>
+                                 @endif
 
                                 <button
                                     type="button"
@@ -259,16 +259,16 @@
                                 </p>
 
                                 @if($campingCount > 0)
-                                    <p class="text-lg font-semibold mb-1"
-                                       style="color: #7a7d52;">
-                                        Starts at ₱300/night
-                                    </p>
-                                    <p class="text-base text-gray-500 mb-6">
-                                        {{ $campingCount }} {{ Str::plural('option', $campingCount) }} available
-                                    </p>
-                                @else
-                                    <p class="text-base text-gray-400 mb-6">No camping options available.</p>
-                                @endif
+                                     <p class="text-lg font-semibold mb-1"
+                                        style="color: #7a7d52;">
+                                         Starts at ₱300/night (BYOT/Car Camping)<br>• ₱3,000/night (Bell/Dome Tents)
+                                     </p>
+                                     <p class="text-base text-gray-500 mb-6">
+                                         {{ $campingCount }} {{ Str::plural('option', $campingCount) }} available
+                                     </p>
+                                 @else
+                                     <p class="text-base text-gray-400 mb-6">No camping options available.</p>
+                                 @endif
 
                                 <button
                                     type="button"
@@ -369,7 +369,20 @@
 
                 <div class="max-h-[70vh] overflow-y-auto">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="glamping-options">
-                        <!-- Options will be populated by JavaScript -->
+                        @foreach($glampingStaycations as $staycation)
+                            <div class="bg-white border rounded-xl p-4 flex items-center gap-4">
+                                <input type="checkbox"
+                                       class="staycation-checkbox"
+                                       data-id="{{ $staycation['id'] }}"
+                                       data-name="{{ $staycation['name'] }}"
+                                       data-price="{{ $staycation['price'] }}"
+                                       id="glamping-{{ $staycation['id'] }}">
+                                <label for="glamping-{{ $staycation['id'] }}" class="flex-1 cursor-pointer">
+                                    <div class="font-semibold">{{ $staycation['name'] }}</div>
+                                    <div class="text-gray-500 text-sm">₱{{ number_format($staycation['price']) }}/night</div>
+                                </label>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
 
@@ -384,6 +397,7 @@
         </div>
     </div>
 </div>
+
 
 {{-- Camping Modal --}}
 <div id="camping-modal" class="fixed inset-0 hidden z-50" role="dialog" aria-modal="true" aria-labelledby="camping-modal-title">
@@ -403,7 +417,20 @@
 
                 <div class="max-h-[70vh] overflow-y-auto">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="camping-options">
-                        <!-- Options will be populated by JavaScript -->
+                        @foreach($campingStaycations as $staycation)
+                            <div class="bg-white border rounded-xl p-4 flex items-center gap-4">
+                                <input type="checkbox"
+                                       class="staycation-checkbox"
+                                       data-id="{{ $staycation['id'] }}"
+                                       data-name="{{ $staycation['name'] }}"
+                                       data-price="{{ $staycation['price'] }}"
+                                       id="camping-{{ $staycation['id'] }}">
+                                <label for="camping-{{ $staycation['id'] }}" class="flex-1 cursor-pointer">
+                                    <div class="font-semibold">{{ $staycation['name'] }}</div>
+                                    <div class="text-gray-500 text-sm">₱{{ number_format($staycation['price']) }}/night</div>
+                                </label>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
 
@@ -447,120 +474,118 @@
     // Global booking functions
     window.FeeCalculator = {
         calculateTotal: function(accommodations, checkin, checkout) {
-            let total = 0;
-            Object.values(accommodations).forEach(acc => {
-                if (acc && acc.staycation) {
-                    let quantity = acc.guests || 1;
-                    const name = acc.staycation.name.toLowerCase();
+            if (!checkin || !checkout) return 0;
 
-                    if (name.includes('standard') || name.includes('premium')) {
-                        // Calculate total based on weekend/weekday pricing with base for 4 pax + 400 per extra
-                        let nightTotal = 0;
-                        let current = new Date(checkin);
-                        while (current < checkout) {
-                            const day = current.getDay();
-                            const isWeekend = day === 5 || day === 6; // Fri, Sat
-                            let basePrice = 0;
-                            if (name.includes('standard')) {
-                                basePrice = isWeekend ? 6000 : 4800;
-                            } else if (name.includes('premium')) {
-                                basePrice = isWeekend ? 7200 : 5760;
-                            }
-                            let extraGuests = Math.max(0, quantity - 4);
-                            nightTotal += basePrice + (extraGuests * 400);
-                            current.setDate(current.getDate() + 1);
-                        }
-                        total += nightTotal;
-                    } else if (name.includes('bell') || name.includes('dome')) {
-                        // Fixed price per tent
-                        let nights = Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24));
-                        total += 3000 * nights;
-                    } else {
-                        // BYOT/Car Camping: 300 per setup + 500 per pax (assuming quantity is setups, but pax not tracked, so approximate)
-                        let nights = Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24));
-                        let price = 300 * quantity; // per setup
-                        // Note: Missing per pax fee as pax count not stored separately
-                        total += price * nights;
+            const checkinDate = new Date(checkin);
+            const checkoutDate = new Date(checkout);
+            const nights = Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
+            if (nights <= 0) return 0;
+
+            let total = 0;
+
+            Object.values(accommodations).forEach(acc => {
+                if (!acc || !acc.staycation) return;
+
+                const staycation = acc.staycation;
+                const guests = acc.guests || 1;
+                const name = staycation.name.toLowerCase();
+
+                if (name.includes('standard') || name.includes('premium')) {
+                    let accTotal = 0;
+                    let current = new Date(checkinDate);
+                    while (current < checkoutDate) {
+                        const day = current.getDay();
+                        const isWeekend = day === 5 || day === 6; // Fri & Sat
+                        let basePrice = 0;
+                        if (name.includes('standard')) basePrice = isWeekend ? 6000 : 4800;
+                        if (name.includes('premium')) basePrice = isWeekend ? 7200 : 5760;
+
+                        const extraGuests = Math.max(0, guests - 4);
+                        accTotal += basePrice + (extraGuests * 400);
+                        current.setDate(current.getDate() + 1);
                     }
+                    total += accTotal;
+                } else if (name.includes('bell') || name.includes('dome')) {
+                    total += 3000 * nights;
+                } else if (name.includes('byot') || name.includes('car')) {
+                    total += 300 * guests * nights;
                 }
             });
+
             return total;
         }
     };
 
-    window.updateBookingSummary = function() {
-        const selectedCount = Object.keys(window.selectedAccommodations).length;
 
-        // Update selected accommodations count
-        const selectedAccText = document.getElementById('selected-accommodations-count');
-        if (selectedAccText) {
-            selectedAccText.textContent = `${selectedCount} selected`;
+window.updateBookingSummary = function() {
+    const summaryContainer = document.getElementById('selected-accommodations-summary');
+    if (!summaryContainer) return;
+
+    summaryContainer.innerHTML = ''; // Clear previous content
+    let selectedCount = 0;
+    let totalPrice = 0;
+
+    // Loop over all selected accommodations
+    Object.entries(window.selectedAccommodations).forEach(([key, accommodation]) => {
+        if (!accommodation || !accommodation.staycation) return;
+
+        selectedCount++;
+
+        const guests = accommodation.guests;
+        const staycation = accommodation.staycation;
+        const name = staycation.name;
+
+        // Calculate price for this accommodation
+        let accPrice = 0;
+        const checkin = new Date('{{ $checkinDate }}');
+        const checkout = new Date('{{ $checkoutDate }}');
+        const nights = Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24));
+
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes('standard') || lowerName.includes('premium')) {
+            let current = new Date(checkin);
+            while (current < checkout) {
+                const day = current.getDay();
+                const isWeekend = day === 5 || day === 6; // Fri/Sat
+                let basePrice = 0;
+                if (lowerName.includes('standard')) basePrice = isWeekend ? 6000 : 4800;
+                if (lowerName.includes('premium')) basePrice = isWeekend ? 7200 : 5760;
+                const extraGuests = Math.max(0, guests - 4);
+                accPrice += basePrice + (extraGuests * 400);
+                current.setDate(current.getDate() + 1);
+            }
+        } else if (lowerName.includes('bell') || lowerName.includes('dome')) {
+            accPrice = 3000 * nights;
+        } else if (lowerName.includes('byot') || lowerName.includes('car')) {
+            accPrice = 300 * guests * nights;
         }
 
-        // Get dates
-        const checkinDate = new Date('{{ $checkinDate }}');
-        const checkoutDate = new Date('{{ $checkoutDate }}');
-        const nights = Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
+        totalPrice += accPrice; // Add to total
 
-        // Update selected accommodations summary
-        const summaryContainer = document.getElementById('selected-accommodations-summary');
-        if (summaryContainer) {
-            summaryContainer.innerHTML = '';
+        // Display individual accommodation with price
+        const summaryItem = document.createElement('div');
+        summaryItem.className = 'text-xs text-gray-600';
+        summaryItem.textContent = `ACCOMMODATION: ${name} - Guests: ${guests} - ₱ ${accPrice.toLocaleString()}`;
+        summaryContainer.appendChild(summaryItem);
+    });
 
-            Object.entries(window.selectedAccommodations).forEach(([index, accommodation]) => {
-                if (accommodation && accommodation.staycation) {
-                    const summaryItem = document.createElement('div');
-                    summaryItem.className = 'text-xs text-gray-600';
-                    const accommodationNumber = parseInt(index) + 1;
-                    const guests = accommodation.guests;
-                    const name = accommodation.staycation.name.toLowerCase();
+    // Update total price element
+    const totalPriceEl = document.getElementById('total-price');
+    if (totalPriceEl) totalPriceEl.textContent = `₱ ${totalPrice.toLocaleString()}`;
 
-                    // Calculate dynamic average price per night
-                    let totalPrice = 0;
-                    const isBYOT = name.includes('byot');
-                    const isCarCamping = name.includes('car camping');
+    // Update selected count display
+    const selectedAccText = document.getElementById('selected-accommodations-count');
+    if (selectedAccText) selectedAccText.textContent = `${selectedCount} selected`;
 
-                    if (name.includes('standard') || name.includes('premium')) {
-                        let current = new Date(checkinDate);
-                        while (current < checkoutDate) {
-                            const day = current.getDay();
-                            const isWeekend = day === 5 || day === 6; // Fri, Sat
-                            let basePrice = 0;
-                            if (name.includes('standard')) {
-                                basePrice = isWeekend ? 6000 : 4800;
-                            } else if (name.includes('premium')) {
-                                basePrice = isWeekend ? 7200 : 5760;
-                            }
-                            let extraGuests = Math.max(0, guests - 4);
-                            totalPrice += basePrice + (extraGuests * 400);
-                            current.setDate(current.getDate() + 1);
-                        }
-                    } else if (name.includes('bell') || name.includes('dome')) {
-                        totalPrice = 3000 * nights;
-                    } else if (isBYOT || isCarCamping) {
-                        totalPrice = 300 * guests * nights; // Approximation
-                    }
+    // Enable/disable proceed button
+    const proceedBtn = document.getElementById('proceed-btn');
+    if (proceedBtn) proceedBtn.disabled = selectedCount === 0;
+};
 
-                    const avgPrice = nights > 0 ? Math.round(totalPrice / nights) : accommodation.staycation.price;
-                    summaryItem.textContent = `ACCOMMODATION ${accommodationNumber}: ${accommodation.staycation.name} - ₱${avgPrice.toLocaleString()}/night (${guests} guests)`;
-                    summaryContainer.appendChild(summaryItem);
-                }
-            });
-        }
 
-        // Calculate total price
-        const totalPrice = window.FeeCalculator.calculateTotal(window.selectedAccommodations, checkinDate, checkoutDate);
-        const totalPriceEl = document.getElementById('total-price');
-        if (totalPriceEl) {
-            totalPriceEl.textContent = '₱ ' + totalPrice.toLocaleString();
-        }
 
-        // Enable/disable proceed button
-        const proceedBtn = document.getElementById('proceed-btn');
-        if (proceedBtn) {
-            proceedBtn.disabled = selectedCount === 0;
-        }
-    };
+
+
 
     window.initializeBookingSummary = function() {
         window.updateBookingSummary();
@@ -696,91 +721,58 @@
 
     function initializeRemoveSelectedButtons() {
         document.querySelectorAll('.remove-selected-accom').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const index = this.dataset.index;
-                window.removeAccommodation(index);
-            });
+            btn.onclick = function() {
+                const id = this.dataset.id;
+                delete window.selectedAccommodations[id];
+                displaySelectedAccommodation(id, null);
+                window.updateBookingSummary();
+            };
         });
     }
 
-    function displaySelectedAccommodation(index, accommodation) {
+
+
+    // --- Display selected accommodation card ---
+    function displaySelectedAccommodation(key, acc) {
         const container = document.getElementById('selected-accommodations-container');
         if (!container) return;
 
-        const staycation = accommodation.staycation;
-        const guests = accommodation.guests || 1;
+        const existing = container.querySelector(`.accommodation-display[data-key="${key}"]`);
+        if (existing) existing.remove();
+        if (!acc) return;
 
-        // Get dates from global booking
-        const checkinDate = new Date('{{ $checkinDate }}');
-        const checkoutDate = new Date('{{ $checkoutDate }}');
-        const nights = Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
-
-        // Calculate dynamic display price per night based on dates
-        let totalPrice = 0;
-        const name = staycation.name.toLowerCase();
-        const isBYOT = name.includes('byot');
-        const isCarCamping = name.includes('car camping');
-
-        if (name.includes('standard') || name.includes('premium')) {
-            let current = new Date(checkinDate);
-            while (current < checkoutDate) {
-                const day = current.getDay();
-                const isWeekend = day === 5 || day === 6; // Fri, Sat
-                let basePrice = 0;
-                if (name.includes('standard')) {
-                    basePrice = isWeekend ? 6000 : 4800;
-                } else if (name.includes('premium')) {
-                    basePrice = isWeekend ? 7200 : 5760;
-                }
-                let extraGuests = Math.max(0, guests - 4);
-                totalPrice += basePrice + (extraGuests * 400);
-                current.setDate(current.getDate() + 1);
-            }
-        } else if (name.includes('bell') || name.includes('dome')) {
-            totalPrice = 3000 * nights;
-        } else if (isBYOT || isCarCamping) {
-            totalPrice = 300 * guests * nights; // Approximation without per-pax
-        }
-
-        const displayPrice = nights > 0 ? Math.round(totalPrice / nights) : staycation.price;
-
-        // Remove existing display for this index
-        const existingDisplay = container.querySelector(`.accommodation-display[data-index="${index}"]`);
-        if (existingDisplay) {
-            existingDisplay.remove();
-        }
-
-        // Create new display
-        const displayDiv = document.createElement('div');
-        displayDiv.className = 'accommodation-display bg-white rounded-lg shadow-sm border border-gray-200 p-4';
-        displayDiv.dataset.index = index;
-        displayDiv.innerHTML = `
+        const staycation = acc.staycation;
+        const guests = acc.guests || 1;
+        const div = document.createElement('div');
+        div.className = 'accommodation-display bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-2';
+        div.dataset.key = key;
+        div.innerHTML = `
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <img src="${staycation.image || '/assets/images/default.jpg'}"
-                         alt="${staycation.name}"
-                         class="w-12 h-12 rounded-lg object-cover">
+                    <img src="${staycation.image || '/assets/images/default.jpg'}" alt="${staycation.name}" class="w-12 h-12 rounded-lg object-cover">
                     <div>
-                        <h4 class="font-semibold text-gray-900">ACCOMMODATION ${parseInt(index) + 1}: ${staycation.name}</h4>
-                        <p class="text-sm text-gray-600">₱ ${displayPrice.toLocaleString()}/night (avg.)</p>
-                        <p class="text-xs text-gray-500">Capacity: ${staycation.capacity} guests</p>
-                        <p class="text-xs text-gray-500">${isBYOT ? 'BYOT' : isCarCamping ? 'Vehicles' : 'Guests'}: ${guests}</p>
+                        <h4 class="font-semibold text-gray-900">${staycation.name}</h4>
+                        <p class="text-xs text-gray-500">Guests: ${guests}</p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${staycation.type === 'glamping' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
-                        ${staycation.type.toUpperCase()}
-                    </span>
-                    <button class="remove-selected-accom text-red-500 hover:text-red-700 text-lg font-bold" data-index="${index}" title="Remove this accommodation">×</button>
-                </div>
+                <button class="remove-selected-accom text-red-500 hover:text-red-700 text-lg font-bold" data-key="${key}">×</button>
             </div>
         `;
+        container.appendChild(div);
 
-        container.appendChild(displayDiv);
+        const removeBtn = div.querySelector('.remove-selected-accom');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => {
+                delete window.selectedAccommodations[key];
+                div.remove();
+                window.updateBookingSummary();
+            });
+        }
     }
-</script>
 
-<script>
+
+
+
     document.addEventListener('DOMContentLoaded', function () {
         setTimeout(function () {
             if (typeof window.initializeBookingSummary === 'function') {
@@ -836,17 +828,20 @@
 
     function getPriceDisplay(staycation) {
         const lowerName = staycation.name.toLowerCase();
+        let price;
         if (lowerName.includes('standard')) {
-            return 'Starts at ₱6,000/night (Weekends: Fri.-Sat.) • ₱4,800/night (Weekdays: Sun.-Thu.)';
+            price = '₱4,800/night (Weekdays: Sun.-Thu.)<br>• ₱6,000/night (Weekends: Fri.-Sat.)';
         } else if (lowerName.includes('premium')) {
-            return 'Starts at ₱7,200/night (Weekends: Fri.-Sat.) • ₱5,760/night (Weekdays: Sun.-Thu.)';
+            price = '₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)';
         } else if (lowerName.includes('bell') || lowerName.includes('dome')) {
-            return 'Starts at ₱3,000/tent/night';
+            price = 'Starts at ₱3,000/tent/night';
         } else if (lowerName.includes('byot') || lowerName.includes('car')) {
-            return 'Starts at ₱300/tent or camp space + ₱500/pax overnight fee';
+            price = 'Starts at ₱300/tent or camp space + ₱500/pax overnight fee';
         } else {
-            return 'Starts at ₱ ' + staycation.price.toLocaleString() + '/night';
+            price = 'Starts at ₱ ' + staycation.price.toLocaleString() + '/night';
         }
+        console.log('getPriceDisplay for', staycation.name, ':', price);
+        return price;
     }
 
     function getFeaturesList(name) {
@@ -854,7 +849,7 @@
         if (lowerName.includes('standard')) {
             return `
                 <li>• With Private Toilet & Bath</li>
-                <li>• Air-conditioned 25 sqm tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
+                <li>• Tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
                 <li>• Assigned heated shower with soap, shampoo & toilet with bidet (approx. 10 meters from tent)</li>
                 <li>• Access to Wi-Fi</li>
                 <li>• Private picnic table and fire pit/grill</li>
@@ -866,7 +861,7 @@
         } else if (lowerName.includes('premium')) {
             return `
                 <li>• With Private Toilet & Bath</li>
-                <li>• Air-conditioned 25 sqm tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
+                <li>• Tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
                 <li>• Exclusive heated shower with soap, shampoo & toilet with bidet, located right beside the tent</li>
                 <li>• Access to Wi-Fi</li>
                 <li>• Private picnic table and fire pit/grill</li>
@@ -963,6 +958,7 @@
                         <button class="carousel-indicator w-2 h-2 rounded-full bg-white opacity-50 hover:opacity-100 transition" data-slide="2"></button>
                     </div>
                 </div>
+
                 <div class="flex flex-col p-4 h-full">
                     <div class="flex justify-between items-start mb-2 gap-2">
                         <h5 class="font-bold text-xl md:text-2xl mb-0" style="line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em;">
@@ -972,15 +968,31 @@
                             ${category.charAt(0).toUpperCase() + category.slice(1)}
                         </span>
                     </div>
+
+                    <!-- CHECKBOX TO SELECT STAYCATION -->
+                    <div class="mb-3 flex items-center gap-2">
+                        <input type="checkbox"
+                            id="select-${index}"
+                            class="staycation-checkbox w-5 h-5"
+                            data-index="${index}"
+                            data-staycation='${JSON.stringify(staycation).replace(/'/g, "'")}' />
+                        <label for="select-${index}" class="text-gray-700 text-base md:text-lg cursor-pointer">
+                            Select this staycation
+                        </label>
+                    </div>
+
+
                     <p class="text-gray-500 text-base md:text-lg mb-3" style="flex-grow: 1;">
                         ${isBYOT || isCarCamping ? 'Area capacity: Suitable for multiple setups and vehicles' : 'Capacity: ' + staycation.capacity + ' guests (' + staycation.adults + ' adults, ' + staycation.children + ' children)'}
                     </p>
+
                     <div class="mb-3">
                         <h6 class="text-sm font-semibold text-gray-800 mb-2">Features</h6>
                         <ul class="text-sm text-gray-600 space-y-1">
                             ${getFeaturesList(staycation.name)}
                         </ul>
                     </div>
+
                     <div class="mt-auto">
                         <div class="mb-3">
                             <label for="guests-${index}" class="block text-lg font-medium text-gray-700 mb-1">${inputLabel}</label>
@@ -989,11 +1001,7 @@
                         <span class="block font-bold text-primary-600 text-xl md:text-2xl mb-2">
                             ${getPriceDisplay(staycation)}
                         </span>
-                        <button class="select-staycation-modal w-full inline-flex justify-center items-center rounded-lg text-base md:text-lg font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition px-4 py-3 mb-2 disabled:opacity-50 disabled:cursor-not-allowed" ${isBYOT || isCarCamping ? '' : 'disabled'}
-                                data-staycation='${JSON.stringify(staycation).replace(/'/g, "'")}'
-                                style="font-size: 1rem;">
-                            Select This Option
-                        </button>
+
                         <div class="flex gap-2">
                             <button class="flex-1 inline-flex justify-center items-center rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition px-3 py-2"
                                     onclick="alert('VR Preview coming soon!')">
@@ -1003,7 +1011,29 @@
                         </div>
                     </div>
                 </div>
-            `;
+                `;
+
+                // --- Handle checkbox selection ---
+            document.addEventListener('change', function(e) {
+                if (!e.target.matches('.staycation-checkbox')) return;
+
+                const checkbox = e.target;
+                const staycation = JSON.parse(checkbox.dataset.staycation);
+                const card = checkbox.closest('.bg-white.rounded-xl');
+                const guestsInput = card.querySelector('.guest-input');
+                const guests = guestsInput ? parseInt(guestsInput.value) || 1 : 1;
+
+                const key = staycation.id;
+
+                if (checkbox.checked) {
+                    window.selectedAccommodations[key] = { staycation, guests };
+                } else {
+                    delete window.selectedAccommodations[key];
+                }
+
+                displaySelectedAccommodation(key, window.selectedAccommodations[key]);
+                window.updateBookingSummary();
+            });
 
             optionsContainer.appendChild(optionDiv);
 
@@ -1190,6 +1220,60 @@
         showToast(`ACCOMMODATION ${accommodationIndex + 1}: ${staycation.name} selected`, 'success');
     }
 
+    function initializeMultiSelectionModal(category) {
+        const modalId = `${category}-modal`;
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+
+        const saveBtn = modal.querySelector('.save-multi-selection');
+        if (!saveBtn) return;
+
+        saveBtn.addEventListener('click', () => {
+            const checkboxes = modal.querySelectorAll('.staycation-checkbox:checked');
+            if (checkboxes.length === 0) {
+                showToast('Please select at least one option', 'error');
+                return;
+            }
+
+            const activeTab = document.querySelector('.accom-btn.bg-gray-900');
+            if (!activeTab) {
+                showToast('No active accommodation tab', 'error');
+                return;
+            }
+
+            const accommodationIndex = parseInt(activeTab.dataset.index);
+
+            // Store selected accommodations
+            window.selectedAccommodations[accommodationIndex] = [];
+
+            checkboxes.forEach(cb => {
+                const staycation = JSON.parse(cb.dataset.staycation || '{}');
+                const guests = parseInt(cb.dataset.guests || 1);
+
+                if (staycation.id) {
+                    window.selectedAccommodations[accommodationIndex].push({
+                        staycation: staycation,
+                        guests: guests
+                    });
+                }
+            });
+
+            // Display all selected accommodations for this tab
+            window.selectedAccommodations[accommodationIndex].forEach((acc, i) => {
+                displaySelectedAccommodation(`${accommodationIndex}-${i}`, acc);
+            });
+
+            initializeRemoveSelectedButtons();
+            window.updateBookingSummary();
+
+            // Close modal
+            closeModal(modalId);
+
+            showToast(`${checkboxes.length} option(s) selected`, 'success');
+        });
+    }
+
+
     function proceedToActivities() {
         // Send POST request to save accommodations and proceed
         fetch('{{ route("booking.staycation") }}', {
@@ -1220,5 +1304,4 @@
             alert('Error saving accommodations. Please try again.');
         });
     }
-</script>
 </script>

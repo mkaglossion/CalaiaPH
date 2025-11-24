@@ -91,6 +91,8 @@ Route::get('/booking/payment', [BookingController::class, 'payment'])->name('boo
 Route::post('/booking/payment', [BookingController::class, 'processPayment'])->name('booking.processPayment');
 Route::get('/booking/confirmation', [BookingController::class, 'confirmation'])->name('booking.confirmation');
 Route::get('/booking/widget', [BookingController::class, 'widget'])->name('booking.widget');
+Route::get('/debug-session', [BookingController::class, 'debugSession']);
+
 Route::get('/booking/reset-inventory', function () {
     session()->forget('inventory');
     return redirect('/booking/widget')->with('success', 'Inventory reset!');

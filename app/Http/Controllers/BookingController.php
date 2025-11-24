@@ -10,6 +10,12 @@ use DateTime;
 
 class BookingController extends Controller
 {
+    public function debugSession()
+    {
+        // Dump the entire session
+        dd(session()->all());
+    }
+
     public function create(Request $request)
     {
         $type = $request->get('type', 'day-visit');
@@ -539,9 +545,9 @@ class BookingController extends Controller
                 'id' => 1,
                 'name' => 'Standard Glamping',
                 'type' => 'glamping',
-                'capacity' => 2,
-                'adults' => 2,
-                'children' => 0,
+                'capacity' => 6,
+                'adults' => 4,
+                'children' => 2,
                 'price' => 1200,
                 'image' => asset('assets/images/carousel/Glamping-1.jpg'),
             ],
@@ -549,7 +555,7 @@ class BookingController extends Controller
                 'id' => 2,
                 'name' => 'Premium Glamping',
                 'type' => 'glamping',
-                'capacity' => 4,
+                'capacity' => 6,
                 'adults' => 4,
                 'children' => 2,
                 'price' => 5500,
@@ -559,8 +565,8 @@ class BookingController extends Controller
                 'id' => 3,
                 'name' => 'Dome Tent',
                 'type' => 'camping',
-                'capacity' => 2,
-                'adults' => 2,
+                'capacity' => 8,
+                'adults' => 8,
                 'children' => 0,
                 'price' => 1200,
                 'image' => asset('assets/images/carousel/Car-camping3.jpg'),
@@ -569,9 +575,9 @@ class BookingController extends Controller
                 'id' => 4,
                 'name' => 'Bell Tent',
                 'type' => 'camping',
-                'capacity' => 4,
-                'adults' => 4,
-                'children' => 2,
+                'capacity' => 8,
+                'adults' => 8,
+                'children' => 0,
                 'price' => 1800,
                 'image' => asset('assets/images/carousel/Car-camping3.jpg'),
             ],

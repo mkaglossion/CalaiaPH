@@ -31,7 +31,13 @@ $checkoutDate = $booking['checkout'] ?? null;
 $datesSelected = !empty($checkinDate) && !empty($checkoutDate);
 
 // Calculate nights for display purposes
-$nights = $datesSelected ? \Carbon\Carbon::parse($checkoutDate)->diffInDays(\Carbon\Carbon::parse($checkinDate)) : 0;
+$nights = 0;
+if ($datesSelected) {
+    $start = new DateTime($checkinDate);
+    $end = new DateTime($checkoutDate);
+    $diff = $start->diff($end);
+    $nights = $diff->days;
+}
 
 // Calculate total guests
 $totalGuests = collect($booking['accommodations'])->sum('guests');
