@@ -295,6 +295,13 @@ class BookingController extends Controller
                     }
                 }
             }
+
+            // Add pet fees
+            foreach ($booking['accommodations'] ?? [] as $acc) {
+                if (!empty($acc['pet_agreement']) && !empty($acc['num_pets'])) {
+                    $accommodationTotal += 2000 * $acc['num_pets'];
+                }
+            }
         }
 
         $activitiesTotal = collect($request->activities)->sum(function($activity) {

@@ -331,6 +331,10 @@
                         <div id="selected-accommodations-summary" class="mt-2 space-y-1">
                             <!-- Selected accommodations details will be populated here -->
                         </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Total Guests:</span>
+                            <span class="text-sm font-medium" id="total-guests">0</span>
+                        </div>
                         <div class="flex justify-between items-center text-lg font-bold">
                             <span>Total:</span>
                             <span id="total-price">₱ 0</span>
@@ -446,8 +450,105 @@
     </div>
 </div>
 
+{{-- Pet Policy Modal --}}
+<div id="pet-policy-modal" class="fixed inset-0 hidden z-50" role="dialog" aria-modal="true" aria-labelledby="pet-policy-modal-title">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 transition-opacity duration-300" id="pet-policy-modal-backdrop" onclick="if (!event.target.closest('#pet-policy-modal-content')) closeModal('pet-policy-modal')"></div>
+
+        <!-- Modal content -->
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden border border-gray-200 relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="pet-policy-modal-content">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="pet-policy-modal-title" class="text-2xl font-bold text-gray-900">Pet Policy</h2>
+                    <button type="button" class="close-modal text-gray-400 hover:text-gray-600 text-3xl font-light leading-none focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" data-modal="pet-policy-modal" aria-label="Close modal" style="line-height: 1;">
+                        ×
+                    </button>
+                </div>
+
+                <div class="max-h-[70vh] overflow-y-auto text-center">
+                    <div class="mb-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4 flex items-center justify-center">
+                            <span class="text-3xl mr-2">🐾</span>
+                            Pets are Welcome at Calaia Nature Park!
+                        </h3>
+                        <p class="text-lg text-gray-700 leading-relaxed">We're happy to welcome well-socialized, non-aggressive pets to Calaia! To ensure a safe and enjoyable experience for everyone, including our animal residents and guests, we kindly ask pet owners to follow these guidelines:</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                                <span class="text-2xl mr-2">🐶</span>
+                                Owner Responsibility
+                            </h4>
+                            <p class="text-gray-700">Pet owners are fully responsible for the behavior and care of their pets at all times. Pets must never be left unattended.</p>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                                <span class="text-2xl mr-2">🐕</span>
+                                Leash Policy
+                            </h4>
+                            <p class="text-gray-700">Pets may be off-leash only when under the close and careful supervision of their owners.</p>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                                <span class="text-2xl mr-2">🦙</span>
+                                Respect for Farm Animals
+                            </h4>
+                            <p class="text-gray-700">Please ensure your pets do not disturb or chase the grazing animals on the property.</p>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                                <span class="text-2xl mr-2">🏕️</span>
+                                Overnight Stays & Pet Fee
+                            </h4>
+                            <p class="text-gray-700 mb-2">Kindly inform us upon booking if you will be bringing a pet.</p>
+                            <p class="text-gray-700 mb-2">If your pet will stay inside the glamping tent, a pet fee of ₱2,000 per pet applies and must be paid in full to confirm your booking.</p>
+                            <p class="text-gray-700">Any damage to the tent, bedding, or furnishings caused by pets will be charged accordingly.</p>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                                <span class="text-2xl mr-2">📋</span>
+                                Health & Cleanliness
+                            </h4>
+                            <p class="text-gray-700">All pets must be up to date on vaccinations (including rabies) and treated for external parasites. We will kindly ask for the date of your pet's last parasite treatment.</p>
+                        </div>
+
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <h4 class="text-xl font-semibold text-red-900 mb-2 flex items-center justify-center">
+                                <span class="text-2xl mr-2">⚠️</span>
+                                Damage & Liability
+                            </h4>
+                            <p class="text-red-800">Owners will be held liable for any damage caused to property or injury inflicted on farm animals, other pets, fellow guests, or Calaia staff.</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p class="text-lg font-semibold text-green-900 flex items-center justify-center">
+                            <span class="text-2xl mr-2">🐾🌿</span>
+                            We appreciate your cooperation and understanding. Let's work together to keep Calaia a safe, peaceful, and pet-friendly space for all!
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <div class="flex justify-end">
+                        <button type="button" class="close-modal px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition focus:outline-none focus:ring-2 focus:ring-gray-400" data-modal="pet-policy-modal">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
     {{-- Toast --}}
-    <div class="toast fixed bottom-4 right-4 flex items-center text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden"
+    <div class="toast fixed bottom-4 right-4 flex items-center text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden z-60"
          role="alert" aria-live="assertive" aria-atomic="true">
         <div class="flex items-center w-full">
             <div class="toast-body text-sm flex-1"></div>
@@ -517,75 +618,90 @@
     };
 
 
-window.updateBookingSummary = function() {
-    const summaryContainer = document.getElementById('selected-accommodations-summary');
-    if (!summaryContainer) return;
+    window.updateBookingSummary = function() {
+        const summaryContainer = document.getElementById('selected-accommodations-summary');
+        if (!summaryContainer) return;
 
-    summaryContainer.innerHTML = ''; // Clear previous content
-    let selectedCount = 0;
-    let totalPrice = 0;
+        summaryContainer.innerHTML = ''; // Clear previous content
+        let selectedCount = 0;
+        let totalPrice = 0;
+        let totalGuests = 0;
 
-    // Loop over all selected accommodations
-    Object.entries(window.selectedAccommodations).forEach(([key, accommodation]) => {
-        if (!accommodation || !accommodation.staycation) return;
+        // Loop over all selected accommodations
+        Object.entries(window.selectedAccommodations).forEach(([key, accommodation]) => {
+            if (!accommodation || !accommodation.staycation) return;
 
-        selectedCount++;
+            selectedCount++;
 
-        const guests = accommodation.guests;
-        const staycation = accommodation.staycation;
-        const name = staycation.name;
+            const guests = accommodation.guests;
+            totalGuests += guests;
+            const staycation = accommodation.staycation;
+            const name = staycation.name;
 
-        // Calculate price for this accommodation
-        let accPrice = 0;
-        const checkin = new Date('{{ $checkinDate }}');
-        const checkout = new Date('{{ $checkoutDate }}');
-        const nights = Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24));
+            // Calculate price for this accommodation
+            let accommodationPrice = 0;
+            const checkin = new Date('{{ $checkinDate }}');
+            const checkout = new Date('{{ $checkoutDate }}');
+            const nights = Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24));
 
-        const lowerName = name.toLowerCase();
-        if (lowerName.includes('standard') || lowerName.includes('premium')) {
-            let current = new Date(checkin);
-            while (current < checkout) {
-                const day = current.getDay();
-                const isWeekend = day === 5 || day === 6; // Fri/Sat
-                let basePrice = 0;
-                if (lowerName.includes('standard')) basePrice = isWeekend ? 6000 : 4800;
-                if (lowerName.includes('premium')) basePrice = isWeekend ? 7200 : 5760;
-                const extraGuests = Math.max(0, guests - 4);
-                accPrice += basePrice + (extraGuests * 400);
-                current.setDate(current.getDate() + 1);
+            const lowerName = name.toLowerCase();
+            if (lowerName.includes('standard') || lowerName.includes('premium')) {
+                let current = new Date(checkin);
+                while (current < checkout) {
+                    const day = current.getDay();
+                    const isWeekend = day === 5 || day === 6; // Fri/Sat
+                    let basePrice = 0;
+                    if (lowerName.includes('standard')) basePrice = isWeekend ? 6000 : 4800;
+                    if (lowerName.includes('premium')) basePrice = isWeekend ? 7200 : 5760;
+                    const extraGuests = Math.max(0, guests - 4);
+                    accommodationPrice += basePrice + (extraGuests * 400);
+                    current.setDate(current.getDate() + 1);
+                }
+            } else if (lowerName.includes('bell') || lowerName.includes('dome')) {
+                accommodationPrice = 3000 * nights;
+            } else if (lowerName.includes('byot') || lowerName.includes('car')) {
+                accommodationPrice = 300 * guests * nights;
             }
-        } else if (lowerName.includes('bell') || lowerName.includes('dome')) {
-            accPrice = 3000 * nights;
-        } else if (lowerName.includes('byot') || lowerName.includes('car')) {
-            accPrice = 300 * guests * nights;
-        }
 
-        totalPrice += accPrice; // Add to total
+            // Calculate pet fee
+            const petFee = (accommodation.pet_agreement && accommodation.num_pets > 0) ? 2000 * accommodation.num_pets : 0;
+            const totalAccPrice = accommodationPrice + petFee;
 
-        // Display individual accommodation with price
-        const summaryItem = document.createElement('div');
-        summaryItem.className = 'text-xs text-gray-600';
-        summaryItem.textContent = `ACCOMMODATION: ${name} - Guests: ${guests} - ₱ ${accPrice.toLocaleString()}`;
-        summaryContainer.appendChild(summaryItem);
-    });
+            totalPrice += totalAccPrice; // Add to total
 
-    // Update total price element
-    const totalPriceEl = document.getElementById('total-price');
-    if (totalPriceEl) totalPriceEl.textContent = `₱ ${totalPrice.toLocaleString()}`;
+            // Display individual accommodation with price breakdown
+            const summaryItem = document.createElement('div');
+            summaryItem.className = 'text-xs text-gray-600 space-y-1';
 
-    // Update selected count display
-    const selectedAccText = document.getElementById('selected-accommodations-count');
-    if (selectedAccText) selectedAccText.textContent = `${selectedCount} selected`;
+            const accommodationDiv = document.createElement('div');
+            accommodationDiv.textContent = `ACCOMMODATION: ${name} - Guests: ${guests} - ₱ ${accommodationPrice.toLocaleString()}`;
+            summaryItem.appendChild(accommodationDiv);
 
-    // Enable/disable proceed button
-    const proceedBtn = document.getElementById('proceed-btn');
-    if (proceedBtn) proceedBtn.disabled = selectedCount === 0;
-};
+            if (petFee > 0) {
+                const petDiv = document.createElement('div');
+                petDiv.textContent = `Pet Fee (${accommodation.num_pets} pet${accommodation.num_pets > 1 ? 's' : ''}): ₱ ${petFee.toLocaleString()}`;
+                summaryItem.appendChild(petDiv);
+            }
 
+            summaryContainer.appendChild(summaryItem);
+        });
 
+        // Update total price element
+        const totalPriceEl = document.getElementById('total-price');
+        if (totalPriceEl) totalPriceEl.textContent = `₱ ${totalPrice.toLocaleString()}`;
 
+        // Update total guests element
+        const totalGuestsEl = document.getElementById('total-guests');
+        if (totalGuestsEl) totalGuestsEl.textContent = totalGuests;
 
+        // Update selected count display
+        const selectedAccText = document.getElementById('selected-accommodations-count');
+        if (selectedAccText) selectedAccText.textContent = `${selectedCount} selected`;
 
+        // Enable/disable proceed button
+        const proceedBtn = document.getElementById('proceed-btn');
+        if (proceedBtn) proceedBtn.disabled = selectedCount === 0;
+    };
 
     window.initializeBookingSummary = function() {
         window.updateBookingSummary();
@@ -730,8 +846,6 @@ window.updateBookingSummary = function() {
         });
     }
 
-
-
     // --- Display selected accommodation card ---
     function displaySelectedAccommodation(key, acc) {
         const container = document.getElementById('selected-accommodations-container');
@@ -769,9 +883,6 @@ window.updateBookingSummary = function() {
             });
         }
     }
-
-
-
 
     document.addEventListener('DOMContentLoaded', function () {
         setTimeout(function () {
@@ -825,6 +936,17 @@ window.updateBookingSummary = function() {
     let activeModal = null;
     let previousFocusElement = null;
     let focusableElements = [];
+
+    function getCapacityText(staycation) {
+        const capacity = staycation.capacity || 0;
+        const adults = staycation.adults || 0;
+        const children = staycation.children || 0;
+        const mattress = staycation.mattress || 0;
+        const lowerName = staycation.name.toLowerCase();
+        const mattressText = (lowerName.includes('bell') || lowerName.includes('dome')) ? '' : ` + extra mattress available ${mattress}`;
+        const petsText = (lowerName.includes('glamping') || lowerName.includes('bell') || lowerName.includes('dome')) ? ', 2 pets' : '';
+        return `Capacity: ${capacity} guests (${adults} adults, ${children} children${mattressText}${petsText})`;
+    }
 
     function getPriceDisplay(staycation) {
         const lowerName = staycation.name.toLowerCase();
@@ -933,10 +1055,10 @@ window.updateBookingSummary = function() {
 
             if (isBYOT) {
                 inputLabel = 'How many BYOT?';
-                inputPlaceholder = '1';
+                inputPlaceholder = '0';
             } else if (isCarCamping) {
                 inputLabel = 'Number of Vehicles';
-                inputPlaceholder = '1';
+                inputPlaceholder = '0';
             }
 
             optionDiv.innerHTML = `
@@ -981,9 +1103,8 @@ window.updateBookingSummary = function() {
                         </label>
                     </div>
 
-
                     <p class="text-gray-500 text-base md:text-lg mb-3" style="flex-grow: 1;">
-                        ${isBYOT || isCarCamping ? 'Area capacity: Suitable for multiple setups and vehicles' : 'Capacity: ' + staycation.capacity + ' guests (' + staycation.adults + ' adults, ' + staycation.children + ' children)'}
+                        ${isBYOT || isCarCamping ? 'Area capacity: Suitable for multiple setups and vehicles' : getCapacityText(staycation)}
                     </p>
 
                     <div class="mb-3">
@@ -996,46 +1117,69 @@ window.updateBookingSummary = function() {
                     <div class="mt-auto">
                         <div class="mb-3">
                             <label for="guests-${index}" class="block text-lg font-medium text-gray-700 mb-1">${inputLabel}</label>
-                            <input type="number" id="guests-${index}" name="guests" value="1" min="1" required class="guest-input w-full px-4 py-2.5 border border-gray-300 rounded-lg text-lg sm:text-xl focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent" placeholder="${inputPlaceholder}">
+                            ${isBYOT || isCarCamping ?
+                                `<input type="number" id="guests-${index}" name="guests" required class="guest-input w-full px-4 py-2.5 border border-gray-300 rounded-lg text-lg sm:text-xl focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent" min="1" max="50" placeholder="${inputPlaceholder}">` :
+                                `<select id="guests-${index}" name="guests" required class="guest-input w-full px-4 py-2.5 border border-gray-300 rounded-lg text-lg sm:text-xl focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent">
+                                    ${Array.from({length: 7}, (_, i) => `<option value="${i}" ${i === 0 ? 'selected' : ''}>${i}</option>`).join('')}
+                                </select>`
+                            }
                         </div>
+                        ${staycation.name.toLowerCase().includes('glamping') || staycation.name.toLowerCase().includes('bell') || staycation.name.toLowerCase().includes('dome') ? `
+                        <div class="mb-3 pt-3 border-t border-gray-200">
+                            <div class="mb-2">
+                                <label class="flex items-start">
+                                    <input type="checkbox" class="pet-agreement mt-1 mr-2 w-4 h-4" data-staycation-id="${staycation.id}" onchange="togglePetSelect(this)">
+                                    <span class="text-sm text-gray-700">
+                                        I agree to the <a href="#" onclick="openPetPolicyModal(); return false;" class="text-emerald-600 hover:text-emerald-800 underline">pet policy</a>
+                                    </span>
+                                </label>
+                            </div>
+                            <div>
+                                <label class="block text-lg font-medium text-gray-700 mb-1">Number of pets</label>
+                                <select class="pet-num-input w-full px-4 py-2.5 border border-gray-300 rounded-lg text-lg sm:text-xl focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent" data-staycation-id="${staycation.id}">
+                                    ${Array.from({length: 3}, (_, i) => `<option value="${i}" ${i === 0 ? 'selected' : ''}>${i}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        ` : ''}
                         <span class="block font-bold text-primary-600 text-xl md:text-2xl mb-2">
                             ${getPriceDisplay(staycation)}
                         </span>
 
                         <div class="flex gap-2">
                             <button class="flex-1 inline-flex justify-center items-center rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition px-3 py-2"
-                                    onclick="alert('VR Preview coming soon!')">
+                                onclick="alert('VR Preview coming soon!')">
                                 <i class="fas fa-vr-cardboard mr-2"></i>
                                 VR Preview
                             </button>
                         </div>
                     </div>
                 </div>
-                `;
-
-                // --- Handle checkbox selection ---
-            document.addEventListener('change', function(e) {
-                if (!e.target.matches('.staycation-checkbox')) return;
-
-                const checkbox = e.target;
-                const staycation = JSON.parse(checkbox.dataset.staycation);
-                const card = checkbox.closest('.bg-white.rounded-xl');
-                const guestsInput = card.querySelector('.guest-input');
-                const guests = guestsInput ? parseInt(guestsInput.value) || 1 : 1;
-
-                const key = staycation.id;
-
-                if (checkbox.checked) {
-                    window.selectedAccommodations[key] = { staycation, guests };
-                } else {
-                    delete window.selectedAccommodations[key];
-                }
-
-                displaySelectedAccommodation(key, window.selectedAccommodations[key]);
-                window.updateBookingSummary();
-            });
+            `;
 
             optionsContainer.appendChild(optionDiv);
+
+            // Add event listeners for pet options
+            const petAgreementInput = optionDiv.querySelector('.pet-agreement');
+            const numPetsInput = optionDiv.querySelector('.pet-num-input');
+            if (petAgreementInput) {
+                petAgreementInput.addEventListener('change', updatePetDataForCurrentSelection);
+            }
+            if (numPetsInput) {
+                numPetsInput.addEventListener('change', updatePetDataForCurrentSelection);
+                numPetsInput.addEventListener('click', function() {
+                    const checkbox = this.closest('.mb-3').querySelector('.pet-agreement');
+                    if (!checkbox.checked) {
+                        showToast('Please agree to the pet policy before selecting the number of pets.', 'error');
+                    }
+                });
+                numPetsInput.addEventListener('focus', function() {
+                    const checkbox = this.closest('.mb-3').querySelector('.pet-agreement');
+                    if (!checkbox.checked) {
+                        showToast('Please agree to the pet policy before selecting the number of pets.', 'error');
+                    }
+                });
+            }
 
             // Carousel functionality
             let currentSlide = 0;
@@ -1073,26 +1217,7 @@ window.updateBookingSummary = function() {
                 });
             });
 
-            // Enable button when guest number is entered
-            const input = optionDiv.querySelector('.guest-input');
-            const button = optionDiv.querySelector('.select-staycation-modal');
-            if (input && button) {
-                input.addEventListener('input', function() {
-                    const guests = parseInt(this.value);
-                    if (isBYOT || isCarCamping) {
-                        // For BYOT and Car Camping, enable if valid number >=1
-                        button.disabled = !this.value || guests < 1;
-                    } else {
-                        // For glamping/camping tents, enable if 1 <= guests <= capacity
-                        if (guests > staycation.capacity) {
-                            showToast(`Number of guests cannot exceed ${staycation.capacity}`, 'error');
-                            button.disabled = true;
-                        } else {
-                            button.disabled = !this.value || guests < 1 || guests > staycation.capacity;
-                        }
-                    }
-                });
-            }
+            // (Optional) extra validation for guest-input enablement can stay if you add a select button later
         });
 
         // Set up focus trapping
@@ -1273,6 +1398,138 @@ window.updateBookingSummary = function() {
         });
     }
 
+    function openPetPolicyModal() {
+        const modal = document.getElementById('pet-policy-modal');
+        const modalContent = document.getElementById('pet-policy-modal-content');
+
+        if (!modal || !modalContent) return;
+
+        // Store previous focus element
+        previousFocusElement = document.activeElement;
+
+        // Show modal with animation
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+        }, 10);
+
+        // Focus first focusable element
+        setTimeout(() => {
+            const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            if (firstFocusable) {
+                firstFocusable.focus();
+            }
+        }, 100);
+
+        activeModal = 'pet-policy-modal';
+        setupFocusTrap('pet-policy-modal');
+    }
+
+    function togglePetSelect(checkbox) {
+        const container = checkbox.closest('.mb-3');
+        const select = container.querySelector('.pet-num-input');
+        if (select) {
+            select.disabled = !checkbox.checked;
+            if (!checkbox.checked) {
+                select.value = '0'; // Reset to 0 when unchecked
+            }
+        }
+    }
+
+    function updatePetDataForCurrentSelection() {
+        const activeTab = document.querySelector('.accom-btn.bg-gray-900');
+        if (!activeTab) return;
+        const accommodationIndex = parseInt(activeTab.dataset.index);
+        const acc = window.selectedAccommodations[accommodationIndex];
+        if (!acc) return;
+
+        // Find the card in the currently open modal
+        const modal = document.querySelector('#glamping-modal:not(.hidden), #camping-modal:not(.hidden)');
+        if (!modal) return;
+        const card = modal.querySelector('.bg-white.rounded-xl');
+        if (!card) return;
+
+        const petAgreementInput = card.querySelector('.pet-agreement');
+        const numPetsInput = card.querySelector('.pet-num-input');
+        if (petAgreementInput && numPetsInput) {
+            acc.pet_agreement = petAgreementInput.checked;
+            acc.num_pets = parseInt(numPetsInput.value) || 0;
+            window.updateBookingSummary();
+        }
+    }
+
+    // 👉 GLOBAL CHANGE HANDLER: checkbox + quantity + pets
+    document.addEventListener('change', function(e) {
+        const target = e.target;
+
+        // Only handle relevant elements
+        if (
+            !target.matches('.staycation-checkbox') &&
+            !target.matches('.guest-input') &&
+            !target.matches('.pet-agreement') &&
+            !target.matches('.pet-num-input')
+        ) {
+            return;
+        }
+
+        const card = target.closest('.bg-white.rounded-xl');
+        if (!card) return;
+
+        const checkbox = card.querySelector('.staycation-checkbox');
+        if (!checkbox) return;
+
+        const staycationData = checkbox.dataset.staycation;
+        if (!staycationData) return;
+
+        let staycation;
+        try {
+            staycation = JSON.parse(staycationData);
+        } catch (err) {
+            console.error('Invalid staycation data', err);
+            return;
+        }
+
+        const guestsInput = card.querySelector('.guest-input');
+        // Ignore old simple checkboxes (those cards without a guest dropdown)
+        if (!guestsInput) return;
+
+        const guests = parseInt(guestsInput.value) || 0;
+
+        const petAgreementInput = card.querySelector('.pet-agreement');
+        const numPetsInput = card.querySelector('.pet-num-input');
+        const petAgreement = petAgreementInput ? petAgreementInput.checked : false;
+        const numPets = numPetsInput ? parseInt(numPetsInput.value) || 0 : 0;
+
+        if (target.matches('.pet-num-input') && !petAgreement) {
+            numPetsInput.value = '0';
+            showToast('Please agree to the pet policy before selecting the number of pets.', 'error');
+            return;
+        }
+
+        const activeTab = document.querySelector('.accom-btn.bg-gray-900');
+        if (!activeTab) return;
+
+        const accommodationIndex = parseInt(activeTab.dataset.index);
+
+        if (checkbox.checked) {
+            // Save selection with latest values
+            window.selectedAccommodations[accommodationIndex] = {
+                staycation,
+                guests,
+                pet_agreement: petAgreement,
+                num_pets: numPets
+            };
+            displaySelectedAccommodation(accommodationIndex, window.selectedAccommodations[accommodationIndex]);
+        } else {
+            // Unchecked: remove selection
+            delete window.selectedAccommodations[accommodationIndex];
+            displaySelectedAccommodation(accommodationIndex, null);
+        }
+
+        // Recompute summary and total every change
+        window.updateBookingSummary();
+    });
 
     function proceedToActivities() {
         // Send POST request to save accommodations and proceed
@@ -1284,7 +1541,9 @@ window.updateBookingSummary = function() {
             },
             body: JSON.stringify({
                 accommodations: window.selectedAccommodations,
-                proceed_to_activities: true
+                proceed_to_activities: true,
+                pet_agreement: document.getElementById('pet-agreement') ? document.getElementById('pet-agreement').checked : false,
+                num_pets: document.getElementById('num-pets') ? (parseInt(document.getElementById('num-pets').value) || 0) : 0
             })
         })
         .then(response => {
@@ -1305,3 +1564,4 @@ window.updateBookingSummary = function() {
         });
     }
 </script>
+

@@ -16,6 +16,7 @@
 // For staycation confirmation
 $totalGuests = 0;
 $nights = 0;
+$accommodationTotal = 0;
 if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations'])) {
     $totalGuests = collect($bookingData['accommodations'])->sum('guests');
 
@@ -38,6 +39,45 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
       // Edge case: if someone books same day, count as 1 night
       if ($nights === 0) {
           $nights = 1;
+      }
+  }
+
+  // Recalculate accommodation total including pet fees
+  foreach ($bookingData['accommodations'] as $accommodation) {
+      if (!empty($accommodation['staycation'])) {
+          $quantity = $accommodation['guests'] ?? 1;
+          $name = strtolower($accommodation['staycation']['name']);
+          $accPrice = 0;
+
+          if ($checkin && $checkout && (str_contains($name, 'standard') || str_contains($name, 'premium'))) {
+              $current = clone $checkin;
+              while ($current < $checkout) {
+                  $day = (int)$current->format('w');
+                  $isWeekend = $day === 5 || $day === 6;
+                  $basePrice = 0;
+                  if (str_contains($name, 'standard')) {
+                      $basePrice = $isWeekend ? 6000 : 4800;
+                  } elseif (str_contains($name, 'premium')) {
+                      $basePrice = $isWeekend ? 7200 : 5760;
+                  }
+                  $extraGuests = max(0, $quantity - 4);
+                  $accPrice += $basePrice + ($extraGuests * 400);
+                  $current->modify('+1 day');
+              }
+          } elseif ($checkin && $checkout && (str_contains($name, 'bell') || str_contains($name, 'dome'))) {
+              $accPrice = 3000 * $nights;
+          } elseif ($checkin && $checkout && (str_contains($name, 'byot') || str_contains($name, 'car camping'))) {
+              $accPrice = 300 * $quantity * $nights;
+          } else {
+              $accPrice = $accommodation['staycation']['price'] * $quantity * $nights;
+          }
+
+          // Add pet fee
+          if (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) {
+              $accPrice += 2000 * $accommodation['num_pets'];
+          }
+
+          $accommodationTotal += $accPrice;
       }
   }
 }
@@ -171,7 +211,7 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
                       $name = strtolower($accommodation['staycation']['name']);
                       $isBYOT = str_contains($name, 'byot');
                       $isCarCamping = str_contains($name, 'car camping');
-                      $totalPrice = 0;
+                      $accommodationPrice = 0;
 
                       if ($checkin && $checkout && (str_contains($name, 'standard') || str_contains($name, 'premium'))) {
                           $current = clone $checkin;
@@ -185,23 +225,28 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
                                   $basePrice = $isWeekend ? 7200 : 5760;
                               }
                               $extraGuests = max(0, $quantity - 4);
-                              $totalPrice += $basePrice + ($extraGuests * 400);
+                              $accommodationPrice += $basePrice + ($extraGuests * 400);
                               $current->modify('+1 day');
                           }
                       } elseif ($checkin && $checkout && (str_contains($name, 'bell') || str_contains($name, 'dome'))) {
-                          $totalPrice = 3000 * $nights;
+                          $accommodationPrice = 3000 * $nights;
                       } elseif ($checkin && $checkout && ($isBYOT || $isCarCamping)) {
-                          $totalPrice = 300 * $quantity * $nights;
+                          $accommodationPrice = 300 * $quantity * $nights;
                       } else {
-                          $totalPrice = $accommodation['staycation']['price'] * $quantity * $nights;
+                          $accommodationPrice = $accommodation['staycation']['price'] * $quantity * $nights;
                       }
 
+                      $petFee = (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) ? 2000 * $accommodation['num_pets'] : 0;
+                      $totalPrice = $accommodationPrice + $petFee;
                       @endphp
                       <li>• {{ $accommodation['staycation']['name'] }}
                         @if($isBYOT || $isCarCamping)
                           ({{ $accommodation['guests'] }} {{ $isBYOT ? 'BYOT' : 'Vehicles' }})
                         @endif
-                        - ₱{{ number_format($totalPrice, 2) }}
+                        - ₱{{ number_format($accommodationPrice, 2) }}
+                        @if($petFee > 0)
+                          <br>&nbsp;&nbsp;Pet Fee ({{ $accommodation['num_pets'] }} pet{{ $accommodation['num_pets'] > 1 ? 's' : '' }}): ₱{{ number_format($petFee, 2) }}
+                        @endif
                       </li>
                     @endif
                   @endforeach
@@ -224,7 +269,7 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
               <div class="space-y-2">
                 <div class="flex justify-between items-center text-sm">
                   <span>Accommodation Total:</span>
-                  <span>₱{{ number_format($bookingData['final_totals']['accommodation_total'] ?? 0, 2) }}</span>
+                  <span>₱{{ number_format($accommodationTotal, 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center text-sm">
                   <span>Activities Total:</span>
@@ -232,7 +277,7 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
                 </div>
                 <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
                   <span>Total Amount Paid:</span>
-                  <span class="text-[#8f5d54]">₱{{ number_format($grandTotal, 2) }}</span>
+                  <span class="text-[#8f5d54]">₱{{ number_format($accommodationTotal + ($bookingData['final_totals']['activities_total'] ?? 0), 2) }}</span>
                 </div>
               </div>
             </div>

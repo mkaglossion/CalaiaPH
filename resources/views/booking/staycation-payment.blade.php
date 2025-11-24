@@ -77,6 +77,13 @@ if ($datesSelected) {
             }
         }
     }
+
+    // Add pet fees
+    foreach ($booking['accommodations'] ?? [] as $acc) {
+        if (!empty($acc['pet_agreement']) && !empty($acc['num_pets'])) {
+            $accommodationTotal += 2000 * $acc['num_pets'];
+        }
+    }
 }
 
 // Get activities total from session
@@ -423,7 +430,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                         $name = strtolower($accommodation['staycation']['name']);
                                         $isBYOT = str_contains($name, 'byot');
                                         $isCarCamping = str_contains($name, 'car camping');
-                                        $totalPrice = 0;
+                                        $accommodationPrice = 0;
 
                                         if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
                                             $current = clone $start;
@@ -437,19 +444,24 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                                     $basePrice = $isWeekend ? 7200 : 5760;
                                                 }
                                                 $extraGuests = max(0, $quantity - 4);
-                                                $totalPrice += $basePrice + ($extraGuests * 400);
+                                                $accommodationPrice += $basePrice + ($extraGuests * 400);
                                                 $current->modify('+1 day');
                                             }
                                         } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
-                                            $totalPrice = 3000 * $nights;
+                                            $accommodationPrice = 3000 * $nights;
                                         } elseif ($isBYOT || $isCarCamping) {
-                                            $totalPrice = 300 * $quantity * $nights;
+                                            $accommodationPrice = 300 * $quantity * $nights;
                                         }
 
-                                        $avgPrice = $nights > 0 ? round($totalPrice / $nights) : $accommodation['staycation']['price'];
+                                        $petFee = (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) ? 2000 * $accommodation['num_pets'] : 0;
+                                        $totalPrice = $accommodationPrice + $petFee;
+                                        $avgPrice = $nights > 0 ? round($accommodationPrice / $nights) : $accommodation['staycation']['price'];
                                         @endphp
-                                        <div class="text-xs text-gray-600">
-                                            ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($avgPrice) }}/night ({{ $accommodation['guests'] }} guests)
+                                        <div class="text-xs text-gray-600 space-y-1">
+                                            <div>ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($avgPrice) }}/night ({{ $accommodation['guests'] }} guests)</div>
+                                            @if($petFee > 0)
+                                                <div>Pet Fee ({{ $accommodation['num_pets'] }} pet{{ $accommodation['num_pets'] > 1 ? 's' : '' }}): ₱{{ number_format($petFee) }}</div>
+                                            @endif
                                         </div>
                                     @endif
                                 @endforeach
