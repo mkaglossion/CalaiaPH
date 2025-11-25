@@ -12,7 +12,6 @@
         "php": "^8.2",
         "cloudinary-labs/cloudinary-laravel": "^3.0",
         "laravel/framework": "^12.0",
-        "laravel/telescope": "^5.15",
         "laravel/tinker": "^2.10.1"
     },
     "require-dev": {
