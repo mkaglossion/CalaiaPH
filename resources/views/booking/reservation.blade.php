@@ -109,7 +109,11 @@
               <div class="flex justify-between gap-2 sm:gap-4">
                 <span class="font-medium text-gray-500 text-xs sm:text-sm">Price</span>
                 <span class="text-right font-semibold text-[#8f5d54] text-sm sm:text-base">
-                  ₱{{ number_format((float) ($price ?? 0), 2) }}
+                  @if(($max_guests ?? 50) == 6)
+                    ₱{{ number_format((float) ($price ?? 0), 2) }} for 6
+                  @else
+                    ₱{{ number_format((float) ($price ?? 0), 2) }}
+                  @endif
                 </span>
               </div>
             </div>
@@ -261,9 +265,11 @@
                       type="number"
                       id="guests"
                       name="guests"
-                      value="{{ old('guests', 1) }}"
+                      value="{{ old('guests', $default_guests ?? 1) }}"
                       min="1"
+                      max="{{ $max_guests ?? 50 }}"
                       required
+                      @if(($max_guests ?? 50) == 6) readonly @endif
                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
                       placeholder="1"
                     >

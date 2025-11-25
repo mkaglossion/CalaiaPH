@@ -679,18 +679,18 @@ $galleryData = [
       </div>
     
       {{-- Toast --}}
-    <div class="toast fixed bottom-4 right-4 flex items-center text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden z-60"
-         role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="flex items-center w-full">
-            <div class="toast-body text-sm flex-1"></div>
-            <button type="button"
-                    class="ml-3 text-white text-xs font-semibold uppercase tracking-wide btn-close"
-                    data-bs-dismiss="toast"
-                    aria-label="Close">
-                ✕
-            </button>
-        </div>
-    </div>
+      <div class="toast fixed bottom-4 right-4 flex items-center text-white border-0 rounded-lg shadow-lg px-4 py-3 hidden z-60"
+           role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="flex items-center w-full">
+              <div class="toast-body text-sm flex-1"></div>
+              <button type="button"
+                      class="ml-3 text-white text-xs font-semibold uppercase tracking-wide btn-close"
+                      data-bs-dismiss="toast"
+                      aria-label="Close">
+                  ✕
+              </button>
+          </div>
+      </div>
 
     <x-footer />
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
@@ -774,6 +774,9 @@ $galleryData = [
 
             // Calculate price for this accommodation
             let accommodationPrice = 0;
+            let basePriceTotal = 0;
+            let extraPriceTotal = 0;
+            let extraGuests = 0;
             const checkin = new Date('{{ $checkinDate }}');
             const checkout = new Date('{{ $checkoutDate }}');
             const nights = Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24));
@@ -787,8 +790,10 @@ $galleryData = [
                     let basePrice = 0;
                     if (lowerName.includes('standard')) basePrice = isWeekend ? 6000 : 4800;
                     if (lowerName.includes('premium')) basePrice = isWeekend ? 7200 : 5760;
-                    const extraGuests = Math.max(0, guests - 4);
+                    extraGuests = Math.max(0, guests - 4);
                     accommodationPrice += basePrice + (extraGuests * 400);
+                    basePriceTotal += basePrice;
+                    extraPriceTotal += extraGuests * 400;
                     current.setDate(current.getDate() + 1);
                 }
             } else if (lowerName.includes('bell') || lowerName.includes('dome')) {
@@ -808,8 +813,14 @@ $galleryData = [
             summaryItem.className = 'text-xs text-gray-600 space-y-1';
 
             const accommodationDiv = document.createElement('div');
-            accommodationDiv.textContent = `ACCOMMODATION: ${name} - Guests: ${guests} - ₱ ${accommodationPrice.toLocaleString()}`;
+            accommodationDiv.textContent = `ACCOMMODATION: ${name} - ₱ ${Math.round(basePriceTotal / nights).toLocaleString()}/night (${guests} guests)`;
             summaryItem.appendChild(accommodationDiv);
+
+            if (extraPriceTotal > 0) {
+                const extraDiv = document.createElement('div');
+                extraDiv.textContent = `Extra Mattress (${extraGuests} guest${extraGuests > 1 ? 's' : ''}): ₱ ${Math.round(extraPriceTotal / nights).toLocaleString()}/night`;
+                summaryItem.appendChild(extraDiv);
+            }
 
             if (petFee > 0) {
                 const petDiv = document.createElement('div');
@@ -930,6 +941,15 @@ $galleryData = [
             const toastBody = toastEl.querySelector('.toast-body');
             if (toastBody) {
                 toastBody.textContent = message;
+            }
+            // Set color based on type
+            toastEl.classList.remove('bg-emerald-600', 'bg-red-600', 'bg-blue-600');
+            if (type === 'success') {
+                toastEl.classList.add('bg-emerald-600');
+            } else if (type === 'error') {
+                toastEl.classList.add('bg-red-600');
+            } else {
+                toastEl.classList.add('bg-blue-600');
             }
             toastEl.classList.remove('hidden');
             setTimeout(() => {
@@ -1670,10 +1690,25 @@ $galleryData = [
                 num_pets: numPets
             };
             displaySelectedAccommodation(accommodationIndex, window.selectedAccommodations[accommodationIndex]);
+            if (target.matches('.staycation-checkbox')) {
+                showToast(`You selected ${staycation.name}`, 'success');
+            }
         } else {
             // Unchecked: remove selection
             delete window.selectedAccommodations[accommodationIndex];
             displaySelectedAccommodation(accommodationIndex, null);
+            if (target.matches('.staycation-checkbox')) {
+                showToast(`You removed ${staycation.name}`, 'info');
+            }
+        }
+
+        // Show toast for pet policy agreement
+        if (target.matches('.pet-agreement')) {
+            if (petAgreement) {
+                showToast('You agreed to the pet policy', 'success');
+            } else {
+                showToast('Pet policy agreement removed', 'info');
+            }
         }
 
         // Recompute summary and total every change

@@ -158,40 +158,11 @@ if ($datesSelected) {
                     <section aria-labelledby="activities-heading">
                         <h2 id="activities-heading" class="sr-only">Available Activities</h2>
 
-                        {{-- Pre-defined Activities --}}
+                        {{-- Curated Activities --}}
                         <div class="mb-8">
-                          <h3 class="text-lg font-semibold text-gray-800 mb-4">Pre-defined Activities</h3>
-                          <div class="grid gap-4 sm:grid-cols-2">
-                            @foreach($activities as $activity)
-                            <div class="bg-gray-50 rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow">
-                              <div class="flex items-start space-x-3">
-                                <input
-                                  type="checkbox"
-                                  id="activity-{{ $activity['id'] }}"
-                                  name="activities[]"
-                                  value="{{ $activity['id'] }}"
-                                  class="activity-checkbox mt-1 text-[#8f5d54] focus:ring-[#8f5d54]"
-                                  data-price="{{ $activity['price'] }}"
-                                  data-name="{{ $activity['name'] }}"
-                                >
-                                <div class="flex-1">
-                                  <label for="activity-{{ $activity['id'] }}" class="cursor-pointer">
-                                    <h4 class="font-semibold text-gray-900">{{ $activity['name'] }}</h4>
-                                    <p class="text-sm text-gray-600 mt-1">{{ $activity['description'] }}</p>
-                                    <div class="flex items-center justify-between mt-2">
-                                      <span class="text-sm text-gray-500">
-                                        <i class="bi bi-clock mr-1"></i>{{ $activity['duration'] }}
-                                      </span>
-                                      <span class="font-semibold text-[#8f5d54]">₱{{ number_format($activity['price'], 2) }}</span>
-                                    </div>
-                                    <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                                      {{ $activity['availability'] }}
-                                    </span>
-                                  </label>
-                                </div>
-                              </div>
-                            </div>
-                            @endforeach
+                          <h3 class="text-lg font-semibold text-gray-800 mb-4">Curated Activities</h3>
+                          <div id="activities-container" class="grid gap-4 sm:grid-cols-2">
+                            <!-- Activities will be loaded here -->
                           </div>
                         </div>
 
@@ -228,6 +199,7 @@ if ($datesSelected) {
                             <span class="text-sm text-gray-600">Accommodations:</span>
                             <span class="text-sm font-medium">{{ count(array_filter($booking['accommodations'] ?? [])) }} selected</span>
                         </div>
+                        @if($bookingType === 'staycation')
                         <div class="mt-2 space-y-1">
                             @if(!empty($booking['accommodations']))
                                 @php
@@ -242,6 +214,9 @@ if ($datesSelected) {
                                         $isBYOT = str_contains($name, 'byot');
                                         $isCarCamping = str_contains($name, 'car camping');
                                         $accommodationPrice = 0;
+                                        $basePriceTotal = 0;
+                                        $extraPriceTotal = 0;
+                                        $extraGuests = 0;
 
                                         if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
                                             $current = clone $start;
@@ -256,6 +231,8 @@ if ($datesSelected) {
                                                 }
                                                 $extraGuests = max(0, $quantity - 4);
                                                 $accommodationPrice += $basePrice + ($extraGuests * 400);
+                                                $basePriceTotal += $basePrice;
+                                                $extraPriceTotal += $extraGuests * 400;
                                                 $current->modify('+1 day');
                                             }
                                         } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
@@ -266,10 +243,26 @@ if ($datesSelected) {
 
                                         $petFee = (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) ? 2000 * $accommodation['num_pets'] : 0;
                                         $totalPrice = $accommodationPrice + $petFee;
-                                        $avgPrice = $nights > 0 ? round($accommodationPrice / $nights) : $accommodation['staycation']['price'];
+
+                                        // Calculate base rate per night (weekday rate for standard/premium)
+                                        $baseRate = 0;
+                                        if (str_contains($name, 'standard')) {
+                                            $baseRate = 4800; // weekday rate
+                                        } elseif (str_contains($name, 'premium')) {
+                                            $baseRate = 5760; // weekday rate
+                                        } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
+                                            $baseRate = 3000;
+                                        } elseif ($isBYOT || $isCarCamping) {
+                                            $baseRate = 300 * $quantity;
+                                        }
+
+                                        $extraRate = $extraGuests * 400; // ₱400 per extra guest per night
                                         @endphp
                                         <div class="text-xs text-gray-600 space-y-1">
-                                            <div>ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($avgPrice) }}/night ({{ $accommodation['guests'] }} guests)</div>
+                                            <div>ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($baseRate) }}/night ({{ $accommodation['guests'] }} guests)</div>
+                                            @if($extraGuests > 0)
+                                                <div>Extra Mattress ({{ $extraGuests }} guest{{ $extraGuests > 1 ? 's' : '' }}): ₱{{ number_format($extraRate) }}/night</div>
+                                            @endif
                                             @if($petFee > 0)
                                                 <div>Pet Fee ({{ $accommodation['num_pets'] }} pet{{ $accommodation['num_pets'] > 1 ? 's' : '' }}): ₱{{ number_format($petFee) }}</div>
                                             @endif
@@ -278,6 +271,7 @@ if ($datesSelected) {
                                 @endforeach
                             @endif
                         </div>
+                        @endif
                         <div class="flex justify-between items-center text-lg font-bold pt-2 border-t border-gray-200">
                             <span>Accommodation Total:</span>
                             <span>₱ {{ number_format($accommodationTotal) }}</span>
@@ -368,14 +362,71 @@ if ($datesSelected) {
       const totalGuests = parseInt(container.dataset.totalGuests) || 0;
       const nights = parseInt(container.dataset.nights) || 0;
 
-    // Handle activity checkboxes
-    document.querySelectorAll('.activity-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        const activityId = this.value;
-        const activityName = this.dataset.name;
-        const activityPrice = parseFloat(this.dataset.price);
+      // Load activities from API
+      loadActivities();
 
-        if (this.checked) {
+      // Function to load activities from API
+      function loadActivities() {
+        fetch('/api/activities')
+          .then(response => response.json())
+          .then(activities => {
+            const container = document.getElementById('activities-container');
+            container.innerHTML = '';
+
+            activities.forEach(activity => {
+              const activityDiv = document.createElement('div');
+              activityDiv.className = 'bg-gray-50 rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow';
+              activityDiv.innerHTML = `
+                <div class="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="activity-${activity.id}"
+                    name="activities[]"
+                    value="${activity.id}"
+                    class="activity-checkbox mt-1 text-[#8f5d54] focus:ring-[#8f5d54]"
+                    data-price="${activity.price}"
+                    data-name="${activity.name}"
+                  >
+                  <div class="flex-1">
+                    <label for="activity-${activity.id}" class="cursor-pointer">
+                      <div class="flex items-start space-x-3">
+                        ${activity.image ? `<img src="${activity.image}" alt="${activity.name}" class="w-16 h-16 object-cover rounded-lg flex-shrink-0">` : ''}
+                        <div class="flex-1">
+                          <h4 class="font-semibold text-gray-900">${activity.name}</h4>
+                          <p class="text-sm text-gray-600 mt-1">${activity.description}</p>
+                          <div class="flex items-center justify-between mt-2">
+                            <span class="text-sm text-gray-500">
+                              <i class="bi bi-clock mr-1"></i>${activity.duration}
+                            </span>
+                            <span class="font-semibold text-[#8f5d54]">₱${parseFloat(activity.price).toFixed(2)}</span>
+                          </div>
+                          <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                            ${activity.availability}
+                          </span>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              `;
+              container.appendChild(activityDiv);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading activities:', error);
+            showToast('Error loading activities. Please refresh the page.', 'error');
+          });
+      }
+
+    // Handle activity checkboxes (using event delegation)
+    document.addEventListener('change', function(e) {
+      if (e.target.classList.contains('activity-checkbox')) {
+        const checkbox = e.target;
+        const activityId = checkbox.value;
+        const activityName = checkbox.dataset.name;
+        const activityPrice = parseFloat(checkbox.dataset.price);
+
+        if (checkbox.checked) {
           selectedActivities.push({ id: activityId, name: activityName, price: activityPrice, guests: totalGuests, type: 'predefined' });
           totalCost += activityPrice * totalGuests;
           showToast(`${activityName} added to selection`, 'success');
@@ -389,7 +440,7 @@ if ($datesSelected) {
         }
 
         updateSummary();
-      });
+      }
     });
 
 

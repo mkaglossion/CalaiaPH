@@ -83,40 +83,11 @@
           <section aria-labelledby="activities-heading">
             <h2 id="activities-heading" class="sr-only">Available Activities</h2>
 
-            {{-- Pre-defined Activities --}}
+            {{-- Curated Activities --}}
             <div class="mb-8">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4">Pre-defined Activities</h3>
-              <div class="grid gap-4 sm:grid-cols-2">
-                @foreach($activities as $activity)
-                <div class="bg-gray-50 rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow">
-                  <div class="flex items-start space-x-3">
-                    <input
-                      type="checkbox"
-                      id="activity-{{ $activity['id'] }}"
-                      name="activities[]"
-                      value="{{ $activity['id'] }}"
-                      class="activity-checkbox mt-1 text-[#8f5d54] focus:ring-[#8f5d54]"
-                      data-price="{{ $activity['price'] }}"
-                      data-name="{{ $activity['name'] }}"
-                    >
-                    <div class="flex-1">
-                      <label for="activity-{{ $activity['id'] }}" class="cursor-pointer">
-                        <h4 class="font-semibold text-gray-900">{{ $activity['name'] }}</h4>
-                        <p class="text-sm text-gray-600 mt-1">{{ $activity['description'] }}</p>
-                        <div class="flex items-center justify-between mt-2">
-                          <span class="text-sm text-gray-500">
-                            <i class="bi bi-clock mr-1"></i>{{ $activity['duration'] }}
-                          </span>
-                          <span class="font-semibold text-[#8f5d54]">₱{{ number_format($activity['price'], 2) }}</span>
-                        </div>
-                        <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                          {{ $activity['availability'] }}
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                @endforeach
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">Curated Activities</h3>
+              <div id="activities-container" class="grid gap-4 sm:grid-cols-2">
+                <!-- Activities will be loaded here -->
               </div>
             </div>
 
@@ -179,6 +150,20 @@
   {{-- Footer --}}
   <x-footer />
 
+  {{-- Toast --}}
+  <div class="toast fixed bottom-4 right-4 flex items-center text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden"
+       role="alert" aria-live="assertive" aria-atomic="true">
+     <div class="flex items-center w-full">
+        <div class="toast-body text-sm flex-1"></div>
+        <button type="button"
+                class="ml-3 text-white text-xs font-semibold uppercase tracking-wide btn-close"
+                data-bs-dismiss="toast"
+                aria-label="Close">
+           ✕
+        </button>
+     </div>
+  </div>
+
   {{-- Temporary inline font helpers --}}
   <style>
     .font-vila-zilka {
@@ -195,26 +180,85 @@
       // Get total guests from data attribute
       const totalGuests = parseInt(document.body.dataset.totalGuests) || 1;
 
-      // Handle pre-defined activity checkboxes
-      document.querySelectorAll('.activity-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-          const activityId = this.value;
-          const activityName = this.dataset.name;
-          const activityPrice = parseFloat(this.dataset.price);
+      // Load activities from API
+      loadActivities();
 
-          if (this.checked) {
+      // Function to load activities from API
+      function loadActivities() {
+        fetch('/api/activities')
+          .then(response => response.json())
+          .then(activities => {
+            const container = document.getElementById('activities-container');
+            container.innerHTML = '';
+
+            activities.forEach(activity => {
+              const activityDiv = document.createElement('div');
+              activityDiv.className = 'bg-gray-50 rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow';
+              activityDiv.innerHTML = `
+                <div class="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="activity-${activity.id}"
+                    name="activities[]"
+                    value="${activity.id}"
+                    class="activity-checkbox mt-1 text-[#8f5d54] focus:ring-[#8f5d54]"
+                    data-price="${activity.price}"
+                    data-name="${activity.name}"
+                  >
+                  <div class="flex-1">
+                    <label for="activity-${activity.id}" class="cursor-pointer">
+                      <div class="flex items-start space-x-3">
+                        ${activity.image ? `<img src="${activity.image}" alt="${activity.name}" class="w-16 h-16 object-cover rounded-lg flex-shrink-0">` : ''}
+                        <div class="flex-1">
+                          <h4 class="font-semibold text-gray-900">${activity.name}</h4>
+                          <p class="text-sm text-gray-600 mt-1">${activity.description}</p>
+                          <div class="flex items-center justify-between mt-2">
+                            <span class="text-sm text-gray-500">
+                              <i class="bi bi-clock mr-1"></i>${activity.duration}
+                            </span>
+                            <span class="font-semibold text-[#8f5d54]">₱${parseFloat(activity.price).toFixed(2)}</span>
+                          </div>
+                          <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                            ${activity.availability}
+                          </span>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              `;
+              container.appendChild(activityDiv);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading activities:', error);
+            showToast('Error loading activities. Please refresh the page.', 'error');
+          });
+      }
+
+      // Handle pre-defined activity checkboxes (using event delegation)
+      document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('activity-checkbox')) {
+          const checkbox = e.target;
+          const activityId = checkbox.value;
+          const activityName = checkbox.dataset.name;
+          const activityPrice = parseFloat(checkbox.dataset.price);
+
+          if (checkbox.checked) {
             selectedActivities.push({ id: activityId, name: activityName, price: activityPrice, guests: totalGuests, type: 'predefined' });
             totalCost += activityPrice * totalGuests;
+            showToast(`${activityName} added to selection`, 'success');
           } else {
             const index = selectedActivities.findIndex(a => a.id === activityId && a.type === 'predefined');
             if (index > -1) {
               totalCost -= selectedActivities[index].price * selectedActivities[index].guests;
               selectedActivities.splice(index, 1);
+              showToast(`${activityName} removed from selection`, 'info');
             }
           }
 
           updateSummary();
-        });
+        }
       });
 
 
@@ -270,6 +314,21 @@
         totalElement.textContent = `₱${totalCost.toFixed(2)}`;
       }
 
+      // Toast function
+      function showToast(message, type = 'info') {
+        const toastEl = document.querySelector('.toast');
+        if (toastEl) {
+          const toastBody = toastEl.querySelector('.toast-body');
+          if (toastBody) {
+            toastBody.textContent = message;
+          }
+          toastEl.classList.remove('hidden');
+          setTimeout(() => {
+            toastEl.classList.add('hidden');
+          }, 3000);
+        }
+      }
+
       // Remove activity
       window.removeActivity = function(id) {
         const index = selectedActivities.findIndex(a => a.id === id);
@@ -302,12 +361,12 @@
           if (data.success) {
             window.location.href = '{{ route("booking.payment") }}';
           } else {
-            alert('Error saving activities. Please try again.');
+            showToast('Error saving activities. Please try again.', 'error');
           }
         })
         .catch(error => {
           console.error('Error:', error);
-          alert('Error saving activities. Please try again.');
+          showToast('Error saving activities. Please try again.', 'error');
         });
       });
     });

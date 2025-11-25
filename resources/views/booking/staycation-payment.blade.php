@@ -431,6 +431,9 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                         $isBYOT = str_contains($name, 'byot');
                                         $isCarCamping = str_contains($name, 'car camping');
                                         $accommodationPrice = 0;
+                                        $basePriceTotal = 0;
+                                        $extraPriceTotal = 0;
+                                        $extraGuests = 0;
 
                                         if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
                                             $current = clone $start;
@@ -445,6 +448,8 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                                 }
                                                 $extraGuests = max(0, $quantity - 4);
                                                 $accommodationPrice += $basePrice + ($extraGuests * 400);
+                                                $basePriceTotal += $basePrice;
+                                                $extraPriceTotal += $extraGuests * 400;
                                                 $current->modify('+1 day');
                                             }
                                         } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
@@ -455,10 +460,14 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
 
                                         $petFee = (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) ? 2000 * $accommodation['num_pets'] : 0;
                                         $totalPrice = $accommodationPrice + $petFee;
-                                        $avgPrice = $nights > 0 ? round($accommodationPrice / $nights) : $accommodation['staycation']['price'];
+                                        $baseAvg = $nights > 0 ? round($basePriceTotal / $nights) : 0;
+                                        $extraAvg = $nights > 0 ? round($extraPriceTotal / $nights) : 0;
                                         @endphp
                                         <div class="text-xs text-gray-600 space-y-1">
-                                            <div>ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($avgPrice) }}/night ({{ $accommodation['guests'] }} guests)</div>
+                                            <div>ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($baseAvg) }}/night ({{ $accommodation['guests'] }} guests)</div>
+                                            @if($extraPriceTotal > 0)
+                                                <div>Extra Mattress ({{ $extraGuests }} guest{{ $extraGuests > 1 ? 's' : '' }}): ₱{{ number_format($extraAvg) }}/night</div>
+                                            @endif
                                             @if($petFee > 0)
                                                 <div>Pet Fee ({{ $accommodation['num_pets'] }} pet{{ $accommodation['num_pets'] > 1 ? 's' : '' }}): ₱{{ number_format($petFee) }}</div>
                                             @endif
@@ -485,8 +494,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                         @foreach($selectedActivities as $activity)
                             <div class="flex justify-between items-start p-2 bg-white rounded border">
                                 <div class="flex-1">
-                                    <p class="text-sm font-medium text-gray-900">{{ $activity['name'] }}</p>
-                                    <p class="text-xs text-gray-600">Guests: {{ $activity['guests'] }}</p>
+                                    <p class="text-sm font-medium text-gray-900">{{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }} x {{ $activity['guests'] }}</p>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-sm font-semibold text-[#8f5d54]">₱{{ number_format($activity['price'] * $activity['guests'], 2) }}</span>

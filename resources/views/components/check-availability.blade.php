@@ -228,6 +228,8 @@
                 // Update form action based on tab
                 if (type === 'room') {
                     this.formAction = '{{ url("/booking/staycation") }}';
+                } else if (type === 'day-visit') {
+                    this.formAction = '{{ url("/booking/dayvisit") }}';
                 } else {
                     this.formAction = '{{ url("/booking") }}';
                 }

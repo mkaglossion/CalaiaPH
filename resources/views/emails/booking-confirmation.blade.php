@@ -26,6 +26,8 @@
 
             <div class="booking-details">
                 <h3>Booking Details:</h3>
+                <p><strong>Name:</strong> {{ ($bookingData['first_name'] ?? $bookingData['customer_info']['first_name'] ?? '') . ' ' . ($bookingData['last_name'] ?? $bookingData['customer_info']['last_name'] ?? '') }}</p>
+                <p><strong>Email:</strong> {{ $bookingData['email'] ?? $bookingData['customer_info']['email'] ?? '' }}</p>
                 @php
                 $isStaycation = isset($bookingData['accommodations']) && !empty($bookingData['accommodations']);
                 $accommodationTotal = 0;
@@ -79,8 +81,6 @@
                     <p><strong>Check-out:</strong> {{ !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout'])->format('M d, Y') : '' }}</p>
                     <p><strong>Nights:</strong> {{ !empty($bookingData['checkin']) && !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout'])->diffInDays(\Carbon\Carbon::parse($bookingData['checkin'])) : 0 }}</p>
                     <p><strong>Guests:</strong> {{ collect($bookingData['accommodations'])->sum('guests') }}</p>
-                    <p><strong>Name:</strong> {{ ($bookingData['first_name'] ?? $bookingData['customer_info']['first_name'] ?? '') . ' ' . ($bookingData['last_name'] ?? $bookingData['customer_info']['last_name'] ?? '') }}</p>
-                    <p><strong>Email:</strong> {{ $bookingData['email'] ?? $bookingData['customer_info']['email'] ?? '' }}</p>
                     @if (!empty($bookingData['accommodations']))
                         <p><strong>Selected Accommodations:</strong></p>
                         <ul>
@@ -95,6 +95,9 @@
                                     $quantity = $accommodation['guests'] ?? 1;
                                     $name = strtolower($accommodation['staycation']['name']);
                                     $accommodationPrice = 0;
+                                    $basePriceTotal = 0;
+                                    $extraPriceTotal = 0;
+                                    $extraGuests = 0;
 
                                     if ($checkin && $checkout && (str_contains($name, 'standard') || str_contains($name, 'premium'))) {
                                         $current = clone $checkin;
@@ -109,6 +112,8 @@
                                             }
                                             $extraGuests = max(0, $quantity - 4);
                                             $accommodationPrice += $basePrice + ($extraGuests * 400);
+                                            $basePriceTotal += $basePrice;
+                                            $extraPriceTotal += $extraGuests * 400;
                                             $current->modify('+1 day');
                                         }
                                     } elseif ($checkin && $checkout && (str_contains($name, 'bell') || str_contains($name, 'dome'))) {
@@ -121,8 +126,25 @@
 
                                     $petFee = (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) ? 2000 * $accommodation['num_pets'] : 0;
                                     $totalPrice = $accommodationPrice + $petFee;
+
+                                    // Calculate base rate per night (weekday rate for standard/premium)
+                                    $baseRate = 0;
+                                    if (str_contains($name, 'standard')) {
+                                        $baseRate = 4800; // weekday rate
+                                    } elseif (str_contains($name, 'premium')) {
+                                        $baseRate = 5760; // weekday rate
+                                    } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
+                                        $baseRate = 3000;
+                                    } elseif ($isBYOT || $isCarCamping) {
+                                        $baseRate = 300 * $quantity;
+                                    }
+
+                                    $extraRate = $extraGuests * 400; // ₱400 per extra guest per night
                                     @endphp
-                                    <li>{{ $accommodation['staycation']['name'] }} - ₱{{ number_format($accommodationPrice, 2) }}
+                                    <li>{{ $accommodation['staycation']['name'] }} - ₱{{ number_format($baseRate, 2) }}/night
+                                        @if($extraGuests > 0)
+                                            <br>Extra Mattress ({{ $extraGuests }} guest{{ $extraGuests > 1 ? 's' : '' }}): ₱{{ number_format($extraRate, 2) }}/night
+                                        @endif
                                         @if($petFee > 0)
                                             <br>Pet Fee ({{ $accommodation['num_pets'] }} pet{{ $accommodation['num_pets'] > 1 ? 's' : '' }}): ₱{{ number_format($petFee, 2) }}
                                         @endif
@@ -138,17 +160,30 @@
                     <p><strong>Type:</strong> {{ ucfirst($bookingData['type']) }}</p>
                     <p><strong>Package:</strong> {{ $bookingData['package'] }}</p>
                     <p><strong>Price:</strong> ₱{{ number_format((float)$bookingData['price']) }}</p>
+                    <p><strong>Preferred Date:</strong> {{ \Carbon\Carbon::parse($bookingData['booking_date'])->format('F j, Y') }}</p>
+                    <p><strong>Number of Guests:</strong> {{ $bookingData['guests'] }}</p>
+                    @php
+                    $activitiesTotal = 0;
+                    if (!empty($selectedActivities)) {
+                        $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
+                            return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+                        });
+                    }
+                    $packageTotal = (float)($bookingData['price'] ?? 0);
+                    $grandTotal = $bookingData['grand_total'] ?? ($packageTotal + $activitiesTotal);
+                    @endphp
+
                     @if(!empty($selectedActivities))
                     <p><strong>Selected Activities:</strong></p>
                     <ul>
                         @foreach($selectedActivities as $activity)
-                        <li>{{ $activity['name'] }} - ₱{{ number_format($activity['price']) }}</li>
+                        <li>{{ $activity['name'] }} ({{ $activity['guests'] ?? 1 }} guest{{ ($activity['guests'] ?? 1) > 1 ? 's' : '' }}) - ₱{{ number_format(($activity['price'] ?? 0) * ($activity['guests'] ?? 1)) }}</li>
                         @endforeach
                     </ul>
-                    <p><strong>Total Price:</strong> ₱{{ number_format((float)$bookingData['price'] + collect($selectedActivities)->sum('price')) }}</p>
+                    <p><strong>Activities Total:</strong> ₱{{ number_format($activitiesTotal) }}</p>
                     @endif
-                    <p><strong>Preferred Date:</strong> {{ \Carbon\Carbon::parse($bookingData['booking_date'])->format('F j, Y') }}</p>
-                    <p><strong>Number of Guests:</strong> {{ $bookingData['guests'] }}</p>
+                    <p><strong>Package Total:</strong> ₱{{ number_format($packageTotal) }}</p>
+                    <p><strong>Total Amount Paid:</strong> ₱{{ number_format($grandTotal) }}</p>
                     @if($bookingData['special_requests'] ?? $bookingData['customer_info']['special_requests'] ?? false)
                     <p><strong>Special Requests:</strong> {{ $bookingData['special_requests'] ?? $bookingData['customer_info']['special_requests'] ?? '' }}</p>
                     @endif
@@ -160,7 +195,7 @@
                 <p><strong>Transaction ID:</strong> {{ $bookingData['transaction_id'] ?? 'N/A' }}</p>
                 <p><strong>Payment Method:</strong> {{ ucfirst($bookingData['payment_method'] ?? 'N/A') }}</p>
                 <p><strong>Payment Date:</strong> {{ !empty($bookingData['payment_date']) ? \Carbon\Carbon::parse($bookingData['payment_date'])->format('M d, Y H:i') : 'N/A' }}</p>
-                <p><strong>Total Amount Paid:</strong> ₱{{ number_format($bookingData['grand_total'] ?? $bookingData['final_totals']['grand_total'] ?? 0, 2) }}</p>
+                <p><strong>Total Amount Paid:</strong> ₱{{ number_format($grandTotal ?? $bookingData['grand_total'] ?? $bookingData['final_totals']['grand_total'] ?? 0, 2) }}</p>
             </div>
 
             <h3>What's Next?</h3>

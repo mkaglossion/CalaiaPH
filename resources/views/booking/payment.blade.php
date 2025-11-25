@@ -79,6 +79,17 @@
 
         {{-- Layout: Summary + Payment --}}
         <div class="grid gap-6 lg:gap-8 grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] items-start">
+          {{-- Back Button --}}
+          <div class="lg:col-span-2 mb-4">
+            <a
+              href="{{ route('booking.activities') }}"
+              class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
+            >
+              <i class="bi bi-arrow-left"></i>
+              Back to Activities
+            </a>
+          </div>
+
           {{-- Booking Summary --}}
           <section
             aria-labelledby="booking-summary-heading"
@@ -111,7 +122,7 @@
                 $selectedActivities = session('selected_activities', []);
                 $activitiesTotal = 0;
                 foreach ($selectedActivities as $activity) {
-                    $activitiesTotal += $activity['price'];
+                    $activitiesTotal += $activity['price'] * ($activity['guests'] ?? 1);
                 }
                 $grandTotal = ($bookingData['price'] ?? 0) + $activitiesTotal;
               @endphp
@@ -123,9 +134,9 @@
                   <p class="font-medium text-gray-700">Selected Activities:</p>
                   @foreach ($selectedActivities as $activity)
                     <div class="flex justify-between gap-4 pl-4">
-                      <span class="text-gray-600">{{ $activity['name'] }}</span>
+                      <span class="text-gray-600">{{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }} x {{ $activity['guests'] ?? 1 }}</span>
                       <span class="text-right font-semibold text-[#8f5d54]">
-                        ₱{{ number_format($activity['price'], 2) }}
+                        ₱{{ number_format($activity['price'] * ($activity['guests'] ?? 1), 2) }}
                       </span>
                     </div>
                   @endforeach

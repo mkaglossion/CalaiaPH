@@ -23,8 +23,8 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
     $nights = 0;
 
   if (!empty($bookingData['checkin']) && !empty($bookingData['checkout'])) {
-      $checkin = \Carbon\Carbon::parse($bookingData['checkin'])->startOfDay();
-      $checkout = \Carbon\Carbon::parse($bookingData['checkout'])->startOfDay();
+      $checkin = \Carbon\Carbon::parse($bookingData['checkin']);
+      $checkout = \Carbon\Carbon::parse($bookingData['checkout']);
 
       // Make sure checkout >= checkin
       if ($checkout->lt($checkin)) {
@@ -154,7 +154,67 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
         <div class="bg-gray-50 rounded-xl p-6 mb-6 text-left">
           <h2 class="text-xl font-semibold text-gray-900 mb-4">Booking Details</h2>
 
-          @if(isset($isStaycation) && $isStaycation)
+          @if(isset($isDayvisit) && $isDayvisit)
+            {{-- Day Visit Booking Details --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span class="font-medium text-gray-500">Booking Type:</span>
+                <span class="ml-2 text-gray-900">Day Visit</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Package:</span>
+                <span class="ml-2 text-gray-900">{{ $bookingData['package'] ?? 'Day Visit Package' }}</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Date:</span>
+                <span class="ml-2 text-gray-900">
+                  @if (!empty($bookingData['booking_date']))
+                    {{ \Carbon\Carbon::parse($bookingData['booking_date'])->format('M d, Y') }}
+                  @endif
+                </span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Guests:</span>
+                <span class="ml-2 text-gray-900">{{ $bookingData['guests'] ?? '' }}</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Name:</span>
+                <span class="ml-2 text-gray-900">{{ ($customerInfo['first_name'] ?? '') . ' ' . ($customerInfo['last_name'] ?? '') }}</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-500">Email:</span>
+                <span class="ml-2 text-gray-900">{{ $customerInfo['email'] ?? '' }}</span>
+              </div>
+            </div>
+
+            @if (!empty($selectedActivities))
+              <div class="mt-4 pt-4 border-t border-gray-200">
+                <h3 class="font-medium text-gray-900 mb-2">Selected Activities:</h3>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  @foreach ($selectedActivities as $activity)
+                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }} x {{ $activity['guests'] }}</li>
+                  @endforeach
+                </ul>
+              </div>
+            @endif
+
+            <div class="mt-4 pt-4 border-t border-gray-200">
+              <div class="space-y-2">
+                <div class="flex justify-between items-center text-sm">
+                  <span>Day Visit Package:</span>
+                  <span>₱{{ number_format($bookingData['price'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <span>Activities Total:</span>
+                  <span>₱{{ number_format(collect($selectedActivities ?? [])->sum(function($activity) { return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1); }), 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
+                  <span>Total Amount Paid:</span>
+                  <span class="text-[#8f5d54]">₱{{ number_format($grandTotal ?? 0, 2) }}</span>
+                </div>
+              </div>
+            </div>
+          @elseif(isset($isStaycation) && $isStaycation)
             {{-- Staycation Booking Details --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
@@ -212,6 +272,9 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
                       $isBYOT = str_contains($name, 'byot');
                       $isCarCamping = str_contains($name, 'car camping');
                       $accommodationPrice = 0;
+                      $basePriceTotal = 0;
+                      $extraPriceTotal = 0;
+                      $extraGuests = 0;
 
                       if ($checkin && $checkout && (str_contains($name, 'standard') || str_contains($name, 'premium'))) {
                           $current = clone $checkin;
@@ -226,6 +289,8 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
                               }
                               $extraGuests = max(0, $quantity - 4);
                               $accommodationPrice += $basePrice + ($extraGuests * 400);
+                              $basePriceTotal += $basePrice;
+                              $extraPriceTotal += $extraGuests * 400;
                               $current->modify('+1 day');
                           }
                       } elseif ($checkin && $checkout && (str_contains($name, 'bell') || str_contains($name, 'dome'))) {
@@ -238,12 +303,29 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
 
                       $petFee = (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) ? 2000 * $accommodation['num_pets'] : 0;
                       $totalPrice = $accommodationPrice + $petFee;
+
+                      // Calculate base rate per night (weekday rate for standard/premium)
+                      $baseRate = 0;
+                      if (str_contains($name, 'standard')) {
+                          $baseRate = 4800; // weekday rate
+                      } elseif (str_contains($name, 'premium')) {
+                          $baseRate = 5760; // weekday rate
+                      } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
+                          $baseRate = 3000;
+                      } elseif ($isBYOT || $isCarCamping) {
+                          $baseRate = 300 * $quantity;
+                      }
+
+                      $extraRate = $extraGuests * 400; // ₱400 per extra guest per night
                       @endphp
                       <li>• {{ $accommodation['staycation']['name'] }}
                         @if($isBYOT || $isCarCamping)
                           ({{ $accommodation['guests'] }} {{ $isBYOT ? 'BYOT' : 'Vehicles' }})
                         @endif
-                        - ₱{{ number_format($accommodationPrice, 2) }}
+                        - ₱{{ number_format($baseRate, 2) }}/night
+                        @if($extraGuests > 0)
+                          <br>&nbsp;&nbsp;Extra Mattress ({{ $extraGuests }} guest{{ $extraGuests > 1 ? 's' : '' }}): ₱{{ number_format($extraRate, 2) }}/night
+                        @endif
                         @if($petFee > 0)
                           <br>&nbsp;&nbsp;Pet Fee ({{ $accommodation['num_pets'] }} pet{{ $accommodation['num_pets'] > 1 ? 's' : '' }}): ₱{{ number_format($petFee, 2) }}
                         @endif
@@ -259,7 +341,7 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
                 <h3 class="font-medium text-gray-900 mb-2">Selected Activities:</h3>
                 <ul class="text-sm text-gray-600 space-y-1">
                   @foreach ($selectedActivities as $activity)
-                    <li>• {{ $activity['name'] }} ({{ $activity['guests'] }} guests) - ₱{{ number_format($activity['price'] * $activity['guests'], 2) }}</li>
+                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }} x {{ $activity['guests'] }}</li>
                   @endforeach
                 </ul>
               </div>
@@ -269,7 +351,7 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
               <div class="space-y-2">
                 <div class="flex justify-between items-center text-sm">
                   <span>Accommodation Total:</span>
-                  <span>₱{{ number_format($accommodationTotal, 2) }}</span>
+                  <span>₱{{ number_format($bookingData['final_totals']['accommodation_total'] ?? $accommodationTotal, 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center text-sm">
                   <span>Activities Total:</span>
@@ -277,7 +359,7 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
                 </div>
                 <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
                   <span>Total Amount Paid:</span>
-                  <span class="text-[#8f5d54]">₱{{ number_format($accommodationTotal + ($bookingData['final_totals']['activities_total'] ?? 0), 2) }}</span>
+                  <span class="text-[#8f5d54]">₱{{ number_format(($bookingData['final_totals']['accommodation_total'] ?? $accommodationTotal) + ($bookingData['final_totals']['activities_total'] ?? 0), 2) }}</span>
                 </div>
               </div>
             </div>
@@ -319,16 +401,26 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
                 <h3 class="font-medium text-gray-900 mb-2">Selected Activities:</h3>
                 <ul class="text-sm text-gray-600 space-y-1">
                   @foreach ($selectedActivities as $activity)
-                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }}</li>
+                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }} x {{ $activity['guests'] ?? 1 }}</li>
                   @endforeach
                 </ul>
               </div>
             @endif
 
             <div class="mt-4 pt-4 border-t border-gray-200">
-              <div class="flex justify-between items-center text-lg font-semibold">
-                <span>Total Amount Paid:</span>
-                <span class="text-[#8f5d54]">₱{{ number_format($grandTotal, 2) }}</span>
+              <div class="space-y-2">
+                <div class="flex justify-between items-center text-sm">
+                  <span>Accommodation Total:</span>
+                  <span>₱{{ number_format($bookingData['price'] ?? 0, 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <span>Activities Total:</span>
+                  <span>₱{{ number_format(collect($selectedActivities ?? [])->sum(function($activity) { return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1); }), 2) }}</span>
+                </div>
+                <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
+                  <span>Total Amount Paid:</span>
+                  <span class="text-[#8f5d54]">₱{{ number_format($grandTotal, 2) }}</span>
+                </div>
               </div>
             </div>
           @endif

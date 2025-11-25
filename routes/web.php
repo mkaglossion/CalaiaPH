@@ -79,6 +79,9 @@ Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show')
 // Booking Routes
 Route::get('/booking', [BookingController::class, 'create'])->name('booking.create');
 Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
+// Centralized API for activities
+Route::get('/api/activities', [BookingController::class, 'getActivitiesApi'])->name('api.activities');
+Route::get('/api/booking/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.activities');
 Route::get('/booking/activities', [BookingController::class, 'activities'])->name('booking.activities');
 Route::post('/booking/activities', [BookingController::class, 'storeActivities'])->name('booking.storeActivities');
 Route::get('/booking/staycation/activities', [BookingController::class, 'staycationActivities'])->name('booking.staycationActivities');
@@ -97,6 +100,14 @@ Route::get('/booking/reset-inventory', function () {
     session()->forget('inventory');
     return redirect('/booking/widget')->with('success', 'Inventory reset!');
 })->name('booking.reset-inventory');
+// Day Visit Routes
+Route::match(['GET', 'POST'], '/booking/dayvisit', [BookingController::class, 'dayvisit'])->name('booking.dayvisit');
+Route::post('/booking/dayvisit/store', [BookingController::class, 'storeDayvisit'])->name('booking.storeDayvisit');
+// Use centralized API for dayvisit activities too
+Route::get('/api/booking/dayvisit/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.dayvisit.activities');
+Route::get('/booking/dayvisit/activities', [BookingController::class, 'dayvisitActivities'])->name('booking.dayvisitActivities');
+Route::post('/booking/dayvisit/activities', [BookingController::class, 'storeDayvisitActivities'])->name('booking.storeDayvisitActivities');
+Route::get('/booking/dayvisit/payment', [BookingController::class, 'dayvisitPayment'])->name('booking.dayvisitPayment');
 
 // ========== Auth Routes ==========
 Route::post('/register-step-one', [RegisterController::class, 'registerStepOne']);
