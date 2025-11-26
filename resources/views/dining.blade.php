@@ -90,10 +90,10 @@
             </div>
 
             <div class="px-6 pb-6 pt-1 text-center">
-              <h3 class="my-4 text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">
+              <h3 class="my-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                 SET MENUS
               </h3>
-              <p class="small mb-2" style="color:#97655A;">
+              <p class="mb-2" style="color:#97655A; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                 SET MENUS ARE AVAILABLE FOR GROUPS AND FAMILIES.
               </p>
 
@@ -121,10 +121,10 @@
             </div>
 
             <div class="px-6 pb-6 pt-1 text-center">
-              <h3 class="my-4 text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">
+              <h3 class="my-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                 SPECIAL MENUS
               </h3>
-              <p class="mb-2" style="color:#97655A;">
+              <p class="mb-2" style="color:#97655A; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                 SPECIAL MENUS ARE AVAILABLE FOR GROUPS AND FAMILIES.
               </p>
 
@@ -152,10 +152,10 @@
             </div>
 
             <div class="px-6 pb-6 pt-1 text-center">
-              <h3 class="my-4 text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">
+              <h3 class="my-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                 SNACK BAR
               </h3>
-              <p class="small mb-2" style="color:#97655A;">
+              <p class="mb-2" style="color:#97655A; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                 SNACK BAR IS AVAILABLE FOR GROUPS AND FAMILIES.
               </p>
 
@@ -284,7 +284,7 @@
       // Build package details
       const packageDetails = document.getElementById('packageDetails');
       packageDetails.innerHTML = descriptionParagraphs.map(p => `
-        <p class="flex items-start text-gray-700">
+        <p class="flex items-start text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
           <i class="bi bi-check-circle-fill text-[#97655A] mr-3 mt-1 flex-shrink-0"></i>
           <span class="flex-1">${p}</span>
         </p>

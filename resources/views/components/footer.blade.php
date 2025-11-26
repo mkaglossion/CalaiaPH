@@ -34,8 +34,8 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Company Info -->
         <div class="text-center md:text-left">
-          <h3 class="text-2xl font-bold uppercase mb-3">CALAIA FARM</h3>
-          <p class="text-gray-200 leading-relaxed">
+          <h3 class="text-2xl font-bold uppercase mb-3" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">CALAIA FARM</h3>
+          <p class="text-gray-200 leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
             Your perfect getaway destination for relaxation and adventure.
             Experience nature at its finest in Calaca, Batangas.
           </p>
@@ -43,38 +43,38 @@
 
         <!-- Quick Links -->
         <div class="text-left">
-          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center" onclick="toggleSection(this)">
+          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center" onclick="toggleSection(this)" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
             <span>EXPLORE</span>
             <i class="bi bi-plus md:hidden"></i>
           </h3>
           <ul class="space-y-1 hidden md:block">
-            <li><a href="{{ url('/') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Home</a></li>
-            <li><a href="{{ url('/daytour') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Day Tour</a></li>
-            <li><a href="{{ url('/staycation') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Where to Stay</a></li>
-            <li><a href="{{ url('/activities') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">What to Do</a></li>
-            <li><a href="{{ url('/dining') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Food & Beverage</a></li>
-            <li><a href="{{ url('/groups') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Special Events</a></li>
-            <li><a href="{{ url('/farm') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Our Farm</a></li>
+            <li><a href="{{ url('/') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200" style="font-family: 'Gotham Book', sans-serif;">Home</a></li>
+            <li><a href="{{ url('/daytour') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200" style="font-family: 'Gotham Book', sans-serif;">Day Tour</a></li>
+            <li><a href="{{ url('/staycation') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200" style="font-family: 'Gotham Book', sans-serif;">Where to Stay</a></li>
+            <li><a href="{{ url('/activities') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200" style="font-family: 'Gotham Book', sans-serif;">What to Do</a></li>
+            <li><a href="{{ url('/dining') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200" style="font-family: 'Gotham Book', sans-serif;">Food & Beverage</a></li>
+            <li><a href="{{ url('/groups') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200" style="font-family: 'Gotham Book', sans-serif;">Special Events</a></li>
+            <li><a href="{{ url('/farm') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200" style="font-family: 'Gotham Book', sans-serif;">Our Farm</a></li>
           </ul>
         </div>
 
         <!-- Useful Links -->
         <div class="text-left">
-          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center" onclick="toggleSection(this)">
+          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center" onclick="toggleSection(this)" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
             <span>INFORMATION</span>
             <i class="bi bi-plus md:hidden"></i>
           </h3>
           <ul class="space-y-1 hidden md:block">
-            <li><a href="{{ url('/our-story') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Our Story</a></li>
-            <li><a href="{{ url('/sustainability') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Sustainability</a></li>
-            <li><a href="{{ url('/services') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Our Services</a></li>
-            <li><a href="{{ url('/contact') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200">Contact Us</a></li>
+            <li><a href="{{ url('/our-story') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200" style="font-family: 'Gotham Book', sans-serif;">Our Story</a></li>
+            <li><a href="{{ url('/sustainability') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200" style="font-family: 'Gotham Book', sans-serif;">Sustainability</a></li>
+            <li><a href="{{ url('/services') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200" style="font-family: 'Gotham Book', sans-serif;">Our Services</a></li>
+            <li><a href="{{ url('/contact') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200" style="font-family: 'Gotham Book', sans-serif;">Contact Us</a></li>
           </ul>
         </div>
 
         <!-- Contact Info -->
         <div class="text-left">
-          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center" onclick="toggleSection(this)">
+          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center" onclick="toggleSection(this)" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
             <span>CONTACT</span>
             <i class="bi bi-plus md:hidden"></i>
           </h3>
@@ -106,7 +106,7 @@
       <!-- Policies Section -->
       <div class="mt-6 pt-6 border-t border-white/20">
         <div class="text-center">
-          <h3 class="text-lg font-semibold uppercase mb-3">POLICIES & TERMS</h3>
+          <h3 class="text-lg font-semibold uppercase mb-3" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">POLICIES & TERMS</h3>
           <div class="flex flex-wrap justify-center gap-6">
             <a href="{{ url('/privacy-notice') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-sm">
               Privacy Notice
@@ -126,7 +126,7 @@
 
       <!-- Copyright -->
       <div class="mt-6 pt-4 border-t border-white/20">
-        <p class="text-center text-gray-200 text-sm">
+        <p class="text-center text-gray-200 text-sm" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
           &copy; {{ date('Y') }} CALAIA FARM. ALL RIGHTS RESERVED.
         </p>
       </div>

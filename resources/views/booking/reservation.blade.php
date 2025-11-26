@@ -70,10 +70,10 @@
           <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">
             CalaiaPH Booking
           </p>
-          <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#8f5d54] font-vila-zilka">
+          <h1 class="text-2xl font-bold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">
             Book Your Experience
           </h1>
-          <p class="mt-2 text-sm sm:text-base text-gray-500 max-w-2xl mx-auto px-2">
+          <p class="mt-2 text-xs text-gray-500 max-w-2xl mx-auto px-2" style="font-family: 'Gotham Book', sans-serif;">
             Fill in your details below. You’ll review and complete your payment in the next step.
           </p>
         </header>
@@ -85,7 +85,7 @@
             class="bg-gray-50 rounded-xl border border-gray-100 p-4 sm:p-5 md:p-6 lg:sticky lg:top-4 order-2 lg:order-1"
           >
             <div class="flex items-center justify-between mb-4">
-              <h2 id="selected-package-heading" class="text-base sm:text-lg font-semibold text-gray-900">
+              <h2 id="selected-package-heading" class="text-2xl font-semibold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
                 Selected Package
               </h2>
               <span class="inline-flex items-center rounded-full bg-[#f4ebe9] px-2 sm:px-3 py-1 text-xs font-semibold text-[#8f5d54]">
@@ -119,7 +119,7 @@
             </div>
 
             <div class="mt-4 p-3 bg-white/50 rounded-lg">
-              <p class="text-xs text-gray-500 leading-relaxed">
+              <p class="text-xs text-gray-500 leading-relaxed" style="font-family: 'Gotham Book', sans-serif;">
                 Package details will be confirmed via email after your booking is completed.
               </p>
             </div>
@@ -146,7 +146,7 @@
 
               {{-- Personal Information --}}
               <div class="bg-gray-50 rounded-xl p-4 sm:p-6">
-                <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center" style="font-family: 'Gotham Book', sans-serif;">
                   <i class="bi bi-person-circle mr-2 text-[#8f5d54]"></i>
                   Personal Information
                 </h3>
@@ -226,7 +226,7 @@
 
               {{-- Booking Details --}}
               <div class="bg-gray-50 rounded-xl p-4 sm:p-6">
-                <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center" style="font-family: 'Gotham Book', sans-serif;">
                   <i class="bi bi-calendar-event mr-2 text-[#8f5d54]"></i>
                   Booking Details
                 </h3>
@@ -253,7 +253,7 @@
                       </div>
                     </div>
                     <!-- Availability text -->
-                    <p class="text-xs text-gray-500 mt-1" id="availability-text"></p>
+                    <p class="text-xs text-gray-500 mt-1" id="availability-text" style="font-family: 'Gotham Book', sans-serif;"></p>
                   </div>
 
                   {{-- Number of Guests --}}
@@ -309,7 +309,7 @@
                   <span>Proceed to Activities</span>
                 </button>
                 <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p class="text-xs sm:text-sm text-blue-700 text-center">
+                  <p class="text-xs text-blue-700 text-center" style="font-family: 'Gotham Book', sans-serif;">
                     <i class="bi bi-info-circle mr-1"></i>
                     Optional activities can enhance your experience. You can skip them if preferred.
                   </p>

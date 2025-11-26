@@ -64,7 +64,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <!-- Check-in / Visit Date -->
                 <div :class="activeTab === 'day-visit' ? 'md:col-span-2' : 'md:col-span-1'">
-                    <label for="check_in" class="block text-sm font-medium text-gray-700 mb-2" x-text="activeTab === 'day-visit' ? 'Visit Date' : 'Check-in'">
+                    <label for="check_in" class="block text-sm font-medium text-gray-700 mb-2" x-text="activeTab === 'day-visit' ? 'Visit Date' : 'Check-in'" style="font-family: 'Gotham Book', sans-serif;">
                     </label>
 
                     <div class="relative">
@@ -84,12 +84,12 @@
                     </div>
 
                     <!-- Availability text -->
-                    <p class="text-xs text-gray-500 mt-1" x-show="availabilityText" x-text="availabilityText"></p>
+                    <p class="text-xs text-gray-500 mt-1" x-show="availabilityText" x-text="availabilityText" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"></p>
                 </div>
 
                 <!-- Check-out (ROOM + SPECIAL EVENT, pero iba behavior) -->
                 <div x-show="activeTab !== 'day-visit'" class="md:col-span-1">
-                    <label for="check_out" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="check_out" class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Gotham Book', sans-serif;">
                         Check-out
                     </label>
                     <div class="relative">
@@ -134,6 +134,7 @@
                         <span
                             x-show="activeTab === 'room'"
                             class="text-[11px] md:text-xs text-gray-500"
+                            style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"
                         >
                             Select the date range for your room booking.
                         </span>
@@ -142,6 +143,7 @@
                         <span
                             x-show="activeTab === 'day-visit'"
                             class="text-[11px] md:text-xs text-gray-500"
+                            style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"
                         >
                             Select the date for your day visit.
                         </span>
@@ -150,6 +152,7 @@
                         <span
                             x-show="activeTab === 'special-event'"
                             class="text-[11px] md:text-xs text-gray-500"
+                            style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"
                         >
                             Select the date range for your special event.
                         </span>

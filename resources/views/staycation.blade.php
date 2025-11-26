@@ -76,9 +76,9 @@
               <img src="{{ asset('assets/images/carousel/Glamping-1.jpg') }}" alt="Glamping Tent" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
             </div>
             <div class="px-4 py-7 text-center">
-              <h3 class="mb-4 text-2xl md:text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">Glamping Tent</h3>
+              <h3 class="mb-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">Glamping Tent</h3>
               <div class="mx-auto my-4 h-px w-full" style="background:#dce8d6;"></div>
-              <ul class="space-y-2 text-base md:text-lg uppercase tracking-widest" style="color:#8f6a60; font-family: 'Vila Zilka Serif', serif;">
+              <ul class="space-y-2 text-xs uppercase tracking-widest" style="color:#8f6a60; font-family: 'Gotham Book', sans-serif;">
                 <li>LUXURY TENT SETUP</li>
                 <li>GOURMET LUNCH SERVICE</li>
                 <li>PRIVATE ATV EXPERIENCE</li>
@@ -97,9 +97,9 @@
               <img src="{{ asset('assets/images/carousel/BYOT-2.jpg') }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
             </div>
             <div class="px-4 py-7 text-center">
-              <h3 class="mb-4 text-2xl md:text-3xl font-extrabold uppercase tracking-wide" style="color:#97655A;">Camping</h3>
+              <h3 class="mb-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">Camping</h3>
               <div class="mx-auto my-4 h-px w-full" style="background:#dce8d6;"></div>
-              <ul class="space-y-2 text-base md:text-lg uppercase tracking-widest" style="color:#8f6a60; font-family: 'Vila Zilka Serif', serif;">
+              <ul class="space-y-2 text-xs uppercase tracking-widest" style="color:#8f6a60; font-family: 'Gotham Book', sans-serif;">
                 <li>TENT SETUP ASSISTANCE</li>
                 <li>CAMPFIRE BUILDING</li>
                 <li>STARGAZING SESSION</li>
@@ -119,7 +119,7 @@
       <div x-show="glampingOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="closeGlampingModal()" @click.self="closeGlampingModal()" style="display:none;">
         <div class="w-full max-w-7xl rounded-2xl bg-white shadow-xl overflow-auto max-h-[90vh]">
           <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color: rgba(128,128,128,0.3);">
-            <h3 class="text-2xl md:text-3xl font-bold" style="color:#97655A; font-family: gotham;"><i class="bi bi-stars me-2"></i>Glamping Options</h3>
+            <h3 class="text-2xl font-bold" style="color:#97655A; font-family: 'Gotham Book', sans-serif;"><i class="bi bi-stars me-2"></i>Glamping Options</h3>
             <button class="p-2 rounded hover:bg-gray-100" @click="closeGlampingModal()"><i class="bi bi-x-lg"></i></button>
           </div>
 
@@ -147,11 +147,11 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                   <p class="text-base sm:text-lg md:text-xl lg:text-2xl font-bold leading-tight" style="color:#7a7d52; font-family: gotham;">Start at ₱4,800/night (Weekdays: Sun.-Thu.)<br>₱6,000/night (Weekends: Fri.-Sat.)</p>
+                   <p class="font-bold leading-tight" style="color:#7a7d52; font-size: 20px; font-family: 'Gotham Book', sans-serif;">Start at ₱4,800/night (Weekdays: Sun.-Thu.)<br>₱6,000/night (Weekends: Fri.-Sat.)</p>
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Standard</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
+                <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">with Private Toilet & Bath</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Air-conditioned 25 sqm tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Assigned heated shower with soap, shampoo & toilet with bidet (approx. 10 meters from tent)</li>
@@ -195,11 +195,11 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                   <p class="text-base sm:text-lg md:text-xl lg:text-2xl font-bold leading-tight" style="color:#7a7d52; font-family: gotham;">Starts at ₱7,200/night (Weekends: Fri.-Sat.)<br>₱5,760/night (Weekdays: Sun.-Thu.)</p>
+                   <p class="font-bold leading-tight" style="color:#7a7d52; font-size: 20px; font-family: 'Gotham Book', sans-serif;">Starts at ₱7,200/night (Weekends: Fri.-Sat.)<br>₱5,760/night (Weekdays: Sun.-Thu.)</p>
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Exclusive</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
+                <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">with Private Toilet & Bath</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Air-conditioned 25 sqm tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Assigned heated shower with soap, shampoo & toilet with bidet (approx. 10 meters from tent)</li>
@@ -231,7 +231,7 @@
       <div x-show="campingOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="closeCampingModal()" @click.self="closeCampingModal()" style="display:none;">
         <div class="w-full max-w-7xl rounded-2xl bg-white shadow-xl overflow-auto max-h-[90vh]">
           <div class="flex items-center justify-between px-4 md:px-6 py-4 border-b" style="border-color: rgba(128,128,128,0.3);">
-            <h3 class="text-2xl md:text-3xl font-bold" style="color:#97655A; font-family: gotham;"><i class="bi bi-house me-2"></i>Camping Options</h3>
+            <h3 class="text-2xl font-bold" style="color:#97655A; font-family: 'Gotham Book', sans-serif;"><i class="bi bi-house me-2"></i>Camping Options</h3>
             <button class="p-2 rounded hover:bg-gray-100" @click="closeCampingModal()"><i class="bi bi-x-lg"></i></button>
           </div>
 
@@ -259,11 +259,11 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                   <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: gotham;">Php 3,000/tent/night</p>
+                   <p class="font-bold" style="color:#7a7d52; font-size: 20px; font-family: 'Gotham Book', sans-serif;">Starts at ₱ 3,000/tent/night</p>
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Comfort</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
+                <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">Fan-cooled, 25 sqm tent</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Spacious enough for up to 8 mattress sets (+Php 400 per set/night) or 12 sleeping bags</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Common toilet and shower</li>
@@ -304,11 +304,11 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                   <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: gotham;">Starts at ₱3,000/tent/night</p>
+                   <p class="font-bold" style="color:#7a7d52; font-size: 20px; font-family: 'Gotham Book', sans-serif;">Starts at ₱3,000/tent/night</p>
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Spacious</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
+                <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">Fan-cooled, 25 sqm tent</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Spacious enough for up to 8 mattress sets (+Php 400 per set/night) or 12 sleeping bags</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Common toilet and shower</li>
@@ -349,11 +349,11 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                   <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: gotham;">Starts at ₱300/tent or camp space + ₱500/pax overnight fee</p>
+                   <p class="font-bold" style="color:#7a7d52; font-size: 20px; font-family: 'Gotham Book', sans-serif;">Starts at ₱300/tent or camp space + ₱500/pax overnight fee</p>
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dcfce7;color:#166534">Budget</span>
                 </div>
                 <h6 class="text-lg md:text-xl font-semibold" style="font-family: 'Vila Zilka Serif', serif;">Features</h6>
-                <ul class="grid grid-cols-1 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
+                <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">Spacious area for your own tent or car camp setup</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Common toilet and shower</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Access to Wi-Fi, camp amenities, and activities</li>
@@ -391,11 +391,11 @@
                 </div>
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
-                   <p class="text-xl md:text-2xl font-bold" style="color:#7a7d52; font-family: gotham;">Php 300/tent or camp space + Php 500/pax overnight fee</p>
+                   <p class="font-bold" style="color:#7a7d52; font-size: 20px; font-family: 'Gotham Book', sans-serif;">Starts at ₱300/tent or camp space + Php 500/pax overnight fee</p>
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#fef3c7;color:#7c2d12">Convenient</span>
                 </div>
                 <h6 class="text-xl md:text-2xl font-semibold" style="font-family: 'Vila Zilka Serif', serif;">Features</h6>
-                <ul class="grid grid-cols-1 gap-2 text-base md:text-lg" style="font-family: 'Vila Zilka Serif', serif;">
+                <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">Spacious area for your own tent or car camp setup</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Common toilet and shower</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Access to Wi-Fi, camp amenities, and activities</li>

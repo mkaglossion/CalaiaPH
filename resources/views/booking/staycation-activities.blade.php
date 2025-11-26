@@ -119,9 +119,9 @@ if ($datesSelected) {
 <div class="pt-6 md:pt-12" data-accommodation-total="{{ $accommodationTotal }}" data-total-guests="{{ $totalGuests }}" data-nights="{{ $nights }}">
     {{-- Header --}}
     <div class="text-center mb-10">
-        <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Select Staycation Activities</h1>
+        <h1 class="text-2xl font-bold tracking-tight" style="font-family: 'Gotham Book', sans-serif;">Select Staycation Activities</h1>
         <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-        <p class="text-gray-500">Enhance your staycation experience with optional activities</p>
+        <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Enhance your staycation experience with optional activities</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10 py-6">
@@ -160,7 +160,7 @@ if ($datesSelected) {
 
                         {{-- Curated Activities --}}
                         <div class="mb-8">
-                          <h3 class="text-lg font-semibold text-gray-800 mb-4">Curated Activities</h3>
+                          <h3 class="text-2xl font-semibold text-gray-800 mb-4" style="font-family: 'Gotham Book', sans-serif;">Curated Activities</h3>
                           <div id="activities-container" class="grid gap-4 sm:grid-cols-2">
                             <!-- Activities will be loaded here -->
                           </div>
@@ -174,7 +174,7 @@ if ($datesSelected) {
         {{-- Sidebar: booking summary --}}
         <div class="lg:col-span-1">
             <div class="bg-white rounded-xl shadow-md p-6 sticky top-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Booking Summary</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
 
                 @if($datesSelected)
                     <div class="space-y-3 mb-6">
@@ -278,12 +278,12 @@ if ($datesSelected) {
                         </div>
                     </div>
                 @else
-                    <p class="text-sm text-gray-500 mb-6">Please select your dates to see the booking summary.</p>
+                    <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
                 @endif
 
                 <hr class="my-4">
 
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Selected Activities</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Selected Activities</h3>
 
                 <div id="selected-activities" class="space-y-3 mb-4">
                   <!-- Selected activities will be added here -->
@@ -392,15 +392,15 @@ if ($datesSelected) {
                       <div class="flex items-start space-x-3">
                         ${activity.image ? `<img src="${activity.image}" alt="${activity.name}" class="w-16 h-16 object-cover rounded-lg flex-shrink-0">` : ''}
                         <div class="flex-1">
-                          <h4 class="font-semibold text-gray-900">${activity.name}</h4>
-                          <p class="text-sm text-gray-600 mt-1">${activity.description}</p>
+                          <h4 class="font-semibold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">${activity.name}</h4>
+                          <p class="text-xs text-gray-600 mt-1" style="font-family: 'Gotham Book', sans-serif;">${activity.description}</p>
                           <div class="flex items-center justify-between mt-2">
-                            <span class="text-sm text-gray-500">
+                            <span class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">
                               <i class="bi bi-clock mr-1"></i>${activity.duration}
                             </span>
-                            <span class="font-semibold text-[#8f5d54]">₱${parseFloat(activity.price).toFixed(2)}</span>
+                            <span class="text-xs font-semibold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">₱${parseFloat(activity.price).toFixed(2)}</span>
                           </div>
-                          <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                          <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full" style="font-family: 'Gotham Book', sans-serif;">
                             ${activity.availability}
                           </span>
                         </div>
@@ -454,7 +454,7 @@ if ($datesSelected) {
         container.innerHTML = '';
 
         if (selectedActivities.length === 0) {
-          container.innerHTML = '<p class="text-sm text-gray-500">No activities selected</p>';
+          container.innerHTML = '<p class="text-xs text-gray-500" style="font-family: \'Gotham Book\', sans-serif;">No activities selected</p>';
           confirmBtn.disabled = true;
         } else {
           selectedActivities.forEach(activity => {
@@ -462,9 +462,9 @@ if ($datesSelected) {
             item.className = 'flex justify-between items-start p-2 bg-white rounded border';
             item.innerHTML = `
               <div class="flex-1">
-                <p class="text-sm font-medium text-gray-900">${activity.name}</p>
+                <p class="text-xs font-medium text-gray-900" style="font-family: 'Gotham Book', sans-serif;">${activity.name}</p>
                 <div class="mt-2">
-                  <label class="block text-xs text-gray-600 mb-1">Number of Guests</label>
+                  <label class="block text-xs text-gray-600 mb-1" style="font-family: 'Gotham Book', sans-serif;">Number of Guests</label>
                   <input type="number" class="activity-guests w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent" value="${activity.guests}" min="1" max="${totalGuests}" data-activity-id="${activity.id}">
                 </div>
               </div>

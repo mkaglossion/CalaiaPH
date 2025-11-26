@@ -107,9 +107,9 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
 <div class="pt-6 md:pt-12">
     {{-- Header --}}
     <div class="text-center mb-10">
-        <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Complete Staycation Payment</h1>
+        <h1 class="text-2xl font-bold tracking-tight" style="font-family: 'Gotham Book', sans-serif;">Complete Staycation Payment</h1>
         <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-        <p class="text-gray-500">Review your staycation details and complete your payment</p>
+        <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Review your staycation details and complete your payment</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10 pb-12">
@@ -160,7 +160,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
 
                             {{-- Customer Information --}}
                             <div class="bg-gray-50 rounded-xl p-4 sm:py-6">
-                                <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center" style="font-family: 'Gotham Book', sans-serif;">
                                     <i class="bi bi-person-circle mr-2 text-[#8f5d54]"></i>
                                     Personal Information
                                 </h3>
@@ -245,7 +245,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                         class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
                                         placeholder="Any special requirements, celebrations, or notes..."
                                     ></textarea>
-                                    <p class="mt-1 text-xs text-gray-400">
+                                    <p class="mt-1 text-xs text-gray-400" style="font-family: 'Gotham Book', sans-serif;">
                                         Example: "Vegan meal options", "Birthday surprise setup", or accessibility needs.
                                     </p>
                                 </div>
@@ -259,7 +259,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                 >
                                     Payment Method
                                 </legend>
-                                <p class="text-xs sm:text-sm text-gray-500 mb-2">
+                                <p class="text-xs text-gray-500 mb-2" style="font-family: 'Gotham Book', sans-serif;">
                                     Secure and encrypted payment via your chosen provider.
                                 </p>
 
@@ -379,7 +379,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                 </button>
 
 
-                                <p class="mt-3 text-xs sm:text-sm text-center text-gray-500">
+                                <p class="mt-3 text-xs text-center text-gray-500" style="font-family: 'Gotham Book', sans-serif;">
                                     Your payment is secured with 256-bit SSL encryption. By proceeding, you agree to our terms of service.
                                 </p>
                             </div>
@@ -392,7 +392,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
         {{-- Sidebar: booking summary --}}
         <div class="lg:col-span-1">
             <div class="bg-white rounded-xl shadow-md p-6 sticky top-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Booking Summary</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
 
                 @if($datesSelected)
                     <div class="space-y-3 mb-6">
@@ -482,12 +482,12 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                         </div>
                     </div>
                 @else
-                    <p class="text-sm text-gray-500 mb-6">Please select your dates to see the booking summary.</p>
+                    <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
                 @endif
 
                 <hr class="my-4">
 
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Selected Activities</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Selected Activities</h3>
 
                 <div class="space-y-3 mb-4">
                     @if(!empty($selectedActivities))
@@ -502,7 +502,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                             </div>
                         @endforeach
                     @else
-                        <p class="text-sm text-gray-500">No activities selected</p>
+                        <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">No activities selected</p>
                     @endif
                 </div>
 

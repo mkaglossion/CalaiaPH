@@ -79,10 +79,10 @@
       <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="sustainable-farming-heading">
         <div class="container mx-auto px-4 max-w-7xl">
           <header class="text-center mb-12">
-            <h2 id="sustainable-farming-heading" class="text-3xl md:text-4xl font-bold text-[#8f5d54] mb-4 font-gotham">
+            <h2 id="sustainable-farming-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
               Our Sustainable Farming
             </h2>
-            <p class="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
               Discover how we raise livestock and grow produce with respect for nature and animal welfare
             </p>
           </header>
@@ -99,10 +99,10 @@
             </figure>
 
             <div class="order-1 lg:order-2">
-              <h3 class="text-2xl font-bold text-[#8f5d54] mb-6 font-gotham">
+              <h3 class="font-bold text-[#8f5d54] mb-6" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                 Ethically Raised Livestock
               </h3>
-              <p class="text-gray-700 mb-8 leading-relaxed">
+              <p class="text-gray-700 mb-8 leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                 Our animals live as nature intended: with plenty of space to roam, fresh air, and a natural diet free from antibiotics and growth hormones.
               </p>
               <ul class="space-y-4" role="list">
@@ -116,7 +116,7 @@
                   <div class="flex-shrink-0 w-6 h-6 bg-[#8f5d54]/10 rounded-full flex items-center justify-center mt-0.5 mr-4">
                     <i class="fas fa-check text-[#8f5d54] text-xs" aria-hidden="true"></i>
                   </div>
-                  <span class="text-gray-700">{{ $item }}</span>
+                  <span class="text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">{{ $item }}</span>
                 </li>
                 @endforeach
               </ul>
@@ -133,8 +133,8 @@
             <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300">
               <img src="{{ asset('assets/images/carousel/'.$product['img']) }}" alt="{{ $product['title'] }} product"
                    class="w-full h-48 object-cover rounded-xl mb-4" loading="lazy">
-              <h4 class="text-xl font-semibold text-[#8f5d54] mb-2">{{ $product['title'] }}</h4>
-              <p class="text-gray-600 mb-4 leading-relaxed">{{ $product['desc'] }}</p>
+              <h4 class="font-semibold text-[#8f5d54] mb-2" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">{{ $product['title'] }}</h4>
+              <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">{{ $product['desc'] }}</p>
               <div class="flex items-center justify-between">
                 <span class="text-sm font-medium text-[#8f5d54]">Available seasonally</span>
                 <i class="fas fa-leaf text-green-500" aria-hidden="true"></i>
@@ -149,10 +149,10 @@
       <section class="py-16 bg-gradient-to-br from-green-50 to-emerald-50" aria-labelledby="fresh-fields-heading">
         <div class="container mx-auto px-4 max-w-7xl">
           <header class="text-center mb-12">
-            <h2 id="fresh-fields-heading" class="text-3xl md:text-4xl font-bold text-[#8f5d54] mb-4 font-gotham">
+            <h2 id="fresh-fields-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
               Fresh From Our Fields
             </h2>
-            <p class="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
               Seasonal, pesticide-free produce grown with care for flavor and nutrition.
             </p>
           </header>
@@ -164,12 +164,12 @@
                 <img src="{{ asset('assets/images/carousel/organic1.jpg') }}" alt="Lush vegetable garden with various organic produce"
                      class="w-full h-64 object-cover rounded-xl md:col-span-1" loading="lazy">
                 <div class="md:col-span-2">
-                  <h3 class="text-xl font-semibold text-[#8f5d54] mb-3">Vegetable Garden</h3>
-                  <p class="text-gray-600 mb-4 leading-relaxed">
+                  <h3 class="font-semibold text-[#8f5d54] mb-3" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Vegetable Garden</h3>
+                  <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                     We grow over 50 varieties of vegetables using organic methods and natural amendments like compost and cover crops.
                   </p>
                   <h4 class="font-semibold text-[#8f5d54] mb-2">In Season Now:</h4>
-                  <p class="text-gray-700 mb-4">Heirloom tomatoes, rainbow chard, zucchini, garlic, kale, peppers, eggplant</p>
+                  <p class="text-gray-700 mb-4" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Heirloom tomatoes, rainbow chard, zucchini, garlic, kale, peppers, eggplant</p>
                   <a href="#contact" class="inline-flex items-center text-[#8f5d54] hover:text-[#8f5d54]-dark font-medium transition-colors">
                     Get our harvest schedule <i class="fas fa-chevron-right text-xs ml-2" aria-hidden="true"></i>
                   </a>
@@ -183,12 +183,12 @@
                 <img src="{{ asset('assets/images/carousel/Calaia-26.jpg') }}" alt="Fruit orchard with trees in bloom"
                      class="w-full h-64 object-cover rounded-xl md:col-span-1" loading="lazy">
                 <div class="md:col-span-2">
-                  <h3 class="text-xl font-semibold text-[#8f5d54] mb-3">Orchard Fruits</h3>
-                  <p class="text-gray-600 mb-4 leading-relaxed">
+                  <h3 class="font-semibold text-[#8f5d54] mb-3" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Orchard Fruits</h3>
+                  <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                     Our heritage fruit trees are grown without chemical sprays, allowing natural ecosystems to maintain balance.
                   </p>
                   <h4 class="font-semibold text-[#8f5d54] mb-2">Coming Soon:</h4>
-                  <p class="text-gray-700 mb-4">Apples, pears, peaches, plums, cherries, persimmons</p>
+                  <p class="text-gray-700 mb-4" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Apples, pears, peaches, plums, cherries, persimmons</p>
                   <a href="#contact" class="inline-flex items-center text-[#8f5d54] hover:text-[#8f5d54]-dark font-medium transition-colors">
                     Join our fruit CSA <i class="fas fa-chevron-right text-xs ml-2" aria-hidden="true"></i>
                   </a>
@@ -199,7 +199,7 @@
 
           {{-- Growing with Nature --}}
           <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-8 md:p-12">
-            <h3 class="text-2xl font-bold text-center text-[#8f5d54] mb-8 font-gotham">Growing with Nature</h3>
+            <h3 class="font-bold text-center text-[#8f5d54] mb-8" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Growing with Nature</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
               @foreach ([
                 ['icon'=>'bi-flower1','title'=>'Soil First','text'=>'We build our soil health through composting, cover crops, and minimal tillage.'],
@@ -211,7 +211,7 @@
                   <i class="bi {{ $feature['icon'] }} text-2xl text-[#8f5d54]" aria-hidden="true"></i>
                 </div>
                 <h4 class="text-lg font-semibold text-[#8f5d54] mb-2">{{ $feature['title'] }}</h4>
-                <p class="text-gray-600 leading-relaxed">{{ $feature['text'] }}</p>
+                <p class="text-gray-600 leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">{{ $feature['text'] }}</p>
               </div>
               @endforeach
             </div>
@@ -223,10 +223,10 @@
       <section class="py-16 bg-white" aria-labelledby="farm-experiences-heading">
         <div class="container mx-auto px-4 max-w-7xl">
           <header class="text-center mb-12">
-            <h2 id="farm-experiences-heading" class="text-3xl md:text-4xl font-bold text-[#8f5d54] mb-4 font-gotham">
+            <h2 id="farm-experiences-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
               Farm Experiences
             </h2>
-            <p class="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
               Connect with your food and learn about sustainable agriculture through hands-on activities
             </p>
           </header>
@@ -275,8 +275,8 @@
                 @endif
               </div>
               <div class="p-6">
-                <h4 class="text-xl font-semibold text-[#8f5d54] mb-3">{{ $experience['title'] }}</h4>
-                <p class="text-gray-600 mb-4 leading-relaxed">{{ $experience['desc'] }}</p>
+                <h4 class="font-semibold text-[#8f5d54] mb-3" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">{{ $experience['title'] }}</h4>
+                <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">{{ $experience['desc'] }}</p>
                 <div class="space-y-2 mb-6">
                   <div class="flex items-center text-sm text-[#8f5d54]">
                     <i class="far fa-clock mr-2" aria-hidden="true"></i> {{ $experience['time'] }}
@@ -300,10 +300,10 @@
       <section id="contact" class="py-16 bg-gradient-to-br from-primary/5 to-primary/10" aria-labelledby="contact-heading">
         <div class="container mx-auto px-4 max-w-7xl">
           <header class="text-center mb-12">
-            <h2 id="contact-heading" class="text-3xl md:text-4xl font-bold text-[#8f5d54] mb-4 font-gotham">
+            <h2 id="contact-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
               Visit or Contact Us
             </h2>
-            <p class="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
               We'd love to hear from you about visiting, volunteering, or partnership opportunities.
             </p>
           </header>
@@ -311,7 +311,7 @@
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {{-- Contact Form --}}
             <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-              <h3 class="text-2xl font-semibold text-[#8f5d54] mb-6">Send a Message</h3>
+              <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Send a Message</h3>
               <form method="POST" action="{{ route('contact.submit') }}" class="space-y-6" role="form" aria-label="Contact form">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -363,7 +363,7 @@
             {{-- Contact Information --}}
             <div class="space-y-8">
               <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-                <h3 class="text-2xl font-semibold text-[#8f5d54] mb-6">Visit Our Farm</h3>
+                <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Visit Our Farm</h3>
                 <ul class="space-y-4" role="list">
                   <li class="flex items-start">
                     <i class="fa fa-location-dot text-[#8f5d54] mt-1 mr-4 flex-shrink-0" aria-hidden="true"></i>
@@ -411,7 +411,7 @@
               </div>
 
               <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-                <h3 class="text-2xl font-semibold text-[#8f5d54] mb-6">Location & Directions</h3>
+                <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Location & Directions</h3>
                 <div class="rounded-xl overflow-hidden mb-6 shadow-md">
                   <iframe
                     src="https://www.google.com/maps?q=Calaca%20Nature%20Park&output=embed"
@@ -421,7 +421,7 @@
                   ></iframe>
                 </div>
                 <h4 class="text-lg font-semibold text-[#8f5d54] mb-3">Getting Here</h4>
-                <p class="text-gray-600 mb-4 leading-relaxed">
+                <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                   Calaia Nature Park is located in Calaca, Batangas along the main road near Sitio Calas from the town proper of Calaca.
                 </p>
                 <a href="https://maps.google.com" target="_blank" rel="noopener"

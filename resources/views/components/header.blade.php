@@ -37,14 +37,14 @@
     </div>
 
     {{-- MAIN NAV CENTER --}}
-    <nav class="hidden md:flex flex-1 justify-center space-x-6 text-center">
-      <a href="{{ url('/') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'home' ? 'border-b-2 border-[#8f5d54]' : '' }}">Home</a>
-      <a href="{{ url('/daytour') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}">Day Tour</a>
-      <a href="{{ url('/staycation') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}">Where to Stay</a>
-      <a href="{{ url('/activities') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}">What to Do</a>
-      <a href="{{ url('/dining') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}">Food & Beverage</a>
-      <a href="{{ url('/groups') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'groups' ? 'border-b-2 border-[#8f5d54]' : '' }}">Special Events</a>
-      <a href="{{ url('/farm') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase text-center {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}">Our Farm</a>
+    <nav class="hidden md:flex flex-1 justify-center space-x-6 text-center ml-45">
+      <a href="{{ url('/') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'home' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Home</a>
+      <a href="{{ url('/daytour') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Day Tour</a>
+      <a href="{{ url('/staycation') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Where to Stay</a>
+      <a href="{{ url('/activities') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">What to Do</a>
+      <a href="{{ url('/dining') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Food & Beverage</a>
+      <a href="{{ url('/groups') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'groups' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Special Events</a>
+      <a href="{{ url('/farm') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Our Farm</a>
     </nav>
 
     {{-- DESKTOP USER / GUEST BUTTONS RIGHT --}}
@@ -118,12 +118,14 @@
         <!-- Guest Buttons -->
         <button
           @click="$store.modals.showLogin = true"
-          class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150">
+          class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150"
+          style="font-family: 'Gotham Book', sans-serif;">
           Log In
         </button>
         <button
           @click="$store.modals.showSignup = true"
-          class="bg-[#8f5d54] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#8f5d54]/90 transition-all shadow-md">
+          class="bg-[#8f5d54] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#8f5d54]/90 transition-all shadow-md"
+          style="font-family: 'Gotham Book', sans-serif;">
           Sign Up
         </button>
       @endauth
@@ -148,13 +150,13 @@
         x-transition:leave-end="opacity-0 -translate-y-2"
         class="fixed top-16 left-0 right-0 bg-white px-4 py-2 z-50 shadow-lg text-left"
       >
-        <a href="{{ url('/') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'home' ? 'border-b-2 border-[#8f5d54]' : '' }}">Home</a>
-        <a href="{{ url('/daytour') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}">Day Tour</a>
-        <a href="{{ url('/staycation') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}">Where to Stay</a>
-        <a href="{{ url('/activities') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}">What to Do</a>
-        <a href="{{ url('/dining') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}">Food & Beverage</a>
-        <a href="{{ url('/groups') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'groups' ? 'border-b-2 border-[#8f5d54]' : '' }}">Special Events</a>
-        <a href="{{ url('/farm') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}">Our Farm</a>
+        <a href="{{ url('/') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'home' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Home</a>
+        <a href="{{ url('/daytour') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Day Tour</a>
+        <a href="{{ url('/staycation') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Where to Stay</a>
+        <a href="{{ url('/activities') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">What to Do</a>
+        <a href="{{ url('/dining') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Food & Beverage</a>
+        <a href="{{ url('/groups') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'groups' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Special Events</a>
+        <a href="{{ url('/farm') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Our Farm</a>
 
         @auth
           <a href="{{ route('profile.show') }}" @click="open = false" class="block py-2 text-gray-700 border-t border-[#8f5d54]/20 mt-2 pt-2">
@@ -181,8 +183,8 @@
             </button>
           </form>
         @else
-          <button @click="$store.modals.showLogin = true; open = false" class="block py-2 text-gray-700 border-t border-[#8f5d54]/20 mt-2 pt-2">Log In</button>
-          <button @click="$store.modals.showSignup = true; open = false" class="block py-2 text-white bg-[#8f5d54] px-4 py-2 rounded mt-2">Sign Up</button>
+          <button @click="$store.modals.showLogin = true; open = false" class="block py-2 text-gray-700 border-t border-[#8f5d54]/20 mt-2 pt-2" style="font-family: 'Gotham Book', sans-serif;">Log In</button>
+          <button @click="$store.modals.showSignup = true; open = false" class="block py-2 text-white bg-[#8f5d54] px-4 py-2 rounded mt-2" style="font-family: 'Gotham Book', sans-serif;">Sign Up</button>
         @endauth
       </div>
     </div>

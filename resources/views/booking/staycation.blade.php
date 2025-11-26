@@ -211,9 +211,9 @@ $galleryData = [
 
     {{-- Header --}}
     <div class="text-center mb-10">
-        <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Book Staycation</h1>
+        <h1 class="text-2xl font-bold tracking-tight" style="font-family: 'Gotham Book', sans-serif;">Book Staycation</h1>
         <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-        <p class="text-gray-500">Plan your perfect getaway at Calaia Nature Park</p>
+        <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Plan your perfect getaway at Calaia Nature Park</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10">
@@ -281,7 +281,7 @@ $galleryData = [
 
                             <div class="flex flex-col p-6 h-full">
                                 <div class="flex items-start justify-between gap-3 mb-2">
-                                    <h3 class="text-2xl md:text-3xl font-extrabold text-gray-900">
+                                    <h3 class="text-2xl font-extrabold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
                                         Glamping Options
                                     </h3>
                                     <span
@@ -291,23 +291,22 @@ $galleryData = [
                                     </span>
                                 </div>
 
-                                <p class="text-lg text-gray-600 leading-relaxed mb-3">
+                                <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
                                     {{ $glampingDescription }}
                                 </p>
 
                                 {{-- Subtypes line --}}
-                                <p class="text-base text-gray-500 mb-4">
+                                <p class="text-xs text-gray-500 mb-4" style="font-family: 'Gotham Book', sans-serif;">
                                     Includes:
                                     <span class="font-semibold text-gray-800">Standard</span> and
                                     <span class="font-semibold text-gray-800">Premium</span> glamping tents.
                                 </p>
 
                                 @if($glampingCount > 0)
-                                     <p class="text-lg font-semibold mb-1"
-                                        style="color: #7a7d52;">
+                                     <p class="font-semibold mb-1" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
                                          Starts at ₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)
                                      </p>
-                                     <p class="text-base text-gray-500 mb-6">
+                                     <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">
                                          {{ $glampingCount }} {{ Str::plural('option', $glampingCount) }} available
                                      </p>
                                  @else
@@ -336,7 +335,7 @@ $galleryData = [
 
                             <div class="flex flex-col p-6 h-full">
                                 <div class="flex items-start justify-between gap-3 mb-2">
-                                    <h3 class="text-2xl md:text-3xl font-extrabold text-gray-900">
+                                    <h3 class="text-2xl font-extrabold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
                                         Camping Options
                                     </h3>
                                     <span
@@ -346,12 +345,12 @@ $galleryData = [
                                     </span>
                                 </div>
 
-                                <p class="text-lg text-gray-600 leading-relaxed mb-3">
+                                <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
                                     {{ $campingDescription }}
                                 </p>
 
                                 {{-- Subtypes line --}}
-                                <p class="text-base text-gray-500 mb-4">
+                                <p class="text-xs text-gray-500 mb-4" style="font-family: 'Gotham Book', sans-serif;">
                                     Includes:
                                     <span class="font-semibold text-gray-800">Bell Tent</span>,
                                     <span class="font-semibold text-gray-800">Dome Tent</span>,
@@ -360,11 +359,10 @@ $galleryData = [
                                 </p>
 
                                 @if($campingCount > 0)
-                                     <p class="text-lg font-semibold mb-1"
-                                        style="color: #7a7d52;">
+                                     <p class="font-semibold mb-1" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
                                          Starts at ₱300/night (BYOT/Car Camping)<br>• ₱3,000/night (Bell/Dome Tents)
                                      </p>
-                                     <p class="text-base text-gray-500 mb-6">
+                                     <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">
                                          {{ $campingCount }} {{ Str::plural('option', $campingCount) }} available
                                      </p>
                                  @else
@@ -408,7 +406,7 @@ $galleryData = [
         {{-- Sidebar: booking summary --}}
         <div class="lg:col-span-1">
             <div class="bg-white rounded-xl shadow-md p-6 sticky top-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Booking Summary</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
 
                 @if($datesSelected)
                     <div class="space-y-3">
@@ -448,7 +446,7 @@ $galleryData = [
                         </button>
                     </div>
                 @else
-                    <p class="text-sm text-gray-500">Please select your dates to see the booking summary.</p>
+                    <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
                 @endif
             </div>
         </div>
@@ -466,7 +464,7 @@ $galleryData = [
         <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden border border-gray-200 relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="glamping-modal-content">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 id="glamping-modal-title" class="text-2xl font-bold text-gray-900">Select Glamping Options</h2>
+                    <h2 id="glamping-modal-title" class="font-bold text-gray-900" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Select Glamping Options</h2>
                     <button type="button" class="close-modal text-gray-400 hover:text-gray-600 text-3xl font-light leading-none focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" data-modal="glamping-modal" aria-label="Close modal" style="line-height: 1;">
                         ×
                     </button>
@@ -483,8 +481,8 @@ $galleryData = [
                                        data-price="{{ $staycation['price'] }}"
                                        id="glamping-{{ $staycation['id'] }}">
                                 <label for="glamping-{{ $staycation['id'] }}" class="flex-1 cursor-pointer">
-                                    <div class="font-semibold">{{ $staycation['name'] }}</div>
-                                    <div class="text-gray-500 text-sm">₱{{ number_format($staycation['price']) }}/night</div>
+                                    <div class="font-semibold" style="font-family: 'Gotham Book', sans-serif;">{{ $staycation['name'] }}</div>
+                                    <div class="text-gray-500" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">₱{{ number_format($staycation['price']) }}/night</div>
                                 </label>
                             </div>
                         @endforeach
@@ -514,7 +512,7 @@ $galleryData = [
         <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden border border-gray-200 relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="camping-modal-content">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 id="camping-modal-title" class="text-2xl font-bold text-gray-900">Select Camping Options</h2>
+                    <h2 id="camping-modal-title" class="font-bold text-gray-900" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Select Camping Options</h2>
                     <button type="button" class="close-modal text-gray-400 hover:text-gray-600 text-3xl font-light leading-none focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" data-modal="camping-modal" aria-label="Close modal" style="line-height: 1;">
                         ×
                     </button>
@@ -531,8 +529,8 @@ $galleryData = [
                                        data-price="{{ $staycation['price'] }}"
                                        id="camping-{{ $staycation['id'] }}">
                                 <label for="camping-{{ $staycation['id'] }}" class="flex-1 cursor-pointer">
-                                    <div class="font-semibold">{{ $staycation['name'] }}</div>
-                                    <div class="text-gray-500 text-sm">₱{{ number_format($staycation['price']) }}/night</div>
+                                    <div class="font-semibold" style="font-family: 'Gotham Book', sans-serif;">{{ $staycation['name'] }}</div>
+                                    <div class="text-gray-500" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">₱{{ number_format($staycation['price']) }}/night</div>
                                 </label>
                             </div>
                         @endforeach
@@ -561,7 +559,7 @@ $galleryData = [
         <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden border border-gray-200 relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="pet-policy-modal-content">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 id="pet-policy-modal-title" class="text-2xl font-bold text-gray-900">Pet Policy</h2>
+                    <h2 id="pet-policy-modal-title" class="font-bold text-gray-900" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Pet Policy</h2>
                     <button type="button" class="close-modal text-gray-400 hover:text-gray-600 text-3xl font-light leading-none focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" data-modal="pet-policy-modal" aria-label="Close modal" style="line-height: 1;">
                         ×
                     </button>
@@ -578,58 +576,58 @@ $galleryData = [
 
                     <div class="space-y-6">
                         <div class="bg-gray-50 rounded-lg p-4">
-                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                            <h4 class="font-semibold text-gray-900 mb-2 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                                 <span class="text-2xl mr-2">🐶</span>
                                 Owner Responsibility
                             </h4>
-                            <p class="text-gray-700">Pet owners are fully responsible for the behavior and care of their pets at all times. Pets must never be left unattended.</p>
+                            <p class="text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Pet owners are fully responsible for the behavior and care of their pets at all times. Pets must never be left unattended.</p>
                         </div>
 
                         <div class="bg-gray-50 rounded-lg p-4">
-                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                            <h4 class="font-semibold text-gray-900 mb-2 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                                 <span class="text-2xl mr-2">🐕</span>
                                 Leash Policy
                             </h4>
-                            <p class="text-gray-700">Pets may be off-leash only when under the close and careful supervision of their owners.</p>
+                            <p class="text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Pets may be off-leash only when under the close and careful supervision of their owners.</p>
                         </div>
 
                         <div class="bg-gray-50 rounded-lg p-4">
-                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                            <h4 class="font-semibold text-gray-900 mb-2 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                                 <span class="text-2xl mr-2">🦙</span>
                                 Respect for Farm Animals
                             </h4>
-                            <p class="text-gray-700">Please ensure your pets do not disturb or chase the grazing animals on the property.</p>
+                            <p class="text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Please ensure your pets do not disturb or chase the grazing animals on the property.</p>
                         </div>
 
                         <div class="bg-gray-50 rounded-lg p-4">
-                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                            <h4 class="font-semibold text-gray-900 mb-2 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                                 <span class="text-2xl mr-2">🏕️</span>
                                 Overnight Stays & Pet Fee
                             </h4>
-                            <p class="text-gray-700 mb-2">Kindly inform us upon booking if you will be bringing a pet.</p>
-                            <p class="text-gray-700 mb-2">If your pet will stay inside the glamping tent, a pet fee of ₱2,000 per pet applies and must be paid in full to confirm your booking.</p>
-                            <p class="text-gray-700">Any damage to the tent, bedding, or furnishings caused by pets will be charged accordingly.</p>
+                            <p class="text-gray-700 mb-2" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Kindly inform us upon booking if you will be bringing a pet.</p>
+                            <p class="text-gray-700 mb-2" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">If your pet will stay inside the glamping tent, a pet fee of ₱2,000 per pet applies and must be paid in full to confirm your booking.</p>
+                            <p class="text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Any damage to the tent, bedding, or furnishings caused by pets will be charged accordingly.</p>
                         </div>
 
                         <div class="bg-gray-50 rounded-lg p-4">
-                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                            <h4 class="font-semibold text-gray-900 mb-2 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                                 <span class="text-2xl mr-2">📋</span>
                                 Health & Cleanliness
                             </h4>
-                            <p class="text-gray-700">All pets must be up to date on vaccinations (including rabies) and treated for external parasites. We will kindly ask for the date of your pet's last parasite treatment.</p>
+                            <p class="text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">All pets must be up to date on vaccinations (including rabies) and treated for external parasites. We will kindly ask for the date of your pet's last parasite treatment.</p>
                         </div>
 
                         <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <h4 class="text-xl font-semibold text-red-900 mb-2 flex items-center justify-center">
+                            <h4 class="font-semibold text-red-900 mb-2 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                                 <span class="text-2xl mr-2">⚠️</span>
                                 Damage & Liability
                             </h4>
-                            <p class="text-red-800">Owners will be held liable for any damage caused to property or injury inflicted on farm animals, other pets, fellow guests, or Calaia staff.</p>
+                            <p class="text-red-800" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Owners will be held liable for any damage caused to property or injury inflicted on farm animals, other pets, fellow guests, or Calaia staff.</p>
                         </div>
                     </div>
 
                     <div class="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                        <p class="text-lg font-semibold text-green-900 flex items-center justify-center">
+                        <p class="font-semibold text-green-900 flex items-center justify-center" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                             <span class="text-2xl mr-2">🐾🌿</span>
                             We appreciate your cooperation and understanding. Let's work together to keep Calaia a safe, peaceful, and pet-friendly space for all!
                         </p>
@@ -658,7 +656,7 @@ $galleryData = [
           <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden border border-gray-200 relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="gallery-modal-content">
             <div class="p-6">
               <div class="flex justify-between items-center mb-6">
-                <h2 id="gallery-modal-title" class="text-2xl font-bold text-gray-900">Photo Gallery</h2>
+                <h2 id="gallery-modal-title" class="font-bold text-gray-900" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Photo Gallery</h2>
                 <button type="button" class="text-gray-400 hover:text-gray-600 text-3xl font-light leading-none focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" onclick="closeGallery()" style="line-height: 1;">
                   ×
                 </button>
@@ -1106,9 +1104,9 @@ $galleryData = [
         const lowerName = staycation.name.toLowerCase();
         let price;
         if (lowerName.includes('standard')) {
-            price = '₱4,800/night (Weekdays: Sun.-Thu.)<br>• ₱6,000/night (Weekends: Fri.-Sat.)';
+            price = 'Start at ₱4,800/night (Weekdays: Sun.-Thu.)<br>• ₱6,000/night (Weekends: Fri.-Sat.)';
         } else if (lowerName.includes('premium')) {
-            price = '₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)';
+            price = 'Start at ₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)';
         } else if (lowerName.includes('bell') || lowerName.includes('dome')) {
             price = 'Starts at ₱3,000/tent/night';
         } else if (lowerName.includes('byot') || lowerName.includes('car')) {
@@ -1208,11 +1206,20 @@ $galleryData = [
             let isCarCamping = staycation.name.toLowerCase().includes('car camping');
 
             let option = '';
-            if (staycation.name.toLowerCase().includes('standard')) option = 'standard';
-            else if (staycation.name.toLowerCase().includes('premium')) option = 'premium';
-            else if (staycation.name.toLowerCase().includes('dome')) option = 'dome';
-            else if (staycation.name.toLowerCase().includes('bell')) option = 'bell';
-            else if (staycation.name.toLowerCase().includes('byot')) option = 'byot';
+            let defaultGuests = 0;
+            if (staycation.name.toLowerCase().includes('standard')) {
+                option = 'standard';
+                defaultGuests = 4;
+            } else if (staycation.name.toLowerCase().includes('premium')) {
+                option = 'premium';
+                defaultGuests = 4;
+            } else if (staycation.name.toLowerCase().includes('dome')) {
+                option = 'dome';
+                defaultGuests = 8;
+            } else if (staycation.name.toLowerCase().includes('bell')) {
+                option = 'bell';
+                defaultGuests = 8;
+            } else if (staycation.name.toLowerCase().includes('byot')) option = 'byot';
             else if (staycation.name.toLowerCase().includes('car')) option = 'car';
 
             if (isBYOT) {
@@ -1244,8 +1251,8 @@ $galleryData = [
                 </div>
 
                 <div class="flex flex-col p-4 h-full">
-                    <div class="flex justify-between items-start mb-2 gap-2">
-                        <h5 class="font-bold text-xl md:text-2xl mb-0" style="line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em;">
+                    <div class="flex justify-between items-start mb-0 gap-2">
+                        <h5 class="font-bold mb-0" style="line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em; font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                             ${staycation.name}
                         </h5>
                         <span class="inline-flex items-center rounded-full px-3 py-1 text-base font-semibold ml-2" style="background: linear-gradient(135deg, ${category === 'glamping' ? '#FFD700 0%, #FFA500 100%' : '#32CD32 0%, #228B22 100%'}); color: ${category === 'glamping' ? '#333' : '#fff'};">
@@ -1254,35 +1261,35 @@ $galleryData = [
                     </div>
 
                     <!-- CHECKBOX TO SELECT STAYCATION -->
-                    <div class="mb-3 flex items-center gap-2">
+                    <div class="mb-2 flex items-center gap-2">
                         <input type="checkbox"
                             id="select-${index}"
                             class="staycation-checkbox w-5 h-5"
                             data-index="${index}"
                             data-staycation='${JSON.stringify(staycation).replace(/'/g, "'")}' />
-                        <label for="select-${index}" class="text-gray-700 text-base md:text-lg cursor-pointer">
+                        <label for="select-${index}" class="text-gray-700 cursor-pointer" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                             Select this staycation
                         </label>
                     </div>
 
-                    <p class="text-gray-500 text-base md:text-lg mb-3" style="flex-grow: 1;">
+                    <p class="text-gray-500 mb-0" style="flex-grow: 1; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                         ${isBYOT || isCarCamping ? 'Area capacity: Suitable for multiple setups and vehicles' : getCapacityText(staycation)}
                     </p>
 
-                    <div class="mb-3">
-                        <h6 class="text-sm font-semibold text-gray-800 mb-2">Features</h6>
-                        <ul class="text-sm text-gray-600 space-y-1">
+                    <div class="mb-0">
+                        <h6 class="font-semibold text-gray-800 mb-0" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Features</h6>
+                        <ul class="text-gray-600 space-y-1" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                             ${getFeaturesList(staycation.name)}
                         </ul>
                     </div>
 
                     <div class="mt-auto">
                         <div class="mb-3">
-                            <label for="guests-${index}" class="block text-lg font-medium text-gray-700 mb-1">${inputLabel}</label>
+                            <label for="guests-${index}" class="block font-bold text-gray-700 mb-1 mt-2" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">${inputLabel}</label>
                             ${isBYOT || isCarCamping ?
-                                `<input type="number" id="guests-${index}" name="guests" required class="guest-input w-full px-4 py-2.5 border border-gray-300 rounded-lg text-lg sm:text-xl focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent" min="1" max="50" placeholder="${inputPlaceholder}">` :
-                                `<select id="guests-${index}" name="guests" required class="guest-input w-full px-4 py-2.5 border border-gray-300 rounded-lg text-lg sm:text-xl focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent">
-                                    ${Array.from({length: 7}, (_, i) => `<option value="${i}" ${i === 0 ? 'selected' : ''}>${i}</option>`).join('')}
+                                `<input type="number" id="guests-${index}" name="guests" required class="guest-input w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent" style="font-size: 13px;" min="1" max="50" placeholder="${inputPlaceholder}">` :
+                                `<select id="guests-${index}" name="guests" required class="guest-input w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent" style="font-size: 13px;">
+                                    ${Array.from({length: category === 'camping' ? 9 : 7}, (_, i) => `<option value="${i}" ${i === defaultGuests ? 'selected' : ''}>${i}</option>`).join('')}
                                 </select>`
                             }
                         </div>
@@ -1297,14 +1304,14 @@ $galleryData = [
                                 </label>
                             </div>
                             <div>
-                                <label class="block text-lg font-medium text-gray-700 mb-1">Number of pets</label>
-                                <select class="pet-num-input w-full px-4 py-2.5 border border-gray-300 rounded-lg text-lg sm:text-xl focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent" data-staycation-id="${staycation.id}">
+                                <label class="block font-bold text-gray-700 mb-1 mt-2" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Number of pets</label>
+                                <select class="pet-num-input w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent" style="font-size: 13px;" data-staycation-id="${staycation.id}">
                                     ${Array.from({length: 3}, (_, i) => `<option value="${i}" ${i === 0 ? 'selected' : ''}>${i}</option>`).join('')}
                                 </select>
                             </div>
                         </div>
                         ` : ''}
-                        <span class="block font-bold text-primary-600 text-xl md:text-2xl mb-2">
+                        <span class="block font-bold text-primary-600 mb-2" style="font-size: 20px; font-family: 'Gotham Book', sans-serif;">
                             ${getPriceDisplay(staycation)}
                         </span>
 

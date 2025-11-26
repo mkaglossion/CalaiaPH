@@ -103,10 +103,8 @@
     <main id="main">
       <section id="set-menu" class="container mx-auto px-4 py-12">
         <div class="max-w-6xl mx-auto">
-          <h2 class="flex items-start gap-3 font-extrabold uppercase leading-tight tracking-wide mb-6"
-              style="font-family: Gotham, sans-serif; color:#a97464; font-size: clamp(20px, 2.1vw + 14px, 32px);">
-            <span class="w-2 rounded-sm bg-[#a97464] mt-1" aria-hidden="true"></span>
-            <span class="block">Enhance your stay with our special events.</span>
+          <h2 class="font-extrabold uppercase leading-tight tracking-wide mb-6 text-left" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
+            Enhance your stay with our special events.
           </h2>
 
           {{-- Two-panel Activities Carousel --}}
@@ -330,7 +328,7 @@
             {{-- Details list --}}
             <div class="space-y-2">
               <template x-for="(p, idx) in modal.details" :key="idx">
-                <p class="text-sm md:text-base">
+                <p style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                   <i class="bi bi-check-circle-fill mr-2" style="color:#a97464;"></i>
                   <span x-text="p"></span>
                 </p>

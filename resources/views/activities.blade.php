@@ -77,18 +77,15 @@
     <main id="main">
       <section class="container mx-auto px-4 py-12">
         <div class="max-w-[1200px] mx-auto">
-          <h2 class="flex items-start gap-3 font-extrabold uppercase leading-tight tracking-wide mb-10"
-              style="font-family: Gotham, sans-serif; color:#a97464; font-size: clamp(20px, 2.1vw + 14px, 32px);">
-            <span class="w-2 rounded-sm bg-[#a97464] mt-1" aria-hidden="true"></span>
-            <span class="block">Enhance your stay with our fun-filled activities.</span>
+          <h2 class="font-extrabold uppercase leading-tight tracking-wide mb-10 text-left" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
+            Enhance your stay with our fun-filled activities.
           </h2>
 
           <div class="space-y-12">
 
             {{-- ADVENTURE --}}
             <div id="adventure">
-              <h3 class="font-bold uppercase tracking-wide mb-4"
-                  style="font-family: Gotham, sans-serif; color:#a97464;">
+              <h3 class="font-bold uppercase tracking-wide mb-4" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
                 Adventure
               </h3>
 
@@ -117,8 +114,7 @@
 
             {{-- SPORTS AND GAMES --}}
             <div id="sports-games">
-              <h3 class="font-bold uppercase tracking-wide mb-4"
-                  style="font-family: Gotham, sans-serif; color:#a97464;">
+              <h3 class="font-bold uppercase tracking-wide mb-4" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
                 Sports &amp; Games
               </h3>
 
@@ -147,8 +143,7 @@
 
             {{-- R & R + CAMP --}}
             <div id="rr-camp">
-              <h3 class="font-bold uppercase tracking-wide mb-4"
-                  style="font-family: Gotham, sans-serif; color:#a97464;">
+              <h3 class="font-bold uppercase tracking-wide mb-4" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
                 R &amp; R &amp; Camp
               </h3>
 
@@ -177,8 +172,7 @@
 
             {{-- FARM --}}
             <div id="farm">
-              <h3 class="font-bold uppercase tracking-wide mb-4"
-                  style="font-family: Gotham, sans-serif; color:#a97464;">
+              <h3 class="font-bold uppercase tracking-wide mb-4" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
                 Farm
               </h3>
 
@@ -617,7 +611,7 @@
 
             <div class="space-y-2">
               <template x-for="(p, idx) in modal.details" :key="idx">
-                <p class="text-[15px]">
+                <p style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                   <i class="fa-solid fa-circle-check text-[#a97464] mr-2"></i>
                   <span x-text="p"></span>
                 </p>
