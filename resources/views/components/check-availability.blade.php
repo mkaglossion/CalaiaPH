@@ -233,6 +233,8 @@
                     this.formAction = '{{ url("/booking/staycation") }}';
                 } else if (type === 'day-visit') {
                     this.formAction = '{{ url("/booking/dayvisit") }}';
+                } else if (type === 'special-event') {
+                    this.formAction = '{{ url("/booking/special-event") }}';
                 } else {
                     this.formAction = '{{ url("/booking") }}';
                 }

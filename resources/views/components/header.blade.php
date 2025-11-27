@@ -43,7 +43,7 @@
       <a href="{{ url('/staycation') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Where to Stay</a>
       <a href="{{ url('/activities') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">What to Do</a>
       <a href="{{ url('/dining') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Food & Beverage</a>
-      <a href="{{ url('/groups') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'groups' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Special Events</a>
+      <a href="{{ url('/special-events') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'special-events' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Special Events</a>
       <a href="{{ url('/farm') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Our Farm</a>
     </nav>
 
@@ -155,7 +155,7 @@
         <a href="{{ url('/staycation') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Where to Stay</a>
         <a href="{{ url('/activities') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">What to Do</a>
         <a href="{{ url('/dining') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Food & Beverage</a>
-        <a href="{{ url('/groups') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'groups' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Special Events</a>
+        <a href="{{ url('/special-events') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'special-events' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Special Events</a>
         <a href="{{ url('/farm') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Our Farm</a>
 
         @auth
