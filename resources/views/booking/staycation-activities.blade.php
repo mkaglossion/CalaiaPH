@@ -102,6 +102,14 @@ if ($datesSelected) {
             $accommodationTotal += 2000 * $acc['num_pets'];
         }
     }
+
+    // Add breakfast fees
+    $breakfastTotal = 0;
+    foreach ($booking['accommodations'] ?? [] as $acc) {
+        if (!empty($acc['has_breakfast'])) {
+            $breakfastTotal += 500 * ($acc['guests'] ?? 1);
+        }
+    }
 }
 @endphp
 
@@ -116,7 +124,7 @@ if ($datesSelected) {
     <x-header active="booking" />
     <div class="min-h-screen">
 
-<div class="pt-6 md:pt-12" data-accommodation-total="{{ $accommodationTotal }}" data-total-guests="{{ $totalGuests }}" data-nights="{{ $nights }}">
+<div class="pt-6 md:pt-12" data-accommodation-total="{{ $accommodationTotal + $breakfastTotal }}" data-total-guests="{{ $totalGuests }}" data-nights="{{ $nights }}">
     {{-- Header --}}
     <div class="text-center mb-10">
         <h1 class="text-2xl font-bold tracking-tight" style="font-family: 'Gotham Book', sans-serif;">Select Staycation Activities</h1>
@@ -128,10 +136,18 @@ if ($datesSelected) {
         {{-- Main content --}}
         <div class="lg:col-span-2">
             <div class="flex flex-col">
-                {{-- Step indicator --}}
-                <small class="text-gray-500 text-sm mb-2">
-                    Step 2 of 3: Select Activities
-                </small>
+                {{-- Progress indicator --}}
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <small class="text-gray-500 text-sm">
+                            Step 2 of 3: Select Activities
+                        </small>
+                        <small class="text-gray-500 text-sm">67% Complete</small>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-[#8f5d54] h-2 rounded-full transition-all duration-300" style="width: 67%"></div>
+                    </div>
+                </div>
 
                 {{-- Navigation --}}
                 <div class="flex items-end justify-between my-3">
@@ -272,10 +288,16 @@ if ($datesSelected) {
                             @endif
                         </div>
                         @endif
-                        <div class="flex justify-between items-center text-lg font-bold pt-2 border-t border-gray-200">
-                            <span>Accommodation Total:</span>
-                            <span>₱ {{ number_format($accommodationTotal) }}</span>
-                        </div>
+                         @if($breakfastTotal > 0)
+                         <div class="flex justify-between items-center">
+                             <span class="text-sm text-gray-600">Breakfast:</span>
+                             <span class="text-sm font-medium">₱ {{ number_format($breakfastTotal) }}</span>
+                         </div>
+                         @endif
+                         <div class="flex justify-between items-center text-lg font-bold pt-2 border-t border-gray-200">
+                             <span>Accommodation Total:</span>
+                             <span>₱ {{ number_format($accommodationTotal + $breakfastTotal) }}</span>
+                         </div>
                     </div>
                 @else
                     <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
@@ -299,7 +321,7 @@ if ($datesSelected) {
                 <div class="border-t border-gray-200 pt-4 mt-4">
                   <div class="flex justify-between items-center text-xl font-bold text-[#8f5d54]">
                     <span>Grand Total:</span>
-                    <span id="grand-total">₱ {{ number_format($accommodationTotal) }}</span>
+                    <span id="grand-total">₱ {{ number_format($accommodationTotal + $breakfastTotal) }}</span>
                   </div>
                 </div>
 
@@ -309,7 +331,8 @@ if ($datesSelected) {
                     id="skip-btn"
                     class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
                   >
-                    Skip
+                    Proceed to Payment Without Activities
+                    <i class="bi bi-arrow-right"></i>
                   </button>
 
                   <button
@@ -320,6 +343,24 @@ if ($datesSelected) {
                   >
                     Confirm and Proceed
                   </button>
+                </div>
+
+                {{-- Trust elements --}}
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="text-center">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">Secure Booking</h4>
+                        <div class="flex justify-center items-center space-x-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-lock text-green-600 mr-2"></i>
+                                <span class="text-xs text-gray-600">SSL Secured</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
+                                <span class="text-xs text-gray-600">Data Protected</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Your information is safe with us</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -556,6 +597,27 @@ if ($datesSelected) {
 
       // Confirm button
       document.getElementById('confirm-btn').addEventListener('click', function() {
+        // Validation: Check if activities are selected
+        if (selectedActivities.length === 0) {
+          showToast('Please select at least one activity or skip to proceed.', 'error');
+          return;
+        }
+
+        // Confirmation dialog
+        const totalCost = document.getElementById('total-cost')?.textContent || '₱ 0.00';
+        const grandTotal = document.getElementById('grand-total')?.textContent || '₱ 0.00';
+
+        if (!confirm(`Are you sure you want to proceed with ${selectedActivities.length} selected activities?\n\nActivities Total: ${totalCost}\nGrand Total: ${grandTotal}\n\nYou will be taken to payment next.`)) {
+          return;
+        }
+
+        // Show loading state
+        const confirmBtn = document.getElementById('confirm-btn');
+        if (confirmBtn) {
+          confirmBtn.disabled = true;
+          confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+        }
+
         // Store selected activities in session and proceed
         fetch('{{ route("booking.storeStaycationActivities") }}', {
           method: 'POST',
@@ -570,12 +632,22 @@ if ($datesSelected) {
           if (data.success) {
             window.location.href = '{{ route("booking.staycationPayment") }}';
           } else {
+            // Reset button
+            if (confirmBtn) {
+              confirmBtn.disabled = false;
+              confirmBtn.innerHTML = 'Confirm and Proceed';
+            }
             showToast('Error saving activities. Please try again.', 'error');
           }
         })
         .catch(error => {
           console.error('Error:', error);
-          showToast('Error saving activities. Please try again.', 'error');
+          // Reset button
+          if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = 'Confirm and Proceed';
+          }
+          showToast('Network error. Please check your connection and try again.', 'error');
         });
       });
     });

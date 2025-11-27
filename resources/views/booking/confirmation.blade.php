@@ -77,6 +77,11 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
               $accPrice += 2000 * $accommodation['num_pets'];
           }
 
+          // Add breakfast fee
+          if (!empty($accommodation['has_breakfast'])) {
+              $accPrice += 500 * $accommodation['guests'];
+          }
+
           $accommodationTotal += $accPrice;
       }
   }
@@ -302,7 +307,8 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
                       }
 
                       $petFee = (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) ? 2000 * $accommodation['num_pets'] : 0;
-                      $totalPrice = $accommodationPrice + $petFee;
+                      $breakfastFee = (!empty($accommodation['has_breakfast'])) ? 500 * $accommodation['guests'] : 0;
+                      $totalPrice = $accommodationPrice + $petFee + $breakfastFee;
 
                       // Calculate base rate per night (weekday rate for standard/premium)
                       $baseRate = 0;
@@ -328,6 +334,9 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
                         @endif
                         @if($petFee > 0)
                           <br>&nbsp;&nbsp;Pet Fee ({{ $accommodation['num_pets'] }} pet{{ $accommodation['num_pets'] > 1 ? 's' : '' }}): ₱{{ number_format($petFee, 2) }}
+                        @endif
+                        @if($breakfastFee > 0)
+                          <br>&nbsp;&nbsp;Breakfast ({{ $accommodation['guests'] }} guest{{ $accommodation['guests'] > 1 ? 's' : '' }}): ₱{{ number_format($breakfastFee, 2) }}
                         @endif
                       </li>
                     @endif

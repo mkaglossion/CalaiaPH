@@ -84,6 +84,14 @@ if ($datesSelected) {
             $accommodationTotal += 2000 * $acc['num_pets'];
         }
     }
+
+    // Add breakfast fees
+    $breakfastTotal = 0;
+    foreach ($booking['accommodations'] ?? [] as $acc) {
+        if (!empty($acc['has_breakfast'])) {
+            $breakfastTotal += 500 * ($acc['guests'] ?? 1);
+        }
+    }
 }
 
 // Get activities total from session
@@ -116,10 +124,18 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
         {{-- Main content --}}
         <div class="lg:col-span-2">
             <div class="flex flex-col">
-                {{-- Step indicator --}}
-                <small class="text-gray-500 text-sm mb-2">
-                    Step 3 of 3: Payment
-                </small>
+                {{-- Progress indicator --}}
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <small class="text-gray-500 text-sm">
+                            Step 3 of 3: Payment
+                        </small>
+                        <small class="text-gray-500 text-sm">100% Complete</small>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-[#8f5d54] h-2 rounded-full transition-all duration-300" style="width: 100%"></div>
+                    </div>
+                </div>
 
                 {{-- Navigation --}}
                 <div class="flex items-end justify-between my-3">
@@ -374,7 +390,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                     <i class="bi bi-lock-fill mr-2"></i>
                                     <span>Complete Staycation Payment</span>
                                     <span class="font-bold ml-2">
-                                        ₱{{ number_format($accommodationTotal + $activitiesTotal, 2, '.', '') }}
+                                        ₱{{ number_format($accommodationTotal + $breakfastTotal + $activitiesTotal, 2, '.', '') }}
                                     </span>
                                 </button>
 
@@ -476,9 +492,15 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                 @endforeach
                             @endif
                         </div>
+                        @if($breakfastTotal > 0)
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Breakfast:</span>
+                            <span class="text-sm font-medium">₱ {{ number_format($breakfastTotal, 2, '.', '') }}</span>
+                        </div>
+                        @endif
                         <div class="flex justify-between items-center text-lg font-bold pt-2 border-t border-gray-200">
                             <span>Accommodation Total:</span>
-                            <span>₱ {{ number_format($accommodationTotal, 2, '.', '') }}</span>
+                            <span>₱ {{ number_format($accommodationTotal + $breakfastTotal, 2, '.', '') }}</span>
                         </div>
                     </div>
                 @else
@@ -516,7 +538,29 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                 <div class="border-t border-gray-200 pt-4 mt-4">
                     <div class="flex justify-between items-center text-xl font-bold text-[#8f5d54]">
                         <span>Grand Total:</span>
-                        <span>₱{{ number_format($accommodationTotal + $activitiesTotal, 2, '.', '') }}</span>
+                        <span>₱{{ number_format($accommodationTotal + $breakfastTotal + $activitiesTotal, 2, '.', '') }}</span>
+                    </div>
+                </div>
+
+                {{-- Trust elements --}}
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="text-center">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">Secure Payment</h4>
+                        <div class="flex justify-center items-center space-x-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-lock text-green-600 mr-2"></i>
+                                <span class="text-xs text-gray-600">SSL Secured</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
+                                <span class="text-xs text-gray-600">Data Protected</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-credit-card text-purple-600 mr-2"></i>
+                                <span class="text-xs text-gray-600">Multiple Payment Options</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Your payment information is encrypted and secure</p>
                     </div>
                 </div>
             </div>
@@ -534,5 +578,131 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.querySelector('form');
+      const submitBtn = document.querySelector('button[type="submit"]');
+
+      // Real-time validation
+      const requiredFields = ['first_name', 'last_name', 'email', 'phone'];
+      requiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+          field.addEventListener('blur', function() {
+            validateField(this);
+          });
+        }
+      });
+
+      function validateField(field) {
+        const value = field.value.trim();
+        const fieldName = field.previousElementSibling ? field.previousElementSibling.textContent.replace('*', '').trim() : field.id;
+
+        // Remove existing error
+        const existingError = field.parentNode.querySelector('.field-error');
+        if (existingError) existingError.remove();
+
+        if (!value) {
+          showFieldError(field, `${fieldName} is required.`);
+          return false;
+        }
+
+        if (field.type === 'email' && !isValidEmail(value)) {
+          showFieldError(field, 'Please enter a valid email address.');
+          return false;
+        }
+
+        if (field.id === 'phone' && !isValidPhone(value)) {
+          showFieldError(field, 'Please enter a valid phone number.');
+          return false;
+        }
+
+        return true;
+      }
+
+      function showFieldError(field, message) {
+        const errorDiv = document.createElement('p');
+        errorDiv.className = 'field-error text-red-500 text-xs mt-1';
+        errorDiv.textContent = message;
+        field.parentNode.appendChild(errorDiv);
+        field.classList.add('border-red-300');
+      }
+
+      function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+      }
+
+      function isValidPhone(phone) {
+        const phoneRegex = /^(\+63|0)[0-9]{10}$/;
+        return phoneRegex.test(phone.replace(/\s/g, ''));
+      }
+
+      // Form submission with loading state
+      form.addEventListener('submit', function(e) {
+        // Validate all required fields
+        let isValid = true;
+        requiredFields.forEach(fieldId => {
+          const field = document.getElementById(fieldId);
+          if (field && !validateField(field)) {
+            isValid = false;
+          }
+        });
+
+        // Check terms
+        const termsCheckbox = document.getElementById('terms');
+        if (!termsCheckbox.checked) {
+          alert('Please accept the Terms and Conditions to proceed.');
+          isValid = false;
+        }
+
+        if (!isValid) {
+          e.preventDefault();
+          return false;
+        }
+
+        // Show loading state
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing Payment...';
+        }
+      });
+
+      // Toast function
+      function showToast(message, type = 'info') {
+        // Create toast element if it doesn't exist
+        let toastEl = document.querySelector('.toast');
+        if (!toastEl) {
+          toastEl = document.createElement('div');
+          toastEl.className = 'toast fixed bottom-4 right-4 flex items-center text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden z-60';
+          toastEl.innerHTML = `
+            <div class="flex items-center w-full">
+              <div class="toast-body text-sm flex-1"></div>
+              <button type="button" class="ml-3 text-white text-xs font-semibold uppercase tracking-wide btn-close" data-bs-dismiss="toast" aria-label="Close">✕</button>
+            </div>
+          `;
+          document.body.appendChild(toastEl);
+        }
+
+        const toastBody = toastEl.querySelector('.toast-body');
+        if (toastBody) {
+          toastBody.textContent = message;
+        }
+        toastEl.classList.remove('bg-emerald-600', 'bg-red-600', 'bg-blue-600');
+        if (type === 'success') {
+          toastEl.classList.add('bg-emerald-600');
+        } else if (type === 'error') {
+          toastEl.classList.add('bg-red-600');
+        } else {
+          toastEl.classList.add('bg-blue-600');
+        }
+        toastEl.classList.remove('hidden');
+        setTimeout(() => {
+          toastEl.classList.add('hidden');
+        }, 5000);
+      }
+    });
+  </script>
 </body>
 </html>

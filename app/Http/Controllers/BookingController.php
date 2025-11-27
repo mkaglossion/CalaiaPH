@@ -255,6 +255,15 @@ class BookingController extends Controller
                     $accommodationTotal += 2000 * $acc['num_pets'];
                 }
             }
+
+            // Add breakfast fees
+            $breakfastTotal = 0;
+            foreach ($booking['accommodations'] ?? [] as $acc) {
+                if (!empty($acc['has_breakfast'])) {
+                    $breakfastTotal += 500 * ($acc['guests'] ?? 1);
+                }
+            }
+            $accommodationTotal += $breakfastTotal;
         }
 
         $activitiesTotal = collect($request->activities)->sum(function($activity) {
@@ -562,7 +571,9 @@ class BookingController extends Controller
             session(['booking' => $booking]);
 
             // Redirect based on request
-            if ($request->input('proceed_to_activities')) {
+            if ($request->input('skip_to_payment')) {
+                return redirect()->route('booking.staycationPayment');
+            } elseif ($request->input('proceed_to_activities')) {
                 return redirect()->route('booking.staycationActivities');
             } else {
                 return redirect()->route('booking.staycation');
