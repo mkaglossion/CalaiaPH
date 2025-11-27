@@ -2,8 +2,8 @@
 
   <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-10">
-      <h2 class="mt-8 text-3xl sm:text-4xl font-['Gotham'] font-bold tracking-tight text-white">WHAT OUR GUESTS SAY</h2>
-      <p class="mt-3 text-lg font-['Vila Zilka Serif'] text-white" style="font-style: italic;">Hear from those who've experienced Calaia</p>
+      <h2 class="mt-8 text-3xl sm:text-4xl font-bold tracking-tight text-white" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">WHAT OUR GUESTS SAY</h2>
+      <p class="mt-3 text-lg text-white" style="font-style: italic; font-size: 13px; font-family: 'Gotham Book', sans-serif;">Hear from those who've experienced Calaia</p>
       <div class="mt-6 mx-auto h-px w-80 bg-white/100"></div>
     </div>
 
@@ -30,12 +30,12 @@
             </svg>
           </div>
         </div>
-        <blockquote class="text-lg text-[#8f5d54] mb-4 italic">"Calaia was an unforgettable experience. The farm stay was peaceful, the activities were fun, and the food was amazing. Highly recommend!"</blockquote>
+        <blockquote class="text-lg text-[#8f5d54] mb-4 italic" style="font-size: 13px;">"Calaia was an unforgettable experience. The farm stay was peaceful, the activities were fun, and the food was amazing. Highly recommend!"</blockquote>
         <div class="flex items-center justify-center">
           <img class="w-12 h-12 rounded-full mr-4" src="/assets/images/testimonials/avatar1.jpg" alt="Sarah Johnson">
           <div>
             <p class="font-semibold text-[#8f5d54]">Sarah Johnson</p>
-            <p class="text-sm text-[#97655A]">Family Traveler</p>
+            <p class="text-sm text-[#97655A]" style="font-size: 13px;">Family Traveler</p>
           </div>
         </div>
       </div>
@@ -61,12 +61,12 @@
             </svg>
           </div>
         </div>
-        <blockquote class="text-lg text-[#8f5d54] mb-4 italic">"The staff was incredibly welcoming, and the farm-to-table experience was outstanding. We felt completely at home."</blockquote>
+        <blockquote class="text-lg text-[#8f5d54] mb-4 italic" style="font-size: 13px;">"The staff was incredibly welcoming, and the farm-to-table experience was outstanding. We felt completely at home."</blockquote>
         <div class="flex items-center justify-center">
           <img class="w-12 h-12 rounded-full mr-4" src="/assets/images/testimonials/avatar2.jpg" alt="Michael Chen">
           <div>
             <p class="font-semibold text-[#8f5d54]">Michael Chen</p>
-            <p class="text-sm text-[#97655A]">Adventure Seeker</p>
+            <p class="text-sm text-[#97655A]" style="font-size: 13px;">Adventure Seeker</p>
           </div>
         </div>
       </div>
@@ -92,12 +92,12 @@
             </svg>
           </div>
         </div>
-        <blockquote class="text-lg text-[#8f5d54] mb-4 italic">"Perfect getaway for our anniversary. The romantic setting and personalized service made it truly special."</blockquote>
+        <blockquote class="text-lg text-[#8f5d54] mb-4 italic" style="font-size: 13px;">"Perfect getaway for our anniversary. The romantic setting and personalized service made it truly special."</blockquote>
         <div class="flex items-center justify-center">
           <img class="w-12 h-12 rounded-full mr-4" src="/assets/images/testimonials/avatar3.jpg" alt="Emma Rodriguez">
           <div>
             <p class="font-semibold text-[#8f5d54]">Emma Rodriguez</p>
-            <p class="text-sm text-[#97655A]">Romantic Getaway</p>
+            <p class="text-sm text-[#97655A]" style="font-size: 13px;">Romantic Getaway</p>
           </div>
         </div>
       </div>

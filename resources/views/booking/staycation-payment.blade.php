@@ -84,6 +84,14 @@ if ($datesSelected) {
             $accommodationTotal += 2000 * $acc['num_pets'];
         }
     }
+
+    // Add breakfast fees
+    $breakfastTotal = 0;
+    foreach ($booking['accommodations'] ?? [] as $acc) {
+        if (!empty($acc['has_breakfast'])) {
+            $breakfastTotal += 500 * ($acc['guests'] ?? 1);
+        }
+    }
 }
 
 // Get activities total from session
@@ -107,19 +115,27 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
 <div class="pt-6 md:pt-12">
     {{-- Header --}}
     <div class="text-center mb-10">
-        <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Complete Staycation Payment</h1>
+        <h1 class="text-2xl font-bold tracking-tight" style="font-family: 'Gotham Book', sans-serif;">Complete Staycation Payment</h1>
         <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-        <p class="text-gray-500">Review your staycation details and complete your payment</p>
+        <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Review your staycation details and complete your payment</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10 pb-12">
         {{-- Main content --}}
         <div class="lg:col-span-2">
             <div class="flex flex-col">
-                {{-- Step indicator --}}
-                <small class="text-gray-500 text-sm mb-2">
-                    Step 3 of 3: Payment
-                </small>
+                {{-- Progress indicator --}}
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <small class="text-gray-500 text-sm">
+                            Step 3 of 3: Payment
+                        </small>
+                        <small class="text-gray-500 text-sm">100% Complete</small>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-[#8f5d54] h-2 rounded-full transition-all duration-300" style="width: 100%"></div>
+                    </div>
+                </div>
 
                 {{-- Navigation --}}
                 <div class="flex items-end justify-between my-3">
@@ -160,7 +176,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
 
                             {{-- Customer Information --}}
                             <div class="bg-gray-50 rounded-xl p-4 sm:py-6">
-                                <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center" style="font-family: 'Gotham Book', sans-serif;">
                                     <i class="bi bi-person-circle mr-2 text-[#8f5d54]"></i>
                                     Personal Information
                                 </h3>
@@ -245,7 +261,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                         class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
                                         placeholder="Any special requirements, celebrations, or notes..."
                                     ></textarea>
-                                    <p class="mt-1 text-xs text-gray-400">
+                                    <p class="mt-1 text-xs text-gray-400" style="font-family: 'Gotham Book', sans-serif;">
                                         Example: "Vegan meal options", "Birthday surprise setup", or accessibility needs.
                                     </p>
                                 </div>
@@ -259,7 +275,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                 >
                                     Payment Method
                                 </legend>
-                                <p class="text-xs sm:text-sm text-gray-500 mb-2">
+                                <p class="text-xs text-gray-500 mb-2" style="font-family: 'Gotham Book', sans-serif;">
                                     Secure and encrypted payment via your chosen provider.
                                 </p>
 
@@ -374,12 +390,12 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                     <i class="bi bi-lock-fill mr-2"></i>
                                     <span>Complete Staycation Payment</span>
                                     <span class="font-bold ml-2">
-                                        ₱{{ number_format($accommodationTotal + $activitiesTotal, 2, '.', '') }}
+                                        ₱{{ number_format($accommodationTotal + $breakfastTotal + $activitiesTotal, 2, '.', '') }}
                                     </span>
                                 </button>
 
 
-                                <p class="mt-3 text-xs sm:text-sm text-center text-gray-500">
+                                <p class="mt-3 text-xs text-center text-gray-500" style="font-family: 'Gotham Book', sans-serif;">
                                     Your payment is secured with 256-bit SSL encryption. By proceeding, you agree to our terms of service.
                                 </p>
                             </div>
@@ -392,7 +408,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
         {{-- Sidebar: booking summary --}}
         <div class="lg:col-span-1">
             <div class="bg-white rounded-xl shadow-md p-6 sticky top-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Booking Summary</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
 
                 @if($datesSelected)
                     <div class="space-y-3 mb-6">
@@ -476,18 +492,24 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                 @endforeach
                             @endif
                         </div>
+                        @if($breakfastTotal > 0)
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Breakfast:</span>
+                            <span class="text-sm font-medium">₱ {{ number_format($breakfastTotal, 2, '.', '') }}</span>
+                        </div>
+                        @endif
                         <div class="flex justify-between items-center text-lg font-bold pt-2 border-t border-gray-200">
                             <span>Accommodation Total:</span>
-                            <span>₱ {{ number_format($accommodationTotal, 2, '.', '') }}</span>
+                            <span>₱ {{ number_format($accommodationTotal + $breakfastTotal, 2, '.', '') }}</span>
                         </div>
                     </div>
                 @else
-                    <p class="text-sm text-gray-500 mb-6">Please select your dates to see the booking summary.</p>
+                    <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
                 @endif
 
                 <hr class="my-4">
 
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Selected Activities</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Selected Activities</h3>
 
                 <div class="space-y-3 mb-4">
                     @if(!empty($selectedActivities))
@@ -502,7 +524,7 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                             </div>
                         @endforeach
                     @else
-                        <p class="text-sm text-gray-500">No activities selected</p>
+                        <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">No activities selected</p>
                     @endif
                 </div>
 
@@ -516,7 +538,29 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                 <div class="border-t border-gray-200 pt-4 mt-4">
                     <div class="flex justify-between items-center text-xl font-bold text-[#8f5d54]">
                         <span>Grand Total:</span>
-                        <span>₱{{ number_format($accommodationTotal + $activitiesTotal, 2, '.', '') }}</span>
+                        <span>₱{{ number_format($accommodationTotal + $breakfastTotal + $activitiesTotal, 2, '.', '') }}</span>
+                    </div>
+                </div>
+
+                {{-- Trust elements --}}
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="text-center">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">Secure Payment</h4>
+                        <div class="flex justify-center items-center space-x-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-lock text-green-600 mr-2"></i>
+                                <span class="text-xs text-gray-600">SSL Secured</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
+                                <span class="text-xs text-gray-600">Data Protected</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-credit-card text-purple-600 mr-2"></i>
+                                <span class="text-xs text-gray-600">Multiple Payment Options</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Your payment information is encrypted and secure</p>
                     </div>
                 </div>
             </div>
@@ -534,5 +578,131 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.querySelector('form');
+      const submitBtn = document.querySelector('button[type="submit"]');
+
+      // Real-time validation
+      const requiredFields = ['first_name', 'last_name', 'email', 'phone'];
+      requiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+          field.addEventListener('blur', function() {
+            validateField(this);
+          });
+        }
+      });
+
+      function validateField(field) {
+        const value = field.value.trim();
+        const fieldName = field.previousElementSibling ? field.previousElementSibling.textContent.replace('*', '').trim() : field.id;
+
+        // Remove existing error
+        const existingError = field.parentNode.querySelector('.field-error');
+        if (existingError) existingError.remove();
+
+        if (!value) {
+          showFieldError(field, `${fieldName} is required.`);
+          return false;
+        }
+
+        if (field.type === 'email' && !isValidEmail(value)) {
+          showFieldError(field, 'Please enter a valid email address.');
+          return false;
+        }
+
+        if (field.id === 'phone' && !isValidPhone(value)) {
+          showFieldError(field, 'Please enter a valid phone number.');
+          return false;
+        }
+
+        return true;
+      }
+
+      function showFieldError(field, message) {
+        const errorDiv = document.createElement('p');
+        errorDiv.className = 'field-error text-red-500 text-xs mt-1';
+        errorDiv.textContent = message;
+        field.parentNode.appendChild(errorDiv);
+        field.classList.add('border-red-300');
+      }
+
+      function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+      }
+
+      function isValidPhone(phone) {
+        const phoneRegex = /^(\+63|0)[0-9]{10}$/;
+        return phoneRegex.test(phone.replace(/\s/g, ''));
+      }
+
+      // Form submission with loading state
+      form.addEventListener('submit', function(e) {
+        // Validate all required fields
+        let isValid = true;
+        requiredFields.forEach(fieldId => {
+          const field = document.getElementById(fieldId);
+          if (field && !validateField(field)) {
+            isValid = false;
+          }
+        });
+
+        // Check terms
+        const termsCheckbox = document.getElementById('terms');
+        if (!termsCheckbox.checked) {
+          alert('Please accept the Terms and Conditions to proceed.');
+          isValid = false;
+        }
+
+        if (!isValid) {
+          e.preventDefault();
+          return false;
+        }
+
+        // Show loading state
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing Payment...';
+        }
+      });
+
+      // Toast function
+      function showToast(message, type = 'info') {
+        // Create toast element if it doesn't exist
+        let toastEl = document.querySelector('.toast');
+        if (!toastEl) {
+          toastEl = document.createElement('div');
+          toastEl.className = 'toast fixed bottom-4 right-4 flex items-center text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden z-60';
+          toastEl.innerHTML = `
+            <div class="flex items-center w-full">
+              <div class="toast-body text-sm flex-1"></div>
+              <button type="button" class="ml-3 text-white text-xs font-semibold uppercase tracking-wide btn-close" data-bs-dismiss="toast" aria-label="Close">✕</button>
+            </div>
+          `;
+          document.body.appendChild(toastEl);
+        }
+
+        const toastBody = toastEl.querySelector('.toast-body');
+        if (toastBody) {
+          toastBody.textContent = message;
+        }
+        toastEl.classList.remove('bg-emerald-600', 'bg-red-600', 'bg-blue-600');
+        if (type === 'success') {
+          toastEl.classList.add('bg-emerald-600');
+        } else if (type === 'error') {
+          toastEl.classList.add('bg-red-600');
+        } else {
+          toastEl.classList.add('bg-blue-600');
+        }
+        toastEl.classList.remove('hidden');
+        setTimeout(() => {
+          toastEl.classList.add('hidden');
+        }, 5000);
+      }
+    });
+  </script>
 </body>
 </html>

@@ -69,10 +69,10 @@
           <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">
             CalaiaPH Day Visit
           </p>
-          <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-[#8f5d54] font-vila-zilka">
+          <h1 class="text-2xl font-bold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">
             Complete Your Payment
           </h1>
-          <p class="mt-2 text-sm sm:text-base text-gray-500 max-w-2xl mx-auto">
+          <p class="mt-2 text-xs text-gray-500 max-w-2xl mx-auto" style="font-family: 'Gotham Book', sans-serif;">
             Review your day visit booking details and choose your preferred payment method.
           </p>
         </header>
@@ -96,7 +96,7 @@
             class="bg-gray-50 rounded-xl border border-gray-100 p-4 sm:p-5 md:p-6 lg:sticky lg:top-4"
           >
             <div class="flex items-center justify-between mb-4">
-              <h2 id="booking-summary-heading" class="text-lg font-semibold text-gray-900">
+              <h2 id="booking-summary-heading" class="text-2xl font-semibold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
                 Day Visit Summary
               </h2>
               <span class="inline-flex items-center rounded-full bg-[#f4ebe9] px-3 py-1 text-xs font-semibold text-[#8f5d54]">
@@ -205,7 +205,7 @@
               @endif
             </div>
 
-            <div class="mt-4 text-xs text-gray-400">
+            <div class="mt-4 text-xs text-gray-400" style="font-family: 'Gotham Book', sans-serif;">
               Please review your details carefully before proceeding with payment.
             </div>
           </section>
@@ -229,7 +229,7 @@
 
               {{-- Customer Information --}}
               <div class="bg-gray-50 rounded-xl p-4 sm:p-6">
-                <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center" style="font-family: 'Gotham Book', sans-serif;">
                   <i class="bi bi-person-circle mr-2 text-[#8f5d54]"></i>
                   Personal Information
                 </h3>
@@ -275,7 +275,7 @@
                 >
                   Payment Method
                 </legend>
-                <p class="text-xs sm:text-sm text-gray-500 mb-2">
+                <p class="text-xs text-gray-500 mb-2" style="font-family: 'Gotham Book', sans-serif;">
                   Secure and encrypted payment via your chosen provider.
                 </p>
 
@@ -396,7 +396,7 @@
                     ₱{{ number_format($grandTotal, 2) }}
                   </span>
                 </button>
-                <p class="mt-3 text-xs sm:text-sm text-center text-gray-500">
+                <p class="mt-3 text-xs text-center text-gray-500" style="font-family: 'Gotham Book', sans-serif;">
                   Your payment is secured with 256-bit SSL encryption. By proceeding, you agree to our terms of service.
                 </p>
               </div>

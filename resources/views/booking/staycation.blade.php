@@ -211,23 +211,31 @@ $galleryData = [
 
     {{-- Header --}}
     <div class="text-center mb-10">
-        <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Book Staycation</h1>
+        <h1 class="text-2xl font-bold tracking-tight" style="font-family: 'Gotham Book', sans-serif;">Book Staycation</h1>
         <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-        <p class="text-gray-500">Plan your perfect getaway at Calaia Nature Park</p>
+        <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Plan your perfect getaway at Calaia Nature Park</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10">
         {{-- Main content --}}
         <div class="lg:col-span-2">
             <div class="flex flex-col">
-                {{-- Step indicator --}}
-                <small class="text-gray-500 text-sm mb-2">
-                    @if($bookingType === 'staycation')
-                        Step 1 of 3: Select Your Staycation
-                    @else
-                        Steps {{ $stepNumber }} of {{ $totalSteps }}
-                    @endif
-                </small>
+                {{-- Progress indicator --}}
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <small class="text-gray-500 text-sm">
+                            @if($bookingType === 'staycation')
+                                Step 1 of 3: Select Your Staycation
+                            @else
+                                Steps {{ $stepNumber }} of {{ $totalSteps }}
+                            @endif
+                        </small>
+                        <small class="text-gray-500 text-sm">33% Complete</small>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-[#8f5d54] h-2 rounded-full transition-all duration-300" style="width: 33%"></div>
+                    </div>
+                </div>
 
                 {{-- Navigation --}}
                 <div class="flex items-end justify-between my-3">
@@ -281,7 +289,7 @@ $galleryData = [
 
                             <div class="flex flex-col p-6 h-full">
                                 <div class="flex items-start justify-between gap-3 mb-2">
-                                    <h3 class="text-2xl md:text-3xl font-extrabold text-gray-900">
+                                    <h3 class="text-2xl font-extrabold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
                                         Glamping Options
                                     </h3>
                                     <span
@@ -291,23 +299,22 @@ $galleryData = [
                                     </span>
                                 </div>
 
-                                <p class="text-lg text-gray-600 leading-relaxed mb-3">
+                                <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
                                     {{ $glampingDescription }}
                                 </p>
 
                                 {{-- Subtypes line --}}
-                                <p class="text-base text-gray-500 mb-4">
+                                <p class="text-xs text-gray-500 mb-4" style="font-family: 'Gotham Book', sans-serif;">
                                     Includes:
                                     <span class="font-semibold text-gray-800">Standard</span> and
                                     <span class="font-semibold text-gray-800">Premium</span> glamping tents.
                                 </p>
 
                                 @if($glampingCount > 0)
-                                     <p class="text-lg font-semibold mb-1"
-                                        style="color: #7a7d52;">
+                                     <p class="font-semibold mb-1" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
                                          Starts at ₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)
                                      </p>
-                                     <p class="text-base text-gray-500 mb-6">
+                                     <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">
                                          {{ $glampingCount }} {{ Str::plural('option', $glampingCount) }} available
                                      </p>
                                  @else
@@ -336,7 +343,7 @@ $galleryData = [
 
                             <div class="flex flex-col p-6 h-full">
                                 <div class="flex items-start justify-between gap-3 mb-2">
-                                    <h3 class="text-2xl md:text-3xl font-extrabold text-gray-900">
+                                    <h3 class="text-2xl font-extrabold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
                                         Camping Options
                                     </h3>
                                     <span
@@ -346,12 +353,12 @@ $galleryData = [
                                     </span>
                                 </div>
 
-                                <p class="text-lg text-gray-600 leading-relaxed mb-3">
+                                <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
                                     {{ $campingDescription }}
                                 </p>
 
                                 {{-- Subtypes line --}}
-                                <p class="text-base text-gray-500 mb-4">
+                                <p class="text-xs text-gray-500 mb-4" style="font-family: 'Gotham Book', sans-serif;">
                                     Includes:
                                     <span class="font-semibold text-gray-800">Bell Tent</span>,
                                     <span class="font-semibold text-gray-800">Dome Tent</span>,
@@ -360,11 +367,10 @@ $galleryData = [
                                 </p>
 
                                 @if($campingCount > 0)
-                                     <p class="text-lg font-semibold mb-1"
-                                        style="color: #7a7d52;">
+                                     <p class="font-semibold mb-1" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
                                          Starts at ₱300/night (BYOT/Car Camping)<br>• ₱3,000/night (Bell/Dome Tents)
                                      </p>
-                                     <p class="text-base text-gray-500 mb-6">
+                                     <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">
                                          {{ $campingCount }} {{ Str::plural('option', $campingCount) }} available
                                      </p>
                                  @else
@@ -408,7 +414,7 @@ $galleryData = [
         {{-- Sidebar: booking summary --}}
         <div class="lg:col-span-1">
             <div class="bg-white rounded-xl shadow-md p-6 sticky top-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Booking Summary</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
 
                 @if($datesSelected)
                     <div class="space-y-3">
@@ -442,13 +448,35 @@ $galleryData = [
                         </div>
                     </div>
 
-                    <div class="mt-6">
+                    <div class="mt-6 space-y-3">
                         <button class="w-full bg-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="proceed-btn" disabled onclick="proceedToActivities()">
                             Proceed to Activities
                         </button>
+
+                        <button class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="skip-btn" disabled onclick="skipToPayment()">
+                            Skip Activities & Go to Payment
+                        </button>
+                    </div>
+
+                    {{-- Trust elements --}}
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <div class="text-center">
+                            <h4 class="text-sm font-semibold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">Secure Booking</h4>
+                            <div class="flex justify-center items-center space-x-4">
+                                <div class="flex items-center">
+                                    <i class="fas fa-lock text-green-600 mr-2"></i>
+                                    <span class="text-xs text-gray-600">SSL Secured</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
+                                    <span class="text-xs text-gray-600">Data Protected</span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Your information is safe with us</p>
+                        </div>
                     </div>
                 @else
-                    <p class="text-sm text-gray-500">Please select your dates to see the booking summary.</p>
+                    <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
                 @endif
             </div>
         </div>
@@ -466,7 +494,7 @@ $galleryData = [
         <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden border border-gray-200 relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="glamping-modal-content">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 id="glamping-modal-title" class="text-2xl font-bold text-gray-900">Select Glamping Options</h2>
+                    <h2 id="glamping-modal-title" class="font-bold text-gray-900" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Select Glamping Options</h2>
                     <button type="button" class="close-modal text-gray-400 hover:text-gray-600 text-3xl font-light leading-none focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" data-modal="glamping-modal" aria-label="Close modal" style="line-height: 1;">
                         ×
                     </button>
@@ -475,16 +503,19 @@ $galleryData = [
                 <div class="max-h-[70vh] overflow-y-auto">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="glamping-options">
                         @foreach($glampingStaycations as $staycation)
-                            <div class="bg-white border rounded-xl p-4 flex items-center gap-4">
+                            <div class="staycation-card bg-white border-2 border-gray-200 rounded-xl p-4 flex items-center gap-4 hover:border-[#8f5d54] hover:shadow-md transition-all duration-200 cursor-pointer" data-staycation-id="{{ $staycation['id'] }}">
                                 <input type="checkbox"
-                                       class="staycation-checkbox"
-                                       data-id="{{ $staycation['id'] }}"
-                                       data-name="{{ $staycation['name'] }}"
-                                       data-price="{{ $staycation['price'] }}"
+                                       class="staycation-checkbox hidden"
+                                       data-staycation='@json($staycation)'
                                        id="glamping-{{ $staycation['id'] }}">
-                                <label for="glamping-{{ $staycation['id'] }}" class="flex-1 cursor-pointer">
-                                    <div class="font-semibold">{{ $staycation['name'] }}</div>
-                                    <div class="text-gray-500 text-sm">₱{{ number_format($staycation['price']) }}/night</div>
+                                <label for="glamping-{{ $staycation['id'] }}" class="flex-1 cursor-pointer flex items-center gap-3">
+                                    <div class="selection-indicator w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-[#8f5d54] rounded-full opacity-0 transition-opacity"></div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="font-semibold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">{{ $staycation['name'] }}</div>
+                                        <div class="text-gray-600 text-sm" style="font-family: 'Gotham Book', sans-serif;">₱{{ number_format($staycation['price']) }}/night</div>
+                                    </div>
                                 </label>
                             </div>
                         @endforeach
@@ -514,7 +545,7 @@ $galleryData = [
         <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden border border-gray-200 relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="camping-modal-content">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 id="camping-modal-title" class="text-2xl font-bold text-gray-900">Select Camping Options</h2>
+                    <h2 id="camping-modal-title" class="font-bold text-gray-900" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Select Camping Options</h2>
                     <button type="button" class="close-modal text-gray-400 hover:text-gray-600 text-3xl font-light leading-none focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" data-modal="camping-modal" aria-label="Close modal" style="line-height: 1;">
                         ×
                     </button>
@@ -523,16 +554,46 @@ $galleryData = [
                 <div class="max-h-[70vh] overflow-y-auto">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="camping-options">
                         @foreach($campingStaycations as $staycation)
-                            <div class="bg-white border rounded-xl p-4 flex items-center gap-4">
+                            <div class="staycation-card bg-white border-2 border-gray-200 rounded-xl p-4 flex items-center gap-4 hover:border-[#8f5d54] hover:shadow-md transition-all duration-200 cursor-pointer" data-staycation-id="{{ $staycation['id'] }}">
                                 <input type="checkbox"
-                                       class="staycation-checkbox"
-                                       data-id="{{ $staycation['id'] }}"
-                                       data-name="{{ $staycation['name'] }}"
-                                       data-price="{{ $staycation['price'] }}"
+                                       class="staycation-checkbox hidden"
+                                       data-staycation='@json($staycation)'
                                        id="camping-{{ $staycation['id'] }}">
-                                <label for="camping-{{ $staycation['id'] }}" class="flex-1 cursor-pointer">
-                                    <div class="font-semibold">{{ $staycation['name'] }}</div>
-                                    <div class="text-gray-500 text-sm">₱{{ number_format($staycation['price']) }}/night</div>
+                                <label for="camping-{{ $staycation['id'] }}" class="flex-1 cursor-pointer flex items-center gap-3">
+                                    <div class="selection-indicator w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-[#8f5d54] rounded-full opacity-0 transition-opacity"></div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2">
+                                            <div class="font-semibold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">{{ $staycation['name'] }}</div>
+                                            @if(str_contains(strtolower($staycation['name']), 'byot'))
+                                                <div class="relative group">
+                                                    <i class="fas fa-info-circle text-gray-400 text-xs cursor-help"></i>
+                                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                                        Bring Your Own Tent
+                                                    </div>
+                                                </div>
+                                            @elseif(str_contains(strtolower($staycation['name']), 'dome'))
+                                                <div class="relative group">
+                                                    <i class="fas fa-info-circle text-gray-400 text-xs cursor-help"></i>
+                                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                                        Spacious tent for groups
+                                                    </div>
+                                                </div>
+                                            @elseif(str_contains(strtolower($staycation['name']), 'bell'))
+                                                <div class="relative group">
+                                                    <i class="fas fa-info-circle text-gray-400 text-xs cursor-help"></i>
+                                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                                        Traditional bell-shaped tent
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <div class="text-gray-600 text-sm" style="font-family: 'Gotham Book', sans-serif;">₱{{ number_format($staycation['price']) }}/night</div>
+                                        <div class="text-xs text-green-600 mt-1" style="font-family: 'Gotham Book', sans-serif;">
+                                            <i class="fas fa-check-circle mr-1"></i>Available ({{ $staycation['capacity'] ?? 6 }} guests max)
+                                        </div>
+                                    </div>
                                 </label>
                             </div>
                         @endforeach
@@ -561,7 +622,7 @@ $galleryData = [
         <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden border border-gray-200 relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="pet-policy-modal-content">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 id="pet-policy-modal-title" class="text-2xl font-bold text-gray-900">Pet Policy</h2>
+                    <h2 id="pet-policy-modal-title" class="font-bold text-gray-900" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Pet Policy</h2>
                     <button type="button" class="close-modal text-gray-400 hover:text-gray-600 text-3xl font-light leading-none focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" data-modal="pet-policy-modal" aria-label="Close modal" style="line-height: 1;">
                         ×
                     </button>
@@ -578,58 +639,58 @@ $galleryData = [
 
                     <div class="space-y-6">
                         <div class="bg-gray-50 rounded-lg p-4">
-                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                            <h4 class="font-semibold text-gray-900 mb-2 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                                 <span class="text-2xl mr-2">🐶</span>
                                 Owner Responsibility
                             </h4>
-                            <p class="text-gray-700">Pet owners are fully responsible for the behavior and care of their pets at all times. Pets must never be left unattended.</p>
+                            <p class="text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Pet owners are fully responsible for the behavior and care of their pets at all times. Pets must never be left unattended.</p>
                         </div>
 
                         <div class="bg-gray-50 rounded-lg p-4">
-                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                            <h4 class="font-semibold text-gray-900 mb-2 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                                 <span class="text-2xl mr-2">🐕</span>
                                 Leash Policy
                             </h4>
-                            <p class="text-gray-700">Pets may be off-leash only when under the close and careful supervision of their owners.</p>
+                            <p class="text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Pets may be off-leash only when under the close and careful supervision of their owners.</p>
                         </div>
 
                         <div class="bg-gray-50 rounded-lg p-4">
-                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                            <h4 class="font-semibold text-gray-900 mb-2 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                                 <span class="text-2xl mr-2">🦙</span>
                                 Respect for Farm Animals
                             </h4>
-                            <p class="text-gray-700">Please ensure your pets do not disturb or chase the grazing animals on the property.</p>
+                            <p class="text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Please ensure your pets do not disturb or chase the grazing animals on the property.</p>
                         </div>
 
                         <div class="bg-gray-50 rounded-lg p-4">
-                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                            <h4 class="font-semibold text-gray-900 mb-2 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                                 <span class="text-2xl mr-2">🏕️</span>
                                 Overnight Stays & Pet Fee
                             </h4>
-                            <p class="text-gray-700 mb-2">Kindly inform us upon booking if you will be bringing a pet.</p>
-                            <p class="text-gray-700 mb-2">If your pet will stay inside the glamping tent, a pet fee of ₱2,000 per pet applies and must be paid in full to confirm your booking.</p>
-                            <p class="text-gray-700">Any damage to the tent, bedding, or furnishings caused by pets will be charged accordingly.</p>
+                            <p class="text-gray-700 mb-2" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Kindly inform us upon booking if you will be bringing a pet.</p>
+                            <p class="text-gray-700 mb-2" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">If your pet will stay inside the glamping tent, a pet fee of ₱2,000 per pet applies and must be paid in full to confirm your booking.</p>
+                            <p class="text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Any damage to the tent, bedding, or furnishings caused by pets will be charged accordingly.</p>
                         </div>
 
                         <div class="bg-gray-50 rounded-lg p-4">
-                            <h4 class="text-xl font-semibold text-gray-900 mb-2 flex items-center justify-center">
+                            <h4 class="font-semibold text-gray-900 mb-2 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                                 <span class="text-2xl mr-2">📋</span>
                                 Health & Cleanliness
                             </h4>
-                            <p class="text-gray-700">All pets must be up to date on vaccinations (including rabies) and treated for external parasites. We will kindly ask for the date of your pet's last parasite treatment.</p>
+                            <p class="text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">All pets must be up to date on vaccinations (including rabies) and treated for external parasites. We will kindly ask for the date of your pet's last parasite treatment.</p>
                         </div>
 
                         <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <h4 class="text-xl font-semibold text-red-900 mb-2 flex items-center justify-center">
+                            <h4 class="font-semibold text-red-900 mb-2 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                                 <span class="text-2xl mr-2">⚠️</span>
                                 Damage & Liability
                             </h4>
-                            <p class="text-red-800">Owners will be held liable for any damage caused to property or injury inflicted on farm animals, other pets, fellow guests, or Calaia staff.</p>
+                            <p class="text-red-800" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Owners will be held liable for any damage caused to property or injury inflicted on farm animals, other pets, fellow guests, or Calaia staff.</p>
                         </div>
                     </div>
 
                     <div class="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                        <p class="text-lg font-semibold text-green-900 flex items-center justify-center">
+                        <p class="font-semibold text-green-900 flex items-center justify-center" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                             <span class="text-2xl mr-2">🐾🌿</span>
                             We appreciate your cooperation and understanding. Let's work together to keep Calaia a safe, peaceful, and pet-friendly space for all!
                         </p>
@@ -658,7 +719,7 @@ $galleryData = [
           <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden border border-gray-200 relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="gallery-modal-content">
             <div class="p-6">
               <div class="flex justify-between items-center mb-6">
-                <h2 id="gallery-modal-title" class="text-2xl font-bold text-gray-900">Photo Gallery</h2>
+                <h2 id="gallery-modal-title" class="font-bold text-gray-900" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Photo Gallery</h2>
                 <button type="button" class="text-gray-400 hover:text-gray-600 text-3xl font-light leading-none focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" onclick="closeGallery()" style="line-height: 1;">
                   ×
                 </button>
@@ -745,6 +806,16 @@ $galleryData = [
                 } else if (name.includes('byot') || name.includes('car')) {
                     total += 300 * guests * nights;
                 }
+
+                // Add pet fees
+                if (acc.pet_agreement && acc.num_pets > 0) {
+                    total += 2000 * acc.num_pets;
+                }
+
+                // Add breakfast fees
+                if (acc.has_breakfast) {
+                    total += 500 * guests;
+                }
             });
 
             return total;
@@ -804,7 +875,11 @@ $galleryData = [
 
             // Calculate pet fee
             const petFee = (accommodation.pet_agreement && accommodation.num_pets > 0) ? 2000 * accommodation.num_pets : 0;
-            const totalAccPrice = accommodationPrice + petFee;
+
+            // Calculate breakfast fee
+            const breakfastFee = accommodation.has_breakfast ? 500 * guests : 0;
+
+            const totalAccPrice = accommodationPrice + petFee + breakfastFee;
 
             totalPrice += totalAccPrice; // Add to total
 
@@ -828,6 +903,12 @@ $galleryData = [
                 summaryItem.appendChild(petDiv);
             }
 
+            if (breakfastFee > 0) {
+                const breakfastDiv = document.createElement('div');
+                breakfastDiv.textContent = `Breakfast (${guests} guest${guests > 1 ? 's' : ''}): ₱ ${breakfastFee.toLocaleString()}`;
+                summaryItem.appendChild(breakfastDiv);
+            }
+
             summaryContainer.appendChild(summaryItem);
         });
 
@@ -843,9 +924,11 @@ $galleryData = [
         const selectedAccText = document.getElementById('selected-accommodations-count');
         if (selectedAccText) selectedAccText.textContent = `${selectedCount} selected`;
 
-        // Enable/disable proceed button
+        // Enable/disable proceed and skip buttons
         const proceedBtn = document.getElementById('proceed-btn');
+        const skipBtn = document.getElementById('skip-btn');
         if (proceedBtn) proceedBtn.disabled = selectedCount === 0;
+        if (skipBtn) skipBtn.disabled = selectedCount === 0;
     };
 
     window.initializeBookingSummary = function() {
@@ -1091,6 +1174,246 @@ $galleryData = [
     let previousFocusElement = null;
     let focusableElements = [];
 
+    // Handle staycation card selection
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('staycation-checkbox')) {
+            const checkbox = e.target;
+            const card = checkbox.closest('.staycation-card');
+            const indicator = card.querySelector('.selection-indicator div');
+
+            if (checkbox.checked) {
+                card.classList.add('border-[#8f5d54]', 'bg-[#8f5d54]/5');
+                card.classList.remove('border-gray-200');
+                indicator.classList.remove('opacity-0');
+                indicator.classList.add('opacity-100');
+            } else {
+                card.classList.remove('border-[#8f5d54]', 'bg-[#8f5d54]/5');
+                card.classList.add('border-gray-200');
+                indicator.classList.remove('opacity-100');
+                indicator.classList.add('opacity-0');
+            }
+        }
+    });
+
+    // Allow clicking on card to toggle selection
+    document.addEventListener('click', function(e) {
+        const card = e.target.closest('.staycation-card');
+        if (card && !e.target.closest('input, select, button, label')) {
+            const checkbox = card.querySelector('.staycation-checkbox');
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                checkbox.dispatchEvent(new Event('change'));
+            }
+        }
+    });
+
+    // Handle guest +/- buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('guest-increment') || e.target.classList.contains('guest-decrement')) {
+            e.preventDefault();
+            const button = e.target;
+            const targetId = button.dataset.target;
+            const input = document.getElementById(targetId);
+            if (!input) return;
+
+            const currentValue = parseInt(input.value) || 0;
+            const min = parseInt(input.min) || 0;
+            const max = parseInt(input.max) || 50;
+
+            let newValue;
+            if (button.classList.contains('guest-increment')) {
+                newValue = Math.min(currentValue + 1, max);
+            } else {
+                newValue = Math.max(currentValue - 1, min);
+            }
+
+            input.value = newValue;
+
+            // Update pricing display
+            updateModalPricing(button.closest('.bg-white.rounded-xl'));
+
+            // Trigger change event for validation
+            input.dispatchEvent(new Event('change'));
+        }
+    });
+
+    // Update pricing display in modal
+    function updateModalPricing(card) {
+        if (!card) return;
+
+        const input = card.querySelector('.guest-input');
+        const priceDisplay = card.querySelector('.pricing-display span');
+        if (!input || !priceDisplay) return;
+
+        const guests = parseInt(input.value) || 0;
+        const checkbox = card.querySelector('.staycation-checkbox');
+        if (!checkbox) return;
+
+        let staycation;
+        try {
+            staycation = JSON.parse(checkbox.dataset.staycation || '{}');
+        } catch (e) {
+            return;
+        }
+
+        // Calculate accommodation price based on staycation type
+        let accommodationPrice = 0;
+        const checkin = new Date('{{ $checkinDate }}');
+        const checkout = new Date('{{ $checkoutDate }}');
+        const nights = Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24));
+
+        const name = staycation.name.toLowerCase();
+        if (name.includes('standard') || name.includes('premium')) {
+            let current = new Date(checkin);
+            while (current < checkout) {
+                const day = current.getDay();
+                const isWeekend = day === 5 || day === 6;
+                let basePrice = 0;
+                if (name.includes('standard')) basePrice = isWeekend ? 6000 : 4800;
+                if (name.includes('premium')) basePrice = isWeekend ? 7200 : 5760;
+
+                const extraGuests = Math.max(0, guests - 4);
+                accommodationPrice += basePrice + (extraGuests * 400);
+                current.setDate(current.getDate() + 1);
+            }
+        } else if (name.includes('bell') || name.includes('dome')) {
+            accommodationPrice = 3000 * nights;
+        } else if (name.includes('byot') || name.includes('car')) {
+            accommodationPrice = 300 * guests * nights;
+        }
+
+        // Add pet fees if applicable
+        let petFee = 0;
+        const hasPetsRadio = card.querySelector('.has-pets-radio:checked');
+        if (hasPetsRadio && hasPetsRadio.value === 'yes') {
+            const petAgreement = card.querySelector('.pet-agreement');
+            const petCountInput = card.querySelector('.pet-num-input');
+            if (petAgreement && petAgreement.checked && petCountInput) {
+                const numPets = parseInt(petCountInput.value) || 0;
+                petFee = 2000 * numPets;
+            }
+        }
+
+        // Add breakfast fees if applicable
+        let breakfastFee = 0;
+        const hasBreakfastRadio = card.querySelector('.has-breakfast-radio:checked');
+        if (hasBreakfastRadio && hasBreakfastRadio.value === 'yes') {
+            breakfastFee = 500 * guests;
+        }
+
+        const totalPrice = accommodationPrice + petFee + breakfastFee;
+        priceDisplay.textContent = totalPrice.toLocaleString();
+    }
+
+    // Update pricing when guest input changes
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('guest-input')) {
+            updateModalPricing(e.target.closest('.bg-white.rounded-xl'));
+        }
+    });
+
+
+
+
+
+    // Handle pet section radio buttons
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('has-pets-radio')) {
+            const radio = e.target;
+            const card = radio.closest('.bg-white.rounded-xl');
+            const petDetails = card.querySelector('.pet-details');
+            const petAgreement = card.querySelector('.pet-agreement');
+            const petCountInput = card.querySelector('.pet-num-input');
+            const petButtons = card.querySelectorAll('.pet-decrement, .pet-increment');
+
+            if (radio.value === 'yes') {
+                // Show pet details
+                if (petDetails) petDetails.classList.remove('hidden');
+                // Reset pet agreement and count
+                if (petAgreement) petAgreement.checked = false;
+                if (petCountInput) {
+                    petCountInput.value = '0';
+                    petCountInput.disabled = true;
+                }
+                if (petButtons) {
+                    petButtons.forEach(btn => btn.disabled = true);
+                }
+            } else {
+                // Hide pet details and reset
+                if (petDetails) petDetails.classList.add('hidden');
+                if (petAgreement) petAgreement.checked = false;
+                if (petCountInput) {
+                    petCountInput.value = '0';
+                    petCountInput.disabled = true;
+                }
+                if (petButtons) {
+                    petButtons.forEach(btn => btn.disabled = true);
+                }
+            }
+
+            // Update pricing
+            updateModalPricing(card);
+        }
+    });
+
+    // Handle pet agreement checkbox
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('pet-agreement')) {
+            const checkbox = e.target;
+            const card = checkbox.closest('.bg-white.rounded-xl');
+            const petCountInput = card.querySelector('.pet-num-input');
+            const petButtons = card.querySelectorAll('.pet-decrement, .pet-increment');
+
+            if (checkbox.checked) {
+                // Enable pet count controls
+                if (petCountInput) petCountInput.disabled = false;
+                if (petButtons) {
+                    petButtons.forEach(btn => btn.disabled = false);
+                }
+            } else {
+                // Disable and reset pet count
+                if (petCountInput) {
+                    petCountInput.value = '0';
+                    petCountInput.disabled = true;
+                }
+                if (petButtons) {
+                    petButtons.forEach(btn => btn.disabled = true);
+                }
+            }
+
+            // Update pricing
+            updateModalPricing(card);
+        }
+    });
+
+    // Handle pet count +/- buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('pet-increment') || e.target.classList.contains('pet-decrement')) {
+            e.preventDefault();
+            const button = e.target;
+            const targetId = button.dataset.target;
+            const input = document.getElementById(targetId);
+            if (!input || input.disabled) return;
+
+            const currentValue = parseInt(input.value) || 0;
+            const min = parseInt(input.min) || 0;
+            const max = parseInt(input.max) || 2;
+
+            let newValue;
+            if (button.classList.contains('pet-increment')) {
+                newValue = Math.min(currentValue + 1, max);
+            } else {
+                newValue = Math.max(currentValue - 1, min);
+            }
+
+            input.value = newValue;
+
+            // Update pricing
+            const card = button.closest('.bg-white.rounded-xl');
+            updateModalPricing(card);
+        }
+    });
+
     function getCapacityText(staycation) {
         const capacity = staycation.capacity || 0;
         const adults = staycation.adults || 0;
@@ -1106,9 +1429,9 @@ $galleryData = [
         const lowerName = staycation.name.toLowerCase();
         let price;
         if (lowerName.includes('standard')) {
-            price = '₱4,800/night (Weekdays: Sun.-Thu.)<br>• ₱6,000/night (Weekends: Fri.-Sat.)';
+            price = 'Start at ₱4,800/night (Weekdays: Sun.-Thu.)<br>• ₱6,000/night (Weekends: Fri.-Sat.)';
         } else if (lowerName.includes('premium')) {
-            price = '₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)';
+            price = 'Start at ₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)';
         } else if (lowerName.includes('bell') || lowerName.includes('dome')) {
             price = 'Starts at ₱3,000/tent/night';
         } else if (lowerName.includes('byot') || lowerName.includes('car')) {
@@ -1208,11 +1531,20 @@ $galleryData = [
             let isCarCamping = staycation.name.toLowerCase().includes('car camping');
 
             let option = '';
-            if (staycation.name.toLowerCase().includes('standard')) option = 'standard';
-            else if (staycation.name.toLowerCase().includes('premium')) option = 'premium';
-            else if (staycation.name.toLowerCase().includes('dome')) option = 'dome';
-            else if (staycation.name.toLowerCase().includes('bell')) option = 'bell';
-            else if (staycation.name.toLowerCase().includes('byot')) option = 'byot';
+            let defaultGuests = 0;
+            if (staycation.name.toLowerCase().includes('standard')) {
+                option = 'standard';
+                defaultGuests = 4;
+            } else if (staycation.name.toLowerCase().includes('premium')) {
+                option = 'premium';
+                defaultGuests = 4;
+            } else if (staycation.name.toLowerCase().includes('dome')) {
+                option = 'dome';
+                defaultGuests = 8;
+            } else if (staycation.name.toLowerCase().includes('bell')) {
+                option = 'bell';
+                defaultGuests = 8;
+            } else if (staycation.name.toLowerCase().includes('byot')) option = 'byot';
             else if (staycation.name.toLowerCase().includes('car')) option = 'car';
 
             if (isBYOT) {
@@ -1244,8 +1576,8 @@ $galleryData = [
                 </div>
 
                 <div class="flex flex-col p-4 h-full">
-                    <div class="flex justify-between items-start mb-2 gap-2">
-                        <h5 class="font-bold text-xl md:text-2xl mb-0" style="line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em;">
+                    <div class="flex justify-between items-start mb-0 gap-2">
+                        <h5 class="font-bold mb-0" style="line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em; font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                             ${staycation.name}
                         </h5>
                         <span class="inline-flex items-center rounded-full px-3 py-1 text-base font-semibold ml-2" style="background: linear-gradient(135deg, ${category === 'glamping' ? '#FFD700 0%, #FFA500 100%' : '#32CD32 0%, #228B22 100%'}); color: ${category === 'glamping' ? '#333' : '#fff'};">
@@ -1253,60 +1585,115 @@ $galleryData = [
                         </span>
                     </div>
 
-                    <!-- CHECKBOX TO SELECT STAYCATION -->
-                    <div class="mb-3 flex items-center gap-2">
-                        <input type="checkbox"
-                            id="select-${index}"
-                            class="staycation-checkbox w-5 h-5"
-                            data-index="${index}"
-                            data-staycation='${JSON.stringify(staycation).replace(/'/g, "'")}' />
-                        <label for="select-${index}" class="text-gray-700 text-base md:text-lg cursor-pointer">
-                            Select this staycation
-                        </label>
-                    </div>
 
-                    <p class="text-gray-500 text-base md:text-lg mb-3" style="flex-grow: 1;">
+                    <p class="text-gray-500 mb-0" style="flex-grow: 1; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                         ${isBYOT || isCarCamping ? 'Area capacity: Suitable for multiple setups and vehicles' : getCapacityText(staycation)}
                     </p>
 
-                    <div class="mb-3">
-                        <h6 class="text-sm font-semibold text-gray-800 mb-2">Features</h6>
-                        <ul class="text-sm text-gray-600 space-y-1">
+                    <div class="mb-0">
+                        <h6 class="font-semibold text-gray-800 mb-0" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Features</h6>
+                        <ul class="text-gray-600 space-y-1" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                             ${getFeaturesList(staycation.name)}
                         </ul>
                     </div>
 
                     <div class="mt-auto">
                         <div class="mb-3">
-                            <label for="guests-${index}" class="block text-lg font-medium text-gray-700 mb-1">${inputLabel}</label>
-                            ${isBYOT || isCarCamping ?
-                                `<input type="number" id="guests-${index}" name="guests" required class="guest-input w-full px-4 py-2.5 border border-gray-300 rounded-lg text-lg sm:text-xl focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent" min="1" max="50" placeholder="${inputPlaceholder}">` :
-                                `<select id="guests-${index}" name="guests" required class="guest-input w-full px-4 py-2.5 border border-gray-300 rounded-lg text-lg sm:text-xl focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent">
-                                    ${Array.from({length: 7}, (_, i) => `<option value="${i}" ${i === 0 ? 'selected' : ''}>${i}</option>`).join('')}
-                                </select>`
-                            }
+                            <label for="guests-${index}" class="block font-bold text-gray-700 mb-1 mt-2" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">${inputLabel}</label>
+                            <div class="flex items-center gap-2">
+                                <button type="button" class="guest-decrement w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors" data-target="guests-${index}">-</button>
+                                ${isBYOT || isCarCamping ?
+                                    `<input type="number" id="guests-${index}" name="guests" required class="guest-input flex-1 text-center px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent" style="font-size: 13px;" min="1" max="50" placeholder="${inputPlaceholder}" value="${defaultGuests}">` :
+                                    `<input type="number" id="guests-${index}" name="guests" required class="guest-input flex-1 text-center px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent" style="font-size: 13px;" min="0" max="${category === 'camping' ? 8 : 6}" value="${defaultGuests}">`
+                                }
+                                <button type="button" class="guest-increment w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors" data-target="guests-${index}">+</button>
+                            </div>
+                            <div class="pricing-display mt-2 text-sm font-semibold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">
+                                Total: ₱<span class="total-price-${index}">0</span>
+                            </div>
                         </div>
                         ${staycation.name.toLowerCase().includes('glamping') || staycation.name.toLowerCase().includes('bell') || staycation.name.toLowerCase().includes('dome') ? `
-                        <div class="mb-3 pt-3 border-t border-gray-200">
-                            <div class="mb-2">
-                                <label class="flex items-start">
-                                    <input type="checkbox" class="pet-agreement mt-1 mr-2 w-4 h-4" data-staycation-id="${staycation.id}" onchange="togglePetSelect(this)">
-                                    <span class="text-sm text-gray-700">
-                                        I agree to the <a href="#" onclick="openPetPolicyModal(); return false;" class="text-emerald-600 hover:text-emerald-800 underline">pet policy</a>
-                                    </span>
-                                </label>
+                        <div class="pet-section">
+                            <div class="pet-initial-question mb-3 pt-3 border-t border-gray-200">
+                                <p class="text-sm font-medium text-gray-700 mb-2" style="font-family: 'Gotham Book', sans-serif;">Will you be bringing pets?</p>
+                                <div class="flex gap-4">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="has_pets_${index}" value="no" class="has-pets-radio" checked data-staycation-id="${staycation.id}">
+                                        <span class="text-sm text-gray-700" style="font-family: 'Gotham Book', sans-serif;">No pets</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="has_pets_${index}" value="yes" class="has-pets-radio" data-staycation-id="${staycation.id}">
+                                        <span class="text-sm text-gray-700" style="font-family: 'Gotham Book', sans-serif;">Bringing pets (+₱2,000/pet)</span>
+                                    </label>
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-lg font-medium text-gray-700 mb-1">Number of pets</label>
-                                <select class="pet-num-input w-full px-4 py-2.5 border border-gray-300 rounded-lg text-lg sm:text-xl focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent" data-staycation-id="${staycation.id}">
-                                    ${Array.from({length: 3}, (_, i) => `<option value="${i}" ${i === 0 ? 'selected' : ''}>${i}</option>`).join('')}
-                                </select>
+
+                            <div class="pet-details hidden">
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <div class="flex items-start gap-3 mb-3">
+                                        <input type="checkbox" id="pet-agreement-${index}" class="pet-agreement mt-1 w-4 h-4" data-staycation-id="${staycation.id}">
+                                        <div class="flex-1">
+                                            <label for="pet-agreement-${index}" class="font-medium text-blue-900 cursor-pointer text-sm" style="font-family: 'Gotham Book', sans-serif;">
+                                                I agree to the pet policy
+                                            </label>
+                                            <div class="text-xs text-blue-800 mt-1 space-y-1">
+                                                <p>• Pets must be leashed and supervised at all times</p>
+                                                <p>• ₱2,000 fee per pet (non-refundable)</p>
+                                                <p>• Maximum 2 pets per accommodation</p>
+                                            </div>
+                                            <button onclick="openPetPolicyModal(); return false;" class="text-xs text-blue-600 hover:text-blue-800 underline mt-1">
+                                                View full pet policy
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="pet-count-section">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Gotham Book', sans-serif;">Number of pets</label>
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" class="pet-decrement w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" data-target="pet-count-${index}" disabled>-</button>
+                                            <input type="number" id="pet-count-${index}" class="pet-num-input text-center w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent" style="font-family: 'Gotham Book', sans-serif;" min="0" max="2" value="0" disabled>
+                                            <button type="button" class="pet-increment w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" data-target="pet-count-${index}" disabled>+</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         ` : ''}
-                        <span class="block font-bold text-primary-600 text-xl md:text-2xl mb-2">
+
+                        <!-- FOOD OPTION -->
+                        <div class="food-section">
+                            <div class="pt-3 border-t border-gray-200">
+                                <p class="text-sm font-medium text-gray-700 mb-2" style="font-family: 'Gotham Book', sans-serif;">Will you add breakfast meal?</p>
+                                <div class="flex gap-4">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="has_breakfast_${index}" value="no" class="has-breakfast-radio" checked data-staycation-id="${staycation.id}">
+                                        <span class="text-sm text-gray-700" style="font-family: 'Gotham Book', sans-serif;">Without breakfast</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="has_breakfast_${index}" value="yes" class="has-breakfast-radio" data-staycation-id="${staycation.id}">
+                                        <span class="text-sm text-gray-700" style="font-family: 'Gotham Book', sans-serif;">With breakfast (+₱500/person)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <span class="block font-bold text-primary-600 mt-4 mb-2" style="font-size: 20px; font-family: 'Gotham Book', sans-serif;">
                             ${getPriceDisplay(staycation)}
                         </span>
+
+                        <!-- CHECKBOX TO SELECT STAYCATION -->
+                        <div class="mb-3">
+                            <label for="select-${index}" class="inline-flex items-center justify-center w-full px-4 py-2 bg-[#8f5d54] text-white font-semibold rounded-lg cursor-pointer hover:bg-[#a0675a] transition-colors duration-200 shadow-md hover:shadow-lg" style="font-family: 'Gotham Book', sans-serif;">
+                                <input type="checkbox"
+                                    id="select-${index}"
+                                    class="staycation-checkbox hidden"
+                                    data-index="${index}"
+                                    data-staycation='${JSON.stringify(staycation).replace(/'/g, "'")}'
+                                />
+                                <span class="select-text">Select this staycation</span>
+                                <i class="fas fa-check ml-2 opacity-0 transition-opacity"></i>
+                            </label>
+                        </div>
 
                         <div class="flex gap-2">
                             <button class="flex-1 inline-flex justify-center items-center rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition px-3 py-2"
@@ -1637,7 +2024,8 @@ $galleryData = [
             !target.matches('.staycation-checkbox') &&
             !target.matches('.guest-input') &&
             !target.matches('.pet-agreement') &&
-            !target.matches('.pet-num-input')
+            !target.matches('.pet-num-input') &&
+            !target.matches('.has-breakfast-radio')
         ) {
             return;
         }
@@ -1670,6 +2058,9 @@ $galleryData = [
         const petAgreement = petAgreementInput ? petAgreementInput.checked : false;
         const numPets = numPetsInput ? parseInt(numPetsInput.value) || 0 : 0;
 
+        const hasBreakfastRadio = card.querySelector('.has-breakfast-radio:checked');
+        const hasBreakfast = hasBreakfastRadio && hasBreakfastRadio.value === 'yes';
+
         if (target.matches('.pet-num-input') && !petAgreement) {
             numPetsInput.value = '0';
             showToast('Please agree to the pet policy before selecting the number of pets.', 'error');
@@ -1687,11 +2078,22 @@ $galleryData = [
                 staycation,
                 guests,
                 pet_agreement: petAgreement,
-                num_pets: numPets
+                num_pets: numPets,
+                has_breakfast: hasBreakfast
             };
             displaySelectedAccommodation(accommodationIndex, window.selectedAccommodations[accommodationIndex]);
             if (target.matches('.staycation-checkbox')) {
                 showToast(`You selected ${staycation.name}`, 'success');
+                // Update button appearance
+                const label = card.querySelector('label[for="select-' + accommodationIndex + '"]');
+                if (label) {
+                    label.classList.remove('bg-[#8f5d54]', 'hover:bg-[#a0675a]');
+                    label.classList.add('bg-green-600', 'hover:bg-green-700');
+                    const selectText = label.querySelector('.select-text');
+                    const checkIcon = label.querySelector('.fa-check');
+                    if (selectText) selectText.textContent = 'Selected';
+                    if (checkIcon) checkIcon.classList.remove('opacity-0');
+                }
             }
         } else {
             // Unchecked: remove selection
@@ -1699,6 +2101,16 @@ $galleryData = [
             displaySelectedAccommodation(accommodationIndex, null);
             if (target.matches('.staycation-checkbox')) {
                 showToast(`You removed ${staycation.name}`, 'info');
+                // Reset button appearance
+                const label = card.querySelector('label[for="select-' + accommodationIndex + '"]');
+                if (label) {
+                    label.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    label.classList.add('bg-[#8f5d54]', 'hover:bg-[#a0675a]');
+                    const selectText = label.querySelector('.select-text');
+                    const checkIcon = label.querySelector('.fa-check');
+                    if (selectText) selectText.textContent = 'Select this staycation';
+                    if (checkIcon) checkIcon.classList.add('opacity-0');
+                }
             }
         }
 
@@ -1716,6 +2128,36 @@ $galleryData = [
     });
 
     function proceedToActivities() {
+        // Validation: Check if accommodations are selected and have valid guests
+        const selectedCount = Object.keys(window.selectedAccommodations).length;
+        if (selectedCount === 0) {
+            showToast('Please select at least one accommodation before proceeding.', 'error');
+            return;
+        }
+
+        // Check each selected accommodation has valid guests
+        for (const [key, acc] of Object.entries(window.selectedAccommodations)) {
+            if (!acc.guests || acc.guests < 1) {
+                showToast(`Please specify the number of guests for Accommodation ${parseInt(key) + 1}.`, 'error');
+                return;
+            }
+        }
+
+        // Confirmation dialog
+        const totalPrice = document.getElementById('total-price')?.textContent || '₱ 0';
+        const totalGuests = document.getElementById('total-guests')?.textContent || '0';
+
+        if (!confirm(`Are you sure you want to proceed?\n\nTotal Guests: ${totalGuests}\nTotal Price: ${totalPrice}\n\nYou will be taken to select activities next.`)) {
+            return;
+        }
+
+        // Show loading state
+        const proceedBtn = document.getElementById('proceed-btn');
+        if (proceedBtn) {
+            proceedBtn.disabled = true;
+            proceedBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+        }
+
         // Send POST request to save accommodations and proceed
         fetch('{{ route("booking.staycation") }}', {
             method: 'POST',
@@ -1740,11 +2182,97 @@ $galleryData = [
         .then(data => {
             if (data && data.success) {
                 window.location.href = '{{ route("booking.staycationActivities") }}';
+            } else {
+                // Reset button
+                if (proceedBtn) {
+                    proceedBtn.disabled = false;
+                    proceedBtn.innerHTML = 'Proceed to Activities';
+                }
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error saving accommodations. Please try again.');
+            // Reset button
+            if (proceedBtn) {
+                proceedBtn.disabled = false;
+                proceedBtn.innerHTML = 'Proceed to Activities';
+            }
+            showToast('Network error. Please check your connection and try again.', 'error');
+        });
+    }
+
+    function skipToPayment() {
+        // Validation: Check if accommodations are selected and have valid guests
+        const selectedCount = Object.keys(window.selectedAccommodations).length;
+        if (selectedCount === 0) {
+            showToast('Please select at least one accommodation before proceeding.', 'error');
+            return;
+        }
+
+        // Check each selected accommodation has valid guests
+        for (const [key, acc] of Object.entries(window.selectedAccommodations)) {
+            if (!acc.guests || acc.guests < 1) {
+                showToast(`Please specify the number of guests for Accommodation ${parseInt(key) + 1}.`, 'error');
+                return;
+            }
+        }
+
+        // Confirmation dialog
+        const totalPrice = document.getElementById('total-price')?.textContent || '₱ 0';
+        const totalGuests = document.getElementById('total-guests')?.textContent || '0';
+
+        if (!confirm(`Are you sure you want to skip activities and proceed to payment?\n\nTotal Guests: ${totalGuests}\nTotal Price: ${totalPrice}\n\nYou can always add activities later if needed.`)) {
+            return;
+        }
+
+        // Show loading state
+        const skipBtn = document.getElementById('skip-btn');
+        if (skipBtn) {
+            skipBtn.disabled = true;
+            skipBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+        }
+
+        // Send POST request to save accommodations and skip to payment
+        fetch('{{ route("booking.staycation") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                accommodations: window.selectedAccommodations,
+                skip_to_payment: true,
+                pet_agreement: document.getElementById('pet-agreement') ? document.getElementById('pet-agreement').checked : false,
+                num_pets: document.getElementById('num-pets') ? (parseInt(document.getElementById('num-pets').value) || 0) : 0
+            })
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                return response.json();
+            }
+        })
+        .then(data => {
+            if (data && data.success) {
+                window.location.href = '{{ route("booking.staycationPayment") }}';
+            } else {
+                // Reset button
+                if (skipBtn) {
+                    skipBtn.disabled = false;
+                    skipBtn.innerHTML = 'Skip Activities & Go to Payment';
+                }
+                showToast('Error saving accommodations. Please try again.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Reset button
+            if (skipBtn) {
+                skipBtn.disabled = false;
+                skipBtn.innerHTML = 'Skip Activities & Go to Payment';
+            }
+            showToast('Network error. Please check your connection and try again.', 'error');
         });
     }
 

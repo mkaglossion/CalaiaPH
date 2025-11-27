@@ -62,12 +62,10 @@
         <div class="swiper-slide relative flex items-center justify-center bg-gray-200 overflow-hidden">
           <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
             <div class="text-center px-4">
-              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                  style="font-family: gotham;">
+              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                 No Image Available
               </h2>
-              <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-                style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
+              <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase" style="font-size: 13px; font-family: 'Gotham Book', sans-serif; font-style: italic;">
                 Images will be added soon
               </p>
             </div>
@@ -121,7 +119,7 @@
               {{-- Body --}}
               <div class="px-8 pt-6 pb-8">
                 {{-- Title --}}
-                 <h3 class="mb-4 text-3xl font-extrabold uppercase tracking-wide text-center" style="color:#97655A;">
+                 <h3 class="mb-4 text-3xl font-extrabold uppercase tracking-wide text-center" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                    @if($package['title'] === 'Nature Experience')
                      NATURE<br>EXPERIENCE
                    @else
@@ -134,7 +132,7 @@
                 <div class="h-px w-full bg-[#dfe6d5] mb-5"></div>
 
                 {{-- Features (compact, centered list) --}}
-                <ul class="space-y-2 text-base md:text-lg uppercase tracking-widest text-center" style="color:#8f6a60; font-family: 'Vila Zilka Serif', serif;">
+                <ul class="space-y-2 text-base md:text-lg uppercase tracking-widest text-center" style="color:#8f6a60; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                   @foreach($package['features'] as $feature)
                     <li>
                       {{ strtoupper($feature) }}
@@ -166,12 +164,11 @@
         {{-- Information Section (kept; slight polish to match palette) --}}
         <div class="bg-gradient-to-r from-[#6b9691] to-[#7ba08a] text-white rounded-3xl p-8 md:p-10 shadow-xl">
           <div class="text-center mb-8">
-            <h4 class="text-2xl md:text-3xl font-bold mb-4 flex items-center justify-center"
-                style="font-family:gotham;">
+            <h4 class="text-2xl md:text-3xl font-bold mb-4 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
               <i class="bi bi-info-circle-fill mr-3 text-3xl"></i>
               Important Information
             </h4>
-            <p class="text-lg/7 opacity-90">Everything you need to know before your visit</p>
+            <p class="text-lg/7 opacity-90" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Everything you need to know before your visit</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -180,12 +177,12 @@
               ['icon' => 'bi-calendar-check',  'text' => 'Advance booking recommended for guaranteed slots'],
               ['icon' => 'bi-person',          'text' => 'Children under 3 years old enter for free'],
               ['icon' => 'bi-people',          'text' => 'Group discounts available for 10+ persons'],
-              ['icon' => 'bi-backpack',        'text' => 'Wear comfy clothing and footwear for outdoor activities'],
+              ['icon' => 'bi-person',        'text' => 'Wear comfy clothing and footwear for outdoor activities'],
               ['icon' => 'bi-cup-straw',       'text' => 'Food and beverages available for purchase on site'],
             ] as $info)
               <div class="flex items-start bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all duration-300">
                 <i class="bi {{ $info['icon'] }} text-xl mr-4 mt-1 flex-shrink-0"></i>
-                <span class="text-sm md:text-base leading-relaxed">{{ $info['text'] }}</span>
+                <span class="text-sm md:text-base leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">{{ $info['text'] }}</span>
               </div>
             @endforeach
           </div>
@@ -200,7 +197,7 @@
       {{-- Modal Header --}}
       <div class="p-4 md:p-6 border-b border-gray-300 flex-shrink-0">
         <div class="flex justify-between items-center">
-          <h3 id="detailsModalLabel" class="text-xl md:text-2xl font-bold text-gray-800"></h3>
+          <h3 id="detailsModalLabel" class="text-xl md:text-2xl font-bold text-gray-800" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;"></h3>
           <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" onclick="closeModal()" aria-label="Close modal">
             <i class="bi bi-x-lg text-xl md:text-2xl"></i>
           </button>
@@ -318,7 +315,7 @@
     // Build package details
     const packageDetails = document.getElementById('packageDetails');
     packageDetails.innerHTML = descriptionParagraphs.map(p => `
-      <p class="flex items-start text-gray-700">
+      <p class="flex items-start text-gray-700 text-xs" style="font-family: 'Gotham Book', sans-serif;">
         <i class="bi bi-check-circle-fill text-blue-500 mr-3 mt-1 flex-shrink-0"></i>
         <span class="flex-1">${p}</span>
       </p>

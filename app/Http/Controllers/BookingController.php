@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\BookingConfirmation;
+use App\Mail\SpecialEventBookingConfirmation;
 use DateTime;
 
 class BookingController extends Controller
@@ -19,7 +20,7 @@ class BookingController extends Controller
     public function create(Request $request)
     {
         $type = $request->get('type', 'day-visit');
-        $allowedTypes = ['day-visit', 'room', 'overnight', 'daytour'];
+        $allowedTypes = ['day-visit', 'room', 'overnight', 'daytour', 'special-event'];
         // Map 'daytour' to 'day-visit' for consistency
         if ($type === 'daytour') {
             $type = 'day-visit';
@@ -255,6 +256,15 @@ class BookingController extends Controller
                     $accommodationTotal += 2000 * $acc['num_pets'];
                 }
             }
+
+            // Add breakfast fees
+            $breakfastTotal = 0;
+            foreach ($booking['accommodations'] ?? [] as $acc) {
+                if (!empty($acc['has_breakfast'])) {
+                    $breakfastTotal += 500 * ($acc['guests'] ?? 1);
+                }
+            }
+            $accommodationTotal += $breakfastTotal;
         }
 
         $activitiesTotal = collect($request->activities)->sum(function($activity) {
@@ -339,6 +349,26 @@ class BookingController extends Controller
             ]);
         }
 
+        // Check for special event booking
+        $specialEventBookingData = session('special_event_booking_data');
+        $specialEventSelectedActivities = session('special_event_selected_activities', []);
+        $specialEventGrandTotal = session('special_event_grand_total', 0);
+        $specialEventCustomerInfo = session('special_event_customer_info', []);
+
+        if ($specialEventBookingData) {
+            // Handle special event confirmation
+            // Clear session data after showing confirmation
+            session()->forget(['special_event_booking_data', 'special_event_selected_activities', 'special_event_grand_total', 'special_event_customer_info']);
+
+            return view('booking.confirmation', [
+                'bookingData' => $specialEventBookingData,
+                'selectedActivities' => $specialEventSelectedActivities,
+                'grandTotal' => $specialEventGrandTotal,
+                'customerInfo' => $specialEventCustomerInfo,
+                'isSpecialEvent' => true
+            ]);
+        }
+
         // Handle regular booking
         $bookingData = session('booking_data');
         $selectedActivities = session('selected_activities', []);
@@ -371,14 +401,16 @@ class BookingController extends Controller
         $bookingData = session('booking_data');
         $staycationBooking = session('booking', []);
         $dayvisitBooking = session('dayvisit_booking_data');
+        $specialEventBooking = session('special_event_booking_data');
 
-        if (!$bookingData && empty($staycationBooking) && !$dayvisitBooking) {
+        if (!$bookingData && empty($staycationBooking) && !$dayvisitBooking && !$specialEventBooking) {
             return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
         }
 
         // Determine booking type
         $isStaycation = !empty($staycationBooking) && isset($staycationBooking['booking_type']) && $staycationBooking['booking_type'] === 'staycation';
         $isDayvisit = !empty($dayvisitBooking);
+        $isSpecialEvent = !empty($specialEventBooking);
 
         if ($isStaycation) {
             // Handle staycation booking
@@ -470,6 +502,49 @@ class BookingController extends Controller
             ]);
         
             return redirect()->route('booking.confirmation')->with('success', 'Day visit payment successful! Booking confirmed. Check your email for details.');
+        } elseif ($isSpecialEvent) {
+            // Handle special event booking
+            $selectedActivities = session('special_event_selected_activities', []);
+
+            // Add payment details to booking data for receipt
+            $specialEventBooking['payment_method'] = $request->payment_method;
+            $specialEventBooking['payment_date'] = now();
+            $specialEventBooking['transaction_id'] = 'TXN-' . strtoupper(uniqid());
+
+            try {
+                // Send receipt email for special event
+                Log::info('Sending special event confirmation email to: ' . $specialEventBooking['email']);
+                Mail::to($specialEventBooking['email'])->send(new SpecialEventBookingConfirmation($specialEventBooking, $selectedActivities));
+                Log::info('Special event confirmation email sent successfully to: ' . $specialEventBooking['email']);
+            } catch (\Exception $e) {
+                // Log the error but continue to confirmation
+                Log::error('Special event receipt email failed: ' . $e->getMessage());
+                Log::error('Special event email error details: ', ['email' => $specialEventBooking['email'], 'booking' => $specialEventBooking]);
+            }
+
+            // Calculate grand total
+            $grandTotal = ($specialEventBooking['price'] ?? 0) + collect($selectedActivities)->sum(function($activity) {
+                return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+            });
+
+            // Add grand total to booking data for email
+            $specialEventBooking['grand_total'] = $grandTotal;
+
+            // Store confirmation data in session
+            session([
+                'special_event_booking_data' => $specialEventBooking,
+                'special_event_selected_activities' => $selectedActivities,
+                'special_event_grand_total' => $grandTotal,
+                'special_event_customer_info' => [
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'email' => $request->email,
+                    'phone' => $request->phone,
+                    'special_requests' => $request->special_requests,
+                ]
+            ]);
+
+            return redirect()->route('booking.confirmation')->with('success', 'Special event payment successful! Booking confirmed. Check your email for details.');
         } else {
             // Handle regular booking
             $selectedActivities = session('selected_activities', []);
@@ -562,7 +637,9 @@ class BookingController extends Controller
             session(['booking' => $booking]);
 
             // Redirect based on request
-            if ($request->input('proceed_to_activities')) {
+            if ($request->input('skip_to_payment')) {
+                return redirect()->route('booking.staycationPayment');
+            } elseif ($request->input('proceed_to_activities')) {
                 return redirect()->route('booking.staycationActivities');
             } else {
                 return redirect()->route('booking.staycation');
@@ -596,8 +673,8 @@ class BookingController extends Controller
                 'name' => 'Dome Tent',
                 'type' => 'camping',
                 'capacity' => 8,
-                'adults' => 8,
-                'children' => 0,
+                'adults' => 6,
+                'children' => 2,
                 'price' => 1200,
                 'image' => asset('assets/images/carousel/Car-camping3.jpg'),
             ],
@@ -606,8 +683,8 @@ class BookingController extends Controller
                 'name' => 'Bell Tent',
                 'type' => 'camping',
                 'capacity' => 8,
-                'adults' => 8,
-                'children' => 0,
+                'adults' => 6,
+                'children' => 2,
                 'price' => 1800,
                 'image' => asset('assets/images/carousel/Car-camping3.jpg'),
             ],
@@ -845,7 +922,7 @@ class BookingController extends Controller
                 [
                     'id' => 1,
                     'name' => 'Go-Kart (15yo above)',
-                    'description' => '4 rounds / 10 minutes (approx.), Age requirement: 15 years old and above',
+                    'description' => '4 rounds / 10 mins (approx)',
                     'duration' => '10 minutes',
                     'price' => 500,
                     'availability' => 'Available',
@@ -854,7 +931,7 @@ class BookingController extends Controller
                 [
                     'id' => 2,
                     'name' => 'ATV (15yo above)',
-                    'description' => 'Duration: 20 minutes, Age requirement: 15 years old and above',
+                    'description' => '20 minutes',
                     'duration' => '20 minutes',
                     'price' => 800,
                     'availability' => 'Available',
@@ -863,7 +940,7 @@ class BookingController extends Controller
                 [
                     'id' => 3,
                     'name' => 'Wet Inflatable Slide',
-                    'description' => 'Minimum of 3 children or ₱1,050',
+                    'description' => '₱350 per child per hour, Minimum of 3 children or ₱1,050',
                     'duration' => '1 hour',
                     'price' => 350,
                     'availability' => 'Available',
@@ -872,7 +949,7 @@ class BookingController extends Controller
                 [
                     'id' => 4,
                     'name' => 'Mini Kalesa',
-                    'description' => 'Duration: 30 minutes, Weight limit: 200 lbs max',
+                    'description' => '30 minutes (200 lbs max)',
                     'duration' => '30 minutes',
                     'price' => 600,
                     'availability' => 'Available',
@@ -881,7 +958,7 @@ class BookingController extends Controller
                 [
                     'id' => 5,
                     'name' => 'Horseback Riding',
-                    'description' => 'Duration: 30 minutes',
+                    'description' => '30 minutes',
                     'duration' => '30 minutes',
                     'price' => 600,
                     'availability' => 'Available',
@@ -968,7 +1045,7 @@ class BookingController extends Controller
                 [
                     'id' => 14,
                     'name' => 'Kawa Bath',
-                    'description' => 'Duration: 1 hour (1–4 persons)',
+                    'description' => '1 hour (1–4 persons), ₱1,000 hot / ₱2,000 cold',
                     'duration' => '1 hour',
                     'price' => 1000,
                     'availability' => 'Available',
@@ -976,7 +1053,7 @@ class BookingController extends Controller
                 ],
                 [
                     'id' => 15,
-                    'name' => 'Bonfire & S\'mores',
+                    'name' => 'Bonfire | S\'mores',
                     'description' => '₱350 bonfire, ₱450 s\'mores (25 pcs)',
                     'duration' => '2 hours',
                     'price' => 350,
@@ -1093,5 +1170,136 @@ class BookingController extends Controller
         }
 
         return view('booking.dayvisit-payment', compact('bookingData'));
+    }
+
+    public function specialEvent(Request $request)
+    {
+        // Handle POST request for event selection
+        if ($request->isMethod('post') && $request->has('event_id')) {
+            $request->validate([
+                'event_id' => 'required|exists:events,id',
+            ]);
+
+            // Get event details
+            $event = \App\Models\Event::find($request->event_id);
+
+            // Store event selection in session
+            $bookingData = [
+                'event_id' => $request->event_id,
+                'event_name' => $event->name,
+                'checkin' => session('special_event_checkin'),
+                'checkout' => session('special_event_checkout'),
+                'price' => 5000, // Base price for special events
+                'type' => 'special-event',
+            ];
+            session(['special_event_booking_data' => $bookingData]);
+
+            return redirect()->route('booking.specialEventDetails');
+        }
+
+        // Handle POST request from availability widget with selected dates
+        if ($request->isMethod('post')) {
+            $request->validate([
+                'check_in' => 'required|date|after:yesterday',
+                'check_out' => 'required|date|after:check_in',
+            ]);
+
+            // Store selected dates in session
+            session(['special_event_checkin' => $request->check_in, 'special_event_checkout' => $request->check_out]);
+        }
+
+        // Get available events
+        $events = \App\Models\Event::with(['swiperImages', 'texts'])->get();
+
+        // Get stored dates
+        $checkin = session('special_event_checkin');
+        $checkout = session('special_event_checkout');
+
+        return view('booking.special-event', compact('events', 'checkin', 'checkout'));
+    }
+
+    public function specialEventDetails()
+    {
+        $bookingData = session('special_event_booking_data');
+
+        if (!$bookingData) {
+            return redirect()->route('booking.specialEvent')->with('error', 'Please select an event first.');
+        }
+
+        return view('booking.special-event-details', compact('bookingData'));
+    }
+
+    public function storeSpecialEvent(Request $request)
+    {
+        $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+            'guests' => 'required|integer|min:1|max:100', // Higher limit for events
+            'special_requests' => 'nullable|string|max:1000',
+        ]);
+
+        $bookingData = session('special_event_booking_data');
+
+        if (!$bookingData) {
+            return redirect()->route('booking.specialEvent')->with('error', 'Please select an event first.');
+        }
+
+        // Merge form data with existing booking data
+        $validated = array_merge($bookingData, $request->only(['first_name', 'last_name', 'email', 'phone', 'guests', 'special_requests']));
+
+        // Store updated booking data in session
+        session(['special_event_booking_data' => $validated]);
+
+        // Redirect to activities
+        return redirect()->route('booking.specialEventActivities');
+    }
+
+    public function specialEventActivities()
+    {
+        $bookingData = session('special_event_booking_data');
+
+        if (!$bookingData) {
+            return redirect()->route('booking.specialEvent')->with('error', 'No booking data found. Please start booking again.');
+        }
+
+        $activities = $this->getActivitiesData();
+
+        return view('booking.special-event-activities', compact('bookingData', 'activities'));
+    }
+
+    public function storeSpecialEventActivities(Request $request)
+    {
+        $request->validate([
+            'activities' => 'required|array',
+            'activities.*.id' => 'required|string',
+            'activities.*.name' => 'required|string',
+            'activities.*.price' => 'required|numeric',
+            'activities.*.guests' => 'required|integer|min:1',
+            'activities.*.type' => 'required|string|in:predefined',
+        ]);
+
+        $bookingData = session('special_event_booking_data');
+
+        if (!$bookingData) {
+            return response()->json(['success' => false, 'message' => 'No booking data found.'], 400);
+        }
+
+        // Store selected activities in session
+        session(['special_event_selected_activities' => $request->activities]);
+
+        return response()->json(['success' => true, 'message' => 'Activities saved successfully.']);
+    }
+
+    public function specialEventPayment()
+    {
+        $bookingData = session('special_event_booking_data');
+
+        if (!$bookingData) {
+            return redirect()->route('booking.specialEvent')->with('error', 'No booking data found. Please start booking again.');
+        }
+
+        return view('booking.special-event-payment', compact('bookingData'));
     }
 }

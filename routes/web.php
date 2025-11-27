@@ -71,6 +71,7 @@ Route::get('/staycation', [PagesController::class, 'staycation'])->name('staycat
 Route::get('/activities', [PagesController::class, 'activities'])->name('activities');
 Route::get('/dining', [PagesController::class, 'dining'])->name('dining');
 Route::get('/groups', [PagesController::class, 'groups'])->name('groups');
+Route::get('/special-events', [PagesController::class, 'specialEvents'])->name('special-events');
 Route::get('/farm', [PagesController::class, 'farm'])->name('farm');
 Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
 
@@ -108,6 +109,15 @@ Route::get('/api/booking/dayvisit/activities', [BookingController::class, 'getAc
 Route::get('/booking/dayvisit/activities', [BookingController::class, 'dayvisitActivities'])->name('booking.dayvisitActivities');
 Route::post('/booking/dayvisit/activities', [BookingController::class, 'storeDayvisitActivities'])->name('booking.storeDayvisitActivities');
 Route::get('/booking/dayvisit/payment', [BookingController::class, 'dayvisitPayment'])->name('booking.dayvisitPayment');
+
+// Special Event Routes
+Route::match(['GET', 'POST'], '/booking/special-event', [BookingController::class, 'specialEvent'])->name('booking.specialEvent');
+Route::get('/booking/special-event/details', [BookingController::class, 'specialEventDetails'])->name('booking.specialEventDetails');
+Route::post('/booking/special-event/store', [BookingController::class, 'storeSpecialEvent'])->name('booking.storeSpecialEvent');
+Route::get('/api/booking/special-event/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.specialEvent.activities');
+Route::get('/booking/special-event/activities', [BookingController::class, 'specialEventActivities'])->name('booking.specialEventActivities');
+Route::post('/booking/special-event/activities', [BookingController::class, 'storeSpecialEventActivities'])->name('booking.storeSpecialEventActivities');
+Route::get('/booking/special-event/payment', [BookingController::class, 'specialEventPayment'])->name('booking.specialEventPayment');
 
 // ========== Auth Routes ==========
 Route::post('/register-step-one', [RegisterController::class, 'registerStepOne']);

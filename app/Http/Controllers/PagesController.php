@@ -18,6 +18,7 @@ use App\Models\SpecialText;
 use App\Models\FarmText;
 
 use App\Models\MenuText;
+use App\Models\Event;
 
 use Illuminate\Http\Request;
 
@@ -81,6 +82,17 @@ class PagesController extends Controller
         })->toArray();
         $active = 'groups';
         return view('groups', compact('swiperImages', 'texts', 'active'));
+    }
+
+    public function specialEvents()
+    {
+        $swiperImages = SpecialSwiperImage::all();
+        $texts = SpecialText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($text, $label) {
+            return [strtolower($label) => $text];
+        })->toArray();
+        $events = Event::with(['swiperImages', 'texts'])->get();
+        $active = 'special-events';
+        return view('special-events', compact('swiperImages', 'texts', 'events', 'active'));
     }
 
     public function farm()
