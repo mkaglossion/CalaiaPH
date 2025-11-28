@@ -79,8 +79,8 @@
 
           <!-- Dropdown Menu -->
           <div
-            x-show="userOpen"
-            @click.away="userOpen = false"
+            x-show="open"
+            @click.away="open = false"
             x-transition
             class="absolute right-0 mt-2 w-48 lg:w-55 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
           >

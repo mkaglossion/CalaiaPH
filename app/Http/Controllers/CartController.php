@@ -8,43 +8,64 @@ use App\Mail\Receipt;
 
 class CartController extends Controller
 {
+    /**
+     * Build a normalized cart summary array.
+     */
+    protected function buildCartSummary(array $cart): array
+    {
+        $items = [];
+        $total = 0;
+        $count = 0;
+
+        foreach ($cart as $id => $it) {
+            $qty   = (int)($it['quantity'] ?? 0);
+            $price = (float)($it['price'] ?? 0);
+            $subtotal = $price * $qty;
+
+            $items[] = [
+                'id'       => $id,
+                'title'    => $it['title'] ?? null,
+                'price'    => $price,
+                'image'    => $it['image'] ?? asset('assets/images/carousel/activities-1.jpg'),
+                'quantity' => $qty,
+                'subtotal' => $subtotal,
+            ];
+
+            $total += $subtotal;
+            $count += $qty;
+        }
+
+        return [
+            'items' => $items,
+            'total' => $total,
+            'count' => $count,
+        ];
+    }
+
+    /**
+     * Helper: return JSON summary (with optional extra keys).
+     */
+    protected function jsonSummary(array $cart, array $extra = [])
+    {
+        return response()->json(array_merge($this->buildCartSummary($cart), $extra));
+    }
+
     public function index(Request $request)
     {
-        $cart = session('cart', []);
-        $cartCount = 0;
-        $cartTotal = 0;
+        $rawCart = session('cart', []);
+        $cart    = is_array($rawCart) ? $rawCart : [];
+        $summary = $this->buildCartSummary($cart);
 
-        if (is_array($cart)) {
-            foreach ($cart as $item) {
-                $qty = $item['quantity'] ?? 0;
-                $cartCount += $qty;
-                $cartTotal += ($item['price'] ?? 0) * $qty;
-            }
-        }
-
-        // Return JSON for AJAX requests (used by header dropdown)
+        // For header dropdown / AJAX
         if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
-            $items = [];
-            foreach ($cart as $id => $it) {
-                $qty = $it['quantity'] ?? 0;
-                $price = $it['price'] ?? 0;
-                $items[] = [
-                    'id' => $id,
-                    'title' => $it['title'] ?? null,
-                    'price' => $price,
-                    'quantity' => $qty,
-                    'subtotal' => $price * $qty,
-                ];
-            }
-
-            return response()->json([
-                'items' => $items,
-                'total' => $cartTotal,
-                'count' => $cartCount,
-            ]);
+            return response()->json($summary);
         }
 
-        return view('cart', compact('cart', 'cartCount', 'cartTotal'));
+        return view('cart', [
+            'cart'      => $cart,
+            'cartCount' => $summary['count'],
+            'cartTotal' => $summary['total'],
+        ]);
     }
 
     public function add(Request $request)
@@ -53,51 +74,39 @@ class CartController extends Controller
             'id'       => 'required|string',
             'title'    => 'required|string',
             'price'    => 'required|numeric|min:0',
+            'image'    => 'nullable|string',
             'quantity' => 'required|integer|min:1',
         ]);
 
         $cart = session()->get('cart', []);
+        if (!is_array($cart)) {
+            $cart = [];
+        }
 
         if (isset($cart[$data['id']])) {
+            // update existing
             $cart[$data['id']]['quantity'] += $data['quantity'];
-            $cart[$data['id']]['price'] = $data['price']; // Update price in case it changed
+            $cart[$data['id']]['price']     = $data['price']; // just in case price changed
+            if (!empty($data['image'])) {
+                $cart[$data['id']]['image'] = $data['image'];
+            }
         } else {
+            // new item
             $cart[$data['id']] = [
                 'title'    => $data['title'],
                 'price'    => $data['price'],
+                'image'    => $data['image'] ?? '',
                 'quantity' => $data['quantity'],
             ];
         }
 
         session()->put('cart', $cart);
 
-        // If the request expects JSON (AJAX), return a cart summary
+        // If AJAX / JSON (e.g. future enhancement), return summary
         if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
-            $cartItems = [];
-            $cartTotal = 0;
-            $cartCount = 0;
-
-            foreach ($cart as $id => $it) {
-                $qty = $it['quantity'] ?? 0;
-                $price = $it['price'] ?? 0;
-                $subtotal = $price * $qty;
-                $cartItems[] = [
-                    'id' => $id,
-                    'title' => $it['title'] ?? null,
-                    'price' => $price,
-                    'quantity' => $qty,
-                    'subtotal' => $subtotal,
-                ];
-                $cartTotal += $subtotal;
-                $cartCount += $qty;
-            }
-
-            return response()->json([
+            return $this->jsonSummary($cart, [
                 'success' => true,
                 'message' => 'Activity added to cart.',
-                'items' => $cartItems,
-                'total' => $cartTotal,
-                'count' => $cartCount,
             ]);
         }
 
@@ -111,22 +120,44 @@ class CartController extends Controller
         ]);
 
         $cart = session()->get('cart', []);
+        if (!is_array($cart)) {
+            $cart = [];
+        }
 
         if (isset($cart[$id])) {
             $cart[$id]['quantity'] = $data['quantity'];
             session()->put('cart', $cart);
         }
 
+        // Support both normal form & AJAX
+        if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
+            return $this->jsonSummary($cart, [
+                'success' => true,
+                'message' => 'Quantity updated.',
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Quantity updated.');
     }
 
-    public function remove($id)
+    public function remove(Request $request, $id)
     {
         $cart = session()->get('cart', []);
+        if (!is_array($cart)) {
+            $cart = [];
+        }
 
         if (isset($cart[$id])) {
             unset($cart[$id]);
             session()->put('cart', $cart);
+        }
+
+        // IMPORTANT: for dropdown X button (AJAX)
+        if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
+            return $this->jsonSummary($cart, [
+                'success' => true,
+                'message' => 'Item removed from cart.',
+            ]);
         }
 
         return redirect()->back()->with('success', 'Item removed from cart.');
@@ -134,51 +165,41 @@ class CartController extends Controller
 
     public function checkoutForm()
     {
-        $cart = session('cart', []);
-        $cartCount = 0;
-        $cartTotal = 0;
+        $rawCart = session('cart', []);
+        $cart    = is_array($rawCart) ? $rawCart : [];
+        $summary = $this->buildCartSummary($cart);
 
-        if (is_array($cart)) {
-            foreach ($cart as $item) {
-                $qty = $item['quantity'] ?? 0;
-                $cartCount += $qty;
-                $cartTotal += ($item['price'] ?? 0) * $qty;
-            }
-        }
-
-        return view('checkout', compact('cart', 'cartCount', 'cartTotal'));
+        return view('checkout', [
+            'cart'      => $cart,
+            'cartCount' => $summary['count'],
+            'cartTotal' => $summary['total'],
+        ]);
     }
 
     public function checkoutSubmit(Request $request)
     {
-        // Validate and process checkout
         $data = $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|email',
-            'phone' => 'required|string',
-            'address' => 'required|string',
-            'booking_date' => 'required|date|after:today',
+            'name'           => 'required|string',
+            'email'          => 'required|email',
+            'phone'          => 'required|string',
+            'booking_date'   => 'required|date|after:today',
             'payment_method' => 'required|in:credit_card,paypal,bank_transfer',
         ]);
 
-        // Get cart data for email
-        $cart = session('cart', []);
-        $cartTotal = 0;
-        if (is_array($cart)) {
-            foreach ($cart as $item) {
-                $qty = $item['quantity'] ?? 0;
-                $cartTotal += ($item['price'] ?? 0) * $qty;
-            }
-        }
+        $rawCart = session('cart', []);
+        $cart    = is_array($rawCart) ? $rawCart : [];
+        $summary = $this->buildCartSummary($cart);
+        $cartTotal = $summary['total'];
 
         // Send receipt email
         Mail::to($data['email'])->send(new Receipt($cart, $cartTotal, $data));
 
-        // Here you would process the payment and save the order
-        // For now, just clear the cart and redirect to confirmation
+        // TODO: save order + process payment here
 
         session()->forget('cart');
 
-        return redirect()->route('checkout.confirmation')->with('success', 'Order placed successfully!');
+        return redirect()
+            ->route('checkout.confirmation')
+            ->with('success', 'Order placed successfully!');
     }
 }

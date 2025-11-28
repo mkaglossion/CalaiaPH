@@ -174,6 +174,7 @@
                     <input type="hidden" name="id" value="">
                     <input type="hidden" name="title" value="">
                     <input type="hidden" name="price" value="">
+                    <input type="hidden" name="image" value="">
                     <input type="hidden" name="quantity" value="1">
                     <button type="submit" class="bg-[#8f5d54] text-white text-[12px] tracking-[.08em] uppercase rounded-[10px] py-[6px] px-3 hover:bg-[#8f5d54]/90 transition">Add to Cart</button>
                   </form>
@@ -195,6 +196,7 @@
                     <input type="hidden" name="id" value="">
                     <input type="hidden" name="title" value="">
                     <input type="hidden" name="price" value="">
+                    <input type="hidden" name="image" value="">
                     <input type="hidden" name="quantity" value="1">
                     <button type="submit" class="bg-[#8f5d54] text-white text-[12px] tracking-[.08em] uppercase rounded-[10px] py-[6px] px-3 hover:bg-[#8f5d54]/90 transition">Add to Cart</button>
                   </form>
@@ -682,9 +684,11 @@
              const idInput = form.querySelector('input[name="id"]');
              const titleInput = form.querySelector('input[name="title"]');
              const priceInput = form.querySelector('input[name="price"]');
+             const imageInput = form.querySelector('input[name="image"]');
              if (idInput) idInput.value = item.title;
              if (titleInput) titleInput.value = item.title;
              if (priceInput) priceInput.value = item.price || 0;
+             if (imageInput) imageInput.value = item.img || '';
            }
 
            [img, chip, link].forEach(el => {

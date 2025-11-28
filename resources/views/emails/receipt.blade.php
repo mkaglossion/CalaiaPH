@@ -29,7 +29,6 @@
                 <p><strong>Name:</strong> {{ $bookingData['name'] }}</p>
                 <p><strong>Email:</strong> {{ $bookingData['email'] }}</p>
                 <p><strong>Phone:</strong> {{ $bookingData['phone'] }}</p>
-                <p><strong>Address:</strong> {{ $bookingData['address'] }}</p>
                 <p><strong>Booking Date:</strong> {{ \Carbon\Carbon::parse($bookingData['booking_date'])->format('F j, Y') }}</p>
                 <p><strong>Payment Method:</strong> {{ ucfirst(str_replace('_', ' ', $bookingData['payment_method'])) }}</p>
 
