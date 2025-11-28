@@ -169,6 +169,14 @@
                 <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
                   <span class="bg-[#a97464] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-[9px] px-3 leading-none cursor-pointer"></span>
                   <a class="text-white text-[14px] tracking-[.08em] uppercase py-[9px] px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
+                  <form action="{{ route('cart.add') }}" method="POST" class="inline">
+                    @csrf
+                    <input type="hidden" name="id" value="">
+                    <input type="hidden" name="title" value="">
+                    <input type="hidden" name="price" value="">
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit" class="bg-[#8f5d54] text-white text-[12px] tracking-[.08em] uppercase rounded-[10px] py-[6px] px-3 hover:bg-[#8f5d54]/90 transition">Add to Cart</button>
+                  </form>
                 </div>
               </article>
 
@@ -182,6 +190,14 @@
                 <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
                   <span class="bg-[#a97464] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-[9px] px-3 leading-none cursor-pointer"></span>
                   <a class="text-white text-[14px] tracking-[.08em] uppercase py-[9px] px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
+                  <form action="{{ route('cart.add') }}" method="POST" class="inline">
+                    @csrf
+                    <input type="hidden" name="id" value="">
+                    <input type="hidden" name="title" value="">
+                    <input type="hidden" name="price" value="">
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit" class="bg-[#8f5d54] text-white text-[12px] tracking-[.08em] uppercase rounded-[10px] py-[6px] px-3 hover:bg-[#8f5d54]/90 transition">Add to Cart</button>
+                  </form>
                 </div>
               </article>
             </div>
@@ -202,10 +218,10 @@
               asset('assets/images/carousel/slide-n-go2.jpg'),
               asset('assets/images/carousel/activities-1.jpg'),
             ],
+            'price' => 500,
             'details' => [
-              '4 rounds / 10 minutes (approx.)',
-              'Rate: ₱500 per session',
-              'Age requirement: 15 years old and above',
+              '4 rounds / 10 mins (approx)',
+              'Duration: 10 minutes',
             ],
           ],
           [
@@ -215,10 +231,10 @@
               asset('assets/images/carousel/slide-n-go2.jpg'),
               asset('assets/images/carousel/activities-1.jpg'),
             ],
+            'price' => 800,
             'details' => [
+              '20 minutes',
               'Duration: 20 minutes',
-              'Rate: ₱800',
-              'Age requirement: 15 years old and above',
             ],
           ],
           [
@@ -228,9 +244,10 @@
               asset('assets/images/carousel/slip-slide-2.jpg'),
               asset('assets/images/carousel/activities-1.jpg'),
             ],
+            'price' => 350,
             'details' => [
-              'Rate: ₱350 per child per hour',
-              'Minimum of 3 children or ₱1,050',
+              '₱350 per child per hour, Minimum of 3 children or ₱1,050',
+              'Duration: 1 hour',
             ],
           ],
           [
@@ -240,10 +257,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 600,
             'details' => [
+              '30 minutes (200 lbs max)',
               'Duration: 30 minutes',
-              'Rate: ₱600',
-              'Weight limit: 200 lbs max',
             ],
           ],
           [
@@ -253,9 +270,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 600,
             'details' => [
+              '30 minutes',
               'Duration: 30 minutes',
-              'Rate: ₱600',
             ],
           ],
         ],
@@ -268,9 +286,9 @@
               asset('assets/images/carousel/bikes.jpg'),
               asset('assets/images/carousel/activities-1.jpg'),
             ],
+            'price' => 300,
             'details' => [
               'Duration: 1 hour',
-              'Rate: ₱300',
             ],
           ],
           [
@@ -280,9 +298,9 @@
               asset('assets/images/carousel/Calaia-26.jpg'),
               asset('assets/images/carousel/activities-1.jpg'),
             ],
+            'price' => 150,
             'details' => [
               'Duration: 45 minutes',
-              'Rate: ₱150',
             ],
           ],
           [
@@ -292,8 +310,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 250,
             'details' => [
               'Rate: ₱250 per game',
+              'Duration: 1 hour',
             ],
           ],
           [
@@ -303,9 +323,9 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 150,
             'details' => [
               'Duration: 1 hour',
-              'Rate: ₱150',
             ],
           ],
           [
@@ -315,8 +335,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 0,
             'details' => [
               'Casual indoor board and card games.',
+              'Duration: 1 hour',
             ],
           ],
           [
@@ -326,8 +348,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 0,
             'details' => [
               'Sand pickleball-style game.',
+              'Duration: 1 hour',
             ],
           ],
           [
@@ -337,8 +361,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 0,
             'details' => [
               'Casual throwing game in the field.',
+              'Duration: 1 hour',
             ],
           ],
           [
@@ -348,8 +374,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 0,
             'details' => [
               'Outdoor volleyball on the grass field.',
+              'Duration: 1 hour',
             ],
           ],
         ],
@@ -362,21 +390,23 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 1000,
             'details' => [
-              'Duration: 1 hour (1–4 persons)',
-              'Rate: ₱1,000 hot / ₱2,000 cold',
+              '1 hour (1–4 persons), ₱1,000 hot / ₱2,000 cold',
+              'Duration: 1 hour',
             ],
           ],
           [
-            'title' => 'Bonfire & S’mores',
+            'title' => 'Bonfire & S\'mores',
             'images' => [
               asset('assets/images/carousel/bonfire.jpg'),
               asset('assets/images/carousel/Retreat-705.jpg'),
               asset('assets/images/carousel/activities-1.jpg'),
             ],
+            'price' => 350,
             'details' => [
-              '₱350 bonfire',
-              '₱450 s’mores (25 pcs)',
+              '₱350 bonfire, ₱450 s\'mores (25 pcs)',
+              'Duration: 2 hours',
             ],
           ],
           [
@@ -386,8 +416,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 0,
             'details' => [
               'Enjoy scenic nature trails around the property.',
+              'Duration: 2 hours',
             ],
           ],
           [
@@ -397,10 +429,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 250,
             'details' => [
-              '1 hour with cup of bait',
-              '₱250 per rod',
-              'Appropriately-sized catch sold at market price',
+              '1 hour with cup of bait, ₱250 per rod',
+              'Duration: 1 hour',
             ],
           ],
           [
@@ -410,9 +442,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 1500,
             'details' => [
               'Strictly 6–9 PM only',
-              'Rate: ₱1,500',
+              'Duration: 3 hours',
             ],
           ],
         ],
@@ -425,9 +458,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 200,
             'details' => [
-              '₱200 per tree',
-              'Includes name label on the tree',
+              '₱200 per tree, Includes name label on the tree',
+              'Duration: 1 hour',
             ],
           ],
           [
@@ -437,9 +471,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 150,
             'details' => [
-              '₱150 per person',
               'Guided tour with friendly farm animals',
+              'Duration: 1 hour',
             ],
           ],
           [
@@ -449,9 +484,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 0,
             'details' => [
               'Prices based on market price that day',
-              'Pick fresh vegetables straight from the farm',
+              'Duration: 30 minutes',
             ],
           ],
           [
@@ -461,9 +497,10 @@
               asset('assets/images/carousel/activities-1.jpg'),
               asset('assets/images/carousel/slide-n-go2.jpg'),
             ],
+            'price' => 0,
             'details' => [
               'Close-up interactions with farm animals',
-              'Perfect for kids and families',
+              'Duration: 30 minutes',
             ],
           ],
         ],
@@ -486,6 +523,7 @@
               'title'   => $left['title'],
               'img'     => $left['images'][0] ?? '',
               'alt'     => $left['title'],
+              'price'   => $left['price'] ?? 0,
               'details' => $left['details'] ?? [],
               'images'  => $left['images'] ?? [],
             ];
@@ -495,6 +533,7 @@
               'title'   => $right['title'],
               'img'     => $right['images'][0] ?? '',
               'alt'     => $right['title'],
+              'price'   => $right['price'] ?? 0,
               'details' => $right['details'] ?? [],
               'images'  => $right['images'] ?? [],
             ];
@@ -522,7 +561,7 @@
     </script>
 
     {{-- Alpine-powered Details Modal (unchanged) --}}
-    <div x-data="{ open:false, modal:{ title:'', details:[], images:[] } }"
+    <div x-data="{ open:false, modal:{ title:'', details:[], images:[], price:0 } }"
          x-on:open-activity.window="modal=$event.detail; open=true"
          class="relative z-50">
       <div x-show="open" class="fixed inset-0 bg-black/50" x-transition.opacity></div>
@@ -563,6 +602,12 @@
               </template>
             </div>
 
+            <template x-if="modal.price > 0">
+              <div class="text-lg font-bold text-[#a97464]">
+                Price: ₱<span x-text="modal.price"></span>
+              </div>
+            </template>
+
             <div class="space-y-2">
               <template x-for="(p, idx) in modal.details" :key="idx">
                 <p style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
@@ -574,10 +619,6 @@
           </div>
 
           <div class="px-5 py-4 border-t flex flex-col md:flex-row items-center justify-end gap-3">
-            <a href="{{ url('/booking') }}"
-               class="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-[#a97464] text-white font-semibold hover:opacity-90 transition-colors duration-300 w-full md:w-auto">
-              Book Now
-            </a>
             <button type="button" @click="open=false" class="bg-gray-500 text-white px-6 py-3 rounded-2xl hover:bg-gray-600 transition-colors duration-300 w-full md:w-auto font-semibold">
               Close
             </button>
@@ -626,23 +667,34 @@
         }
 
         function wire(panelEl, item) {
-          const img  = panelEl.querySelector('img');
-          const chip = panelEl.querySelector('span');
-          const link = panelEl.querySelector('a');
+           const img  = panelEl.querySelector('img');
+           const chip = panelEl.querySelector('span');
+           const link = panelEl.querySelector('a');
+           const form = panelEl.querySelector('form');
 
-          img.src = item.img;
-          img.alt = item.alt || item.title;
-          img.style.cursor = 'pointer';
-          chip.textContent = item.title;
+           img.src = item.img;
+           img.alt = item.alt || item.title;
+           img.style.cursor = 'pointer';
+           chip.textContent = item.title;
 
-          [img, chip, link].forEach(el => {
-            if (!el) return;
-            el.addEventListener('click', (e) => {
-              e.preventDefault();
-              open(item);
-            });
-          });
-        }
+           // Set form inputs
+           if (form) {
+             const idInput = form.querySelector('input[name="id"]');
+             const titleInput = form.querySelector('input[name="title"]');
+             const priceInput = form.querySelector('input[name="price"]');
+             if (idInput) idInput.value = item.title;
+             if (titleInput) titleInput.value = item.title;
+             if (priceInput) priceInput.value = item.price || 0;
+           }
+
+           [img, chip, link].forEach(el => {
+             if (!el) return;
+             el.addEventListener('click', (e) => {
+               e.preventDefault();
+               open(item);
+             });
+           });
+         }
 
         function updateDots(active) {
           dotsEl.innerHTML = '';

@@ -1,13 +1,25 @@
 @props(['active' => 'home'])
 
+@php
+   $cart = session('cart', []);
+   $cartCount = 0;
+
+   if (is_array($cart)) {
+       foreach ($cart as $item) {
+           $cartCount += $item['quantity'] ?? 0;
+       }
+   }
+@endphp
+
 <header
   x-data="{ open: false }"
   x-init="
-    Alpine.store('modals', { showLogin: false, showSignup: false, signupSuccess: false });
+    Alpine.store('modals', { showLogin: false, showSignup: false, signupSuccess: false, showCart: false });
     $watch('open', value => document.body.style.overflow = value ? 'hidden' : '')
   "
   class="bg-[#f6f0eb] text-[#8f5d54] shadow-lg sticky top-0 z-50"
 >
+
   <div class="container mx-auto flex items-center justify-between py-4 px-4 md:py-6 md:px-6 text-center">
 
     {{-- MOBILE LOGO LEFT --}}
@@ -48,7 +60,7 @@
     </nav>
 
     {{-- DESKTOP USER / GUEST BUTTONS RIGHT --}}
-    <nav class="hidden md:flex space-x-4 relative" x-data="{ open: false }">
+    <nav class="hidden md:flex items-center space-x-4 relative" x-data="{ open: false }">
       @auth
         <!-- User Menu -->
         <div class="relative inline-block text-left">
@@ -62,13 +74,13 @@
                class="w-6 h-6 text-[#8f5d54]">
             <path stroke-linecap="round" stroke-linejoin="round"
                   d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z" />
-          </svg>
+           </svg>
           </button>
 
           <!-- Dropdown Menu -->
           <div
-            x-show="open"
-            @click.away="open = false"
+            x-show="userOpen"
+            @click.away="userOpen = false"
             x-transition
             class="absolute right-0 mt-2 w-48 lg:w-55 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
           >
@@ -114,6 +126,9 @@
             </form>
           </div>
         </div>
+
+        {{-- CART BUTTON (DESKTOP) --}}
+        <x-cart />
       @else
         <!-- Guest Buttons -->
         <button
@@ -128,6 +143,9 @@
           style="font-family: 'Gotham Book', sans-serif;">
           Sign Up
         </button>
+
+        {{-- CART BUTTON (DESKTOP) --}}
+        <x-cart />
       @endauth
     </nav>
 
@@ -157,6 +175,18 @@
         <a href="{{ url('/dining') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Food & Beverage</a>
         <a href="{{ url('/special-events') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'special-events' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Special Events</a>
         <a href="{{ url('/farm') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Our Farm</a>
+
+        <a href="{{ route('cart.index') }}" data-js-cart-button
+           @click="open = false"
+           class="flex items-center justify-between py-2 text-[#8f5d54] uppercase"
+           style="font-family: 'Gotham Book', sans-serif;">
+          <span>Cart</span>
+          @if($cartCount > 0)
+            <span data-js-cart-count class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full bg-[#8f5d54] text-white text-xs">
+              {{ $cartCount }}
+            </span>
+          @endif
+        </a>
 
         @auth
           <a href="{{ route('profile.show') }}" @click="open = false" class="block py-2 text-gray-700 border-t border-[#8f5d54]/20 mt-2 pt-2">
