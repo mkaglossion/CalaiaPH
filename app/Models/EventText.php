@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class EventText extends Model
+class EventText extends BaseRelatedText
 {
     protected $fillable = ['event_id', 'section', 'title', 'content'];
 
     public function event()
     {
         return $this->belongsTo(Event::class);
+    }
+
+    protected function getParentModelClass(): string
+    {
+        return Event::class;
     }
 }

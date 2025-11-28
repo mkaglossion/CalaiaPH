@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class ActivitySwiperImage extends Model
+class ActivitySwiperImage extends BaseRelatedSwiperImage
 {
     protected $fillable = ['activity_id', 'title', 'image_path', 'public_id'];
 
     public function activity()
     {
         return $this->belongsTo(Activity::class);
+    }
+
+    protected function getParentModelClass(): string
+    {
+        return Activity::class;
     }
 }
 

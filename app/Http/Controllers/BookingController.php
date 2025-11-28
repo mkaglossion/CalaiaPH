@@ -8,163 +8,226 @@ use Illuminate\Support\Facades\Log;
 use App\Mail\BookingConfirmation;
 use App\Mail\SpecialEventBookingConfirmation;
 use DateTime;
+use App\Services\BookingService;
+use App\Services\PaymentService;
+use App\Services\InventoryService;
+use App\Services\ValidationService;
 
 class BookingController extends Controller
 {
+    protected $bookingService;
+    protected $paymentService;
+    protected $inventoryService;
+
+    public function __construct(
+        BookingService $bookingService,
+        PaymentService $paymentService,
+        InventoryService $inventoryService
+    ) {
+        $this->bookingService = $bookingService;
+        $this->paymentService = $paymentService;
+        $this->inventoryService = $inventoryService;
+    }
     public function debugSession()
     {
         // Dump the entire session
         dd(session()->all());
     }
 
+    private function getBookingActivities($type)
+    {
+        $config = self::BOOKING_CONFIG[$type];
+        $data = session($config['session_key']);
+        if (!$data) {
+            return redirect()->route($config['activities_error_route'])->with('error', 'No booking data found. Please start booking again.');
+        }
+        $activities = $this->bookingService->getActivitiesData();
+        return view($config['activities_view'], [$config['var_name'] => $data, 'activities' => $activities]);
+    }
+
+    private function storeBookingActivities(Request $request, $type, $validationRules, $saveKey)
+    {
+        $config = self::BOOKING_CONFIG[$type];
+        $data = session($config['session_key']);
+        if (!$data) {
+            return response()->json(['success' => false, 'message' => 'No booking data found.'], 400);
+        }
+        $request->validate($validationRules);
+        $this->bookingService->saveActivities($request->activities, $saveKey);
+        return response()->json(['success' => true, 'message' => 'Activities saved successfully.']);
+    }
+
+    private function getBookingPayment($type)
+    {
+        $config = self::BOOKING_CONFIG[$type];
+        $data = session($config['session_key']);
+        if (!$data) {
+            return redirect()->route($config['payment_error_route'])->with('error', 'No booking data found. Please start booking again.');
+        }
+        return view($config['payment_view'], [$config['var_name'] => $data]);
+    }
+
+    private function getConfirmationData(string $type): ?array
+    {
+        $sessionKeys = [
+            'staycation' => [
+                'booking_data' => 'staycation_booking_data',
+                'selected_activities' => 'staycation_selected_activities',
+                'grand_total' => 'staycation_grand_total',
+                'customer_info' => 'staycation_customer_info',
+                'is_type' => 'isStaycation'
+            ],
+            'dayvisit' => [
+                'booking_data' => 'dayvisit_booking_data',
+                'selected_activities' => 'dayvisit_selected_activities',
+                'grand_total' => 'dayvisit_grand_total',
+                'customer_info' => 'dayvisit_customer_info',
+                'is_type' => 'isDayvisit'
+            ],
+            'special_event' => [
+                'booking_data' => 'special_event_booking_data',
+                'selected_activities' => 'special_event_selected_activities',
+                'grand_total' => 'special_event_grand_total',
+                'customer_info' => 'special_event_customer_info',
+                'is_type' => 'isSpecialEvent'
+            ],
+            'regular' => [
+                'booking_data' => 'booking_data',
+                'selected_activities' => 'selected_activities',
+                'is_type' => null
+            ]
+        ];
+
+        if (!isset($sessionKeys[$type])) {
+            return null;
+        }
+
+        $keys = $sessionKeys[$type];
+        $bookingData = session($keys['booking_data']);
+
+        if (!$bookingData) {
+            return null;
+        }
+
+        $data = [
+            'bookingData' => $bookingData,
+            'selectedActivities' => session($keys['selected_activities'], []),
+        ];
+
+        if (isset($keys['grand_total'])) {
+            $data['grandTotal'] = session($keys['grand_total'], 0);
+            $data['customerInfo'] = session($keys['customer_info'], []);
+        } else {
+            // Regular booking calculation
+            $data['grandTotal'] = ($bookingData['price'] ?? 0) + collect($data['selectedActivities'])->sum(function($activity) {
+                return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+            });
+        }
+
+        if ($keys['is_type']) {
+            $data[$keys['is_type']] = true;
+        }
+
+        // Clear sessions
+        $sessionsToClear = [$keys['booking_data'], $keys['selected_activities']];
+        if (isset($keys['grand_total'])) {
+            $sessionsToClear = array_merge($sessionsToClear, [$keys['grand_total'], $keys['customer_info']]);
+        }
+        session()->forget($sessionsToClear);
+
+        return $data;
+    }
+
     public function create(Request $request)
     {
+        // Get booking type from URL or default to day-visit
         $type = $request->get('type', 'day-visit');
-        $allowedTypes = ['day-visit', 'room', 'overnight', 'daytour', 'special-event'];
-        // Map 'daytour' to 'day-visit' for consistency
+
+        // Handle different type variations
+        $allowedTypes = ['day-visit', 'room', 'special-event', 'daytour', 'special-event'];
         if ($type === 'daytour') {
-            $type = 'day-visit';
+            $type = 'day-visit'; // Map daytour to day-visit
         }
         if (!in_array($type, $allowedTypes)) {
-            $type = 'day-visit';
+            $type = 'day-visit'; // Fallback to default
         }
 
+        // Get package details
         $package = $request->get('package', 'Day Visit Package');
         $price = $request->get('price', '1000');
+        $price = preg_replace('/[^\d.]/', '', $price); // Remove currency symbols
 
-        // Clean the price to remove currency symbols and get numeric value
-        $price = preg_replace('/[^\d.]/', '', $price);
+        // Set guest limits based on package type
+        $max_guests = 50;
+        $default_guests = 1;
 
-        // Set max guests based on package
-        $max_guests = 50; // default
-        $default_guests = 1; // default
         if (str_contains($package, 'Family Fun Package')) {
-            $max_guests = 6; // max 6 guests per family
-            $default_guests = 6; // auto-set to 6 for family package
+            $max_guests = 6; // Family packages limited to 6 guests
+            $default_guests = 6;
         }
 
         session(['max_guests' => $max_guests]);
 
-        // Get capacities and inventory for calendar
+        // Get booking settings and current inventory
         $settings = (object) [
             'day_visit_capacity' => 10,
             'room_capacity' => 5,
-            'overnight_capacity' => 3,
+            'special_event_capacity' => 3,
         ];
 
-        $defaultInventory = [
-            'day-visit' => [
-                '2025-11-20' => 8,
-                '2025-11-21' => 5,
-                '2025-11-22' => 10,
-            ],
-            'room' => [
-                '2025-11-20' => 3,
-                '2025-11-21' => 2,
-                '2025-11-22' => 5,
-            ],
-            'overnight' => [
-                '2025-11-20' => 2,
-                '2025-11-21' => 1,
-                '2025-11-22' => 3,
-            ],
-        ];
+        $today = now()->format('Y-m-d');
+        $tomorrow = now()->addDay()->format('Y-m-d');
+        $dayAfter = now()->addDays(2)->format('Y-m-d');
 
-        $inventory = session('inventory', $defaultInventory);
+        $inventory = session('inventory', [
+            'day-visit' => [$today => 8, $tomorrow => 5, $dayAfter => 10],
+            'room' => [$today => 3, $tomorrow => 2, $dayAfter => 5],
+            'special-event' => [$today => 2, $tomorrow => 1, $dayAfter => 3],
+        ]);
 
         return view('booking.reservation', compact('type', 'package', 'price', 'settings', 'inventory', 'max_guests', 'default_guests'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'booking_date' => 'required|date|after:yesterday',
-            'guests' => 'required|integer|min:1|max:' . session('max_guests', 50),
-            'special_requests' => 'nullable|string|max:1000',
-            'type' => 'required|string|in:day-visit,room,overnight',
-            'package' => 'required|string',
-            'price' => 'required|numeric',
-        ]);
+        // Validate booking data
+        $validated = $request->validate(ValidationService::bookingRules(session('max_guests', 50)));
 
-        // Get current inventory from session
-        $defaultInventory = [
-            'day-visit' => ['2025-11-20' => 8, '2025-11-21' => 5, '2025-11-22' => 10],
-            'room' => ['2025-11-20' => 3, '2025-11-21' => 2, '2025-11-22' => 5],
-            'overnight' => ['2025-11-20' => 2, '2025-11-21' => 1, '2025-11-22' => 3],
-        ];
-        $inventory = session('inventory', $defaultInventory);
-
-        // Get booking type and date
-        $type = $request->input('type'); // 'room', 'day-visit', or 'overnight'
+        // Check availability
+        $type = $validated['type'];
         $date = $validated['booking_date'];
 
-        // Check availability - for demo, assume available if not in inventory
-        if (isset($inventory[$type][$date]) && $inventory[$type][$date] <= 0) {
-            return redirect()->back()->with('error', 'No availability for the selected date and type.');
+        if (!$this->inventoryService->isAvailable($type, $date)) {
+            return redirect()->back()->with('error', 'No availability for the selected date.');
         }
 
-        // Deduct inventory for the booked date
-        if (isset($inventory[$type][$date])) {
-            $inventory[$type][$date] = max(0, $inventory[$type][$date] - 1);
-            session(['inventory' => $inventory]);
-        }
+        // Update inventory
+        $this->inventoryService->reduceInventory($type, $date);
 
-        // For day-visit, multiply price by number of guests (except for family packages which are already per family)
+        // Calculate price for day visits (per person except family packages)
         if ($validated['type'] === 'day-visit' && !str_contains($validated['package'], 'Family Fun Package')) {
             $validated['price'] = $validated['price'] * $validated['guests'];
         }
 
-        // Store booking data in session for activities
+        // Save booking data and go to activities
         session(['booking_data' => $validated]);
-
-        // Redirect to activities page
         return redirect()->route('booking.activities');
     }
 
     public function activities()
     {
-        $bookingData = session('booking_data');
-
-        if (!$bookingData) {
-            return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
-        }
-
-        $activities = $this->getActivitiesData();
-
-        return view('booking.activities', compact('bookingData', 'activities'));
+        return $this->getBookingActivities('regular');
     }
 
     public function getActivitiesApi()
     {
-        $activities = $this->getActivitiesData();
+        $activities = $this->bookingService->getActivitiesData();
         return response()->json($activities);
     }
 
     public function storeActivities(Request $request)
     {
-        $request->validate([
-            'activities' => 'required|array',
-            'activities.*.id' => 'required|string',
-            'activities.*.name' => 'required|string',
-            'activities.*.price' => 'required|numeric',
-            'activities.*.guests' => 'required|integer|min:1',
-            'activities.*.type' => 'required|string|in:predefined',
-        ]);
-
-        $bookingData = session('booking_data');
-
-        if (!$bookingData) {
-            return response()->json(['success' => false, 'message' => 'No booking data found.'], 400);
-        }
-
-        // Store selected activities in session
-        session(['selected_activities' => $request->activities]);
-
-        return response()->json(['success' => true, 'message' => 'Activities saved successfully.']);
+        return $this->storeBookingActivities($request, 'regular', ValidationService::activitiesRules(), 'selected_activities');
     }
 
     public function staycationActivities()
@@ -175,30 +238,42 @@ class BookingController extends Controller
             return redirect()->route('booking.staycation')->with('error', 'Please complete accommodation selection first.');
         }
 
-        $activities = $this->getActivitiesData();
+        $activities = $this->bookingService->getActivitiesData();
 
         return view('booking.staycation-activities', compact('booking', 'activities'));
     }
 
     public function storeStaycationActivities(Request $request)
     {
-        $request->validate([
-            'activities' => 'array',
-            'activities.*.id' => 'required|string',
-            'activities.*.name' => 'required|string',
-            'activities.*.price' => 'required|numeric',
-            'activities.*.guests' => 'required|integer|min:1',
-            'activities.*.type' => 'required|string|in:predefined,custom',
-        ]);
-
         $booking = session('booking', []);
 
         if (empty($booking)) {
             return response()->json(['success' => false, 'message' => 'No booking data found.'], 400);
         }
 
-        // Store selected activities in session
-        $booking['selected_activities'] = $request->activities;
+        // For staycations, activities are optional - allow empty array
+        $staycationValidationRules = [
+            'activities' => 'array', // Allow empty array for "proceed without activities"
+            'activities.*.id' => 'required|string',
+            'activities.*.name' => 'required|string',
+            'activities.*.price' => 'required|numeric',
+            'activities.*.guests' => 'required|integer|min:1',
+            'activities.*.type' => 'required|string|in:predefined,custom',
+        ];
+
+        try {
+            $request->validate(ValidationService::staycationActivitiesRules());
+            $this->bookingService->saveActivities($request->activities ?? [], 'booking.selected_activities');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error saving. Please try again.',
+                'errors' => $e->errors()
+            ], 422);
+        }
+
+        // Note: We need to update the session booking array, so handle differently
+        $booking['selected_activities'] = $request->activities ?? [];
 
         // Calculate final totals (same calculation as JavaScript)
         $checkinDate = $booking['checkin'] ?? null;
@@ -234,9 +309,9 @@ class BookingController extends Controller
                             $isWeekend = $day === 5 || $day === 6;
                             $basePrice = 0;
                             if (str_contains($name, 'standard')) {
-                                $basePrice = $isWeekend ? 6000 : 4800;
+                                $basePrice = $isWeekend ? 1000 * $quantity : 800 * $quantity;
                             } elseif (str_contains($name, 'premium')) {
-                                $basePrice = $isWeekend ? 7200 : 5760;
+                                $basePrice = $isWeekend ? 1200 * $quantity : 960 * $quantity;
                             }
                             $extraGuests = max(0, $quantity - 4);
                             $accommodationTotal += $basePrice + ($extraGuests * 400);
@@ -268,7 +343,7 @@ class BookingController extends Controller
         }
 
         $activitiesTotal = collect($request->activities)->sum(function($activity) {
-            return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+            return 500 * ($activity['guests'] ?? 1);
         });
 
         // Store final totals in session
@@ -298,327 +373,121 @@ class BookingController extends Controller
 
     public function payment()
     {
-        $bookingData = session('booking_data');
-
-        if (!$bookingData) {
-            return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
-        }
-
-        return view('booking.payment', compact('bookingData'));
+        return $this->getBookingPayment('regular');
     }
 
     public function confirmation()
     {
-        // Check for staycation booking first
-        $staycationBookingData = session('staycation_booking_data');
-        $staycationSelectedActivities = session('staycation_selected_activities', []);
-        $staycationGrandTotal = session('staycation_grand_total', 0);
-        $staycationCustomerInfo = session('staycation_customer_info', []);
+        $bookingTypes = ['staycation', 'dayvisit', 'special_event', 'regular'];
 
-        if ($staycationBookingData) {
-            // Handle staycation confirmation
-            // Clear session data after showing confirmation
-            session()->forget(['staycation_booking_data', 'staycation_selected_activities', 'staycation_grand_total', 'staycation_customer_info']);
-
-            return view('booking.confirmation', [
-                'bookingData' => $staycationBookingData,
-                'selectedActivities' => $staycationSelectedActivities,
-                'grandTotal' => $staycationGrandTotal,
-                'customerInfo' => $staycationCustomerInfo,
-                'isStaycation' => true
-            ]);
+        foreach ($bookingTypes as $type) {
+            $data = $this->getConfirmationData($type);
+            if ($data) {
+                return view('booking.confirmation', $data);
+            }
         }
 
-        // Check for day visit booking
-        $dayvisitBookingData = session('dayvisit_booking_data');
-        $dayvisitSelectedActivities = session('dayvisit_selected_activities', []);
-        $dayvisitGrandTotal = session('dayvisit_grand_total', 0);
-        $dayvisitCustomerInfo = session('dayvisit_customer_info', []);
-
-        if ($dayvisitBookingData) {
-            // Handle day visit confirmation
-            // Clear session data after showing confirmation
-            session()->forget(['dayvisit_booking_data', 'dayvisit_selected_activities', 'dayvisit_grand_total', 'dayvisit_customer_info']);
-
-            return view('booking.confirmation', [
-                'bookingData' => $dayvisitBookingData,
-                'selectedActivities' => $dayvisitSelectedActivities,
-                'grandTotal' => $dayvisitGrandTotal,
-                'customerInfo' => $dayvisitCustomerInfo,
-                'isDayvisit' => true
-            ]);
-        }
-
-        // Check for special event booking
-        $specialEventBookingData = session('special_event_booking_data');
-        $specialEventSelectedActivities = session('special_event_selected_activities', []);
-        $specialEventGrandTotal = session('special_event_grand_total', 0);
-        $specialEventCustomerInfo = session('special_event_customer_info', []);
-
-        if ($specialEventBookingData) {
-            // Handle special event confirmation
-            // Clear session data after showing confirmation
-            session()->forget(['special_event_booking_data', 'special_event_selected_activities', 'special_event_grand_total', 'special_event_customer_info']);
-
-            return view('booking.confirmation', [
-                'bookingData' => $specialEventBookingData,
-                'selectedActivities' => $specialEventSelectedActivities,
-                'grandTotal' => $specialEventGrandTotal,
-                'customerInfo' => $specialEventCustomerInfo,
-                'isSpecialEvent' => true
-            ]);
-        }
-
-        // Handle regular booking
-        $bookingData = session('booking_data');
-        $selectedActivities = session('selected_activities', []);
-        $grandTotal = ($bookingData['price'] ?? 0) + collect($selectedActivities)->sum(function($activity) {
-            return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
-        });
-
-        if (!$bookingData) {
-            return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
-        }
-
-        // Clear session data after showing confirmation
-        session()->forget(['booking_data', 'selected_activities']);
-
-        return view('booking.confirmation', compact('bookingData', 'selectedActivities', 'grandTotal'));
+        return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
     }
 
     public function processPayment(Request $request)
     {
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'payment_method' => 'required|in:gcash,paymaya,bank',
-            'terms' => 'accepted',
-            'special_requests' => 'nullable|string|max:1000',
-        ]);
+        // Validate payment form
+        $request->validate(ValidationService::paymentRules());
 
+        // Get booking data from session
         $bookingData = session('booking_data');
         $staycationBooking = session('booking', []);
         $dayvisitBooking = session('dayvisit_booking_data');
         $specialEventBooking = session('special_event_booking_data');
 
+        // Check if we have any booking data
         if (!$bookingData && empty($staycationBooking) && !$dayvisitBooking && !$specialEventBooking) {
             return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
         }
 
-        // Determine booking type
-        $isStaycation = !empty($staycationBooking) && isset($staycationBooking['booking_type']) && $staycationBooking['booking_type'] === 'staycation';
-        $isDayvisit = !empty($dayvisitBooking);
-        $isSpecialEvent = !empty($specialEventBooking);
+        // Define payment processors for each booking type
+        $paymentProcessors = [
+            [
+                'condition' => !empty($staycationBooking) && $staycationBooking['booking_type'] === 'staycation',
+                'processor' => fn() => $this->paymentService->processStaycationPayment($staycationBooking, $request->all())
+            ],
+            [
+                'condition' => (bool) $dayvisitBooking,
+                'processor' => fn() => $this->paymentService->processDayvisitPayment($dayvisitBooking, $request->all())
+            ],
+            [
+                'condition' => (bool) $specialEventBooking,
+                'processor' => fn() => $this->paymentService->processSpecialEventPayment($specialEventBooking, $request->all())
+            ],
+            [
+                'condition' => true, // default case
+                'processor' => fn() => $this->paymentService->processRegularBookingPayment($bookingData, $request->all())
+            ]
+        ];
 
-        if ($isStaycation) {
-            // Handle staycation booking
-            $selectedActivities = $staycationBooking['selected_activities'] ?? [];
-
-            // Add customer info and payment details to booking data for receipt
-            $staycationBooking['first_name'] = $request->first_name;
-            $staycationBooking['last_name'] = $request->last_name;
-            $staycationBooking['email'] = $request->email;
-            $staycationBooking['phone'] = $request->phone;
-            $staycationBooking['special_requests'] = $request->special_requests;
-            $staycationBooking['payment_method'] = $request->payment_method;
-            $staycationBooking['payment_date'] = now();
-            $staycationBooking['transaction_id'] = 'TXN-' . strtoupper(uniqid());
-
-            try {
-                // Send receipt email for staycation using form data
-                $customerEmail = $request->email ?? 'guest@example.com';
-                Log::info('Sending staycation confirmation email to: ' . $customerEmail);
-                Mail::to($customerEmail)->send(new BookingConfirmation($staycationBooking, $selectedActivities));
-                Log::info('Staycation confirmation email sent successfully to: ' . $customerEmail);
-            } catch (\Exception $e) {
-                // Log the error but continue to confirmation
-                Log::error('Staycation receipt email failed: ' . $e->getMessage());
-                Log::error('Staycation email error details: ', ['email' => $customerEmail, 'booking' => $staycationBooking]);
+        // Find and execute the appropriate payment processor
+        foreach ($paymentProcessors as $processor) {
+            if ($processor['condition']) {
+                return $processor['processor']();
             }
-
-            // Store booking data for confirmation page
-            $grandTotal = ($staycationBooking['final_totals']['accommodation_total'] ?? 0) + ($staycationBooking['final_totals']['activities_total'] ?? 0);
-
-            // Store confirmation data in session
-            session([
-                'staycation_booking_data' => $staycationBooking,
-                'staycation_selected_activities' => $selectedActivities,
-                'staycation_grand_total' => $grandTotal,
-                'staycation_customer_info' => [
-                    'first_name' => $request->first_name,
-                    'last_name' => $request->last_name,
-                    'email' => $request->email,
-                    'phone' => $request->phone,
-                    'special_requests' => $request->special_requests,
-                ]
-            ]);
-
-            // Clear session
-            session()->forget('booking');
-
-            return redirect()->route('booking.confirmation')->with('success', 'Staycation payment successful! Booking confirmed. Check your email for details.');
-        } elseif ($isDayvisit) {
-            // Handle day visit booking
-            $selectedActivities = session('dayvisit_selected_activities', []);
-
-            // Add payment details to booking data for receipt
-            $dayvisitBooking['payment_method'] = $request->payment_method;
-            $dayvisitBooking['payment_date'] = now();
-            $dayvisitBooking['transaction_id'] = 'TXN-' . strtoupper(uniqid());
-
-            try {
-                // Send receipt email for day visit
-                Log::info('Sending day visit confirmation email to: ' . $dayvisitBooking['email']);
-                Mail::to($dayvisitBooking['email'])->send(new BookingConfirmation($dayvisitBooking, $selectedActivities));
-                Log::info('Day visit confirmation email sent successfully to: ' . $dayvisitBooking['email']);
-            } catch (\Exception $e) {
-                // Log the error but continue to confirmation
-                Log::error('Day visit receipt email failed: ' . $e->getMessage());
-                Log::error('Day visit email error details: ', ['email' => $dayvisitBooking['email'], 'booking' => $dayvisitBooking]);
-            }
-
-            // Calculate grand total
-            $grandTotal = ($dayvisitBooking['price'] ?? 0) + collect($selectedActivities)->sum(function($activity) {
-                return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
-            });
-        
-            // Add grand total to booking data for email
-            $dayvisitBooking['grand_total'] = $grandTotal;
-        
-            // Store confirmation data in session
-            session([
-                'dayvisit_booking_data' => $dayvisitBooking,
-                'dayvisit_selected_activities' => $selectedActivities,
-                'dayvisit_grand_total' => $grandTotal,
-                'dayvisit_customer_info' => [
-                    'first_name' => $request->first_name,
-                    'last_name' => $request->last_name,
-                    'email' => $request->email,
-                    'phone' => $request->phone,
-                    'special_requests' => $request->special_requests,
-                ]
-            ]);
-        
-            return redirect()->route('booking.confirmation')->with('success', 'Day visit payment successful! Booking confirmed. Check your email for details.');
-        } elseif ($isSpecialEvent) {
-            // Handle special event booking
-            $selectedActivities = session('special_event_selected_activities', []);
-
-            // Add payment details to booking data for receipt
-            $specialEventBooking['payment_method'] = $request->payment_method;
-            $specialEventBooking['payment_date'] = now();
-            $specialEventBooking['transaction_id'] = 'TXN-' . strtoupper(uniqid());
-
-            try {
-                // Send receipt email for special event
-                Log::info('Sending special event confirmation email to: ' . $specialEventBooking['email']);
-                Mail::to($specialEventBooking['email'])->send(new SpecialEventBookingConfirmation($specialEventBooking, $selectedActivities));
-                Log::info('Special event confirmation email sent successfully to: ' . $specialEventBooking['email']);
-            } catch (\Exception $e) {
-                // Log the error but continue to confirmation
-                Log::error('Special event receipt email failed: ' . $e->getMessage());
-                Log::error('Special event email error details: ', ['email' => $specialEventBooking['email'], 'booking' => $specialEventBooking]);
-            }
-
-            // Calculate grand total
-            $grandTotal = ($specialEventBooking['price'] ?? 0) + collect($selectedActivities)->sum(function($activity) {
-                return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
-            });
-
-            // Add grand total to booking data for email
-            $specialEventBooking['grand_total'] = $grandTotal;
-
-            // Store confirmation data in session
-            session([
-                'special_event_booking_data' => $specialEventBooking,
-                'special_event_selected_activities' => $selectedActivities,
-                'special_event_grand_total' => $grandTotal,
-                'special_event_customer_info' => [
-                    'first_name' => $request->first_name,
-                    'last_name' => $request->last_name,
-                    'email' => $request->email,
-                    'phone' => $request->phone,
-                    'special_requests' => $request->special_requests,
-                ]
-            ]);
-
-            return redirect()->route('booking.confirmation')->with('success', 'Special event payment successful! Booking confirmed. Check your email for details.');
-        } else {
-            // Handle regular booking
-            $selectedActivities = session('selected_activities', []);
-
-            // Add payment details to booking data for receipt
-            $bookingData['payment_method'] = $request->payment_method;
-            $bookingData['payment_date'] = now();
-            $bookingData['transaction_id'] = 'TXN-' . strtoupper(uniqid());
-
-            try {
-                // Send receipt email with activities
-                Log::info('Sending regular booking confirmation email to: ' . $bookingData['email']);
-                Mail::to($bookingData['email'])->send(new BookingConfirmation($bookingData, $selectedActivities));
-                Log::info('Regular booking confirmation email sent successfully to: ' . $bookingData['email']);
-            } catch (\Exception $e) {
-                // Log the error but continue to confirmation
-                Log::error('Receipt email sending failed: ' . $e->getMessage());
-                Log::error('Regular booking email error details: ', ['email' => $bookingData['email'], 'booking' => $bookingData]);
-            }
-
-            // Redirect to confirmation page
-            return redirect()->route('booking.confirmation');
         }
     }
 
+
     public function widget()
     {
-        // Assuming settings are stored in a Settings model or config
-        // For now, using placeholder values
-        $settings = (object) [
-            'day_visit_capacity' => 10,
-            'room_capacity' => 5,
-            'overnight_capacity' => 3,
-        ];
-
-        // Default static inventory for demo
-        $defaultInventory = [
-            'day-visit' => [
-                '2025-11-20' => 8, // 8 out of 10 available
-                '2025-11-21' => 5,
-                '2025-11-22' => 10, // fully available
-            ],
-            'room' => [
-                '2025-11-20' => 3, // 3 out of 5 available
-                '2025-11-21' => 2,
-                '2025-11-22' => 5,
-            ],
-            'overnight' => [
-                '2025-11-20' => 2, // 2 out of 3 available
-                '2025-11-21' => 1,
-                '2025-11-22' => 3,
-            ],
-        ];
-
-        // Get inventory from session, or use default
-        $remainingPerDateArray = session('inventory', $defaultInventory);
+        $settings = (object) config('booking.capacities');
+        $remainingPerDateArray = $this->inventoryService->getAllInventory();
 
         return view('booking.widget', [
             'dayVisitCapacity'    => $settings->day_visit_capacity,
             'roomCapacity'        => $settings->room_capacity,
-            'overnightCapacity'   => $settings->overnight_capacity,
+            'specialEventCapacity'   => $settings->special_event_capacity,
             'inventory'           => $remainingPerDateArray, // optional
         ]);
     }
+
+    private const BOOKING_CONFIG = [
+        'regular' => [
+            'session_key' => 'booking_data',
+            'activities_view' => 'booking.activities',
+            'activities_error_route' => 'home',
+            'payment_view' => 'booking.payment',
+            'payment_error_route' => 'home',
+            'var_name' => 'bookingData',
+        ],
+        'staycation' => [
+            'session_key' => 'booking',
+            'activities_view' => 'booking.staycation-activities',
+            'activities_error_route' => 'booking.staycation',
+            'payment_view' => 'booking.staycation-payment',
+            'payment_error_route' => 'booking.staycation',
+            'var_name' => 'booking',
+        ],
+        'dayvisit' => [
+            'session_key' => 'dayvisit_booking_data',
+            'activities_view' => 'booking.dayvisit-activities',
+            'activities_error_route' => 'booking.dayvisit',
+            'payment_view' => 'booking.dayvisit-payment',
+            'payment_error_route' => 'booking.dayvisit',
+            'var_name' => 'bookingData',
+        ],
+        'special_event' => [
+            'session_key' => 'special_event_booking_data',
+            'activities_view' => 'booking.special-event-activities',
+            'activities_error_route' => 'booking.specialEvent',
+            'payment_view' => 'booking.special-event-payment',
+            'payment_error_route' => 'booking.specialEvent',
+            'var_name' => 'bookingData',
+        ],
+    ];
 
     public function staycation(Request $request)
     {
         // Handle POST request to set dates and accommodations
         if ($request->isMethod('post')) {
-            $request->validate([
-                'check_in' => 'sometimes|date|after:yesterday',
-                'check_out' => 'sometimes|date|after:check_in',
-                'accommodations' => 'sometimes|array',
-            ]);
+            $request->validate(ValidationService::staycationPostRules());
 
             $booking = session('booking', []);
             if ($request->has('check_in') && $request->has('check_out')) {
@@ -756,10 +625,7 @@ class BookingController extends Controller
 
     public function selectDates(Request $request)
     {
-        $request->validate([
-            'checkin' => 'required|date|after:today',
-            'checkout' => 'required|date|after:checkin',
-        ]);
+        $request->validate(ValidationService::staycationDatesRules());
 
         $booking = session('booking', []);
         $booking['checkin'] = $request->checkin;
@@ -775,12 +641,7 @@ class BookingController extends Controller
 
     public function checkAvailability(Request $request)
     {
-        $request->validate([
-            'checkin' => 'required|date',
-            'checkout' => 'required|date|after:checkin',
-            'staycation_ids' => 'required|array',
-            'staycation_ids.*' => 'integer',
-        ]);
+        $request->validate(ValidationService::availabilityCheckRules());
 
         $checkin = $request->checkin;
         $checkout = $request->checkout;
@@ -818,15 +679,7 @@ class BookingController extends Controller
             $today = now()->format('Y-m-d');
             $selectedDate = $today;
 
-            // Check if today is available, if not, find next available date
-            $defaultInventory = [
-                'day-visit' => [
-                    '2025-11-20' => 8,
-                    '2025-11-21' => 5,
-                    '2025-11-22' => 10,
-                ],
-            ];
-            $inventory = session('inventory', $defaultInventory);
+            $inventory = $this->inventoryService->getAllInventory();
 
             // If today is not available or has low availability, try next few days
             if (!isset($inventory['day-visit'][$today]) || $inventory['day-visit'][$today] <= 0) {
@@ -845,15 +698,7 @@ class BookingController extends Controller
 
     public function storeDayvisit(Request $request)
     {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'booking_date' => 'sometimes|date|after:yesterday',
-            'guests' => 'required|integer|min:1',
-            'special_requests' => 'nullable|string|max:1000',
-        ]);
+        $validated = $request->validate(ValidationService::dayvisitBookingRules());
 
         // Use session date if no booking_date provided
         $bookingDate = $validated['booking_date'] ?? session('selected_dayvisit_date');
@@ -866,24 +711,15 @@ class BookingController extends Controller
         $validated['package'] = 'Day Visit (500 per person)';
         $validated['price'] = 500 * $validated['guests'];
 
-        // Get current inventory
-        $defaultInventory = [
-            'day-visit' => ['2025-11-20' => 8, '2025-11-21' => 5, '2025-11-22' => 10],
-        ];
-        $inventory = session('inventory', $defaultInventory);
-
         $date = $validated['booking_date'];
 
         // Check availability
-        if (isset($inventory['day-visit'][$date]) && $inventory['day-visit'][$date] <= 0) {
+        if (!$this->inventoryService->isAvailable('day-visit', $date)) {
             return redirect()->back()->with('error', 'No availability for the selected date.');
         }
 
         // Deduct inventory
-        if (isset($inventory['day-visit'][$date])) {
-            $inventory['day-visit'][$date] = max(0, $inventory['day-visit'][$date] - 1);
-            session(['inventory' => $inventory]);
-        }
+        $this->inventoryService->reduceInventory('day-visit', $date);
 
         // Store booking data in session
         session(['dayvisit_booking_data' => $validated]);
@@ -897,279 +733,24 @@ class BookingController extends Controller
 
     public function dayvisitActivities()
     {
-        $bookingData = session('dayvisit_booking_data');
-
-        if (!$bookingData) {
-            return redirect()->route('booking.dayvisit')->with('error', 'No booking data found. Please start booking again.');
-        }
-
-        $activities = $this->getActivitiesData();
-
-        return view('booking.dayvisit-activities', compact('bookingData', 'activities'));
+        return $this->getBookingActivities('dayvisit');
     }
 
     public function getDayvisitActivitiesApi()
     {
-        $activities = $this->getActivitiesData();
+        $activities = $this->bookingService->getActivitiesData();
         return response()->json($activities);
     }
 
-    private function getActivitiesData()
-    {
-        // Centralized activities data from the activities page
-        $activitiesByCategory = [
-            'adventure' => [
-                [
-                    'id' => 1,
-                    'name' => 'Go-Kart (15yo above)',
-                    'description' => '4 rounds / 10 mins (approx)',
-                    'duration' => '10 minutes',
-                    'price' => 500,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/go-cart2.jpg'),
-                ],
-                [
-                    'id' => 2,
-                    'name' => 'ATV (15yo above)',
-                    'description' => '20 minutes',
-                    'duration' => '20 minutes',
-                    'price' => 800,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/atv.jpg'),
-                ],
-                [
-                    'id' => 3,
-                    'name' => 'Wet Inflatable Slide',
-                    'description' => '₱350 per child per hour, Minimum of 3 children or ₱1,050',
-                    'duration' => '1 hour',
-                    'price' => 350,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/slide-n-go2.jpg'),
-                ],
-                [
-                    'id' => 4,
-                    'name' => 'Mini Kalesa',
-                    'description' => '30 minutes (200 lbs max)',
-                    'duration' => '30 minutes',
-                    'price' => 600,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/minikalesa.jpg'),
-                ],
-                [
-                    'id' => 5,
-                    'name' => 'Horseback Riding',
-                    'description' => '30 minutes',
-                    'duration' => '30 minutes',
-                    'price' => 600,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/our-farm2.jpg'),
-                ],
-            ],
-
-            'sports' => [
-                [
-                    'id' => 6,
-                    'name' => 'Mountain Bike',
-                    'description' => 'Duration: 1 hour',
-                    'duration' => '1 hour',
-                    'price' => 300,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/bikes.jpg'),
-                ],
-                [
-                    'id' => 7,
-                    'name' => 'Archery Tag | Target',
-                    'description' => 'Duration: 45 minutes',
-                    'duration' => '45 minutes',
-                    'price' => 150,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/archery.jpg'),
-                ],
-                [
-                    'id' => 8,
-                    'name' => 'Disc Golf',
-                    'description' => 'Rate: ₱250 per game',
-                    'duration' => '1 hour',
-                    'price' => 250,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/slides CALAIA-01.png'),
-                ],
-                [
-                    'id' => 9,
-                    'name' => 'Kiteflying',
-                    'description' => 'Duration: 1 hour',
-                    'duration' => '1 hour',
-                    'price' => 150,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/slides CALAIA-01.png'),
-                ],
-                [
-                    'id' => 10,
-                    'name' => 'Board Games / Cards',
-                    'description' => 'Casual indoor board and card games.',
-                    'duration' => '1 hour',
-                    'price' => 0,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/slides CALAIA-01.png'),
-                ],
-                [
-                    'id' => 11,
-                    'name' => 'Sandy Pickle',
-                    'description' => 'Sand pickleball-style game.',
-                    'duration' => '1 hour',
-                    'price' => 0,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/games-grounds4.jpg'),
-                ],
-                [
-                    'id' => 12,
-                    'name' => 'Frisbee',
-                    'description' => 'Casual throwing game in the field.',
-                    'duration' => '1 hour',
-                    'price' => 0,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/games-grounds4.jpg'),
-                ],
-                [
-                    'id' => 13,
-                    'name' => 'Field Volleyball',
-                    'description' => 'Outdoor volleyball on the grass field.',
-                    'duration' => '1 hour',
-                    'price' => 0,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/games-grounds4.jpg'),
-                ],
-            ],
-
-            'rrcamp' => [
-                [
-                    'id' => 14,
-                    'name' => 'Kawa Bath',
-                    'description' => '1 hour (1–4 persons), ₱1,000 hot / ₱2,000 cold',
-                    'duration' => '1 hour',
-                    'price' => 1000,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/Kawa bath.jpg'),
-                ],
-                [
-                    'id' => 15,
-                    'name' => 'Bonfire | S\'mores',
-                    'description' => '₱350 bonfire, ₱450 s\'mores (25 pcs)',
-                    'duration' => '2 hours',
-                    'price' => 350,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/bonfire.jpg'),
-                ],
-                [
-                    'id' => 16,
-                    'name' => 'Hiking',
-                    'description' => 'Enjoy scenic nature trails around the property.',
-                    'duration' => '2 hours',
-                    'price' => 0,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/slides CALAIA-01.png'),
-                ],
-                [
-                    'id' => 17,
-                    'name' => 'Fishing',
-                    'description' => '1 hour with cup of bait, ₱250 per rod',
-                    'duration' => '1 hour',
-                    'price' => 250,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/OUTDOOR MOVIE.jpg'),
-                ],
-                [
-                    'id' => 18,
-                    'name' => 'Outdoor Movie',
-                    'description' => 'Strictly 6–9 PM only',
-                    'duration' => '3 hours',
-                    'price' => 1500,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/OUTDOOR MOVIE.jpg'),
-                ],
-            ],
-
-            'farm' => [
-                [
-                    'id' => 19,
-                    'name' => 'Tree Planting',
-                    'description' => '₱200 per tree, Includes name label on the tree',
-                    'duration' => '1 hour',
-                    'price' => 200,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/Retreat-1164.jpg'),
-                ],
-                [
-                    'id' => 20,
-                    'name' => 'Farm Tour / Animal Feeding',
-                    'description' => 'Guided tour with friendly farm animals',
-                    'duration' => '1 hour',
-                    'price' => 150,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/Retreat-880.jpg'),
-                ],
-                [
-                    'id' => 21,
-                    'name' => 'Veggie Picking',
-                    'description' => 'Prices based on market price that day',
-                    'duration' => '30 minutes',
-                    'price' => 0,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/Retreat-880.jpg'),
-                ],
-                [
-                    'id' => 22,
-                    'name' => 'Animal Encounters',
-                    'description' => 'Close-up interactions with farm animals',
-                    'duration' => '30 minutes',
-                    'price' => 0,
-                    'availability' => 'Available',
-                    'image' => asset('assets/images/carousel/our-farm2.jpg'),
-                ],
-            ],
-        ];
-
-        // Flatten all activities into a single array
-        $activities = [];
-        foreach ($activitiesByCategory as $category => $categoryActivities) {
-            $activities = array_merge($activities, $categoryActivities);
-        }
-
-        return $activities;
-    }
 
     public function storeDayvisitActivities(Request $request)
     {
-        $request->validate([
-            'activities' => 'required|array',
-            'activities.*.id' => 'required|string',
-            'activities.*.name' => 'required|string',
-            'activities.*.price' => 'required|numeric',
-            'activities.*.guests' => 'required|integer|min:1',
-            'activities.*.type' => 'required|string|in:predefined',
-        ]);
-
-        $bookingData = session('dayvisit_booking_data');
-
-        if (!$bookingData) {
-            return response()->json(['success' => false, 'message' => 'No booking data found.'], 400);
-        }
-
-        // Store selected activities in session
-        session(['dayvisit_selected_activities' => $request->activities]);
-
-        return response()->json(['success' => true, 'message' => 'Activities saved successfully.']);
+        return $this->storeBookingActivities($request, 'dayvisit', ValidationService::activitiesRules(), 'dayvisit_selected_activities');
     }
 
     public function dayvisitPayment()
     {
-        $bookingData = session('dayvisit_booking_data');
-
-        if (!$bookingData) {
-            return redirect()->route('booking.dayvisit')->with('error', 'No booking data found. Please start booking again.');
-        }
-
-        return view('booking.dayvisit-payment', compact('bookingData'));
+        return $this->getBookingPayment('dayvisit');
     }
 
     public function specialEvent(Request $request)
@@ -1231,14 +812,7 @@ class BookingController extends Controller
 
     public function storeSpecialEvent(Request $request)
     {
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'guests' => 'required|integer|min:1|max:100', // Higher limit for events
-            'special_requests' => 'nullable|string|max:1000',
-        ]);
+        $request->validate(ValidationService::specialEventBookingRules());
 
         $bookingData = session('special_event_booking_data');
 
@@ -1258,48 +832,16 @@ class BookingController extends Controller
 
     public function specialEventActivities()
     {
-        $bookingData = session('special_event_booking_data');
-
-        if (!$bookingData) {
-            return redirect()->route('booking.specialEvent')->with('error', 'No booking data found. Please start booking again.');
-        }
-
-        $activities = $this->getActivitiesData();
-
-        return view('booking.special-event-activities', compact('bookingData', 'activities'));
+        return $this->getBookingActivities('special_event');
     }
 
     public function storeSpecialEventActivities(Request $request)
     {
-        $request->validate([
-            'activities' => 'required|array',
-            'activities.*.id' => 'required|string',
-            'activities.*.name' => 'required|string',
-            'activities.*.price' => 'required|numeric',
-            'activities.*.guests' => 'required|integer|min:1',
-            'activities.*.type' => 'required|string|in:predefined',
-        ]);
-
-        $bookingData = session('special_event_booking_data');
-
-        if (!$bookingData) {
-            return response()->json(['success' => false, 'message' => 'No booking data found.'], 400);
-        }
-
-        // Store selected activities in session
-        session(['special_event_selected_activities' => $request->activities]);
-
-        return response()->json(['success' => true, 'message' => 'Activities saved successfully.']);
+        return $this->storeBookingActivities($request, 'special_event', ValidationService::activitiesRules(), 'special_event_selected_activities');
     }
 
     public function specialEventPayment()
     {
-        $bookingData = session('special_event_booking_data');
-
-        if (!$bookingData) {
-            return redirect()->route('booking.specialEvent')->with('error', 'No booking data found. Please start booking again.');
-        }
-
-        return view('booking.special-event-payment', compact('bookingData'));
+        return $this->getBookingPayment('special_event');
     }
 }

@@ -24,104 +24,69 @@ use Illuminate\Http\Request;
 
 class PagesController extends Controller
 {
+    /**
+     * Generic method to render pages with swiper images and texts
+     */
+    protected function renderPage($swiperModel, $textModel, $viewName, $activeName, $textField = 'label', $contentField = 'text', $extraData = [])
+    {
+        $swiperImages = $swiperModel::all();
+        $texts = $textModel::whereNotNull($textField)->pluck($contentField, $textField)->mapWithKeys(function ($content, $field) {
+            return [strtolower($field) => $content];
+        })->toArray();
+
+        $data = compact('swiperImages', 'texts') + ['active' => $activeName] + $extraData;
+
+        return view($viewName, $data);
+    }
+
     public function home()
     {
-        $swiperImages = SwiperImage::all();
-        $texts = HomeText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($text, $label) {
-            return [strtolower($label) => $text];
-        })->toArray();
-        $active = 'home';
-        return view('home', compact('swiperImages', 'texts', 'active'));
+        return $this->renderPage(SwiperImage::class, HomeText::class, 'home', 'home');
     }
 
     public function daytour()
     {
-        $swiperImages = DayTourSwiperImage::all();
-        $texts = DayTourText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($text, $label) {
-            return [strtolower($label) => $text];
-        })->toArray();
-        $active = 'daytour';
-        return view('daytour', compact('swiperImages', 'texts', 'active'));
+        return $this->renderPage(DayTourSwiperImage::class, DayTourText::class, 'daytour', 'daytour');
     }
 
     public function staycation()
     {
-        $swiperImages = StaySwiperImage::all();
-        $texts = StayText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($text, $label) {
-            return [strtolower($label) => $text];
-        })->toArray();
-        $active = 'staycation';
-        return view('staycation', compact('swiperImages', 'texts', 'active'));
+        return $this->renderPage(StaySwiperImage::class, StayText::class, 'staycation', 'staycation');
     }
 
     public function activities()
     {
-        $swiperImages = DoSwiperImage::all();
-        $texts = DoText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($text, $label) {
-            return [strtolower($label) => $text];
-        })->toArray();
-        $active = 'activities';
-        return view('activities', compact('swiperImages', 'texts', 'active'));
+        return $this->renderPage(DoSwiperImage::class, DoText::class, 'activities', 'activities');
     }
 
     public function dining()
     {
-        $swiperImages = FoodSwiperImage::all();
-        $texts = FoodText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($text, $label) {
-            return [strtolower($label) => $text];
-        })->toArray();
-        $active = 'dining';
-        return view('dining', compact('swiperImages', 'texts', 'active'));
+        return $this->renderPage(FoodSwiperImage::class, FoodText::class, 'dining', 'dining');
     }
 
     public function groups()
     {
-        $swiperImages = SpecialSwiperImage::all();
-        $texts = SpecialText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($text, $label) {
-            return [strtolower($label) => $text];
-        })->toArray();
-        $active = 'groups';
-        return view('groups', compact('swiperImages', 'texts', 'active'));
+        return $this->renderPage(SpecialSwiperImage::class, SpecialText::class, 'groups', 'groups');
     }
 
     public function specialEvents()
     {
-        $swiperImages = SpecialSwiperImage::all();
-        $texts = SpecialText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($text, $label) {
-            return [strtolower($label) => $text];
-        })->toArray();
         $events = Event::with(['swiperImages', 'texts'])->get();
-        $active = 'special-events';
-        return view('special-events', compact('swiperImages', 'texts', 'events', 'active'));
+        return $this->renderPage(SpecialSwiperImage::class, SpecialText::class, 'special-events', 'special-events', 'label', 'text', compact('events'));
     }
 
     public function farm()
     {
-        $swiperImages = FarmSwiperImage::all();
-        $texts = FarmText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($text, $label) {
-            return [strtolower($label) => $text];
-        })->toArray();
-        $active = 'farm';
-        return view('farm', compact('swiperImages', 'texts', 'active'));
+        return $this->renderPage(FarmSwiperImage::class, FarmText::class, 'farm', 'farm');
     }
 
     public function stay()
     {
-        $swiperImages = StaySwiperImage::all();
-        $texts = StayText::whereNotNull('title')->pluck('content', 'title')->mapWithKeys(function ($content, $title) {
-            return [strtolower($title) => $content];
-        })->toArray();
-        $active = 'stay';
-        return view('stay', compact('swiperImages', 'texts', 'active'));
+        return $this->renderPage(StaySwiperImage::class, StayText::class, 'stay', 'stay');
     }
 
     public function food()
     {
-        $swiperImages = FoodSwiperImage::all();
-        $texts = FoodText::whereNotNull('title')->pluck('content', 'title')->mapWithKeys(function ($content, $title) {
-            return [strtolower($title) => $content];
-        })->toArray();
-        $active = 'food';
-        return view('food', compact('swiperImages', 'texts', 'active'));
+        return $this->renderPage(FoodSwiperImage::class, FoodText::class, 'food', 'food');
     }
 }

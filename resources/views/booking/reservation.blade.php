@@ -330,8 +330,8 @@
     .font-gotham {
       font-family: 'Gotham', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    .font-vila-zilka {
-      font-family: 'Vila Zilka Serif', ui-serif, Georgia, 'Times New Roman', serif;
+    .font-gotham {
+      font-family: 'Gotham Book', sans-serif;
     }
   </style>
 
@@ -373,7 +373,7 @@
       {!! json_encode([
           'day-visit' => $settings->day_visit_capacity ?? 10,
           'room' => $settings->room_capacity ?? 5,
-          'special-event' => $settings->overnight_capacity ?? 3
+          'special-event' => $settings->special_event_capacity ?? 3
       ]) !!}
   </script>
   <script type="application/json" id="inventory-data">

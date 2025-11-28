@@ -70,7 +70,7 @@
           <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">
             CalaiaPH Day Visit
           </p>
-          <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#8f5d54] font-vila-zilka">
+          <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#8f5d54] font-gotham">
             Book Your Day Visit
           </h1>
           <p class="mt-2 text-sm sm:text-base text-gray-500 max-w-2xl mx-auto px-2">
@@ -281,7 +281,7 @@
                       type="number"
                       id="guests"
                       name="guests"
-                      value="{{ old('guests', 1) }}"
+                      value="{{ old('guests', 0) }}"
                       min="1"
                       required
                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
@@ -345,8 +345,8 @@
     .font-gotham {
       font-family: 'Gotham', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    .font-vila-zilka {
-      font-family: 'Vila Zilka Serif', ui-serif, Georgia, 'Times New Roman', serif;
+    .font-gotham {
+      font-family: 'Gotham Book', sans-serif;
     }
   </style>
 

@@ -94,11 +94,20 @@ if ($datesSelected) {
     }
 }
 
-// Get activities total from session
-$selectedActivities = $booking['selected_activities'] ?? [];
-$activitiesTotal = collect($selectedActivities)->sum(function($activity) {
-    return ($activity['price'] ?? 0) * ($activity['guests'] ?? 0);
-});
+// Get stored totals from session if available, otherwise calculate
+$finalTotals = $booking['final_totals'] ?? null;
+if ($finalTotals) {
+    $accommodationTotal = $finalTotals['accommodation_total'] ?? 0;
+    $activitiesTotal = $finalTotals['activities_total'] ?? 0;
+    $grandTotal = $finalTotals['grand_total'] ?? 0;
+    $breakfastTotal = 0; // Already included in accommodation_total
+} else {
+    // Fallback calculation if final_totals not set
+    $selectedActivities = $booking['selected_activities'] ?? [];
+    $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
+        return 500 * ($activity['guests'] ?? 0);
+    });
+}
 @endphp
 
 <body class="bg-[#f5efe7]">
@@ -458,9 +467,9 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
                                                 $isWeekend = $day === 5 || $day === 6;
                                                 $basePrice = 0;
                                                 if (str_contains($name, 'standard')) {
-                                                    $basePrice = $isWeekend ? 6000 : 4800;
+                                                    $basePrice = $isWeekend ? 1000 * $quantity : 800 * $quantity;
                                                 } elseif (str_contains($name, 'premium')) {
-                                                    $basePrice = $isWeekend ? 7200 : 5760;
+                                                    $basePrice = $isWeekend ? 1200 * $quantity : 960 * $quantity;
                                                 }
                                                 $extraGuests = max(0, $quantity - 4);
                                                 $accommodationPrice += $basePrice + ($extraGuests * 400);
@@ -573,8 +582,8 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
 
   {{-- Temporary inline font helpers --}}
   <style>
-    .font-vila-zilka {
-      font-family: 'Vila Zilka Serif', ui-serif, Georgia, 'Times New Roman', serif;
+    .font-gotham {
+      font-family: 'Gotham Book', sans-serif;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>

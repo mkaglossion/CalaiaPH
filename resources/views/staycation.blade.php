@@ -26,42 +26,7 @@
     <x-header active="staycation" />
 
     <!-- ================= Hero Slider ================= -->
-    <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]" data-slides-count="{{ count($swiperImages) }}">
-      <div class="swiper-wrapper">
-        @if(count($swiperImages) > 0)
-          @php $texts_array = array_values($texts); $labels_array = array_keys($texts); @endphp
-          @foreach($swiperImages as $index => $image)
-          <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-            <img src="{{ $image->image_path }}" alt="{{ $image->title ?? 'Slide Image' }}" class="w-full h-full object-cover object-center" loading="lazy">
-            <div class="absolute inset-0 bg-black/40 z-10"></div>
-            <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-              <div class="text-center px-4">
-                @if(isset($texts_array[$index]))
-                  <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 uppercase" style="font-family:gotham;">{{ ucfirst($labels_array[$index]) }}</h2>
-                  <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase" style="font-family:'Vila Zilka Serif', serif; font-style:italic;">{{ $texts_array[$index] }}</p>
-                @endif
-              </div>
-            </div>
-          </div>
-          @endforeach
-        @else
-          <div class="swiper-slide relative flex items-center justify-center bg-gray-200 overflow-hidden">
-            <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
-              <div class="text-center px-4">
-                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 uppercase"
-                    style="font-family: gotham;">
-                  No Image Available
-                </h2>
-                <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-                  style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
-                  Images will be added soon
-                </p>
-              </div>
-            </div>
-          </div>
-        @endif
-      </div>
-    </div>
+    <x-hero-slider :images="$swiperImages" :texts="$texts" />
 
     <!-- ================= Main ================= -->
     <main id="main" class="" x-data="staycationPage()" x-on:open-staycation-modal.window="openModal($event.detail)">
@@ -626,7 +591,6 @@
     @endphp
 
     <!-- ================= Scripts ================= -->
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
@@ -760,23 +724,6 @@
         }
       }
 
-      // ---------- Swiper setup ----------
-      function initHero(){
-        if(!window.Swiper) return;
-        const hero = document.querySelector('.heroSwiper');
-        if(!hero) return;
-        const slidesCount = parseInt(hero.dataset.slidesCount);
-        try {
-          new Swiper(hero, {
-            loop: slidesCount > 1,
-            effect: 'fade',
-            fadeEffect: { crossFade: true },
-            keyboard: { enabled: true },
-            a11y: { prevSlideMessage: 'Previous slide', nextSlideMessage: 'Next slide' },
-            autoplay: { delay: 5000, disableOnInteraction: false },
-          });
-        } catch(e){ console.warn('Hero swiper init failed', e); }
-      }
 
       function initModalSwipers(){
         if(!window.Swiper) return;
@@ -811,8 +758,6 @@
       }
 
       document.addEventListener('DOMContentLoaded', function(){
-        if(!window.Swiper){ console.warn('Swiper not loaded – skipping init'); return; }
-        initHero();
         initModalSwipers();
         document.querySelectorAll('a[href^="#"]').forEach(a => {
           a.addEventListener('click', (e) => {

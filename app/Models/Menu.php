@@ -2,19 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class Menu extends Model
+class Menu extends ContentModel
 {
     protected $fillable = ['name'];
 
-    public function swiperImages()
+    protected function getImageModelClass(): string
     {
-        return $this->hasMany(MenuSwiperImage::class);
+        return MenuSwiperImage::class;
     }
 
-    public function texts()
+    protected function getTextModelClass(): string
     {
-        return $this->hasMany(MenuText::class);
+        return MenuText::class;
     }
 }

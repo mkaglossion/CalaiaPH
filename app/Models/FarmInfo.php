@@ -2,19 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class FarmInfo extends Model
+class FarmInfo extends ContentModel
 {
     protected $fillable = ['name'];
 
-    public function swiperImages()
+    protected function getImageModelClass(): string
     {
-        return $this->hasMany(FarmInfoSwiperImage::class);
+        return FarmInfoSwiperImage::class;
     }
 
-    public function texts()
+    protected function getTextModelClass(): string
     {
-        return $this->hasMany(FarmInfoText::class);
+        return FarmInfoText::class;
     }
 }

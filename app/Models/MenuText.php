@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class MenuText extends Model
+class MenuText extends BaseRelatedText
 {
     protected $fillable = ['menu_id', 'section', 'title', 'content'];
 
     public function menu()
     {
         return $this->belongsTo(Menu::class);
+    }
+
+    protected function getParentModelClass(): string
+    {
+        return Menu::class;
     }
 }

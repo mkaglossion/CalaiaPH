@@ -68,13 +68,13 @@
         {{-- Title --}}
         <header class="mb-6 sm:mb-8 text-center">
           <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">
-            CalaiaPH Booking
+            CalaiaPH Activities
           </p>
           <h1 class="text-2xl font-bold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">
             Select or Add Activities
           </h1>
           <p class="mt-2 text-xs text-gray-500 max-w-2xl mx-auto px-2" style="font-family: 'Gotham Book', sans-serif;">
-            These are optional enhancements to your booking. Choose from our curated experiences or add your own custom activity.
+            These are optional enhancements to your booking. Choose from our curated experiences.
           </p>
         </header>
 
@@ -114,14 +114,13 @@
             </div>
 
             <div class="mt-6 space-y-3">
-              <button
-                type="button"
-                onclick="window.history.back()"
+              <a
+                href="{{ route('booking.create') }}"
                 class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
               >
                 <i class="bi bi-arrow-left"></i>
-                Back
-              </button>
+                Back to Details
+              </a>
 
               <button
                 type="button"
@@ -153,22 +152,22 @@
 
   {{-- Toast --}}
   <div class="toast fixed bottom-4 right-4 flex items-center text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden"
-       role="alert" aria-live="assertive" aria-atomic="true">
-     <div class="flex items-center w-full">
-        <div class="toast-body text-sm flex-1"></div>
-        <button type="button"
-                class="ml-3 text-white text-xs font-semibold uppercase tracking-wide btn-close"
-                data-bs-dismiss="toast"
-                aria-label="Close">
-           ✕
-        </button>
-     </div>
+        role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="flex items-center w-full">
+      <div class="toast-body text-sm flex-1"></div>
+      <button type="button"
+              class="ml-3 text-white text-xs font-semibold uppercase tracking-wide btn-close"
+              data-bs-dismiss="toast"
+              aria-label="Close">
+        ✕
+      </button>
+    </div>
   </div>
 
   {{-- Temporary inline font helpers --}}
   <style>
-    .font-vila-zilka {
-      font-family: 'Vila Zilka Serif', ui-serif, Georgia, 'Times New Roman', serif;
+    .font-gotham {
+      font-family: 'Gotham Book', sans-serif;
     }
   </style>
 
@@ -246,8 +245,8 @@
           const activityPrice = parseFloat(checkbox.dataset.price);
 
           if (checkbox.checked) {
-            selectedActivities.push({ id: activityId, name: activityName, price: activityPrice, guests: totalGuests, type: 'predefined' });
-            totalCost += activityPrice * totalGuests;
+            selectedActivities.push({ id: activityId, name: activityName, price: activityPrice, guests: 0, type: 'predefined' });
+            totalCost += activityPrice * 0;
             showToast(`${activityName} added to selection`, 'success');
           } else {
             const index = selectedActivities.findIndex(a => a.id === activityId && a.type === 'predefined');
@@ -283,7 +282,7 @@
                 <p class="text-xs font-medium text-gray-900" style="font-family: 'Gotham Book', sans-serif;">${activity.name}</p>
                 <div class="mt-2">
                   <label class="block text-xs text-gray-600 mb-1" style="font-family: 'Gotham Book', sans-serif;">Number of Guests</label>
-                  <input type="number" class="activity-guests w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent" value="${activity.guests}" min="1" max="${totalGuests}" data-activity-id="${activity.id}">
+                  <input type="number" class="activity-guests w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent" value="${activity.guests}" min="0" max="${totalGuests}" data-activity-id="${activity.id}">
                 </div>
                 ${activity.type === 'custom' ? `<p class="text-xs text-gray-500 mt-1" style="font-family: 'Gotham Book', sans-serif;">${activity.description}</p>` : ''}
               </div>
@@ -299,7 +298,7 @@
             // Add event listener for guest input
             const guestInput = item.querySelector('.activity-guests');
             guestInput.addEventListener('input', function() {
-              const newGuests = parseInt(this.value) || 1;
+              const newGuests = parseInt(this.value) || 0;
               const index = selectedActivities.findIndex(a => a.id === activity.id);
               if (index > -1) {
                 const oldGuests = selectedActivities[index].guests;

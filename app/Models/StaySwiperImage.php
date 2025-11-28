@@ -2,12 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class StaySwiperImage extends Model
+class StaySwiperImage extends BaseSwiperImage
 {
-    use HasFactory;
-
-    protected $fillable = ['title', 'image_path', 'public_id'];
+    //
 }

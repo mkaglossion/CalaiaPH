@@ -2,19 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class Staycation extends Model
+class Staycation extends ContentModel
 {
     protected $fillable = ['name'];
 
-    public function swiperImages()
+    protected function getImageModelClass(): string
     {
-        return $this->hasMany(StaycationSwiperImage::class);
+        return StaycationSwiperImage::class;
     }
 
-    public function texts()
+    protected function getTextModelClass(): string
     {
-        return $this->hasMany(StaycationText::class);
+        return StaycationText::class;
     }
 }

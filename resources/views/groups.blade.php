@@ -44,7 +44,7 @@
                     {{ ucfirst($labels_array[$index]) }}
                   </h2>
                   <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-                    style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
+                    style="font-family: 'Gotham Book', sans-serif; font-style: italic;">
                     {{ $texts_array[$index] }}
                   </p>
                 @endif
@@ -61,7 +61,7 @@
                   No Image Available
                 </h2>
                 <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-                  style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
+                  style="font-family: 'Gotham Book', sans-serif; font-style: italic;">
                   Images will be added soon
                 </p>
               </div>

@@ -434,8 +434,8 @@
     .font-gotham {
       font-family: 'Gotham', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    .font-vila-zilka {
-      font-family: 'Vila Zilka Serif', ui-serif, Georgia, 'Times New Roman', serif;
+    .font-gotham {
+      font-family: 'Gotham Book', sans-serif;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>

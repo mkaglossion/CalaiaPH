@@ -176,8 +176,8 @@
 
   {{-- Temporary inline font helpers --}}
   <style>
-    .font-vila-zilka {
-      font-family: 'Vila Zilka Serif', ui-serif, Georgia, 'Times New Roman', serif;
+    .font-gotham {
+      font-family: 'Gotham Book', sans-serif;
     }
   </style>
 

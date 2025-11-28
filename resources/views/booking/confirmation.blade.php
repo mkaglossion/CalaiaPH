@@ -215,7 +215,7 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
                 </div>
                 <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
                   <span>Total Amount Paid:</span>
-                  <span class="text-[#8f5d54]">₱{{ number_format($grandTotal ?? 0, 2) }}</span>
+                  <span class="text-[#8f5d54]">₱{{ number_format(($bookingData['price'] ?? 0) + collect($selectedActivities ?? [])->sum(function($activity) { return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1); }), 2) }}</span>
                 </div>
               </div>
             </div>
@@ -485,8 +485,8 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
 
   {{-- Temporary inline font helpers --}}
   <style>
-    .font-vila-zilka {
-      font-family: 'Vila Zilka Serif', ui-serif, Georgia, 'Times New Roman', serif;
+    .font-gotham {
+      font-family: 'Gotham Book', sans-serif;
     }
 
     @media print {

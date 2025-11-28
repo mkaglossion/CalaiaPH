@@ -1,6 +1,6 @@
 <x-check-availability
     :dayVisitCapacity="$dayVisitCapacity"
     :roomCapacity="$roomCapacity"
-    :specialEventCapacity="$overnightCapacity"
+    :specialEventCapacity="$specialEventCapacity"
     :inventory="$inventory"
 />

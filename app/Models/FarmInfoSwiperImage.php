@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class FarmInfoSwiperImage extends Model
+class FarmInfoSwiperImage extends BaseRelatedSwiperImage
 {
     protected $fillable = ['farm_info_id', 'title', 'image_path', 'public_id'];
 
     public function farmInfo()
     {
         return $this->belongsTo(FarmInfo::class);
+    }
+
+    protected function getParentModelClass(): string
+    {
+        return FarmInfo::class;
     }
 }
 

@@ -20,46 +20,31 @@ use App\Models\HomeText;
 
 class AdminPagesController extends Controller
 {
-    public function home()
+    private $pageConfigs = [
+        'home' => [SwiperImage::class, HomeText::class, 'admin.pages.home'],
+        'dayTour' => [DayTourSwiperImage::class, DayTourText::class, 'admin.pages.daytour'],
+        'whereToStay' => [StaySwiperImage::class, StayText::class, 'admin.pages.wheretostay'],
+        'whatToDo' => [DoSwiperImage::class, DoText::class, 'admin.pages.whattodo'],
+        'foodAndBeverage' => [FoodSwiperImage::class, FoodText::class, 'admin.pages.foodandbeverage'],
+        'specialEvents' => [SpecialSwiperImage::class, SpecialText::class, 'admin.pages.specialevents'],
+        'ourFarm' => [FarmSwiperImage::class, FarmText::class, 'admin.pages.ourfarm'],
+    ];
+
+    public function __call($method, $args)
     {
-        $images = SwiperImage::all();
-        $texts = HomeText::all();
-        return view('admin.pages.home', compact('images', 'texts'));
+        if (isset($this->pageConfigs[$method])) {
+            return $this->showPage($method);
+        }
+
+        throw new \BadMethodCallException("Method {$method} does not exist.");
     }
-    public function dayTour()
+
+    private function showPage($page)
     {
-        $images = DayTourSwiperImage::all();
-        $texts = DayTourText::all();
-        return view('admin.pages.daytour', compact('images', 'texts'));
-    }
-    public function whereToStay()
-    {
-        $images = StaySwiperImage::all();
-        $texts = StayText::all();
-        return view('admin.pages.wheretostay', compact('images', 'texts'));
-    }
-    public function whatToDo()
-    {
-        $images = DoSwiperImage::all();
-        $texts = DoText::all();
-        return view('admin.pages.whattodo', compact('images', 'texts'));
-    }
-    public function foodAndBeverage()
-    {
-        $images = FoodSwiperImage::all();
-        $texts = FoodText::all();
-        return view('admin.pages.foodandbeverage', compact('images', 'texts'));
-    }
-    public function specialEvents()
-    {
-        $images = SpecialSwiperImage::all();
-        $texts = SpecialText::all();
-        return view('admin.pages.specialevents', compact('images', 'texts'));
-    }
-    public function ourFarm()
-    {
-        $images = FarmSwiperImage::all();
-        $texts = FarmText::all();
-        return view('admin.pages.ourfarm', compact('images', 'texts'));
+        [$imageModel, $textModel, $view] = $this->pageConfigs[$page];
+        $images = $imageModel::all();
+        $texts = $textModel::all();
+
+        return view($view, compact('images', 'texts'));
     }
 }

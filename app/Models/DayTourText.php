@@ -2,12 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class DayTourText extends Model
+class DayTourText extends BaseText
 {
-    use HasFactory;
-
-    protected $fillable = ['label', 'text'];
+    //
 }
