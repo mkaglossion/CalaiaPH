@@ -18,7 +18,7 @@
       @if (session('success'))
           <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">
               {{ session('success') }}
-          </div>
+          </div>z
       @endif
     </div>
     <x-header active="booking" />
@@ -198,16 +198,12 @@ $galleryData = [
 ];
 @endphp
 
-@if (!$step1Completed || !$datesSelected)
-    <script>
-        window.location.href = "{{ $backLink }}";
-    </script>
-@endif
 
 <div class="pt-6 md:pt-12"
      data-accommodation-count="{{ count($accommodationData ?? []) }}"
      data-root-dir="{{ url('/') }}"
-     data-accommodation-data='@json($accommodationData ?? [])'>
+     data-accommodation-data='@json($accommodationData ?? [])'
+     data-selected-activities='@json($booking['selected_activities'] ?? [])'>
 
     {{-- Header --}}
     <div class="text-center mb-10">
@@ -442,6 +438,18 @@ $galleryData = [
                             <span class="text-sm text-gray-600">Total Guests:</span>
                             <span class="text-sm font-medium" id="total-guests">0</span>
                         </div>
+
+                        {{-- Selected Activities --}}
+                        @if(!empty($booking['selected_activities']))
+                            <div class="mt-2 space-y-1">
+                                @foreach($booking['selected_activities'] as $activity)
+                                    <div class="text-xs text-gray-600">
+                                        Activity: {{ $activity['name'] }} - ₱{{ number_format($activity['price'] * $activity['guests']) }} ({{ $activity['guests'] }} guests)
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+
                         <div class="flex justify-between items-center text-lg font-bold">
                             <span>Total:</span>
                             <span id="total-price">₱ 0</span>
@@ -767,6 +775,48 @@ $galleryData = [
     window.galleryImages = [];
     window.galleryCurrentIndex = 0;
 
+    // Storage key for staycation selections
+    const STAYCATION_STORAGE_KEY = 'staycation_selections';
+
+    // Save selections to storage
+    function saveSelectionsToStorage() {
+        try {
+            const data = {
+                selectedAccommodations: window.selectedAccommodations,
+                accommodationCount: window.accommodationCount,
+                timestamp: Date.now()
+            };
+            sessionStorage.setItem(STAYCATION_STORAGE_KEY, JSON.stringify(data));
+        } catch (error) {
+            console.warn('Failed to save selections to storage:', error);
+        }
+    }
+
+    // Load selections from storage
+    function loadSelectionsFromStorage() {
+        try {
+            const stored = sessionStorage.getItem(STAYCATION_STORAGE_KEY);
+            if (stored) {
+                const data = JSON.parse(stored);
+                // Check if data is not too old (24 hours)
+                const age = Date.now() - data.timestamp;
+                if (age < 24 * 60 * 60 * 1000) { // 24 hours
+                    window.selectedAccommodations = data.selectedAccommodations || {};
+                    window.accommodationCount = data.accommodationCount || 1;
+                    return true;
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to load selections from storage:', error);
+        }
+        return false;
+    }
+
+    // Clear storage (call when booking is completed or user starts fresh)
+    function clearSelectionsStorage() {
+        sessionStorage.removeItem(STAYCATION_STORAGE_KEY);
+    }
+
     // Global booking functions
     window.FeeCalculator = {
         calculateTotal: function(accommodations, checkin, checkout) {
@@ -912,6 +962,11 @@ $galleryData = [
             summaryContainer.appendChild(summaryItem);
         });
 
+        // Add activities total
+        const selectedActivities = JSON.parse(el.dataset.selectedActivities || '[]');
+        const activitiesTotal = selectedActivities.reduce((sum, activity) => sum + (activity.price * activity.guests), 0);
+        totalPrice += activitiesTotal;
+
         // Update total price element
         const totalPriceEl = document.getElementById('total-price');
         if (totalPriceEl) totalPriceEl.textContent = `₱ ${totalPrice.toLocaleString()}`;
@@ -929,11 +984,38 @@ $galleryData = [
         const skipBtn = document.getElementById('skip-btn');
         if (proceedBtn) proceedBtn.disabled = selectedCount === 0;
         if (skipBtn) skipBtn.disabled = selectedCount === 0;
+
+        // Save selections to storage whenever summary is updated
+        saveSelectionsToStorage();
     };
 
     window.initializeBookingSummary = function() {
         window.updateBookingSummary();
     };
+
+    function addAccommodationTab(index) {
+        const tabsContainer = document.getElementById('accommodation-tabs');
+        if (tabsContainer) {
+            const newTab = document.createElement('div');
+            newTab.className = 'accom-tab-item relative';
+            newTab.dataset.index = index;
+            newTab.innerHTML = `
+                <button type="button"
+                        class="accom-btn my-2 px-4 py-2 border rounded-md text-xs md:text-sm font-medium transition border-gray-300 text-gray-700 hover:bg-gray-100"
+                        data-index="${index}"
+                        aria-label="Select accommodation ${index + 1}">
+                    ACCOMMODATION ${index + 1}
+                </button>
+                <button type="button"
+                        class="remove-accom absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600 transition"
+                        data-index="${index}"
+                        aria-label="Remove accommodation ${index + 1}">
+                    ×
+                </button>
+            `;
+            tabsContainer.appendChild(newTab);
+        }
+    }
 
     window.addAccommodationWithValidation = function() {
         if (window.accommodationCount >= 4) {
@@ -945,27 +1027,7 @@ $galleryData = [
         window.accommodationCount++;
 
         // Create new tab
-        const tabsContainer = document.getElementById('accommodation-tabs');
-        if (tabsContainer) {
-            const newTab = document.createElement('div');
-            newTab.className = 'accom-tab-item relative';
-            newTab.dataset.index = newIndex;
-            newTab.innerHTML = `
-                <button type="button"
-                        class="accom-btn my-2 px-4 py-2 border rounded-md text-xs md:text-sm font-medium transition border-gray-300 text-gray-700 hover:bg-gray-100"
-                        data-index="${newIndex}"
-                        aria-label="Select accommodation ${newIndex + 1}">
-                    ACCOMMODATION ${newIndex + 1}
-                </button>
-                <button type="button" 
-                        class="remove-accom absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600 transition"
-                        data-index="${newIndex}"
-                        aria-label="Remove accommodation ${newIndex + 1}">
-                    ×
-                </button>
-            `;
-            tabsContainer.appendChild(newTab);
-        }
+        addAccommodationTab(newIndex);
 
         // Update the "Add accommodation" button visibility
         const addButton = document.getElementById('add-accommodation');
@@ -975,7 +1037,7 @@ $galleryData = [
 
         window.updateBookingSummary();
         initializeTabEvents();
-        
+
         // Show success toast
         showToast(`ACCOMMODATION ${newIndex + 1} added successfully`, 'success');
     };
@@ -983,7 +1045,7 @@ $galleryData = [
     window.removeAccommodation = function(index) {
         // Remove from selected accommodations
         delete window.selectedAccommodations[index];
-        
+
         // Remove the tab
         const tabToRemove = document.querySelector(`.accom-tab-item[data-index="${index}"]`);
         if (tabToRemove) {
@@ -1015,6 +1077,7 @@ $galleryData = [
         }
 
         window.updateBookingSummary();
+        saveSelectionsToStorage();
     };
 
     // Toast function
@@ -1123,6 +1186,24 @@ $galleryData = [
 
     document.addEventListener('DOMContentLoaded', function () {
         setTimeout(function () {
+            // Load saved selections
+            if (loadSelectionsFromStorage()) {
+                // Restore accommodation tabs
+                for (let i = 1; i < window.accommodationCount; i++) {
+                    addAccommodationTab(i);
+                }
+                // Update the "Add accommodation" button visibility
+                const addButton = document.getElementById('add-accommodation');
+                if (addButton && window.accommodationCount >= 4) {
+                    addButton.style.display = 'none';
+                }
+                // Update UI with loaded selections
+                Object.entries(window.selectedAccommodations).forEach(([index, acc]) => {
+                    displaySelectedAccommodation(index, acc);
+                });
+                window.updateBookingSummary();
+            }
+
             if (typeof window.initializeBookingSummary === 'function') {
                 window.initializeBookingSummary();
             }
@@ -1776,6 +1857,49 @@ $galleryData = [
             // (Optional) extra validation for guest-input enablement can stay if you add a select button later
         });
 
+        // Pre-populate selections if they exist
+        const activeTab = document.querySelector('.accom-btn.bg-gray-900');
+        if (activeTab) {
+            const accommodationIndex = parseInt(activeTab.dataset.index);
+            const savedSelection = window.selectedAccommodations[accommodationIndex];
+
+            if (savedSelection) {
+                // Find and pre-select the saved staycation
+                const savedStaycationId = savedSelection.staycation?.id;
+                if (savedStaycationId) {
+                    const checkbox = optionsContainer.querySelector(`input[data-staycation*='"id":${savedStaycationId}']`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        checkbox.dispatchEvent(new Event('change'));
+
+                        // Set guest count
+                        const card = checkbox.closest('.bg-white.rounded-xl');
+                        const guestInput = card.querySelector('.guest-input');
+                        if (guestInput) {
+                            guestInput.value = savedSelection.guests || 1;
+                        }
+
+                        // Set pet options if applicable
+                        if (savedSelection.pet_agreement) {
+                            const petAgreement = card.querySelector('.pet-agreement');
+                            const numPetsInput = card.querySelector('.pet-num-input');
+                            if (petAgreement) petAgreement.checked = true;
+                            if (numPetsInput) numPetsInput.value = savedSelection.num_pets || 0;
+                        }
+
+                        // Set breakfast option
+                        if (savedSelection.has_breakfast) {
+                            const breakfastRadio = card.querySelector('.has-breakfast-radio[value="yes"]');
+                            if (breakfastRadio) breakfastRadio.checked = true;
+                        }
+
+                        // Update pricing display
+                        updateModalPricing(card);
+                    }
+                }
+            }
+        }
+
         // Set up focus trapping
         setupFocusTrap(modalId);
 
@@ -2181,6 +2305,7 @@ $galleryData = [
         })
         .then(data => {
             if (data && data.success) {
+                clearSelectionsStorage(); // Clear saved selections
                 window.location.href = '{{ route("booking.staycationActivities") }}';
             } else {
                 // Reset button
@@ -2255,6 +2380,7 @@ $galleryData = [
         })
         .then(data => {
             if (data && data.success) {
+                clearSelectionsStorage(); // Clear saved selections
                 window.location.href = '{{ route("booking.staycationPayment") }}';
             } else {
                 // Reset button
