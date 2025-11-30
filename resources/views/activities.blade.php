@@ -60,7 +60,7 @@
                     </svg>
                   </button>
 
-                  <div class="min-h-[320px]" id="adventure-stage"></div>
+                  <div class="min-h-80" id="adventure-stage"></div>
                 </div>
                 <div id="adventure-dots" class="flex gap-2 justify-center py-3" role="tablist" aria-label="Adventure slides"></div>
               </div>
@@ -89,7 +89,7 @@
                     </svg>
                   </button>
 
-                  <div class="min-h-[320px]" id="sports-stage"></div>
+                  <div class="min-h-80" id="sports-stage"></div>
                 </div>
                 <div id="sports-dots" class="flex gap-2 justify-center py-3" role="tablist" aria-label="Sports &amp; games slides"></div>
               </div>
@@ -118,7 +118,7 @@
                     </svg>
                   </button>
 
-                  <div class="min-h-[320px]" id="rrcamp-stage"></div>
+                  <div class="min-h-80" id="rrcamp-stage"></div>
                 </div>
                 <div id="rrcamp-dots" class="flex gap-2 justify-center py-3" role="tablist" aria-label="R &amp; R &amp; Camp slides"></div>
               </div>
@@ -147,7 +147,7 @@
                     </svg>
                   </button>
 
-                  <div class="min-h-[320px]" id="farm-stage"></div>
+                  <div class="min-h-80" id="farm-stage"></div>
                 </div>
                 <div id="farm-dots" class="flex gap-2 justify-center py-3" role="tablist" aria-label="Farm slides"></div>
               </div>
@@ -176,7 +176,6 @@
                     <input type="hidden" name="price" value="">
                     <input type="hidden" name="image" value="">
                     <input type="hidden" name="quantity" value="1">
-                    <button type="submit" class="bg-[#8f5d54] text-white text-[12px] tracking-[.08em] uppercase rounded-[10px] py-[6px] px-3 hover:bg-[#8f5d54]/90 transition">Add to Cart</button>
                   </form>
                 </div>
               </article>
@@ -198,7 +197,6 @@
                     <input type="hidden" name="price" value="">
                     <input type="hidden" name="image" value="">
                     <input type="hidden" name="quantity" value="1">
-                    <button type="submit" class="bg-[#8f5d54] text-white text-[12px] tracking-[.08em] uppercase rounded-[10px] py-[6px] px-3 hover:bg-[#8f5d54]/90 transition">Add to Cart</button>
                   </form>
                 </div>
               </article>
@@ -522,6 +520,7 @@
           $slide = [];
           if ($left) {
             $slide['left'] = [
+              'id'      => $left['title'],
               'title'   => $left['title'],
               'img'     => $left['images'][0] ?? '',
               'alt'     => $left['title'],
@@ -532,6 +531,7 @@
           }
           if ($right) {
             $slide['right'] = [
+              'id'      => $right['title'],
               'title'   => $right['title'],
               'img'     => $right['images'][0] ?? '',
               'alt'     => $right['title'],
@@ -562,8 +562,8 @@
       {!! json_encode($slidesByCategory['farm'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
     </script>
 
-    {{-- Alpine-powered Details Modal (unchanged) --}}
-    <div x-data="{ open:false, modal:{ title:'', details:[], images:[], price:0 } }"
+    {{-- Alpine-powered Details Modal --}}
+    <div x-data="{ open:false, modal:{ title:'', details:[], images:[], price:0, id:'' } }"
          x-on:open-activity.window="modal=$event.detail; open=true"
          class="relative z-50">
       <div x-show="open" class="fixed inset-0 bg-black/50" x-transition.opacity></div>
@@ -621,6 +621,19 @@
           </div>
 
           <div class="px-5 py-4 border-t flex flex-col md:flex-row items-center justify-end gap-3">
+            <template x-if="modal.price > 0">
+              <form action="{{ route('cart.add') }}" method="POST" class="inline">
+                @csrf
+                <input type="hidden" name="id" :value="modal.id || modal.title">
+                <input type="hidden" name="title" :value="modal.title">
+                <input type="hidden" name="price" :value="modal.price">
+                <input type="hidden" name="image" :value="modal.images && modal.images.length ? modal.images[0] : ''">
+                <input type="hidden" name="quantity" value="1">
+                <button type="submit" class="bg-[#8f5d54] text-white px-6 py-3 rounded-2xl hover:bg-[#8f5d54]/90 transition-colors duration-300 w-full md:w-auto font-semibold">
+                  Add to Cart
+                </button>
+              </form>
+            </template>
             <button type="button" @click="open=false" class="bg-gray-500 text-white px-6 py-3 rounded-2xl hover:bg-gray-600 transition-colors duration-300 w-full md:w-auto font-semibold">
               Close
             </button>
@@ -636,9 +649,9 @@
     {{-- Activities + Hero JS --}}
     <script>
       // Global helper for opening modal
-      function viewDetails(title, details = [], images = []) {
+      function viewDetails(title, details = [], images = [], price = 0, id = '') {
         window.dispatchEvent(new CustomEvent('open-activity', {
-          detail: { title, details, images }
+          detail: { title, details, images, price, id }
         }));
       }
 
@@ -665,7 +678,7 @@
         const count = slides.length;
 
         function open(item) {
-          viewDetails(item.title, item.details || [], item.images || []);
+          viewDetails(item.title, item.details || [], item.images || [], item.price || 0, item.id || item.title);
         }
 
         function wire(panelEl, item) {
