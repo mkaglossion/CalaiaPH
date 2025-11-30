@@ -444,7 +444,7 @@ $galleryData = [
    <div class="mt-6 mb-8 w-full">
        <div
            id="selected-accommodations-container"
-           class="flex flex-row gap-3 lg:gap-4 overflow-x-auto w-full"
+           class="grid grid-cols-4 gap-3 lg:gap-4 w-full"
        >
            <!-- Selected staycations will be rendered here by JS -->
        </div>
@@ -1029,7 +1029,7 @@ function computeStaycationTotals(staycation, options = {}) {
         const staycation = acc.staycation;
         const guests = acc.guests || 1;
         const div = document.createElement('div');
-        div.className = 'accommodation-display bg-white rounded-lg shadow-sm border border-gray-200 p-3 flex-1';
+        div.className = 'accommodation-display bg-white rounded-lg shadow-sm border border-gray-200 p-3';
         div.dataset.key = key;
         div.innerHTML = `
             <div class="flex items-center justify-between">
@@ -1525,7 +1525,7 @@ function computeStaycationTotals(staycation, options = {}) {
             // 🔹 CHECK IF MAY NA-SAVE NANG GUESTS FOR THIS STAYCATION
             const lowerName = staycation.name.toLowerCase();
             const category = staycation.type || (lowerName.includes('standard') || lowerName.includes('premium') ? 'glamping' : 'camping');
-            const key = `${category}-${staycation.name}`;
+            const key = `${category}-${staycation.id}`;
             const savedAcc = window.selectedAccommodations
                 ? window.selectedAccommodations[key]
                 : null;
@@ -2023,161 +2023,180 @@ function computeStaycationTotals(staycation, options = {}) {
         }
     }
 
-    // 👉 CLEAN GLOBAL CHANGE HANDLER: checkbox + quantity + pets (multi-select, MAX 4 total)
-    const MAX_STAYCATIONS = 4;
+    // 👉 CLEAN GLOBAL CHANGE HANDLER: checkbox + quantity + pets (multi-select, unlimited)
+// Helper: consistent unique key per staycation
+function getStaycationKeyFromCheckbox(checkbox) {
+    let staycation;
+    try {
+        staycation = JSON.parse(checkbox.dataset.staycation || '{}');
+    } catch (err) {
+        console.error('Invalid staycation JSON:', err);
+        return null;
+    }
+    if (!staycation || !staycation.id) return null;
+
+    const lowerName = (staycation.name || '').toLowerCase();
+    const typeFromName = (lowerName.includes('standard') || lowerName.includes('premium'))
+        ? 'glamping'
+        : 'camping';
+
+    const category =
+        checkbox.dataset.category ||
+        staycation.type ||
+        typeFromName; // fallback if walang type
+
+    const key = `${category}-${staycation.id}`;
+
+    return { staycation, key, category };
+}
+
+// Helper: extract data from card
+function getCardData(card) {
+    const guestsInput = card.querySelector('.guest-input');
+    const guests = parseInt(guestsInput?.value, 10) || 0;
+
+    const petAgreementInput = card.querySelector('.pet-agreement');
+    const numPetsInput = card.querySelector('.pet-num-input');
+    const hasPetAgreement = !!(petAgreementInput && petAgreementInput.checked);
+    const numPets = hasPetAgreement && numPetsInput ? (parseInt(numPetsInput.value, 10) || 0) : 0;
+
+    const breakfastRadio = card.querySelector('.has-breakfast-radio:checked');
+    const hasBreakfast = !!(breakfastRadio && breakfastRadio.value === 'yes');
+
+    return { guests, hasPetAgreement, numPets, hasBreakfast };
+}
+
+// Helper: update UI for selection
+function updateSelectionUI(card, checkbox, isSelected) {
+    const label = card.querySelector(`label[for="${checkbox.id}"]`);
+    if (!label) return;
+
+    const selectText = label.querySelector('.select-text');
+    const checkIcon = label.querySelector('.fa-check');
+
+    if (isSelected) {
+        label.classList.remove('bg-[#8f5d54]', 'hover:bg-[#a0675a]');
+        label.classList.add('bg-green-600', 'hover:bg-green-700');
+        if (selectText) selectText.textContent = 'Selected';
+        if (checkIcon) checkIcon.classList.remove('opacity-0');
+    } else {
+        label.classList.remove('bg-green-600', 'hover:bg-green-700');
+        label.classList.add('bg-[#8f5d54]', 'hover:bg-[#a0675a]');
+        if (selectText) selectText.textContent = 'Select this staycation';
+        if (checkIcon) checkIcon.classList.add('opacity-0');
+    }
+}
 
     document.addEventListener('change', function (e) {
-        const target = e.target;
+    const target = e.target;
 
-        const isCheckbox     = target.matches('.staycation-checkbox');
-        const isGuestInput   = target.matches('.guest-input');
-        const isPetAgreement = target.matches('.pet-agreement');
-        const isPetCount     = target.matches('.pet-num-input');
-        const isBreakfast    = target.matches('.has-breakfast-radio');
+    const isCheckbox     = target.classList.contains('staycation-checkbox');
+    const isGuestInput   = target.classList.contains('guest-input');
+    const isPetAgreement = target.classList.contains('pet-agreement');
+    const isPetCount     = target.classList.contains('pet-num-input');
+    const isBreakfast    = target.classList.contains('has-breakfast-radio');
 
-        // Ignore other controls
-        if (!isCheckbox && !isGuestInput && !isPetAgreement && !isPetCount && !isBreakfast) {
-            return;
-        }
+    // Ignore other inputs
+    if (!isCheckbox && !isGuestInput && !isPetAgreement && !isPetCount && !isBreakfast) {
+        return;
+    }
 
-        const card = target.closest('.bg-white.rounded-xl');
-        if (!card) return;
+    const card = target.closest('.bg-white.rounded-xl');
+    if (!card) return;
 
-        const checkbox = card.querySelector('.staycation-checkbox');
-        if (!checkbox) return;
+    const checkbox = card.querySelector('.staycation-checkbox');
+    if (!checkbox) return;
 
-        // Parse staycation data
-        let staycation;
-        try {
-            staycation = JSON.parse(checkbox.dataset.staycation || '{}');
-        } catch (err) {
-            console.error('Invalid staycation data', err);
-            return;
-        }
+    const info = getStaycationKeyFromCheckbox(checkbox);
+    if (!info) return;
 
-        const lowerName = (staycation.name || '').toLowerCase();
+    const { staycation, key, category } = info;
+    const lowerName = (staycation.name || '').toLowerCase();
 
-        // Category used in the key so glamping/camping don't collide
-        const category =
-            checkbox.dataset.category ||
-            staycation.type ||
-            (lowerName.includes('standard') || lowerName.includes('premium') ? 'glamping' : 'camping');
+    // Get data from card
+    const { guests, hasPetAgreement, numPets, hasBreakfast } = getCardData(card);
 
-        // UNIQUE KEY per staycation (across glamping + camping)
-        const key = `${category}-${staycation.id}`;
-
-        // Guests
-        const guestsInput = card.querySelector('.guest-input');
-        const guests = parseInt(guestsInput?.value, 10) || 0;
-
-        // Pets
-        const petAgreementInput = card.querySelector('.pet-agreement');
-        const numPetsInput      = card.querySelector('.pet-num-input');
-        const hasPetAgreement   = !!(petAgreementInput && petAgreementInput.checked);
-        const numPets           = hasPetAgreement && numPetsInput ? (parseInt(numPetsInput.value, 10) || 0) : 0;
-
-        // Breakfast
-        const breakfastRadio = card.querySelector('.has-breakfast-radio:checked');
-        const hasBreakfast   = !!(breakfastRadio && breakfastRadio.value === 'yes');
-
-        // ---- Validations ----
-
-        // If user touches pet count without agreeing to policy → block & reset
-        if (isPetCount && !hasPetAgreement) {
-            if (numPetsInput) numPetsInput.value = '0';
-            showToast('Please agree to the pet policy before selecting the number of pets.', 'error');
-            updateModalPricing(card);
-            return;
-        }
-
-        // If just changing guests/pets/breakfast while NOT yet selected, only update pricing
-        if (!checkbox.checked && !isCheckbox) {
-            updateModalPricing(card);
-            return;
-        }
-
-        // When turning the checkbox ON (selecting)
-        if (isCheckbox && checkbox.checked) {
-            // BYOT / Car camping: require quantity > 0
-            if ((lowerName.includes('byot') || lowerName.includes('car')) && guests <= 0) {
-                showToast('Please enter a number before selecting this option.', 'error');
-                checkbox.checked = false;
-                updateModalPricing(card);
-                return;
-            }
-
-            // Bell / Dome: require guests > 0
-            if ((lowerName.includes('bell') || lowerName.includes('dome')) && guests <= 0) {
-                showToast('Please set number of guests (up to 8) before selecting.', 'error');
-                checkbox.checked = false;
-                updateModalPricing(card);
-                return;
-            }
-
-            // GLOBAL MAX = 4 selections across all types
-            const alreadySelected = !!window.selectedAccommodations[key];
-            const selectedCount   = Object.keys(window.selectedAccommodations || {}).length;
-
-            if (!alreadySelected && selectedCount >= MAX_STAYCATIONS) {
-                showToast(`Maximum of ${MAX_STAYCATIONS} staycations can be selected.`, 'error');
-                checkbox.checked = false;
-                updateModalPricing(card);
-                return;
-            }
-        }
-
-        // ---- Update global selectedAccommodations ----
-
-        if (checkbox.checked) {
-            // Add/update selection
-            window.selectedAccommodations[key] = {
-                staycation,
-                guests,
-                pet_agreement: hasPetAgreement,
-                num_pets: numPets,
-                has_breakfast: hasBreakfast,
-            };
-
-            displaySelectedAccommodation(key, window.selectedAccommodations[key]);
-
-            // Button UI (turn green when selected)
-            const label = card.querySelector(`label[for="${checkbox.id}"]`);
-            if (label) {
-                label.classList.remove('bg-[#8f5d54]', 'hover:bg-[#a0675a]');
-                label.classList.add('bg-green-600', 'hover:bg-green-700');
-                const selectText = label.querySelector('.select-text');
-                const checkIcon  = label.querySelector('.fa-check');
-                if (selectText) selectText.textContent = 'Selected';
-                if (checkIcon)  checkIcon.classList.remove('opacity-0');
-            }
-
-            if (isCheckbox) {
-                showToast(`You selected ${staycation.name}`, 'success');
-            }
-        } else {
-            // Remove this specific staycation only
-            delete window.selectedAccommodations[key];
-            displaySelectedAccommodation(key, null);
-
-            const label = card.querySelector(`label[for="${checkbox.id}"]`);
-            if (label) {
-                label.classList.remove('bg-green-600', 'hover:bg-green-700');
-                label.classList.add('bg-[#8f5d54]', 'hover:bg-[#a0675a]');
-                const selectText = label.querySelector('.select-text');
-                const checkIcon  = label.querySelector('.fa-check');
-                if (selectText) selectText.textContent = 'Select this staycation';
-                if (checkIcon)  checkIcon.classList.add('opacity-0');
-            }
-
-            if (isCheckbox) {
-                showToast(`You removed ${staycation.name}`, 'info');
-            }
-        }
-
-        // Recompute card pricing + overall summary
+    // --- Guard: pets count without agreeing to policy ---
+    if (isPetCount && !hasPetAgreement) {
+        const numPetsInput = card.querySelector('.pet-num-input');
+        if (numPetsInput) numPetsInput.value = '0';
+        showToast('Please agree to the pet policy before selecting the number of pets.', 'error');
         updateModalPricing(card);
-        window.updateBookingSummary();
-    });
+        return;
+    }
+
+    // If just changing guests/pets/breakfast while NOT yet selected, only update pricing
+    if (!checkbox.checked && !isCheckbox) {
+        updateModalPricing(card);
+        return;
+    }
+
+    // --- Validation when turning checkbox ON ---
+    if (isCheckbox && checkbox.checked) {
+        // BYOT / Car camping: require quantity > 0
+        if ((lowerName.includes('byot') || lowerName.includes('car')) && guests <= 0) {
+            showToast('Please enter a number before selecting this option.', 'error');
+            checkbox.checked = false;
+            updateModalPricing(card);
+            return;
+        }
+
+        // Bell / Dome: require guests > 0
+        if ((lowerName.includes('bell') || lowerName.includes('dome')) && guests <= 0) {
+            showToast('Please set number of guests (up to 8) before selecting.', 'error');
+            checkbox.checked = false;
+            updateModalPricing(card);
+            return;
+        }
+
+        // Unlimited accommodations allowed
+        const selectedCount = Object.keys(window.selectedAccommodations || {}).length;
+        const alreadySelected = !!window.selectedAccommodations[key];
+    }
+
+    // --- Update global state ---
+    if (checkbox.checked) {
+        // Add or update selection
+        window.selectedAccommodations[key] = {
+            staycation,
+            guests,
+            pet_agreement: hasPetAgreement,
+            num_pets: numPets,
+            has_breakfast: hasBreakfast,
+        };
+
+        displaySelectedAccommodation(key, window.selectedAccommodations[key]);
+        updateSelectionUI(card, checkbox, true);
+
+        if (isCheckbox) {
+            showToast(`You selected ${staycation.name}`, 'success');
+        }
+    } else {
+        // Remove this specific staycation
+        delete window.selectedAccommodations[key];
+        displaySelectedAccommodation(key, null);
+        updateSelectionUI(card, checkbox, false);
+
+        if (isCheckbox) {
+            showToast(`You removed ${staycation.name}`, 'info');
+        }
+    }
+
+    // If guests/pets/breakfast changed while selected, update data
+    if (!isCheckbox && window.selectedAccommodations[key]) {
+        window.selectedAccommodations[key] = {
+            ...window.selectedAccommodations[key],
+            guests,
+            pet_agreement: hasPetAgreement,
+            num_pets: numPets,
+            has_breakfast: hasBreakfast,
+        };
+    }
+
+    // Recompute pricing & summary
+    updateModalPricing(card);
+    window.updateBookingSummary();
+});
 
     function proceedToActivities() {
         // Validation: Check if accommodations are selected and have valid guests
