@@ -489,7 +489,7 @@ if ($finalTotals) {
                                         $extraAvg = $nights > 0 ? round($extraPriceTotal / $nights) : 0;
                                         @endphp
                                         <div class="text-xs text-gray-600 space-y-1">
-                                            <div>ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($baseAvg) }}/night ({{ $accommodation['guests'] }} guests)</div>
+                                            <div>ACCOMMODATION {{ (int)$index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($baseAvg) }}/night ({{ $accommodation['guests'] }} guests)</div>
                                             @if($extraPriceTotal > 0)
                                                 <div>Extra Mattress ({{ $extraGuests }} guest{{ $extraGuests > 1 ? 's' : '' }}): ₱{{ number_format($extraAvg) }}/night</div>
                                             @endif

@@ -216,18 +216,24 @@ $galleryData = [
    <div class="mb-6">
        {{-- Progress indicator --}}
        <div class="mb-4">
-           <div class="flex justify-between items-center mb-2">
-               <small class="text-gray-500 text-sm">
-                   @if($bookingType === 'staycation')
-                       Step 1 of 3: Select Your Staycation
-                   @else
-                       Steps {{ $stepNumber }} of {{ $totalSteps }}
-                   @endif
-               </small>
-               <small class="text-gray-500 text-sm">33% Complete</small>
-           </div>
-           <div class="w-full bg-gray-200 rounded-full h-2">
-               <div class="bg-[#8f5d54] h-2 rounded-full transition-all duration-300" style="width: 33%"></div>
+           {{-- limit width + center --}}
+           <div class="max-w-4xl md:max-w-5xl mx-auto">
+               <div class="flex justify-between items-center mb-2">
+                   <small class="text-gray-500 text-sm">
+                       @if($bookingType === 'staycation')
+                           Step 1 of 3: Select Your Staycation
+                       @else
+                           Steps {{ $stepNumber }} of {{ $totalSteps }}
+                       @endif
+                   </small>
+                   <small class="text-gray-500 text-sm">33% Complete</small>
+               </div>
+               <div class="w-full bg-gray-200 rounded-full h-1.5 md:h-2">
+                   <div
+                       class="bg-[#8f5d54] h-1.5 md:h-2 rounded-full transition-all duration-300"
+                       style="width: 33%">
+                   </div>
+               </div>
            </div>
        </div>
 

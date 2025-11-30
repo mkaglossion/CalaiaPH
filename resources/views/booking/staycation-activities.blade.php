@@ -275,7 +275,7 @@ if ($datesSelected) {
                                         $extraRate = $extraGuests * 400; // ₱400 per extra guest per night
                                         @endphp
                                         <div class="text-xs text-gray-600 space-y-1">
-                                            <div>ACCOMMODATION {{ $index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($baseRate) }}/night ({{ $accommodation['guests'] }} guests)</div>
+                                            <div>ACCOMMODATION {{ (int)$index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($baseRate) }}/night ({{ $accommodation['guests'] }} guests)</div>
                                             @if($extraGuests > 0)
                                                 <div>Extra Mattress ({{ $extraGuests }} guest{{ $extraGuests > 1 ? 's' : '' }}): ₱{{ number_format($extraRate) }}/night</div>
                                             @endif
@@ -368,7 +368,7 @@ if ($datesSelected) {
 </div>
 
 {{-- Toast --}}
-<div class="toast fixed bottom-4 right-4 flex items-center text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden"
+<div class="toast fixed bottom-4 right-4 text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden"
      role="alert" aria-live="assertive" aria-atomic="true">
    <div class="flex items-center w-full">
       <div class="toast-body text-sm flex-1"></div>
