@@ -17,8 +17,10 @@ use App\Models\FoodText;
 use App\Models\SpecialText;
 use App\Models\FarmText;
 
+use App\Models\Menu;
 use App\Models\MenuText;
 use App\Models\Event;
+use App\Models\DayTour;
 
 use Illuminate\Http\Request;
 
@@ -46,7 +48,8 @@ class PagesController extends Controller
 
     public function daytour()
     {
-        return $this->renderPage(DayTourSwiperImage::class, DayTourText::class, 'daytour', 'daytour');
+        $packages = DayTour::with(['swiperImages', 'texts', 'activities'])->get();
+        return $this->renderPage(DayTourSwiperImage::class, DayTourText::class, 'daytour', 'daytour', 'label', 'text', compact('packages'));
     }
 
     public function staycation()
@@ -61,7 +64,8 @@ class PagesController extends Controller
 
     public function dining()
     {
-        return $this->renderPage(FoodSwiperImage::class, FoodText::class, 'dining', 'dining');
+        $menus = Menu::with('swiperImages')->get();
+        return $this->renderPage(FoodSwiperImage::class, FoodText::class, 'dining', 'dining', 'label', 'text', compact('menus'));
     }
 
     public function groups()

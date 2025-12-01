@@ -182,7 +182,7 @@
            style="font-family: 'Gotham Book', sans-serif;">
           <span>Cart</span>
           @if($cartCount > 0)
-            <span data-js-cart-count class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full bg-[#8f5d54] text-white text-xs">
+            <span data-js-cart-count class="inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-[#8f5d54] text-white text-xs">
               {{ $cartCount }}
             </span>
           @endif
@@ -214,7 +214,7 @@
           </form>
         @else
           <button @click="$store.modals.showLogin = true; open = false" class="block py-2 text-gray-700 border-t border-[#8f5d54]/20 mt-2 pt-2" style="font-family: 'Gotham Book', sans-serif;">Log In</button>
-          <button @click="$store.modals.showSignup = true; open = false" class="block py-2 text-white bg-[#8f5d54] px-4 py-2 rounded mt-2" style="font-family: 'Gotham Book', sans-serif;">Sign Up</button>
+          <button @click="$store.modals.showSignup = true; open = false" class="block text-white bg-[#8f5d54] px-4 py-2 rounded mt-2" style="font-family: 'Gotham Book', sans-serif;">Sign Up</button>
         @endauth
       </div>
     </div>
@@ -226,7 +226,7 @@
     x-transition
     @click.self="$store.modals.showSignup = false"
     x-cloak
-    class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+    class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-60 p-4"
   >
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-gray-800 relative">
       <button
@@ -379,7 +379,7 @@
     x-transition
     @click.self="$store.modals.showLogin = false"
     x-cloak
-    class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+    class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-60 p-4"
   >
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-gray-800 relative">
       <button

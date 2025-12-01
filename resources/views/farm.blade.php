@@ -1,29 +1,12 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="Visit our beautiful farm at CalaiaPH. Learn about sustainable farming, enjoy farm tours, and experience the source of our fresh, organic produce firsthand.">
-    <meta name="keywords" content="organic farm, sustainFable farming, farm tours, fresh produce, CalaiaPH farm, Philippines agriculture, farm visit">
-    <meta name="author" content="CalaiaPH">
-    @vite(['resources/css/app.css'])
-    <title>CalaiaPH - Farm</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<x-page-layout
+    title="CalaiaPH - Farm"
+    description="Visit our beautiful farm at CalaiaPH. Learn about sustainable farming, enjoy farm tours, and experience the source of our fresh, organic produce firsthand."
+    keywords="organic farm, sustainFable farming, farm tours, fresh produce, CalaiaPH farm, Philippines agriculture, farm visit"
+    active-header="farm"
+>
+    @push('styles')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-  </head>
-  <body class="bg-[#f5efe7]">
-    {{-- Flash --}}
-    <div class="flex flex-col items-center justify-center px-4">
-      @if (session('success'))
-        <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">
-          {{ session('success') }}
-        </div>
-      @endif
-    </div>
-
-    <x-header active="farm" />
+    @endpush
 
     {{-- Hero Slider --}}
     <x-hero-slider :images="$swiperImages" :texts="$texts" />
@@ -32,14 +15,11 @@
       {{-- SECTION: Our Sustainable Farming --}}
       <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="sustainable-farming-heading">
         <div class="container mx-auto px-4 max-w-7xl">
-          <header class="text-center mb-12">
-            <h2 id="sustainable-farming-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
-              Our Sustainable Farming
-            </h2>
-            <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
-              Discover how we raise livestock and grow produce with respect for nature and animal welfare
-            </p>
-          </header>
+          <x-section-header
+              id="sustainable-farming-heading"
+              title="Our Sustainable Farming"
+              subtitle="Discover how we raise livestock and grow produce with respect for nature and animal welfare"
+          />
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
             <figure class="order-2 lg:order-1">
@@ -59,21 +39,14 @@
               <p class="text-gray-700 mb-8 leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                 Our animals live as nature intended: with plenty of space to roam, fresh air, and a natural diet free from antibiotics and growth hormones.
               </p>
-              <ul class="space-y-4" role="list">
-                @foreach ([
-                  'Pasture-raised with daily access to open fields',
-                  'No antibiotics or hormones — ever',
-                  'Non-GMO, locally-sourced feed',
-                  'Humane treatment with low-stress handling',
-                ] as $item)
-                <li class="flex items-start">
-                  <div class="flex-shrink-0 w-6 h-6 bg-[#8f5d54]/10 rounded-full flex items-center justify-center mt-0.5 mr-4">
-                    <i class="fas fa-check text-[#8f5d54] text-xs" aria-hidden="true"></i>
-                  </div>
-                  <span class="text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">{{ $item }}</span>
-                </li>
-                @endforeach
-              </ul>
+              <x-feature-list
+                  :features="[
+                      'Pasture-raised with daily access to open fields',
+                      'No antibiotics or hormones — ever',
+                      'Non-GMO, locally-sourced feed',
+                      'Humane treatment with low-stress handling',
+                  ]"
+              />
             </div>
           </div>
 
@@ -100,7 +73,7 @@
       </section>
 
       {{-- SECTION: Fresh From Our Fields --}}
-      <section class="py-16 bg-gradient-to-br from-green-50 to-emerald-50" aria-labelledby="fresh-fields-heading">
+      <section class="py-16 bg-linear-to-br from-green-50 to-emerald-50" aria-labelledby="fresh-fields-heading">
         <div class="container mx-auto px-4 max-w-7xl">
           <header class="text-center mb-12">
             <h2 id="fresh-fields-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
@@ -251,7 +224,7 @@
       </section>
 
       {{-- SECTION: Visit or Contact Us --}}
-      <section id="contact" class="py-16 bg-gradient-to-br from-primary/5 to-primary/10" aria-labelledby="contact-heading">
+      <section id="contact" class="py-16 bg-linear-to-br from-primary/5 to-primary/10" aria-labelledby="contact-heading">
         <div class="container mx-auto px-4 max-w-7xl">
           <header class="text-center mb-12">
             <h2 id="contact-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
@@ -264,55 +237,7 @@
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {{-- Contact Form --}}
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-              <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Send a Message</h3>
-              <form method="POST" action="{{ route('contact.submit') }}" class="space-y-6" role="form" aria-label="Contact form">
-                @csrf
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-                    <input id="name" name="name" type="text" required
-                           class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
-                           placeholder="Your full name">
-                  </div>
-                  <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
-                    <input id="email" name="email" type="email" required
-                           class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
-                           placeholder="your@email.com">
-                  </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                    <input id="phone" name="phone" type="tel"
-                           class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
-                           placeholder="+63 XXX XXX XXXX">
-                  </div>
-                  <div>
-                    <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-                    <select id="subject" name="subject"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors bg-white">
-                      <option value="" selected disabled>Select an option</option>
-                      <option value="Visit">Visit</option>
-                      <option value="Experience Booking">Experience Booking</option>
-                      <option value="Partnership">Partnership</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Message</label>
-                  <textarea id="message" name="message" rows="5"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors resize-vertical"
-                            placeholder="Tell us about your inquiry..."></textarea>
-                </div>
-                <button type="submit"
-                        class="w-full bg-[#8f5d54] hover:bg-[#7a4f46] text-white font-medium py-3 px-6 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:ring-offset-2">
-                  Send Message
-                </button>
-              </form>
-            </div>
+            <x-contact-form action="{{ route('contact.submit') }}" />
 
             {{-- Contact Information --}}
             <div class="space-y-8">
@@ -320,28 +245,28 @@
                 <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Visit Our Farm</h3>
                 <ul class="space-y-4" role="list">
                   <li class="flex items-start">
-                    <i class="fa fa-location-dot text-[#8f5d54] mt-1 mr-4 flex-shrink-0" aria-hidden="true"></i>
+                    <i class="fa fa-location-dot text-[#8f5d54] mt-1 mr-4 shrink-0" aria-hidden="true"></i>
                     <div>
                       <span class="font-medium text-gray-900">Address</span>
                       <address class="text-gray-600 not-italic">Purok 3, Brgy. Buso-buso, Calaca, Philippines</address>
                     </div>
                   </li>
                   <li class="flex items-center">
-                    <i class="fa fa-phone text-[#8f5d54] mr-4 flex-shrink-0" aria-hidden="true"></i>
+                    <i class="fa fa-phone text-[#8f5d54] mr-4 shrink-0" aria-hidden="true"></i>
                     <div>
                       <span class="font-medium text-gray-900">Phone</span>
                       <a href="tel:+639051294741" class="text-gray-600 hover:text-[#8f5d54] transition-colors">+63 905 129 4741</a>
                     </div>
                   </li>
                   <li class="flex items-center">
-                    <i class="fa fa-envelope text-[#8f5d54] mr-4 flex-shrink-0" aria-hidden="true"></i>
+                    <i class="fa fa-envelope text-[#8f5d54] mr-4 shrink-0" aria-hidden="true"></i>
                     <div>
                       <span class="font-medium text-gray-900">Email</span>
                       <a href="mailto:calaia@calaia.com" class="text-gray-600 hover:text-[#8f5d54] transition-colors">calaia@calaia.com</a>
                     </div>
                   </li>
                   <li class="flex items-start">
-                    <i class="fa fa-clock text-[#8f5d54] mt-1 mr-4 flex-shrink-0" aria-hidden="true"></i>
+                    <i class="fa fa-clock text-[#8f5d54] mt-1 mr-4 shrink-0" aria-hidden="true"></i>
                     <div>
                       <span class="font-medium text-gray-900">Hours</span>
                       <span class="text-gray-600 block">Monday–Saturday: 9AM – 3PM</span>
@@ -391,10 +316,5 @@
 
     {{-- Floating Buttons --}}
     <x-floating-buttons />
-  {{-- Footer --}}
-  <x-footer />
-
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-  </body>
-</html>
+</x-page-layout>
 

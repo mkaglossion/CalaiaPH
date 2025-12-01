@@ -52,7 +52,7 @@
     <div class="overflow-x-auto">
       <div class="flex space-x-4 min-w-max lg:w-full lg:justify-center gap-8">
         @foreach($data['hourly'] as $hour)
-        <div class="text-center min-w-[80px]">
+        <div class="text-center min-w-20">
           <div class="text-sm font-medium text-gray-700" style="font-size: 13px;">{{ $hour['time'] }}</div>
           <div class="text-2xl font-bold my-2" style="font-size: 20px;">{{ $hour['temp'] }}°C</div>
           <div class="text-xs text-gray-500 bg-gray-100 rounded-full py-1" style="font-size: 10px;">{{ $hour['rain'] }}%</div>

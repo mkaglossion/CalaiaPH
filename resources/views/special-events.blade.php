@@ -17,9 +17,7 @@
   <body class="bg-[#f5efe7]">
       <div class="flex flex-col items-center justify-center px-4">
         @if (session('success'))
-            <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">
-                {{ session('success') }}
-            </div>
+            <x-flash-message type="success" :message="session('success')" />
         @endif
       </div>
     <x-header active="special-events" />
@@ -54,7 +52,7 @@
                       class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     >
                   @else
-                    <div class="w-full h-full bg-gradient-to-br from-[#8f5d54] to-[#a97464] flex items-center justify-center">
+                    <div class="w-full h-full bg-linear-to-br from-[#8f5d54] to-[#a97464] flex items-center justify-center">
                       <i class="bi bi-calendar-event text-white text-4xl"></i>
                     </div>
                   @endif

@@ -10,34 +10,32 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <!-- Pannellum CSS (VR) -->
+    {{-- Pannellum CSS (VR) --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css" />
   </head>
   <body class="bg-[#f5efe7]">
-    <!-- flash message -->
+    {{-- Validation Errors --}}
     <div class="flex flex-col items-center justify-center px-4">
       @if (session('success'))
-        <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">
-          {{ session('success') }}
-        </div>
+        <x-flash-message type="success" :message="session('success')" />
       @endif
     </div>
 
     <x-header active="staycation" />
 
-    <!-- ================= Hero Slider ================= -->
+    {{-- Hero Slider --}}
     <x-hero-slider :images="$swiperImages" :texts="$texts" />
 
-    <!-- ================= Main ================= -->
+    {{-- Main --}}
     <main id="main" class="" x-data="staycationPage()" x-on:open-staycation-modal.window="openModal($event.detail)">
-      <!-- Cards patterned to provided design -->
+      {{-- Cards patterned to provided design --}}
       <section id="glamping" class="container mx-auto max-w-6xl px-4 py-10">
         <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
 
-          <!-- Card: Glamping Tent -->
+          {{-- Card: Glamping Tent --}}
           <article class="relative mx-auto w-full max-w-md rounded-[22px] bg-white p-5 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2" style="box-shadow:0 10px 16px rgba(0,0,0,0.08);">
             <div class="rounded-xl bg-white overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <!-- image frame placeholder -->
+              {{-- image frame placeholder --}}
               <img src="{{ asset('assets/images/carousel/Glamping-1.jpg') }}" alt="Glamping Tent" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
             </div>
             <div class="px-4 py-7 text-center">
@@ -56,7 +54,7 @@
             </div>
           </article>
 
-          <!-- Card: Camping -->
+          {{-- Card: Camping --}}
           <article class="relative mx-auto w-full max-w-md rounded-[22px] bg-white p-5 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2" style="box-shadow:0 10px 16px rgba(0,0,0,0.08);">
             <div class="rounded-xl ring-1 ring-black/5 shadow-sm bg-white overflow-hidden">
               <img src="{{ asset('assets/images/carousel/BYOT-2.jpg') }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
@@ -80,7 +78,7 @@
         </div>
       </section>
 
-      <!-- ================= Glamping Options Modal ================= -->
+      {{-- Glamping Options Modal --}}
       <div x-show="glampingOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="closeGlampingModal()" @click.self="closeGlampingModal()" style="display:none;">
         <div class="w-full max-w-7xl rounded-2xl bg-white shadow-xl overflow-auto max-h-[90vh]">
           <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color: rgba(128,128,128,0.3);">
@@ -89,7 +87,7 @@
           </div>
 
           <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Standard -->
+            {{-- Standard --}}
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
               <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Vila Zilka Serif', serif;"><i class="bi bi-house-fill"></i> Standard Family Glamping Tent</h4></div>
               <div class="p-4 space-y-4">
@@ -137,7 +135,7 @@
               </div>
             </div>
 
-            <!-- Premium -->
+            {{-- Premium --}}
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
               <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Vila Zilka Serif', serif;"><i class="bi bi-star-fill"></i> Premium Family Glamping Tent</h4></div>
               <div class="p-4 space-y-4">
@@ -192,7 +190,7 @@
         </div>
       </div>
 
-      <!-- ================= Camping Options Modal ================= -->
+      {{-- Camping Options Modal --}}
       <div x-show="campingOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="closeCampingModal()" @click.self="closeCampingModal()" style="display:none;">
         <div class="w-full max-w-7xl rounded-2xl bg-white shadow-xl overflow-auto max-h-[90vh]">
           <div class="flex items-center justify-between px-4 md:px-6 py-4 border-b" style="border-color: rgba(128,128,128,0.3);">
@@ -201,7 +199,7 @@
           </div>
 
           <div class="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-            <!-- Dome Tent -->
+            {{-- Dome Tent --}}
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
               <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Vila Zilka Serif', serif;"><i class="bi bi-tent"></i>Dome Tent</h4></div>
               <div class="p-4 space-y-4">
@@ -246,7 +244,7 @@
               </div>
             </div>
 
-            <!-- Bell Tent -->
+            {{-- Bell Tent --}}
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
               <div class="px-4 py-2" style="background:#7a7d52;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-house-fill"></i>Bell Tent</h4></div>
               <div class="p-4 space-y-4">
@@ -291,7 +289,7 @@
               </div>
             </div>
 
-            <!-- BYOT -->
+            {{-- BYOT --}}
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
               <div class="px-4 py-2" style="background:#843c23;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-backpack"></i>BYOT</h4></div>
               <div class="p-4 space-y-4">
@@ -333,7 +331,7 @@
               </div>
             </div>
 
-            <!-- Car Camping -->
+            {{-- Car Camping --}}
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
               <div class="px-4 py-2" style="background:#db8636;color:white"><h4 class="text-base md:text-lg font-semibold flex items-center gap-2"><i class="bi bi-car-front-fill"></i>Car Camping</h4></div>
               <div class="p-4 space-y-4">
@@ -382,19 +380,19 @@
         </div>
       </div>
 
-      <!-- ================= VR Preview (Pannellum) ================= -->
+      {{-- VR Preview (Pannellum) --}}
       <div x-show="vrOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/80" @keydown.escape.window="closeVR()" @click.self="closeVR()" style="display:none;">
         <div class="relative w-full max-w-[1200px] mx-4 bg-black rounded-2xl shadow-2xl overflow-hidden">
-          <!-- Header -->
+          {{-- Header --}}
           <div class="flex items-center justify-between px-6 py-4" style="background:rgba(255,255,255,0.05)">
             <h3 class="text-white font-semibold"><i class="bi bi-eye me-2"></i>Virtual Reality Preview</h3>
             <button class="p-2 rounded hover:bg-white/10 text-white" @click="closeVR()"><i class="bi bi-x-lg"></i></button>
           </div>
 
-          <!-- Viewer -->
+          {{-- Viewer --}}
           <div id="vr-media-container" class="relative w-full h-[65vh]"></div>
 
-          <!-- Controls Bar -->
+          {{-- Controls Bar --}}
           <div class="absolute left-0 right-0 bottom-3 flex items-center justify-center pointer-events-none">
             <div class="flex items-center gap-3 px-4 py-2 rounded-full shadow-lg pointer-events-auto" style="background:rgba(0,0,0,.7)">
               <button class="px-3 py-2 rounded-md text-white" @click.stop="vrPrev()"><i class="bi bi-chevron-left"></i></button>
@@ -403,7 +401,7 @@
             </div>
           </div>
 
-          <!-- Corners: left -->
+          {{-- Corners: left --}}
           <div class="absolute left-3 bottom-3 flex gap-2">
             <button class="w-9 h-9 flex items-center justify-center rounded-md text-white/90 bg-black/60" title="Fullscreen" @click.stop="vrFullscreen()">
               <i class="bi bi-arrows-fullscreen"></i>
@@ -412,7 +410,7 @@
               <i class="bi bi-info-circle"></i>
             </button>
           </div>
-          <!-- Corners: right -->
+          {{-- Corners: right --}}
           <div class="absolute right-3 bottom-3 flex gap-2">
             <button class="w-9 h-9 flex items-center justify-center rounded-md text-white/90 bg-black/60" title="Share" @click.stop="shareVR()">
               <i class="bi bi-share"></i>
@@ -422,7 +420,7 @@
             </button>
           </div>
 
-          <!-- Info overlay -->
+          {{-- Info overlay --}} 
           <div id="vr-info-overlay" class="absolute top-4 left-4 max-w-sm text-white rounded-md p-4" style="background:rgba(0,0,0,.8); display:none;">
             <div>
               <h6 id="vr-info-title" class="font-semibold mb-1">Title</h6>
@@ -438,22 +436,22 @@
         </div>
       </div>
 
-      <!-- ================= Photo Gallery Modal ================= -->
+      {{-- Photo Gallery Modal --}}
       <div x-show="galleryOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/80" @keydown.escape.window="closeGallery()" @click.self="closeGallery()" style="display:none;">
         <div class="relative w-full max-w-4xl mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <!-- Header -->
+          {{-- Header --}}
           <div class="flex items-center justify-between px-6 py-4 border-b">
             <h3 class="font-semibold"><i class="bi bi-images me-2"></i>Photo Gallery</h3>
             <button class="p-2 rounded hover:bg-gray-100" @click="closeGallery()"><i class="bi bi-x-lg"></i></button>
           </div>
 
-          <!-- Image Viewer -->
+          {{-- Image Viewer --}}
           <div class="flex items-center justify-center h-96 bg-black">
             <img x-show="galleryImages.length > 0" :src="galleryImages[galleryCurrentIndex]" class="max-w-full max-h-full object-contain" :alt="'Gallery image ' + (galleryCurrentIndex + 1)">
             <div x-show="galleryImages.length === 0" class="text-white">No images available</div>
           </div>
 
-          <!-- Navigation -->
+          {{-- Navigation --}}
           <div class="flex items-center justify-center gap-4 p-4 border-t">
             <button class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" @click="galleryPrev()" :disabled="galleryCurrentIndex === 0"><i class="bi bi-chevron-left"></i> Prev</button>
             <span x-text="' ' + (galleryCurrentIndex + 1) + ' / ' + galleryImages.length"></span>
@@ -464,7 +462,7 @@
 
     </main>
 
-    {{-- Floating Buttons --}}
+    {{-- Floating Buttons --}} 
     <x-floating-buttons />
     <x-footer />
 
@@ -590,11 +588,11 @@
     ];
     @endphp
 
-    <!-- ================= Scripts ================= -->
+    {{-- Scripts --}}
     <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
-    <!-- Pass PHP data to JavaScript -->
+    {{-- Pass PHP data to JavaScript --}}
     <script>
       window.vrData = <?php echo json_encode($vrData); ?>;
       window.galleryData = <?php echo json_encode($galleryData); ?>;
@@ -604,7 +602,7 @@
       // ---------- Alpine component ----------
       function staycationPage(){
         return {
-          // modals
+          // modals 
           glampingOpen: false,
           campingOpen: false,
           vrOpen: false,

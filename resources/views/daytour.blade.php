@@ -17,13 +17,12 @@
 </head>
 
 <body class="bg-white">
-  {{-- Success Message --}}
-  @if (session('success'))
-    <div class="flex justify-center px-4 py-4">
-      <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg max-w-md w-full text-center shadow-sm" role="alert">
-        {{ session('success') }}
-      </div>
-  @endif
+{{-- flash message --}}
+    <div class="flex flex-col items-center justify-center px-4">
+      @if (session('success'))
+        <x-flash-message type="success" :message="session('success')" />
+      @endif
+    </div>
   <x-header active="daytour" />
     {{-- Hero Slider --}}
     <x-hero-slider :images="$swiperImages" :texts="$texts" />
@@ -43,14 +42,6 @@
 
       {{-- Packages Section --}}
       {{-- Day Tour Cards Component (matches mock) --}}
-      @php
-        // Title → price text to mirror your getPackagePrice() map
-        $priceMap = [
-          'Adventure Package'  => 'PHP 1,500 per person',
-          'Family Fun Package' => 'PHP 2,000 per family',
-          'Nature Experience'  => 'PHP 1,200 per person',
-        ];
-      @endphp
 
       <div class="space-y-16">
         {{-- Packages Grid --}}
@@ -61,9 +52,9 @@
               <div class="px-5 pt-5">
                 <div class="relative overflow-hidden ring-1 ring-black/5 shadow-sm bg-white">
                   <img
-                    src="{{ asset($package['image']) }}"
+                    src="{{ asset(is_array($package) ? $package['image'] : ($package->swiperImages->first()->image_path ?? 'images/default.jpg')) }}"
                     class="h-64 md:h-72 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                    alt="{{ $package['title'] }} package"
+                    alt="{{ is_array($package) ? $package['title'] : $package->name }} package"
                     loading="lazy"
                   >
                 </div>
@@ -73,10 +64,13 @@
               <div class="px-8 pt-6 pb-8">
                 {{-- Title --}}
                  <h3 class="mb-4 text-3xl font-extrabold uppercase tracking-wide text-center" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">
-                   @if($package['title'] === 'Nature Experience')
+                   @php
+                     $title = is_array($package) ? $package['title'] : $package->name;
+                   @endphp
+                   @if(strtolower($title) === 'nature experience')
                      NATURE<br>EXPERIENCE
                    @else
-                     {{ strtoupper($package['title']) }}
+                     {{ strtoupper($title) }}
                    @endif
                  </h3>
 
@@ -86,7 +80,7 @@
 
                 {{-- Features (compact, centered list) --}}
                 <ul class="space-y-2 text-base md:text-lg uppercase tracking-widest text-center" style="color:#8f6a60; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
-                  @foreach($package['features'] as $feature)
+                  @foreach(is_array($package) ? $package['features'] : $package->activities->pluck('name') as $feature)
                     <li>
                       {{ strtoupper($feature) }}
                     </li>
@@ -102,9 +96,10 @@
                     style="background-color:#8f5d54;"
                     onmouseover="this.style.backgroundColor='#a0675a'"
                     onmouseout="this.style.backgroundColor='#8f5d54'"
-                    data-title="{{ $package['title'] }}"
-                    data-details='@json($package["details"])'
-                    data-gallery='@json(array_map(fn($img) => asset($img), $package["gallery"]))'
+                    data-title="{{ $title }}"
+                    data-price="{{ is_array($package) ? 'PHP 1,500 per person' : $package->price }}"
+                    data-details='@json(is_array($package) ? $package["details"] : explode("\n", $package->description ?? ""))'
+                    data-gallery='@json(is_array($package) ? array_map(fn($img) => asset($img), $package["gallery"]) : $package->swiperImages->pluck("image_path")->map(fn($path) => asset($path))->toArray())'
                   >
                     LEARN MORE
                   </button>
@@ -115,7 +110,7 @@
         </div>
 
         {{-- Information Section (kept; slight polish to match palette) --}}
-        <div class="bg-gradient-to-r from-[#6b9691] to-[#7ba08a] text-white rounded-3xl p-8 md:p-10 shadow-xl">
+        <div class="bg-linear-to-r from-[#6b9691] to-[#7ba08a] text-white rounded-3xl p-8 md:p-10 shadow-xl">
           <div class="text-center mb-8">
             <h4 class="text-2xl md:text-3xl font-bold mb-4 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
               <i class="bi bi-info-circle-fill mr-3 text-3xl"></i>
@@ -134,7 +129,7 @@
               ['icon' => 'bi-cup-straw',       'text' => 'Food and beverages available for purchase on site'],
             ] as $info)
               <div class="flex items-start bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all duration-300">
-                <i class="bi {{ $info['icon'] }} text-xl mr-4 mt-1 flex-shrink-0"></i>
+                <i class="bi {{ $info['icon'] }} text-xl mr-4 mt-1 shrink-0"></i>
                 <span class="text-sm md:text-base leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">{{ $info['text'] }}</span>
               </div>
             @endforeach
@@ -145,59 +140,7 @@
   </main>
 
   {{-- Dynamic Details Modal --}}
-  <div id="detailsModal" class="fixed inset-0 bg-transparent flex items-center justify-center p-2 md:p-4 pt-16 md:pt-4 hidden z-50">
-    <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[95vh] md:max-h-[90vh] flex flex-col border border-gray-300 mx-2 sm:mx-4">
-      {{-- Modal Header --}}
-      <div class="p-4 md:p-6 border-b border-gray-300 flex-shrink-0">
-        <div class="flex justify-between items-center">
-          <h3 id="detailsModalLabel" class="text-xl md:text-2xl font-bold text-gray-800" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;"></h3>
-          <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" onclick="closeModal()" aria-label="Close modal">
-            <i class="bi bi-x-lg text-xl md:text-2xl"></i>
-          </button>
-        </div>
-      </div>
-
-      {{-- Modal Body --}}
-      <div class="p-4 md:p-6 flex-1 overflow-y-auto" id="detailsModalBody">
-        {{-- Swiper Carousel --}}
-        <div class="swiper relative packageSwiper mb-4 md:mb-6 rounded-2xl overflow-hidden" data-swiper="modal">
-          <div class="swiper-wrapper" id="swiperWrapper"></div>
-          <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-prev>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          <button type="button" aria-label="Next slide" class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-next>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
-        </div>
-        {{-- Package Details --}}
-        <div id="packageDetails" class="space-y-3"></div>
-
-        {{-- Package Price --}}
-        <div id="packagePrice" class="mt-4 p-4 bg-gradient-to-r from-[#8f5d54] to-[#a0675a] text-white rounded-xl text-center shadow-lg">
-          <div class="flex items-center justify-center mb-1">
-            <i class="bi bi-tag-fill text-lg mr-2"></i>
-            <span class="text-xs font-medium uppercase tracking-wide">Starting from</span>
-          </div>
-          <p class="text-lg md:text-xl font-bold font-gotham" id="priceDisplay"></p>
-        </div>
-      </div>
-
-      {{-- Modal Footer --}}
-      <div class="p-4 md:p-6 border-t border-gray-300 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4 justify-center flex-shrink-0">
-        <button type="button" id="bookNowBtn" class="bg-[#8f5d54] text-white px-6 py-3 rounded-2xl hover:bg-[#a0675a] transition-colors duration-300 w-full md:w-auto font-semibold">
-          Book Now
-        </button>
-        <button type="button" onclick="closeModal()" class="bg-gray-500 text-white px-6 py-3 rounded-2xl hover:bg-gray-600 transition-colors duration-300 w-full md:w-auto font-semibold">
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
+  <x-package-modal id="detailsModal" :price="true" buttonText="Book Now" buttonAction="bookNow" />
 
   {{-- Floating Buttons --}}
   <x-floating-buttons />
@@ -213,7 +156,6 @@
     initializeModal();
   });
 
-  let packageSwiper = null;
   let lastFocusedElement = null;
 
   function initializeModal() {
@@ -223,119 +165,11 @@
         const title = this.getAttribute('data-title');
         const details = JSON.parse(this.getAttribute('data-details'));
         const gallery = JSON.parse(this.getAttribute('data-gallery'));
-        viewDetails(title, details, gallery);
+        const price = this.getAttribute('data-price');
+        openModaldetailsModal(title, details, gallery, price);
       });
     });
   }
-
-  function viewDetails(title, descriptionParagraphs, imageUrls) {
-    // Destroy previous swiper instance if exists
-    if (packageSwiper) {
-      packageSwiper.destroy();
-      packageSwiper = null;
-    }
-
-    // Build carousel slides
-    const swiperWrapper = document.getElementById('swiperWrapper');
-    swiperWrapper.innerHTML = imageUrls.map((url, index) => `
-      <div class="swiper-slide">
-        <img src="${url}" class="w-full h-64 md:h-96 object-cover" alt="${title} - Image ${index + 1}" loading="lazy">
-      </div>
-    `).join('');
-
-    // Build package details
-    const packageDetails = document.getElementById('packageDetails');
-    packageDetails.innerHTML = descriptionParagraphs.map(p => `
-      <p class="flex items-start text-gray-700 text-xs" style="font-family: 'Gotham Book', sans-serif;">
-        <i class="bi bi-check-circle-fill text-blue-500 mr-3 mt-1 flex-shrink-0"></i>
-        <span class="flex-1">${p}</span>
-      </p>
-    `).join('');
-
-    // Update modal title and price
-    document.getElementById('detailsModalLabel').textContent = `${title} Details`;
-    document.getElementById('priceDisplay').textContent = getPackagePrice(title);
-
-    // Initialize package swiper
-    packageSwiper = new Swiper('.packageSwiper', {
-      slidesPerView: 1,
-      loop: true,
-      navigation: { nextEl: '[data-custom-next]', prevEl: '[data-custom-prev]' },
-    });
-
-    // Custom dots
-    const dotsEl = document.querySelector('[data-custom-dots]');
-    const numSlides = imageUrls.length;
-    function updateDots() {
-      dotsEl.innerHTML = '';
-      for(let i=0; i<numSlides; i++){
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'h-2.5 rounded-full ' + (i === packageSwiper.realIndex ? 'bg-[#a97464] w-4' : 'bg-[#c8a89f] w-2.5');
-        b.setAttribute('role','tab');
-        b.setAttribute('aria-label', `Go to slide ${i+1}`);
-        b.addEventListener('click', ()=> packageSwiper.slideToLoop(i));
-        dotsEl.appendChild(b);
-      }
-    }
-    updateDots();
-    packageSwiper.on('slideChange', updateDots);
-
-    // Set up book now button
-    document.getElementById('bookNowBtn').onclick = function() {
-      bookTour(title, getPackagePrice(title));
-    };
-
-    // Show modal
-    const modal = document.getElementById('detailsModal');
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-
-    // Focus management for accessibility
-    modal.focus();
-  }
-
-  function closeModal() {
-    const modal = document.getElementById('detailsModal');
-    modal.classList.add('hidden');
-    document.body.style.overflow = '';
-
-    if (packageSwiper) {
-      packageSwiper.destroy();
-      packageSwiper = null;
-    }
-
-    if (lastFocusedElement) {
-      lastFocusedElement.focus();
-    }
-  }
-
-  function getPackagePrice(packageName) {
-    const prices = {
-      'Adventure Package': 'PHP 1,500 per person',
-      'Family Fun Package': 'PHP 2,000 per family',
-      'Nature Experience': 'PHP 1,200 per person'
-    };
-    return prices[packageName] || 'PHP 0';
-  }
-
-  function bookTour(packageName, price) {
-    const url = '{{ route("booking.create") }}?type=daytour&package=' + encodeURIComponent(packageName) + '&price=' + encodeURIComponent(price);
-    window.location.href = url;
-  }
-
-  // Close modal on outside click and Escape key
-  document.getElementById('detailsModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-      closeModal();
-    }
-  });
-
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && !document.getElementById('detailsModal').classList.contains('hidden')) {
-      closeModal();
-    }
-  });
   </script>
 </body>
 </html>

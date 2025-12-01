@@ -21,68 +21,33 @@
   </head>
 
   <body class="bg-[#f5efe7]">
+  {{-- flash message --}}
+    <div class="flex flex-col items-center justify-center px-4">
+      @if (session('success'))
+        <x-flash-message type="success" :message="session('success')" />
+      @endif
+    </div>
     <x-header active="dining" />
 
-      {{-- Hero Slider (matches dining.blade.php exactly) --}}
-      <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
-        <div class="swiper-wrapper">
-          @if(count($swiperImages) > 0)
-            @php $texts_array = array_values($texts); $labels_array = array_keys($texts); @endphp
-            @foreach($swiperImages as $index => $image)
-            <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-              <img
-                src="{{ $image->image_path }}"
-                alt="{{ $image->title ?? 'Slide Image' }}"
-                class="w-full h-full object-cover object-center"
-                loading="lazy"
-              >
-              <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-              <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-                <div class="text-center px-4">
-                  @if(isset($texts_array[$index]))
-                    <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                        style="font-family: gotham;">
-                      {{ ucfirst($labels_array[$index]) }}
-                    </h2>
-                    <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-                      style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
-                      {{ $texts_array[$index] }}
-                    </p>
-                  @endif
-                </div>
-              </div>
-            </div>
-            @endforeach
-          @else
-            <div class="swiper-slide relative flex items-center justify-center bg-gray-200 overflow-hidden">
-              <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
-                <div class="text-center px-4">
-                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                      style="font-family: gotham;">
-                    No Image Available
-                  </h2>
-                  <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-                    style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
-                    Images will be added soon
-                  </p>
-                </div>
-              </div>
-            </div>
-          @endif
-        </div>
-      </div>
+      {{-- Hero Slider --}}
+    <x-hero-slider :images="$swiperImages" :texts="$texts" />
 
       {{-- CARDS SECTION (updated to match mock) --}}
       <section id="set-menu" class="container mx-auto px-4 py-12">
         <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
 
           {{-- Card 1 --}}
+          @php
+              $menu1Images = isset($menus[0]) && $menus[0]->swiperImages->count() > 0
+                  ? $menus[0]->swiperImages->pluck('image_path')->toArray()
+                  : [asset('images/carousel/menu1.jpg'), asset('images/carousel/SET MEALS.jpg'), asset('images/carousel/menu1.jpg')];
+          @endphp
           <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
             {{-- inset image frame --}}
             <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10">
               <img
-                src="{{ asset('images/carousel/SET MENUS2.JPG') }}"
-                alt="Set Menus"
+                src="{{ isset($menus[0]) ? ($menus[0]->swiperImages->first()->image_path ?? asset('images/carousel/menu1.jpg')) : asset('images/carousel/menu1.jpg') }}"
+                alt="{{ $menus[0]->name ?? 'Set Menus' }}"
                 class="w-full h-64 sm:h-72 md:h-80 object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                 loading="lazy"
               >
@@ -90,16 +55,16 @@
 
             <div class="px-6 pb-6 pt-1 text-center">
               <h3 class="my-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">
-                SET MENUS
+                {{ $menus[0]->name ?? 'SET MENUS' }}
               </h3>
               <p class="mb-2" style="color:#97655A; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
-                SET MENUS ARE AVAILABLE FOR GROUPS AND FAMILIES.
+                {{ $menus[0]->name ?? 'SET MENUS' }} ARE AVAILABLE FOR GROUPS AND FAMILIES.
               </p>
 
               <button
-                data-title="SET MENUS"
+                data-title="{{ $menus[0]->name ?? 'SET MENUS' }}"
                 data-details='["Ready-made meals for families, couples, or groups","Breakfast, lunch, and dinner options"]'
-                data-images='["{{ asset('images/carousel/SET MENUS2.JPG') }}","{{ asset('images/carousel/SET MEALS.jpg') }}","{{ asset('images/carousel/menu1.jpg') }}"]'
+                data-images='@json($menu1Images)'
                 onclick="openModal(this)"
                 class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4"
                 style="background:#97655A;color:#ffffff;">
@@ -109,11 +74,16 @@
           </div>
 
           {{-- Card 2 --}}
+          @php
+              $menu2Images = isset($menus[1]) && $menus[1]->swiperImages->count() > 0
+                  ? $menus[1]->swiperImages->pluck('image_path')->toArray()
+                  : [asset('images/carousel/menu2.jpg'), asset('images/carousel/menu2.jpg'), asset('images/carousel/menu4.jpg')];
+          @endphp
           <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
             <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10">
               <img
-                src="{{ asset('images/carousel/menu1.jpg') }}"
-                alt="Special Menus"
+                src="{{ isset($menus[1]) ? ($menus[1]->swiperImages->first()->image_path ?? asset('images/carousel/menu2.jpg')) : asset('images/carousel/menu2.jpg') }}"
+                alt="{{ $menus[1]->name ?? 'Special Menus' }}"
                 class="w-full h-64 sm:h-72 md:h-80 object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                 loading="lazy"
               >
@@ -121,16 +91,16 @@
 
             <div class="px-6 pb-6 pt-1 text-center">
               <h3 class="my-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">
-                SPECIAL MENUS
+                {{ $menus[1]->name ?? 'SPECIAL MENUS' }}
               </h3>
               <p class="mb-2" style="color:#97655A; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
-                SPECIAL MENUS ARE AVAILABLE FOR GROUPS AND FAMILIES.
+                {{ $menus[1]->name ?? 'SPECIAL MENUS' }} ARE AVAILABLE FOR GROUPS AND FAMILIES.
               </p>
 
               <button
-                data-title="SPECIAL MENUS"
+                data-title="{{ $menus[1]->name ?? 'SPECIAL MENUS' }}"
                 data-details='["Harvest Your Own – Pick and cook farm-fresh ingredients","Cochinillo – Whole roast pig (pre-order required)"]'
-                data-images='["{{ asset('images/carousel/menu1.jpg') }}","{{ asset('images/carousel/menu2.jpg') }}","{{ asset('images/carousel/menu4.jpg') }}"]'
+                data-images='@json($menu2Images)'
                 onclick="openModal(this)"
                 class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4"
                 style="background:#97655A;color:#ffffff;">
@@ -140,11 +110,16 @@
           </div>
 
           {{-- Card 3 --}}
+          @php
+              $menu3Images = isset($menus[2]) && $menus[2]->swiperImages->count() > 0
+                  ? $menus[2]->swiperImages->pluck('image_path')->toArray()
+                  : [asset('images/carousel/menu3.jpg'), asset('images/carousel/menu1.jpg'), asset('images/carousel/menu4.jpg')];
+          @endphp
           <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
             <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10">
               <img
-                src="{{ asset('images/carousel/menu3.jpg') }}"
-                alt="Snack Bar"
+                src="{{ isset($menus[2]) ? ($menus[2]->swiperImages->first()->image_path ?? asset('images/carousel/menu3.jpg')) : asset('images/carousel/menu3.jpg') }}"
+                alt="{{ $menus[2]->name ?? 'Snack Bar' }}"
                 class="w-full h-64 sm:h-72 md:h-80 object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                 loading="lazy"
               >
@@ -152,16 +127,16 @@
 
             <div class="px-6 pb-6 pt-1 text-center">
               <h3 class="my-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">
-                SNACK BAR
+                {{ $menus[2]->name ?? 'SNACK BAR' }}
               </h3>
               <p class="mb-2" style="color:#97655A; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
-                SNACK BAR IS AVAILABLE FOR GROUPS AND FAMILIES.
+                {{ $menus[2]->name ?? 'SNACK BAR' }} IS AVAILABLE FOR GROUPS AND FAMILIES.
               </p>
 
               <button
-                data-title="SNACK BAR"
+                data-title="{{ $menus[2]->name ?? 'SNACK BAR' }}"
                 data-details='["All-day light snacks and drinks","Includes smoothies, juice, sandwiches, and more"]'
-                data-images='["{{ asset('images/carousel/menu3.jpg') }}","{{ asset('images/carousel/menu1.jpg') }}","{{ asset('images/carousel/menu4.jpg') }}"]'
+                data-images='@json($menu3Images)'
                 onclick="openModal(this)"
                 class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4"
                 style="background:#97655A;color:#ffffff;">
@@ -173,54 +148,8 @@
         </div>
       </section>
 
-      {{-- FLOATING BUTTONS (optional component) --}}
-      {{-- <x-floating-buttons /> --}}
-
       {{-- Dynamic Details Modal --}}
-      <div id="detailsModal" class="fixed inset-0 bg-transparent flex items-center justify-center p-2 md:p-4 pt-16 md:pt-4 opacity-0 pointer-events-none z-50 transition-opacity duration-300">
-        <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[95vh] md:max-h-[90vh] flex flex-col border border-gray-300 mx-2 sm:mx-4">
-          {{-- Modal Header --}}
-          <div class="p-4 md:p-6 border-b border-gray-300 shrink-0">
-            <div class="flex justify-between items-center">
-              <h3 id="detailsModalLabel" class="text-xl md:text-2xl font-bold text-gray-800"></h3>
-              <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" onclick="closeModal()" aria-label="Close modal">
-                <i class="bi bi-x-lg text-xl md:text-2xl"></i>
-              </button>
-            </div>
-          </div>
-
-          {{-- Modal Body --}}
-          <div class="p-4 md:p-6 flex-1 overflow-y-auto" id="detailsModalBody">
-            {{-- Swiper Carousel --}}
-            <div class="swiper relative packageSwiper mb-4 md:mb-6 rounded-2xl overflow-hidden" data-swiper="modal">
-              <div class="swiper-wrapper" id="swiperWrapper"></div>
-              <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-prev>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <button type="button" aria-label="Next slide" class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-next>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
-            </div>
-            {{-- Package Details --}}
-            <div id="packageDetails" class="space-y-3"></div>
-          </div>
-
-          {{-- Modal Footer --}}
-          <div class="p-4 md:p-6 border-t border-gray-300 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4 justify-end shrink-0">
-            <button type="button" id="bookNowBtn" class="bg-[#97655A] text-white px-6 py-3 rounded-2xl hover:bg-[#a0675a] transition-colors duration-300 w-full md:w-auto font-semibold">
-              Add to Cart
-            </button>
-            <button type="button" onclick="closeModal()" class="bg-gray-500 text-white px-6 py-3 rounded-2xl hover:bg-gray-600 transition-colors duration-300 w-full md:w-auto font-semibold">
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
+      <x-package-modal id="detailsModal" />
 
     </div>
 
@@ -255,141 +184,12 @@
       });
     });
 
-    let packageSwiper = null;
-    let lastFocusedElement = null;
-
     function openModal(button) {
       const title = button.dataset.title;
       const details = JSON.parse(button.dataset.details);
       const images = JSON.parse(button.dataset.images);
-      viewDetails(title, details, images);
+      openModaldetailsModal(title, details, images);
     }
-
-    function viewDetails(title, descriptionParagraphs, imageUrls) {
-      // Destroy previous swiper instance if exists
-      if (packageSwiper) {
-        packageSwiper.destroy();
-        packageSwiper = null;
-      }
-
-      // Build carousel slides
-      const swiperWrapper = document.getElementById('swiperWrapper');
-      swiperWrapper.innerHTML = imageUrls.map((url, index) => `
-        <div class="swiper-slide">
-          <img src="${url}" class="w-full h-64 md:h-96 object-cover" alt="${title} - Image ${index + 1}" loading="lazy">
-        </div>
-      `).join('');
-
-      // Build package details
-      const packageDetails = document.getElementById('packageDetails');
-      packageDetails.innerHTML = descriptionParagraphs.map(p => `
-        <p class="flex items-start text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
-          <i class="bi bi-check-circle-fill text-[#97655A] mr-3 mt-1 flex-shrink-0"></i>
-          <span class="flex-1">${p}</span>
-        </p>
-      `).join('');
-
-      // Update modal title
-      document.getElementById('detailsModalLabel').textContent = `${title} Details`;
-
-      // Initialize package swiper
-      packageSwiper = new Swiper('.packageSwiper', {
-        slidesPerView: 1,
-        loop: true,
-        navigation: { nextEl: '[data-custom-next]', prevEl: '[data-custom-prev]' },
-      });
-
-      // Custom dots
-      const dotsEl = document.querySelector('[data-custom-dots]');
-      const numSlides = imageUrls.length;
-      function updateDots() {
-        dotsEl.innerHTML = '';
-        for(let i=0; i<numSlides; i++){
-          const b = document.createElement('button');
-          b.type = 'button';
-          b.className = 'h-2.5 rounded-full ' + (i === packageSwiper.realIndex ? 'bg-[#a97464] w-4' : 'bg-[#c8a89f] w-2.5');
-          b.setAttribute('role','tab');
-          b.setAttribute('aria-label', `Go to slide ${i+1}`);
-          b.addEventListener('click', ()=> packageSwiper.slideToLoop(i));
-          dotsEl.appendChild(b);
-        }
-      }
-      updateDots();
-      packageSwiper.on('slideChange', updateDots);
-
-      // Set up add to cart button
-      document.getElementById('bookNowBtn').onclick = function() {
-        // Create form to add to cart
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ route("cart.add") }}';
-
-        // Add CSRF token
-        const csrfToken = document.createElement('input');
-        csrfToken.type = 'hidden';
-        csrfToken.name = '_token';
-        csrfToken.value = '{{ csrf_token() }}';
-        form.appendChild(csrfToken);
-
-        // Add item details
-        const fields = {
-          'id': title.toLowerCase().replace(/\s+/g, '-'),
-          'title': title,
-          'price': '1500.00', // Default price for dining items
-          'image': imageUrls[0] || '',
-          'quantity': '1'
-        };
-
-        for (const [name, value] of Object.entries(fields)) {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = name;
-          input.value = value;
-          form.appendChild(input);
-        }
-
-        document.body.appendChild(form);
-        form.submit();
-      };
-
-      // Show modal
-      const modal = document.getElementById('detailsModal');
-      modal.classList.remove('opacity-0', 'pointer-events-none');
-      modal.classList.add('opacity-100', 'pointer-events-auto');
-      document.body.style.overflow = 'hidden';
-
-      // Focus management for accessibility
-      modal.focus();
-    }
-
-    function closeModal() {
-      const modal = document.getElementById('detailsModal');
-      modal.classList.remove('opacity-100', 'pointer-events-auto');
-      modal.classList.add('opacity-0', 'pointer-events-none');
-      document.body.style.overflow = '';
-
-      if (packageSwiper) {
-        packageSwiper.destroy();
-        packageSwiper = null;
-      }
-
-      if (lastFocusedElement) {
-        lastFocusedElement.focus();
-      }
-    }
-
-    // Close modal on outside click and Escape key
-    document.getElementById('detailsModal').addEventListener('click', function(e) {
-      if (e.target === this) {
-        closeModal();
-      }
-    });
-
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && document.getElementById('detailsModal').classList.contains('opacity-100')) {
-        closeModal();
-      }
-    });
     </script>
   </body>
 </html>
