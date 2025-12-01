@@ -29,7 +29,7 @@ class AdminController extends Controller
         $staycations = Staycation::all();
         $images = StaycationSwiperImage::all();
         $texts = StaycationText::all();
-        return view('admin.staycations', compact('staycations', 'images', 'texts'));
+        return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts'));
     }
 
     public function activity()
@@ -37,7 +37,7 @@ class AdminController extends Controller
         $activities = Activity::all();
         $images = ActivitySwiperImage::all();
         $texts = ActivityText::all();
-        return view('admin.activities', compact('activities', 'images', 'texts'));
+        return view('admin.whatToDo.activities', compact('activities', 'images', 'texts'));
     }
 
     public function menu()
@@ -45,7 +45,7 @@ class AdminController extends Controller
         $menus = Menu::all();
         $images = MenuSwiperImage::all();
         $texts = MenuText::all();
-        return view('admin.menus', compact('menus', 'images', 'texts'));
+        return view('admin.foodBeverages.menus', compact('menus', 'images', 'texts'));
     }
 
     public function event()
@@ -53,7 +53,7 @@ class AdminController extends Controller
         $events = Event::all();
         $images = EventSwiperImage::all();
         $texts = EventText::all();
-        return view('admin.events', compact('events', 'images', 'texts'));
+        return view('admin.specialEvents.events', compact('events', 'images', 'texts'));
     }
 
     public function farmInfo()
@@ -61,7 +61,7 @@ class AdminController extends Controller
         $farmInfos = FarmInfo::all();
         $images = FarmInfoSwiperImage::all();
         $texts = FarmInfoText::all();
-        return view('admin.farmInfos', compact('farmInfos', 'images', 'texts'));
+        return view('admin.ourFarm.farmInfos', compact('farmInfos', 'images', 'texts'));
     }
 
     public function dayTour()
@@ -69,6 +69,6 @@ class AdminController extends Controller
         $tours  = DayTour::with('activities')->get(); // get all packages with activities
         $texts = DayPackageText::all();
         $activities = Activity::all(); // list of all activities for selection
-        return view('admin.days', compact('tours', 'texts', 'activities'));
+        return view('admin.dayTour.days', compact('tours', 'texts', 'activities'));
     }
 }
