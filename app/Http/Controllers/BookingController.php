@@ -378,6 +378,20 @@ class BookingController extends Controller
 
     public function confirmation()
     {
+        // Handle staycation confirmation separately since it uses 'booking' session
+        $staycationBooking = session('booking', []);
+        if (!empty($staycationBooking) && isset($staycationBooking['booking_type']) && $staycationBooking['booking_type'] === 'staycation') {
+            $data = [
+                'bookingData' => $staycationBooking,
+                'selectedActivities' => $staycationBooking['selected_activities'] ?? [],
+                'grandTotal' => $staycationBooking['final_totals']['grand_total'] ?? 0,
+                'customerInfo' => session('staycation_customer_info', []),
+                'isStaycation' => true
+            ];
+            session()->forget(['booking', 'staycation_customer_info']);
+            return view('booking.confirmation', $data);
+        }
+
         $bookingTypes = ['staycation', 'dayvisit', 'special_event', 'regular'];
 
         foreach ($bookingTypes as $type) {

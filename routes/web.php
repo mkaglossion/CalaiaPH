@@ -57,7 +57,7 @@ use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\FarmInfoController;
 use App\Http\Controllers\Admin\DayTourController as AdminDayTourController;
-
+use App\Http\Controllers\CartController;
 
 // ========== Root Route ==========
 Route::get('/', function () {
@@ -118,6 +118,18 @@ Route::get('/api/booking/special-event/activities', [BookingController::class, '
 Route::get('/booking/special-event/activities', [BookingController::class, 'specialEventActivities'])->name('booking.specialEventActivities');
 Route::post('/booking/special-event/activities', [BookingController::class, 'storeSpecialEventActivities'])->name('booking.storeSpecialEventActivities');
 Route::get('/booking/special-event/payment', [BookingController::class, 'specialEventPayment'])->name('booking.specialEventPayment');
+
+// Cart Routes
+Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+Route::patch('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
+Route::delete('/cart/{id}', [CartController::class, 'remove'])->name('cart.remove');
+
+Route::get('/checkout', [CartController::class, 'checkoutForm'])->name('checkout.form');
+Route::post('/checkout', [CartController::class, 'checkoutSubmit'])->name('checkout.submit');
+Route::get('/checkout/confirmation', function () {
+    return view('checkout_confirmation');
+})->name('checkout.confirmation');
 
 // ========== Auth Routes ==========
 Route::post('/register-step-one', [RegisterController::class, 'registerStepOne']);

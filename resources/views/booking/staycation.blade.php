@@ -198,16 +198,11 @@ $galleryData = [
 ];
 @endphp
 
-@if (!$step1Completed || !$datesSelected)
-    <script>
-        window.location.href = "{{ $backLink }}";
-    </script>
-@endif
 
 <div class="pt-6 md:pt-12"
-     data-accommodation-count="{{ count($accommodationData ?? []) }}"
      data-root-dir="{{ url('/') }}"
-     data-accommodation-data='@json($accommodationData ?? [])'>
+     data-accommodation-data='@json($accommodationData ?? [])'
+     data-selected-activities='@json($booking['selected_activities'] ?? [])'>
 
     {{-- Header --}}
     <div class="text-center mb-10">
@@ -216,271 +211,252 @@ $galleryData = [
         <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Plan your perfect getaway at Calaia Nature Park</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10">
-        {{-- Main content --}}
-        <div class="lg:col-span-2">
-            <div class="flex flex-col">
-                {{-- Progress indicator --}}
-                <div class="mb-6">
-                    <div class="flex justify-between items-center mb-2">
-                        <small class="text-gray-500 text-sm">
-                            @if($bookingType === 'staycation')
-                                Step 1 of 3: Select Your Staycation
-                            @else
-                                Steps {{ $stepNumber }} of {{ $totalSteps }}
-                            @endif
-                        </small>
-                        <small class="text-gray-500 text-sm">33% Complete</small>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-[#8f5d54] h-2 rounded-full transition-all duration-300" style="width: 33%"></div>
-                    </div>
-                </div>
+<div class="mx-0 md:mx-10">
+   {{-- Progress + nav --}}
+   <div class="mb-6">
+       {{-- Progress indicator --}}
+       <div class="mb-4">
+           {{-- limit width + center --}}
+           <div class="max-w-4xl md:max-w-5xl mx-auto">
+               <div class="flex justify-between items-center mb-2">
+                   <small class="text-gray-500 text-sm">
+                       @if($bookingType === 'staycation')
+                           Step 1 of 3: Select Your Staycation
+                       @else
+                           Steps {{ $stepNumber }} of {{ $totalSteps }}
+                       @endif
+                   </small>
+                   <small class="text-gray-500 text-sm">33% Complete</small>
+               </div>
+               <div class="w-full bg-gray-200 rounded-full h-1.5 md:h-2">
+                   <div
+                       class="bg-[#8f5d54] h-1.5 md:h-2 rounded-full transition-all duration-300"
+                       style="width: 33%">
+                   </div>
+               </div>
+           </div>
+       </div>
 
-                {{-- Navigation --}}
-                <div class="flex items-end justify-between my-3">
-                    <a href="{{ $backLink }}"
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                        <i class="bi bi-arrow-left mr-2"></i>
-                        Back
-                    </a>
+       {{-- Back + guest mode --}}
+       <div class="flex items-end justify-between">
+           <a href="{{ $backLink }}"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+               <i class="bi bi-arrow-left mr-2"></i>
+               Back
+           </a>
 
-                    <div class="flex items-center gap-2">
-                        @if (session()->has('user.is_guest') && session('user.is_guest'))
-                            <span
-                                class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-white shadow"
-                                style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: 1px solid rgba(255,255,255,.2);">
-                                <i class="bi bi-person mr-1 text-sm"></i> Guest Mode
-                            </span>
-                        @endif
-                    </div>
-                </div>
+           <div class="flex items-center gap-2">
+               @if (session()->has('user.is_guest') && session('user.is_guest'))
+                   <span
+                       class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-white shadow"
+                       style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: 1px solid rgba(255,255,255,.2);">
+                       <i class="bi bi-person mr-1 text-sm"></i> Guest Mode
+                   </span>
+               @endif
+           </div>
+       </div>
+   </div>
 
-                {{-- Booking section --}}
-                <div class="booking-section">
-                    {{-- Top nav: accommodation tabs --}}
-                    <div class="mb-6">
-                        <div class="flex flex-row flex-nowrap justify-between gap-2 pr-2 p-2 mt-2 border-b border-gray-200 overflow-x-auto"
-                            style="white-space: nowrap;">
-                            <div class="flex flex-row flex-nowrap gap-2" id="accommodation-tabs">
-                                <!-- Accommodation tabs will be populated by JavaScript -->
-                                <div class="accom-tab-item relative" data-index="0">
-                                    <button type="button"
-                                            class="accom-btn my-2 px-4 py-2 border rounded-md text-xs md:text-sm font-medium transition bg-gray-900 text-white border-gray-900"
-                                            data-index="0"
-                                            aria-label="Select accommodation 1">
-                                        ACCOMMODATION 1
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+   {{-- 3 cards sa isang grid: Glamping, Camping, Booking Summary --}}
+   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+       {{-- Glamping card --}}
+       <div class="bg-white rounded-2xl shadow-[0_18px_40px_rgba(15,23,42,0.08)] border border-gray-100 overflow-hidden flex flex-col">
+           <img
+               src="{{ $glampingImage }}"
+               alt="Glamping Options"
+               class="w-full object-cover"
+               style="height: 280px;">
 
-                    {{-- 2 main category cards: Glamping + Camping --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div class="flex flex-col p-6 h-full">
+               <div class="flex items-start justify-between gap-3 mb-2">
+                   <h3 class="text-2xl font-extrabold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
+                       Glamping Options
+                   </h3>
+                   <span
+                       class="inline-flex items-center px-3 py-1 rounded-full text-base font-semibold"
+                       style="background: #ffc44c; color: #2b1b00;">
+                       GLAMPING
+                   </span>
+               </div>
 
-                        {{-- Glamping card --}}
-                        <div class="bg-white rounded-2xl shadow-[0_18px_40px_rgba(15,23,42,0.08)] border border-gray-100 overflow-hidden flex flex-col">
-                            <img
-                                src="{{ $glampingImage }}"
-                                alt="Glamping Options"
-                                class="w-full object-cover"
-                                style="height: 280px;">
+               <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
+                   {{ $glampingDescription }}
+               </p>
 
-                            <div class="flex flex-col p-6 h-full">
-                                <div class="flex items-start justify-between gap-3 mb-2">
-                                    <h3 class="text-2xl font-extrabold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
-                                        Glamping Options
-                                    </h3>
-                                    <span
-                                        class="inline-flex items-center px-3 py-1 rounded-full text-base font-semibold"
-                                        style="background: #ffc44c; color: #2b1b00;">
-                                        GLAMPING
-                                    </span>
-                                </div>
+               <p class="text-xs text-gray-500 mb-4" style="font-family: 'Gotham Book', sans-serif;">
+                   Includes:
+                   <span class="font-semibold text-gray-800">Standard</span> and
+                   <span class="font-semibold text-gray-800">Premium</span> glamping tents.
+               </p>
 
-                                <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
-                                    {{ $glampingDescription }}
-                                </p>
+               @if($glampingCount > 0)
+                   <p class="font-semibold mb-1" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
+                       Starts at ₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)
+                   </p>
+                   <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">
+                       {{ $glampingCount }} {{ Str::plural('option', $glampingCount) }} available
+                   </p>
+               @else
+                   <p class="text-base text-gray-400 mb-6">No glamping options available.</p>
+               @endif
 
-                                {{-- Subtypes line --}}
-                                <p class="text-xs text-gray-500 mb-4" style="font-family: 'Gotham Book', sans-serif;">
-                                    Includes:
-                                    <span class="font-semibold text-gray-800">Standard</span> and
-                                    <span class="font-semibold text-gray-800">Premium</span> glamping tents.
-                                </p>
+               <button
+                   type="button"
+                   class="select-category-btn mt-auto w-full inline-flex items-center justify-center rounded-full text-lg font-semibold text-white px-6 py-3 transition"
+                   data-category="glamping"
+                   data-staycations='@json($glampingStaycations)'
+                   @if($glampingCount === 0) disabled @endif
+                   style="background-color:#8f5d54; box-shadow:0 10px 20px rgba(143,93,84,0.35);">
+                   Select Glamping Options
+               </button>
+           </div>
+       </div>
 
-                                @if($glampingCount > 0)
-                                     <p class="font-semibold mb-1" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
-                                         Starts at ₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)
-                                     </p>
-                                     <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">
-                                         {{ $glampingCount }} {{ Str::plural('option', $glampingCount) }} available
-                                     </p>
-                                 @else
-                                     <p class="text-base text-gray-400 mb-6">No glamping options available.</p>
-                                 @endif
+       {{-- Camping card --}}
+       <div class="bg-white rounded-2xl shadow-[0_18px_40px_rgba(15,23,42,0.08)] border border-gray-100 overflow-hidden flex flex-col">
+           <img
+               src="{{ $campingImage }}"
+               alt="Camping Options"
+               class="w-full object-cover"
+               style="height: 280px;">
 
-                                <button
-                                    type="button"
-                                    class="select-category-btn mt-auto w-full inline-flex items-center justify-center rounded-full text-lg font-semibold text-white px-6 py-3 transition"
-                                    data-category="glamping"
-                                    data-staycations='@json($glampingStaycations)'
-                                    @if($glampingCount === 0) disabled @endif
-                                    style="background-color:#8f5d54; box-shadow:0 10px 20px rgba(143,93,84,0.35);">
-                                    Select Glamping Options
-                                </button>
-                            </div>
-                        </div>
+           <div class="flex flex-col p-6 h-full">
+               <div class="flex items-start justify-between gap-3 mb-2">
+                   <h3 class="text-2xl font-extrabold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
+                       Camping Options
+                   </h3>
+                   <span
+                       class="inline-flex items-center px-3 py-1 rounded-full text-base font-semibold"
+                       style="background:#31b44b; color:#ffffff;">
+                       CAMPING
+                   </span>
+               </div>
 
-                        {{-- Camping card --}}
-                        <div class="bg-white rounded-2xl shadow-[0_18px_40px_rgba(15,23,42,0.08)] border border-gray-100 overflow-hidden flex flex-col">
-                            <img
-                                src="{{ $campingImage }}"
-                                alt="Camping Options"
-                                class="w-full object-cover"
-                                style="height: 280px;">
+               <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
+                   {{ $campingDescription }}
+               </p>
 
-                            <div class="flex flex-col p-6 h-full">
-                                <div class="flex items-start justify-between gap-3 mb-2">
-                                    <h3 class="text-2xl font-extrabold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
-                                        Camping Options
-                                    </h3>
-                                    <span
-                                        class="inline-flex items-center px-3 py-1 rounded-full text-base font-semibold"
-                                        style="background:#31b44b; color:#ffffff;">
-                                        CAMPING
-                                    </span>
-                                </div>
+               <p class="text-xs text-gray-500 mb-4" style="font-family: 'Gotham Book', sans-serif;">
+                   Includes:
+                   <span class="font-semibold text-gray-800">Bell Tent</span>,
+                   <span class="font-semibold text-gray-800">Dome Tent</span>,
+                   <span class="font-semibold text-gray-800">BYOT</span>, and
+                   <span class="font-semibold text-gray-800">Car Camping</span>.
+               </p>
 
-                                <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
-                                    {{ $campingDescription }}
-                                </p>
+               @if($campingCount > 0)
+                   <p class="font-semibold mb-1" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
+                       Starts at ₱300/night (BYOT/Car Camping)<br>• ₱3,000/night (Bell/Dome Tents)
+                   </p>
+                   <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">
+                       {{ $campingCount }} {{ Str::plural('option', $campingCount) }} available
+                   </p>
+               @else
+                   <p class="text-base text-gray-400 mb-6">No camping options available.</p>
+               @endif
 
-                                {{-- Subtypes line --}}
-                                <p class="text-xs text-gray-500 mb-4" style="font-family: 'Gotham Book', sans-serif;">
-                                    Includes:
-                                    <span class="font-semibold text-gray-800">Bell Tent</span>,
-                                    <span class="font-semibold text-gray-800">Dome Tent</span>,
-                                    <span class="font-semibold text-gray-800">BYOT</span>, and
-                                    <span class="font-semibold text-gray-800">Car Camping</span>.
-                                </p>
+               <button
+                   type="button"
+                   class="select-category-btn mt-auto w-full inline-flex items-center justify-center rounded-full text-lg font-semibold text-white px-6 py-3 transition"
+                   data-category="camping"
+                   data-staycations='@json($campingStaycations)'
+                   @if($campingCount === 0) disabled @endif
+                   style="background-color:#8f5d54; box-shadow:0 10px 20px rgba(143,93,84,0.35);">
+                   Select Camping Options
+               </button>
+           </div>
+       </div>
 
-                                @if($campingCount > 0)
-                                     <p class="font-semibold mb-1" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
-                                         Starts at ₱300/night (BYOT/Car Camping)<br>• ₱3,000/night (Bell/Dome Tents)
-                                     </p>
-                                     <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">
-                                         {{ $campingCount }} {{ Str::plural('option', $campingCount) }} available
-                                     </p>
-                                 @else
-                                     <p class="text-base text-gray-400 mb-6">No camping options available.</p>
-                                 @endif
+       {{-- Booking summary card (right) --}}
+       <div class="bg-white rounded-xl shadow-md p-6 lg:sticky lg:top-6">
+           <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
 
-                                <button
-                                    type="button"
-                                    class="select-category-btn mt-auto w-full inline-flex items-center justify-center rounded-full text-lg font-semibold text-white px-6 py-3 transition"
-                                    data-category="camping"
-                                    data-staycations='@json($campingStaycations)'
-                                    @if($campingCount === 0) disabled @endif
-                                    style="background-color:#8f5d54; box-shadow:0 10px_20px_rgba(143,93,84,0.35);">
-                                    Select Camping Options
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+           @if($datesSelected)
+               <div class="space-y-3">
+                   <div class="flex justify-between items-center">
+                       <span class="text-sm text-gray-600">Check-in:</span>
+                       <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkinDate)->format('M j, Y') }}</span>
+                   </div>
+                   <div class="flex justify-between items-center">
+                       <span class="text-sm text-gray-600">Check-out:</span>
+                       <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkoutDate)->format('M j, Y') }}</span>
+                   </div>
+                   <div class="flex justify-between items-center">
+                       <span class="text-sm text-gray-600">Nights:</span>
+                       <span class="text-sm font-medium">{{ $nights }}</span>
+                   </div>
+                   <hr class="my-3">
+                   <div class="flex justify-between items-center">
+                       <span class="text-sm text-gray-600">Accommodations:</span>
+                       <span class="text-sm font-medium" id="selected-accommodations-count">0 selected</span>
+                   </div>
+                   <div id="selected-accommodations-summary" class="mt-2 space-y-1">
+                       <!-- JS will populate -->
+                   </div>
+                   <div class="flex justify-between items-center">
+                       <span class="text-sm text-gray-600">Total Guests:</span>
+                       <span class="text-sm font-medium" id="total-guests">0</span>
+                   </div>
 
-                    {{-- Selected accommodations display --}}
-                    <div id="selected-accommodations-container" class="mt-6 space-y-4">
-                        <!-- Selected accommodations will be displayed here -->
-                    </div>
+                   @if(!empty($booking['selected_activities']))
+                       <div class="mt-2 space-y-1">
+                           @foreach($booking['selected_activities'] as $activity)
+                               <div class="text-xs text-gray-600">
+                                   Activity: {{ $activity['name'] }} - ₱{{ number_format($activity['price'] * $activity['guests']) }} ({{ $activity['guests'] }} guests)
+                               </div>
+                           @endforeach
+                       </div>
+                   @endif
 
-                    {{-- Add accommodation button --}}
-                    @if (count($accommodationData) < 4)
-                        <div class="my-6">
-                            <button type="button"
-                                    id="add-accommodation"
-                                    class="w-full border border-transparent rounded-full text-sm md:text-base font-semibold text-gray-700 py-3 px-5 min-h-[48px] hover:bg-gray-50 transition inline-flex items-center justify-center"
-                                    aria-label="Add another accommodation to your booking">
-                                <span class="mr-2 text-lg">+</span>
-                                Add another accommodation
-                            </button>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
+                   <div class="flex justify-between items-center text-lg font-bold">
+                       <span>Total:</span>
+                       <span id="total-price">₱ 0</span>
+                   </div>
+               </div>
 
-        {{-- Sidebar: booking summary --}}
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-xl shadow-md p-6 sticky top-6">
-                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
+               <div class="mt-6 space-y-3">
+                   <button class="w-full bg-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="proceed-btn" disabled onclick="proceedToActivities(event)">
+                       Proceed to Activities
+                   </button>
 
-                @if($datesSelected)
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Check-in:</span>
-                            <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkinDate)->format('M j, Y') }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Check-out:</span>
-                            <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkoutDate)->format('M j, Y') }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Nights:</span>
-                            <span class="text-sm font-medium">{{ $nights }}</span>
-                        </div>
-                        <hr class="my-3">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Accommodations:</span>
-                            <span class="text-sm font-medium" id="selected-accommodations-count">0 selected</span>
-                        </div>
-                        <div id="selected-accommodations-summary" class="mt-2 space-y-1">
-                            <!-- Selected accommodations details will be populated here -->
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Total Guests:</span>
-                            <span class="text-sm font-medium" id="total-guests">0</span>
-                        </div>
-                        <div class="flex justify-between items-center text-lg font-bold">
-                            <span>Total:</span>
-                            <span id="total-price">₱ 0</span>
-                        </div>
-                    </div>
+                   <button class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="skip-btn" disabled onclick="skipToPayment()">
+                       Skip Activities & Go to Payment
+                   </button>
+               </div>
 
-                    <div class="mt-6 space-y-3">
-                        <button class="w-full bg-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="proceed-btn" disabled onclick="proceedToActivities()">
-                            Proceed to Activities
-                        </button>
+               <div class="mt-6 pt-6 border-t border-gray-200">
+                   <div class="text-center">
+                       <h4 class="text-sm font-semibold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">Secure Booking</h4>
+                       <div class="flex justify-center items-center space-x-4">
+                           <div class="flex items-center">
+                               <i class="fas fa-lock text-green-600 mr-2"></i>
+                               <span class="text-xs text-gray-600">SSL Secured</span>
+                           </div>
+                           <div class="flex items-center">
+                               <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
+                               <span class="text-xs text-gray-600">Data Protected</span>
+                           </div>
+                       </div>
+                       <p class="text-xs text-gray-500 mt-2">Your information is safe with us</p>
+                   </div>
+               </div>
+           @else
+               <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
+           @endif
+       </div>
+   </div>
 
-                        <button class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="skip-btn" disabled onclick="skipToPayment()">
-                            Skip Activities & Go to Payment
-                        </button>
-                    </div>
-
-                    {{-- Trust elements --}}
-                    <div class="mt-6 pt-6 border-t border-gray-200">
-                        <div class="text-center">
-                            <h4 class="text-sm font-semibold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">Secure Booking</h4>
-                            <div class="flex justify-center items-center space-x-4">
-                                <div class="flex items-center">
-                                    <i class="fas fa-lock text-green-600 mr-2"></i>
-                                    <span class="text-xs text-gray-600">SSL Secured</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
-                                    <span class="text-xs text-gray-600">Data Protected</span>
-                                </div>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2">Your information is safe with us</p>
-                        </div>
-                    </div>
-                @else
-                    <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
-                @endif
-            </div>
-        </div>
-    </div>
+   {{-- Selected accommodations (cards under the 3 main cards) --}}
+   <div class="mt-6 mb-8 w-full">
+       <div
+           id="selected-accommodations-container"
+           class="grid grid-cols-4 gap-3 lg:gap-4 w-full"
+       >
+           <!-- Selected staycations will be rendered here by JS -->
+       </div>
+   </div>
+</div>
+</div>
 </div>
 
 {{-- Modals --}}
@@ -506,6 +482,7 @@ $galleryData = [
                             <div class="staycation-card bg-white border-2 border-gray-200 rounded-xl p-4 flex items-center gap-4 hover:border-[#8f5d54] hover:shadow-md transition-all duration-200 cursor-pointer" data-staycation-id="{{ $staycation['id'] }}">
                                 <input type="checkbox"
                                        class="staycation-checkbox hidden"
+                                       data-category="glamping"
                                        data-staycation='@json($staycation)'
                                        id="glamping-{{ $staycation['id'] }}">
                                 <label for="glamping-{{ $staycation['id'] }}" class="flex-1 cursor-pointer flex items-center gap-3">
@@ -557,6 +534,7 @@ $galleryData = [
                             <div class="staycation-card bg-white border-2 border-gray-200 rounded-xl p-4 flex items-center gap-4 hover:border-[#8f5d54] hover:shadow-md transition-all duration-200 cursor-pointer" data-staycation-id="{{ $staycation['id'] }}">
                                 <input type="checkbox"
                                        class="staycation-checkbox hidden"
+                                       data-category="camping"
                                        data-staycation='@json($staycation)'
                                        id="camping-{{ $staycation['id'] }}">
                                 <label for="camping-{{ $staycation['id'] }}" class="flex-1 cursor-pointer flex items-center gap-3">
@@ -740,7 +718,7 @@ $galleryData = [
       </div>
     
       {{-- Toast --}}
-      <div class="toast fixed bottom-4 right-4 flex items-center text-white border-0 rounded-lg shadow-lg px-4 py-3 hidden z-60"
+      <div class="toast fixed bottom-4 right-4 items-center text-white border-0 rounded-lg shadow-lg px-4 py-3 hidden z-60"
            role="alert" aria-live="assertive" aria-atomic="true">
           <div class="flex items-center w-full">
               <div class="toast-body text-sm flex-1"></div>
@@ -756,66 +734,154 @@ $galleryData = [
     <x-footer />
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   </body>
-</html>
-<script>
+  <script>
     const el = document.querySelector('.pt-6.md\\:pt-12');
-    window.accommodationCount = 1; // Start with 1 accommodation
     window.ROOT_DIR = el.dataset.rootDir;
     window.accommodationData = JSON.parse(el.dataset.accommodationData || '[]');
-    window.selectedAccommodations = {}; // Store selected accommodations by index
+    window.selectedAccommodations = {}; // Store selected accommodations by staycation.id
     window.galleryData = <?php echo json_encode($galleryData); ?>;
     window.galleryImages = [];
     window.galleryCurrentIndex = 0;
 
-    // Global booking functions
+    // Storage key for staycation selections
+// Global dates from Blade
+const CHECKIN = '{{ $checkinDate }}';
+const CHECKOUT = '{{ $checkoutDate }}';
+
+// Single source of truth for all pricing
+function computeStaycationTotals(staycation, options = {}) {
+    const {
+        guests = 1,
+        checkinStr = CHECKIN,
+        checkoutStr = CHECKOUT,
+        numPets = 0,
+        hasPetAgreement = false,
+        hasBreakfast = false
+    } = options;
+
+    const emptyResult = {
+        basePriceTotal: 0,
+        extraPriceTotal: 0,
+        petFee: 0,
+        breakfastFee: 0,
+        total: 0,
+        nights: 0
+    };
+
+    if (!checkinStr || !checkoutStr) return emptyResult;
+
+    const checkin = new Date(checkinStr);
+    const checkout = new Date(checkoutStr);
+    const diffMs = checkout - checkin;
+    if (!isFinite(diffMs) || diffMs <= 0) return emptyResult;
+
+    const nights = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const name = (staycation.name || '').toLowerCase();
+
+    let basePriceTotal = 0;
+    let extraPriceTotal = 0;
+
+    // ---- BASE ACCOMMODATION PRICING ----
+    if (name.includes('standard') || name.includes('premium')) {
+        let current = new Date(checkin);
+        while (current < checkout) {
+            const day = current.getDay(); // 0-6
+            const isWeekend = (day === 5 || day === 6); // Fri & Sat
+            let basePrice = 0;
+
+            if (name.includes('standard')) basePrice = isWeekend ? 6000 : 4800;
+            if (name.includes('premium')) basePrice = isWeekend ? 7200 : 5760;
+
+            const extraGuests = Math.max(0, guests - 4);
+            basePriceTotal += basePrice;
+            extraPriceTotal += extraGuests * 400;
+
+            current.setDate(current.getDate() + 1);
+        }
+    } else if (name.includes('bell') || name.includes('dome')) {
+        // Dome / Bell: flat 3000 per night, up to 8
+        basePriceTotal = 3000 * nights;
+    } else if (name.includes('byot') || name.includes('car')) {
+        // BYOT / Car: 300 * guests * nights
+        basePriceTotal = 300 * guests * nights;
+    }
+
+    // ---- PET FEE ----
+    const petFee = (hasPetAgreement && numPets > 0) ? 2000 * numPets : 0;
+
+    // ---- BREAKFAST FEE ----
+    const breakfastFee = hasBreakfast ? 500 * guests : 0;
+
+    const total = basePriceTotal + extraPriceTotal + petFee + breakfastFee;
+
+    return {
+        basePriceTotal,
+        extraPriceTotal,
+        petFee,
+        breakfastFee,
+        total,
+        nights
+    };
+}
+    const STAYCATION_STORAGE_KEY = 'staycation_selections';
+
+    // Save selections to storage
+    function saveSelectionsToStorage() {
+        try {
+            const data = {
+                selectedAccommodations: window.selectedAccommodations,
+                timestamp: Date.now()
+            };
+            sessionStorage.setItem(STAYCATION_STORAGE_KEY, JSON.stringify(data));
+        } catch (error) {
+            console.warn('Failed to save selections to storage:', error);
+        }
+    }
+
+    // Load selections from storage
+    function loadSelectionsFromStorage() {
+        try {
+            const stored = sessionStorage.getItem(STAYCATION_STORAGE_KEY);
+            if (stored) {
+                const data = JSON.parse(stored);
+                // Check if data is not too old (24 hours)
+                const age = Date.now() - data.timestamp;
+                if (age < 24 * 60 * 60 * 1000) { // 24 hours
+                    window.selectedAccommodations = data.selectedAccommodations || {};
+                    return true;
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to load selections from storage:', error);
+        }
+        return false;
+    }
+
+    // Clear storage (call when booking is completed or user starts fresh)
+    function clearSelectionsStorage() {
+        sessionStorage.removeItem(STAYCATION_STORAGE_KEY);
+    }
+
+
     window.FeeCalculator = {
         calculateTotal: function(accommodations, checkin, checkout) {
             if (!checkin || !checkout) return 0;
-
-            const checkinDate = new Date(checkin);
-            const checkoutDate = new Date(checkout);
-            const nights = Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
-            if (nights <= 0) return 0;
 
             let total = 0;
 
             Object.values(accommodations).forEach(acc => {
                 if (!acc || !acc.staycation) return;
 
-                const staycation = acc.staycation;
-                const guests = acc.guests || 1;
-                const name = staycation.name.toLowerCase();
+                const result = computeStaycationTotals(acc.staycation, {
+                    guests: acc.guests || 1,
+                    checkinStr: checkin,
+                    checkoutStr: checkout,
+                    numPets: acc.num_pets || 0,
+                    hasPetAgreement: acc.pet_agreement,
+                    hasBreakfast: acc.has_breakfast
+                });
 
-                if (name.includes('standard') || name.includes('premium')) {
-                    let accTotal = 0;
-                    let current = new Date(checkinDate);
-                    while (current < checkoutDate) {
-                        const day = current.getDay();
-                        const isWeekend = day === 5 || day === 6; // Fri & Sat
-                        let basePrice = 0;
-                        if (name.includes('standard')) basePrice = isWeekend ? 6000 : 4800;
-                        if (name.includes('premium')) basePrice = isWeekend ? 7200 : 5760;
-
-                        const extraGuests = Math.max(0, guests - 4);
-                        accTotal += basePrice + (extraGuests * 400);
-                        current.setDate(current.getDate() + 1);
-                    }
-                    total += accTotal;
-                } else if (name.includes('bell') || name.includes('dome')) {
-                    total += 3000 * nights;
-                } else if (name.includes('byot') || name.includes('car')) {
-                    total += 300 * guests * nights;
-                }
-
-                // Add pet fees
-                if (acc.pet_agreement && acc.num_pets > 0) {
-                    total += 2000 * acc.num_pets;
-                }
-
-                // Add breakfast fees
-                if (acc.has_breakfast) {
-                    total += 500 * guests;
-                }
+                total += result.total;
             });
 
             return total;
@@ -827,195 +893,109 @@ $galleryData = [
         const summaryContainer = document.getElementById('selected-accommodations-summary');
         if (!summaryContainer) return;
 
-        summaryContainer.innerHTML = ''; // Clear previous content
+        summaryContainer.innerHTML = '';
         let selectedCount = 0;
         let totalPrice = 0;
         let totalGuests = 0;
 
-        // Loop over all selected accommodations
         Object.entries(window.selectedAccommodations).forEach(([key, accommodation]) => {
             if (!accommodation || !accommodation.staycation) return;
 
             selectedCount++;
 
-            const guests = accommodation.guests;
+            const guests = accommodation.guests || 1;
             totalGuests += guests;
             const staycation = accommodation.staycation;
             const name = staycation.name;
 
-            // Calculate price for this accommodation
-            let accommodationPrice = 0;
-            let basePriceTotal = 0;
-            let extraPriceTotal = 0;
-            let extraGuests = 0;
-            const checkin = new Date('{{ $checkinDate }}');
-            const checkout = new Date('{{ $checkoutDate }}');
-            const nights = Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24));
+            const result = computeStaycationTotals(staycation, {
+                guests,
+                checkinStr: CHECKIN,
+                checkoutStr: CHECKOUT,
+                numPets: accommodation.num_pets || 0,
+                hasPetAgreement: accommodation.pet_agreement,
+                hasBreakfast: accommodation.has_breakfast
+            });
 
-            const lowerName = name.toLowerCase();
-            if (lowerName.includes('standard') || lowerName.includes('premium')) {
-                let current = new Date(checkin);
-                while (current < checkout) {
-                    const day = current.getDay();
-                    const isWeekend = day === 5 || day === 6; // Fri/Sat
-                    let basePrice = 0;
-                    if (lowerName.includes('standard')) basePrice = isWeekend ? 6000 : 4800;
-                    if (lowerName.includes('premium')) basePrice = isWeekend ? 7200 : 5760;
-                    extraGuests = Math.max(0, guests - 4);
-                    accommodationPrice += basePrice + (extraGuests * 400);
-                    basePriceTotal += basePrice;
-                    extraPriceTotal += extraGuests * 400;
-                    current.setDate(current.getDate() + 1);
-                }
-            } else if (lowerName.includes('bell') || lowerName.includes('dome')) {
-                accommodationPrice = 3000 * nights;
-            } else if (lowerName.includes('byot') || lowerName.includes('car')) {
-                accommodationPrice = 300 * guests * nights;
-            }
+            totalPrice += result.total;
 
-            // Calculate pet fee
-            const petFee = (accommodation.pet_agreement && accommodation.num_pets > 0) ? 2000 * accommodation.num_pets : 0;
-
-            // Calculate breakfast fee
-            const breakfastFee = accommodation.has_breakfast ? 500 * guests : 0;
-
-            const totalAccPrice = accommodationPrice + petFee + breakfastFee;
-
-            totalPrice += totalAccPrice; // Add to total
-
-            // Display individual accommodation with price breakdown
             const summaryItem = document.createElement('div');
             summaryItem.className = 'text-xs text-gray-600 space-y-1';
 
+            const nights = result.nights || 1;
+
+            // Base accommodation line
             const accommodationDiv = document.createElement('div');
-            accommodationDiv.textContent = `ACCOMMODATION: ${name} - ₱ ${Math.round(basePriceTotal / nights).toLocaleString()}/night (${guests} guests)`;
+            const perNightBase = result.basePriceTotal > 0
+                ? Math.round(result.basePriceTotal / nights)
+                : 0;
+
+            accommodationDiv.textContent =
+                `ACCOMMODATION: ${name} - ₱ ${perNightBase.toLocaleString()}/night (${guests} guest${guests > 1 ? 's' : ''})`;
             summaryItem.appendChild(accommodationDiv);
 
-            if (extraPriceTotal > 0) {
+            // Extra mattress line
+            if (result.extraPriceTotal > 0) {
+                const extraGuests = Math.max(0, guests - 4);
+                const perNightExtra = Math.round(result.extraPriceTotal / nights);
+
                 const extraDiv = document.createElement('div');
-                extraDiv.textContent = `Extra Mattress (${extraGuests} guest${extraGuests > 1 ? 's' : ''}): ₱ ${Math.round(extraPriceTotal / nights).toLocaleString()}/night`;
+                extraDiv.textContent =
+                    `Extra Mattress (${extraGuests} guest${extraGuests > 1 ? 's' : ''}): ₱ ${perNightExtra.toLocaleString()}/night`;
                 summaryItem.appendChild(extraDiv);
             }
 
-            if (petFee > 0) {
+            // Pet fee
+            if (result.petFee > 0) {
+                const numPets = accommodation.num_pets || 0;
                 const petDiv = document.createElement('div');
-                petDiv.textContent = `Pet Fee (${accommodation.num_pets} pet${accommodation.num_pets > 1 ? 's' : ''}): ₱ ${petFee.toLocaleString()}`;
+                petDiv.textContent =
+                    `Pet Fee (${numPets} pet${numPets > 1 ? 's' : ''}): ₱ ${result.petFee.toLocaleString()}`;
                 summaryItem.appendChild(petDiv);
             }
 
-            if (breakfastFee > 0) {
+            // Breakfast fee
+            if (result.breakfastFee > 0) {
                 const breakfastDiv = document.createElement('div');
-                breakfastDiv.textContent = `Breakfast (${guests} guest${guests > 1 ? 's' : ''}): ₱ ${breakfastFee.toLocaleString()}`;
+                breakfastDiv.textContent =
+                    `Breakfast (${guests} guest${guests > 1 ? 's' : ''}): ₱ ${result.breakfastFee.toLocaleString()}`;
                 summaryItem.appendChild(breakfastDiv);
             }
 
             summaryContainer.appendChild(summaryItem);
         });
 
-        // Update total price element
+        // Activities total (as is)
+        const selectedActivities = JSON.parse(el.dataset.selectedActivities || '[]');
+        const activitiesTotal = selectedActivities.reduce(
+            (sum, activity) => sum + (activity.price * activity.guests),
+            0
+        );
+        totalPrice += activitiesTotal;
+
         const totalPriceEl = document.getElementById('total-price');
         if (totalPriceEl) totalPriceEl.textContent = `₱ ${totalPrice.toLocaleString()}`;
 
-        // Update total guests element
         const totalGuestsEl = document.getElementById('total-guests');
         if (totalGuestsEl) totalGuestsEl.textContent = totalGuests;
 
-        // Update selected count display
         const selectedAccText = document.getElementById('selected-accommodations-count');
         if (selectedAccText) selectedAccText.textContent = `${selectedCount} selected`;
 
-        // Enable/disable proceed and skip buttons
         const proceedBtn = document.getElementById('proceed-btn');
         const skipBtn = document.getElementById('skip-btn');
         if (proceedBtn) proceedBtn.disabled = selectedCount === 0;
         if (skipBtn) skipBtn.disabled = selectedCount === 0;
+
+        saveSelectionsToStorage();
     };
 
     window.initializeBookingSummary = function() {
         window.updateBookingSummary();
     };
 
-    window.addAccommodationWithValidation = function() {
-        if (window.accommodationCount >= 4) {
-            showToast('Maximum of 4 accommodations allowed', 'error');
-            return;
-        }
 
-        const newIndex = window.accommodationCount;
-        window.accommodationCount++;
 
-        // Create new tab
-        const tabsContainer = document.getElementById('accommodation-tabs');
-        if (tabsContainer) {
-            const newTab = document.createElement('div');
-            newTab.className = 'accom-tab-item relative';
-            newTab.dataset.index = newIndex;
-            newTab.innerHTML = `
-                <button type="button"
-                        class="accom-btn my-2 px-4 py-2 border rounded-md text-xs md:text-sm font-medium transition border-gray-300 text-gray-700 hover:bg-gray-100"
-                        data-index="${newIndex}"
-                        aria-label="Select accommodation ${newIndex + 1}">
-                    ACCOMMODATION ${newIndex + 1}
-                </button>
-                <button type="button" 
-                        class="remove-accom absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600 transition"
-                        data-index="${newIndex}"
-                        aria-label="Remove accommodation ${newIndex + 1}">
-                    ×
-                </button>
-            `;
-            tabsContainer.appendChild(newTab);
-        }
-
-        // Update the "Add accommodation" button visibility
-        const addButton = document.getElementById('add-accommodation');
-        if (addButton && window.accommodationCount >= 4) {
-            addButton.style.display = 'none';
-        }
-
-        window.updateBookingSummary();
-        initializeTabEvents();
-        
-        // Show success toast
-        showToast(`ACCOMMODATION ${newIndex + 1} added successfully`, 'success');
-    };
-
-    window.removeAccommodation = function(index) {
-        // Remove from selected accommodations
-        delete window.selectedAccommodations[index];
-        
-        // Remove the tab
-        const tabToRemove = document.querySelector(`.accom-tab-item[data-index="${index}"]`);
-        if (tabToRemove) {
-            tabToRemove.remove();
-        }
-
-        // Remove the accommodation display
-        const accDisplay = document.querySelector(`.accommodation-display[data-index="${index}"]`);
-        if (accDisplay) {
-            accDisplay.remove();
-        }
-
-        // Update accommodation count
-        window.accommodationCount--;
-
-        // If we removed the active tab, switch to first tab and update label
-        const activeTab = document.querySelector('.accom-btn.bg-gray-900');
-        if (!activeTab && window.accommodationCount > 0) {
-            const firstTab = document.querySelector('.accom-tab-item:first-child .accom-btn');
-            if (firstTab) {
-                firstTab.click();
-            }
-        }
-
-        // Show "Add accommodation" button if we're below max
-        const addButton = document.getElementById('add-accommodation');
-        if (addButton && window.accommodationCount < 4) {
-            addButton.style.display = 'flex';
-        }
-
-        window.updateBookingSummary();
-    };
 
     // Toast function
     function showToast(message, type = 'info') {
@@ -1041,47 +1021,7 @@ $galleryData = [
         }
     }
 
-    function initializeTabEvents() {
-        // Tab click events
-        document.querySelectorAll('.accom-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const index = this.dataset.index;
 
-                // Update active tab styling
-                document.querySelectorAll('.accom-btn').forEach(b => {
-                    b.classList.remove('bg-gray-900', 'text-white', 'border-gray-900');
-                    b.classList.add('border-gray-300', 'text-gray-700', 'hover:bg-gray-100');
-                });
-                this.classList.remove('border-gray-300', 'text-gray-700', 'hover:bg-gray-100');
-                this.classList.add('bg-gray-900', 'text-white', 'border-gray-900');
-            });
-        });
-
-        // Remove accommodation events
-        document.querySelectorAll('.remove-accom').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const index = this.dataset.index;
-                if (window.accommodationCount > 1) {
-                    window.removeAccommodation(index);
-                    showToast('Accommodation removed', 'success');
-                } else {
-                    showToast('At least one accommodation is required', 'error');
-                }
-            });
-        });
-    }
-
-    function initializeRemoveSelectedButtons() {
-        document.querySelectorAll('.remove-selected-accom').forEach(btn => {
-            btn.onclick = function() {
-                const id = this.dataset.id;
-                delete window.selectedAccommodations[id];
-                displaySelectedAccommodation(id, null);
-                window.updateBookingSummary();
-            };
-        });
-    }
 
     // --- Display selected accommodation card ---
     function displaySelectedAccommodation(key, acc) {
@@ -1095,18 +1035,18 @@ $galleryData = [
         const staycation = acc.staycation;
         const guests = acc.guests || 1;
         const div = document.createElement('div');
-        div.className = 'accommodation-display bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-2';
+        div.className = 'accommodation-display bg-white rounded-lg shadow-sm border border-gray-200 p-3';
         div.dataset.key = key;
         div.innerHTML = `
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <img src="${staycation.image || '/assets/images/default.jpg'}" alt="${staycation.name}" class="w-12 h-12 rounded-lg object-cover">
-                    <div>
-                        <h4 class="font-semibold text-gray-900">${staycation.name}</h4>
-                        <p class="text-xs text-gray-500">Guests: ${guests}</p>
+                <div class="flex items-center space-x-2">
+                    <img src="${staycation.image || '/assets/images/default.jpg'}" alt="${staycation.name}" class="w-10 h-10 rounded-md object-cover">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-semibold text-gray-900 text-sm truncate">${staycation.name}</h4>
+                        <p class="text-xs text-gray-500">${guests} guest${guests > 1 ? 's' : ''}</p>
                     </div>
                 </div>
-                <button class="remove-selected-accom text-red-500 hover:text-red-700 text-lg font-bold" data-key="${key}">×</button>
+                <button class="remove-selected-accom text-red-500 hover:text-red-700 text-base font-bold flex-shrink-0" data-key="${key}">×</button>
             </div>
         `;
         container.appendChild(div);
@@ -1123,24 +1063,23 @@ $galleryData = [
 
     document.addEventListener('DOMContentLoaded', function () {
         setTimeout(function () {
+            // Load saved selections
+            if (loadSelectionsFromStorage()) {
+                // Update UI with loaded selections
+                Object.entries(window.selectedAccommodations).forEach(([key, acc]) => {
+                    displaySelectedAccommodation(key, acc);
+                });
+                window.updateBookingSummary();
+            }
+    
             if (typeof window.initializeBookingSummary === 'function') {
                 window.initializeBookingSummary();
             }
             initializeStaycationValidation();
-            initializeTabEvents();
         }, 100);
     });
 
     function initializeStaycationValidation() {
-        const addAccommodationBtn = document.getElementById('add-accommodation');
-        if (addAccommodationBtn) {
-            addAccommodationBtn.addEventListener('click', function () {
-                if (typeof window.addAccommodationWithValidation === 'function') {
-                    window.addAccommodationWithValidation();
-                }
-            });
-        }
-
         // Modal functionality
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('select-category-btn')) {
@@ -1237,72 +1176,48 @@ $galleryData = [
         }
     });
 
-    // Update pricing display in modal
+    // Update pricing display in modal (uses computeStaycationTotals)
     function updateModalPricing(card) {
         if (!card) return;
 
         const input = card.querySelector('.guest-input');
         const priceDisplay = card.querySelector('.pricing-display span');
-        if (!input || !priceDisplay) return;
-
-        const guests = parseInt(input.value) || 0;
         const checkbox = card.querySelector('.staycation-checkbox');
-        if (!checkbox) return;
+
+        if (!input || !priceDisplay || !checkbox) return;
 
         let staycation;
         try {
             staycation = JSON.parse(checkbox.dataset.staycation || '{}');
         } catch (e) {
+            console.warn('Invalid staycation data in modal:', e);
             return;
         }
 
-        // Calculate accommodation price based on staycation type
-        let accommodationPrice = 0;
-        const checkin = new Date('{{ $checkinDate }}');
-        const checkout = new Date('{{ $checkoutDate }}');
-        const nights = Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24));
+        const guests = parseInt(input.value) || 0;
 
-        const name = staycation.name.toLowerCase();
-        if (name.includes('standard') || name.includes('premium')) {
-            let current = new Date(checkin);
-            while (current < checkout) {
-                const day = current.getDay();
-                const isWeekend = day === 5 || day === 6;
-                let basePrice = 0;
-                if (name.includes('standard')) basePrice = isWeekend ? 6000 : 4800;
-                if (name.includes('premium')) basePrice = isWeekend ? 7200 : 5760;
-
-                const extraGuests = Math.max(0, guests - 4);
-                accommodationPrice += basePrice + (extraGuests * 400);
-                current.setDate(current.getDate() + 1);
-            }
-        } else if (name.includes('bell') || name.includes('dome')) {
-            accommodationPrice = 3000 * nights;
-        } else if (name.includes('byot') || name.includes('car')) {
-            accommodationPrice = 300 * guests * nights;
-        }
-
-        // Add pet fees if applicable
-        let petFee = 0;
+        const petAgreementInput = card.querySelector('.pet-agreement');
+        const petCountInput = card.querySelector('.pet-num-input');
         const hasPetsRadio = card.querySelector('.has-pets-radio:checked');
-        if (hasPetsRadio && hasPetsRadio.value === 'yes') {
-            const petAgreement = card.querySelector('.pet-agreement');
-            const petCountInput = card.querySelector('.pet-num-input');
-            if (petAgreement && petAgreement.checked && petCountInput) {
-                const numPets = parseInt(petCountInput.value) || 0;
-                petFee = 2000 * numPets;
-            }
-        }
 
-        // Add breakfast fees if applicable
-        let breakfastFee = 0;
+        const hasPetAgreement = !!(petAgreementInput && petAgreementInput.checked && hasPetsRadio && hasPetsRadio.value === 'yes');
+        const numPets = (petCountInput && !petCountInput.disabled)
+            ? (parseInt(petCountInput.value) || 0)
+            : 0;
+
         const hasBreakfastRadio = card.querySelector('.has-breakfast-radio:checked');
-        if (hasBreakfastRadio && hasBreakfastRadio.value === 'yes') {
-            breakfastFee = 500 * guests;
-        }
+        const hasBreakfast = hasBreakfastRadio && hasBreakfastRadio.value === 'yes';
 
-        const totalPrice = accommodationPrice + petFee + breakfastFee;
-        priceDisplay.textContent = totalPrice.toLocaleString();
+        const result = computeStaycationTotals(staycation, {
+            guests,
+            checkinStr: CHECKIN,
+            checkoutStr: CHECKOUT,
+            numPets,
+            hasPetAgreement,
+            hasBreakfast
+        });
+
+        priceDisplay.textContent = result.total.toLocaleString();
     }
 
     // Update pricing when guest input changes
@@ -1414,6 +1329,87 @@ $galleryData = [
         }
     });
 
+    // Configuration for staycation types
+    const STAYCATION_CONFIG = {
+        'glamping-standard': {
+            displayPrice: 'Start at ₱4,800/night (Weekdays: Sun.-Thu.)<br>• ₱6,000/night (Weekends: Fri.-Sat.)',
+            features: [
+                'With Private Toilet & Bath',
+                'Tent good for 4 pax (max of 6; +₱400/pax/night)',
+                'Assigned heated shower with soap, shampoo & toilet with bidet (approx. 10 meters from tent)',
+                'Access to Wi-Fi',
+                'Private picnic table and fire pit/grill',
+                'Complimentary coffee/tea and drinking water in tent',
+                'Bathroom towels, dental & vanity kit, sleeping eye masks',
+                'Convenience outlet',
+                'Pet-friendly*'
+            ]
+        },
+        'glamping-premium': {
+            displayPrice: 'Start at ₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)',
+            features: [
+                'With Private Toilet & Bath',
+                'Tent good for 4 pax (max of 6; +₱400/pax/night)',
+                'Exclusive heated shower with soap, shampoo & toilet with bidet, located right beside the tent',
+                'Access to Wi-Fi',
+                'Private picnic table and fire pit/grill',
+                'Complimentary coffee/tea and drinking water in tent',
+                'Bathroom towels, dental & vanity kit, sleeping eye masks',
+                'Convenience outlet',
+                'Pet-friendly*'
+            ]
+        },
+        'camping-bell': {
+            displayPrice: 'Starts at ₱3,000/tent/night',
+            features: [
+                'Fan-cooled, 25 sqm tent',
+                'Spacious enough for up to 8 mattress sets (+₱400 per set/night) or 12 sleeping bags',
+                'Common toilet and shower',
+                'Convenience outlets',
+                'Access to Wi-Fi, camp amenities, and activities',
+                'Pet-friendly*'
+            ]
+        },
+        'camping-dome': {
+            displayPrice: 'Starts at ₱3,000/tent/night',
+            features: [
+                'Fan-cooled, 25 sqm tent',
+                'Spacious enough for up to 8 mattress sets (+₱400 per set/night) or 12 sleeping bags',
+                'Common toilet and shower',
+                'Convenience outlets',
+                'Access to Wi-Fi, camp amenities, and activities',
+                'Pet-friendly*'
+            ]
+        },
+        'camping-byot': {
+            displayPrice: 'Starts at ₱300/tent or camp space + ₱500/pax overnight fee',
+            features: [
+                'Spacious area for your own tent or car camp setup',
+                'Common toilet and shower',
+                'Access to Wi-Fi, camp amenities, and activities'
+            ]
+        },
+        'camping-car': {
+            displayPrice: 'Starts at ₱300/tent or camp space + ₱500/pax overnight fee',
+            features: [
+                'Spacious area for your own tent or car camp setup',
+                'Common toilet and shower',
+                'Access to Wi-Fi, camp amenities, and activities'
+            ]
+        }
+    };
+
+    function detectStayType(name) {
+        const n = name.toLowerCase();
+        if (n.includes('standard')) return 'glamping-standard';
+        if (n.includes('premium')) return 'glamping-premium';
+        if (n.includes('bell')) return 'camping-bell';
+        if (n.includes('dome')) return 'camping-dome';
+        if (n.includes('byot')) return 'camping-byot';
+        if (n.includes('car')) return 'camping-car';
+        return 'unknown';
+    }
+
     function getCapacityText(staycation) {
         const capacity = staycation.capacity || 0;
         const adults = staycation.adults || 0;
@@ -1426,83 +1422,63 @@ $galleryData = [
     }
 
     function getPriceDisplay(staycation) {
-        const lowerName = staycation.name.toLowerCase();
-        let price;
-        if (lowerName.includes('standard')) {
-            price = 'Start at ₱4,800/night (Weekdays: Sun.-Thu.)<br>• ₱6,000/night (Weekends: Fri.-Sat.)';
-        } else if (lowerName.includes('premium')) {
-            price = 'Start at ₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)';
-        } else if (lowerName.includes('bell') || lowerName.includes('dome')) {
-            price = 'Starts at ₱3,000/tent/night';
-        } else if (lowerName.includes('byot') || lowerName.includes('car')) {
-            price = 'Starts at ₱300/tent or camp space + ₱500/pax overnight fee';
-        } else {
-            price = 'Starts at ₱ ' + staycation.price.toLocaleString() + '/night';
-        }
-        console.log('getPriceDisplay for', staycation.name, ':', price);
-        return price;
+        const type = detectStayType(staycation.name || '');
+        const config = STAYCATION_CONFIG[type];
+        return config ? config.displayPrice : 'Starts at ₱ ' + (staycation.price || 0).toLocaleString() + '/night';
     }
 
     function getFeaturesList(name) {
-        const lowerName = name.toLowerCase();
-        if (lowerName.includes('standard')) {
-            return `
-                <li>• With Private Toilet & Bath</li>
-                <li>• Tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
-                <li>• Assigned heated shower with soap, shampoo & toilet with bidet (approx. 10 meters from tent)</li>
-                <li>• Access to Wi-Fi</li>
-                <li>• Private picnic table and fire pit/grill</li>
-                <li>• Complimentary coffee/tea and drinking water in tent</li>
-                <li>• Bathroom towels, dental & vanity kit, sleeping eye masks</li>
-                <li>• Convenience outlet</li>
-                <li>• Pet-friendly*</li>
-            `;
-        } else if (lowerName.includes('premium')) {
-            return `
-                <li>• With Private Toilet & Bath</li>
-                <li>• Tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
-                <li>• Exclusive heated shower with soap, shampoo & toilet with bidet, located right beside the tent</li>
-                <li>• Access to Wi-Fi</li>
-                <li>• Private picnic table and fire pit/grill</li>
-                <li>• Complimentary coffee/tea and drinking water in tent</li>
-                <li>• Bathroom towels, dental & vanity kit, sleeping eye masks</li>
-                <li>• Convenience outlet</li>
-                <li>• Pet-friendly*</li>
-            `;
-        } else if (lowerName.includes('bell')) {
-            return `
-                <li>• Fan-cooled, 25 sqm tent</li>
-                <li>• Spacious enough for up to 8 mattress sets (+Php 400 per set/night) or 12 sleeping bags</li>
-                <li>• Common toilet and shower</li>
-                <li>• Convenience outlets</li>
-                <li>• Access to Wi-Fi, camp amenities, and activities</li>
-                <li>• Pet-friendly*</li>
-            `;
-        } else if (lowerName.includes('dome')) {
-            return `
-                <li>• Fan-cooled, 25 sqm tent</li>
-                <li>• Spacious enough for up to 8 mattress sets (+Php 400 per set/night) or 12 sleeping bags</li>
-                <li>• Common toilet and shower</li>
-                <li>• Convenience outlets</li>
-                <li>• Access to Wi-Fi, camp amenities, and activities</li>
-                <li>• Pet-friendly*</li>
-            `;
-        } else if (lowerName.includes('byot') || lowerName.includes('car')) {
-            return `
-                <li>• Spacious area for your own tent or car camp setup</li>
-                <li>• Common toilet and shower</li>
-                <li>• Access to Wi-Fi, camp amenities, and activities</li>
-            `;
-        } else {
-            return `
-                <li>• Shared bathroom facilities</li>
-                <li>• Double bed</li>
-                <li>• Electricity and heating</li>
-                <li>• Scenic views</li>
-                <li>• Comfortable accommodations</li>
-                <li>• 28 m² • 4 single beds</li>
-            `;
+        const type = detectStayType(name || '');
+        const config = STAYCATION_CONFIG[type];
+        if (!config) return `
+            <li>• Shared bathroom facilities</li>
+            <li>• Double bed</li>
+            <li>• Electricity and heating</li>
+            <li>• Scenic views</li>
+            <li>• Comfortable accommodations</li>
+            <li>• 28 m² • 4 single beds</li>
+        `;
+        return config.features.map(f => `<li>• ${f}</li>`).join('');
+    }
+
+    // Generic modal helpers
+    function showModal(modalId) {
+        const modal = document.getElementById(modalId);
+        const modalContent = document.getElementById(modalId + '-content');
+        if (!modal || !modalContent) return;
+
+        previousFocusElement = document.activeElement;
+
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+        }, 10);
+
+        setupFocusTrap(modalId);
+
+        setTimeout(() => {
+            const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            if (firstFocusable) firstFocusable.focus();
+        }, 100);
+
+        activeModal = modalId;
+    }
+
+    function hideModal(modalId) {
+        const modal = document.getElementById(modalId);
+        const modalContent = document.getElementById(modalId + '-content');
+        if (!modal || !modalContent) return;
+
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+
+        if (previousFocusElement && typeof previousFocusElement.focus === 'function') {
+            setTimeout(() => previousFocusElement.focus(), 310);
         }
+
+        activeModal = null;
     }
 
     function openCategoryModal(category, staycations) {
@@ -1544,8 +1520,25 @@ $galleryData = [
             } else if (staycation.name.toLowerCase().includes('bell')) {
                 option = 'bell';
                 defaultGuests = 8;
-            } else if (staycation.name.toLowerCase().includes('byot')) option = 'byot';
-            else if (staycation.name.toLowerCase().includes('car')) option = 'car';
+            } else if (staycation.name.toLowerCase().includes('byot')) {
+                option = 'byot';
+                defaultGuests = 1;
+            } else if (staycation.name.toLowerCase().includes('car')) {
+                option = 'car';
+                defaultGuests = 1;
+            }
+
+            // 🔹 CHECK IF MAY NA-SAVE NANG GUESTS FOR THIS STAYCATION
+            const lowerName = staycation.name.toLowerCase();
+            const category = staycation.type || (lowerName.includes('standard') || lowerName.includes('premium') ? 'glamping' : 'camping');
+            const key = `${category}-${staycation.id}`;
+            const savedAcc = window.selectedAccommodations
+                ? window.selectedAccommodations[key]
+                : null;
+
+            if (savedAcc && typeof savedAcc.guests === 'number') {
+                defaultGuests = savedAcc.guests;   // <-- ito na yung 6, 5, etc. na dati mong sinet
+            }
 
             if (isBYOT) {
                 inputLabel = 'How many BYOT?';
@@ -1688,6 +1681,7 @@ $galleryData = [
                                     id="select-${index}"
                                     class="staycation-checkbox hidden"
                                     data-index="${index}"
+                                    data-category="${category}"
                                     data-staycation='${JSON.stringify(staycation).replace(/'/g, "'")}'
                                 />
                                 <span class="select-text">Select this staycation</span>
@@ -1715,6 +1709,33 @@ $galleryData = [
 
             optionsContainer.appendChild(optionDiv);
 
+            // BYOT / Car Camping: kailangan >0 ang quantity bago puwedeng i-check
+            const guestInput = optionDiv.querySelector('.guest-input');
+            const selectCheckbox = optionDiv.querySelector('.staycation-checkbox');
+            const isByotOrCar = staycation.name.toLowerCase().includes('byot') || staycation.name.toLowerCase().includes('car');
+
+            if (isByotOrCar && guestInput && selectCheckbox) {
+                const updateCheckboxState = () => {
+                    const val = parseInt(guestInput.value) || 0;
+                    const shouldEnable = val > 0;
+
+                    selectCheckbox.disabled = !shouldEnable;
+
+                    // Safety: kung naging 0 tapos naka-check pa, i-uncheck
+                    if (!shouldEnable && selectCheckbox.checked) {
+                        selectCheckbox.checked = false;
+                        selectCheckbox.dispatchEvent(new Event('change'));
+                    }
+                };
+
+                // initial state based on defaultGuests
+                updateCheckboxState();
+
+                // respond sa manual type at sa +/- buttons
+                guestInput.addEventListener('input', updateCheckboxState);
+                guestInput.addEventListener('change', updateCheckboxState);
+            }
+
             // Add event listeners for pet options
             const petAgreementInput = optionDiv.querySelector('.pet-agreement');
             const numPetsInput = optionDiv.querySelector('.pet-num-input');
@@ -1733,6 +1754,29 @@ $galleryData = [
                     const checkbox = this.closest('.mb-3').querySelector('.pet-agreement');
                     if (!checkbox.checked) {
                         showToast('Please agree to the pet policy before selecting the number of pets.', 'error');
+                    }
+                });
+            }
+
+            // Ensure select button changes color
+            const checkbox = optionDiv.querySelector('.staycation-checkbox');
+            const label = optionDiv.querySelector('label[for="' + checkbox.id + '"]');
+            if (checkbox && label) {
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        label.classList.remove('bg-[#8f5d54]', 'hover:bg-[#a0675a]');
+                        label.classList.add('bg-green-600', 'hover:bg-green-700');
+                        const selectText = label.querySelector('.select-text');
+                        const checkIcon = label.querySelector('.fa-check');
+                        if (selectText) selectText.textContent = 'Selected';
+                        if (checkIcon) checkIcon.classList.remove('opacity-0');
+                    } else {
+                        label.classList.remove('bg-green-600', 'hover:bg-green-700');
+                        label.classList.add('bg-[#8f5d54]', 'hover:bg-[#a0675a]');
+                        const selectText = label.querySelector('.select-text');
+                        const checkIcon = label.querySelector('.fa-check');
+                        if (selectText) selectText.textContent = 'Select this staycation';
+                        if (checkIcon) checkIcon.classList.add('opacity-0');
                     }
                 });
             }
@@ -1776,51 +1820,48 @@ $galleryData = [
             // (Optional) extra validation for guest-input enablement can stay if you add a select button later
         });
 
-        // Set up focus trapping
-        setupFocusTrap(modalId);
+        // Pre-populate selections if they exist (use unified category-id keys)
+        // For each option checkbox, check if there's a saved selection matching this category + staycation id
+        (function prepopulateSelections() {
+            const checkboxes = optionsContainer.querySelectorAll('.staycation-checkbox');
+            checkboxes.forEach(cb => {
+                try {
+                    const sc = JSON.parse(cb.dataset.staycation || '{}');
+                    const key = `${category}-${sc.id}`;
+                    const saved = window.selectedAccommodations && window.selectedAccommodations[key];
+                    if (saved) {
+                        cb.checked = true;
+                        cb.dispatchEvent(new Event('change'));
 
-        // Show modal with animation
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-            modalContent.classList.remove('scale-95', 'opacity-0');
-            modalContent.classList.add('scale-100', 'opacity-100');
-        }, 10);
+                        const card = cb.closest('.bg-white.rounded-xl');
+                        const guestInput = card.querySelector('.guest-input');
+                        if (guestInput) guestInput.value = saved.guests || 1;
 
-        // Focus first focusable element
-        setTimeout(() => {
-            const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            if (firstFocusable) {
-                firstFocusable.focus();
-            }
-        }, 100);
+                        if (saved.pet_agreement) {
+                            const petAgreement = card.querySelector('.pet-agreement');
+                            const numPetsInput = card.querySelector('.pet-num-input');
+                            if (petAgreement) petAgreement.checked = true;
+                            if (numPetsInput) numPetsInput.value = saved.num_pets || 0;
+                        }
 
-        activeModal = modalId;
+                        if (saved.has_breakfast) {
+                            const breakfastRadio = card.querySelector('.has-breakfast-radio[value="yes"]');
+                            if (breakfastRadio) breakfastRadio.checked = true;
+                        }
+
+                        updateModalPricing(card);
+                    }
+                } catch (e) {
+                    // ignore parse errors
+                }
+            });
+        })();
+
+        showModal(modalId);
     }
 
     function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        const modalContent = document.getElementById(`${modalId}-content`);
-
-        if (modal && modalContent) {
-            // Animate out
-            modalContent.classList.remove('scale-100', 'opacity-100');
-            modalContent.classList.add('scale-95', 'opacity-0');
-
-            // Hide after animation
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-
-            // Restore focus
-            if (previousFocusElement && typeof previousFocusElement.focus === 'function') {
-                setTimeout(() => {
-                    previousFocusElement.focus();
-                }, 310);
-            }
-
-            // Clear active modal
-            activeModal = null;
-        }
+        hideModal(modalId);
     }
 
     function setupFocusTrap(modalId) {
@@ -1871,34 +1912,27 @@ $galleryData = [
         // Close the modal
         closeModal('glamping-modal');
         closeModal('camping-modal');
-
-        // Get active tab index
-        const activeTab = document.querySelector('.accom-btn.bg-gray-900');
-        if (!activeTab) return;
-
-        const accommodationIndex = parseInt(activeTab.dataset.index);
-
-        // Get the guest number
+        // Determine category and use unified key so selections don't overwrite each other
         const card = button.closest('.bg-white.rounded-xl');
-        const input = card.querySelector('.guest-input');
+        const input = card ? card.querySelector('.guest-input') : null;
         const guests = input ? parseInt(input.value) || 1 : 1;
 
-        // Store the selected accommodation
-        window.selectedAccommodations[accommodationIndex] = {
+        const lowerName = (staycation.name || '').toLowerCase();
+        const category = staycation.type || (lowerName.includes('standard') || lowerName.includes('premium') ? 'glamping' : 'camping');
+        const key = `${category}-${staycation.id}`;
+
+        // Store selection under category-id key
+        window.selectedAccommodations[key] = {
             staycation: staycation,
             guests: guests
         };
 
-        // Display the selected accommodation
-        displaySelectedAccommodation(accommodationIndex, window.selectedAccommodations[accommodationIndex]);
-
-        // Initialize remove buttons for selected accommodations
+        // Render selection and update summary
+        displaySelectedAccommodation(key, window.selectedAccommodations[key]);
         initializeRemoveSelectedButtons();
-
-        // Update booking summary
         window.updateBookingSummary();
 
-        showToast(`ACCOMMODATION ${accommodationIndex + 1}: ${staycation.name} selected`, 'success');
+        showToast(`${staycation.name} selected`, 'success');
     }
 
     function initializeMultiSelectionModal(category) {
@@ -1915,33 +1949,27 @@ $galleryData = [
                 showToast('Please select at least one option', 'error');
                 return;
             }
-
-            const activeTab = document.querySelector('.accom-btn.bg-gray-900');
-            if (!activeTab) {
-                showToast('No active accommodation tab', 'error');
-                return;
-            }
-
-            const accommodationIndex = parseInt(activeTab.dataset.index);
-
-            // Store selected accommodations
-            window.selectedAccommodations[accommodationIndex] = [];
-
-            checkboxes.forEach(cb => {
-                const staycation = JSON.parse(cb.dataset.staycation || '{}');
-                const guests = parseInt(cb.dataset.guests || 1);
-
-                if (staycation.id) {
-                    window.selectedAccommodations[accommodationIndex].push({
-                        staycation: staycation,
-                        guests: guests
-                    });
-                }
+            // When saving multi-select for this category, remove any previous selections for the same category
+            Object.keys(window.selectedAccommodations || {}).forEach(k => {
+                if (k.startsWith(`${category}-`)) delete window.selectedAccommodations[k];
             });
 
-            // Display all selected accommodations for this tab
-            window.selectedAccommodations[accommodationIndex].forEach((acc, i) => {
-                displaySelectedAccommodation(`${accommodationIndex}-${i}`, acc);
+            // Add each checked staycation into the global map using category-id keys
+            checkboxes.forEach(cb => {
+                try {
+                    const staycation = JSON.parse(cb.dataset.staycation || '{}');
+                    const guests = parseInt(cb.closest('.bg-white.rounded-xl')?.querySelector('.guest-input')?.value, 10) || 1;
+                    if (staycation.id) {
+                        const key = `${category}-${staycation.id}`;
+                        window.selectedAccommodations[key] = {
+                            staycation: staycation,
+                            guests: guests
+                        };
+                        displaySelectedAccommodation(key, window.selectedAccommodations[key]);
+                    }
+                } catch (err) {
+                    // ignore parse errors
+                }
             });
 
             initializeRemoveSelectedButtons();
@@ -1955,31 +1983,7 @@ $galleryData = [
     }
 
     function openPetPolicyModal() {
-        const modal = document.getElementById('pet-policy-modal');
-        const modalContent = document.getElementById('pet-policy-modal-content');
-
-        if (!modal || !modalContent) return;
-
-        // Store previous focus element
-        previousFocusElement = document.activeElement;
-
-        // Show modal with animation
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-            modalContent.classList.remove('scale-95', 'opacity-0');
-            modalContent.classList.add('scale-100', 'opacity-100');
-        }, 10);
-
-        // Focus first focusable element
-        setTimeout(() => {
-            const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            if (firstFocusable) {
-                firstFocusable.focus();
-            }
-        }, 100);
-
-        activeModal = 'pet-policy-modal';
-        setupFocusTrap('pet-policy-modal');
+        showModal('pet-policy-modal');
     }
 
     function togglePetSelect(checkbox) {
@@ -1994,17 +1998,27 @@ $galleryData = [
     }
 
     function updatePetDataForCurrentSelection() {
-        const activeTab = document.querySelector('.accom-btn.bg-gray-900');
-        if (!activeTab) return;
-        const accommodationIndex = parseInt(activeTab.dataset.index);
-        const acc = window.selectedAccommodations[accommodationIndex];
-        if (!acc) return;
-
-        // Find the card in the currently open modal
+        // Find the card in the currently open modal and map to correct category-id key
         const modal = document.querySelector('#glamping-modal:not(.hidden), #camping-modal:not(.hidden)');
         if (!modal) return;
         const card = modal.querySelector('.bg-white.rounded-xl');
         if (!card) return;
+
+        const checkbox = card.querySelector('.staycation-checkbox');
+        if (!checkbox) return;
+
+        let staycation;
+        try {
+            staycation = JSON.parse(checkbox.dataset.staycation || '{}');
+        } catch (e) {
+            return;
+        }
+
+        const lowerName = (staycation.name || '').toLowerCase();
+        const category = checkbox.dataset.category || staycation.type || (lowerName.includes('standard') || lowerName.includes('premium') ? 'glamping' : 'camping');
+        const key = `${category}-${staycation.id}`;
+        const acc = window.selectedAccommodations[key];
+        if (!acc) return;
 
         const petAgreementInput = card.querySelector('.pet-agreement');
         const numPetsInput = card.querySelector('.pet-num-input');
@@ -2015,117 +2029,180 @@ $galleryData = [
         }
     }
 
-    // 👉 GLOBAL CHANGE HANDLER: checkbox + quantity + pets
-    document.addEventListener('change', function(e) {
-        const target = e.target;
+    // 👉 CLEAN GLOBAL CHANGE HANDLER: checkbox + quantity + pets (multi-select, unlimited)
+// Helper: consistent unique key per staycation
+function getStaycationKeyFromCheckbox(checkbox) {
+    let staycation;
+    try {
+        staycation = JSON.parse(checkbox.dataset.staycation || '{}');
+    } catch (err) {
+        console.error('Invalid staycation JSON:', err);
+        return null;
+    }
+    if (!staycation || !staycation.id) return null;
 
-        // Only handle relevant elements
-        if (
-            !target.matches('.staycation-checkbox') &&
-            !target.matches('.guest-input') &&
-            !target.matches('.pet-agreement') &&
-            !target.matches('.pet-num-input') &&
-            !target.matches('.has-breakfast-radio')
-        ) {
-            return;
-        }
+    const lowerName = (staycation.name || '').toLowerCase();
+    const typeFromName = (lowerName.includes('standard') || lowerName.includes('premium'))
+        ? 'glamping'
+        : 'camping';
 
-        const card = target.closest('.bg-white.rounded-xl');
-        if (!card) return;
+    const category =
+        checkbox.dataset.category ||
+        staycation.type ||
+        typeFromName; // fallback if walang type
 
-        const checkbox = card.querySelector('.staycation-checkbox');
-        if (!checkbox) return;
+    const key = `${category}-${staycation.id}`;
 
-        const staycationData = checkbox.dataset.staycation;
-        if (!staycationData) return;
+    return { staycation, key, category };
+}
 
-        let staycation;
-        try {
-            staycation = JSON.parse(staycationData);
-        } catch (err) {
-            console.error('Invalid staycation data', err);
-            return;
-        }
+// Helper: extract data from card
+function getCardData(card) {
+    const guestsInput = card.querySelector('.guest-input');
+    const guests = parseInt(guestsInput?.value, 10) || 0;
 
-        const guestsInput = card.querySelector('.guest-input');
-        // Ignore old simple checkboxes (those cards without a guest dropdown)
-        if (!guestsInput) return;
+    const petAgreementInput = card.querySelector('.pet-agreement');
+    const numPetsInput = card.querySelector('.pet-num-input');
+    const hasPetAgreement = !!(petAgreementInput && petAgreementInput.checked);
+    const numPets = hasPetAgreement && numPetsInput ? (parseInt(numPetsInput.value, 10) || 0) : 0;
 
-        const guests = parseInt(guestsInput.value) || 0;
+    const breakfastRadio = card.querySelector('.has-breakfast-radio:checked');
+    const hasBreakfast = !!(breakfastRadio && breakfastRadio.value === 'yes');
 
-        const petAgreementInput = card.querySelector('.pet-agreement');
+    return { guests, hasPetAgreement, numPets, hasBreakfast };
+}
+
+// Helper: update UI for selection
+function updateSelectionUI(card, checkbox, isSelected) {
+    const label = card.querySelector(`label[for="${checkbox.id}"]`);
+    if (!label) return;
+
+    const selectText = label.querySelector('.select-text');
+    const checkIcon = label.querySelector('.fa-check');
+
+    if (isSelected) {
+        label.classList.remove('bg-[#8f5d54]', 'hover:bg-[#a0675a]');
+        label.classList.add('bg-green-600', 'hover:bg-green-700');
+        if (selectText) selectText.textContent = 'Selected';
+        if (checkIcon) checkIcon.classList.remove('opacity-0');
+    } else {
+        label.classList.remove('bg-green-600', 'hover:bg-green-700');
+        label.classList.add('bg-[#8f5d54]', 'hover:bg-[#a0675a]');
+        if (selectText) selectText.textContent = 'Select this staycation';
+        if (checkIcon) checkIcon.classList.add('opacity-0');
+    }
+}
+
+    document.addEventListener('change', function (e) {
+    const target = e.target;
+
+    const isCheckbox     = target.classList.contains('staycation-checkbox');
+    const isGuestInput   = target.classList.contains('guest-input');
+    const isPetAgreement = target.classList.contains('pet-agreement');
+    const isPetCount     = target.classList.contains('pet-num-input');
+    const isBreakfast    = target.classList.contains('has-breakfast-radio');
+
+    // Ignore other inputs
+    if (!isCheckbox && !isGuestInput && !isPetAgreement && !isPetCount && !isBreakfast) {
+        return;
+    }
+
+    const card = target.closest('.bg-white.rounded-xl');
+    if (!card) return;
+
+    const checkbox = card.querySelector('.staycation-checkbox');
+    if (!checkbox) return;
+
+    const info = getStaycationKeyFromCheckbox(checkbox);
+    if (!info) return;
+
+    const { staycation, key, category } = info;
+    const lowerName = (staycation.name || '').toLowerCase();
+
+    // Get data from card
+    const { guests, hasPetAgreement, numPets, hasBreakfast } = getCardData(card);
+
+    // --- Guard: pets count without agreeing to policy ---
+    if (isPetCount && !hasPetAgreement) {
         const numPetsInput = card.querySelector('.pet-num-input');
-        const petAgreement = petAgreementInput ? petAgreementInput.checked : false;
-        const numPets = numPetsInput ? parseInt(numPetsInput.value) || 0 : 0;
+        if (numPetsInput) numPetsInput.value = '0';
+        showToast('Please agree to the pet policy before selecting the number of pets.', 'error');
+        updateModalPricing(card);
+        return;
+    }
 
-        const hasBreakfastRadio = card.querySelector('.has-breakfast-radio:checked');
-        const hasBreakfast = hasBreakfastRadio && hasBreakfastRadio.value === 'yes';
+    // If just changing guests/pets/breakfast while NOT yet selected, only update pricing
+    if (!checkbox.checked && !isCheckbox) {
+        updateModalPricing(card);
+        return;
+    }
 
-        if (target.matches('.pet-num-input') && !petAgreement) {
-            numPetsInput.value = '0';
-            showToast('Please agree to the pet policy before selecting the number of pets.', 'error');
+    // --- Validation when turning checkbox ON ---
+    if (isCheckbox && checkbox.checked) {
+        // BYOT / Car camping: require quantity > 0
+        if ((lowerName.includes('byot') || lowerName.includes('car')) && guests <= 0) {
+            showToast('Please enter a number before selecting this option.', 'error');
+            checkbox.checked = false;
+            updateModalPricing(card);
             return;
         }
 
-        const activeTab = document.querySelector('.accom-btn.bg-gray-900');
-        if (!activeTab) return;
-
-        const accommodationIndex = parseInt(activeTab.dataset.index);
-
-        if (checkbox.checked) {
-            // Save selection with latest values
-            window.selectedAccommodations[accommodationIndex] = {
-                staycation,
-                guests,
-                pet_agreement: petAgreement,
-                num_pets: numPets,
-                has_breakfast: hasBreakfast
-            };
-            displaySelectedAccommodation(accommodationIndex, window.selectedAccommodations[accommodationIndex]);
-            if (target.matches('.staycation-checkbox')) {
-                showToast(`You selected ${staycation.name}`, 'success');
-                // Update button appearance
-                const label = card.querySelector('label[for="select-' + accommodationIndex + '"]');
-                if (label) {
-                    label.classList.remove('bg-[#8f5d54]', 'hover:bg-[#a0675a]');
-                    label.classList.add('bg-green-600', 'hover:bg-green-700');
-                    const selectText = label.querySelector('.select-text');
-                    const checkIcon = label.querySelector('.fa-check');
-                    if (selectText) selectText.textContent = 'Selected';
-                    if (checkIcon) checkIcon.classList.remove('opacity-0');
-                }
-            }
-        } else {
-            // Unchecked: remove selection
-            delete window.selectedAccommodations[accommodationIndex];
-            displaySelectedAccommodation(accommodationIndex, null);
-            if (target.matches('.staycation-checkbox')) {
-                showToast(`You removed ${staycation.name}`, 'info');
-                // Reset button appearance
-                const label = card.querySelector('label[for="select-' + accommodationIndex + '"]');
-                if (label) {
-                    label.classList.remove('bg-green-600', 'hover:bg-green-700');
-                    label.classList.add('bg-[#8f5d54]', 'hover:bg-[#a0675a]');
-                    const selectText = label.querySelector('.select-text');
-                    const checkIcon = label.querySelector('.fa-check');
-                    if (selectText) selectText.textContent = 'Select this staycation';
-                    if (checkIcon) checkIcon.classList.add('opacity-0');
-                }
-            }
+        // Bell / Dome: require guests > 0
+        if ((lowerName.includes('bell') || lowerName.includes('dome')) && guests <= 0) {
+            showToast('Please set number of guests (up to 8) before selecting.', 'error');
+            checkbox.checked = false;
+            updateModalPricing(card);
+            return;
         }
 
-        // Show toast for pet policy agreement
-        if (target.matches('.pet-agreement')) {
-            if (petAgreement) {
-                showToast('You agreed to the pet policy', 'success');
-            } else {
-                showToast('Pet policy agreement removed', 'info');
-            }
-        }
+        // Unlimited accommodations allowed
+        const selectedCount = Object.keys(window.selectedAccommodations || {}).length;
+        const alreadySelected = !!window.selectedAccommodations[key];
+    }
 
-        // Recompute summary and total every change
-        window.updateBookingSummary();
-    });
+    // --- Update global state ---
+    if (checkbox.checked) {
+        // Add or update selection
+        window.selectedAccommodations[key] = {
+            staycation,
+            guests,
+            pet_agreement: hasPetAgreement,
+            num_pets: numPets,
+            has_breakfast: hasBreakfast,
+        };
+
+        displaySelectedAccommodation(key, window.selectedAccommodations[key]);
+        updateSelectionUI(card, checkbox, true);
+
+        if (isCheckbox) {
+            showToast(`You selected ${staycation.name}`, 'success');
+        }
+    } else {
+        // Remove this specific staycation
+        delete window.selectedAccommodations[key];
+        displaySelectedAccommodation(key, null);
+        updateSelectionUI(card, checkbox, false);
+
+        if (isCheckbox) {
+            showToast(`You removed ${staycation.name}`, 'info');
+        }
+    }
+
+    // If guests/pets/breakfast changed while selected, update data
+    if (!isCheckbox && window.selectedAccommodations[key]) {
+        window.selectedAccommodations[key] = {
+            ...window.selectedAccommodations[key],
+            guests,
+            pet_agreement: hasPetAgreement,
+            num_pets: numPets,
+            has_breakfast: hasBreakfast,
+        };
+    }
+
+    // Recompute pricing & summary
+    updateModalPricing(card);
+    window.updateBookingSummary();
+});
 
     function proceedToActivities() {
         // Validation: Check if accommodations are selected and have valid guests
@@ -2135,10 +2212,10 @@ $galleryData = [
             return;
         }
 
-        // Check each selected accommodation has valid guests
-        for (const [key, acc] of Object.entries(window.selectedAccommodations)) {
+        // Check each selected staycation has valid guests
+        for (const acc of Object.values(window.selectedAccommodations)) {
             if (!acc.guests || acc.guests < 1) {
-                showToast(`Please specify the number of guests for Accommodation ${parseInt(key) + 1}.`, 'error');
+                showToast('Please specify the number of guests for all selected staycations.', 'error');
                 return;
             }
         }
@@ -2181,6 +2258,7 @@ $galleryData = [
         })
         .then(data => {
             if (data && data.success) {
+                clearSelectionsStorage(); // Clear saved selections
                 window.location.href = '{{ route("booking.staycationActivities") }}';
             } else {
                 // Reset button
@@ -2209,10 +2287,10 @@ $galleryData = [
             return;
         }
 
-        // Check each selected accommodation has valid guests
-        for (const [key, acc] of Object.entries(window.selectedAccommodations)) {
+        // Check each selected staycation has valid guests
+        for (const acc of Object.values(window.selectedAccommodations)) {
             if (!acc.guests || acc.guests < 1) {
-                showToast(`Please specify the number of guests for Accommodation ${parseInt(key) + 1}.`, 'error');
+                showToast('Please specify the number of guests for all selected staycations.', 'error');
                 return;
             }
         }
@@ -2255,6 +2333,7 @@ $galleryData = [
         })
         .then(data => {
             if (data && data.success) {
+                clearSelectionsStorage(); // Clear saved selections
                 window.location.href = '{{ route("booking.staycationPayment") }}';
             } else {
                 // Reset button
@@ -2342,4 +2421,6 @@ $galleryData = [
         }
     }
 </script>
+</html>
+
 
