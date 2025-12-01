@@ -21,13 +21,13 @@ use App\Models\HomeText;
 class AdminPagesController extends Controller
 {
     private $pageConfigs = [
-        'home' => [SwiperImage::class, HomeText::class, 'admin.pages.home'],
-        'dayTour' => [DayTourSwiperImage::class, DayTourText::class, 'admin.pages.daytour'],
-        'whereToStay' => [StaySwiperImage::class, StayText::class, 'admin.pages.wheretostay'],
-        'whatToDo' => [DoSwiperImage::class, DoText::class, 'admin.pages.whattodo'],
-        'foodAndBeverage' => [FoodSwiperImage::class, FoodText::class, 'admin.pages.foodandbeverage'],
-        'specialEvents' => [SpecialSwiperImage::class, SpecialText::class, 'admin.pages.specialevents'],
-        'ourFarm' => [FarmSwiperImage::class, FarmText::class, 'admin.pages.ourfarm'],
+        'home' => [SwiperImage::class, HomeText::class, 'admin.home.home'],
+        'dayTour' => [DayTourSwiperImage::class, DayTourText::class, 'admin.dayTour.daytour'],
+        'whereToStay' => [StaySwiperImage::class, StayText::class, 'admin.wheretoStay.wheretostay'],
+        'whatToDo' => [DoSwiperImage::class, DoText::class, 'admin.whatToDo.whattodo'],
+        'foodAndBeverage' => [FoodSwiperImage::class, FoodText::class, 'admin.foodBeverages.foodandbeverage'],
+        'specialEvents' => [SpecialSwiperImage::class, SpecialText::class, 'admin.specialEvents.specialevents'],
+        'ourFarm' => [FarmSwiperImage::class, FarmText::class, 'admin.ourFarm.ourfarm'],
     ];
 
     public function __call($method, $args)
