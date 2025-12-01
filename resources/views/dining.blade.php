@@ -177,10 +177,10 @@
       {{-- <x-floating-buttons /> --}}
 
       {{-- Dynamic Details Modal --}}
-      <div id="detailsModal" class="fixed inset-0 bg-transparent flex items-center justify-center p-2 md:p-4 pt-16 md:pt-4 hidden z-50">
+      <div id="detailsModal" class="fixed inset-0 bg-transparent flex items-center justify-center p-2 md:p-4 pt-16 md:pt-4 opacity-0 pointer-events-none z-50 transition-opacity duration-300">
         <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[95vh] md:max-h-[90vh] flex flex-col border border-gray-300 mx-2 sm:mx-4">
           {{-- Modal Header --}}
-          <div class="p-4 md:p-6 border-b border-gray-300 flex-shrink-0">
+          <div class="p-4 md:p-6 border-b border-gray-300 shrink-0">
             <div class="flex justify-between items-center">
               <h3 id="detailsModalLabel" class="text-xl md:text-2xl font-bold text-gray-800"></h3>
               <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" onclick="closeModal()" aria-label="Close modal">
@@ -211,9 +211,9 @@
           </div>
 
           {{-- Modal Footer --}}
-          <div class="p-4 md:p-6 border-t border-gray-300 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4 justify-center flex-shrink-0">
+          <div class="p-4 md:p-6 border-t border-gray-300 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4 justify-end shrink-0">
             <button type="button" id="bookNowBtn" class="bg-[#97655A] text-white px-6 py-3 rounded-2xl hover:bg-[#a0675a] transition-colors duration-300 w-full md:w-auto font-semibold">
-              Book Now
+              Add to Cart
             </button>
             <button type="button" onclick="closeModal()" class="bg-gray-500 text-white px-6 py-3 rounded-2xl hover:bg-gray-600 transition-colors duration-300 w-full md:w-auto font-semibold">
               Close
@@ -317,14 +317,45 @@
       updateDots();
       packageSwiper.on('slideChange', updateDots);
 
-      // Set up book now button
+      // Set up add to cart button
       document.getElementById('bookNowBtn').onclick = function() {
-        window.location.href = '{{ url("/booking") }}';
+        // Create form to add to cart
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route("cart.add") }}';
+
+        // Add CSRF token
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = '_token';
+        csrfToken.value = '{{ csrf_token() }}';
+        form.appendChild(csrfToken);
+
+        // Add item details
+        const fields = {
+          'id': title.toLowerCase().replace(/\s+/g, '-'),
+          'title': title,
+          'price': '1500.00', // Default price for dining items
+          'image': imageUrls[0] || '',
+          'quantity': '1'
+        };
+
+        for (const [name, value] of Object.entries(fields)) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value;
+          form.appendChild(input);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
       };
 
       // Show modal
       const modal = document.getElementById('detailsModal');
-      modal.classList.remove('hidden');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      modal.classList.add('opacity-100', 'pointer-events-auto');
       document.body.style.overflow = 'hidden';
 
       // Focus management for accessibility
@@ -333,7 +364,8 @@
 
     function closeModal() {
       const modal = document.getElementById('detailsModal');
-      modal.classList.add('hidden');
+      modal.classList.remove('opacity-100', 'pointer-events-auto');
+      modal.classList.add('opacity-0', 'pointer-events-none');
       document.body.style.overflow = '';
 
       if (packageSwiper) {
@@ -354,7 +386,7 @@
     });
 
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && !document.getElementById('detailsModal').classList.contains('hidden')) {
+      if (e.key === 'Escape' && document.getElementById('detailsModal').classList.contains('opacity-100')) {
         closeModal();
       }
     });

@@ -13,14 +13,27 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   </head>
   <body class="bg-[#f5efe7] min-h-screen">
-    <x-header active="" />
+    <!-- Logo -->
+    <div class="bg-linear-to-r from-white via-gray-50 to-white border-b border-gray-100 shadow-sm">
+      <div class="container mx-auto px-4 py-6">
+        <div class="flex items-center justify-center">
+          <a href="{{ route('home') }}" class="group transition-transform duration-300 hover:scale-105">
+            <img
+              src="/assets/logo/Calaia_LogoRust3.png"
+              alt="CalaiaPH Logo"
+              class="h-16 w-auto drop-shadow-sm group-hover:drop-shadow-md transition-all duration-300"
+            >
+          </a>
+        </div>
+      </div>
+    </div>
 
     <!-- Page Header -->
     <div class="bg-white border-b border-gray-100">
       <div class="container mx-auto px-4 py-8">
         <div class="flex items-center justify-center">
           <i class="bi bi-cart3 text-2xl text-[#8f5d54] mr-3"></i>
-          <h1 class="text-2xl font-semibold text-gray-800" style="font-family: 'Gotham Book', sans-serif;">Shopping Cart</h1>
+          <h1 class="text-2xl font-semibold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">Shopping Cart</h1>
         </div>
       </div>
     </div>
@@ -81,7 +94,7 @@
                             </button>
                           </form>
 
-                          <div class="px-4 py-2 min-w-[3rem] text-center">
+                          <div class="px-4 py-2 min-w-12 text-center">
                             <span class="text-lg font-semibold text-gray-800">{{ $item['quantity'] }}</span>
                           </div>
 
@@ -192,7 +205,7 @@
           </h3>
           <div class="grid md:grid-cols-3 gap-6">
             <a href="{{ url('/daytour') }}" class="group">
-              <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
+              <div class="bg-linear-to-br from-blue-50 to-blue-100 p-6 rounded-xl hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
                 <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-4">
                   <i class="bi bi-sun text-white text-xl"></i>
                 </div>
@@ -202,7 +215,7 @@
             </a>
 
             <a href="{{ url('/staycation') }}" class="group">
-              <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
+              <div class="bg-linear-to-br from-green-50 to-green-100 p-6 rounded-xl hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
                 <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-4">
                   <i class="bi bi-house-heart text-white text-xl"></i>
                 </div>
@@ -212,7 +225,7 @@
             </a>
 
             <a href="{{ url('/dining') }}" class="group">
-              <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-xl hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
+              <div class="bg-linear-to-br from-orange-50 to-orange-100 p-6 rounded-xl hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
                 <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mb-4">
                   <i class="bi bi-cup-hot text-white text-xl"></i>
                 </div>
