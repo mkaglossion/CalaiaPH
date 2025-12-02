@@ -29,7 +29,7 @@
                 <h3>🎉 Your Special Event Details</h3>
                 <p><strong>Event:</strong> {{ $bookingData['event_name'] ?? 'Special Event' }}</p>
                 <p><strong>Event Dates:</strong> {{ !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin'])->format('M d, Y') : '' }} - {{ !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout'])->format('M d, Y') : '' }}</p>
-                <p><strong>Number of Guests:</strong> {{ $bookingData['guests'] }}</p>
+                <p><strong>Number of Guests:</strong> {{ $bookingData['guests'] ?? 1 }}</p>
             </div>
 
             <div class="booking-details">

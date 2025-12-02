@@ -80,36 +80,35 @@
 
                       <!-- Quantity Controls -->
                       <div class="flex items-center justify-between md:justify-end gap-4">
-                        <div class="flex items-center bg-gray-50 rounded-xl p-1">
-                          <form action="{{ route('cart.update', $id) }}" method="POST" class="inline">
-                            @csrf
-                            @method('PATCH')
-                            <input type="hidden" name="quantity" value="{{ max(1, $item['quantity'] - 1) }}">
-                            <button
-                              type="submit"
-                              class="w-10 h-10 flex items-center justify-center rounded-lg bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm {{ $item['quantity'] <= 1 ? 'opacity-50 cursor-not-allowed' : '' }}"
-                              {{ $item['quantity'] <= 1 ? 'disabled' : '' }}
-                            >
-                              <i class="bi bi-dash"></i>
-                            </button>
-                          </form>
+                        <form action="{{ route('cart.update', $id) }}" method="POST" class="flex items-center bg-gray-50 rounded-xl p-1">
+                          @csrf
+                          @method('PATCH')
+                          <button
+                            type="button"
+                            onclick="this.form.quantity.value = Math.max(1, parseInt(this.form.quantity.value || 1) - 1); this.form.submit();"
+                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm {{ $item['quantity'] <= 1 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                            {{ $item['quantity'] <= 1 ? 'disabled' : '' }}
+                          >
+                            <i class="bi bi-dash"></i>
+                          </button>
 
-                          <div class="px-4 py-2 min-w-12 text-center">
-                            <span class="text-lg font-semibold text-gray-800">{{ $item['quantity'] }}</span>
-                          </div>
+                          <input
+                            type="number"
+                            name="quantity"
+                            value="{{ $item['quantity'] }}"
+                            min="1"
+                            class="px-2 py-1 w-12 text-center text-lg font-semibold text-gray-800 bg-transparent border-0 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] rounded"
+                            onchange="this.form.submit()"
+                          />
 
-                          <form action="{{ route('cart.update', $id) }}" method="POST" class="inline">
-                            @csrf
-                            @method('PATCH')
-                            <input type="hidden" name="quantity" value="{{ $item['quantity'] + 1 }}">
-                            <button
-                              type="submit"
-                              class="w-10 h-10 flex items-center justify-center rounded-lg bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm"
-                            >
-                              <i class="bi bi-plus"></i>
-                            </button>
-                          </form>
-                        </div>
+                          <button
+                            type="button"
+                            onclick="this.form.quantity.value = (parseInt(this.form.quantity.value || 1) + 1); this.form.submit();"
+                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm"
+                          >
+                            <i class="bi bi-plus"></i>
+                          </button>
+                        </form>
 
                         <!-- Subtotal & Remove -->
                         <div class="text-right">

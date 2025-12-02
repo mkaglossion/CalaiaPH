@@ -175,7 +175,6 @@
               :grand-total="$grandTotal ?? 0"
               :errors="$errors ?? null"
           />
-          </section>
         </div>
       </div>
     </div>
@@ -183,6 +182,7 @@
 
   {{-- Footer --}}
   <x-footer />
+  </x-page-layout>
 
   {{-- Temporary inline font helpers (move to CSS if possible) --}}
   <style>
