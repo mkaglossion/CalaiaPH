@@ -31,11 +31,22 @@
                 @php
                 $isStaycation = isset($bookingData['accommodations']) && !empty($bookingData['accommodations']);
                 $accommodationTotal = 0;
+                $activitiesTotal = 0;
+                $packageTotal = (float)($bookingData['price'] ?? 0);
+                $grandTotal = $bookingData['grand_total'] ?? 0;
+
+                // Calculate activities total (common for all booking types)
+                if (!empty($selectedActivities)) {
+                    $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
+                        return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+                    });
+                }
+
                 if ($isStaycation) {
                     // Use stored final totals if available
                     if (isset($bookingData['final_totals'])) {
                         $accommodationTotal = $bookingData['final_totals']['accommodation_total'] ?? 0;
-                        $activitiesTotal = $bookingData['final_totals']['activities_total'] ?? 0;
+                        $activitiesTotal = $bookingData['final_totals']['activities_total'] ?? $activitiesTotal;
                         $grandTotal = $bookingData['final_totals']['grand_total'] ?? 0;
                     } else {
                         // Fallback calculation if final_totals not set
@@ -86,6 +97,12 @@
                         }
                     }
                 }
+            } elseif ($isSpecialEvent ?? false) {
+                // For special events, calculate grand total
+                $grandTotal = $packageTotal + $activitiesTotal;
+            } else {
+                // For regular bookings, calculate grand total
+                $grandTotal = $packageTotal + $activitiesTotal;
             }
                 @endphp
                 @if($isStaycation)
@@ -187,22 +204,28 @@
                         <p><strong>Activities Total:</strong> ₱{{ number_format($bookingData['final_totals']['activities_total'] ?? 0, 2) }}</p>
                         <p><strong>Total Amount Paid:</strong> ₱{{ number_format($accommodationTotal + ($bookingData['final_totals']['activities_total'] ?? 0), 2) }}</p>
                     @endif
+                @elseif($isSpecialEvent ?? false)
+                    <p><strong>Booking Type:</strong> Special Event</p>
+                    <p><strong>Event:</strong> {{ $bookingData['event_name'] ?? 'Special Event' }}</p>
+                    <p><strong>Event Dates:</strong> {{ !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin'])->format('M d, Y') : '' }} - {{ !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout'])->format('M d, Y') : '' }}</p>
+                    <p><strong>Number of Guests:</strong> {{ $bookingData['guests'] ?? 1 }}</p>
+                    <p><strong>Event Package Price:</strong> ₱{{ number_format((float)($bookingData['price'] ?? 0)) }}</p>
+                    @if(!empty($selectedActivities))
+                    <p><strong>Selected Activities:</strong></p>
+                    <ul>
+                        @foreach($selectedActivities as $activity)
+                        <li>{{ $activity['name'] }} ({{ $activity['guests'] ?? 1 }} guest{{ ($activity['guests'] ?? 1) > 1 ? 's' : '' }}) - ₱{{ number_format(($activity['price'] ?? 0) * ($activity['guests'] ?? 1)) }}</li>
+                        @endforeach
+                    </ul>
+                    <p><strong>Activities Total:</strong> ₱{{ number_format($activitiesTotal) }}</p>
+                    @endif
+                    <p><strong>Total Amount Paid:</strong> ₱{{ number_format($grandTotal) }}</p>
                 @else
                     <p><strong>Type:</strong> {{ ucfirst($bookingData['type'] ?? 'N/A') }}</p>
                     <p><strong>Package:</strong> {{ $bookingData['package'] ?? 'N/A' }}</p>
                     <p><strong>Price:</strong> ₱{{ number_format((float)($bookingData['price'] ?? 0)) }}</p>
                     <p><strong>Preferred Date:</strong> {{ !empty($bookingData['booking_date']) ? \Carbon\Carbon::parse($bookingData['booking_date'])->format('F j, Y') : 'N/A' }}</p>
                     <p><strong>Number of Guests:</strong> {{ $bookingData['guests'] ?? 'N/A' }}</p>
-                    @php
-                    $activitiesTotal = 0;
-                    if (!empty($selectedActivities)) {
-                        $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
-                            return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
-                        });
-                    }
-                    $packageTotal = (float)($bookingData['price'] ?? 0);
-                    $grandTotal = $bookingData['grand_total'] ?? ($packageTotal + $activitiesTotal);
-                    @endphp
 
                     @if(!empty($selectedActivities))
                     <p><strong>Selected Activities:</strong></p>

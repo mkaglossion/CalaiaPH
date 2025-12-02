@@ -94,6 +94,7 @@ Route::post('/booking/check-availability', [BookingController::class, 'checkAvai
 Route::get('/booking/payment', [BookingController::class, 'payment'])->name('booking.payment');
 Route::post('/booking/payment', [BookingController::class, 'processPayment'])->name('booking.processPayment');
 Route::get('/booking/confirmation', [BookingController::class, 'confirmation'])->name('booking.confirmation');
+Route::get('/booking/special-event/confirmation', [BookingController::class, 'specialEventConfirmation'])->name('booking.specialEventConfirmation');
 Route::get('/booking/widget', [BookingController::class, 'widget'])->name('booking.widget');
 Route::get('/debug-session', [BookingController::class, 'debugSession']);
 

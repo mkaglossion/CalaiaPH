@@ -94,6 +94,8 @@ class BookingController extends Controller
             'regular' => [
                 'booking_data' => 'booking_data',
                 'selected_activities' => 'selected_activities',
+                'grand_total' => 'grand_total',
+                'customer_info' => 'customer_info',
                 'is_type' => null
             ]
         ];
@@ -418,7 +420,7 @@ class BookingController extends Controller
                 } elseif ($type === 'special_event') {
                     $sessionsToClear = ['special_event_booking_data', 'special_event_selected_activities', 'special_event_grand_total', 'special_event_customer_info'];
                 } elseif ($type === 'regular') {
-                    $sessionsToClear = ['booking_data', 'selected_activities'];
+                    $sessionsToClear = ['booking_data', 'selected_activities', 'grand_total', 'customer_info'];
                 }
                 session()->forget($sessionsToClear);
                 return view('booking.confirmation', $data);
@@ -426,6 +428,17 @@ class BookingController extends Controller
         }
 
         return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
+    }
+
+    public function specialEventConfirmation()
+    {
+        // Get special event confirmation data
+        $data = $this->getConfirmationData('special_event');
+        if (!$data) {
+            return redirect()->route('booking.specialEvent')->with('error', 'No special event booking data found. Please start booking again.');
+        }
+
+        return view('booking.special-event-confirmation', $data);
     }
 
     public function processPayment(Request $request)
