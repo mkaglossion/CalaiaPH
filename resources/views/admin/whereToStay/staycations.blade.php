@@ -318,7 +318,6 @@
                         <td class="px-4 py-2">{{ $text->staycation->name ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ $text->title ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ $text->content ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ Str::limit($text->text, 60) }}</td>
                         <td class="px-4 py-2 text-right space-x-2">
                             <form action="{{ route('staycation-text.destroy', $text->id) }}" method="POST" class="inline">
                                 @csrf

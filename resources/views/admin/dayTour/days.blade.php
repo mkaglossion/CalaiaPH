@@ -1,79 +1,154 @@
 @extends('layouts.admin')
 
-@section('title', 'Day Tours')
+@section('title', 'Day Tour Page CMS')
 
 @section('content')
-<div x-data="dayTourComponent()">
 
-    <hr class="my-6">
+<div
+    x-data="dayTourManager()"
+    class="p-8 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
+>
 
-    <!-- Add Day Tour Button -->
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Day Tour Packages</h2>
+    <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
+        Day Tour Page Management
+    </h1>
+    <p class="text-gray-600 mb-10">Manage your Day Tour packages, activities, and text content.</p>
+
+    {{-- ============================================================= --}}
+    {{-- DAY TOUR PACKAGES SECTION --}}
+    {{-- ============================================================= --}}
+    <div class="flex justify-between items-end mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Day Tour Packages</h2>
+            <p class="text-gray-500 text-sm">Manage packages and included activities.</p>
+        </div>
         <button 
             @click="showDayTourModal = true; resetForm()" 
-            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-            + Add Day Tour Package
+            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+            + Add Package
         </button>
     </div>
 
-    <!-- Table of Day Tour Packages -->
-    <div class="overflow-x-auto border rounded-lg shadow">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 border-b">
-                <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Package Name</th>
-                    <th class="px-4 py-2">Description</th>
-                    <th class="px-4 py-2">Price</th>
-                    <th class="px-4 py-2">Included Activities</th>
-                    <th class="px-4 py-2">Created At</th>
-                    <th class="px-4 py-2 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($tours as $index => $tour)
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="px-4 py-2">{{ $index + 1 }}</td>
-                    <td class="px-4 py-2">{{ $tour->name }}</td>
-                    <td class="px-4 py-2">{{ $tour->description ?? '-' }}</td>
-                    <td class="px-4 py-2">{{ $tour->price ? '₱'.number_format($tour->price, 2) : '-' }}</td>
-                    <td class="px-4 py-2">
-                        @foreach($tour->activities as $activity)
-                            <span class="inline-block bg-gray-200 px-2 py-1 rounded text-xs mr-1 mb-1">{{ $activity->name }}</span>
-                        @endforeach
-                    </td>
-                    <td class="px-4 py-2">{{ $tour->created_at->format('Y-m-d') }}</td>
-                    <td class="px-4 py-2 text-right space-x-2">
-                        <button class="text-blue-600 hover:underline" @click="editDayTour({{ $tour->id }})">Edit</button>
-                        <form action="{{ route('day-tours.destroy', $tour->id) }}" method="POST" class="inline">
+    {{-- Packages Cards Grid --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        @forelse($tours as $tour)
+            <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition">
+                <h3 class="font-semibold text-lg text-gray-900">{{ $tour->name }}</h3>
+                <p class="text-gray-500 text-sm mt-1">{{ Str::limit($tour->description, 100) ?: '-' }}</p>
+                <p class="text-gray-600 mt-2 font-medium">{{ $tour->price ? '₱'.number_format($tour->price, 2) : '-' }}</p>
+
+                <div class="mt-3 flex flex-wrap gap-1">
+                    @foreach($tour->activities as $activity)
+                        <span class="inline-block bg-gray-200 px-2 py-1 rounded text-xs">{{ $activity->name }}</span>
+                    @endforeach
+                </div>
+
+                <p class="text-gray-400 text-xs mt-2">Created: {{ $tour->created_at->format('Y-m-d') }}</p>
+
+                <div class="mt-4 flex justify-end gap-3">
+                    <button 
+                        class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                        @click="editDayTour({{ $tour->id }})">
+                        Edit
+                    </button>
+
+                    <form action="{{ route('day-tours.destroy', $tour->id) }}" method="POST">
+                        @csrf @method('DELETE')
+                        <button 
+                            onclick="return confirm('Delete this package?')"
+                            class="text-red-600 font-semibold hover:text-red-700 hover:underline transition">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        @empty
+            <p class="text-gray-500 col-span-full">No packages added yet.</p>
+        @endforelse
+    </div>
+
+    <hr class="my-14 border-gray-300">
+
+    {{-- ============================================================= --}}
+    {{-- TEXT CONTENT SECTION --}}
+    {{-- ============================================================= --}}
+    <div class="flex justify-between items-end mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
+            <p class="text-gray-500 text-sm">Paragraphs and captions displayed on the Day Tour page.</p>
+        </div>
+
+        <button 
+            @click="showTextModal = true" 
+            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+            + Add Text
+        </button>
+    </div>
+
+    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+    <table class="w-full text-left">
+        <thead class="bg-gray-100/70 backdrop-blur">
+            <tr>
+                <th class="px-6 py-4 text-sm font-semibold text-gray-700">#</th>
+                <th class="px-6 py-4 text-sm font-semibold text-gray-700">Package</th>
+                <th class="px-6 py-4 text-sm font-semibold text-gray-700">Label</th>
+                <th class="px-6 py-4 text-sm font-semibold text-gray-700">Text</th>
+                <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
+            </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-200">
+            @forelse($texts as $index => $text)
+                <tr class="hover:bg-gray-50/70 transition">
+                    <td class="px-6 py-4 font-medium text-gray-900">{{ $index + 1 }}</td>
+                    <td class="px-6 py-4 text-gray-700">{{ $text->daytour->name ?? 'Untitled' }}</td>
+                    <td class="px-6 py-4 text-gray-700">{{ $text->title ?? 'Untitled' }}</td>
+                    <td class="px-6 py-4 text-gray-600 text-sm">{{ $text->content ?? 'Untitled' }}</td>
+                    <td class="px-6 py-4 text-right space-x-3">
+                        <button 
+                            class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                            @click="editText({{ $text->id }})">
+                            Edit
+                        </button>
+
+                        <form id="delete-text-{{ $text->id }}" 
+                              action="{{ route('day-text.destroy', $text->id) }}" 
+                              method="POST" class="inline">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:underline" onclick="return confirm('Delete this package?')">Delete</button>
+                            <button 
+                                type="button"
+                                @click="deleteText({{ $text->id }})"
+                                class="text-red-600 font-semibold hover:text-red-700 hover:underline transition">
+                                Delete
+                            </button>
                         </form>
                     </td>
                 </tr>
-                @empty
+            @empty
                 <tr>
-                    <td colspan="7" class="px-4 py-4 text-center text-gray-500">No packages added yet.</td>
+                    <td colspan="6" class="px-6 py-6 text-center text-gray-500">
+                        No text content added yet.
+                    </td>
                 </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+            @endforelse
+        </tbody>
+    </table>
+</div>
 
-    <!-- Modal to Add/Edit Day Tour -->
+
+    {{-- ============================================================= --}}
+    {{-- MODALS --}}
+    {{-- ============================================================= --}}
+
+    {{-- Add/Edit Day Tour Modal --}}
     <div 
         x-show="showDayTourModal"
-        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-        x-cloak
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        x-transition.opacity
     >
-        <div 
-            @click.away="showDayTourModal = false"
-            class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6"
-        >
-            <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Day Tour Package' : 'Add Day Tour Package'"></h3>
+        <div @click.away="showDayTourModal = false" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-6 border border-gray-200">
+            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editMode ? 'Edit Day Tour Package' : 'Add Day Tour Package'"></h3>
 
             <form id="dayTourForm" @submit.prevent="saveDayTour" class="space-y-5">
                 @csrf
@@ -81,45 +156,36 @@
                     <input type="hidden" name="_method" value="PUT">
                 </template>
 
-                <!-- Name -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Package Name</label>
-                    <input type="text" x-model="form.name" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="Package Name" required>
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Package Name</label>
+                    <input type="text" x-model="form.name" class="w-full border rounded-xl px-3 py-2" placeholder="Package Name" required>
                 </div>
 
-                <!-- Description -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Description</label>
-                    <textarea x-model="form.description" rows="3" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="Description"></textarea>
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Description</label>
+                    <textarea x-model="form.description" rows="3" class="w-full border rounded-xl px-3 py-2" placeholder="Description"></textarea>
                 </div>
 
-                <!-- Price -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Price</label>
-                    <input type="number" x-model="form.price" step="0.01" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="Price">
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Price</label>
+                    <input type="number" x-model="form.price" step="0.01" class="w-full border rounded-xl px-3 py-2" placeholder="Price">
                 </div>
 
-                <!-- Pick Activities -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-2">Pick Activities to Include</label>
-                    <div class="max-h-64 overflow-y-auto border rounded p-2">
+                <div>
+                    <label class="block font-medium mb-2 text-gray-700">Included Activities</label>
+                    <div class="max-h-64 overflow-y-auto border rounded-xl p-2">
                         @foreach($activities as $activity)
                             <div class="flex items-center mb-1">
-                                <input 
-                                    type="checkbox" 
-                                    value="{{ $activity->id }}" 
-                                    x-model="form.activity_ids"
-                                    class="mr-2"
-                                >
+                                <input type="checkbox" value="{{ $activity->id }}" x-model="form.activity_ids" class="mr-2">
                                 <span>{{ $activity->name }}</span>
                             </div>
                         @endforeach
                     </div>
                 </div>
 
-                <div class="flex justify-end space-x-2">
-                    <button type="button" @click="showDayTourModal = false; resetForm()" class="px-4 py-2 rounded border hover:bg-gray-100">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" @click="showDayTourModal = false; resetForm()" class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition">
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
                     </button>
                 </div>
@@ -127,77 +193,15 @@
         </div>
     </div>
 
-    <hr class="my-6">
+    {{-- Add/Edit Text Modal --}}
+    <div x-show="showTextModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" x-transition.opacity>
+        <div @click.away="showTextModal = false" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-7 border border-gray-200">
+            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
 
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Text Content Management</h2>
-        <button 
-            @click="showTextModal = true" 
-            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-            + Add Text Content
-        </button>
-    </div>
-
-    {{-- Text Table --}}
-    <div class="overflow-x-auto border rounded-lg shadow">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 border-b">
-                <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Package Name</th>
-                    <th class="px-4 py-2">Label</th>
-                    <th class="px-4 py-2">Text</th>
-                    <th class="px-4 py-2 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($texts as $index => $text)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ $index + 1 }}</td>
-                        <td class="px-4 py-2">{{ $text->daytour->name ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $text->title ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $text->content ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ Str::limit($text->text, 60) }}</td>
-                        <td class="px-4 py-2 text-right space-x-2">
-                            <form action="{{ route('day-text.destroy', $text->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button 
-                                    type="submit"
-                                    class="text-red-600 hover:underline"
-                                    onclick="return confirm('Delete this text content?')"
-                                >
-                                    Delete
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">No text content added yet.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Text Content Modal -->
-    <div 
-        x-show="showTextModal" 
-        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-        x-cloak
-    >
-        <div 
-            @click.away="showTextModal = false" 
-            class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6"
-        >
-            <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
-
-            <form
-                id="textUploadForm"
-                class="space-y-5"
-                enctype="multipart/form-data"
+            <form 
+                id="textUploadForm" 
+                class="space-y-5" 
+                enctype="multipart/form-data" 
                 @submit.prevent="saveText()"
             >
                 @csrf
@@ -205,12 +209,13 @@
                     <input type="hidden" name="_method" value="PUT">
                 </template>
 
-                <div class="mb-3">
-                    <label class="block font-semibold mb-1">Package</label>
+                <!-- Package Selection -->
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Package</label>
                     <select 
                         name="package_id" 
                         x-model="form.package_id" 
-                        class="border rounded p-2 w-full" 
+                        class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         required
                     >
                         <option value="">Select Package</option>
@@ -220,41 +225,44 @@
                     </select>
                 </div>
 
-            
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Label</label>
+                <!-- Label -->
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Label</label>
                     <input 
                         type="text" 
                         name="label" 
                         x-model="form.label" 
-                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         placeholder="Optional"
                     >
                 </div>
 
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Text</label>
+                <!-- Text -->
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Text</label>
                     <textarea 
                         name="text" 
                         x-model="form.text" 
                         rows="4" 
-                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        placeholder="Enter text text..."
+                        class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        placeholder="Enter text..."
                         required
                     ></textarea>
                 </div>
 
-                <div class="flex justify-end space-x-2">
+                <!-- Buttons -->
+                <div class="flex justify-end space-x-3 pt-2">
                     <button 
                         type="button" 
                         @click="showTextModal = false" 
-                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
+                        class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition"
                     >
                         Cancel
                     </button>
+
                     <button 
                         type="submit" 
-                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                        class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition"
                     >
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
                     </button>
@@ -264,25 +272,42 @@
         </div>
     </div>
 
+    <!-- GLOBAL LOADING OVERLAY -->
+    <div 
+        x-show="isLoading"
+        x-transition.opacity
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]"
+    >
+        <div class="flex flex-col items-center space-y-3">
+            <svg class="animate-spin h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-30" cx="12" cy="12" r="10" stroke="white" stroke-width="4"></circle>
+                <path class="opacity-90" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span class="text-white text-lg font-medium">Processing...</span>
+        </div>
+    </div>
+
 </div>
 
 <script>
-function dayTourComponent() {
+function dayTourManager() {
     return {
+        isLoading: false,
+        showModal: false,
         showDayTourModal: false,
         showTextModal: false,
         editMode: false,
         texts: @js($texts),
         dayTours: @js($tours),
         activities: @js($activities),
-        form: { id: null, name: '', description: '', price: '', activity_ids: [] },
-        textForm: { id: null, name: '', label: '', text: '' },
+        form: { id: null, name: '', description: '', price: '', activity_ids: [], package_id: '', label: '', text: '' },
 
         resetForm() {
-            this.form = { id: null, name: '', description: '', price: '', activity_ids: [] };
+            this.form = { id: null, name: '', description: '', price: '', activity_ids: [], package_id: '', label: '', text: '' };
             this.editMode = false;
         },
 
+        // Edit Day Tour Package
         editDayTour(id) {
             const tour = this.dayTours.find(d => d.id === id);
             if (tour) {
@@ -296,20 +321,25 @@ function dayTourComponent() {
             }
         },
 
+        // Edit Text Content
         editText(id) {
             const text = this.texts.find(t => t.id === id);
             if (text) {
-                this.form.id = text.id;
-                this.form.label = text.label;
-                this.form.text = text.text;
-                this.form.tour = text.tour;
+                this.form = { 
+                    id: text.id, 
+                    package_id: text.package_id, 
+                    label: text.label, 
+                    text: text.text 
+                };
                 this.editMode = true;
                 this.showTextModal = true;
             }
         },
 
-        saveDayTour: async function() {
-            const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+        // Save Day Tour Package
+        async saveDayTour() {
+            this.isLoading = true;
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
             const formData = new FormData();
             formData.append('name', this.form.name);
             formData.append('description', this.form.description);
@@ -322,87 +352,219 @@ function dayTourComponent() {
                 formData.append('_method', 'PUT');
             }
 
-            const btn = document.querySelector('#dayTourForm button[type=submit]');
-            btn.innerText = this.editMode ? 'Updating...' : 'Adding...';
-            btn.disabled = true;
-
             try {
                 const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-                    body: formData,
-                    credentials: 'same-origin'
+                    body: formData
                 });
-
                 const data = await res.json();
 
                 if (res.ok) {
-                    alert(data.message || (this.editMode ? 'Day Tour updated!' : 'Day Tour added!'));
-                    this.resetForm();
-                    this.showDayTourModal = false;
-                    window.location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: this.editMode ? 'Updated!' : 'Added!',
+                        text: data.message || 'Day Tour saved successfully!',
+                        confirmButtonColor: '#2563eb'
+                    }).then(() => {
+                        this.resetForm();
+                        this.showDayTourModal = false;
+                        window.location.reload();
+                    });
                 } else if (data.errors) {
-                    alert(Object.values(data.errors).flat().join('\n'));
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Validation Error',
+                        html: Object.values(data.errors).flat().join('<br>')
+                    });
                 } else {
-                    alert(data.message || 'Operation failed.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Operation failed.'
+                    });
                 }
-            } catch(err) {
-                console.error(err);
-                alert('Error submitting Day Tour.');
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Unexpected Error',
+                    text: 'Something went wrong.'
+                });
             } finally {
-                btn.innerText = this.editMode ? 'Update' : 'Add';
-                btn.disabled = false;
+                this.isLoading = false;
             }
         },
 
-        saveText: async function() {
-            const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+        // Save Text Content
+        async saveText() {
+            this.isLoading = true;
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
             const formData = new FormData();
-
+            formData.append('package_id', this.form.package_id);
             formData.append('title', this.form.label);
             formData.append('content', this.form.text);
-            formData.append('package_id', this.form.package_id); // make sure this is populated
 
             let url = '{{ route('day-text.store') }}';
-
             if (this.editMode && this.form.id) {
                 url = `/admin/day-text/${this.form.id}`;
                 formData.append('_method', 'PUT');
             }
 
-            const btn = document.querySelector('#textUploadForm button[type=submit]');
-            btn.innerText = this.editMode ? 'Updating...' : 'Uploading...';
-            btn.disabled = true;
-
             try {
                 const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-                    body: formData,
-                    credentials: 'same-origin'
+                    body: formData
                 });
-
                 const data = await res.json();
 
                 if (res.ok) {
-                    alert(data.message || (this.editMode ? 'Text updated successfully!' : 'Text added successfully!'));
-                    this.resetForm();
-                    this.showTextModal = false;
-                    window.location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: this.editMode ? 'Updated!' : 'Added!',
+                        text: data.message || 'Text content saved!',
+                        confirmButtonColor: '#2563eb'
+                    }).then(() => {
+                        this.resetForm();
+                        this.showTextModal = false;
+                        window.location.reload();
+                    });
                 } else if (data.errors) {
-                    alert(Object.values(data.errors).flat().join('\n'));
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Validation Error',
+                        html: Object.values(data.errors).flat().join('<br>')
+                    });
                 } else {
-                    alert(data.message || 'Operation failed.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Operation failed.'
+                    });
                 }
-            } catch(err) {
-                console.error(err);
-                alert('Error submitting text.');
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Unexpected Error',
+                    text: 'Something went wrong.'
+                });
             } finally {
-                btn.innerText = this.editMode ? 'Update' : 'Add';
-                btn.disabled = false;
+                this.isLoading = false;
             }
         },
-    }
+
+        // Upload Swiper Image
+        async uploadImage() {
+            this.isLoading = true;
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+            const formData = new FormData();
+            formData.append('title', this.$refs.title.value);
+            formData.append('image', this.$refs.image.files[0]);
+
+            try {
+                const res = await fetch('{{ route('day-tour-swiper-images.store') }}', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Upload Complete',
+                        text: data.message || 'Image uploaded successfully!',
+                        confirmButtonColor: '#2563eb'
+                    }).then(() => {
+                        this.showModal = false;
+                        window.location.reload();
+                    });
+                } else if (data.errors) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Upload Failed',
+                        html: Object.values(data.errors).flat().join('<br>')
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Unexpected Error',
+                    text: 'Something went wrong. Please try again.'
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        // Delete Day Tour
+        deleteDayTour(id) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Delete Day Tour?',
+                text: 'This action cannot be undone.',
+                showCancelButton: true,
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    document.getElementById(`delete-daytour-${id}`).submit();
+                }
+            });
+        },
+
+        // Delete Text Content
+        deleteText(id) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Delete Text Content?',
+                text: 'This action cannot be undone.',
+                showCancelButton: true,
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    document.getElementById(`delete-text-${id}`).submit();
+                }
+            });
+        },
+
+        // Delete Swiper Image
+        deleteImage(id) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Delete Image?',
+                text: 'This action cannot be undone.',
+                showCancelButton: true,
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    document.getElementById(`delete-image-${id}`).submit();
+                }
+            });
+        }
+    };
 }
 </script>
+
+
+<style>
+.tilt-card {
+    transform-style: preserve-3d;
+    perspective: 1200px;
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+.tilt-card:hover {
+    transform: rotateX(6deg) rotateY(-6deg) translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 35px rgba(0,0,0,0.18);
+}
+</style>
+
 @endsection
