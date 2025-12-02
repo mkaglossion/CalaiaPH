@@ -136,7 +136,7 @@
               <div class="flex justify-between gap-2 sm:gap-4">
                 <span class="font-medium text-gray-500 text-xs sm:text-sm">Duration</span>
                 <span class="text-right font-semibold text-[#8f5d54] text-sm sm:text-base">
-                  {{ \Carbon\Carbon::parse($bookingData['checkin'])->diffInDays(\Carbon\Carbon::parse($bookingData['checkout'])) + 1 }} days
+                  {{ max(1, abs(\Carbon\Carbon::parse($bookingData['checkin'])->diffInDays(\Carbon\Carbon::parse($bookingData['checkout'])))) + 1 }} days
                 </span>
               </div>
               @endif

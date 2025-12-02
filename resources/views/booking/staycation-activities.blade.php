@@ -44,7 +44,7 @@ if ($datesSelected) {
     $start = new DateTime($checkinDate);
     $end = new DateTime($checkoutDate);
     $diff = $start->diff($end);
-    $nights = $diff->days;
+    $nights = max(1, $diff->days);
 }
 
 // Calculate total guests
@@ -169,7 +169,7 @@ if ($datesSelected) {
                 </div>
 
                 {{-- Activities Selection --}}
-                <x-activities-page
+                <x-activities-page-no-sidebar
                     pretitle="Staycation Activities"
                     title="Select Staycation Activities"
                     subtitle="Enhance your staycation experience with optional activities"
@@ -312,7 +312,7 @@ if ($datesSelected) {
                 <div class="border-t border-gray-200 pt-4">
                   <div class="flex justify-between items-center text-lg font-bold">
                     <span>Activities Total:</span>
-                    <span id="total-cost">₱ 0.00</span>
+                    <span id="total-cost">₱0.00</span>
                   </div>
                 </div>
 

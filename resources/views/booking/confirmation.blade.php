@@ -301,7 +301,7 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
                       } elseif ($checkin && $checkout && (str_contains($name, 'bell') || str_contains($name, 'dome'))) {
                           $accommodationPrice = 3000 * $nights;
                       } elseif ($checkin && $checkout && ($isBYOT || $isCarCamping)) {
-                          $accommodationPrice = 300 * $quantity * $nights;
+                          $accommodationPrice = (300 * $nights) + (500 * $quantity * $nights);
                       } else {
                           $accommodationPrice = $accommodation['staycation']['price'] * $quantity * $nights;
                       }
@@ -319,7 +319,7 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
                       } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
                           $baseRate = 3000;
                       } elseif ($isBYOT || $isCarCamping) {
-                          $baseRate = 300 * $quantity;
+                          $baseRate = 300 + (500 * $quantity);
                       }
 
                       $extraRate = $extraGuests * 400; // ₱400 per extra guest per night

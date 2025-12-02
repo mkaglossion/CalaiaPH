@@ -36,7 +36,7 @@ if ($datesSelected) {
     $start = new DateTime($checkinDate);
     $end = new DateTime($checkoutDate);
     $diff = $start->diff($end);
-    $nights = $diff->days;
+    $nights = max(1, $diff->days);
 }
 
 // Calculate total guests
@@ -101,11 +101,19 @@ if ($finalTotals) {
     $activitiesTotal = $finalTotals['activities_total'] ?? 0;
     $grandTotal = $finalTotals['grand_total'] ?? 0;
     $breakfastTotal = 0; // Already included in accommodation_total
+    // Ensure we still have the selected activities for display in the sidebar
+    $selectedActivities = session('selected_activities') ?? $booking['selected_activities'] ?? [];
 } else {
-    // Fallback calculation if final_totals not set
-    $selectedActivities = $booking['selected_activities'] ?? [];
+    // Get selected activities from URL parameter first (most reliable), then session
+    $selectedActivities = [];
+    if (isset($_GET['activities'])) {
+        $selectedActivities = json_decode(base64_decode($_GET['activities']), true) ?? [];
+    }
+    if (empty($selectedActivities)) {
+        $selectedActivities = session('selected_activities') ?? $booking['selected_activities'] ?? [];
+    }
     $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
-        return 500 * ($activity['guests'] ?? 0);
+        return ($activity['price'] ?? 500) * ($activity['guests'] ?? 0);
     });
 }
 @endphp
@@ -431,7 +439,7 @@ if ($finalTotals) {
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Nights:</span>
-                            <span class="text-sm font-medium">{{ $nights }}</span>
+                            <span class="text-sm font-medium">{{ max(1, $nights) }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600">Guests:</span>
@@ -467,9 +475,9 @@ if ($finalTotals) {
                                                 $isWeekend = $day === 5 || $day === 6;
                                                 $basePrice = 0;
                                                 if (str_contains($name, 'standard')) {
-                                                    $basePrice = $isWeekend ? 1000 * $quantity : 800 * $quantity;
+                                                    $basePrice = $isWeekend ? 6000 : 4800;
                                                 } elseif (str_contains($name, 'premium')) {
-                                                    $basePrice = $isWeekend ? 1200 * $quantity : 960 * $quantity;
+                                                    $basePrice = $isWeekend ? 7200 : 5760;
                                                 }
                                                 $extraGuests = max(0, $quantity - 4);
                                                 $accommodationPrice += $basePrice + ($extraGuests * 400);
@@ -480,7 +488,7 @@ if ($finalTotals) {
                                         } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
                                             $accommodationPrice = 3000 * $nights;
                                         } elseif ($isBYOT || $isCarCamping) {
-                                            $accommodationPrice = 300 * $quantity * $nights;
+                                            $accommodationPrice = (300 * $nights) + (500 * $quantity * $nights);
                                         }
 
                                         $petFee = (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) ? 2000 * $accommodation['num_pets'] : 0;
@@ -520,16 +528,15 @@ if ($finalTotals) {
 
                 <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Selected Activities</h3>
 
-                <div class="space-y-3 mb-4">
+                <div class="space-y-1 mb-4 text-xs text-gray-600">
                     @if(!empty($selectedActivities))
                         @foreach($selectedActivities as $activity)
-                            <div class="flex justify-between items-start p-2 bg-white rounded border">
-                                <div class="flex-1">
-                                    <p class="text-sm font-medium text-gray-900">{{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }} x {{ $activity['guests'] }}</p>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-sm font-semibold text-[#8f5d54]">₱{{ number_format($activity['price'] * $activity['guests'], 2) }}</span>
-                                </div>
+                            @php
+                                $unit = $activity['price'] ?? 0;
+                                $qty = $activity['guests'] ?? 0;
+                            @endphp
+                            <div>
+                                {{ $activity['name'] }} - ₱{{ number_format($unit, 2, '.', '') }} ({{ $qty }} guest{{ $qty > 1 ? 's' : '' }})
                             </div>
                         @endforeach
                     @else

@@ -285,7 +285,7 @@ class BookingController extends Controller
             $start = new DateTime($checkinDate);
             $end = new DateTime($checkoutDate);
             $diff = $start->diff($end);
-            $nights = $diff->days;
+            $nights = max(1, $diff->days);
         }
 
         $totalGuests = collect($booking['accommodations'])->sum('guests');
@@ -302,25 +302,26 @@ class BookingController extends Controller
                     $isBYOT = str_contains($name, 'byot');
                     $isCarCamping = str_contains($name, 'car camping');
 
-                    if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
-                        $current = clone $start;
-                        while ($current < $end) {
-                            $day = (int)$current->format('w');
-                            $isWeekend = $day === 5 || $day === 6;
-                            $basePrice = 0;
-                            if (str_contains($name, 'standard')) {
-                                $basePrice = $isWeekend ? 1000 * $quantity : 800 * $quantity;
-                            } elseif (str_contains($name, 'premium')) {
-                                $basePrice = $isWeekend ? 1200 * $quantity : 960 * $quantity;
-                            }
-                            $extraGuests = max(0, $quantity - 4);
-                            $accommodationTotal += $basePrice + ($extraGuests * 400);
-                            $current->modify('+1 day');
-                        }
+                            if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
+                                $current = clone $start;
+                                while ($current < $end) {
+                                    $day = (int)$current->format('w');
+                                    $isWeekend = $day === 5 || $day === 6;
+                                    $basePrice = 0;
+                                    // Use room-level base rates (matches the view): standard/premium per-room prices
+                                    if (str_contains($name, 'standard')) {
+                                        $basePrice = $isWeekend ? 6000 : 4800;
+                                    } elseif (str_contains($name, 'premium')) {
+                                        $basePrice = $isWeekend ? 7200 : 5760;
+                                    }
+                                    $extraGuests = max(0, $quantity - 4);
+                                    $accommodationTotal += $basePrice + ($extraGuests * 400);
+                                    $current->modify('+1 day');
+                                }
                     } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
                         $accommodationTotal += 3000 * $nights;
                     } elseif ($isBYOT || $isCarCamping) {
-                        $accommodationTotal += 300 * $quantity * $nights;
+                        $accommodationTotal += (300 * $nights) + (500 * $quantity * $nights);
                     }
                 }
             }

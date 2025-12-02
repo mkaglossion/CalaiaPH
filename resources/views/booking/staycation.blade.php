@@ -14,13 +14,26 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   </head>
   <body class="bg-[#f5efe7]">
-    <div class="flex flex-col items-center justify-center px-4">
-      @if (session('success'))
-          <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">
-              {{ session('success') }}
-          </div>
-      @endif
-    </div>
+        <div class="flex flex-col items-center justify-center px-4">
+            @if (session('success'))
+                    <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">
+                            {{ session('success') }}
+                    </div>
+                    <script>
+                        // Clear selections and UI after booking success
+                        sessionStorage.removeItem('staycation_selections');
+                        if (window.selectedAccommodations) {
+                            window.selectedAccommodations = {};
+                        }
+                        var container = document.getElementById('selected-accommodations-container');
+                        if (container) container.innerHTML = '';
+                        if (typeof window.updateBookingSummary === 'function') window.updateBookingSummary();
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1200);
+                    </script>
+            @endif
+        </div>
     <x-header active="booking" />
     <div class="min-h-screen">
 @php
@@ -53,7 +66,7 @@
         $start = new DateTime($checkinDate);
         $end = new DateTime($checkoutDate);
         $diff = $start->diff($end);
-        $nights = $diff->days;
+        $nights = max(1, $diff->days);
     }
 
     // Check if accommodations are selected
@@ -398,15 +411,6 @@ $galleryData = [
                        <span class="text-sm font-medium" id="total-guests">0</span>
                    </div>
 
-                   @if(!empty($booking['selected_activities']))
-                       <div class="mt-2 space-y-1">
-                           @foreach($booking['selected_activities'] as $activity)
-                               <div class="text-xs text-gray-600">
-                                   Activity: {{ $activity['name'] }} - ₱{{ number_format($activity['price'] * $activity['guests']) }} ({{ $activity['guests'] }} guests)
-                               </div>
-                           @endforeach
-                       </div>
-                   @endif
 
                    <div class="flex justify-between items-center text-lg font-bold">
                        <span>Total:</span>
@@ -802,8 +806,8 @@ function computeStaycationTotals(staycation, options = {}) {
         // Dome / Bell: flat 3000 per night, up to 8
         basePriceTotal = 3000 * nights;
     } else if (name.includes('byot') || name.includes('car')) {
-        // BYOT / Car: 300 * guests * nights
-        basePriceTotal = 300 * guests * nights;
+        // BYOT / Car: 300 * guests * nights + 500 * guests * nights
+        basePriceTotal = (300 * nights) + (500 * guests * nights);
     }
 
     // ---- PET FEE ----
@@ -965,13 +969,13 @@ function computeStaycationTotals(staycation, options = {}) {
             summaryContainer.appendChild(summaryItem);
         });
 
-        // Activities total (as is)
-        const selectedActivities = JSON.parse(el.dataset.selectedActivities || '[]');
-        const activitiesTotal = selectedActivities.reduce(
-            (sum, activity) => sum + (activity.price * activity.guests),
-            0
-        );
-        totalPrice += activitiesTotal;
+        // Activities are handled on the activities page, not here
+        // const selectedActivities = JSON.parse(el.dataset.selectedActivities || '[]');
+        // const activitiesTotal = selectedActivities.reduce(
+        //     (sum, activity) => sum + (activity.price * activity.guests),
+        //     0
+        // );
+        // totalPrice += activitiesTotal;
 
         const totalPriceEl = document.getElementById('total-price');
         if (totalPriceEl) totalPriceEl.textContent = `₱ ${totalPrice.toLocaleString()}`;
@@ -1495,8 +1499,16 @@ function computeStaycationTotals(staycation, options = {}) {
         // Clear previous options
         optionsContainer.innerHTML = '';
 
+        // Filter out already selected accommodations
+        const availableStaycations = staycations.filter(staycation => {
+            const lowerName = staycation.name.toLowerCase();
+            const category = staycation.type || (lowerName.includes('standard') || lowerName.includes('premium') ? 'glamping' : 'camping');
+            const key = `${category}-${staycation.id}`;
+            return !window.selectedAccommodations || !window.selectedAccommodations[key];
+        });
+
         // Populate options
-        staycations.forEach((staycation, index) => {
+        availableStaycations.forEach((staycation, index) => {
             const optionDiv = document.createElement('div');
             optionDiv.className = 'bg-white rounded-xl shadow-md overflow-hidden transition transform hover:-translate-y-1 hover:shadow-xl h-full flex flex-col border border-gray-100';
 

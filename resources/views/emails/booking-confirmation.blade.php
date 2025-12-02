@@ -44,7 +44,20 @@
                         // Fallback calculation if final_totals not set
                         $checkin = !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin']) : null;
                         $checkout = !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout']) : null;
-                        $nights = $checkin && $checkout ? $checkout->diffInDays($checkin) : 0;
+                        // Normalize ordering and compute nights defensively
+                        if ($checkin && $checkout) {
+                            if ($checkout->lt($checkin)) {
+                                $tmp = $checkin;
+                                $checkin = $checkout;
+                                $checkout = $tmp;
+                            }
+                            $nights = $checkout->diffInDays($checkin);
+                            if ($nights === 0) {
+                                $nights = 1;
+                            }
+                        } else {
+                            $nights = 0;
+                        }
 
                         foreach ($bookingData['accommodations'] as $accommodation) {
                             if (!empty($accommodation['staycation'])) {
@@ -104,7 +117,7 @@
                     <p><strong>Booking Type:</strong> Staycation</p>
                     <p><strong>Check-in:</strong> {{ !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin'])->format('M d, Y') : '' }}</p>
                     <p><strong>Check-out:</strong> {{ !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout'])->format('M d, Y') : '' }}</p>
-                    <p><strong>Nights:</strong> {{ !empty($bookingData['checkin']) && !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout'])->diffInDays(\Carbon\Carbon::parse($bookingData['checkin'])) : 0 }}</p>
+                    <p><strong>Nights:</strong> {{ !empty($bookingData['checkin']) && !empty($bookingData['checkout']) ? max(1, abs(\Carbon\Carbon::parse($bookingData['checkout'])->diffInDays(\Carbon\Carbon::parse($bookingData['checkin'])))) : 0 }}</p>
                     <p><strong>Guests:</strong> {{ collect($bookingData['accommodations'])->sum('guests') }}</p>
                     @if (!empty($bookingData['accommodations']))
                         <p><strong>Selected Accommodations:</strong></p>
@@ -112,7 +125,19 @@
                             @php
                             $checkin = !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin']) : null;
                             $checkout = !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout']) : null;
-                            $nights = $checkin && $checkout ? $checkout->diffInDays($checkin) : 0;
+                            if ($checkin && $checkout) {
+                                if ($checkout->lt($checkin)) {
+                                    $tmp = $checkin;
+                                    $checkin = $checkout;
+                                    $checkout = $tmp;
+                                }
+                                $nights = $checkout->diffInDays($checkin);
+                                if ($nights === 0) {
+                                    $nights = 1;
+                                }
+                            } else {
+                                $nights = 0;
+                            }
                             @endphp
                             @foreach ($bookingData['accommodations'] as $accommodation)
                                 @if (!empty($accommodation['staycation']))
@@ -131,9 +156,9 @@
                                             $isWeekend = $day === 5 || $day === 6;
                                             $basePrice = 0;
                                             if (str_contains($name, 'standard')) {
-                                                $basePrice = $isWeekend ? 1000 * $quantity : 800 * $quantity;
+                                                $basePrice = $isWeekend ? 6000 : 4800;
                                             } elseif (str_contains($name, 'premium')) {
-                                                $basePrice = $isWeekend ? 1200 * $quantity : 960 * $quantity;
+                                                $basePrice = $isWeekend ? 7200 : 5760;
                                             }
                                             $extraGuests = max(0, $quantity - 4);
                                             $accommodationPrice += $basePrice + ($extraGuests * 400);
@@ -162,7 +187,7 @@
                                     } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
                                         $baseRate = 3000;
                                     } elseif ($isBYOT || $isCarCamping) {
-                                        $baseRate = 300 * $quantity;
+                                        $baseRate = 300;
                                     }
 
                                     $extraRate = $extraGuests * 400; // ₱400 per extra guest per night
