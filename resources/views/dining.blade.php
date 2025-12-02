@@ -17,6 +17,7 @@
     {{-- Icons / Swiper --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   </head>
 
   <body class="bg-[#f5efe7]">
@@ -27,8 +28,6 @@
       @endif
     </div>
     <x-header active="dining" />
-
-    <div class="min-h-screen">
 
       {{-- Hero Slider --}}
     <x-hero-slider :images="$swiperImages" :texts="$texts" />

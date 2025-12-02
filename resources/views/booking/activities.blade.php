@@ -151,7 +151,7 @@
   <x-footer />
 
   {{-- Toast --}}
-  <div class="toast fixed bottom-4 right-4 flex items-center text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden"
+  <div class="toast fixed bottom-4 right-4 items-center text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden"
         role="alert" aria-live="assertive" aria-atomic="true">
     <div class="flex items-center w-full">
       <div class="toast-body text-sm flex-1"></div>

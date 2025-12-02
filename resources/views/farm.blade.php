@@ -8,54 +8,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     @endpush
 
-    {{-- Hero Slider (dining-style) --}}
-    <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]" data-slides-count="{{ count($swiperImages) }}">
-      <div class="swiper-wrapper">
-        @if(count($swiperImages) > 0)
-          @php $texts_array = array_values($texts); $labels_array = array_keys($texts); @endphp
-          @foreach($swiperImages as $index => $image)
-          <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-            <img
-              src="{{ $image->image_path }}"
-              alt="{{ $image->title ?? 'Slide Image' }}"
-              class="w-full h-full object-cover object-center"
-              loading="lazy"
-            >
-            <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
-            <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
-              <div class="text-center px-4">
-                @if(isset($texts_array[$index]))
-                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                      style="font-family: gotham;">
-                    {{ ucfirst($labels_array[$index]) }}
-                  </h2>
-                  <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-                    style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
-                    {{ $texts_array[$index] }}
-                  </p>
-                @endif
-              </div>
-            </div>
-          </div>
-          @endforeach
-        @else
-          <div class="swiper-slide relative flex items-center justify-center bg-gray-200 overflow-hidden">
-            <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
-              <div class="text-center px-4">
-                <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                    style="font-family: gotham;">
-                  No Image Available
-                </h2>
-                <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-                  style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
-                  Images will be added soon
-                </p>
-              </div>
-            </div>
-          </div>
-        @endif
-      </div>
-    </div>
+    {{-- Hero Slider --}}
+    <x-hero-slider :images="$swiperImages" :texts="$texts" />
 
     <main id="main" class="">
       {{-- SECTION: Our Sustainable Farming --}}
@@ -362,10 +316,5 @@
 
     {{-- Floating Buttons --}}
     <x-floating-buttons />
-  {{-- Footer --}}
-  <x-footer />
-
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-  </body>
-</html>
+</x-page-layout>
 
