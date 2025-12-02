@@ -58,4 +58,19 @@
       </div>
     </div>
   </main>
-</x-page-layout>
+
+  {{-- Footer --}}
+  <x-footer />
+
+  {{-- Temporary inline font helpers (move to CSS if possible) --}}
+  <style>
+    .font-gotham {
+      font-family: 'Gotham', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    .font-gotham {
+      font-family: 'Gotham Book', sans-serif;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</body>
+</html>

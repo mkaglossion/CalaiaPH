@@ -365,7 +365,276 @@ if ($datesSelected) {
     </div>
 </div>
 
-{{-- Footer --}}
-<x-footer />
+  {{-- Footer --}}
+  <x-footer />
+
+  {{-- Temporary inline font helpers --}}
+  <style>
+    .font-gotham {
+      font-family: 'Gotham Book', sans-serif;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const selectedActivities = [];
+      let totalCost = 0;
+
+      // Get data from attributes
+      const container = document.querySelector('.pt-6.md\\:pt-12');
+      const accommodationTotal = parseFloat(container.dataset.accommodationTotal) || 0;
+      const totalGuests = parseInt(container.dataset.totalGuests) || 0;
+      const nights = parseInt(container.dataset.nights) || 0;
+
+      // Load activities from API
+      loadActivities();
+
+      // Function to load activities from API
+      function loadActivities() {
+        fetch('/api/activities')
+          .then(response => response.json())
+          .then(activities => {
+            const container = document.getElementById('activities-container');
+            container.innerHTML = '';
+
+            activities.forEach(activity => {
+              const activityDiv = document.createElement('div');
+              activityDiv.className = 'bg-gray-50 rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow';
+              activityDiv.innerHTML = `
+                <div class="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="activity-${activity.id}"
+                    name="activities[]"
+                    value="${activity.id}"
+                    class="activity-checkbox mt-1 text-[#8f5d54] focus:ring-[#8f5d54]"
+                    data-price="${activity.price}"
+                    data-name="${activity.name}"
+                  >
+                  <div class="flex-1">
+                    <label for="activity-${activity.id}" class="cursor-pointer">
+                      <div class="flex items-start space-x-3">
+                        ${activity.image ? `<img src="${activity.image}" alt="${activity.name}" class="w-16 h-16 object-cover rounded-lg flex-shrink-0">` : ''}
+                        <div class="flex-1">
+                          <h4 class="font-semibold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">${activity.name}</h4>
+                          <p class="text-xs text-gray-600 mt-1" style="font-family: 'Gotham Book', sans-serif;">${activity.description}</p>
+                          <div class="flex items-center justify-between mt-2">
+                            <span class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">
+                              <i class="bi bi-clock mr-1"></i>${activity.duration}
+                            </span>
+                            <span class="text-xs font-semibold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">₱${parseFloat(activity.price).toFixed(2)}</span>
+                          </div>
+                          <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full" style="font-family: 'Gotham Book', sans-serif;">
+                            ${activity.availability}
+                          </span>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              `;
+              container.appendChild(activityDiv);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading activities:', error);
+            showToast('Error loading activities. Please refresh the page.', 'error');
+          });
+      }
+
+    // Handle activity checkboxes (using event delegation)
+    document.addEventListener('change', function(e) {
+      if (e.target.classList.contains('activity-checkbox')) {
+        const checkbox = e.target;
+        const activityId = checkbox.value;
+        const activityName = checkbox.dataset.name;
+        const activityPrice = parseFloat(checkbox.dataset.price);
+
+        if (checkbox.checked) {
+          selectedActivities.push({ id: activityId, name: activityName, price: activityPrice, guests: totalGuests, type: 'predefined' });
+          totalCost += activityPrice * totalGuests;
+          showToast(`${activityName} added to selection`, 'success');
+        } else {
+          const index = selectedActivities.findIndex(a => a.id === activityId);
+          if (index > -1) {
+            totalCost -= selectedActivities[index].price * selectedActivities[index].guests;
+            selectedActivities.splice(index, 1);
+            showToast(`${activityName} removed from selection`, 'info');
+          }
+        }
+
+        updateSummary();
+      }
+    });
+
+
+      // Update summary display
+      function updateSummary() {
+        const container = document.getElementById('selected-activities');
+        const totalElement = document.getElementById('total-cost');
+        const grandTotalElement = document.getElementById('grand-total');
+        const confirmBtn = document.getElementById('confirm-btn');
+
+        container.innerHTML = '';
+
+        if (selectedActivities.length === 0) {
+          container.innerHTML = '<p class="text-xs text-gray-500" style="font-family: \'Gotham Book\', sans-serif;">No activities selected</p>';
+          confirmBtn.disabled = true;
+        } else {
+          selectedActivities.forEach(activity => {
+            const item = document.createElement('div');
+            item.className = 'flex justify-between items-start p-2 bg-white rounded border';
+            item.innerHTML = `
+              <div class="flex-1">
+                <p class="text-xs font-medium text-gray-900" style="font-family: 'Gotham Book', sans-serif;">${activity.name}</p>
+                <div class="mt-2">
+                  <label class="block text-xs text-gray-600 mb-1" style="font-family: 'Gotham Book', sans-serif;">Number of Guests</label>
+                  <input type="number" class="activity-guests w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent" value="${activity.guests}" min="1" max="${totalGuests}" data-activity-id="${activity.id}">
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold text-[#8f5d54]">₱${(activity.price * activity.guests).toFixed(2)}</span>
+                <button type="button" class="text-red-500 hover:text-red-700" onclick="removeActivity('${activity.id}')">
+                  <i class="bi bi-x"></i>
+                </button>
+              </div>
+            `;
+            container.appendChild(item);
+
+            // Add event listener for guest input
+            const guestInput = item.querySelector('.activity-guests');
+            guestInput.addEventListener('input', function() {
+              const newGuests = parseInt(this.value) || 1;
+              const index = selectedActivities.findIndex(a => a.id === activity.id);
+              if (index > -1) {
+                const oldGuests = selectedActivities[index].guests;
+                selectedActivities[index].guests = newGuests;
+                totalCost += (newGuests - oldGuests) * activity.price;
+                updateSummary();
+              }
+            });
+          });
+          confirmBtn.disabled = false;
+        }
+
+        totalElement.textContent = `₱${totalCost.toFixed(2)}`;
+
+        // Calculate grand total (accommodation total + activities total)
+        const grandTotal = accommodationTotal + totalCost;
+        if (grandTotalElement) {
+          grandTotalElement.textContent = `₱${grandTotal.toFixed(2)}`;
+        }
+      }
+
+      // Remove activity
+      window.removeActivity = function(id) {
+        const index = selectedActivities.findIndex(a => a.id === id);
+        if (index > -1) {
+          const activityName = selectedActivities[index].name;
+          totalCost -= selectedActivities[index].price * totalGuests;
+          selectedActivities.splice(index, 1);
+          updateSummary();
+          showToast(`${activityName} removed from selection`, 'info');
+        }
+      };
+
+      // Toast function
+      function showToast(message, type = 'info') {
+        const toastEl = document.querySelector('.toast');
+        if (toastEl) {
+          const toastBody = toastEl.querySelector('.toast-body');
+          if (toastBody) {
+            toastBody.textContent = message;
+          }
+          toastEl.classList.remove('hidden');
+          setTimeout(() => {
+            toastEl.classList.add('hidden');
+          }, 3000);
+        }
+      }
+
+      // Skip button
+      document.getElementById('skip-btn').addEventListener('click', function() {
+        // Store empty activities and proceed to payment
+        fetch('{{ route("booking.storeStaycationActivities") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({ activities: [] })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            window.location.href = '{{ route("booking.staycationPayment") }}';
+          } else {
+            showToast('Error saving. Please try again.', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('Error saving. Please try again.', 'error');
+        });
+      });
+
+      // Confirm button
+      document.getElementById('confirm-btn').addEventListener('click', function() {
+        // Validation: Check if activities are selected
+        if (selectedActivities.length === 0) {
+          showToast('Please select at least one activity or skip to proceed.', 'error');
+          return;
+        }
+
+        // Confirmation dialog
+        const totalCost = document.getElementById('total-cost')?.textContent || '₱ 0.00';
+        const grandTotal = document.getElementById('grand-total')?.textContent || '₱ 0.00';
+
+        if (!confirm(`Are you sure you want to proceed with ${selectedActivities.length} selected activities?\n\nActivities Total: ${totalCost}\nGrand Total: ${grandTotal}\n\nYou will be taken to payment next.`)) {
+          return;
+        }
+
+        // Show loading state
+        const confirmBtn = document.getElementById('confirm-btn');
+        if (confirmBtn) {
+          confirmBtn.disabled = true;
+          confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+        }
+
+        // Store selected activities in session and proceed
+        fetch('{{ route("booking.storeStaycationActivities") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({ activities: selectedActivities })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            window.location.href = '{{ route("booking.staycationPayment") }}';
+          } else {
+            // Reset button
+            if (confirmBtn) {
+              confirmBtn.disabled = false;
+              confirmBtn.innerHTML = 'Confirm and Proceed';
+            }
+            showToast('Error saving activities. Please try again.', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          // Reset button
+          if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = 'Confirm and Proceed';
+          }
+          showToast('Network error. Please check your connection and try again.', 'error');
+        });
+      });
+    });
+  </script>
 </body>
 </html>

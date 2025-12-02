@@ -9,13 +9,13 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
     --font-heading: 'Gotham', sans-serif;
-    --font-body: 'Gotham Book', sans-serif;
+    --font-body: 'Vilaka Modern Serif', serif;
 }
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Gotham', sans-serif;
 }
 p {
-  font-family: 'Gotham Book', sans-serif;
+  font-family: 'Vilaka Modern Serif', serif;
 }
 [x-cloak] {
   display: none !important;

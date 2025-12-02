@@ -2352,10 +2352,7 @@ function updateSelectionUI(card, checkbox, isSelected) {
                     skipBtn.disabled = false;
                     skipBtn.innerHTML = 'Skip Activities & Go to Payment';
                 }
-                // Only show error toast if we actually got a JSON response with error
-                if (data && !data.success) {
-                    showToast('Error saving accommodations. Please try again.', 'error');
-                }
+                showToast('Error saving accommodations. Please try again.', 'error');
             }
         })
         .catch(error => {

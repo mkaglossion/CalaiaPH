@@ -216,72 +216,50 @@ Route::prefix('admin')->group(function () {
     Route::get('swiper-images', [SwiperImageController::class, 'index'])->name('swiper-images.index');
     Route::post('swiper-images', [SwiperImageController::class, 'store'])->name('swiper-images.store');
     Route::delete('swiper-images/{swiperImage}', [SwiperImageController::class, 'destroy'])->name('swiper-images.destroy');
-
-    $swiperRoutes = [
-        'day-tour-swiper-images' => DaytourSwiperImageController::class,
-        'stay-swiper-images' => StaySwiperImageController::class,
-        'do-swiper-images' => DoSwiperImageController::class,
-        'food-swiper-images' => FoodSwiperImageController::class,
-        'special-swiper-images' => SpecialSwiperImageController::class,
-        'farm-swiper-images' => FarmSwiperImageController::class,
-    ];
-    foreach ($swiperRoutes as $route => $controller) {
-        Route::resource($route, $controller)->only(['index', 'store', 'destroy']);
-    }
+    Route::resource('day-tour-swiper-images', DaytourSwiperImageController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('stay-swiper-images', StaySwiperImageController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('do-swiper-images', DoSwiperImageController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('food-swiper-images', FoodSwiperImageController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('special-swiper-images', SpecialSwiperImageController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('farm-swiper-images', FarmSwiperImageController::class)->only(['index', 'store', 'destroy']);
     Route::resource('activity-swiper-images', ActivitySwiperImageController::class)->only(['store', 'destroy']);
 
     // Text CRUD
-    $textRoutes = [
-        'home-texts' => HomeTextController::class,
-        'day-tour-texts' => DayTourTextController::class,
-        'stay-texts' => StayTextController::class,
-        'do-texts' => DoTextController::class,
-        'food-texts' => FoodTextController::class,
-        'special-texts' => SpecialTextController::class,
-        'farm-texts' => FarmTextController::class,
-    ];
-    foreach ($textRoutes as $route => $controller) {
-        Route::resource($route, $controller)->only(['index', 'store', 'update', 'destroy']);
-    }
+    Route::resource('home-texts', HomeTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('day-tour-texts', DayTourTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('stay-texts', StayTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('do-texts', DoTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('food-texts', FoodTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('special-texts', SpecialTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('farm-texts', FarmTextController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('activity-texts', ActivityTextController::class)->only(['store', 'update', 'destroy']);
 
     // activities CRUD
-    // Activity CRUD
     Route::resource('activity-list', ActivityController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('activity-image', ActivitySwiperImageController::class)->only(['index', 'store', 'destroy']);
     Route::resource('activity-text', ActivityTextController::class)->only(['store', 'update', 'destroy']);
 
-    // Other CRUD resources
-    $crudRoutes = [
-        'staycation-list' => StaycationController::class,
-        'menu-list' => MenuController::class,
-        'event-list' => EventController::class,
-        'farmInfo-list' => FarmInfoController::class,
-        'day-tours' => AdminDayTourController::class,
-    ];
-    foreach ($crudRoutes as $route => $controller) {
-        Route::resource($route, $controller)->only(['index', 'store', 'update', 'destroy']);
-    }
+    // staycation CRUD
+    Route::resource('staycation-list', StaycationController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('staycation-image', StaycationSwiperImageController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('staycation-text', StaycationTextController::class)->only(['store', 'update', 'destroy']);
 
-    $imageRoutes = [
-        'staycation-image' => StaycationSwiperImageController::class,
-        'menu-image' => MenuSwiperImageController::class,
-        'event-image' => EventSwiperImageController::class,
-        'farmInfo-image' => FarmInfoSwiperImageController::class,
-    ];
-    foreach ($imageRoutes as $route => $controller) {
-        Route::resource($route, $controller)->only(['index', 'store', 'destroy']);
-    }
+    // menu CRUD
+    Route::resource('menu-list', MenuController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('menu-image', MenuSwiperImageController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('menu-text', MenuTextController::class)->only(['store', 'update', 'destroy']);
 
-    $textRoutes2 = [
-        'staycation-text' => StaycationTextController::class,
-        'menu-text' => MenuTextController::class,
-        'event-text' => EventTextController::class,
-        'farmInfo-text' => FarmInfoTextController::class,
-        'day-text' => DayPackageTextController::class,
-    ];
-    foreach ($textRoutes2 as $route => $controller) {
-        Route::resource($route, $controller)->only(['store', 'update', 'destroy']);
-    }
+    // event CRUD
+    Route::resource('event-list', EventController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('event-image', EventSwiperImageController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('event-text', EventTextController::class)->only(['store', 'update', 'destroy']);
+
+    // farmInfo CRUD
+    Route::resource('farmInfo-list', FarmInfoController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('farmInfo-image', FarmInfoSwiperImageController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
+
+    Route::resource('day-tours', AdminDayTourController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('day-text', DayPackageTextController::class)->only(['index', 'store', 'update', 'destroy']);
 
 });

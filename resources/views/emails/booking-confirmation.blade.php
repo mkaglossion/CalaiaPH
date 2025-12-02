@@ -31,9 +31,6 @@
                 @php
                 $isStaycation = isset($bookingData['accommodations']) && !empty($bookingData['accommodations']);
                 $accommodationTotal = 0;
-                $activitiesTotal = 0;
-                $grandTotal = 0;
-
                 if ($isStaycation) {
                     // Use stored final totals if available
                     if (isset($bookingData['final_totals'])) {
@@ -44,72 +41,49 @@
                         // Fallback calculation if final_totals not set
                         $checkin = !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin']) : null;
                         $checkout = !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout']) : null;
-                        // Normalize ordering and compute nights defensively
-                        if ($checkin && $checkout) {
-                            if ($checkout->lt($checkin)) {
-                                $tmp = $checkin;
-                                $checkin = $checkout;
-                                $checkout = $tmp;
-                            }
-                            $nights = $checkout->diffInDays($checkin);
-                            if ($nights === 0) {
-                                $nights = 1;
-                            }
-                        } else {
-                            $nights = 0;
-                        }
+                        $nights = $checkin && $checkout ? $checkout->diffInDays($checkin) : 0;
 
-                        foreach ($bookingData['accommodations'] as $accommodation) {
-                            if (!empty($accommodation['staycation'])) {
-                                $quantity = $accommodation['guests'] ?? 1;
-                                $name = strtolower($accommodation['staycation']['name']);
-                                $accPrice = 0;
+                    foreach ($bookingData['accommodations'] as $accommodation) {
+                        if (!empty($accommodation['staycation'])) {
+                            $quantity = $accommodation['guests'] ?? 1;
+                            $name = strtolower($accommodation['staycation']['name']);
+                            $accPrice = 0;
 
-                                if ($checkin && $checkout && (str_contains($name, 'standard') || str_contains($name, 'premium'))) {
-                                    $current = clone $checkin;
-                                    while ($current < $checkout) {
-                                        $day = (int)$current->format('w');
-                                        $isWeekend = $day === 5 || $day === 6;
-                                        $basePrice = 0;
-                                        if (str_contains($name, 'standard')) {
-                                            $basePrice = $isWeekend ? 6000 : 4800;
-                                        } elseif (str_contains($name, 'premium')) {
-                                            $basePrice = $isWeekend ? 7200 : 5760;
-                                        }
-                                        $extraGuests = max(0, $quantity - 4);
-                                        $accPrice += $basePrice + ($extraGuests * 400);
-                                        $current->modify('+1 day');
+                            if ($checkin && $checkout && (str_contains($name, 'standard') || str_contains($name, 'premium'))) {
+                                $current = clone $checkin;
+                                while ($current < $checkout) {
+                                    $day = (int)$current->format('w');
+                                    $isWeekend = $day === 5 || $day === 6;
+                                    $basePrice = 0;
+                                    if (str_contains($name, 'standard')) {
+                                        $basePrice = $isWeekend ? 6000 : 4800;
+                                    } elseif (str_contains($name, 'premium')) {
+                                        $basePrice = $isWeekend ? 7200 : 5760;
                                     }
-                                } elseif ($checkin && $checkout && (str_contains($name, 'bell') || str_contains($name, 'dome'))) {
-                                    $accPrice = 3000 * $nights;
-                                } elseif ($checkin && $checkout && (str_contains($name, 'byot') || str_contains($name, 'car camping'))) {
-                                    $accPrice = 300 * $quantity * $nights;
-                                } else {
-                                    $accPrice = $accommodation['staycation']['price'] * $quantity * $nights;
+                                    $extraGuests = max(0, $quantity - 4);
+                                    $accPrice += $basePrice + ($extraGuests * 400);
+                                    $current->modify('+1 day');
                                 }
-
-                                // Add pet fee
-                                if (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) {
-                                    $accPrice += 2000 * $accommodation['num_pets'];
-                                }
-
-                                // Add breakfast fee
-                                if (!empty($accommodation['has_breakfast'])) {
-                                    $accPrice += 500 * $accommodation['guests'];
-                                }
-
-                                $accommodationTotal += $accPrice;
+                            } elseif ($checkin && $checkout && (str_contains($name, 'bell') || str_contains($name, 'dome'))) {
+                                $accPrice = 3000 * $nights;
+                            } elseif ($checkin && $checkout && (str_contains($name, 'byot') || str_contains($name, 'car camping'))) {
+                                $accPrice = 300 * $quantity * $nights;
+                            } else {
+                                $accPrice = $accommodation['staycation']['price'] * $quantity * $nights;
                             }
-                        }
 
-                        // Calculate activities total
-                        if (!empty($selectedActivities)) {
-                            $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
-                                return 500 * ($activity['guests'] ?? 1);
-                            });
-                        }
+                            // Add pet fee
+                            if (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) {
+                                $accPrice += 2000 * $accommodation['num_pets'];
+                            }
 
-                        $grandTotal = $accommodationTotal + $activitiesTotal;
+                            // Add breakfast fee
+                            if (!empty($accommodation['has_breakfast'])) {
+                                $accPrice += 500 * $accommodation['guests'];
+                            }
+
+                            $accommodationTotal += $accPrice;
+                        }
                     }
                 }
                 @endphp
@@ -207,8 +181,8 @@
                             @endforeach
                         </ul>
                         <p><strong>Accommodation Total:</strong> ₱{{ number_format($accommodationTotal, 2) }}</p>
-                        <p><strong>Activities Total:</strong> ₱{{ number_format($activitiesTotal, 2) }}</p>
-                        <p><strong>Total Amount Paid:</strong> ₱{{ number_format($grandTotal, 2) }}</p>
+                        <p><strong>Activities Total:</strong> ₱{{ number_format($bookingData['final_totals']['activities_total'] ?? 0, 2) }}</p>
+                        <p><strong>Total Amount Paid:</strong> ₱{{ number_format($accommodationTotal + ($bookingData['final_totals']['activities_total'] ?? 0), 2) }}</p>
                     @endif
                 @else
                     <p><strong>Type:</strong> {{ ucfirst($bookingData['type']) }}</p>
@@ -249,7 +223,7 @@
                 <p><strong>Transaction ID:</strong> {{ $bookingData['transaction_id'] ?? 'N/A' }}</p>
                 <p><strong>Payment Method:</strong> {{ ucfirst($bookingData['payment_method'] ?? 'N/A') }}</p>
                 <p><strong>Payment Date:</strong> {{ !empty($bookingData['payment_date']) ? \Carbon\Carbon::parse($bookingData['payment_date'])->format('M d, Y H:i') : 'N/A' }}</p>
-                <p><strong>Total Amount Paid:</strong> ₱{{ number_format($grandTotal ?? $bookingData['grand_total'] ?? 0, 2) }}</p>
+                <p><strong>Total Amount Paid:</strong> ₱{{ number_format($grandTotal ?? $bookingData['grand_total'] ?? $bookingData['final_totals']['grand_total'] ?? 0, 2) }}</p>
             </div>
 
             <h3>What's Next?</h3>

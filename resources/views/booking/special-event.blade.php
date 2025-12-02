@@ -80,7 +80,7 @@
           <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">
             CalaiaPH Special Events
           </p>
-          <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#8f5d54] font-gotham flex items-center justify-center gap-2 sm:gap-3">
+          <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#8f5d54] font-vila-zilka flex items-center justify-center gap-2 sm:gap-3">
             <i class="fa-solid fa-calendar-star text-2xl sm:text-3xl md:text-4xl text-[#8f5d54]"></i>
             <span>Choose Your Special Event</span>
           </h1>
@@ -226,8 +226,8 @@
     .font-gotham {
       font-family: 'Gotham', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    .font-gotham {
-      font-family: 'Gotham Book', sans-serif;
+    .font-vila-zilka {
+      font-family: 'Vila Zilka Serif', ui-serif, Georgia, 'Times New Roman', serif;
     }
   </style>
 

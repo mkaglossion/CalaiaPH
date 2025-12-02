@@ -80,7 +80,7 @@
           <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">
             CalaiaPH Special Event - {{ $bookingData['event_name'] ?? 'Event' }}
           </p>
-          <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#8f5d54] font-gotham">
+          <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#8f5d54] font-vila-zilka">
             Enter Your Details
           </h1>
           <p class="mt-2 text-sm sm:text-base text-gray-500 max-w-2xl mx-auto px-2">
@@ -297,8 +297,8 @@
     .font-gotham {
       font-family: 'Gotham', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-    .font-gotham {
-      font-family: 'Gotham Book', sans-serif;
+    .font-vila-zilka {
+      font-family: 'Vila Zilka Serif', ui-serif, Georgia, 'Times New Roman', serif;
     }
   </style>
 

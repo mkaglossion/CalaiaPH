@@ -23,7 +23,7 @@
 
     <x-header active="staycation" />
 
-    {{-- Hero Slider --}}
+    <!-- ================= Hero Slider ================= -->
     <x-hero-slider :images="$swiperImages" :texts="$texts" />
 
     {{-- Main --}}
@@ -588,7 +588,7 @@
     ];
     @endphp
 
-    {{-- Scripts --}}
+    <!-- ================= Scripts ================= -->
     <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
@@ -722,6 +722,23 @@
         }
       }
 
+      // ---------- Swiper setup ----------
+      function initHero(){
+        if(!window.Swiper) return;
+        const hero = document.querySelector('.heroSwiper');
+        if(!hero) return;
+        const slidesCount = parseInt(hero.dataset.slidesCount);
+        try {
+          new Swiper(hero, {
+            loop: slidesCount > 1,
+            effect: 'fade',
+            fadeEffect: { crossFade: true },
+            keyboard: { enabled: true },
+            a11y: { prevSlideMessage: 'Previous slide', nextSlideMessage: 'Next slide' },
+            autoplay: { delay: 5000, disableOnInteraction: false },
+          });
+        } catch(e){ console.warn('Hero swiper init failed', e); }
+      }
 
       function initModalSwipers(){
         if(!window.Swiper) return;
@@ -756,6 +773,8 @@
       }
 
       document.addEventListener('DOMContentLoaded', function(){
+        if(!window.Swiper){ console.warn('Swiper not loaded – skipping init'); return; }
+        initHero();
         initModalSwipers();
         document.querySelectorAll('a[href^="#"]').forEach(a => {
           a.addEventListener('click', (e) => {
