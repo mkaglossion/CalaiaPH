@@ -34,8 +34,8 @@
       <nav class="mt-4 space-y-1 overflow-y-auto" style="max-height: calc(100vh - 100px);">
         @php
           $menuItems = [
-            ['title'=>'Home','icon'=>'home','route'=>'admin.do.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.do.activities']
+            ['title'=>'Home','icon'=>'home','route'=>'admin.home.*','sub'=>[
+              ['label'=>'Pages Information','route'=>'admin.home.home']
             ]],
             ['title'=>'Day Tour','icon'=>'sun','route'=>'admin.day.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.day.daytour'],
@@ -49,13 +49,13 @@
               ['label'=>'Pages Information','route'=>'admin.do.activities'],
               ['label'=>'Items','route'=>'admin.do.activities']
             ]],
-            ['title'=>'Special Events','icon'=>'party-popper','route'=>'admin.do.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.do.activities'],
-              ['label'=>'Items','route'=>'admin.do.activities']
+            ['title'=>'Special Events','icon'=>'party-popper','route'=>'admin.events.*','sub'=>[
+              ['label'=>'Pages Information','route'=>'admin.events.specialevents'],
+              ['label'=>'Items','route'=>'admin.events.events']
             ]],
-            ['title'=>'Our Farm','icon'=>'leaf','route'=>'admin.do.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.do.activities'],
-              ['label'=>'Items','route'=>'admin.do.activities']
+            ['title'=>'Our Farm','icon'=>'leaf','route'=>'admin.farm.*','sub'=>[
+              ['label'=>'Pages Information','route'=>'admin.farm.ourfarm'],
+              ['label'=>'Items','route'=>'admin.farm.farmInfos']
             ]],
             
           ];

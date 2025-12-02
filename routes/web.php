@@ -170,7 +170,7 @@ Route::middleware('auth')->group(function () {
 //     })->name($name);
 // }
 // ========== Admin Routes ==========
-Route::middleware('auth:admin')->prefix('admin')->group(function () {
+Route::middleware(['auth'])->prefix('admin')->group(function () {
     // Main Sections
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/users', [AdminUsersController::class, 'index'])->name('admin.users');
@@ -202,7 +202,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     });
     Route::prefix('/farm')->group(function () {
             Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farm.farmInfos');
-            Route::get('/our-farm', [AdminPagesController::class, 'ourFarm'])->name('admin.farmourfarm');
+            Route::get('/our-farm', [AdminPagesController::class, 'ourFarm'])->name('admin.farm.ourfarm');
 
     });
     Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.staycations');
