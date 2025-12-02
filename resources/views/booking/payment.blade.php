@@ -1,4 +1,11 @@
 <x-page-layout title="CalaiaPH - Payment" active-header="booking">
+@php
+$selectedActivities = session('selected_activities', []);
+$activitiesTotal = collect($selectedActivities)->sum(function($activity) {
+    return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+});
+$grandTotal = ($bookingData['price'] ?? 0) + $activitiesTotal;
+@endphp
   {{-- Progress Indicator --}}
   <x-booking-progress
       :steps="[
@@ -17,7 +24,7 @@
           <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">
             CalaiaPH Booking
           </p>
-          <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-[#8f5d54] font-gotham">
+          <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">
             Complete Your Payment
           </h1>
           <p class="mt-2 text-sm sm:text-base text-gray-500 max-w-2xl mx-auto">
@@ -41,6 +48,7 @@
           {{-- Booking Summary --}}
           <x-booking-summary
               :booking-data="$bookingData"
+              :grand-total="$grandTotal ?? 0"
               title="Booking Summary"
               badge-text="{{ ucfirst($bookingData['type'] ?? '') }}"
               badge-icon="ticket-simple"
@@ -58,19 +66,4 @@
       </div>
     </div>
   </main>
-
-  {{-- Footer --}}
-  <x-footer />
-
-  {{-- Temporary inline font helpers (move to CSS if possible) --}}
-  <style>
-    .font-gotham {
-      font-family: 'Gotham', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-    .font-gotham {
-      font-family: 'Gotham Book', sans-serif;
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-</body>
-</html>
+</x-page-layout>

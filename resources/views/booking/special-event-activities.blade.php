@@ -263,8 +263,10 @@
           if (toastBody) {
             toastBody.textContent = message;
           }
+          toastEl.classList.add('flex');
           toastEl.classList.remove('hidden');
           setTimeout(() => {
+            toastEl.classList.remove('flex');
             toastEl.classList.add('hidden');
           }, 3000);
         }

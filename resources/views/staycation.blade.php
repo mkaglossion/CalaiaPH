@@ -23,7 +23,7 @@
 
     <x-header active="staycation" />
 
-    <!-- ================= Hero Slider ================= -->
+    {{-- Hero Slider --}}
     <x-hero-slider :images="$swiperImages" :texts="$texts" />
 
     {{-- Main --}}
@@ -89,7 +89,7 @@
           <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
             {{-- Standard --}}
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Vila Zilka Serif', serif;"><i class="bi bi-house-fill"></i> Standard Family Glamping Tent</h4></div>
+              <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif;"><i class="bi bi-house-fill"></i> Standard Family Glamping Tent</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -137,7 +137,7 @@
 
             {{-- Premium --}}
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Vila Zilka Serif', serif;"><i class="bi bi-star-fill"></i> Premium Family Glamping Tent</h4></div>
+              <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif;"><i class="bi bi-star-fill"></i> Premium Family Glamping Tent</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -201,7 +201,7 @@
           <div class="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {{-- Dome Tent --}}
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Vila Zilka Serif', serif;"><i class="bi bi-tent"></i>Dome Tent</h4></div>
+              <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif;"><i class="bi bi-tent"></i>Dome Tent</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -315,7 +315,7 @@
                    <p class="font-bold" style="color:#7a7d52; font-size: 20px; font-family: 'Gotham Book', sans-serif;">Starts at ₱300/tent or camp space + ₱500/pax overnight fee</p>
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dcfce7;color:#166534">Budget</span>
                 </div>
-                <h6 class="text-lg md:text-xl font-semibold" style="font-family: 'Vila Zilka Serif', serif;">Features</h6>
+                <h6 class="text-lg md:text-xl font-semibold" style="font-family: 'Gotham Book', sans-serif;">Features</h6>
                 <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">Spacious area for your own tent or car camp setup</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Common toilet and shower</li>
@@ -357,7 +357,7 @@
                    <p class="font-bold" style="color:#7a7d52; font-size: 20px; font-family: 'Gotham Book', sans-serif;">Starts at ₱300/tent or camp space + Php 500/pax overnight fee</p>
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#fef3c7;color:#7c2d12">Convenient</span>
                 </div>
-                <h6 class="text-xl md:text-2xl font-semibold" style="font-family: 'Vila Zilka Serif', serif;">Features</h6>
+                <h6 class="text-xl md:text-2xl font-semibold" style="font-family: 'Gotham Book', sans-serif;">Features</h6>
                 <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
                   <li class="px-3 py-2 bg-gray-50 rounded">Spacious area for your own tent or car camp setup</li>
                   <li class="px-3 py-2 bg-gray-50 rounded">Common toilet and shower</li>
@@ -588,7 +588,7 @@
     ];
     @endphp
 
-    <!-- ================= Scripts ================= -->
+    {{-- Scripts --}}
     <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
@@ -722,23 +722,6 @@
         }
       }
 
-      // ---------- Swiper setup ----------
-      function initHero(){
-        if(!window.Swiper) return;
-        const hero = document.querySelector('.heroSwiper');
-        if(!hero) return;
-        const slidesCount = parseInt(hero.dataset.slidesCount);
-        try {
-          new Swiper(hero, {
-            loop: slidesCount > 1,
-            effect: 'fade',
-            fadeEffect: { crossFade: true },
-            keyboard: { enabled: true },
-            a11y: { prevSlideMessage: 'Previous slide', nextSlideMessage: 'Next slide' },
-            autoplay: { delay: 5000, disableOnInteraction: false },
-          });
-        } catch(e){ console.warn('Hero swiper init failed', e); }
-      }
 
       function initModalSwipers(){
         if(!window.Swiper) return;
@@ -773,8 +756,6 @@
       }
 
       document.addEventListener('DOMContentLoaded', function(){
-        if(!window.Swiper){ console.warn('Swiper not loaded – skipping init'); return; }
-        initHero();
         initModalSwipers();
         document.querySelectorAll('a[href^="#"]').forEach(a => {
           a.addEventListener('click', (e) => {

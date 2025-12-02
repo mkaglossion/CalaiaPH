@@ -1,4 +1,11 @@
 <x-page-layout title="CalaiaPH - Day Visit Payment" active-header="daytour">
+  @php
+  $selectedActivities = session('dayvisit_selected_activities', []);
+  $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
+      return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+  });
+  $grandTotal = ($bookingData['price'] ?? 0) + $activitiesTotal;
+  @endphp
   {{-- Progress Indicator --}}
   <x-booking-progress
       :steps="[
@@ -41,6 +48,7 @@
           {{-- Booking Summary --}}
           <x-booking-summary
               :booking-data="$bookingData"
+              :grand-total="$grandTotal ?? 0"
               title="Day Visit Summary"
               badge-text="Day Visit"
               badge-icon="sun"
@@ -59,18 +67,4 @@
     </div>
   </main>
 
-  {{-- Footer --}}
-  <x-footer />
-
-  {{-- Temporary inline font helpers (move to CSS if possible) --}}
-  <style>
-    .font-gotham {
-      font-family: 'Gotham', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-    .font-gotham {
-      font-family: 'Gotham Book', sans-serif;
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-</body>
-</html>
+</x-page-layout>

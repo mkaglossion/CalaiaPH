@@ -14,7 +14,7 @@
                        ($step['status'] === 'current' ? 'text-[#8f5d54]' : 'text-gray-400') }}">
                     @if($step['status'] === 'completed')
                         <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mb-1">
-                            <i class="bi bi-check-circle-fill text-sm"></i>
+                            <i class="bi bi-check-circle-fill text-sm text-[#8f6a60]"></i>
                         </div>
                     @else
                         <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mb-1

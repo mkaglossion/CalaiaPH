@@ -24,11 +24,11 @@
           <div class="text-center px-4">
             @if(isset($texts_array[$index]))
               <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                  style="font-family: gotham;">
+                  style="font-family: 'Gotham Book', sans-serif;">
                 {{ ucfirst($labels_array[$index]) }}
               </h2>
               <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-                style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
+                style="font-family: 'Gotham Book', sans-serif; font-style: italic;">
                 {{ $texts_array[$index] }}
               </p>
             @endif
@@ -41,11 +41,11 @@
         <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
           <div class="text-center px-4">
             <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                style="font-family: gotham;">
+                style="font-family: 'Gotham Book', sans-serif;">
               No Image Available
             </h2>
             <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-              style="font-family: 'Vilaka Modern Serif', serif; font-style: italic;">
+              style="font-family: 'Gotham Book', sans-serif; font-style: italic;">
               Images will be added soon
             </p>
           </div>
@@ -53,13 +53,10 @@
       </div>
     @endif
   </div>
-  <div class="swiper-pagination hidden sm:block" aria-label="Slider pagination"></div>
 </div>
 
 {{-- Swiper JS --}}
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-
-@php $paginationMessage = 'Go to slide {{index}}'; @endphp
 
 @verbatim
 <script>
@@ -77,10 +74,6 @@ document.addEventListener('DOMContentLoaded', function () {
       fadeEffect: {
         crossFade: true
       },
-      pagination: {
-        el: '.swiper-pagination',
-        clickable: true,
-      },
       keyboard: {
         enabled: true,
         onlyInViewport: false,
@@ -90,7 +83,6 @@ document.addEventListener('DOMContentLoaded', function () {
         nextSlideMessage: 'Next slide',
         firstSlideMessage: 'This is the first slide',
         lastSlideMessage: 'This is the last slide',
-        paginationBulletMessage: '{{ $paginationMessage }}',
       },
     });
   });

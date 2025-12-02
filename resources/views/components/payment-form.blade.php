@@ -187,9 +187,6 @@
             >
                 <i class="bi bi-lock-fill mr-2"></i>
                 <span>Complete Payment</span>
-                <span class="font-bold ml-2">
-                    ₱{{ number_format($grandTotal, 2) }}
-                </span>
             </button>
             <p class="mt-3 text-xs sm:text-sm text-center text-gray-500" style="font-family: 'Gotham Book', sans-serif;">
                 Your payment is secured with 256-bit SSL encryption. By proceeding, you agree to our terms of service.

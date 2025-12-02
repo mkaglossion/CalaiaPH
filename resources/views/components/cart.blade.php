@@ -70,7 +70,7 @@
                         </button>
 
                         <div class="flex items-center gap-3 pr-4">
-                            <div class="w-10 h-10 flex-shrink-0 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                            <div class="w-10 h-10 shrink-0 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
                                 <template x-if="item.image">
                                     <img :src="item.image" :alt="item.title" class="w-full h-full object-cover">
                                 </template>

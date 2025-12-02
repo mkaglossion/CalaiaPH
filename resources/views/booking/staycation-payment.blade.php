@@ -101,16 +101,31 @@ if ($finalTotals) {
     $activitiesTotal = $finalTotals['activities_total'] ?? 0;
     $grandTotal = $finalTotals['grand_total'] ?? 0;
     $breakfastTotal = 0; // Already included in accommodation_total
+    // Ensure we still have the selected activities for display in the sidebar
+    $selectedActivities = $booking['selected_activities'] ?? session('booking.selected_activities') ?? session('selected_activities') ?? [];
 } else {
-    // Fallback calculation if final_totals not set
-    $selectedActivities = $booking['selected_activities'] ?? [];
+    // Get selected activities from URL parameter first (most reliable), then session
+    $selectedActivities = [];
+    if (isset($_GET['activities'])) {
+        $selectedActivities = json_decode(base64_decode($_GET['activities']), true) ?? [];
+    }
+    if (empty($selectedActivities)) {
+        $selectedActivities = session('selected_activities') ?? $booking['selected_activities'] ?? [];
+    }
     $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
-        return 500 * ($activity['guests'] ?? 0);
+        return ($activity['price'] ?? 500) * ($activity['guests'] ?? 0);
     });
 }
+
+$grandTotal = $accommodationTotal + $breakfastTotal + $activitiesTotal;
 @endphp
 
 <body class="bg-[#f5efe7]">
+    @if(isset($_GET['activities']))
+    <script>
+        window.history.replaceState(null, null, window.location.pathname);
+    </script>
+    @endif
     <div class="flex flex-col items-center justify-center px-4">
       @if (session('success'))
           <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">
@@ -581,8 +596,8 @@ if ($finalTotals) {
 
   {{-- Temporary inline font helpers --}}
   <style>
-    .font-vila-zilka {
-      font-family: 'Vila Zilka Serif', ui-serif, Georgia, 'Times New Roman', serif;
+    .font-gotham {
+      font-family: 'Gotham Book', sans-serif;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>

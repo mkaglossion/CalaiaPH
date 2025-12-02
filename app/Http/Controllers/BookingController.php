@@ -124,6 +124,11 @@ class BookingController extends Controller
             });
         }
 
+        // Set isDayvisit for regular bookings that are day visits
+        if ($type === 'regular' && isset($bookingData['type']) && $bookingData['type'] === 'day-visit') {
+            $data['isDayvisit'] = true;
+        }
+
         if ($keys['is_type']) {
             $data[$keys['is_type']] = true;
         }
@@ -175,15 +180,23 @@ class BookingController extends Controller
             'special_event_capacity' => 3,
         ];
 
-        $today = now()->format('Y-m-d');
-        $tomorrow = now()->addDay()->format('Y-m-d');
-        $dayAfter = now()->addDays(2)->format('Y-m-d');
+        // Generate inventory for the next 30 days including weekends
+        $inventory = [];
+        $inventory['day-visit'] = [];
+        $inventory['room'] = [];
+        $inventory['special-event'] = [];
+        for ($i = 0; $i < 30; $i++) {
+            $date = now()->addDays($i)->format('Y-m-d');
+            $dayOfWeek = now()->addDays($i)->dayOfWeek;
+            // Weekends have slightly lower availability
+            $dayVisitSlots = ($dayOfWeek == 0 || $dayOfWeek == 6) ? 6 : 8;
+            $roomSlots = ($dayOfWeek == 0 || $dayOfWeek == 6) ? 2 : 3;
+            $specialEventSlots = ($dayOfWeek == 0 || $dayOfWeek == 6) ? 1 : 2;
 
-        $inventory = session('inventory', [
-            'day-visit' => [$today => 8, $tomorrow => 5, $dayAfter => 10],
-            'room' => [$today => 3, $tomorrow => 2, $dayAfter => 5],
-            'special-event' => [$today => 2, $tomorrow => 1, $dayAfter => 3],
-        ]);
+            $inventory['day-visit'][$date] = $dayVisitSlots;
+            $inventory['room'][$date] = $roomSlots;
+            $inventory['special-event'][$date] = $specialEventSlots;
+        }
 
         return view('booking.reservation', compact('type', 'package', 'price', 'settings', 'inventory', 'max_guests', 'default_guests'));
     }
@@ -398,6 +411,16 @@ class BookingController extends Controller
         foreach ($bookingTypes as $type) {
             $data = $this->getConfirmationData($type);
             if ($data) {
+                // Clear sessions for this type
+                $sessionsToClear = [];
+                if ($type === 'dayvisit') {
+                    $sessionsToClear = ['dayvisit_booking_data', 'dayvisit_selected_activities', 'dayvisit_grand_total', 'dayvisit_customer_info'];
+                } elseif ($type === 'special_event') {
+                    $sessionsToClear = ['special_event_booking_data', 'special_event_selected_activities', 'special_event_grand_total', 'special_event_customer_info'];
+                } elseif ($type === 'regular') {
+                    $sessionsToClear = ['booking_data', 'selected_activities'];
+                }
+                session()->forget($sessionsToClear);
                 return view('booking.confirmation', $data);
             }
         }

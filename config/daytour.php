@@ -6,16 +6,18 @@ return [
             'title' => 'Adventure Package',
             'image' => 'assets/images/carousel/adventure.jpg',
             'features' => [
-                'ATV RIDING',
-                'ZIP LINE',
-                'TREKKING',
-                'BONFIRE'
+                'ATV RIDE (30 MINUTES)',
+                'NATURE TRAIL WALK',
+                'LUNCH INCLUDED',
+                'GUIDED FARM TOUR'
             ],
             'details' => [
-                'Experience the thrill of ATV riding through scenic trails',
-                'Soar through the air on our exciting zip line course',
-                'Explore nature trails with our expert guides',
-                'Gather around a cozy bonfire under the stars'
+                '30-minute ATV ride through scenic trails',
+                'Guided nature walk with wildlife spotting',
+                'Team building games and challenges',
+                'Buffet lunch with local cuisine',
+                'Comprehensive farm tour',
+                'Safety equipment and guides'
             ],
             'gallery' => [
                 'assets/images/carousel/adventure.jpg',
@@ -27,16 +29,17 @@ return [
             'title' => 'Nature Experience',
             'image' => 'assets/images/carousel/nature.jpg',
             'features' => [
-                'HIKING TRAILS',
-                'BIRD WATCHING',
-                'PHOTOGRAPHY TOUR',
-                'WILDLIFE VIEWING'
+                'FAMILY GAMES & ACTIVITIES',
+                'KIDS PLAY AREA ACCESS',
+                'ANIMAL FEEDING',
+                'PHOTO SESSION'
             ],
             'details' => [
-                'Discover hidden hiking trails with breathtaking views',
-                'Observe diverse bird species in their natural habitat',
-                'Capture stunning landscapes with professional guidance',
-                'Encounter local wildlife in their natural environment'
+                'Family-friendly games and activities',
+                'Safe and fun kids play area access',
+                'Delicious picnic lunch for the whole family',
+                'Interactive animal feeding experience',
+                'Professional photo session with digital copies'
             ],
             'gallery' => [
                 'assets/images/carousel/nature.jpg',
@@ -48,16 +51,19 @@ return [
             'title' => 'Family Fun Package',
             'image' => 'assets/images/carousel/family.jpg',
             'features' => [
-                'KIDDIE RIDES',
-                'PICNIC AREAS',
-                'GAMES & ACTIVITIES',
-                'PHOTO SESSIONS'
+                'GUIDED NATURE WALK',
+                'BIRD WATCHING',
+                'ORGANIC FARMING DEMO',
+                'HEALTHY LUNCH',
+                'MEDITATION SESSION'
             ],
             'details' => [
-                'Enjoy safe and fun rides designed for children',
-                'Relax in our designated picnic areas with family',
-                'Participate in family-friendly games and activities',
-                'Capture precious family memories with our photographers'
+                'Guided nature walk through scenic trails',
+                'Bird watching with expert guides',
+                'Organic farming demonstration',
+                'Healthy farm-to-table lunch',
+                'Guided meditation session',
+                'Nature photography opportunities'
             ],
             'gallery' => [
                 'assets/images/carousel/family.jpg',

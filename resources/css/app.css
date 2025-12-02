@@ -10,6 +10,7 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
     --font-heading: 'Gotham', sans-serif;
     --font-body: 'Vilaka Modern Serif', serif;
+    --font-gotham-book: 'Gotham Book', sans-serif;
 }
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Gotham', sans-serif;

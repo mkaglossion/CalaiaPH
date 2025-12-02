@@ -86,6 +86,7 @@
                         }
                     }
                 }
+            }
                 @endphp
                 @if($isStaycation)
                     <p><strong>Booking Type:</strong> Staycation</p>
@@ -118,6 +119,8 @@
                                     @php
                                     $quantity = $accommodation['guests'] ?? 1;
                                     $name = strtolower($accommodation['staycation']['name']);
+                                    $isBYOT = str_contains($name, 'byot');
+                                    $isCarCamping = str_contains($name, 'car camping');
                                     $accommodationPrice = 0;
                                     $basePriceTotal = 0;
                                     $extraPriceTotal = 0;
@@ -185,11 +188,11 @@
                         <p><strong>Total Amount Paid:</strong> ₱{{ number_format($accommodationTotal + ($bookingData['final_totals']['activities_total'] ?? 0), 2) }}</p>
                     @endif
                 @else
-                    <p><strong>Type:</strong> {{ ucfirst($bookingData['type']) }}</p>
-                    <p><strong>Package:</strong> {{ $bookingData['package'] }}</p>
-                    <p><strong>Price:</strong> ₱{{ number_format((float)$bookingData['price']) }}</p>
-                    <p><strong>Preferred Date:</strong> {{ \Carbon\Carbon::parse($bookingData['booking_date'])->format('F j, Y') }}</p>
-                    <p><strong>Number of Guests:</strong> {{ $bookingData['guests'] }}</p>
+                    <p><strong>Type:</strong> {{ ucfirst($bookingData['type'] ?? 'N/A') }}</p>
+                    <p><strong>Package:</strong> {{ $bookingData['package'] ?? 'N/A' }}</p>
+                    <p><strong>Price:</strong> ₱{{ number_format((float)($bookingData['price'] ?? 0)) }}</p>
+                    <p><strong>Preferred Date:</strong> {{ !empty($bookingData['booking_date']) ? \Carbon\Carbon::parse($bookingData['booking_date'])->format('F j, Y') : 'N/A' }}</p>
+                    <p><strong>Number of Guests:</strong> {{ $bookingData['guests'] ?? 'N/A' }}</p>
                     @php
                     $activitiesTotal = 0;
                     if (!empty($selectedActivities)) {

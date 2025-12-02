@@ -23,8 +23,8 @@ class PaymentService
             'isStaycation' => true
         ]));
 
-        // Clear session
-        session()->forget(['booking', 'staycation_customer_info']);
+        // Store customer info in session for confirmation page
+        session(['staycation_customer_info' => $paymentData]);
 
         return redirect()->route('booking.confirmation')->with('success', 'Payment processed successfully!');
     }
@@ -42,7 +42,7 @@ class PaymentService
             'isDayvisit' => true
         ]));
 
-        session()->forget(['dayvisit_booking_data', 'dayvisit_selected_activities', 'dayvisit_grand_total', 'dayvisit_customer_info']);
+        // Session will be cleared in confirmation method
 
         return redirect()->route('booking.confirmation')->with('success', 'Payment processed successfully!');
     }

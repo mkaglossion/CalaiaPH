@@ -4,7 +4,7 @@
     <div class="max-w-7xl mx-auto px-6">
       <div class="flex flex-col justify-center items-center">
         <div class="text-center mb-3">
-          <span class="text-lg font-semibold">Get connected with us on social networks:</span>
+          <span class="text-lg font-semibold font-gotham-book">Get connected with us on social networks:</span>
         </div>
         <div class="flex space-x-4">
           <!-- Instagram -->
@@ -34,8 +34,8 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Company Info -->
         <div class="text-center md:text-left">
-          <h3 class="text-xl font-bold uppercase mb-3 font-['Gotham Book']">CALAIA FARM</h3>
-          <p class="text-gray-200 leading-relaxed text-base font-['Gotham Book']">
+          <h3 class="text-xl font-bold uppercase mb-3 font-gotham-book">CALAIA FARM</h3>
+          <p class="text-gray-200 leading-relaxed text-base" style="font-family: 'Gotham Book', sans-serif;">
             Your perfect getaway destination for relaxation and adventure.
             Experience nature at its finest in Calaca, Batangas.
           </p>
@@ -43,32 +43,32 @@
 
         <!-- Quick Links -->
         <div class="text-left">
-          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center font-['Gotham Book']" onclick="toggleSection(this)">
+          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center font-gotham-book" onclick="toggleSection(this)">
             <span>EXPLORE</span>
             <i class="bi bi-plus md:hidden"></i>
           </h3>
           <ul class="space-y-1 hidden md:block">
-            <li><a href="{{ url('/') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">Home</a></li>
-            <li><a href="{{ url('/daytour') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">Day Tour</a></li>
-            <li><a href="{{ url('/staycation') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">Where to Stay</a></li>
-            <li><a href="{{ url('/activities') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">What to Do</a></li>
-            <li><a href="{{ url('/dining') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">Food & Beverage</a></li>
-            <li><a href="{{ url('/groups') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">Special Events</a></li>
-            <li><a href="{{ url('/farm') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">Our Farm</a></li>
+            <li><a href="{{ url('/') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Home</a></li>
+            <li><a href="{{ url('/daytour') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Day Tour</a></li>
+            <li><a href="{{ url('/staycation') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Where to Stay</a></li>
+            <li><a href="{{ url('/activities') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">What to Do</a></li>
+            <li><a href="{{ url('/dining') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Food & Beverage</a></li>
+            <li><a href="{{ url('/groups') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Special Events</a></li>
+            <li><a href="{{ url('/farm') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Our Farm</a></li>
           </ul>
         </div>
 
         <!-- Useful Links -->
         <div class="text-left">
-          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center font-['Gotham Book']" onclick="toggleSection(this)">
+          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center font-gotham-book" onclick="toggleSection(this)">
             <span>INFORMATION</span>
             <i class="bi bi-plus md:hidden"></i>
           </h3>
           <ul class="space-y-1 hidden md:block">
-            <li><a href="{{ url('/our-story') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">Our Story</a></li>
-            <li><a href="{{ url('/sustainability') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">Sustainability</a></li>
-            <li><a href="{{ url('/services') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">Our Services</a></li>
-            <li><a href="{{ url('/contact') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">Contact Us</a></li>
+            <li><a href="{{ url('/our-story') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Our Story</a></li>
+            <li><a href="{{ url('/sustainability') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Sustainability</a></li>
+            <li><a href="{{ url('/services') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Our Services</a></li>
+            <li><a href="{{ url('/contact') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Contact Us</a></li>
           </ul>
         </div>
 
@@ -81,23 +81,23 @@
           <div class="space-y-2 hidden md:block">
             <div class="flex items-center justify-center md:justify-start">
               <i class="bi bi-geo-alt-fill mr-3 text-gray-200"></i>
-              <span class="text-gray-200 text-base">Calaca, Batangas, Philippines</span>
+              <span class="text-gray-200 text-base font-['Gotham Book']">Calaca, Batangas, Philippines</span>
             </div>
             <div class="flex items-center justify-center md:justify-start">
               <i class="bi bi-envelope-fill mr-3 text-gray-200"></i>
-              <a href="mailto:calaia.ph@gmail.com" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
+              <a href="mailto:calaia.ph@gmail.com" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">
                 calaia.ph@gmail.com
               </a>
             </div>
             <div class="flex items-center justify-center md:justify-start">
               <i class="bi bi-telephone-fill mr-3 text-gray-200"></i>
-              <a href="tel:+639051294741" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
+              <a href="tel:+639051294741" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">
                 +63 905 129 4741
               </a>
             </div>
             <div class="flex items-center justify-center md:justify-start">
               <i class="bi bi-clock-fill mr-3 text-gray-200"></i>
-              <span class="text-gray-200 text-base">Open Daily: 8:00 AM - 6:00 PM</span>
+              <span class="text-gray-200 text-base font-['Gotham Book']">Open Daily: 8:00 AM - 6:00 PM</span>
             </div>
           </div>
         </div>
@@ -126,8 +126,8 @@
 
       <!-- Copyright -->
       <div class="mt-6 pt-4 border-t border-white/20">
-        <p class="text-center text-gray-200 text-base font-['Gotham Book']">
-          &copy; {{ date('Y') }} CALAIA FARM. ALL RIGHTS RESERVED.
+        <p class="text-center text-gray-200 text-base" style="font-family: 'Gotham Book', sans-serif;">
+          © 2025 CALAIA FARM. ALL RIGHTS RESERVED.
         </p>
       </div>
     </div>

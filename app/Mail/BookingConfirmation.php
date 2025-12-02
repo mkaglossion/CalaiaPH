@@ -13,16 +13,14 @@ class BookingConfirmation extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $bookingData;
-    public $selectedActivities;
+    public $data;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($bookingData, $selectedActivities = [])
+    public function __construct($data)
     {
-        $this->bookingData = $bookingData;
-        $this->selectedActivities = $selectedActivities;
+        $this->data = $data;
     }
 
     /**
@@ -43,8 +41,13 @@ class BookingConfirmation extends Mailable
         return new Content(
             view: 'emails.booking-confirmation',
             with: [
-                'bookingData' => $this->bookingData,
-                'selectedActivities' => $this->selectedActivities,
+                'bookingData' => $this->data['bookingData'] ?? [],
+                'selectedActivities' => $this->data['selectedActivities'] ?? [],
+                'grandTotal' => $this->data['grandTotal'] ?? 0,
+                'customerInfo' => $this->data['customerInfo'] ?? [],
+                'isStaycation' => $this->data['isStaycation'] ?? false,
+                'isDayvisit' => $this->data['isDayvisit'] ?? false,
+                'isSpecialEvent' => $this->data['isSpecialEvent'] ?? false,
             ],
         );
     }

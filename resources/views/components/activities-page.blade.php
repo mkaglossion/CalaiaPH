@@ -70,7 +70,7 @@
                 aria-labelledby="summary-heading"
                 class="bg-gray-50 rounded-xl border border-gray-100 p-4 sm:p-5 md:p-6 lg:sticky lg:top-4 order-2 lg:order-1"
             >
-                <h2 id="summary-heading" class="text-2xl font-semibold text-gray-900 mb-4"
+                <h2 id="summary-heading" class="text-lg font-semibold text-gray-900 mb-4"
                     style="font-family: 'Gotham Book', sans-serif;">
                     Selected Activities
                 </h2>

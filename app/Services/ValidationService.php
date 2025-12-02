@@ -51,7 +51,7 @@ class ValidationService
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
-            'payment_method' => 'required|string|in:credit_card,paypal,bank_transfer',
+            'payment_method' => 'required|string|in:gcash,paymaya,bank',
             'card_number' => 'required_if:payment_method,credit_card|string|max:19',
             'expiry_date' => 'required_if:payment_method,credit_card|date_format:m/y',
             'cvv' => 'required_if:payment_method,credit_card|string|max:4',

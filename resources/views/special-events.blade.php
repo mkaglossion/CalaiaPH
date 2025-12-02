@@ -22,7 +22,7 @@
       </div>
     <x-header active="special-events" />
 
-    {{-- Hero Slider --}}
+     {{-- Hero Slider --}}
     <x-hero-slider :images="$swiperImages" :texts="$texts" />
 
     {{-- ===== Events Section ===== --}}
