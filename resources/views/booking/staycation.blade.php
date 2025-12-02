@@ -27,9 +27,18 @@
                         }
                         var container = document.getElementById('selected-accommodations-container');
                         if (container) container.innerHTML = '';
+
+                        // Clear the booking summary immediately
+                        document.getElementById('selected-accommodations-summary').innerHTML = '';
+                        document.getElementById('total-price').textContent = '₱ 0';
+                        document.getElementById('total-guests').textContent = '0';
+                        document.getElementById('selected-accommodations-count').textContent = '0 selected';
+                        document.getElementById('proceed-btn').disabled = true;
+                        document.getElementById('skip-btn').disabled = true;
+
                         if (typeof window.updateBookingSummary === 'function') window.updateBookingSummary();
                         setTimeout(function() {
-                            window.location.reload();
+                            window.location.href = '{{ route("booking.staycation") }}?clear=1';
                         }, 1200);
                     </script>
             @endif
@@ -454,9 +463,10 @@ $galleryData = [
    <div class="mt-6 mb-8 w-full">
        <div
            id="selected-accommodations-container"
-           class="grid grid-cols-4 gap-3 lg:gap-4 w-full"
+           style="display:none;"
+           aria-hidden="true"
        >
-           <!-- Selected staycations will be rendered here by JS -->
+           <!-- Selected staycations hidden by design: small-card UI removed -->
        </div>
    </div>
 </div>
@@ -928,14 +938,39 @@ function computeStaycationTotals(staycation, options = {}) {
 
             const nights = result.nights || 1;
 
-            // Base accommodation line
+            // Base accommodation line with remove button
             const accommodationDiv = document.createElement('div');
+            accommodationDiv.className = 'flex justify-between items-center';
+
             const perNightBase = result.basePriceTotal > 0
                 ? Math.round(result.basePriceTotal / nights)
                 : 0;
 
-            accommodationDiv.textContent =
+            const accommodationText = document.createElement('span');
+            accommodationText.textContent =
                 `ACCOMMODATION: ${name} - ₱ ${perNightBase.toLocaleString()}/night (${guests} guest${guests > 1 ? 's' : ''})`;
+            accommodationDiv.appendChild(accommodationText);
+
+            // Add remove button
+            const removeButton = document.createElement('button');
+            removeButton.className = 'text-red-600 hover:text-red-800 text-sm font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors';
+            removeButton.innerHTML = '<i class="fas fa-trash-alt mr-1"></i>';
+            removeButton.dataset.key = key;
+            removeButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Remove from selected accommodations
+                delete window.selectedAccommodations[key];
+
+                // Update UI
+                window.updateBookingSummary();
+
+                // Show toast notification
+                showToast(`Removed ${name} from your booking`, 'info');
+            });
+
+            accommodationDiv.appendChild(removeButton);
             summaryItem.appendChild(accommodationDiv);
 
             // Extra mattress line
@@ -1029,40 +1064,10 @@ function computeStaycationTotals(staycation, options = {}) {
 
     // --- Display selected accommodation card ---
     function displaySelectedAccommodation(key, acc) {
-        const container = document.getElementById('selected-accommodations-container');
-        if (!container) return;
-
-        const existing = container.querySelector(`.accommodation-display[data-key="${key}"]`);
-        if (existing) existing.remove();
-        if (!acc) return;
-
-        const staycation = acc.staycation;
-        const guests = acc.guests || 1;
-        const div = document.createElement('div');
-        div.className = 'accommodation-display bg-white rounded-lg shadow-sm border border-gray-200 p-3';
-        div.dataset.key = key;
-        div.innerHTML = `
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <img src="${staycation.image || '/assets/images/default.jpg'}" alt="${staycation.name}" class="w-10 h-10 rounded-md object-cover">
-                    <div class="flex-1 min-w-0">
-                        <h4 class="font-semibold text-gray-900 text-sm truncate">${staycation.name}</h4>
-                        <p class="text-xs text-gray-500">${guests} guest${guests > 1 ? 's' : ''}</p>
-                    </div>
-                </div>
-                <button class="remove-selected-accom text-red-500 hover:text-red-700 text-base font-bold flex-shrink-0" data-key="${key}">×</button>
-            </div>
-        `;
-        container.appendChild(div);
-
-        const removeBtn = div.querySelector('.remove-selected-accom');
-        if (removeBtn) {
-            removeBtn.addEventListener('click', () => {
-                delete window.selectedAccommodations[key];
-                div.remove();
-                window.updateBookingSummary();
-            });
-        }
+        // Disabled: selected-accommodations small-card UI removed.
+        // This function is intentionally a no-op to prevent DOM rendering of the
+        // small selected-card. Selections are still stored in `window.selectedAccommodations`.
+        return;
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -1499,13 +1504,8 @@ function computeStaycationTotals(staycation, options = {}) {
         // Clear previous options
         optionsContainer.innerHTML = '';
 
-        // Filter out already selected accommodations
-        const availableStaycations = staycations.filter(staycation => {
-            const lowerName = staycation.name.toLowerCase();
-            const category = staycation.type || (lowerName.includes('standard') || lowerName.includes('premium') ? 'glamping' : 'camping');
-            const key = `${category}-${staycation.id}`;
-            return !window.selectedAccommodations || !window.selectedAccommodations[key];
-        });
+        // Show all staycations, including already selected ones
+        const availableStaycations = staycations;
 
         // Populate options
         availableStaycations.forEach((staycation, index) => {
@@ -1941,7 +1941,6 @@ function computeStaycationTotals(staycation, options = {}) {
 
         // Render selection and update summary
         displaySelectedAccommodation(key, window.selectedAccommodations[key]);
-        initializeRemoveSelectedButtons();
         window.updateBookingSummary();
 
         showToast(`${staycation.name} selected`, 'success');
@@ -1984,7 +1983,7 @@ function computeStaycationTotals(staycation, options = {}) {
                 }
             });
 
-            initializeRemoveSelectedButtons();
+            // Removal UI initializer removed; no-op.
             window.updateBookingSummary();
 
             // Close modal
@@ -2434,5 +2433,6 @@ function updateSelectionUI(card, checkbox, isSelected) {
     }
 </script>
 </html>
+
 
 

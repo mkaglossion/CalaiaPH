@@ -500,6 +500,11 @@ class BookingController extends Controller
 
     public function staycation(Request $request)
     {
+        // Clear booking session if requested (after successful booking)
+        if ($request->has('clear')) {
+            session()->forget('booking');
+        }
+
         // Handle POST request to set dates and accommodations
         if ($request->isMethod('post')) {
             $request->validate(ValidationService::staycationPostRules());

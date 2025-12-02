@@ -527,5 +527,9 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script>
+    // Clear any saved selections after booking confirmation
+    sessionStorage.removeItem('staycation_selections');
+  </script>
 </body>
 </html>
