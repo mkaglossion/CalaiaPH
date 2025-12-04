@@ -2,37 +2,29 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Activity;
 use App\Models\DayTour;
 
-class DayTourController extends BaseCrudController
+class DayTourController extends Controller
 {
-    protected $model = DayTour::class;
-    protected $viewPrefix = 'days';
-    protected $routePrefix = 'day-tours';
-
-    protected function validationRules($id = null): array
-    {
-        return [
-            'name' => 'required|string|max:255|unique:day_tours,name' . ($id ? ",$id" : ''),
-            'description' => 'nullable|string',
-            'price' => 'nullable|numeric',
-            'activity_ids' => 'nullable|array',
-        ];
-    }
-
     public function index()
     {
-        $tours = $this->model::with('activities')->get();
+        $tours = DayTour::with('activities')->get();
         return view('admin.days', compact('tours'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate($this->validationRules());
-        $tour = $this->model::create(collect($validated)->except('activity_ids')->toArray());
-        $tour->activities()->sync($request->activity_ids ?? []);
+        $request->validate([
+            'name' => 'required|string|max:255|unique:day_tours,name',
+        ]);
 
+        $tour = DayTour::create($request->only(['name', 'description', 'price']));
+        $tour->activities()->sync($request->activity_ids);
+
+        // If the request is AJAX, return JSON
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'message' => 'Day Tour created!',
@@ -40,17 +32,23 @@ class DayTourController extends BaseCrudController
             ]);
         }
 
+        // fallback for normal form submit
         return back()->with('success', 'Day Tour created!');
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, DayTour $dayTour)
     {
-        $tour = $this->model::findOrFail($id);
-        $validated = $request->validate($this->validationRules($id));
-        $tour->update(collect($validated)->except('activity_ids')->toArray());
-        $tour->activities()->sync($request->activity_ids ?? []);
+        $dayTour->update($request->only(['name', 'description', 'price']));
+
+        $dayTour->activities()->sync($request->activity_ids);
 
         return back()->with('success', 'Day Tour updated!');
+    }
+
+    public function destroy(DayTour $dayTour)
+    {
+        $dayTour->delete();
+        return back()->with('success', 'Day Tour deleted!');
     }
 }
 

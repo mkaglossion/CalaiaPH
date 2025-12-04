@@ -2,23 +2,25 @@
 
 namespace App\Models;
 
-class Activity extends ContentModel
+use Illuminate\Database\Eloquent\Model;
+
+class Activity extends Model
 {
     protected $fillable = ['name'];
+
+    public function swiperImages()
+    {
+        return $this->hasMany(ActivitySwiperImage::class);
+    }
+
+    public function texts()
+    {
+        return $this->hasMany(ActivityText::class);
+    }
 
     // 🔥 Reverse relation for Day Tour Packages
     public function dayTours()
     {
         return $this->belongsToMany(DayTour::class, 'day_tour_activity');
-    }
-
-    protected function getImageModelClass(): string
-    {
-        return ActivitySwiperImage::class;
-    }
-
-    protected function getTextModelClass(): string
-    {
-        return ActivityText::class;
     }
 }

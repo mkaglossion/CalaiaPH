@@ -2,17 +2,14 @@
 
 namespace App\Models;
 
-class StaycationText extends BaseRelatedText
+use Illuminate\Database\Eloquent\Model;
+
+class StaycationText extends Model
 {
     protected $fillable = ['staycation_id', 'section', 'title', 'content'];
 
     public function staycation()
     {
         return $this->belongsTo(Staycation::class);
-    }
-
-    protected function getParentModelClass(): string
-    {
-        return Staycation::class;
     }
 }

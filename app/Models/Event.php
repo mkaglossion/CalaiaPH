@@ -2,17 +2,19 @@
 
 namespace App\Models;
 
-class Event extends ContentModel
+use Illuminate\Database\Eloquent\Model;
+
+class Event extends Model
 {
     protected $fillable = ['name'];
 
-    protected function getImageModelClass(): string
+    public function swiperImages()
     {
-        return EventSwiperImage::class;
+        return $this->hasMany(EventSwiperImage::class);
     }
 
-    protected function getTextModelClass(): string
+    public function texts()
     {
-        return EventText::class;
+        return $this->hasMany(EventText::class);
     }
 }
