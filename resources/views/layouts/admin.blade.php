@@ -49,11 +49,14 @@
               ['label'=>'Pages Information','route'=>'admin.do.activities'],
               ['label'=>'Items','route'=>'admin.do.activities']
             ]],
+            ['title'=>'Special Events','icon'=>'calendar','route'=>'admin.specialEvents.*','sub'=>[
+              ['label'=>'Pages Information','route'=>'admin.specialEvents.specialevents']
+            ]],
             ['title'=>'Our Farm','icon'=>'leaf','route'=>'admin.farm.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.farm.ourfarm'],
               ['label'=>'Items','route'=>'admin.farm.farmInfos']
             ]],
-            
+
           ];
         @endphp
 

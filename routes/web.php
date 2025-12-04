@@ -191,10 +191,12 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::prefix('/events')->group(function () {
         Route::get('/events', [AdminController::class, 'event'])->name('admin.events.events');
     });
+    Route::prefix('/special-events')->group(function () {
+        Route::get('/', [AdminPagesController::class, 'specialEvents'])->name('admin.specialEvents.specialevents');
+    });
     Route::prefix('/farm')->group(function () {
             Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farm.farmInfos');
             Route::get('/our-farm', [AdminPagesController::class, 'ourFarm'])->name('admin.farm.ourfarm');
-
     });
     Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.staycations');
     Route::get('/events', [AdminController::class, 'event'])->name('admin.events');
