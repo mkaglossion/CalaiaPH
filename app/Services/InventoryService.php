@@ -33,7 +33,6 @@ class InventoryService
         return [
             'day-visit' => [$today => 8, $tomorrow => 5, $dayAfter => 10],
             'room' => [$today => 3, $tomorrow => 2, $dayAfter => 5],
-            'special-event' => [$today => 2, $tomorrow => 1, $dayAfter => 3],
         ];
     }
 }

@@ -94,7 +94,6 @@ Route::post('/booking/check-availability', [BookingController::class, 'checkAvai
 Route::get('/booking/payment', [BookingController::class, 'payment'])->name('booking.payment');
 Route::post('/booking/payment', [BookingController::class, 'processPayment'])->name('booking.processPayment');
 Route::get('/booking/confirmation', [BookingController::class, 'confirmation'])->name('booking.confirmation');
-Route::get('/booking/special-event/confirmation', [BookingController::class, 'specialEventConfirmation'])->name('booking.specialEventConfirmation');
 Route::get('/booking/widget', [BookingController::class, 'widget'])->name('booking.widget');
 Route::get('/debug-session', [BookingController::class, 'debugSession']);
 
@@ -111,14 +110,6 @@ Route::get('/booking/dayvisit/activities', [BookingController::class, 'dayvisitA
 Route::post('/booking/dayvisit/activities', [BookingController::class, 'storeDayvisitActivities'])->name('booking.storeDayvisitActivities');
 Route::get('/booking/dayvisit/payment', [BookingController::class, 'dayvisitPayment'])->name('booking.dayvisitPayment');
 
-// Special Event Routes
-Route::match(['GET', 'POST'], '/booking/special-event', [BookingController::class, 'specialEvent'])->name('booking.specialEvent');
-Route::get('/booking/special-event/details', [BookingController::class, 'specialEventDetails'])->name('booking.specialEventDetails');
-Route::post('/booking/special-event/store', [BookingController::class, 'storeSpecialEvent'])->name('booking.storeSpecialEvent');
-Route::get('/api/booking/special-event/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.specialEvent.activities');
-Route::get('/booking/special-event/activities', [BookingController::class, 'specialEventActivities'])->name('booking.specialEventActivities');
-Route::post('/booking/special-event/activities', [BookingController::class, 'storeSpecialEventActivities'])->name('booking.storeSpecialEventActivities');
-Route::get('/booking/special-event/payment', [BookingController::class, 'specialEventPayment'])->name('booking.specialEventPayment');
 
 // Cart Routes
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
@@ -199,7 +190,6 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     });
     Route::prefix('/events')->group(function () {
         Route::get('/events', [AdminController::class, 'event'])->name('admin.events.events');
-        Route::get('/special-events', [AdminPagesController::class, 'specialEvents'])->name('admin.events.specialevents');
     });
     Route::prefix('/farm')->group(function () {
             Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farm.farmInfos');

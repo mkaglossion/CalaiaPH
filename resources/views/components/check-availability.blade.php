@@ -3,12 +3,10 @@
     // galing Admin Panel (per day capacity)
     'dayVisitCapacity' => null,
     'roomCapacity' => null,
-    'specialEventCapacity' => null,
     // optional: per-date remaining slots (array from backend)
     // [
     //   'day-visit' => ['2025-11-20' => 5, ...],
     //   'room'      => ['2025-11-20' => 2, ...],
-    //   'special-event' => ['2025-11-20' => 1, ...],
     // ]
     'inventory' => null,
 ])
@@ -19,8 +17,7 @@
         x-data='bookingWidget({
             dayVisitCapacity: @json($dayVisitCapacity),
             roomCapacity: @json($roomCapacity),
-            specialEventCapacity: @json($specialEventCapacity),
-            inventory: @json($inventory ?? ["day-visit" => (object)[], "room" => (object)[], "special-event" => (object)[]]),
+            inventory: @json($inventory ?? ["day-visit" => (object)[], "room" => (object)[]]),
         })'
         x-init="initDatepickers()"
         x-cloak
@@ -57,7 +54,8 @@
         <!-- Divider -->
         <hr class="mb-6 border-gray-300">
 
-        <form id="booking-form" method="POST" :action="formAction" novalidate>
+        <!-- Booking Form for Room and Day Visit -->
+        <form id="booking-form" method="POST" :action="formAction" novalidate x-show="activeTab !== 'special-event'">
         @csrf
         <input type="hidden" name="type" x-ref="type" value="room">
 
@@ -87,8 +85,8 @@
                     <p class="text-xs text-gray-500 mt-1" x-show="availabilityText" x-text="availabilityText" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"></p>
                 </div>
 
-                <!-- Check-out (ROOM + SPECIAL EVENT, pero iba behavior) -->
-                <div x-show="activeTab !== 'day-visit'" class="md:col-span-1">
+                <!-- Check-out (ROOM only) -->
+                <div x-show="activeTab === 'room'" class="md:col-span-1">
                     <label for="check_out" class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Gotham Book', sans-serif;">
                         Check-out
                     </label>
@@ -100,7 +98,7 @@
                             x-ref="checkOut"
                             class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none transition-colors text-sm hover:border-[#8f5d54]/70 hover:bg-gray-50"
                             placeholder="Select date"
-                            :required="activeTab === 'room'"
+                            required
                             readonly
                         >
                         <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
@@ -154,12 +152,40 @@
                             class="text-[11px] md:text-xs text-gray-500"
                             style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"
                         >
-                            Select the date range for your special event.
+                            Contact us for special event arrangements.
                         </span>
+
                     </div>
                 </div>
             </div>
         </form>
+
+        <!-- Special Event Contact Section -->
+        <div x-show="activeTab === 'special-event'" class="space-y-4">
+            <div class="text-center">
+                <p class="text-sm text-gray-600 mb-4" style="font-family: 'Gotham Book', sans-serif;">
+                    Message us here for special event arrangements
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a
+                        href="https://m.me/410774518796277"
+                        target="_blank"
+                        class="inline-flex items-center gap-2 bg-[#0084ff] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#0084ff]/90 transition-colors"
+                    >
+                        <i class="bi bi-messenger"></i>
+                        Message on Messenger
+                    </a>
+                    <a
+                        href="mailto:calaia.ph@gmail.com?subject=Special Event Inquiry"
+                        class="inline-flex items-center gap-2 bg-[#8f5d54] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#8f5d54]/90 transition-colors"
+                    >
+                        <i class="bi bi-envelope"></i>
+                        Send Email
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -215,13 +241,11 @@
             // capacities galing Admin Panel (per day)
             dayVisitCapacity: config.dayVisitCapacity ?? null,
             roomCapacity: config.roomCapacity ?? null,
-            specialEventCapacity: config.specialEventCapacity ?? null,
 
             // remaining slots per date per type (puwedeng i-override ng backend)
             inventory: config.inventory ?? {
                 'day-visit': {},
-                'room': {},
-                'special-event': {}
+                'room': {}
             },
 
             setTab(type) {
@@ -233,8 +257,6 @@
                     this.formAction = '{{ url("/booking/staycation") }}';
                 } else if (type === 'day-visit') {
                     this.formAction = '{{ url("/booking/dayvisit") }}';
-                } else if (type === 'special-event') {
-                    this.formAction = '{{ url("/booking/special-event") }}';
                 } else {
                     this.formAction = '{{ url("/booking") }}';
                 }
@@ -340,7 +362,6 @@
                 const capacityMap = {
                     'day-visit': this.dayVisitCapacity,
                     'room': this.roomCapacity,
-                    'special-event': this.specialEventCapacity,
                 };
                 const capacity = capacityMap[type] ?? null;
 
@@ -361,27 +382,6 @@
                 }
             },
 
-            updateSpecialEventStay() {
-                if (this.activeTab !== 'special-event') return;
-
-                const checkInVal = this.$refs.checkIn.value;
-                if (!checkInVal) {
-                    if (this.$refs.checkOut) this.$refs.checkOut.value = '';
-                    return;
-                }
-
-                const start = new Date(checkInVal + 'T00:00:00');
-                const end = new Date(start.getTime() + 1 * 24 * 60 * 60 * 1000);
-
-                const yyyy = end.getFullYear();
-                const mm = String(end.getMonth() + 1).padStart(2, '0');
-                const dd = String(end.getDate()).padStart(2, '0');
-                const outStr = `${yyyy}-${mm}-${dd}`;
-
-                if (this.$refs.checkOut) {
-                    this.$refs.checkOut.value = outStr;
-                }
-            },
 
             updateStaySummary() {
                 const checkInVal = this.$refs.checkIn.value;

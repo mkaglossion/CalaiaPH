@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\BookingConfirmation;
-use App\Mail\SpecialEventBookingConfirmation;
 use DateTime;
 use App\Services\BookingService;
 use App\Services\PaymentService;
@@ -84,13 +83,6 @@ class BookingController extends Controller
                 'customer_info' => 'dayvisit_customer_info',
                 'is_type' => 'isDayvisit'
             ],
-            'special_event' => [
-                'booking_data' => 'special_event_booking_data',
-                'selected_activities' => 'special_event_selected_activities',
-                'grand_total' => 'special_event_grand_total',
-                'customer_info' => 'special_event_customer_info',
-                'is_type' => 'isSpecialEvent'
-            ],
             'regular' => [
                 'booking_data' => 'booking_data',
                 'selected_activities' => 'selected_activities',
@@ -151,7 +143,7 @@ class BookingController extends Controller
         $type = $request->get('type', 'day-visit');
 
         // Handle different type variations
-        $allowedTypes = ['day-visit', 'room', 'special-event', 'daytour', 'special-event'];
+        $allowedTypes = ['day-visit', 'room', 'daytour'];
         if ($type === 'daytour') {
             $type = 'day-visit'; // Map daytour to day-visit
         }
@@ -179,25 +171,20 @@ class BookingController extends Controller
         $settings = (object) [
             'day_visit_capacity' => 10,
             'room_capacity' => 5,
-            'special_event_capacity' => 3,
         ];
 
         // Generate inventory for the next 30 days including weekends
         $inventory = [];
         $inventory['day-visit'] = [];
         $inventory['room'] = [];
-        $inventory['special-event'] = [];
         for ($i = 0; $i < 30; $i++) {
             $date = now()->addDays($i)->format('Y-m-d');
             $dayOfWeek = now()->addDays($i)->dayOfWeek;
             // Weekends have slightly lower availability
             $dayVisitSlots = ($dayOfWeek == 0 || $dayOfWeek == 6) ? 6 : 8;
             $roomSlots = ($dayOfWeek == 0 || $dayOfWeek == 6) ? 2 : 3;
-            $specialEventSlots = ($dayOfWeek == 0 || $dayOfWeek == 6) ? 1 : 2;
-
             $inventory['day-visit'][$date] = $dayVisitSlots;
             $inventory['room'][$date] = $roomSlots;
-            $inventory['special-event'][$date] = $specialEventSlots;
         }
 
         return view('booking.reservation', compact('type', 'package', 'price', 'settings', 'inventory', 'max_guests', 'default_guests'));
@@ -408,7 +395,7 @@ class BookingController extends Controller
             return view('booking.confirmation', $data);
         }
 
-        $bookingTypes = ['staycation', 'dayvisit', 'special_event', 'regular'];
+        $bookingTypes = ['staycation', 'dayvisit', 'regular'];
 
         foreach ($bookingTypes as $type) {
             $data = $this->getConfirmationData($type);
@@ -417,8 +404,6 @@ class BookingController extends Controller
                 $sessionsToClear = [];
                 if ($type === 'dayvisit') {
                     $sessionsToClear = ['dayvisit_booking_data', 'dayvisit_selected_activities', 'dayvisit_grand_total', 'dayvisit_customer_info'];
-                } elseif ($type === 'special_event') {
-                    $sessionsToClear = ['special_event_booking_data', 'special_event_selected_activities', 'special_event_grand_total', 'special_event_customer_info'];
                 } elseif ($type === 'regular') {
                     $sessionsToClear = ['booking_data', 'selected_activities', 'grand_total', 'customer_info'];
                 }
@@ -430,16 +415,6 @@ class BookingController extends Controller
         return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
     }
 
-    public function specialEventConfirmation()
-    {
-        // Get special event confirmation data
-        $data = $this->getConfirmationData('special_event');
-        if (!$data) {
-            return redirect()->route('booking.specialEvent')->with('error', 'No special event booking data found. Please start booking again.');
-        }
-
-        return view('booking.special-event-confirmation', $data);
-    }
 
     public function processPayment(Request $request)
     {
@@ -450,10 +425,9 @@ class BookingController extends Controller
         $bookingData = session('booking_data');
         $staycationBooking = session('booking', []);
         $dayvisitBooking = session('dayvisit_booking_data');
-        $specialEventBooking = session('special_event_booking_data');
 
         // Check if we have any booking data
-        if (!$bookingData && empty($staycationBooking) && !$dayvisitBooking && !$specialEventBooking) {
+        if (!$bookingData && empty($staycationBooking) && !$dayvisitBooking) {
             return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
         }
 
@@ -466,10 +440,6 @@ class BookingController extends Controller
             [
                 'condition' => (bool) $dayvisitBooking,
                 'processor' => fn() => $this->paymentService->processDayvisitPayment($dayvisitBooking, $request->all())
-            ],
-            [
-                'condition' => (bool) $specialEventBooking,
-                'processor' => fn() => $this->paymentService->processSpecialEventPayment($specialEventBooking, $request->all())
             ],
             [
                 'condition' => true, // default case
@@ -494,7 +464,6 @@ class BookingController extends Controller
         return view('booking.widget', [
             'dayVisitCapacity'    => $settings->day_visit_capacity,
             'roomCapacity'        => $settings->room_capacity,
-            'specialEventCapacity'   => $settings->special_event_capacity,
             'inventory'           => $remainingPerDateArray, // optional
         ]);
     }
@@ -522,14 +491,6 @@ class BookingController extends Controller
             'activities_error_route' => 'booking.dayvisit',
             'payment_view' => 'booking.dayvisit-payment',
             'payment_error_route' => 'booking.dayvisit',
-            'var_name' => 'bookingData',
-        ],
-        'special_event' => [
-            'session_key' => 'special_event_booking_data',
-            'activities_view' => 'booking.special-event-activities',
-            'activities_error_route' => 'booking.specialEvent',
-            'payment_view' => 'booking.special-event-payment',
-            'payment_error_route' => 'booking.specialEvent',
             'var_name' => 'bookingData',
         ],
     ];
@@ -809,95 +770,9 @@ class BookingController extends Controller
         return $this->getBookingPayment('dayvisit');
     }
 
-    public function specialEvent(Request $request)
-    {
-        // Handle POST request for event selection
-        if ($request->isMethod('post') && $request->has('event_id')) {
-            $request->validate([
-                'event_id' => 'required|exists:events,id',
-            ]);
 
-            // Get event details
-            $event = \App\Models\Event::find($request->event_id);
 
-            // Store event selection in session
-            $bookingData = [
-                'event_id' => $request->event_id,
-                'event_name' => $event->name,
-                'checkin' => session('special_event_checkin'),
-                'checkout' => session('special_event_checkout'),
-                'price' => 5000, // Base price for special events
-                'type' => 'special-event',
-            ];
-            session(['special_event_booking_data' => $bookingData]);
 
-            return redirect()->route('booking.specialEventDetails');
-        }
 
-        // Handle POST request from availability widget with selected dates
-        if ($request->isMethod('post')) {
-            $request->validate([
-                'check_in' => 'required|date|after:yesterday',
-                'check_out' => 'required|date|after:check_in',
-            ]);
 
-            // Store selected dates in session
-            session(['special_event_checkin' => $request->check_in, 'special_event_checkout' => $request->check_out]);
-        }
-
-        // Get available events
-        $events = \App\Models\Event::with(['swiperImages', 'texts'])->get();
-
-        // Get stored dates
-        $checkin = session('special_event_checkin');
-        $checkout = session('special_event_checkout');
-
-        return view('booking.special-event', compact('events', 'checkin', 'checkout'));
-    }
-
-    public function specialEventDetails()
-    {
-        $bookingData = session('special_event_booking_data');
-
-        if (!$bookingData) {
-            return redirect()->route('booking.specialEvent')->with('error', 'Please select an event first.');
-        }
-
-        return view('booking.special-event-details', compact('bookingData'));
-    }
-
-    public function storeSpecialEvent(Request $request)
-    {
-        $request->validate(ValidationService::specialEventBookingRules());
-
-        $bookingData = session('special_event_booking_data');
-
-        if (!$bookingData) {
-            return redirect()->route('booking.specialEvent')->with('error', 'Please select an event first.');
-        }
-
-        // Merge form data with existing booking data
-        $validated = array_merge($bookingData, $request->only(['first_name', 'last_name', 'email', 'phone', 'guests', 'special_requests']));
-
-        // Store updated booking data in session
-        session(['special_event_booking_data' => $validated]);
-
-        // Redirect to activities
-        return redirect()->route('booking.specialEventActivities');
-    }
-
-    public function specialEventActivities()
-    {
-        return $this->getBookingActivities('special_event');
-    }
-
-    public function storeSpecialEventActivities(Request $request)
-    {
-        return $this->storeBookingActivities($request, 'special_event', ValidationService::activitiesRules(), 'special_event_selected_activities');
-    }
-
-    public function specialEventPayment()
-    {
-        return $this->getBookingPayment('special_event');
-    }
 }

@@ -63,35 +63,6 @@ class PaymentService
         return redirect()->route('booking.confirmation')->with('success', 'Payment processed successfully!');
     }
 
-    public function processSpecialEventPayment($specialEventBooking, $paymentData)
-    {
-        // Calculate grand total
-        $grandTotal = $specialEventBooking['price'] + collect(session('special_event_selected_activities', []))->sum(function($activity) {
-            return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
-        });
-
-        // Add payment details
-        $specialEventBooking['transaction_id'] = 'TXN-' . strtoupper(uniqid());
-        $specialEventBooking['payment_method'] = $paymentData['payment_method'] ?? 'N/A';
-        $specialEventBooking['payment_date'] = now()->toDateTimeString();
-
-        // Process special event payment
-        Mail::to($paymentData['email'])->send(new BookingConfirmation([
-            'bookingData' => $specialEventBooking,
-            'selectedActivities' => session('special_event_selected_activities', []),
-            'grandTotal' => $grandTotal,
-            'customerInfo' => $paymentData,
-            'isSpecialEvent' => true
-        ]));
-
-        // Store customer info and grand total in session for confirmation page (session will be cleared in confirmation method)
-        session([
-            'special_event_customer_info' => $paymentData,
-            'special_event_grand_total' => $grandTotal
-        ]);
-
-        return redirect()->route('booking.specialEventConfirmation')->with('success', 'Payment processed successfully!');
-    }
 
     public function processRegularBookingPayment($bookingData, $paymentData)
     {

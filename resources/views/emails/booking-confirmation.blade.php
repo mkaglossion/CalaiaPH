@@ -97,9 +97,6 @@
                         }
                     }
                 }
-            } elseif ($isSpecialEvent ?? false) {
-                // For special events, calculate grand total
-                $grandTotal = $packageTotal + $activitiesTotal;
             } else {
                 // For regular bookings, calculate grand total
                 $grandTotal = $packageTotal + $activitiesTotal;
@@ -204,22 +201,6 @@
                         <p><strong>Activities Total:</strong> ₱{{ number_format($bookingData['final_totals']['activities_total'] ?? 0, 2) }}</p>
                         <p><strong>Total Amount Paid:</strong> ₱{{ number_format($accommodationTotal + ($bookingData['final_totals']['activities_total'] ?? 0), 2) }}</p>
                     @endif
-                @elseif($isSpecialEvent ?? false)
-                    <p><strong>Booking Type:</strong> Special Event</p>
-                    <p><strong>Event:</strong> {{ $bookingData['event_name'] ?? 'Special Event' }}</p>
-                    <p><strong>Event Dates:</strong> {{ !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin'])->format('M d, Y') : '' }} - {{ !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout'])->format('M d, Y') : '' }}</p>
-                    <p><strong>Number of Guests:</strong> {{ $bookingData['guests'] ?? 1 }}</p>
-                    <p><strong>Event Package Price:</strong> ₱{{ number_format((float)($bookingData['price'] ?? 0)) }}</p>
-                    @if(!empty($selectedActivities))
-                    <p><strong>Selected Activities:</strong></p>
-                    <ul>
-                        @foreach($selectedActivities as $activity)
-                        <li>{{ $activity['name'] }} ({{ $activity['guests'] ?? 1 }} guest{{ ($activity['guests'] ?? 1) > 1 ? 's' : '' }}) - ₱{{ number_format(($activity['price'] ?? 0) * ($activity['guests'] ?? 1)) }}</li>
-                        @endforeach
-                    </ul>
-                    <p><strong>Activities Total:</strong> ₱{{ number_format($activitiesTotal) }}</p>
-                    @endif
-                    <p><strong>Total Amount Paid:</strong> ₱{{ number_format($grandTotal) }}</p>
                 @else
                     <p><strong>Type:</strong> {{ ucfirst($bookingData['type'] ?? 'N/A') }}</p>
                     <p><strong>Package:</strong> {{ $bookingData['package'] ?? 'N/A' }}</p>

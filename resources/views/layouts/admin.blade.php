@@ -49,10 +49,6 @@
               ['label'=>'Pages Information','route'=>'admin.do.activities'],
               ['label'=>'Items','route'=>'admin.do.activities']
             ]],
-            ['title'=>'Special Events','icon'=>'party-popper','route'=>'admin.events.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.events.specialevents'],
-              ['label'=>'Items','route'=>'admin.events.events']
-            ]],
             ['title'=>'Our Farm','icon'=>'leaf','route'=>'admin.farm.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.farm.ourfarm'],
               ['label'=>'Items','route'=>'admin.farm.farmInfos']

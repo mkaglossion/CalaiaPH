@@ -115,13 +115,13 @@
                     </ul>
                   </div>
 
-                  {{-- Book Now Button --}}
+                  {{-- Contact Button --}}
                   <a
-                    href="{{ route('booking.specialEvent') }}?event={{ $event->id }}"
+                    href="mailto:calaia.ph@gmail.com?subject=Inquiry about {{ $event->name }}"
                     class="w-full inline-flex items-center justify-center gap-2 bg-[#8f5d54] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#a0675a] transition-colors duration-300"
                   >
-                    <i class="bi bi-calendar-event"></i>
-                    Book This Event
+                    <i class="bi bi-envelope"></i>
+                    Inquire About This Event
                   </a>
                 </div>
               </div>
@@ -159,10 +159,10 @@
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="{{ route('booking.specialEvent') }}"
+                href="mailto:calaia.ph@gmail.com?subject=Custom Event Planning Inquiry"
                 class="inline-flex items-center justify-center gap-2 bg-[#8f5d54] text-white px-8 py-4 rounded-xl font-semibold hover:bg-[#a0675a] transition-colors duration-300"
               >
-                <i class="bi bi-calendar-plus"></i>
+                <i class="bi bi-envelope"></i>
                 Plan Custom Event
               </a>
               <a

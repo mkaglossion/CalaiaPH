@@ -7,7 +7,7 @@ class ValidationService
     public static function bookingRules($maxGuests = 50)
     {
         return [
-            'type' => 'required|string|in:day-visit,room,special-event',
+            'type' => 'required|string|in:day-visit,room',
             'package' => 'required|string',
             'price' => 'required|numeric|min:0',
             'booking_date' => 'required|date|after:yesterday',
