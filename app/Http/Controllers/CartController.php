@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -19,8 +18,25 @@ class CartController extends Controller
 
         foreach ($cart as $id => $it) {
             $qty   = (int)($it['quantity'] ?? 0);
-            $price = (float)($it['price'] ?? 0);
-            $subtotal = $price * $qty;
+            $basePrice = (float)($it['price'] ?? 0);
+
+            // Check if it's a dining item (SET MENUS)
+            $isDining = str_contains(strtolower($it['title'] ?? ''), 'set menus');
+
+            if ($isDining) {
+                // Tiered pricing for dining based on pax
+                if ($qty <= 4) {
+                    $price = 5980.00;
+                } elseif ($qty <= 6) {
+                    $price = 8790.00;
+                } else {
+                    $price = 12900.00;
+                }
+                $subtotal = $price; // Price is for the set, not per person
+            } else {
+                $price = $basePrice;
+                $subtotal = $price * $qty;
+            }
 
             $items[] = [
                 'id'       => $id,
@@ -29,6 +45,7 @@ class CartController extends Controller
                 'image'    => $it['image'] ?? asset('assets/images/carousel/activities-1.jpg'),
                 'quantity' => $qty,
                 'subtotal' => $subtotal,
+                'isDining' => $isDining,
             ];
 
             $total += $subtotal;
@@ -76,6 +93,7 @@ class CartController extends Controller
             'price'    => 'required|numeric|min:0',
             'image'    => 'nullable|string',
             'quantity' => 'required|integer|min:1',
+            'isDining' => 'nullable',
         ]);
 
         $cart = session()->get('cart', []);
@@ -90,6 +108,7 @@ class CartController extends Controller
             if (!empty($data['image'])) {
                 $cart[$data['id']]['image'] = $data['image'];
             }
+            $cart[$data['id']]['isDining'] = ($data['isDining'] ?? '0') == '1';
         } else {
             // new item
             $cart[$data['id']] = [
@@ -97,6 +116,7 @@ class CartController extends Controller
                 'price'    => $data['price'],
                 'image'    => $data['image'] ?? '',
                 'quantity' => $data['quantity'],
+                'isDining' => ($data['isDining'] ?? '0') == '1',
             ];
         }
 
@@ -126,6 +146,19 @@ class CartController extends Controller
 
         if (isset($cart[$id])) {
             $cart[$id]['quantity'] = $data['quantity'];
+
+            // Recalculate price for dining items based on new quantity
+            if (isset($cart[$id]['isDining']) && $cart[$id]['isDining']) {
+                $qty = $data['quantity'];
+                if ($qty <= 4) {
+                    $cart[$id]['price'] = 5980.00;
+                } elseif ($qty <= 6) {
+                    $cart[$id]['price'] = 8790.00;
+                } else {
+                    $cart[$id]['price'] = 12900.00;
+                }
+            }
+
             session()->put('cart', $cart);
         }
 

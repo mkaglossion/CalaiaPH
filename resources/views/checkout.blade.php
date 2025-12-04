@@ -118,7 +118,15 @@
       </div>
     </div>
 
-    <div class="container mx-auto px-4 py-12">
+    <!-- Back Button -->
+    <div class="container mx-auto px-4 py-6">
+      <a href="{{ route('home') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+        <i class="bi bi-arrow-left mr-2"></i>
+        Back
+      </a>
+    </div>
+
+    <div class="container mx-auto px-4 pb-16">
 
         @if($cartCount === 0)
             <div class="max-w-md mx-auto text-center py-16">

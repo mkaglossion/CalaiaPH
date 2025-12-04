@@ -41,6 +41,25 @@
         </button>
         <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
       </div>
+      {{-- Person Selection for Dining --}}
+      <div id="{{ $id }}PersonSelection" class="mb-4 hidden">
+        <h4 class="text-lg font-semibold mb-3" style="color:#97655A;">Select Number of Persons</h4>
+        <div class="grid grid-cols-1 gap-2">
+          <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+            <input type="radio" name="personRange" value="3-4" class="mr-3" onchange="updatePriceForPersons(this.value)">
+            <span class="font-medium">3–4 Person – ₱5,980.00</span>
+          </label>
+          <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+            <input type="radio" name="personRange" value="5-6" class="mr-3" onchange="updatePriceForPersons(this.value)">
+            <span class="font-medium">5–6 Person – ₱8,790.00</span>
+          </label>
+          <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+            <input type="radio" name="personRange" value="7-9" class="mr-3" onchange="updatePriceForPersons(this.value)">
+            <span class="font-medium">7–9 Person – ₱12,900.00</span>
+          </label>
+        </div>
+      </div>
+
       {{-- Package Details --}}
       <div id="{{ $id }}Details" class="space-y-3"></div>
 
@@ -70,86 +89,125 @@
 
 <script>
 let packageSwipers = {};
+let selectedPrice = 5980.00; // default
+
+window.openModal = function(button) {
+  const title = button.dataset.title;
+  const details = JSON.parse(button.dataset.details);
+  const images = JSON.parse(button.dataset.images);
+  const price = button.dataset.price;
+  openModaldetailsModal(title, details, images, price);
+}
+
+function updatePriceForPersons(range) {
+  const prices = {
+    '3-4': 5980.00,
+    '5-6': 8790.00,
+    '7-9': 12900.00
+  };
+  selectedPrice = prices[range] || 5980.00;
+  const priceDisplay = document.getElementById('detailsModalPriceDisplay');
+  if (priceDisplay) {
+    priceDisplay.textContent = 'PHP ' + selectedPrice.toLocaleString('en-US', { minimumFractionDigits: 2 });
+  }
+}
 
 function openModal{{ $id }}(title, details, images, price = null) {
   viewDetails{{ $id }}(title, details, images, price);
 }
 
 function viewDetails{{ $id }}(title, descriptionParagraphs, imageUrls, price = null) {
-  const modalId = '{{ $id }}';
-  // Destroy previous swiper instance if exists
-  if (packageSwipers[modalId]) {
-    packageSwipers[modalId].destroy();
-    packageSwipers[modalId] = null;
-  }
+   const modalId = '{{ $id }}';
+   // Destroy previous swiper instance if exists
+   if (packageSwipers[modalId]) {
+     packageSwipers[modalId].destroy();
+     packageSwipers[modalId] = null;
+   }
 
-  // Build carousel slides
-  const swiperWrapper = document.getElementById(modalId + 'Wrapper');
-  swiperWrapper.innerHTML = imageUrls.map((url, index) => `
-    <div class="swiper-slide">
-      <img src="${url}" class="w-full h-64 md:h-96 object-cover" alt="${title} - Image ${index + 1}" loading="lazy">
-    </div>
-  `).join('');
+   // Check if it's SET MENUS
+   const isDining = title.toLowerCase().includes('menu');
 
-  // Build package details
-  const packageDetails = document.getElementById(modalId + 'Details');
-  packageDetails.innerHTML = descriptionParagraphs.map(p => `
-    <p class="flex items-start text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
-      <i class="bi bi-check-circle-fill text-[#97655A] mr-3 mt-1 flex-shrink-0"></i>
-      <span class="flex-1">${p}</span>
-    </p>
-  `).join('');
+   // Show/hide person selection
+   const personSelection = document.getElementById(modalId + 'PersonSelection');
+   if (isDining) {
+     personSelection.classList.remove('hidden');
+     // Set default selection to 3-4
+     const defaultRadio = document.querySelector('input[name="personRange"][value="3-4"]');
+     if (defaultRadio) {
+       defaultRadio.checked = true;
+       updatePriceForPersons('3-4');
+     }
+   } else {
+     personSelection.classList.add('hidden');
+   }
 
-  // Update modal title
-  document.getElementById(modalId + 'Label').textContent = `${title} Details`;
+   // Build carousel slides
+   const swiperWrapper = document.getElementById(modalId + 'Wrapper');
+   swiperWrapper.innerHTML = imageUrls.map((url, index) => `
+     <div class="swiper-slide">
+       <img src="${url}" class="w-full h-64 md:h-96 object-cover" alt="${title} - Image ${index + 1}" loading="lazy">
+     </div>
+   `).join('');
 
-  // Update price if provided
-  if (price && document.getElementById(modalId + 'PriceDisplay')) {
-    document.getElementById(modalId + 'PriceDisplay').textContent = price;
-  }
+   // Build package details
+   const packageDetails = document.getElementById(modalId + 'Details');
+   packageDetails.innerHTML = descriptionParagraphs.map(p => `
+     <p class="flex items-start text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+       <i class="bi bi-check-circle-fill text-[#97655A] mr-3 mt-1 flex-shrink-0"></i>
+       <span class="flex-1">${p}</span>
+     </p>
+   `).join('');
 
-  // Initialize package swiper
-  packageSwipers[modalId] = new Swiper('.packageSwiper', {
-    slidesPerView: 1,
-    loop: true,
-    navigation: { nextEl: '[data-custom-next]', prevEl: '[data-custom-prev]' },
-  });
+   // Update modal title
+   document.getElementById(modalId + 'Label').textContent = `${title} Details`;
 
-  // Custom dots
-  const dotsEl = document.querySelector('[data-custom-dots]');
-  const numSlides = imageUrls.length;
-  function updateDots() {
-    dotsEl.innerHTML = '';
-    for(let i=0; i<numSlides; i++){
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'h-2.5 rounded-full ' + (i === packageSwipers[modalId].realIndex ? 'bg-[#a97464] w-4' : 'bg-[#c8a89f] w-2.5');
-      b.setAttribute('role','tab');
-      b.setAttribute('aria-label', `Go to slide ${i+1}`);
-      b.addEventListener('click', ()=> packageSwipers[modalId].slideToLoop(i));
-      dotsEl.appendChild(b);
-    }
-  }
-  updateDots();
-  packageSwipers[modalId].on('slideChange', updateDots);
+   // Update price if provided and not dining
+   if (price && document.getElementById(modalId + 'PriceDisplay') && !isDining) {
+     document.getElementById(modalId + 'PriceDisplay').textContent = price;
+   }
 
-  // Set up button action
-  document.getElementById(modalId + 'Btn').onclick = function() {
-    if ('{{ $buttonAction }}' === 'addToCart') {
-      addToCart(title, imageUrls[0] || '');
-    } else if ('{{ $buttonAction }}' === 'bookNow') {
-      bookTour(title, price || 'PHP 0');
-    }
-  };
+   // Initialize package swiper
+   packageSwipers[modalId] = new Swiper('.packageSwiper', {
+     slidesPerView: 1,
+     loop: true,
+     navigation: { nextEl: '[data-custom-next]', prevEl: '[data-custom-prev]' },
+   });
 
-  // Show modal
-  const modal = document.getElementById(modalId);
-  modal.classList.remove('opacity-0', 'pointer-events-none');
-  modal.classList.add('opacity-100', 'pointer-events-auto');
-  document.body.style.overflow = 'hidden';
+   // Custom dots
+   const dotsEl = document.querySelector('[data-custom-dots]');
+   const numSlides = imageUrls.length;
+   function updateDots() {
+     dotsEl.innerHTML = '';
+     for(let i=0; i<numSlides; i++){
+       const b = document.createElement('button');
+       b.type = 'button';
+       b.className = 'h-2.5 rounded-full ' + (i === packageSwipers[modalId].realIndex ? 'bg-[#a97464] w-4' : 'bg-[#c8a89f] w-2.5');
+       b.setAttribute('role','tab');
+       b.setAttribute('aria-label', `Go to slide ${i+1}`);
+       b.addEventListener('click', ()=> packageSwipers[modalId].slideToLoop(i));
+       dotsEl.appendChild(b);
+     }
+   }
+   updateDots();
+   packageSwipers[modalId].on('slideChange', updateDots);
 
-  // Focus management for accessibility
-  modal.focus();
+   // Set up button action
+   document.getElementById(modalId + 'Btn').onclick = function() {
+     if ('{{ $buttonAction }}' === 'addToCart') {
+       addToCart(title, imageUrls[0] || '');
+     } else if ('{{ $buttonAction }}' === 'bookNow') {
+       bookTour(title, price || 'PHP 0');
+     }
+   };
+
+   // Show modal
+   const modal = document.getElementById(modalId);
+   modal.classList.remove('opacity-0', 'pointer-events-none');
+   modal.classList.add('opacity-100', 'pointer-events-auto');
+   document.body.style.overflow = 'hidden';
+
+   // Focus management for accessibility
+   modal.focus();
 }
 
 function closeModal(modalId) {
@@ -175,12 +233,15 @@ function addToCart(title, image) {
   csrfToken.value = '{{ $csrfToken }}';
   form.appendChild(csrfToken);
 
+  const isDining = title.toLowerCase().includes('menu');
+
   const fields = {
     'id': title.toLowerCase().replace(/\s+/g, '-'),
     'title': title,
-    'price': '1500.00',
+    'price': selectedPrice.toFixed(2),
     'image': image,
-    'quantity': '1'
+    'quantity': '1',
+    'isDining': isDining ? '1' : '0'
   };
 
   for (const [name, value] of Object.entries(fields)) {

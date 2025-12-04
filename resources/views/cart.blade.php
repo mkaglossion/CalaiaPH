@@ -38,7 +38,15 @@
       </div>
     </div>
 
-    <div class="container mx-auto px-4 py-12">
+    <!-- Back Button -->
+    <div class="container mx-auto px-4 py-6">
+      <a href="{{ route('home') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+        <i class="bi bi-arrow-left mr-2"></i>
+        Back
+      </a>
+    </div>
+
+    <div class="container mx-auto px-4 pb-16">
       @if($cartCount === 0)
         <!-- Empty Cart State -->
         <div class="max-w-md mx-auto text-center py-16">
@@ -74,41 +82,59 @@
                         <div class="flex items-center text-gray-600 mb-3">
                           <i class="bi bi-tag mr-1"></i>
                           <span class="font-medium">₱{{ number_format($item['price'], 2) }}</span>
-                          <span class="text-gray-400 mx-2">per person</span>
+                          @if(isset($item['isDining']) && $item['isDining'])
+                            <span class="text-gray-400 mx-2">
+                              @if($item['price'] == 5980)
+                                (3–4 Person)
+                              @elseif($item['price'] == 8790)
+                                (5–6 Person)
+                              @else
+                                (7–9 Person)
+                              @endif
+                            </span>
+                          @else
+                            <span class="text-gray-400 mx-2">per person</span>
+                          @endif
                         </div>
                       </div>
 
                       <!-- Quantity Controls -->
                       <div class="flex items-center justify-between md:justify-end gap-4">
-                        <form action="{{ route('cart.update', $id) }}" method="POST" class="flex items-center bg-gray-50 rounded-xl p-1">
-                          @csrf
-                          @method('PATCH')
-                          <button
-                            type="button"
-                            onclick="this.form.quantity.value = Math.max(1, parseInt(this.form.quantity.value || 1) - 1); this.form.submit();"
-                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm {{ $item['quantity'] <= 1 ? 'opacity-50 cursor-not-allowed' : '' }}"
-                            {{ $item['quantity'] <= 1 ? 'disabled' : '' }}
-                          >
-                            <i class="bi bi-dash"></i>
-                          </button>
+                        @if(isset($item['isDining']) && $item['isDining'])
+                          <div class="flex items-center bg-gray-50 rounded-xl p-3">
+                            <span class="text-sm text-gray-600">Set Menu</span>
+                          </div>
+                        @else
+                          <form action="{{ route('cart.update', $id) }}" method="POST" class="flex items-center bg-gray-50 rounded-xl p-1">
+                            @csrf
+                            @method('PATCH')
+                            <button
+                              type="button"
+                              onclick="this.form.quantity.value = Math.max(1, parseInt(this.form.quantity.value || 1) - 1); this.form.submit();"
+                              class="w-10 h-10 flex items-center justify-center rounded-lg bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm {{ $item['quantity'] <= 1 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                              {{ $item['quantity'] <= 1 ? 'disabled' : '' }}
+                            >
+                              <i class="bi bi-dash"></i>
+                            </button>
 
-                          <input
-                            type="number"
-                            name="quantity"
-                            value="{{ $item['quantity'] }}"
-                            min="1"
-                            class="px-2 py-1 w-12 text-center text-lg font-semibold text-gray-800 bg-transparent border-0 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] rounded"
-                            onchange="this.form.submit()"
-                          />
+                            <input
+                              type="number"
+                              name="quantity"
+                              value="{{ $item['quantity'] }}"
+                              min="1"
+                              class="px-2 py-1 w-12 text-center text-lg font-semibold text-gray-800 bg-transparent border-0 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] rounded"
+                              onchange="this.form.submit()"
+                            />
 
-                          <button
-                            type="button"
-                            onclick="this.form.quantity.value = (parseInt(this.form.quantity.value || 1) + 1); this.form.submit();"
-                            class="w-10 h-10 flex items-center justify-center rounded-lg bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm"
-                          >
-                            <i class="bi bi-plus"></i>
-                          </button>
-                        </form>
+                            <button
+                              type="button"
+                              onclick="this.form.quantity.value = (parseInt(this.form.quantity.value || 1) + 1); this.form.submit();"
+                              class="w-10 h-10 flex items-center justify-center rounded-lg bg-white hover:bg-gray-100 text-gray-600 hover:text-gray-800 transition-all duration-200 shadow-sm"
+                            >
+                              <i class="bi bi-plus"></i>
+                            </button>
+                          </form>
+                        @endif
 
                         <!-- Subtotal & Remove -->
                         <div class="text-right">
@@ -187,8 +213,8 @@
                     <span>Secure</span>
                   </div>
                   <div class="flex items-center">
-                    <i class="bi bi-truck text-blue-500 mr-1"></i>
-                    <span>Fast Booking</span>
+                    <i class="bi bi-house-heart text-blue-500 mr-1"></i>
+                    <span>Farm Booking</span>
                   </div>
                 </div>
               </div>
