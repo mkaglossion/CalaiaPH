@@ -2,7 +2,12 @@
 
 namespace App\Models;
 
-class FoodSwiperImage extends BaseSwiperImage
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class FoodSwiperImage extends Model
 {
-    //
+    use HasFactory;
+
+    protected $fillable = ['title', 'image_path', 'public_id'];
 }

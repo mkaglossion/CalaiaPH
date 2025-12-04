@@ -2,7 +2,12 @@
 
 namespace App\Models;
 
-class HomeText extends BaseText
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class HomeText extends Model
 {
-    //
+    use HasFactory;
+
+    protected $fillable = ['label', 'text'];
 }

@@ -2,17 +2,14 @@
 
 namespace App\Models;
 
-class FarmInfoText extends BaseRelatedText
+use Illuminate\Database\Eloquent\Model;
+
+class FarmInfoText extends Model
 {
     protected $fillable = ['farm_info_id', 'section', 'title', 'content'];
 
     public function farmInfo()
     {
         return $this->belongsTo(FarmInfo::class);
-    }
-
-    protected function getParentModelClass(): string
-    {
-        return FarmInfo::class;
     }
 }
