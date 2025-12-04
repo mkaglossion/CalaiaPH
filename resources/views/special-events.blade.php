@@ -176,6 +176,9 @@
           </div>
         </div>
       </section>
+
+      {{-- SECTION: Visit or Contact Us --}}
+      <x-contact-section />
     </main>
 
     {{-- Floating Buttons --}}
