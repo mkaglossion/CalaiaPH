@@ -13,6 +13,11 @@ class PaymentService
         // Process staycation payment logic here
         // For now, just send confirmation email and redirect
 
+        // Add payment details
+        $staycationBooking['transaction_id'] = 'TXN-' . strtoupper(uniqid());
+        $staycationBooking['payment_method'] = $paymentData['payment_method'] ?? 'N/A';
+        $staycationBooking['payment_date'] = now()->toDateTimeString();
+
         // Send confirmation email
         Mail::to($paymentData['email'])->send(new BookingConfirmation([
             'bookingData' => $staycationBooking,
@@ -34,6 +39,11 @@ class PaymentService
         $grandTotal = $dayvisitBooking['price'] + collect(session('dayvisit_selected_activities', []))->sum(function($activity) {
             return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
         });
+
+        // Add payment details
+        $dayvisitBooking['transaction_id'] = 'TXN-' . strtoupper(uniqid());
+        $dayvisitBooking['payment_method'] = $paymentData['payment_method'] ?? 'N/A';
+        $dayvisitBooking['payment_date'] = now()->toDateTimeString();
 
         // Process dayvisit payment
         Mail::to($paymentData['email'])->send(new BookingConfirmation([
@@ -60,6 +70,11 @@ class PaymentService
             return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
         });
 
+        // Add payment details
+        $specialEventBooking['transaction_id'] = 'TXN-' . strtoupper(uniqid());
+        $specialEventBooking['payment_method'] = $paymentData['payment_method'] ?? 'N/A';
+        $specialEventBooking['payment_date'] = now()->toDateTimeString();
+
         // Process special event payment
         Mail::to($paymentData['email'])->send(new BookingConfirmation([
             'bookingData' => $specialEventBooking,
@@ -84,6 +99,11 @@ class PaymentService
         $grandTotal = ($bookingData['price'] ?? 0) + collect(session('selected_activities', []))->sum(function($activity) {
             return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
         });
+
+        // Add payment details
+        $bookingData['transaction_id'] = 'TXN-' . strtoupper(uniqid());
+        $bookingData['payment_method'] = $paymentData['payment_method'] ?? 'N/A';
+        $bookingData['payment_date'] = now()->toDateTimeString();
 
         // Process regular booking payment
         Mail::to($paymentData['email'])->send(new BookingConfirmation([

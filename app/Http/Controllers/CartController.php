@@ -224,6 +224,10 @@ class CartController extends Controller
         $summary = $this->buildCartSummary($cart);
         $cartTotal = $summary['total'];
 
+        // Add payment details
+        $data['transaction_id'] = 'TXN-' . strtoupper(uniqid());
+        $data['payment_date'] = now()->toDateTimeString();
+
         // Send receipt email
         Mail::to($data['email'])->send(new Receipt($cart, $cartTotal, $data));
 

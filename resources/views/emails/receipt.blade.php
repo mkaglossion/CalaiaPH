@@ -42,6 +42,13 @@
                 <p><strong>Total Amount:</strong> ₱{{ number_format($cartTotal, 2) }}</p>
             </div>
 
+            <div class="booking-details">
+                <h3>Payment Details:</h3>
+                <p><strong>Transaction ID:</strong> {{ $bookingData['transaction_id'] ?? 'N/A' }}</p>
+                <p><strong>Payment Method:</strong> {{ ucfirst(str_replace('_', ' ', $bookingData['payment_method'] ?? 'N/A')) }}</p>
+                <p><strong>Payment Date:</strong> {{ !empty($bookingData['payment_date']) ? \Carbon\Carbon::parse($bookingData['payment_date'])->format('M d, Y H:i') : 'N/A' }}</p>
+            </div>
+
             <h3>What's Next?</h3>
             <ul>
                 <li>Keep this receipt for your records.</li>
