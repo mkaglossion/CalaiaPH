@@ -17,4 +17,10 @@ class Staycation extends Model
     {
         return $this->hasMany(StaycationText::class);
     }
+
+    // 🔥 Reverse relation for Day Tour Packages
+    public function staycationAccommodations()
+    {
+        return $this->belongsToMany(StaycationAccommodation::class, 'accommodation_variants');
+    }
 }

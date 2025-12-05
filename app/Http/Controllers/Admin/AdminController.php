@@ -20,6 +20,8 @@ use App\Models\FarmInfoSwiperImage;
 use App\Models\FarmInfoText;
 use App\Models\DayTour;
 use App\Models\DayPackageText;
+use App\Models\StaycationAccommodation;
+
 
 
 class AdminController extends Controller
@@ -70,5 +72,13 @@ class AdminController extends Controller
         $texts = DayPackageText::all();
         $activities = Activity::all(); // list of all activities for selection
         return view('admin.dayTour.days', compact('tours', 'texts', 'activities'));
+    }
+
+    public function staycationAccommodation()
+    {
+        $accommodations  = StaycationAccommodation::with('accommodationVariants')->get(); // get all packages with activities
+        $texts = DayPackageText::all();
+        $staycations = Staycation::all(); // list of all activities for selection
+        return view('admin.whereToStay.accommodations', compact('accommodations', 'texts', 'staycations'));
     }
 }

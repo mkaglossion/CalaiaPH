@@ -57,6 +57,7 @@ use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\FarmInfoController;
 use App\Http\Controllers\Admin\DayTourController as AdminDayTourController;
+use App\Http\Controllers\Admin\StaycationAccommodationController;
 use App\Http\Controllers\CartController;
 
 // ========== Root Route ==========
@@ -169,25 +170,39 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     // adminRoute('/bookings', AdminController::class, 'admin.bookings', 'bookings');
     // adminRoute('/staycations', AdminController::class, 'admin.staycations', 'staycations');
     // adminRoute('/activities', AdminController::class, 'admin.activities', 'activity');
-    Route::get('/activities', [AdminController::class, 'activity'])->name('admin.activities');
-    Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.staycations');
-    Route::get('/menus', [AdminController::class, 'menu'])->name('admin.menus');
-    Route::get('/events', [AdminController::class, 'event'])->name('admin.events');
-    Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farmInfos');
-    Route::get('/day', [AdminController::class, 'dayTour'])->name('admin.day');
-    // adminRoute('/reports', AdminController::class, 'admin.reports', 'reports');
-
-    // Pages Submenu
-    Route::prefix('/pages')->group(function () {
-        // 🏠 Admin Home Page with Swiper CRUD
-        Route::get('/home', [AdminPagesController::class, 'home'])->name('admin.pages.home');
-        Route::get('/day-tour', [AdminPagesController::class, 'dayTour'])->name('admin.pages.daytour');
-        Route::get('/where-to-stay', [AdminPagesController::class, 'whereToStay'])->name('admin.pages.wheretostay');
-        Route::get('/what-to-do', [AdminPagesController::class, 'whatToDo'])->name('admin.pages.whattodo');
-        Route::get('/food-and-beverage', [AdminPagesController::class, 'foodAndBeverage'])->name('admin.pages.foodandbeverage');
-        Route::get('/special-events', [AdminPagesController::class, 'specialEvents'])->name('admin.pages.specialevents');
-        Route::get('/our-farm', [AdminPagesController::class, 'ourFarm'])->name('admin.pages.ourfarm');
+    Route::prefix('/home')->group(function () {
+        Route::get('/home', [AdminPagesController::class, 'home'])->name('admin.home.home');
     });
+    Route::prefix('/day')->group(function () {
+        Route::get('/day', [AdminController::class, 'dayTour'])->name('admin.day.day');
+        Route::get('/day-tour', [AdminPagesController::class, 'dayTour'])->name('admin.day.daytour');
+    });
+    Route::prefix('/stay')->group(function () {
+        Route::get('/where-to-stay', [AdminPagesController::class, 'whereToStay'])->name('admin.stay.wheretostay');
+        Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.stay.staycations');
+        Route::get('/accommodations', [AdminController::class, 'staycationAccommodation'])->name('admin.stay.accommodations');
+    });
+    Route::prefix('/do')->group(function () {
+            Route::get('/activities', [AdminController::class, 'activity'])->name('admin.do.activities');
+            Route::get('/what-to-do', [AdminPagesController::class, 'whatToDo'])->name('admin.do.whattodo');
+    });
+    Route::prefix('/food')->group(function () {
+            Route::get('/food-and-beverage', [AdminPagesController::class, 'foodAndBeverage'])->name('admin.food.foodandbeverage');
+            Route::get('/menus', [AdminController::class, 'menu'])->name('admin.food.menus');
+    });
+    Route::prefix('/events')->group(function () {
+        Route::get('/events', [AdminController::class, 'event'])->name('admin.events.events');
+    });
+    Route::prefix('/special-events')->group(function () {
+        Route::get('/', [AdminPagesController::class, 'specialEvents'])->name('admin.specialEvents.specialevents');
+    });
+    Route::prefix('/farm')->group(function () {
+            Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farm.farmInfos');
+            Route::get('/our-farm', [AdminPagesController::class, 'ourFarm'])->name('admin.farm.ourfarm');
+    });
+    Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.staycations');
+    Route::get('/events', [AdminController::class, 'event'])->name('admin.events');
+    // adminRoute('/reports', AdminController::class, 'admin.reports', 'reports');
 
     // Pages Submenu
 
@@ -241,5 +256,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
     Route::resource('day-tours', AdminDayTourController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('day-text', DayPackageTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    
+    Route::resource('staycation-accommodations', StaycationAccommodationController::class)->only(['index', 'store', 'update', 'destroy']);
 
 });
