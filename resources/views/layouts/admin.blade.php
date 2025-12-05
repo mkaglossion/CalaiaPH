@@ -6,20 +6,17 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>@yield('title', 'Admin Panel')</title>
   @vite(['resources/css/app.css', 'resources/js/app.js'])
-  
-  <!-- Icons and SweetAlert -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="//unpkg.com/alpinejs" defer></script>
 </head>
 
-<body x-data="{ sidebarOpen: false }" class="bg-gray-100 flex">
+<body x-data="{ sidebarOpen: false, pageMenu: false }" class="bg-gray-100 flex min-h-screen">
 
   {{-- Sidebar --}}
   <aside 
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-64 md:translate-x-0'"
-    class="fixed top-0 left-0 w-64 bg-[#8f5d54] text-white h-screen flex flex-col justify-between transition-transform duration-300 z-50">
+    class="fixed md:static md:flex flex-col justify-between w-64 bg-[#8f5d54] text-white min-h-screen transform transition-transform duration-300 z-50">
 
     {{-- Top Section --}}
     <div>
@@ -30,66 +27,158 @@
         </button>
       </div>
 
-      {{-- Navigation --}}
-      <nav class="mt-4 space-y-1 overflow-y-auto" style="max-height: calc(100vh - 100px);">
-        @php
-          $menuItems = [
-            ['title'=>'Home','icon'=>'home','route'=>'admin.home.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.home.home']
-            ]],
-            ['title'=>'Day Tour','icon'=>'sun','route'=>'admin.day.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.day.daytour'],
-              ['label'=>'Items','route'=>'admin.day.day']
-            ]],
-            ['title'=>'Where to Stay','icon'=>'building','route'=>'admin.stay.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.stay.wheretostay'],
-              ['label'=>'Items','route'=>'admin.stay.staycations']
-            ]],
-            ['title'=>'What to Do','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.do.activities'],
-              ['label'=>'Items','route'=>'admin.do.activities']
-            ]],
-            ['title'=>'Special Events','icon'=>'calendar','route'=>'admin.specialEvents.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.specialEvents.specialevents']
-            ]],
-            ['title'=>'Our Farm','icon'=>'leaf','route'=>'admin.farm.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.farm.ourfarm'],
-              ['label'=>'Items','route'=>'admin.farm.farmInfos']
-            ]],
+      <nav class="mt-4 space-y-1">
 
-          ];
-        @endphp
+        <!-- {{-- Dashboard --}}
+        <a 
+          class="flex items-center gap-3 px-6 py-2 transition 
+          {{ request()->routeIs('admin.dashboard') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          <span>Dashboard</span>
+        </a> -->
 
-        @foreach($menuItems as $item)
-          @if(!empty($item['sub']))
-            <div x-data="{ open: {{ request()->routeIs($item['route']) ? 'true' : 'false' }} }" class="space-y-1">
-              <button @click="open = !open" 
-                class="w-full flex items-center justify-between px-6 py-2 rounded-lg transition
-                {{ request()->routeIs($item['route']) ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]/80' }}">
-                <div class="flex items-center gap-3">
-                  <i data-lucide="{{ $item['icon'] }}" class="w-5 h-5"></i>
-                  <span>{{ $item['title'] }}</span>
-                </div>
-                <i :class="open ? 'rotate-180' : ''" data-lucide="chevron-down" class="w-4 h-4 transition-transform"></i>
-              </button>
+        <!-- {{-- Manage Users --}}
+        <a 
+          class="flex items-center gap-3 px-6 py-2 transition 
+          {{ request()->routeIs('admin.users') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
+          <i data-lucide="users" class="w-5 h-5"></i>
+          <span>Manage Users</span>
+        </a> -->
 
-              <div x-cloak x-show="open" x-transition class="pl-10 space-y-1 mt-1">
-                @foreach($item['sub'] as $sub)
-                  <a href="{{ route($sub['route']) }}" class="flex items-center gap-2 py-1 transition
-                    {{ request()->routeIs($sub['route']) ? 'text-yellow-200' : 'hover:text-gray-300' }}">
-                    <i data-lucide="home" class="w-4 h-4"></i> <span>{{ $sub['label'] }}</span>
-                  </a>
-                @endforeach
-              </div>
+        <!-- {{-- Bookings --}}
+        <a 
+          class="flex items-center gap-3 px-6 py-2 transition 
+          {{ request()->routeIs('admin.bookings') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
+          <i data-lucide="calendar-days" class="w-5 h-5"></i>
+          <span>Bookings</span>
+        </a> -->
+
+        {{-- Staycations --}}
+        <a href="{{ route('admin.staycations') }}"  
+          class="flex items-center gap-3 px-6 py-2 transition 
+          {{ request()->routeIs('admin.staycations') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
+          <i data-lucide="bed-double" class="w-5 h-5"></i>
+          <span>Staycations</span>
+        </a>
+
+        {{-- Activities --}}
+        <a href="{{ route('admin.activities') }}" 
+          class="flex items-center gap-3 px-6 py-2 transition 
+          {{ request()->routeIs('admin.activities') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
+          <i data-lucide="mountain" class="w-5 h-5"></i>
+          <span>Activities</span>
+        </a>
+
+        {{-- Menu --}}
+        <a href="{{ route('admin.menus') }}" 
+          class="flex items-center gap-3 px-6 py-2 transition 
+          {{ request()->routeIs('admin.menus') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
+          <i data-lucide="utensils" class="w-5 h-5"></i>
+          <span>Menu</span>
+        </a>
+
+        {{-- Event --}}
+        <a href="{{ route('admin.events') }}" 
+          class="flex items-center gap-3 px-6 py-2 transition 
+          {{ request()->routeIs('admin.events') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
+          <i data-lucide="calendar-days" class="w-5 h-5"></i>
+          <span>Event</span>
+        </a>
+
+        {{-- Farm --}}
+        <a href="{{ route('admin.farmInfos') }}"  
+          class="flex items-center gap-3 px-6 py-2 transition 
+          {{ request()->routeIs('admin.farmInfos') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
+          <i data-lucide="sprout" class="w-5 h-5"></i>
+          <span>Farm</span> 
+        </a>
+
+        {{-- Day Tour --}}
+        <a href="{{ route('admin.day') }}"  
+          class="flex items-center gap-3 px-6 py-2 transition 
+          {{ request()->routeIs('admin.day') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
+          <i data-lucide="sun" class="w-5 h-5"></i>
+          <span>Day tour</span> 
+        </a>
+
+        {{-- Pages (Dropdown) --}}
+        <div 
+        class="space-y-1"
+        x-data="{ pageMenu: {{ request()->routeIs('admin.pages.*') ? 'true' : 'false' }} }"
+        >
+       <button 
+            @click="pageMenu = !pageMenu"
+            class="w-full flex items-center justify-between px-6 py-2 transition 
+            {{ request()->routeIs('admin.pages.*') 
+                ? 'bg-[#7a4d46] font-semibold' 
+                : 'hover:bg-[#7a4d46]' }}"
+        >
+            <div class="flex items-center gap-3 ">
+            <i data-lucide="book" class="w-5 h-5"></i>
+            <span>Pages</span>
             </div>
-          @else
-            <a href="{{ route($item['route']) }}" class="flex items-center gap-3 px-6 py-2 rounded-lg transition
-              {{ request()->routeIs($item['route']) ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]/80' }}">
-              <i data-lucide="{{ $item['icon'] }}" class="w-5 h-5"></i>
-              <span>{{ $item['title'] }}</span>
+            <i :class="pageMenu ? 'rotate-180' : ''" data-lucide="chevron-down" class="w-4 h-4 transition-transform"></i>
+        </button>
+
+        <div 
+            x-cloak 
+            x-show="pageMenu" 
+            x-transition 
+            class="pl-10 space-y-1"
+        >
+            <a href="{{ route('admin.pages.home') }}" 
+            class="flex items-center gap-2 py-1 transition 
+            {{ request()->routeIs('admin.pages.home') ? 'text-yellow-200' : 'hover:text-gray-300' }}">
+            <i data-lucide="home" class="w-4 h-4"></i>
+            <span>Home</span>
             </a>
-          @endif
-        @endforeach
+            <a href="{{ route('admin.pages.daytour') }}" 
+            class="flex items-center gap-2 py-1 transition 
+            {{ request()->routeIs('admin.pages.daytour') ? 'text-yellow-200' : 'hover:text-gray-300' }}">
+            <i data-lucide="sun" class="w-4 h-4"></i>
+            <span>Day Tour</span>
+            </a>
+            <a href="{{ route('admin.pages.wheretostay') }}" 
+            class="flex items-center gap-2 py-1 transition 
+            {{ request()->routeIs('admin.pages.wheretostay') ? 'text-yellow-200' : 'hover:text-gray-300' }}">
+            <i data-lucide="building-2" class="w-4 h-4"></i>
+            <span>Where to Stay</span>
+            </a>
+            <a href="{{ route('admin.pages.whattodo') }}" 
+            class="flex items-center gap-2 py-1 transition 
+            {{ request()->routeIs('admin.pages.whattodo') ? 'text-yellow-200' : 'hover:text-gray-300' }}">
+            <i data-lucide="mountain" class="w-4 h-4"></i>
+            <span>What to Do</span>
+            </a>
+            <a href="{{ route('admin.pages.foodandbeverage') }}" 
+            class="flex items-center gap-2 py-1 transition 
+            {{ request()->routeIs('admin.pages.foodandbeverage') ? 'text-yellow-200' : 'hover:text-gray-300' }}">
+            <i data-lucide="utensils" class="w-4 h-4"></i>
+            <span>Food & Beverage</span>
+            </a>
+            <a href="{{ route('admin.pages.specialevents') }}" 
+            class="flex items-center gap-2 py-1 transition 
+            {{ request()->routeIs('admin.pages.specialevents') ? 'text-yellow-200' : 'hover:text-gray-300' }}">
+            <i data-lucide="party-popper" class="w-4 h-4"></i>
+            <span>Special Events</span>
+            </a>
+            <a href="{{ route('admin.pages.ourfarm') }}" 
+            class="flex items-center gap-2 py-1 transition 
+            {{ request()->routeIs('admin.pages.ourfarm') ? 'text-yellow-200' : 'hover:text-gray-300' }}">
+            <i data-lucide="leaf" class="w-4 h-4"></i>
+            <span>Our Farm</span>
+            </a>
+        </div>
+        </div>
+
+
+        {{-- Reports --}}
+        <a 
+          class="flex items-center gap-3 px-6 py-2 transition 
+          {{ request()->routeIs('admin.reports') ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]' }}">
+          <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+          <span>Reports</span>
+        </a>
       </nav>
     </div>
 
@@ -106,7 +195,7 @@
   </aside>
 
   {{-- Main Content --}}
-  <main class="flex-1 ml-64 overflow-y-auto h-screen p-8">
+  <main class="flex-1 p-8">
     @yield('content')
   </main>
 
