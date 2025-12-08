@@ -213,8 +213,8 @@
                 <div>
                     <label class="block font-medium mb-1 text-gray-700">Package</label>
                     <select 
-                        name="package_id" 
-                        x-model="form.package_id" 
+                        name="accommodation_id" 
+                        x-model="form.accommodation_id" 
                         class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         required
                     >
@@ -300,10 +300,10 @@ function dayTourManager() {
         texts: @js($texts),
         accommodations: @js($accommodations),
         staycations: @js($staycations),
-        form: { id: null, name: '', description: '', price: '', staycation_ids: [], package_id: '', label: '', text: '' },
+        form: { id: null, name: '', description: '', price: '', staycation_ids: [], accommodation_id: '', label: '', text: '' },
 
         resetForm() {
-            this.form = { id: null, name: '', description: '', price: '', staycation_ids: [], package_id: '', label: '', text: '' };
+            this.form = { id: null, name: '', description: '', price: '', staycation_ids: [], accommodation_id: '', label: '', text: '' };
             this.editMode = false;
         },
 
@@ -327,12 +327,11 @@ function dayTourManager() {
         editText(id) {
             const text = this.texts.find(t => t.id === id);
             if (text) {
-                this.form = { 
-                    id: text.id, 
-                    package_id: text.package_id, 
-                    label: text.label, 
-                    text: text.text 
-                };
+                this.form.id = text.id;
+                this.form.accommodation_id = text.accommodation_id;
+                this.form.label = text.title;
+                this.form.text = text.content;
+
                 this.editMode = true;
                 this.showTextModal = true;
             }
@@ -402,13 +401,13 @@ function dayTourManager() {
             this.isLoading = true;
             const csrf = document.querySelector('meta[name=csrf-token]').content;
             const formData = new FormData();
-            formData.append('package_id', this.form.package_id);
+            formData.append('accommodation_id', this.form.accommodation_id);
             formData.append('title', this.form.label);
             formData.append('content', this.form.text);
 
-            let url = '{{ route('staycation-text.store') }}';
+            let url = '{{ route('accommodations-text.store') }}';
             if (this.editMode && this.form.id) {
-                url = `/admin/staycation-text/${this.form.id}`;
+                url = `/admin/accommodations-text/${this.form.id}`;
                 formData.append('_method', 'PUT');
             }
 

@@ -44,6 +44,7 @@ use App\Http\Controllers\Admin\MenuTextController;
 use App\Http\Controllers\Admin\EventTextController;
 use App\Http\Controllers\Admin\FarmInfoTextController;
 use App\Http\Controllers\Admin\DayPackageTextController;
+use App\Http\Controllers\Admin\AccommodationTextController;
 
 
 use App\Http\Controllers\Admin\HomeController;
@@ -258,5 +259,6 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('day-text', DayPackageTextController::class)->only(['index', 'store', 'update', 'destroy']);
     
     Route::resource('staycation-accommodations', StaycationAccommodationController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('accommodations-text', AccommodationTextController::class)->only(['index', 'store', 'update', 'destroy']);
 
 });

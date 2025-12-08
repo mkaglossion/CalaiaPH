@@ -21,7 +21,7 @@ use App\Models\FarmInfoText;
 use App\Models\DayTour;
 use App\Models\DayPackageText;
 use App\Models\StaycationAccommodation;
-
+use App\Models\AccommodationText;
 
 
 class AdminController extends Controller
@@ -77,7 +77,7 @@ class AdminController extends Controller
     public function staycationAccommodation()
     {
         $accommodations  = StaycationAccommodation::with('accommodationVariants')->get(); // get all packages with activities
-        $texts = DayPackageText::all();
+        $texts = AccommodationText::all();
         $staycations = Staycation::all(); // list of all activities for selection
         return view('admin.whereToStay.accommodations', compact('accommodations', 'texts', 'staycations'));
     }
