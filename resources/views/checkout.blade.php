@@ -145,7 +145,7 @@
                 <div class="bg-white rounded-2xl shadow-xl p-6">
                     <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center" style="">
                         <i class="bi bi-person-lines-fill mr-2 text-[#8f5d54]"></i>
-                        Contact & Delivery Information
+                        Contact Information
                     </h2>
                     <form id="checkout-form" action="{{ route('checkout.submit') }}" method="POST">
                         @csrf
