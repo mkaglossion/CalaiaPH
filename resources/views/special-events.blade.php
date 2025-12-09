@@ -117,10 +117,12 @@
 
                   {{-- Contact Button --}}
                   <a
-                    href="mailto:calaia.ph@gmail.com?subject=Inquiry about {{ $event->name }}"
+                    href="https://m.me/410774518796277"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     class="w-full inline-flex items-center justify-center gap-2 bg-[#8f5d54] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#a0675a] transition-colors duration-300"
                   >
-                    <i class="bi bi-envelope"></i>
+                    <i class="bi bi-messenger"></i>
                     Inquire About This Event
                   </a>
                 </div>
@@ -159,18 +161,20 @@
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="mailto:calaia.ph@gmail.com?subject=Custom Event Planning Inquiry"
+                href="https://m.me/410774518796277"
+                target="_blank"
+                rel="noopener noreferrer"
                 class="inline-flex items-center justify-center gap-2 bg-[#8f5d54] text-white px-8 py-4 rounded-xl font-semibold hover:bg-[#a0675a] transition-colors duration-300"
               >
-                <i class="bi bi-envelope"></i>
+                <i class="bi bi-messenger"></i>
                 Plan Custom Event
               </a>
               <a
-                href="tel:+639051294741"
+                href="mailto:calaia.ph@gmail.com?subject=Call Request"
                 class="inline-flex items-center justify-center gap-2 border-2 border-[#8f5d54] text-[#8f5d54] px-8 py-4 rounded-xl font-semibold hover:bg-[#8f5d54] hover:text-white transition-colors duration-300"
               >
-                <i class="bi bi-telephone"></i>
-                Call Us Now
+                <i class="bi bi-envelope"></i>
+                Email Us Now
               </a>
             </div>
           </div>
