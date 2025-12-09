@@ -368,7 +368,7 @@ $galleryData = [
 
                @if($campingCount > 0)
                    <p class="font-semibold mb-1" style="color: #7a7d52; font-size: 16px;">
-                       Starts at ₱300/night (BYOT/Car Camping)<br>• ₱3,000/night (Bell/Dome Tents)
+                       Starts at ₱300/tent or camp space + ₱500/pax overnight fee (BYOT/Car Camping)<br>• ₱3,000/night (Bell/Dome Tents)
                    </p>
                    <p class="text-xs text-gray-500 mb-6" style="">
                        {{ $campingCount }} {{ Str::plural('option', $campingCount) }} available
@@ -816,8 +816,8 @@ function computeStaycationTotals(staycation, options = {}) {
         // Dome / Bell: flat 3000 per night, up to 8
         basePriceTotal = 3000 * nights;
     } else if (name.includes('byot') || name.includes('car')) {
-        // BYOT / Car: 300 * guests * nights + 500 * guests * nights
-        basePriceTotal = (300 * nights) + (500 * guests * nights);
+           // BYOT / Car: ₱300/tent + ₱500/pax per night
+           basePriceTotal = (300 * guests * nights) + (500 * guests * nights);
     }
 
     // ---- PET FEE ----

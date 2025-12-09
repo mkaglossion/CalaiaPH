@@ -73,7 +73,7 @@ if ($datesSelected) {
             } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
                 $accommodationTotal += 3000 * $nights;
             } elseif ($isBYOT || $isCarCamping) {
-                $accommodationTotal += 300 * $quantity * $nights;
+                    $accommodationTotal += (300 * $quantity * $nights) + (500 * $quantity * $nights);
             }
         }
     }
@@ -495,18 +495,29 @@ $grandTotal = $accommodationTotal + $breakfastTotal + $activitiesTotal;
                                         } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
                                             $accommodationPrice = 3000 * $nights;
                                         } elseif ($isBYOT || $isCarCamping) {
-                                            $accommodationPrice = (300 * $nights) + (500 * $quantity * $nights);
+                                                $accommodationPrice = (300 * $quantity * $nights) + (500 * $quantity * $nights);
+                                                $basePriceTotal = 300 * $quantity * $nights;
+                                                $extraPriceTotal = 500 * $quantity * $nights;
                                         }
 
                                         $petFee = (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) ? 2000 * $accommodation['num_pets'] : 0;
                                         $totalPrice = $accommodationPrice + $petFee;
-                                        $baseAvg = $nights > 0 ? round($basePriceTotal / $nights) : 0;
-                                        $extraAvg = $nights > 0 ? round($extraPriceTotal / $nights) : 0;
+                                            if (!($isBYOT || $isCarCamping)) {
+                                                $baseAvg = $nights > 0 ? round($basePriceTotal / $nights) : 0;
+                                                $extraAvg = $nights > 0 ? round($extraPriceTotal / $nights) : 0;
+                                            } else {
+                                                $baseAvg = 300;
+                                                $extraAvg = 500;
+                                            }
                                         @endphp
                                         <div class="text-xs text-gray-600 space-y-1">
-                                            <div>ACCOMMODATION {{ (int)$index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($baseAvg) }}/night ({{ $accommodation['guests'] }} guests)</div>
-                                            @if($extraPriceTotal > 0)
-                                                <div>Extra Mattress ({{ $extraGuests }} guest{{ $extraGuests > 1 ? 's' : '' }}): ₱{{ number_format($extraAvg) }}/night</div>
+                                                @if($isBYOT || $isCarCamping)
+                                                    <div>ACCOMMODATION {{ (int)$index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($baseAvg) }}/tent + ₱{{ number_format($extraAvg) }}/pax ({{ $accommodation['guests'] }} guests)</div>
+                                                @else
+                                                    <div>ACCOMMODATION {{ (int)$index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($baseAvg) }}/night ({{ $accommodation['guests'] }} guests)</div>
+                                                @endif
+                                                @if($extraPriceTotal > 0 && !($isBYOT || $isCarCamping))
+                                                    <div>Extra Mattress ({{ $extraGuests }} guest{{ $extraGuests > 1 ? 's' : '' }}): ₱{{ number_format($extraAvg) }}/night</div>
                                             @endif
                                             @if($petFee > 0)
                                                 <div>Pet Fee ({{ $accommodation['num_pets'] }} pet{{ $accommodation['num_pets'] > 1 ? 's' : '' }}): ₱{{ number_format($petFee) }}</div>

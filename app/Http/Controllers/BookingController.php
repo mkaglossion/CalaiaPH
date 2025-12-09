@@ -27,6 +27,80 @@ class BookingController extends Controller
         $this->paymentService = $paymentService;
         $this->inventoryService = $inventoryService;
     }
+
+    /**
+     * Calculate accommodation pricing for staycations
+     */
+    private function calculateAccommodationPrice($accommodation, $checkinDate, $checkoutDate)
+    {
+        $quantity = $accommodation['guests'] ?? 1;
+        $name = strtolower($accommodation['staycation']['name']);
+        $isBYOT = str_contains($name, 'byot');
+        $isCarCamping = str_contains($name, 'car camping');
+
+        $checkin = new DateTime($checkinDate);
+        $checkout = new DateTime($checkoutDate);
+        $nights = max(1, $checkin->diff($checkout)->days);
+
+        $price = 0;
+
+        if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
+            $current = clone $checkin;
+            while ($current < $checkout) {
+                $day = (int)$current->format('w');
+                $isWeekend = $day === 5 || $day === 6;
+                $basePrice = 0;
+                if (str_contains($name, 'standard')) {
+                    $basePrice = $isWeekend ? 6000 : 4800;
+                } elseif (str_contains($name, 'premium')) {
+                    $basePrice = $isWeekend ? 7200 : 5760;
+                }
+                $extraGuests = max(0, $quantity - 4);
+                $price += $basePrice + ($extraGuests * 400);
+                $current->modify('+1 day');
+            }
+        } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
+            $price = 3000 * $nights;
+        } elseif ($isBYOT || $isCarCamping) {
+              $price = (300 * $quantity * $nights) + (500 * $quantity * $nights);
+        } else {
+            $price = $accommodation['staycation']['price'] * $quantity * $nights;
+        }
+
+        // Add pet fees
+        if (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) {
+            $price += 2000 * $accommodation['num_pets'];
+        }
+
+        // Add breakfast fees
+        if (!empty($accommodation['has_breakfast'])) {
+            $price += 500 * $accommodation['guests'];
+        }
+
+        return $price;
+    }
+
+    /**
+     * Get base rate for accommodation display
+     */
+    private function getAccommodationBaseRate($accommodation)
+    {
+        $name = strtolower($accommodation['staycation']['name']);
+        $isBYOT = str_contains($name, 'byot');
+        $isCarCamping = str_contains($name, 'car camping');
+
+        if (str_contains($name, 'standard')) {
+            return 4800; // weekday rate
+        } elseif (str_contains($name, 'premium')) {
+            return 5760; // weekday rate
+        } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
+            return 3000;
+        } elseif ($isBYOT || $isCarCamping) {
+            return 300;
+        }
+
+        return $accommodation['staycation']['price'] ?? 0;
+    }
     public function debugSession()
     {
         // Dump the entire session
@@ -242,7 +316,27 @@ class BookingController extends Controller
 
         $activities = $this->bookingService->getActivitiesData();
 
-        return view('booking.staycation-activities', compact('booking', 'activities'));
+        // Calculate accommodation total
+        $accommodationTotal = 0;
+        $checkinDate = $booking['checkin'] ?? null;
+        $checkoutDate = $booking['checkout'] ?? null;
+        if ($checkinDate && $checkoutDate) {
+            foreach ($booking['accommodations'] ?? [] as $acc) {
+                if (!empty($acc) && !empty($acc['staycation'])) {
+                    $accommodationTotal += $this->calculateAccommodationPrice($acc, $checkinDate, $checkoutDate);
+                }
+            }
+        }
+
+        // Calculate breakfast total
+        $breakfastTotal = 0;
+        foreach ($booking['accommodations'] ?? [] as $acc) {
+            if (!empty($acc['has_breakfast'])) {
+                $breakfastTotal += 500 * ($acc['guests'] ?? 1);
+            }
+        }
+
+        return view('booking.staycation-activities', compact('booking', 'activities', 'accommodationTotal', 'breakfastTotal'));
     }
 
     public function storeStaycationActivities(Request $request)
@@ -322,7 +416,9 @@ class BookingController extends Controller
                                 }
                     } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
                         $accommodationTotal += 3000 * $nights;
-                    } elseif ($isBYOT || $isCarCamping) {
+                    } elseif ($isBYOT) {
+                        $accommodationTotal += (300 * $nights) + (500 * $quantity * $nights);
+                    } elseif ($isCarCamping) {
                         $accommodationTotal += (300 * $nights) + (500 * $quantity * $nights);
                     }
                 }
@@ -581,7 +677,7 @@ class BookingController extends Controller
                 'capacity' => 4,
                 'adults' => 4,
                 'children' => 2,
-                'price' => 800,
+                'price' => 300,
                 'image' => asset('assets/images/carousel/BYOT-2.jpg'),
             ],
             [
@@ -591,7 +687,7 @@ class BookingController extends Controller
                 'capacity' => 4,
                 'adults' => 4,
                 'children' => 2,
-                'price' => 1500,
+                'price' => 300,
                 'image' => asset('assets/images/carousel/Car-camping3.jpg'),
             ],
         ];

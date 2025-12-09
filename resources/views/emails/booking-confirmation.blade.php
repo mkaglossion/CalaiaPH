@@ -20,14 +20,14 @@
         </div>
 
         <div class="content">
-            <p>Dear {{ $bookingData['first_name'] ?? $bookingData['customer_info']['first_name'] ?? 'Guest' }} {{ $bookingData['last_name'] ?? $bookingData['customer_info']['last_name'] ?? '' }},</p>
+            <p>Dear {{ $bookingData['first_name'] ?? $customerInfo['first_name'] ?? 'Guest' }} {{ $bookingData['last_name'] ?? $customerInfo['last_name'] ?? '' }},</p>
 
             <p>Your booking has been successfully processed and confirmed. Below is your receipt. Thank you for choosing CalaiaPH!</p>
 
             <div class="booking-details">
                 <h3>Booking Details:</h3>
-                <p><strong>Name:</strong> {{ ($bookingData['first_name'] ?? $bookingData['customer_info']['first_name'] ?? '') . ' ' . ($bookingData['last_name'] ?? $bookingData['customer_info']['last_name'] ?? '') }}</p>
-                <p><strong>Email:</strong> {{ $bookingData['email'] ?? $bookingData['customer_info']['email'] ?? '' }}</p>
+                <p><strong>Name:</strong> {{ ($bookingData['first_name'] ?? $customerInfo['first_name'] ?? '') . ' ' . ($bookingData['last_name'] ?? $customerInfo['last_name'] ?? '') }}</p>
+                <p><strong>Email:</strong> {{ $bookingData['email'] ?? $customerInfo['email'] ?? '' }}</p>
                 @php
                 $isStaycation = isset($bookingData['accommodations']) && !empty($bookingData['accommodations']);
                 $accommodationTotal = 0;
@@ -77,7 +77,9 @@
                                 }
                             } elseif ($checkin && $checkout && (str_contains($name, 'bell') || str_contains($name, 'dome'))) {
                                 $accPrice = 3000 * $nights;
-                            } elseif ($checkin && $checkout && (str_contains($name, 'byot') || str_contains($name, 'car camping'))) {
+                            } elseif ($checkin && $checkout && str_contains($name, 'byot')) {
+                                $accPrice = 800 * $quantity * $nights;
+                            } elseif ($checkin && $checkout && str_contains($name, 'car camping')) {
                                 $accPrice = 300 * $quantity * $nights;
                             } else {
                                 $accPrice = $accommodation['staycation']['price'] * $quantity * $nights;
@@ -106,7 +108,7 @@
                     <p><strong>Booking Type:</strong> Staycation</p>
                     <p><strong>Check-in:</strong> {{ !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin'])->format('M d, Y') : '' }}</p>
                     <p><strong>Check-out:</strong> {{ !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout'])->format('M d, Y') : '' }}</p>
-                    <p><strong>Nights:</strong> {{ !empty($bookingData['checkin']) && !empty($bookingData['checkout']) ? max(1, abs(\Carbon\Carbon::parse($bookingData['checkout'])->diffInDays(\Carbon\Carbon::parse($bookingData['checkin'])))) : 0 }}</p>
+                    <p><strong>Nights:</strong> {{ !empty($bookingData['checkin']) && !empty($bookingData['checkout']) ? max(1, abs(\Carbon\Carbon::parse($bookingData['checkout'])->diffInDays(\Carbon\Carbon::parse($bookingData['checkin'])))) : 1 }}</p>
                     <p><strong>Guests:</strong> {{ collect($bookingData['accommodations'])->sum('guests') }}</p>
                     @if (!empty($bookingData['accommodations']))
                         <p><strong>Selected Accommodations:</strong></p>
@@ -177,7 +179,9 @@
                                         $baseRate = 5760; // weekday rate
                                     } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
                                         $baseRate = 3000;
-                                    } elseif ($isBYOT || $isCarCamping) {
+                                    } elseif ($isBYOT) {
+                                        $baseRate = 300;
+                                    } elseif ($isCarCamping) {
                                         $baseRate = 300;
                                     }
 
@@ -219,8 +223,8 @@
                     @endif
                     <p><strong>Package Total:</strong> ₱{{ number_format($packageTotal) }}</p>
                     <p><strong>Total Amount Paid:</strong> ₱{{ number_format($grandTotal) }}</p>
-                    @if($bookingData['special_requests'] ?? $bookingData['customer_info']['special_requests'] ?? false)
-                    <p><strong>Special Requests:</strong> {{ $bookingData['special_requests'] ?? $bookingData['customer_info']['special_requests'] ?? '' }}</p>
+                    @if($bookingData['special_requests'] ?? $customerInfo['special_requests'] ?? false)
+                    <p><strong>Special Requests:</strong> {{ $bookingData['special_requests'] ?? $customerInfo['special_requests'] ?? '' }}</p>
                     @endif
                 @endif
             </div>

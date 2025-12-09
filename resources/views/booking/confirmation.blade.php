@@ -263,7 +263,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
               </div>
               <div>
                 <span class="font-medium text-gray-500">Nights:</span>
-                  <span class="ml-2 text-gray-900">{{ $nights ?? 0 }}</span>
+                  <span class="ml-2 text-gray-900">{{ max(1, abs($nights ?? 0)) }}</span>
               </div>
               <div>
                 <span class="font-medium text-gray-500">Guests:</span>
@@ -286,7 +286,16 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                   @php
                   $checkin = !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin']) : null;
                   $checkout = !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout']) : null;
-                  $nights = $checkin && $checkout ? $checkout->diffInDays($checkin) : 0;
+                  if ($checkin && $checkout) {
+                      if ($checkout->lt($checkin)) {
+                          $temp = $checkin;
+                          $checkin = $checkout;
+                          $checkout = $temp;
+                      }
+                      $nights = max(1, $checkout->diffInDays($checkin));
+                  } else {
+                      $nights = 0;
+                  }
                   @endphp
                   @foreach ($bookingData['accommodations'] as $accommodation)
                     @if (!empty($accommodation['staycation']))

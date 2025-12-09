@@ -61,56 +61,8 @@ if ($bookingType === 'staycation') {
 }
 
 // Calculate accommodation total with dynamic pricing
-$accommodationTotal = 0;
-if ($datesSelected) {
-    $start = new DateTime($checkinDate);
-    $end = new DateTime($checkoutDate);
-
-    foreach ($booking['accommodations'] ?? [] as $acc) {
-        if (!empty($acc) && !empty($acc['staycation'])) {
-            $quantity = $acc['guests'] ?? 1;
-            $name = strtolower($acc['staycation']['name']);
-            $isBYOT = str_contains($name, 'byot');
-            $isCarCamping = str_contains($name, 'car camping');
-
-            if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
-                $current = clone $start;
-                while ($current < $end) {
-                    $day = (int)$current->format('w'); // 0=Sun, 6=Sat
-                    $isWeekend = $day === 5 || $day === 6; // Fri=5, Sat=6
-                    $basePrice = 0;
-                    if (str_contains($name, 'standard')) {
-                        $basePrice = $isWeekend ? 6000 : 4800;
-                    } elseif (str_contains($name, 'premium')) {
-                        $basePrice = $isWeekend ? 7200 : 5760;
-                    }
-                    $extraGuests = max(0, $quantity - 4);
-                    $accommodationTotal += $basePrice + ($extraGuests * 400);
-                    $current->modify('+1 day');
-                }
-            } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
-                $accommodationTotal += 3000 * $nights;
-            } elseif ($isBYOT || $isCarCamping) {
-                $accommodationTotal += 300 * $quantity * $nights;
-            }
-        }
-    }
-
-    // Add pet fees
-    foreach ($booking['accommodations'] ?? [] as $acc) {
-        if (!empty($acc['pet_agreement']) && !empty($acc['num_pets'])) {
-            $accommodationTotal += 2000 * $acc['num_pets'];
-        }
-    }
-
-    // Add breakfast fees
-    $breakfastTotal = 0;
-    foreach ($booking['accommodations'] ?? [] as $acc) {
-        if (!empty($acc['has_breakfast'])) {
-            $breakfastTotal += 500 * ($acc['guests'] ?? 1);
-        }
-    }
-}
+$accommodationTotal = $accommodationTotal ?? 0;
+$breakfastTotal = $breakfastTotal ?? 0;
 @endphp
 
 <body class="bg-[#f5efe7]">
@@ -252,7 +204,7 @@ if ($datesSelected) {
                                         } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
                                             $accommodationPrice = 3000 * $nights;
                                         } elseif ($isBYOT || $isCarCamping) {
-                                            $accommodationPrice = 300 * $quantity * $nights;
+                                                $accommodationPrice = (300 * $quantity * $nights) + (500 * $quantity * $nights);
                                         }
 
                                         $petFee = (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) ? 2000 * $accommodation['num_pets'] : 0;
@@ -267,7 +219,7 @@ if ($datesSelected) {
                                         } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
                                             $baseRate = 3000;
                                         } elseif ($isBYOT || $isCarCamping) {
-                                            $baseRate = 300 * $quantity;
+                                                $baseRate = (300 + 500) * $quantity;
                                         }
 
                                         $extraRate = $extraGuests * 400; // ₱400 per extra guest per night
