@@ -70,7 +70,7 @@
           <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">
             CalaiaPH Day Visit
           </p>
-          <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#8f5d54] font-gotham">
+          <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#8f5d54]">
             Book Your Day Visit
           </h1>
           <p class="mt-2 text-sm sm:text-base text-gray-500 max-w-2xl mx-auto px-2">
@@ -339,16 +339,6 @@
 
   {{-- Footer --}}
   <x-footer />
-
-  {{-- Temporary inline font helpers (move to CSS if possible) --}}
-  <style>
-    .font-gotham {
-      font-family: 'Gotham', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-    .font-gotham {
-      font-family: 'Gotham Book', sans-serif;
-    }
-  </style>
 
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </body>

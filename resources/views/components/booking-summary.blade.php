@@ -34,7 +34,7 @@ if ($grandTotal == 0 && $bookingData) {
 @endphp
 
 <section aria-labelledby="summary-heading" class="bg-gray-50 rounded-xl border border-gray-100 p-4 sm:p-5 md:p-6 lg:sticky lg:top-4">
-    <h2 id="summary-heading" class="text-2xl font-semibold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">
+    <h2 id="summary-heading" class="text-2xl font-semibold text-gray-900 mb-4" style="">
         {{ $title }}
     </h2>
 
@@ -146,10 +146,10 @@ if ($grandTotal == 0 && $bookingData) {
 
     {{-- Selected Activities --}}
     @if($showActivities)
-        <h3 class="text-xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Selected Activities</h3>
+        <h3 class="text-xl font-bold text-gray-900 mb-4" style="">Selected Activities</h3>
         <div id="selected-activities" class="space-y-3 mb-4">
             @if(empty($selectedActivities))
-                <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">No activities selected</p>
+                <p class="text-xs text-gray-500" style="">No activities selected</p>
             @else
                 @foreach($selectedActivities as $activity)
                     <div class="text-xs text-gray-600">

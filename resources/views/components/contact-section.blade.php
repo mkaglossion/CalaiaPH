@@ -2,10 +2,10 @@
 <section id="contact" class="py-16 bg-linear-to-br from-primary/5 to-primary/10" aria-labelledby="contact-heading">
   <div class="policy-container px-4">
     <header class="text-center mb-12">
-      <h2 id="contact-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
+      <h2 id="contact-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px;">
         Visit or Contact Us
       </h2>
-      <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+      <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed" style="font-size: 13px;">
         We'd love to hear from you about visiting, volunteering, or partnership opportunities.
       </p>
     </header>
@@ -17,7 +17,7 @@
       {{-- Contact Information --}}
       <div class="space-y-8">
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-          <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Visit Our Farm</h3>
+          <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px;">Visit Our Farm</h3>
           <ul class="space-y-4" role="list">
             <li class="flex items-start">
               <i class="fa fa-location-dot text-[#8f5d54] mt-1 mr-4 shrink-0" aria-hidden="true"></i>
@@ -65,7 +65,7 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-          <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Location & Directions</h3>
+          <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px;">Location & Directions</h3>
           <div class="rounded-xl overflow-hidden mb-6 shadow-md">
             <iframe
               src="https://www.google.com/maps?q=Calaca%20Nature%20Park&output=embed"
@@ -75,7 +75,7 @@
             ></iframe>
           </div>
           <h4 class="text-lg font-semibold text-[#8f5d54] mb-3">Getting Here</h4>
-          <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+          <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px;">
             Calaia Nature Park is located in Calaca, Batangas along the main road near Sitio Calas from the town proper of Calaca.
           </p>
           <a href="https://maps.google.com" target="_blank" rel="noopener"

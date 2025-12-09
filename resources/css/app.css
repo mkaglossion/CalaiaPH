@@ -33,7 +33,7 @@ p {
 }
 
 :root {
-  --font-system: 'Gotham Book', 'Gotham', 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  --font-system: 'Gotham Book', sans-serif;
 }
 
 body, h1, h2, h3, h4, h5, h6, p, a, li {

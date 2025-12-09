@@ -17,7 +17,7 @@
     {{-- Custom Fonts --}}
     <style>
       body {
-        font-family: 'Gotham Book', sans-serif;
+       
       }
     </style>
 
@@ -61,10 +61,10 @@
             </div>
 
             <div class="px-6 pb-6 pt-1 text-center">
-              <h3 class="my-4 font-extrabold uppercase tracking-wide text-[#97655A]" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
+              <h3 class="my-4 font-extrabold uppercase tracking-wide text-[#97655A]" style="font-size: 25px;">
                 {{ $menus[0]->name ?? 'SET MENUS' }}
               </h3>
-              <p class="mb-2 text-[#97655A] text-xs" style="font-family: 'Gotham Book', sans-serif;">
+              <p class="mb-2 text-[#97655A] text-xs" style="">
                 {{ $menus[0]->name ?? 'SET MENUS' }} ARE AVAILABLE FOR GROUPS AND FAMILIES.
               </p>
 
@@ -98,10 +98,10 @@
             </div>
 
             <div class="px-6 pb-6 pt-1 text-center">
-              <h3 class="my-4 font-extrabold uppercase tracking-wide text-[#97655A]" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
+              <h3 class="my-4 font-extrabold uppercase tracking-wide text-[#97655A]" style="font-size: 25px;">
                 {{ $menus[1]->name ?? 'SPECIAL MENUS' }}
               </h3>
-              <p class="mb-2 text-[#97655A] text-xs" style="font-family: 'Gotham Book', sans-serif;">
+              <p class="mb-2 text-[#97655A] text-xs" style="">
                 {{ $menus[1]->name ?? 'SPECIAL MENUS' }} ARE AVAILABLE FOR GROUPS AND FAMILIES.
               </p>
 
@@ -135,10 +135,10 @@
             </div>
 
             <div class="px-6 pb-6 pt-1 text-center">
-              <h3 class="my-4 font-extrabold uppercase tracking-wide text-[#97655A]" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
+              <h3 class="my-4 font-extrabold uppercase tracking-wide text-[#97655A]" style="font-size: 25px;">
                 {{ $menus[2]->name ?? 'SNACK BAR' }}
               </h3>
-              <p class="mb-2 text-[#97655A] text-xs" style="font-family: 'Gotham Book', sans-serif;">
+              <p class="mb-2 text-[#97655A] text-xs" style="">
                 {{ $menus[2]->name ?? 'SNACK BAR' }} IS AVAILABLE FOR GROUPS AND FAMILIES.
               </p>
 
@@ -166,21 +166,21 @@
       {{-- Menu Details Section --}}
       <section id="menu-details" class="container mx-auto px-4 pb-16" x-data="{ activeTab: 'all' }">
         <div class="max-w-6xl mx-auto">
-          <h2 class="text-3xl font-bold text-center mb-8 text-[#97655A]" style="font-family: 'Gotham Book', sans-serif;">Menu Details</h2>
+          <h2 class="text-3xl font-bold text-center mb-8 text-[#97655A]" style="">Menu Details</h2>
 
           {{-- Filter Buttons --}}
           <div class="flex justify-center mb-8 flex-wrap gap-2">
-            <button @click="activeTab = 'all'" :class="activeTab === 'all' ? 'bg-[#97655A] text-white' : 'bg-gray-200 text-gray-700'" class="px-6 py-3 rounded-lg font-semibold transition-colors" style="font-family: 'Gotham Book', sans-serif;">All</button>
-            <button @click="activeTab = 'lunch'" :class="activeTab === 'lunch' ? 'bg-[#97655A] text-white' : 'bg-gray-200 text-gray-700'" class="px-6 py-3 rounded-lg font-semibold transition-colors" style="font-family: 'Gotham Book', sans-serif;">Lunch</button>
-            <button @click="activeTab = 'merienda'" :class="activeTab === 'merienda' ? 'bg-[#97655A] text-white' : 'bg-gray-200 text-gray-700'" class="px-6 py-3 rounded-lg font-semibold transition-colors" style="font-family: 'Gotham Book', sans-serif;">Merienda</button>
-            <button @click="activeTab = 'dinner'" :class="activeTab === 'dinner' ? 'bg-[#97655A] text-white' : 'bg-gray-200 text-gray-700'" class="px-6 py-3 rounded-lg font-semibold transition-colors" style="font-family: 'Gotham Book', sans-serif;">Dinner</button>
-            <button @click="activeTab = 'breakfast'" :class="activeTab === 'breakfast' ? 'bg-[#97655A] text-white' : 'bg-gray-200 text-gray-700'" class="px-6 py-3 rounded-lg font-semibold transition-colors" style="font-family: 'Gotham Book', sans-serif;">Breakfast</button>
+            <button @click="activeTab = 'all'" :class="activeTab === 'all' ? 'bg-[#97655A] text-white' : 'bg-gray-200 text-gray-700'" class="px-6 py-3 rounded-lg font-semibold transition-colors" style="">All</button>
+            <button @click="activeTab = 'lunch'" :class="activeTab === 'lunch' ? 'bg-[#97655A] text-white' : 'bg-gray-200 text-gray-700'" class="px-6 py-3 rounded-lg font-semibold transition-colors" style="">Lunch</button>
+            <button @click="activeTab = 'merienda'" :class="activeTab === 'merienda' ? 'bg-[#97655A] text-white' : 'bg-gray-200 text-gray-700'" class="px-6 py-3 rounded-lg font-semibold transition-colors" style="">Merienda</button>
+            <button @click="activeTab = 'dinner'" :class="activeTab === 'dinner' ? 'bg-[#97655A] text-white' : 'bg-gray-200 text-gray-700'" class="px-6 py-3 rounded-lg font-semibold transition-colors" style="">Dinner</button>
+            <button @click="activeTab = 'breakfast'" :class="activeTab === 'breakfast' ? 'bg-[#97655A] text-white' : 'bg-gray-200 text-gray-700'" class="px-6 py-3 rounded-lg font-semibold transition-colors" style="">Breakfast</button>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {{-- Lunch --}}
             <div class="bg-white rounded-2xl shadow-lg p-6" x-show="activeTab === 'lunch' || activeTab === 'all'" x-transition>
-              <h3 class="text-2xl font-bold mb-4 text-[#97655A]" style="font-family: 'Gotham Book', sans-serif;">Lunch</h3>
+              <h3 class="text-2xl font-bold mb-4 text-[#97655A]" style="">Lunch</h3>
 
               <div class="mb-6">
                 <h4 class="font-semibold mb-2">Set Menu 1</h4>
@@ -195,7 +195,7 @@
               </div>
 
               <div class="mb-6">
-                <h4 class="font-semibold mb-2" style="font-family: 'Gotham Book', sans-serif;">Set Menu 2</h4>
+                <h4 class="font-semibold mb-2" style="">Set Menu 2</h4>
                 <ul class="list-disc list-inside text-sm space-y-1">
                   <li>Coconut Milk Chicken Curry</li>
                   <li>Grilled Tuna Panga</li>
@@ -207,8 +207,8 @@
               </div>
 
               <div class="mb-6">
-                <h4 class="font-semibold mb-2" style="font-family: 'Gotham Book', sans-serif;">Set Menu 3</h4>
-                <ul class="list-disc list-inside text-sm space-y-1" style="font-family: 'Gotham Book', sans-serif;">
+                <h4 class="font-semibold mb-2" style="">Set Menu 3</h4>
+                <ul class="list-disc list-inside text-sm space-y-1" style="">
                   <li>Beef Sausages on Buns</li>
                   <li>Condiments: Ketchup, Mustard, Mayo, Pickle Relish</li>
                   <li>Choice of Spanish Sardine Pasta or Creamy Tomato Pasta</li>
@@ -218,10 +218,10 @@
 
             {{-- Merienda --}}
             <div class="bg-white rounded-2xl shadow-lg p-6" x-show="activeTab === 'merienda' || activeTab === 'all'" x-transition>
-              <h3 class="text-2xl font-bold mb-4 text-[#97655A]" style="font-family: 'Gotham Book', sans-serif;">Merienda</h3>
+              <h3 class="text-2xl font-bold mb-4 text-[#97655A]" style="">Merienda</h3>
 
               <div class="mb-6">
-                <h4 class="font-semibold mb-2" style="font-family: 'Gotham Book', sans-serif;">Set Menu 1</h4>
+                <h4 class="font-semibold mb-2" style="">Set Menu 1</h4>
                 <ul class="list-disc list-inside text-sm space-y-1">
                   <li>Local Bakery Breads</li>
                   <li>Seasonal Fruit</li>
@@ -245,7 +245,7 @@
 
             {{-- Dinner --}}
             <div class="bg-white rounded-2xl shadow-lg p-6" x-show="activeTab === 'dinner' || activeTab === 'all'" x-transition>
-              <h3 class="text-2xl font-bold mb-4 text-[#97655A]" style="font-family: 'Gotham Book', sans-serif;">Dinner</h3>
+              <h3 class="text-2xl font-bold mb-4 text-[#97655A]" style="">Dinner</h3>
 
               <div class="mb-6">
                 <h4 class="font-semibold mb-2">Set Menu 1</h4>
@@ -283,7 +283,7 @@
 
             {{-- Breakfast --}}
             <div class="bg-white rounded-2xl shadow-lg p-6" x-show="activeTab === 'breakfast' || activeTab === 'all'" x-transition>
-              <h3 class="text-2xl font-bold mb-4 text-[#97655A]" style="font-family: 'Gotham Book', sans-serif;">Breakfast</h3>
+              <h3 class="text-2xl font-bold mb-4 text-[#97655A]" style="">Breakfast</h3>
 
               <div class="mb-6">
                 <h4 class="font-semibold mb-2">Set Menu 1</h4>
@@ -322,8 +322,8 @@
 
           {{-- Pricing --}}
           <div class="mt-12 bg-white rounded-2xl shadow-lg p-6">
-            <h3 class="text-2xl font-bold mb-4 text-center text-[#97655A]" style="font-family: 'Gotham Book', sans-serif;">Price / Set Menu Price</h3>
-            <ul class="list-disc list-inside text-lg space-y-2 text-center" style="font-family: 'Gotham Book', sans-serif;">
+            <h3 class="text-2xl font-bold mb-4 text-center text-[#97655A]" style="">Price / Set Menu Price</h3>
+            <ul class="list-disc list-inside text-lg space-y-2 text-center" style="">
               <li>3–4 Person – 5,980.00</li>
               <li>5–6 Person – 8,790.00</li>
               <li>7–9 Person – 12,900.00</li>
@@ -332,13 +332,13 @@
 
           {{-- Inclusions --}}
           <div class="mt-8 bg-white rounded-2xl shadow-lg p-6">
-            <h3 class="text-xl font-bold mb-4 text-[#97655A]" style="font-family: 'Gotham Book', sans-serif;">Inclusions</h3>
-            <p class="text-sm" style="font-family: 'Gotham Book', sans-serif;">Disposable cutlery (non-disposable upon request) Drinking water and ice</p>
+            <h3 class="text-xl font-bold mb-4 text-[#97655A]" style="">Inclusions</h3>
+            <p class="text-sm" style="">Disposable cutlery (non-disposable upon request) Drinking water and ice</p>
           </div>
 
           {{-- Beverages Included --}}
           <div class="mt-8 bg-white rounded-2xl shadow-lg p-6">
-            <h3 class="text-xl font-bold mb-4 text-[#97655A]" style="font-family: 'Gotham Book', sans-serif;">Beverages Included</h3>
+            <h3 class="text-xl font-bold mb-4 text-[#97655A]" style="">Beverages Included</h3>
             <ul class="list-disc list-inside text-sm space-y-1">
               <li>Filtered Drinking Water</li>
               <li>Lunch & Merienda: Juice with Ice</li>
@@ -349,11 +349,11 @@
 
           {{-- NEW KUROBOTA Lechon --}}
           <div class="mt-8 bg-white rounded-2xl shadow-lg p-6">
-            <h3 class="text-xl font-bold mb-4 text-center text-[#97655A]" style="font-family: 'Gotham Book', sans-serif;">NEW KUROBOTA Lechon</h3>
+            <h3 class="text-xl font-bold mb-4 text-center text-[#97655A]" style="">NEW KUROBOTA Lechon</h3>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 class="font-semibold mb-2" style="font-family: 'Gotham Book', sans-serif;">Kurobota x Native</h4>
+                <h4 class="font-semibold mb-2" style="">Kurobota x Native</h4>
                 <ul class="list-disc list-inside text-sm space-y-1">
                   <li>Live price/weight P850.00/kg</li>
                   <li>Dressed price/weight P1100.00/kg</li>
@@ -361,7 +361,7 @@
               </div>
 
               <div>
-                <h4 class="font-semibold mb-2" style="font-family: 'Gotham Book', sans-serif;">Kurobota Pure</h4>
+                <h4 class="font-semibold mb-2" style="">Kurobota Pure</h4>
                 <ul class="list-disc list-inside text-sm space-y-1">
                   <li>Live price/weight P1200.00/kg</li>
                   <li>Dressed price/weight P1500.00/kg</li>
@@ -369,7 +369,7 @@
               </div>
             </div>
 
-            <p class="text-sm mt-4" style="font-family: 'Gotham Book', sans-serif;"><strong>Onsite Cooking fee:</strong> 10% per kg</p>
+            <p class="text-sm mt-4" style=""><strong>Onsite Cooking fee:</strong> 10% per kg</p>
           </div>
         </div>
       </section>

@@ -24,11 +24,11 @@
           <div class="text-center px-4">
             @if(isset($texts_array[$index]))
               <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                  style="font-family: 'Gotham Book', sans-serif;">
+                  style="">
                 {{ ucfirst($labels_array[$index]) }}
               </h2>
               <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-                style="font-family: 'Gotham Book', sans-serif; font-style: italic;">
+                style=" font-style: italic;">
                 {{ $texts_array[$index] }}
               </p>
             @endif
@@ -41,11 +41,11 @@
         <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
           <div class="text-center px-4">
             <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                style="font-family: 'Gotham Book', sans-serif;">
+                style="">
               No Image Available
             </h2>
             <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-              style="font-family: 'Gotham Book', sans-serif; font-style: italic;">
+              style=" font-style: italic;">
               Images will be added soon
             </p>
           </div>

@@ -41,8 +41,7 @@
             <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
               <div class="text-center px-4">
                 @if(isset($texts_array[$index]))
-                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                      style="font-family: gotham;">
+                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase">
                     {{ ucfirst($labels_array[$index]) }}
                   </h2>
                   <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
@@ -58,8 +57,7 @@
           <div class="swiper-slide relative flex items-center justify-center bg-gray-200 overflow-hidden">
             <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
               <div class="text-center px-4">
-                <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                    style="font-family: gotham;">
+                <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase">
                   No Image Available
                 </h2>
                 <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
@@ -77,7 +75,7 @@
     <main id="main">
       <section class="container mx-auto px-4 py-12">
         <div class="max-w-[1200px] mx-auto">
-          <h2 class="font-extrabold uppercase leading-tight tracking-wide mb-10 text-left" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
+          <h2 class="font-extrabold uppercase leading-tight tracking-wide mb-10 text-left" style=" color:#a97464; font-size: 25px;">
             Enhance your stay with our fun-filled activities.
           </h2>
 
@@ -85,7 +83,7 @@
 
             {{-- ADVENTURE --}}
             <div id="adventure">
-              <h3 class="font-bold uppercase tracking-wide mb-4" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
+              <h3 class="font-bold uppercase tracking-wide mb-4" style=" color:#a97464; font-size: 25px;">
                 Adventure
               </h3>
 
@@ -114,7 +112,7 @@
 
             {{-- SPORTS AND GAMES --}}
             <div id="sports-games">
-              <h3 class="font-bold uppercase tracking-wide mb-4" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
+              <h3 class="font-bold uppercase tracking-wide mb-4" style=" color:#a97464; font-size: 25px;">
                 Sports &amp; Games
               </h3>
 
@@ -143,7 +141,7 @@
 
             {{-- R & R + CAMP --}}
             <div id="rr-camp">
-              <h3 class="font-bold uppercase tracking-wide mb-4" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
+              <h3 class="font-bold uppercase tracking-wide mb-4" style=" color:#a97464; font-size: 25px;">
                 R &amp; R &amp; Camp
               </h3>
 
@@ -172,7 +170,7 @@
 
             {{-- FARM --}}
             <div id="farm">
-              <h3 class="font-bold uppercase tracking-wide mb-4" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
+              <h3 class="font-bold uppercase tracking-wide mb-4" style=" color:#a97464; font-size: 25px;">
                 Farm
               </h3>
 
@@ -658,7 +656,7 @@
 
             <div class="space-y-2">
               <template x-for="(p, idx) in modal.details" :key="idx">
-                <p style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+                <p style="font-size: 13px;">
                   <i class="fa-solid fa-circle-check text-[#a97464] mr-2"></i>
                   <span x-text="p"></span>
                 </p>

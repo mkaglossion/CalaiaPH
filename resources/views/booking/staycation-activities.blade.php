@@ -127,9 +127,9 @@ if ($datesSelected) {
 <div class="pt-6 md:pt-12">
     {{-- Header --}}
     <div class="text-center mb-10">
-        <h1 class="text-2xl font-bold tracking-tight" style="font-family: 'Gotham Book', sans-serif;">Select Staycation Activities</h1>
+        <h1 class="text-2xl font-bold tracking-tight" style="">Select Staycation Activities</h1>
         <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-        <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Enhance your staycation experience with optional activities</p>
+        <p class="text-xs text-gray-500" style="">Enhance your staycation experience with optional activities</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10 py-6">
@@ -188,7 +188,7 @@ if ($datesSelected) {
         {{-- Sidebar: booking summary --}}
         <div class="lg:col-span-1">
             <div class="bg-white rounded-xl shadow-md p-6 sticky top-6">
-                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="">Booking Summary</h3>
 
                 @if($datesSelected)
                     <div class="space-y-3 mb-6">
@@ -298,12 +298,12 @@ if ($datesSelected) {
                          </div>
                     </div>
                 @else
-                    <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
+                    <p class="text-xs text-gray-500 mb-6" style="">Please select your dates to see the booking summary.</p>
                 @endif
 
                 <hr class="my-4">
 
-                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Selected Activities</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="">Selected Activities</h3>
 
                 <div id="selected-activities" class="space-y-3 mb-4">
                   <!-- Selected activities will be added here -->
@@ -346,7 +346,7 @@ if ($datesSelected) {
                 {{-- Trust elements --}}
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <div class="text-center">
-                        <h4 class="text-sm font-semibold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">Secure Booking</h4>
+                        <h4 class="text-sm font-semibold text-gray-900 mb-3" style="">Secure Booking</h4>
                         <div class="flex justify-center items-center space-x-4">
                             <div class="flex items-center">
                                 <i class="fas fa-lock text-green-600 mr-2"></i>
@@ -367,13 +367,6 @@ if ($datesSelected) {
 
   {{-- Footer --}}
   <x-footer />
-
-  {{-- Temporary inline font helpers --}}
-  <style>
-    .font-gotham {
-      font-family: 'Gotham Book', sans-serif;
-    }
-  </style>
 
   {{-- Alpine.js --}}
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>

@@ -38,12 +38,11 @@
             <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
               <div class="text-center px-4">
                 @if(isset($texts_array[$index]))
-                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                      style="font-family: gotham;">
+                  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase">
                     {{ ucfirst($labels_array[$index]) }}
                   </h2>
                   <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-                    style="font-family: 'Gotham Book', sans-serif; font-style: italic;">
+                    style=" font-style: italic;">
                     {{ $texts_array[$index] }}
                   </p>
                 @endif
@@ -55,12 +54,11 @@
           <div class="swiper-slide relative flex items-center justify-center bg-gray-200 overflow-hidden">
             <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
               <div class="text-center px-4">
-                <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                    style="font-family: gotham;">
+                <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase">
                   No Image Available
                 </h2>
                 <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-                  style="font-family: 'Gotham Book', sans-serif; font-style: italic;">
+                  style=" font-style: italic;">
                   Images will be added soon
                 </p>
               </div>
@@ -102,7 +100,7 @@
     <main id="main">
       <section id="set-menu" class="container mx-auto px-4 py-12">
         <div class="max-w-6xl mx-auto">
-          <h2 class="font-extrabold uppercase leading-tight tracking-wide mb-6 text-left" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
+          <h2 class="font-extrabold uppercase leading-tight tracking-wide mb-6 text-left" style=" color:#a97464; font-size: 25px;">
             Enhance your stay with our special events.
           </h2>
 
@@ -327,7 +325,7 @@
             {{-- Details list --}}
             <div class="space-y-2">
               <template x-for="(p, idx) in modal.details" :key="idx">
-                <p style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+                <p style="font-size: 13px;">
                   <i class="bi bi-check-circle-fill mr-2" style="color:#a97464;"></i>
                   <span x-text="p"></span>
                 </p>

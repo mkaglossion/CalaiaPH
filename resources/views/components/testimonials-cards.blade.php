@@ -2,8 +2,8 @@
 
   <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-10">
-      <h2 class="mt-8 text-3xl sm:text-4xl font-bold tracking-tight text-white" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">WHAT OUR GUESTS SAY</h2>
-      <p class="mt-3 text-lg text-white" style="font-style: italic; font-size: 13px; font-family: 'Gotham Book', sans-serif;">Hear from those who've experienced Calaia</p>
+      <h2 class="mt-8 text-3xl sm:text-4xl font-bold tracking-tight text-white" style="font-size: 25px;">WHAT OUR GUESTS SAY</h2>
+      <p class="mt-3 text-lg text-white" style="font-style: italic; font-size: 13px;">Hear from those who've experienced Calaia</p>
       <div class="mt-6 mx-auto h-px w-80 bg-white"></div>
     </div>
 

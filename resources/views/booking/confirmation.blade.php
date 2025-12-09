@@ -166,17 +166,17 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
           <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <i class="bi bi-check-circle-fill text-4xl text-green-600"></i>
           </div>
-          <h1 class="text-2xl font-bold text-[#8f5d54] mb-2" style="font-family: 'Gotham Book', sans-serif;">
+          <h1 class="text-2xl font-bold text-[#8f5d54] mb-2" style="">
             Booking Confirmed!
           </h1>
-          <p class="text-xs text-gray-600" style="font-family: 'Gotham Book', sans-serif;">
+          <p class="text-xs text-gray-600" style="">
             Your booking has been successfully processed and confirmed.
           </p>
         </div>
 
         {{-- Booking Details --}}
         <div class="bg-gray-50 rounded-xl p-6 mb-6 text-left">
-          <h2 class="text-2xl font-semibold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Details</h2>
+          <h2 class="text-2xl font-semibold text-gray-900 mb-4" style="">Booking Details</h2>
 
           @if(isset($isDayvisit) && $isDayvisit)
             {{-- Day Visit Booking Details --}}
@@ -213,7 +213,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
 
             @if (!empty($selectedActivities))
               <div class="mt-4 pt-4 border-t border-gray-200">
-                <h3 class="text-2xl font-medium text-gray-900 mb-2" style="font-family: 'Gotham Book', sans-serif;">Selected Activities:</h3>
+                <h3 class="text-2xl font-medium text-gray-900 mb-2" style="">Selected Activities:</h3>
                 <ul class="text-sm text-gray-600 space-y-1">
                   @foreach ($selectedActivities as $activity)
                     <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }} x {{ $activity['guests'] }}</li>
@@ -281,7 +281,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
 
             @if (!empty($bookingData['accommodations']))
               <div class="mt-4 pt-4 border-t border-gray-200">
-                <h3 class="text-2xl font-medium text-gray-900 mb-2" style="font-family: 'Gotham Book', sans-serif;">Selected Accommodations:</h3>
+                <h3 class="text-2xl font-medium text-gray-900 mb-2" style="">Selected Accommodations:</h3>
                 <ul class="text-sm text-gray-600 space-y-1">
                   @php
                   $checkin = !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin']) : null;
@@ -366,7 +366,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
 
             @if (!empty($selectedActivities))
               <div class="mt-4 pt-4 border-t border-gray-200">
-                <h3 class="text-2xl font-medium text-gray-900 mb-2" style="font-family: 'Gotham Book', sans-serif;">Selected Activities:</h3>
+                <h3 class="text-2xl font-medium text-gray-900 mb-2" style="">Selected Activities:</h3>
                 <ul class="text-sm text-gray-600 space-y-1">
                   @foreach ($selectedActivities as $activity)
                     <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }} x {{ $activity['guests'] }}</li>
@@ -426,7 +426,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
 
             @if (!empty($selectedActivities))
               <div class="mt-4 pt-4 border-t border-gray-200">
-                <h3 class="text-2xl font-medium text-gray-900 mb-2" style="font-family: 'Gotham Book', sans-serif;">Selected Activities:</h3>
+                <h3 class="text-2xl font-medium text-gray-900 mb-2" style="">Selected Activities:</h3>
                 <ul class="text-sm text-gray-600 space-y-1">
                   @foreach ($selectedActivities as $activity)
                     <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }} x {{ $activity['guests'] ?? 1 }}</li>
@@ -456,8 +456,8 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
 
         {{-- Next Steps --}}
         <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
-          <h3 class="text-2xl font-semibold text-blue-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">What's Next?</h3>
-          <ul class="text-xs text-blue-800 space-y-2 text-left" style="font-family: 'Gotham Book', sans-serif;">
+          <h3 class="text-2xl font-semibold text-blue-900 mb-3" style="">What's Next?</h3>
+          <ul class="text-xs text-blue-800 space-y-2 text-left" style="">
             <li class="flex items-start">
               <i class="bi bi-envelope mr-2 mt-0.5"></i>
               <span>Check your email for a detailed confirmation and booking instructions.</span>
@@ -489,8 +489,8 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
 
         {{-- Contact Info --}}
         <div class="mt-8 pt-6 border-t border-gray-200">
-          <p class="text-xs text-gray-500 mb-2" style="font-family: 'Gotham Book', sans-serif;">Need assistance?</p>
-          <p class="text-xs text-gray-600" style="font-family: 'Gotham Book', sans-serif;">
+          <p class="text-xs text-gray-500 mb-2" style="">Need assistance?</p>
+          <p class="text-xs text-gray-600" style="">
             Contact us at <a href="mailto:calaia.ph@gmail.com" class="text-[#8f5d54] hover:underline">calaia.ph@gmail.com</a>
             or call <span class="font-medium">+63 905 129 4741</span>
           </p>

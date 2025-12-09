@@ -24,10 +24,10 @@
           <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">
             CalaiaPH Day Visit
           </p>
-          <h1 class="text-2xl font-bold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">
+          <h1 class="text-2xl font-bold text-[#8f5d54]" style="">
             Complete Your Payment
           </h1>
-          <p class="mt-2 text-xs text-gray-500 max-w-2xl mx-auto" style="font-family: 'Gotham Book', sans-serif;">
+          <p class="mt-2 text-xs text-gray-500 max-w-2xl mx-auto" style="">
             Review your day visit booking details and choose your preferred payment method.
           </p>
         </header>

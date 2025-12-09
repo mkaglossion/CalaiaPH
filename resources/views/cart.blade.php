@@ -33,7 +33,7 @@
       <div class="container mx-auto px-4 py-8">
         <div class="flex items-center justify-center">
           <i class="bi bi-cart3 text-2xl text-[#8f5d54] mr-3"></i>
-          <h1 class="text-2xl font-semibold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">Shopping Cart</h1>
+          <h1 class="text-2xl font-semibold text-[#8f5d54]" style="">Shopping Cart</h1>
         </div>
       </div>
     </div>
@@ -53,7 +53,7 @@
           <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <i class="bi bi-cart-x text-3xl text-gray-400"></i>
           </div>
-          <h2 class="text-xl font-medium text-gray-700 mb-3" style="font-family: 'Gotham Book', sans-serif;">Your cart is empty</h2>
+          <h2 class="text-xl font-medium text-gray-700 mb-3" style="">Your cart is empty</h2>
           <p class="text-gray-500 mb-8">Add some activities to get started</p>
           <a href="{{ url('/activities') }}" class="inline-flex items-center bg-[#8f5d54] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#7a4a42] transition-colors">
             Browse Activities
@@ -66,7 +66,7 @@
           <div class="lg:col-span-2">
             <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
               <div class="bg-[#8f5d54] text-white px-6 py-4">
-                <h2 class="text-xl font-semibold flex items-center" style="font-family: 'Gotham Book', sans-serif;">
+                <h2 class="text-xl font-semibold flex items-center" style="">
                   <i class="bi bi-receipt mr-2"></i>
                   Cart Items ({{ $cartCount }})
                 </h2>
@@ -165,7 +165,7 @@
           <!-- Order Summary -->
           <div class="lg:col-span-1">
             <div class="bg-white rounded-2xl shadow-xl p-6 sticky top-6">
-              <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center" style="font-family: 'Gotham Book', sans-serif;">
+              <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center" style="">
                 <i class="bi bi-calculator mr-2 text-[#8f5d54]"></i>
                 Order Summary
               </h3>
@@ -224,7 +224,7 @@
 
         <!-- Related Activities Suggestion -->
         <div class="mt-12 bg-white rounded-2xl shadow-xl p-8">
-          <h3 class="text-2xl font-semibold text-gray-800 mb-6 text-center" style="font-family: 'Gotham Book', sans-serif;">
+          <h3 class="text-2xl font-semibold text-gray-800 mb-6 text-center" style="">
             <i class="bi bi-lightbulb text-[#8f5d54] mr-2"></i>
             You might also like
           </h3>

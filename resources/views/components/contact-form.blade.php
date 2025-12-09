@@ -6,7 +6,7 @@
 ])
 
 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-    <h3 class="font-semibold text-[#8f5d54] mb-4" style="font-size: 20px; font-family: 'Gotham Book', sans-serif;">{{ $title }}</h3>
+    <h3 class="font-semibold text-[#8f5d54] mb-4" style="font-size: 20px;">{{ $title }}</h3>
     <form method="POST" action="{{ $action }}" class="space-y-4" role="form" aria-label="Contact form">
         @csrf
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -19,7 +19,7 @@
 
         <div class="card-body px-5 pb-5 pt-4">
           <h3 class="text-center fw-bold mb-3 text-uppercase"
-              style="letter-spacing:.02em; color:#8f5d54; font-family:gotham;">
+              style="letter-spacing:.02em; color:#8f5d54;">
             {{ $accommodation['title'] }}
           </h3>
 

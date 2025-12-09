@@ -17,7 +17,7 @@
     {{-- Modal Header --}}
     <div class="p-4 md:p-6 border-b border-gray-300 shrink-0">
       <div class="flex justify-between items-center">
-        <h3 id="{{ $id }}Label" class="text-xl md:text-2xl font-bold text-gray-800" style="font-size: 25px; font-family: 'Gotham Book', sans-serif; color: #8f5d54;"></h3>
+        <h3 id="{{ $id }}Label" class="text-xl md:text-2xl font-bold text-gray-800" style="font-size: 25px; color: #8f5d54;"></h3>
         <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" onclick="closeModal('{{ $id }}')" aria-label="Close modal">
           <i class="bi bi-x-lg text-xl md:text-2xl"></i>
         </button>
@@ -70,7 +70,7 @@
             <i class="bi bi-tag-fill text-lg mr-2"></i>
             <span class="text-xs font-medium uppercase tracking-wide">Starting from</span>
           </div>
-          <p class="text-lg md:text-xl font-bold font-gotham" id="{{ $id }}PriceDisplay">{{ $price }}</p>
+          <p class="text-lg md:text-xl font-bold" id="{{ $id }}PriceDisplay">{{ $price }}</p>
         </div>
       @endif
     </div>
@@ -152,7 +152,7 @@ function viewDetails{{ $id }}(title, descriptionParagraphs, imageUrls, price = n
    // Build package details
    const packageDetails = document.getElementById(modalId + 'Details');
    packageDetails.innerHTML = descriptionParagraphs.map(p => `
-     <p class="flex items-start text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+     <p class="flex items-start text-gray-700" style="font-size: 13px;">
        <i class="bi bi-check-circle-fill text-[#97655A] mr-3 mt-1 flex-shrink-0"></i>
        <span class="flex-1">${p}</span>
      </p>

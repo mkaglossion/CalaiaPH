@@ -63,7 +63,7 @@
               {{-- Body --}}
               <div class="px-8 pt-6 pb-8">
                 {{-- Title --}}
-                 <h3 class="mb-4 text-3xl font-extrabold uppercase tracking-wide text-center" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">
+                 <h3 class="mb-4 text-3xl font-extrabold uppercase tracking-wide text-center" style="color:#97655A; font-size: 25px;">
                    @php
                      $title = is_array($package) ? $package['title'] : $package->name;
                    @endphp
@@ -79,7 +79,7 @@
                 <div class="h-px w-full bg-[#dfe6d5] mb-5"></div>
 
                 {{-- Features (compact, centered list) --}}
-                <ul class="space-y-2 text-base md:text-lg uppercase tracking-widest text-center" style="color:#8f6a60; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+                <ul class="space-y-2 text-base md:text-lg uppercase tracking-widest text-center" style="color:#8f6a60; font-size: 13px;">
                   @foreach(is_array($package) ? $package['features'] : $package->activities->pluck('name') as $feature)
                     <li>
                       {{ strtoupper($feature) }}
@@ -112,11 +112,11 @@
         {{-- Information Section (kept; slight polish to match palette) --}}
         <div class="bg-linear-to-r from-[#6b9691] to-[#7ba08a] text-white rounded-3xl p-8 md:p-10 shadow-xl">
           <div class="text-center mb-8">
-            <h4 class="text-2xl md:text-3xl font-bold mb-4 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
+            <h4 class="text-2xl md:text-3xl font-bold mb-4 flex items-center justify-center" style="font-size: 25px;">
               <i class="bi bi-info-circle-fill mr-3 text-3xl"></i>
               Important Information
             </h4>
-            <p class="text-lg/7 opacity-90" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Everything you need to know before your visit</p>
+            <p class="text-lg/7 opacity-90" style="font-size: 13px;">Everything you need to know before your visit</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -130,7 +130,7 @@
             ] as $info)
               <div class="flex items-start bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all duration-300">
                 <i class="bi {{ $info['icon'] }} text-xl mr-4 mt-1 shrink-0"></i>
-                <span class="text-sm md:text-base leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">{{ $info['text'] }}</span>
+                <span class="text-sm md:text-base leading-relaxed" style="font-size: 13px;">{{ $info['text'] }}</span>
               </div>
             @endforeach
           </div>

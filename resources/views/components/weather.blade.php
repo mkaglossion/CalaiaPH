@@ -44,7 +44,7 @@
   
   <!-- Hourly Forecast -->
   <div class="p-4">
-    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif; font-size: 25px;">
+    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2" style=" font-size: 25px;">
       <i class="fas fa-clock text-amber-500"></i>
       Hourly Forecast
     </h2>
@@ -64,7 +64,7 @@
   
   <!-- Weather Tips -->
   <div class="bg-blue-50 p-4 border-t border-blue-100">
-    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif; font-size: 25px;">
+    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2" style=" font-size: 25px;">
       <i class="fas fa-lightbulb text-cyan-600"></i>
       Weather Tips For Your Visit
     </h2>
@@ -73,7 +73,7 @@
       @foreach($data['tips'] as $tip)
       <li class="flex items-start">
         <i class="fas fa-lightbulb text-blue-500 mt-1 mr-3"></i>
-        <span class="text-slate-700" style="font-family: 'Gotham Book', sans-serif; font-size: 13px;">{{ $tip }}</span>
+        <span class="text-slate-700" style=" font-size: 13px;">{{ $tip }}</span>
       </li>
       @endforeach
     </ul>

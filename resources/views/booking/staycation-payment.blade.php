@@ -139,9 +139,9 @@ $grandTotal = $accommodationTotal + $breakfastTotal + $activitiesTotal;
 <div class="pt-6 md:pt-12">
     {{-- Header --}}
     <div class="text-center mb-10">
-        <h1 class="text-2xl font-bold tracking-tight" style="font-family: 'Gotham Book', sans-serif;">Complete Staycation Payment</h1>
+        <h1 class="text-2xl font-bold tracking-tight" style="">Complete Staycation Payment</h1>
         <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-        <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Review your staycation details and complete your payment</p>
+        <p class="text-xs text-gray-500" style="">Review your staycation details and complete your payment</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10 pb-12">
@@ -200,7 +200,7 @@ $grandTotal = $accommodationTotal + $breakfastTotal + $activitiesTotal;
 
                             {{-- Customer Information --}}
                             <div class="bg-gray-50 rounded-xl p-4 sm:py-6">
-                                <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center" style="font-family: 'Gotham Book', sans-serif;">
+                                <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center" style="">
                                     <i class="bi bi-person-circle mr-2 text-[#8f5d54]"></i>
                                     Personal Information
                                 </h3>
@@ -285,7 +285,7 @@ $grandTotal = $accommodationTotal + $breakfastTotal + $activitiesTotal;
                                         class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
                                         placeholder="Any special requirements, celebrations, or notes..."
                                     ></textarea>
-                                    <p class="mt-1 text-xs text-gray-400" style="font-family: 'Gotham Book', sans-serif;">
+                                    <p class="mt-1 text-xs text-gray-400" style="">
                                         Example: "Vegan meal options", "Birthday surprise setup", or accessibility needs.
                                     </p>
                                 </div>
@@ -299,7 +299,7 @@ $grandTotal = $accommodationTotal + $breakfastTotal + $activitiesTotal;
                                 >
                                     Payment Method
                                 </legend>
-                                <p class="text-xs text-gray-500 mb-2" style="font-family: 'Gotham Book', sans-serif;">
+                                <p class="text-xs text-gray-500 mb-2" style="">
                                     Secure and encrypted payment via your chosen provider.
                                 </p>
 
@@ -419,7 +419,7 @@ $grandTotal = $accommodationTotal + $breakfastTotal + $activitiesTotal;
                                 </button>
 
 
-                                <p class="mt-3 text-xs text-center text-gray-500" style="font-family: 'Gotham Book', sans-serif;">
+                                <p class="mt-3 text-xs text-center text-gray-500" style="">
                                     Your payment is secured with 256-bit SSL encryption. By proceeding, you agree to our terms of service.
                                 </p>
                             </div>
@@ -432,7 +432,7 @@ $grandTotal = $accommodationTotal + $breakfastTotal + $activitiesTotal;
         {{-- Sidebar: booking summary --}}
         <div class="lg:col-span-1">
             <div class="bg-white rounded-xl shadow-md p-6 sticky top-6">
-                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="">Booking Summary</h3>
 
                 @if($datesSelected)
                     <div class="space-y-3 mb-6">
@@ -528,12 +528,12 @@ $grandTotal = $accommodationTotal + $breakfastTotal + $activitiesTotal;
                         </div>
                     </div>
                 @else
-                    <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
+                    <p class="text-xs text-gray-500 mb-6" style="">Please select your dates to see the booking summary.</p>
                 @endif
 
                 <hr class="my-4">
 
-                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Selected Activities</h3>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="">Selected Activities</h3>
 
                 <div class="space-y-1 mb-4 text-xs text-gray-600">
                     @if(!empty($selectedActivities))
@@ -547,7 +547,7 @@ $grandTotal = $accommodationTotal + $breakfastTotal + $activitiesTotal;
                             </div>
                         @endforeach
                     @else
-                        <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">No activities selected</p>
+                        <p class="text-xs text-gray-500" style="">No activities selected</p>
                     @endif
                 </div>
 
@@ -568,7 +568,7 @@ $grandTotal = $accommodationTotal + $breakfastTotal + $activitiesTotal;
                 {{-- Trust elements --}}
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <div class="text-center">
-                        <h4 class="text-sm font-semibold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">Secure Payment</h4>
+                        <h4 class="text-sm font-semibold text-gray-900 mb-3" style="">Secure Payment</h4>
                         <div class="flex justify-center items-center space-x-4">
                             <div class="flex items-center">
                                 <i class="fas fa-lock text-green-600 mr-2"></i>
@@ -594,12 +594,6 @@ $grandTotal = $accommodationTotal + $breakfastTotal + $activitiesTotal;
   {{-- Footer --}}
   <x-footer />
 
-  {{-- Temporary inline font helpers --}}
-  <style>
-    .font-gotham {
-      font-family: 'Gotham Book', sans-serif;
-    }
-  </style>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
   <script>

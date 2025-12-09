@@ -36,13 +36,13 @@
                 </p>
             @endif
 
-            <h1 class="text-2xl font-bold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">
+            <h1 class="text-2xl font-bold text-[#8f5d54]" style="">
                 {{ $title }}
             </h1>
 
             @if($subtitle)
                 <p class="mt-2 text-xs text-gray-500 max-w-2xl mx-auto px-2"
-                   style="font-family: 'Gotham Book', sans-serif;">
+                   style="">
                     {{ $subtitle }}
                 </p>
             @endif
@@ -56,7 +56,7 @@
                 {{-- Curated Activities --}}
                 <div class="mb-8">
                     <h3 class="text-2xl font-semibold text-gray-800 mb-4"
-                        style="font-family: 'Gotham Book', sans-serif;">
+                        style="">
                         Curated Activities
                     </h3>
                     <div id="activities-container" class="grid gap-4 sm:grid-cols-2">
@@ -71,7 +71,7 @@
                 class="bg-gray-50 rounded-xl border border-gray-100 p-4 sm:p-5 md:p-6 lg:sticky lg:top-4 order-2 lg:order-1"
             >
                 <h2 id="summary-heading" class="text-lg font-semibold text-gray-900 mb-4"
-                    style="font-family: 'Gotham Book', sans-serif;">
+                    style="">
                     Selected Activities
                 </h2>
 
@@ -191,15 +191,15 @@ document.addEventListener('DOMContentLoaded', function() {
                               <div class="flex items-start space-x-3">
                                 ${activity.image ? `<img src="${activity.image}" alt="${activity.name}" class="w-16 h-16 object-cover rounded-lg flex-shrink-0">` : ''}
                                 <div class="flex-1">
-                                  <h4 class="font-semibold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">${activity.name}</h4>
-                                  <p class="text-xs text-gray-600 mt-1" style="font-family: 'Gotham Book', sans-serif;">${activity.description}</p>
+                                  <h4 class="font-semibold text-gray-900" style="">${activity.name}</h4>
+                                  <p class="text-xs text-gray-600 mt-1" style="">${activity.description}</p>
                                   <div class="flex items-center justify-between mt-2">
-                                    <span class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">
+                                    <span class="text-xs text-gray-500" style="">
                                       <i class="bi bi-clock mr-1"></i>${activity.duration}
                                     </span>
-                                    <span class="text-xs font-semibold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">₱${parseFloat(activity.price).toFixed(2)}</span>
+                                    <span class="text-xs font-semibold text-[#8f5d54]" style="">₱${parseFloat(activity.price).toFixed(2)}</span>
                                   </div>
-                                  <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full" style="font-family: 'Gotham Book', sans-serif;">
+                                  <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full" style="">
                                     ${activity.availability}
                                   </span>
                                 </div>
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (selectedActivities.length === 0) {
             container.innerHTML =
-                '<p class="text-xs text-gray-500" style="font-family: \'Gotham Book\', sans-serif;">No activities selected</p>';
+                '<p class="text-xs text-gray-500">No activities selected</p>';
             confirmBtn.disabled = true;
         } else {
             selectedActivities.forEach(activity => {
@@ -236,9 +236,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 item.innerHTML = `
                   <div class="flex-1">
-                    <p class="text-xs font-medium text-gray-900" style="font-family: 'Gotham Book', sans-serif;">${activity.name}</p>
+                    <p class="text-xs font-medium text-gray-900" style="">${activity.name}</p>
                     <div class="mt-2">
-                      <label class="block text-xs text-gray-600 mb-1" style="font-family: 'Gotham Book', sans-serif;">Number of Guests</label>
+                      <label class="block text-xs text-gray-600 mb-1" style="">Number of Guests</label>
                       <input type="number"
                         class="activity-guests w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent"
                         value="${activity.guests}"

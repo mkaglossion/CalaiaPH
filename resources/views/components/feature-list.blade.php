@@ -4,7 +4,7 @@
     'icon' => 'check',
     'iconColor' => 'text-[#8f5d54]',
     'textColor' => 'text-gray-700',
-    'fontSize' => 'font-size: 13px; font-family: \'Gotham Book\', sans-serif;'
+    'fontSize' => 'font-size: 13px;'
 ])
 
 @if($features)
