@@ -1,6 +1,6 @@
 {{-- SECTION: Visit or Contact Us --}}
 <section id="contact" class="py-16 bg-linear-to-br from-primary/5 to-primary/10" aria-labelledby="contact-heading">
-  <div class="container mx-auto px-4 max-w-7xl">
+  <div class="policy-container px-4">
     <header class="text-center mb-12">
       <h2 id="contact-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
         Visit or Contact Us

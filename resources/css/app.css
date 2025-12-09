@@ -21,3 +21,65 @@ p {
 [x-cloak] {
   display: none !important;
 }
+
+/* Gotham Book font (place licensed font files in public/assets/fonts/) */
+@font-face {
+  font-family: 'Gotham Book';
+  src: url('/assets/fonts/Gotham-Book.woff2') format('woff2'),
+       url('/assets/fonts/Gotham-Book.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-system: 'Gotham Book', 'Gotham', 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+body, h1, h2, h3, h4, h5, h6, p, a, li {
+  font-family: var(--font-system);
+}
+
+/* Policy nav + container styles */
+.policy-subnav {
+  transform: translateY(-2rem);
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.policy-pill {
+  background: #f59e0b; /* amber-500 */
+  color: white;
+  padding: 0.5rem 0.9rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.policy-pill.secondary {
+  background: white;
+  color: #1f2937; /* gray-800 */
+  border: 1px solid #e5e7eb; /* gray-200 */
+}
+
+.policy-pill:focus {
+  outline: 2px solid rgba(245,158,11,0.25);
+  outline-offset: 2px;
+}
+
+.policy-pill[aria-current="page"] {
+  background: #b45309; /* darker amber */
+  color: #fff;
+}
+
+.policy-container {
+  max-width: 70rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}

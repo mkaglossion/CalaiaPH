@@ -75,7 +75,15 @@ Route::get('/dining', [PagesController::class, 'dining'])->name('dining');
 Route::get('/groups', [PagesController::class, 'groups'])->name('groups');
 Route::get('/special-events', [PagesController::class, 'specialEvents'])->name('special-events');
 Route::get('/farm', [PagesController::class, 'farm'])->name('farm');
+Route::get('/our-story', [PagesController::class, 'ourStory'])->name('our-story');
+Route::get('sustainability', [PagesController::class, 'sustainability'])->name('sustainability');
+Route::get('/our-services', [PagesController::class, 'ourServices'])->name('our-services');
+Route::get('/contact', [PagesController::class, 'contact'])->name('contact');
 Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
+Route::get('/privacy-notice', [PagesController::class, 'privacyNotice'])->name('privacy-notice');
+Route::get('/calaia-policy', [PagesController::class, 'calaiaPolicy'])->name('calaia-policy');
+Route::get('/cookies-policy', [PagesController::class, 'cookiesPolicy'])->name('cookies-policy');
+Route::get('/terms-service', [PagesController::class, 'termsService'])->name('terms-service');
 
 Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show');
 

@@ -67,7 +67,7 @@
           <ul class="space-y-1 hidden md:block">
             <li><a href="{{ url('/our-story') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Our Story</a></li>
             <li><a href="{{ url('/sustainability') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Sustainability</a></li>
-            <li><a href="{{ url('/services') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Our Services</a></li>
+            <li><a href="{{ url('/our-services') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Our Services</a></li>
             <li><a href="{{ url('/contact') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-gotham-book">Contact Us</a></li>
           </ul>
         </div>
@@ -117,7 +117,7 @@
             <a href="{{ url('/cookies-policy') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">
               Cookies Policy
             </a>
-            <a href="{{ url('/terms') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">
+            <a href="{{ url('/terms-service') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base font-['Gotham Book']">
               Terms of Service
             </a>
           </div>
