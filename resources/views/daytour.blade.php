@@ -47,94 +47,28 @@
         {{-- Packages Grid --}}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
           @foreach($packages as $package)
-            <div class="bg-white rounded-[28px] shadow-lg border border-gray-200 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group">
-              {{-- Inset framed image --}}
-              <div class="px-5 pt-5">
-                <div class="relative overflow-hidden ring-1 ring-black/5 shadow-sm bg-white">
-                  <img
-                    src="{{ asset(is_array($package) ? $package['image'] : ($package->swiperImages->first()->image_path ?? 'images/default.jpg')) }}"
-                    class="h-64 md:h-72 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                    alt="{{ is_array($package) ? $package['title'] : $package->name }} package"
-                    loading="lazy"
-                  >
-                </div>
-              </div>
+            @php
+              $title = is_array($package) ? $package['title'] : $package->name;
+              $image = asset(is_array($package) ? $package['image'] : ($package->swiperImages->first()->image_path ?? 'images/default.jpg'));
+              $features = is_array($package) ? $package['features'] : $package->activities->pluck('name');
+              $price = is_array($package) ? 'PHP 1,500 per person' : $package->price;
+              $details = is_array($package) ? $package["details"] : explode("\n", $package->description ?? "");
+              $gallery = is_array($package) ? array_map(fn($img) => asset($img), $package["gallery"]) : $package->swiperImages->pluck("image_path")->map(fn($path) => asset($path))->toArray();
+            @endphp
 
-              {{-- Body --}}
-              <div class="px-8 pt-6 pb-8">
-                {{-- Title --}}
-                 <h3 class="mb-4 text-3xl font-extrabold uppercase tracking-wide text-center" style="color:#97655A; font-size: 25px;">
-                   @php
-                     $title = is_array($package) ? $package['title'] : $package->name;
-                   @endphp
-                   @if(strtolower($title) === 'nature experience')
-                     NATURE<br>EXPERIENCE
-                   @else
-                     {{ strtoupper($title) }}
-                   @endif
-                 </h3>
-
-
-                {{-- Divider (subtle sage like the mock) --}}
-                <div class="h-px w-full bg-[#dfe6d5] mb-5"></div>
-
-                {{-- Features (compact, centered list) --}}
-                <ul class="space-y-2 text-base md:text-lg uppercase tracking-widest text-center" style="color:#8f6a60; font-size: 13px;">
-                  @foreach(is_array($package) ? $package['features'] : $package->activities->pluck('name') as $feature)
-                    <li>
-                      {{ strtoupper($feature) }}
-                    </li>
-                  @endforeach
-                </ul>
-
-                {{-- CTA --}}
-                <div class="mt-7 flex justify-center">
-                  <button
-                    type="button"
-                    class="px-6 py-2.5 rounded-full text-white text-xs md:text-sm font-semibold tracking-wider shadow
-                           transition-all duration-300 hover:-translate-y-0.5"
-                    style="background-color:#8f5d54;"
-                    onmouseover="this.style.backgroundColor='#a0675a'"
-                    onmouseout="this.style.backgroundColor='#8f5d54'"
-                    data-title="{{ $title }}"
-                    data-price="{{ is_array($package) ? 'PHP 1,500 per person' : $package->price }}"
-                    data-details='@json(is_array($package) ? $package["details"] : explode("\n", $package->description ?? ""))'
-                    data-gallery='@json(is_array($package) ? array_map(fn($img) => asset($img), $package["gallery"]) : $package->swiperImages->pluck("image_path")->map(fn($path) => asset($path))->toArray())'
-                  >
-                    LEARN MORE
-                  </button>
-                </div>
-              </div>
-            </div>
+            <x-daytour-package-card
+                :title="$title"
+                :image="$image"
+                :features="$features"
+                :price="$price"
+                :details="$details"
+                :gallery="$gallery"
+            />
           @endforeach
         </div>
 
-        {{-- Information Section (kept; slight polish to match palette) --}}
-        <div class="bg-linear-to-r from-[#6b9691] to-[#7ba08a] text-white rounded-3xl p-8 md:p-10 shadow-xl">
-          <div class="text-center mb-8">
-            <h4 class="text-2xl md:text-3xl font-bold mb-4 flex items-center justify-center" style="font-size: 25px;">
-              <i class="bi bi-info-circle-fill mr-3 text-3xl"></i>
-              Important Information
-            </h4>
-            <p class="text-lg/7 opacity-90" style="font-size: 13px;">Everything you need to know before your visit</p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            @foreach([
-              ['icon' => 'bi-clock',           'text' => 'Operating hours: 8:00 AM - 5:00 PM daily'],
-              ['icon' => 'bi-calendar-check',  'text' => 'Advance booking recommended for guaranteed slots'],
-              ['icon' => 'bi-person',          'text' => 'Children under 3 years old enter for free'],
-              ['icon' => 'bi-people',          'text' => 'Group discounts available for 10+ persons'],
-              ['icon' => 'bi-person',        'text' => 'Wear comfy clothing and footwear for outdoor activities'],
-              ['icon' => 'bi-cup-straw',       'text' => 'Food and beverages available for purchase on site'],
-            ] as $info)
-              <div class="flex items-start bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all duration-300">
-                <i class="bi {{ $info['icon'] }} text-xl mr-4 mt-1 shrink-0"></i>
-                <span class="text-sm md:text-base leading-relaxed" style="font-size: 13px;">{{ $info['text'] }}</span>
-              </div>
-            @endforeach
-          </div>
-        </div>
+        {{-- Information Section --}}
+        <x-daytour-info-section />
       </div>
     </div>
   </main>
