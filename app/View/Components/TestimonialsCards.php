@@ -21,6 +21,7 @@ class TestimonialsCards extends Component
     public function render()
     {
         $testimonials = Testimonial::where('status', 'approved')
+            ->where('rating', 5) // Only show 5-star testimonials on frontend
             ->orderBy('order')
             ->get();
 

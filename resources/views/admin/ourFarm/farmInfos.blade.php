@@ -20,6 +20,7 @@
     <div class="flex justify-between items-end mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Farm Info Categories</h2>
+            <p class="text-gray-500 text-sm">Manage your farm information categories.</p>
         </div>
 
         <button
@@ -29,24 +30,25 @@
         </button>
     </div>
 
-    <div class="overflow-x-auto border rounded-lg shadow">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 border-b">
+    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+        <table class="w-full text-left">
+            <thead class="bg-gray-100/70 backdrop-blur">
                 <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Name</th>
-                    <th class="px-4 py-2">Uploaded</th>
-                    <th class="px-4 py-2 text-right">Actions</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">#</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Name</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Uploaded</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+
+            <tbody class="divide-y divide-gray-200">
                 @forelse($farmInfos as $index => $farmInfo)
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="px-4 py-2">{{ $index + 1 }}</td>
-                    <td class="px-4 py-2">{{ $farmInfo->name ?? 'Untitled' }}</td>
-                    <td class="px-4 py-2">{{ $farmInfo->created_at->format('Y-m-d') }}</td>
-                    <td class="px-4 py-2 text-right space-x-2">
-                        <button class="text-blue-600 hover:underline" @click="editFarmInfo({{ $farmInfo->id }})">
+                <tr class="hover:bg-gray-50/70 transition">
+                    <td class="px-6 py-4 font-medium text-gray-900">{{ $index + 1 }}</td>
+                    <td class="px-6 py-4 text-gray-600">{{ $farmInfo->name ?? 'Untitled' }}</td>
+                    <td class="px-6 py-4 text-gray-500 text-sm">{{ $farmInfo->created_at->format('Y-m-d') }}</td>
+                    <td class="px-6 py-4 text-right space-x-4">
+                        <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition" @click="editFarmInfo({{ $farmInfo->id }})">
                             Edit
                         </button>
                         <form action="{{ route('farmInfo-list.destroy', $farmInfo->id) }}" method="POST" class="inline">
@@ -54,7 +56,7 @@
                             @method('DELETE')
                             <button
                                 type="submit"
-                                class="text-red-600 hover:underline"
+                                class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
                                 onclick="return confirm('Delete this farmInfo?')"
                             >
                                 Delete
@@ -64,7 +66,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="px-4 py-4 text-center text-gray-500">No farmInfos added yet.</td>
+                    <td colspan="4" class="px-6 py-6 text-center text-gray-500">No farmInfos added yet.</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -79,6 +81,7 @@
     <div class="flex justify-between items-end mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Swiper Images Management</h2>
+            <p class="text-gray-500 text-sm">Photos that appear inside the farm information carousel.</p>
         </div>
 
         <button
@@ -88,49 +91,37 @@
         </button>
     </div>
 
-    <div class="overflow-x-auto border rounded-lg shadow">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 border-b">
-                <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Preview</th>
-                    <th class="px-4 py-2">FarmInfo Name</th>
-                    <th class="px-4 py-2">Title</th>
-                    <th class="px-4 py-2">Uploaded</th>
-                    <th class="px-4 py-2 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($images as $index => $img)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ $index + 1 }}</td>
-                        <td class="px-4 py-2">
-                            <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
-                        </td>
-                        <td class="px-4 py-2">{{ $img->farmInfo->name ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $img->title ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $img->created_at->format('Y-m-d') }}</td>
-                        <td class="px-4 py-2 text-right">
-                            <form action="{{ route('farmInfo-image.destroy', $img->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button
-                                    type="submit"
-                                    class="text-red-600 hover:underline"
-                                    onclick="return confirm('Delete this image?')"
-                                >
-                                    Delete
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="px-4 py-4 text-center text-gray-500">No images uploaded yet.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+    {{-- Cards Grid --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+        @forelse($images as $img)
+            <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition">
+                <div class="overflow-hidden rounded-xl">
+                    <img src="{{ $img->image_path }}" class="w-full h-48 object-cover transition hover:scale-105">
+                </div>
+
+                <div class="mt-4">
+                    <h3 class="font-semibold text-lg text-gray-900">{{ $img->title ?: 'Untitled' }}</h3>
+                    <p class="text-gray-500 text-sm">
+                        Uploaded: {{ $img->created_at->format('Y-m-d') }}
+                    </p>
+                    <p class="text-gray-500 text-sm">
+                        Farm Info: {{ $img->farmInfo->name ?? 'Untitled' }}
+                    </p>
+                </div>
+
+                <div class="mt-5 flex justify-end">
+                    <form action="{{ route('farmInfo-image.destroy', $img->id) }}" method="POST">
+                        @csrf @method('DELETE')
+                        <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                            onclick="return confirm('Delete this image?')">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        @empty
+            <p class="text-gray-500">No images uploaded yet.</p>
+        @endforelse
     </div>
 
     <hr class="my-14 border-gray-300">
@@ -141,6 +132,7 @@
     <div class="flex justify-between items-end mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Text Content Management</h2>
+            <p class="text-gray-500 text-sm">Paragraphs and captions displayed on the farm information page.</p>
         </div>
 
         <button
@@ -150,27 +142,28 @@
         </button>
     </div>
 
-    <div class="overflow-x-auto border rounded-lg shadow">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 border-b">
+    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+        <table class="w-full text-left">
+            <thead class="bg-gray-100/70 backdrop-blur">
                 <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">FarmInfo Name</th>
-                    <th class="px-4 py-2">Title</th>
-                    <th class="px-4 py-2">Content</th>
-                    <th class="px-4 py-2 text-right">Actions</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">#</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">FarmInfo Name</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Title</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Content</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+
+            <tbody class="divide-y divide-gray-200">
                 @forelse($texts as $index => $text)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ $index + 1 }}</td>
-                        <td class="px-4 py-2">{{ $text->farmInfo->name ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $text->title ?? 'No Title' }}</td>
-                        <td class="px-4 py-2">{{ Str::limit($text->content, 60) }}</td>
-                        <td class="px-4 py-2 text-right space-x-2">
+                    <tr class="hover:bg-gray-50/70 transition">
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ $index + 1 }}</td>
+                        <td class="px-6 py-4 text-gray-600">{{ $text->farmInfo->name ?? 'Untitled' }}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ $text->title ?? 'No Title' }}</td>
+                        <td class="px-6 py-4 text-gray-600 text-sm">{{ Str::limit($text->content, 60) }}</td>
+                        <td class="px-6 py-4 text-right space-x-4">
                             <button
-                                class="text-blue-600 hover:underline"
+                                class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
                                 @click="editText({{ $text->id }})">
                                 Edit
                             </button>
@@ -180,8 +173,7 @@
                                 @csrf @method('DELETE')
                                 <button
                                     onclick="return confirm('Delete this text content?')"
-                                    class="text-red-600 hover:underline"
-                                >
+                                    class="text-red-600 font-semibold hover:text-red-700 hover:underline transition">
                                     Delete
                                 </button>
                             </form>
@@ -189,7 +181,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">No text content added yet.</td>
+                        <td colspan="5" class="px-6 py-6 text-center text-gray-500">No text content added yet.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -555,4 +547,15 @@ function farmInfoManager() {
     };
 }
 </script>
+<style>
+.tilt-card {
+    transform-style: preserve-3d;
+    perspective: 1200px;
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+.tilt-card:hover {
+    transform: rotateX(6deg) rotateY(-6deg) translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 35px rgba(0,0,0,0.18);
+}
+</style>
 @endsection

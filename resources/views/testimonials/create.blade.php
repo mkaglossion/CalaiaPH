@@ -35,17 +35,18 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Rating</label>
-                <div class="flex items-center space-x-2">
-                    <!-- Only show 5-star option since only perfect ratings are allowed -->
-                    <label class="flex items-center">
-                        <input type="radio" name="rating" value="5" required checked
-                               class="sr-only peer">
-                        <div class="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full peer-checked:bg-yellow-400 peer-checked:text-white">
-                            <span class="text-lg">5</span>
-                        </div>
-                    </label>
+                <div class="flex items-center space-x-1">
+                    <!-- Star rating system - visually shows 5 stars but allows 1-5 selection -->
+                    <input type="hidden" name="rating" id="rating-value" value="1" required>
+                    <div class="flex space-x-1" id="star-rating">
+                        <button type="button" class="star-btn text-3xl text-gray-300 hover:text-yellow-400" data-value="1">★</button>
+                        <button type="button" class="star-btn text-3xl text-gray-300 hover:text-yellow-400" data-value="2">★</button>
+                        <button type="button" class="star-btn text-3xl text-gray-300 hover:text-yellow-400" data-value="3">★</button>
+                        <button type="button" class="star-btn text-3xl text-gray-300 hover:text-yellow-400" data-value="4">★</button>
+                        <button type="button" class="star-btn text-3xl text-gray-300 hover:text-yellow-400" data-value="5">★</button>
+                    </div>
                 </div>
-                <p class="text-sm text-gray-500 mt-2">Only 5-star experiences can be shared (perfect ratings only)</p>
+                <p class="text-sm text-gray-500 mt-2">Rate your experience from 1 to 5 stars</p>
             </div>
 
             <div class="flex justify-end">
@@ -57,4 +58,40 @@
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const starButtons = document.querySelectorAll('.star-btn');
+        const ratingInput = document.getElementById('rating-value');
+
+        starButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const value = this.getAttribute('data-value');
+                ratingInput.value = value;
+
+                // Update star colors
+                starButtons.forEach((star, index) => {
+                    if (index < value) {
+                        star.classList.remove('text-gray-300');
+                        star.classList.add('text-yellow-400');
+                    } else {
+                        star.classList.remove('text-yellow-400');
+                        star.classList.add('text-gray-300');
+                    }
+                });
+            });
+        });
+
+        // Initialize with 1 star selected by default
+        const defaultRating = 1;
+        ratingInput.value = defaultRating;
+
+        starButtons.forEach((star, index) => {
+            if (index < defaultRating) {
+                star.classList.remove('text-gray-300');
+                star.classList.add('text-yellow-400');
+            }
+        });
+    });
+</script>
 </x-page-layout>

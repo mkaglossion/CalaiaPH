@@ -24,7 +24,7 @@ class TestimonialController extends Controller
             'name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
             'content' => 'required|string',
-            'rating' => 'required|integer|min:5|max:5', // Only 5-star ratings allowed
+            'rating' => 'required|integer|min:1|max:5', // Allow 1-5 star ratings
         ]);
 
         $testimonial = Testimonial::create([
