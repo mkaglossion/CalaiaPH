@@ -22,63 +22,100 @@ use App\Models\DayTour;
 use App\Models\DayPackageText;
 use App\Models\StaycationAccommodation;
 use App\Models\AccommodationText;
-
+use Illuminate\Support\Facades\Log;
 
 class AdminController extends Controller
 {
     public function staycation()
     {
-        $staycations = Staycation::all();
-        $images = StaycationSwiperImage::all();
-        $texts = StaycationText::all();
-        return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts'));
+        try {
+            $staycations = Staycation::with(['swiperImages', 'texts'])->get();
+            $images = StaycationSwiperImage::all();
+            $texts = StaycationText::all();
+            return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts'));
+        } catch (\Exception $e) {
+            Log::error('Error fetching staycations: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load staycations. Please try again.');
+        }
     }
 
     public function activity()
     {
-        $activities = Activity::all();
-        $images = ActivitySwiperImage::all();
-        $texts = ActivityText::all();
-        return view('admin.whatToDo.activities', compact('activities', 'images', 'texts'));
+        try {
+            $activities = Activity::with(['swiperImages', 'texts'])->get();
+            $images = ActivitySwiperImage::all();
+            $texts = ActivityText::all();
+            return view('admin.whatToDo.activities', compact('activities', 'images', 'texts'));
+        } catch (\Exception $e) {
+            Log::error('Error fetching activities: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load activities. Please try again.');
+        }
     }
 
     public function menu()
     {
-        $menus = Menu::all();
-        $images = MenuSwiperImage::all();
-        $texts = MenuText::all();
-        return view('admin.foodBeverages.menus', compact('menus', 'images', 'texts'));
+        try {
+            $menus = Menu::with(['swiperImages', 'texts'])->get();
+            $images = MenuSwiperImage::all();
+            $texts = MenuText::all();
+            return view('admin.foodBeverages.menus', compact('menus', 'images', 'texts'));
+        } catch (\Exception $e) {
+            Log::error('Error fetching menus: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load menus. Please try again.');
+        }
     }
 
     public function event()
     {
-        $events = Event::all();
-        $images = EventSwiperImage::all();
-        $texts = EventText::all();
-        return view('admin.specialEvents.events', compact('events', 'images', 'texts'));
+        try {
+            $events = Event::with(['swiperImages', 'texts'])->get();
+            $images = EventSwiperImage::all();
+            $texts = EventText::all();
+            return view('admin.specialEvents.events', compact('events', 'images', 'texts'));
+        } catch (\Exception $e) {
+            Log::error('Error fetching events: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load events. Please try again.');
+        }
     }
 
     public function farmInfo()
     {
-        $farmInfos = FarmInfo::all();
-        $images = FarmInfoSwiperImage::all();
-        $texts = FarmInfoText::all();
-        return view('admin.ourFarm.farmInfos', compact('farmInfos', 'images', 'texts'));
+        try {
+            $farmInfos = FarmInfo::with(['swiperImages', 'texts'])->get();
+            $images = FarmInfoSwiperImage::all();
+            $texts = FarmInfoText::all();
+            return view('admin.ourFarm.farmInfos', compact('farmInfos', 'images', 'texts'));
+        } catch (\Exception $e) {
+            Log::error('Error fetching farm infos: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load farm infos. Please try again.');
+        }
     }
 
     public function dayTour()
     {
-        $tours  = DayTour::with('activities')->get(); // get all packages with activities
-        $texts = DayPackageText::all();
-        $activities = Activity::all(); // list of all activities for selection
-        return view('admin.dayTour.days', compact('tours', 'texts', 'activities'));
+        try {
+            $tours = DayTour::with('activities')->get();
+            $activities = Activity::all();
+            $farmInfos = FarmInfo::with(['swiperImages', 'texts'])->get();
+            $images = FarmInfoSwiperImage::all();
+            $texts = DayPackageText::all();
+            return view('admin.dayTour.days', compact('tours', 'texts', 'activities', 'farmInfos', 'images'));
+        } catch (\Exception $e) {
+            Log::error('Error fetching day tours: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load day tours. Please try again.');
+        }
     }
 
     public function staycationAccommodation()
     {
-        $accommodations  = StaycationAccommodation::with('accommodationVariants')->get(); // get all packages with activities
-        $texts = AccommodationText::all();
-        $staycations = Staycation::all(); // list of all activities for selection
-        return view('admin.whereToStay.accommodations', compact('accommodations', 'texts', 'staycations'));
+        try {
+            $accommodations = StaycationAccommodation::with('accommodationVariants')->get();
+            $staycations = Staycation::all();
+            $texts = AccommodationText::all();
+            return view('admin.whereToStay.accommodations', compact('accommodations', 'texts', 'staycations'));
+        } catch (\Exception $e) {
+            Log::error('Error fetching staycation accommodations: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load staycation accommodations. Please try again.');
+        }
     }
 }
