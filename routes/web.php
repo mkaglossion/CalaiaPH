@@ -181,6 +181,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     // adminRoute('/activities', AdminController::class, 'admin.activities', 'activity');
     Route::prefix('/home')->group(function () {
         Route::get('/home', [AdminPagesController::class, 'home'])->name('admin.home.home');
+        Route::get('/items', [AdminPagesController::class, 'items'])->name('admin.home.items');
     });
     Route::prefix('/day')->group(function () {
         Route::get('/day', [AdminController::class, 'dayTour'])->name('admin.day.day');
@@ -269,4 +270,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('staycation-accommodations', StaycationAccommodationController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('accommodations-text', AccommodationTextController::class)->only(['index', 'store', 'update', 'destroy']);
 
+    // Event sections CRUD
+    Route::resource('event-sections', \App\Http\Controllers\Admin\EventSectionController::class)
+        ->only(['index', 'store', 'update', 'destroy']);
 });
+

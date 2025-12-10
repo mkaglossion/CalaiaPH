@@ -35,7 +35,8 @@
         @php
           $menuItems = [
             ['title'=>'Home','icon'=>'home','route'=>'admin.home.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.home.home']
+              ['label'=>'Pages Information','route'=>'admin.home.home'],
+              ['label'=>'Items','route'=>'admin.home.items']
             ]],
             ['title'=>'Day Tour','icon'=>'sun','route'=>'admin.day.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.day.daytour'],

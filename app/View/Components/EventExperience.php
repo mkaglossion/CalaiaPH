@@ -3,6 +3,7 @@
 namespace App\View\Components;
 
 use Illuminate\View\Component;
+use App\Models\EventSection;
 
 class EventExperience extends Component
 {
@@ -19,6 +20,7 @@ class EventExperience extends Component
      */
     public function render()
     {
-        return view('components.event-experience');
+        $sections = EventSection::orderBy('order')->get();
+        return view('components.event-experience', compact('sections'));
     }
 }
