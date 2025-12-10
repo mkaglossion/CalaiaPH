@@ -13,6 +13,7 @@ class EventSection extends Model
         'section_id',
         'title',
         'image_path',
+        'public_id',
         'description1',
         'description2',
         'link_path',

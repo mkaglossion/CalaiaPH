@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Event Experience Items')
+@section('title', 'Event Experience Cards Management')
 
 @section('content')
 
@@ -9,7 +9,7 @@
     class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
 >
     <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
-        Event Experience Items
+        Event Experience Cards Management
     </h1>
     <p class="text-gray-600 mb-10">Manage the sections displayed in the Event Experience component.</p>
 
@@ -109,9 +109,21 @@
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Image Path</label>
-                    <input type="text" x-model="form.image_path" class="border rounded-xl p-3 w-full" required>
-                    <p class="text-xs text-gray-500 mt-1">Example: /assets/images/carousel/filename.jpg</p>
+                    <label class="block font-medium mb-1 text-gray-700">Image</label>
+                    <div class="space-y-2">
+                        <input type="text" x-model="form.image_path" placeholder="Enter image URL or path" class="border rounded-xl p-3 w-full">
+                        <p class="text-xs text-gray-500 mt-1">Example: /assets/images/carousel/filename.jpg</p>
+                        <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center">
+                            <label class="cursor-pointer">
+                                <div class="flex flex-col items-center">
+                                    <i data-lucide="upload-cloud" class="w-8 h-8 text-blue-500 mb-2"></i>
+                                    <span class="text-sm text-gray-600">Click to upload image</span>
+                                    <span class="text-xs text-gray-400">or drag and drop</span>
+                                </div>
+                                <input type="file" @change="handleFileUpload" class="hidden" accept="image/*">
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <div>
@@ -187,6 +199,7 @@ function eventSectionsManager() {
             link_path: '',
             order: 1
         },
+        file: null,
 
         resetForm() {
             this.form = {
@@ -199,7 +212,17 @@ function eventSectionsManager() {
                 link_path: '',
                 order: 1
             };
+            this.file = null;
             this.editMode = false;
+        },
+
+        handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                this.file = file;
+                // Show preview if needed
+                console.log('File selected:', file.name);
+            }
         },
 
         editSection(id) {
@@ -246,11 +269,18 @@ function eventSectionsManager() {
             // Add all form fields
             formData.append('section_id', this.form.section_id);
             formData.append('title', this.form.title);
-            formData.append('image_path', this.form.image_path);
+            if (this.form.image_path) {
+                formData.append('image_path', this.form.image_path);
+            }
             formData.append('description1', this.form.description1);
             formData.append('description2', this.form.description2);
             formData.append('link_path', this.form.link_path);
             formData.append('order', this.form.order);
+
+            // Add file if present
+            if (this.file) {
+                formData.append('image_file', this.file);
+            }
 
             let url = '{{ route('event-sections.store') }}';
             let method = 'POST';

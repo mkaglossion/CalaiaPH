@@ -85,5 +85,20 @@
         </div>
       </div>
     </div>
+
+    {{-- Share Your Experience Section --}}
+    <div class="mt-12 text-center">
+      <h3 class="font-semibold text-[#8f5d54] mb-4" style="font-size: 20px;">Share Your Experience</h3>
+      <p class="text-gray-600 mb-6 max-w-2xl mx-auto" style="font-size: 13px;">
+        Have you visited Calaia Farm? We'd love to hear about your experience!
+      </p>
+      <a href="{{ route('testimonials.create') }}"
+         class="inline-block px-6 py-3 bg-[#7a7d52] text-white font-medium rounded-lg hover:bg-[#6b6e45] transition-colors duration-300">
+        Leave a Testimonial
+      </a>
+    </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>

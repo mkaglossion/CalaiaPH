@@ -60,6 +60,8 @@ use App\Http\Controllers\Admin\FarmInfoController;
 use App\Http\Controllers\Admin\DayTourController as AdminDayTourController;
 use App\Http\Controllers\Admin\StaycationAccommodationController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\TestimonialController;
+use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
 
 // ========== Root Route ==========
 Route::get('/', function () {
@@ -86,6 +88,10 @@ Route::get('/cookies-policy', [PagesController::class, 'cookiesPolicy'])->name('
 Route::get('/terms-service', [PagesController::class, 'termsService'])->name('terms-service');
 
 Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show');
+
+// Testimonial Routes
+Route::get('/testimonials/create', [TestimonialController::class, 'create'])->name('testimonials.create');
+Route::post('/testimonials', [TestimonialController::class, 'store'])->name('testimonials.store');
 
 // Booking Routes
 Route::get('/booking', [BookingController::class, 'create'])->name('booking.create');
@@ -273,5 +279,11 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     // Event sections CRUD
     Route::resource('event-sections', \App\Http\Controllers\Admin\EventSectionController::class)
         ->only(['index', 'store', 'update', 'destroy']);
+
+    // Testimonials CRUD
+    Route::get('/testimonials', [AdminTestimonialController::class, 'index'])->name('admin.testimonials.index');
+    Route::patch('/testimonials/{testimonial}/approve', [AdminTestimonialController::class, 'approve'])->name('admin.testimonials.approve');
+    Route::post('/testimonials/update-order', [AdminTestimonialController::class, 'updateOrder'])->name('admin.testimonials.updateOrder');
+    Route::delete('/testimonials/{testimonial}', [AdminTestimonialController::class, 'destroy'])->name('admin.testimonials.destroy');
 });
 
