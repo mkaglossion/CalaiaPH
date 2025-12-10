@@ -5,8 +5,14 @@
 @section('content')
 <div
     x-data="activityComponent(@js($texts), @js($activities))"
-
+    class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
 >
+
+    <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
+        Activities
+    </h1>
+    <p class="text-gray-600 mb-10">Manage the activities, image slider and content displayed on your Activities page.</p>
+
     <hr class="my-6">
 
     <div class="flex justify-between items-center mb-4">
@@ -61,17 +67,17 @@
         </table>
     </div>
 
-    <!-- Activity Modal -->
-    <div 
-        x-show="showActivityModal" 
-        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-        x-cloak
+    {{-- Activity Modal --}}
+    <div
+        x-show="showActivityModal"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        x-transition.opacity
     >
-        <div 
-            @click.away="showActivityModal = false" 
-            class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6"
+        <div
+            @click.away="showActivityModal = false"
+            class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-6 border border-gray-200"
         >
-            <h3 class="text-lg font-semibold mb-4" x-text="editModeActivity ? 'Edit Activity' : 'Add Activity'"></h3>
+            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editModeActivity ? 'Edit Activity' : 'Add Activity'"></h3>
 
             <form
                 id="activityForm"
@@ -95,17 +101,17 @@
                     >
                 </div>
 
-                <div class="flex justify-end space-x-2">
-                    <button 
-                        type="button" 
-                        @click="showActivityModal = false; resetForm()" 
-                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button
+                        type="button"
+                        @click="showActivityModal = false; resetForm()"
+                        class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition"
                     >
                         Cancel
                     </button>
-                    <button 
-                        type="submit" 
-                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    <button
+                        type="submit"
+                        class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition"
                     >
                         <span x-text="editModeActivity ? 'Update' : 'Add'"></span>
                     </button>
@@ -178,19 +184,19 @@
         </table>
     </div>
 
-    {{-- Modal --}}
-    <div 
+    {{-- Swiper Modal --}}
+    <div
         x-show="showModal"
-        class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
         x-transition
     >
-        <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-            <button 
+        <div class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-md p-6 relative border border-gray-200">
+            <button
                 @click="showModal = false"
-                class="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4">Upload New Swiper Image</h3>
+            <h3 class="text-xl font-bold mb-4 text-gray-900">Upload Swiper Image</h3>
 
             <form
                 id="swiperUploadForm"
@@ -259,9 +265,10 @@
                 "
             >
                 @csrf
-                <div class="mb-3">
-                    <label class="block font-semibold mb-1">Activity</label>
-                    <select x-ref="activity" name="activity_id" class="border rounded p-2 w-full" required>
+
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Activity</label>
+                    <select x-ref="activity" name="activity_id" class="border rounded-xl p-3 w-full" required>
                         <option value="">Select Activity</option>
                         @foreach($activities as $activity)
                             <option value="{{ $activity->id }}">{{ $activity->name }}</option>
@@ -269,19 +276,29 @@
                     </select>
                 </div>
 
-                <div class="mb-3">
-                    <label class="block font-semibold mb-1">Title (optional)</label>
-                    <input type="text" x-ref="title" name="title" class="border rounded p-2 w-full">
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Title (optional)</label>
+                    <input type="text" x-ref="title" name="title" class="border rounded-xl p-3 w-full">
                 </div>
 
-                <div class="mb-3">
-                    <label class="block font-semibold mb-1">Upload Image</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*" class="border rounded p-2 w-full" required>
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Upload Image</label>
+                    <input type="file" x-ref="image" name="image" accept="image/*" class="border rounded-xl p-3 w-full" required>
                 </div>
 
-                <div class="flex justify-end space-x-2">
-                    <button type="button" @click="showModal = false" class="px-4 py-2 border rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Upload</button>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button
+                        type="button"
+                        @click="showModal = false"
+                        class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition">
+                        Upload
+                    </button>
                 </div>
             </form>
         </div>
@@ -299,35 +316,61 @@
         </button>
     </div>
 
-    {{-- Text Table --}}
-    <div class="overflow-x-auto border rounded-lg shadow">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 border-b">
+    {{-- ============================================================= --}}
+    {{-- TEXT CONTENT SECTION --}}
+    {{-- ============================================================= --}}
+    <div class="flex justify-between items-end mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
+            <p class="text-gray-500 text-sm">Paragraphs and captions displayed on the Activities page.</p>
+        </div>
+
+        <button
+            @click="showTextModal = true"
+            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+            + Add Text
+        </button>
+    </div>
+
+    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+        <table class="w-full text-left">
+            <thead class="bg-gray-100/70 backdrop-blur">
                 <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Activity Name</th>
-                    <th class="px-4 py-2">Label</th>
-                    <th class="px-4 py-2">Text</th>
-                    <th class="px-4 py-2 text-right">Actions</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Activity Name</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Label</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Text</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody>
-                @forelse($texts as $index => $text)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ $index + 1 }}</td>
-                        <td class="px-4 py-2">{{ $text->activity->name ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $text->title ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $text->content ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ Str::limit($text->text, 60) }}</td>
-                        <td class="px-4 py-2 text-right space-x-2">
-                            <form action="{{ route('activity-text.destroy', $text->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button 
-                                    type="submit"
-                                    class="text-red-600 hover:underline"
-                                    onclick="return confirm('Delete this text content?')"
-                                >
+
+            <tbody class="divide-y divide-gray-200">
+                @forelse($texts as $text)
+                    <tr class="hover:bg-gray-50/70 transition">
+                        <td class="px-6 py-4 font-medium text-gray-900">
+                            {{ $text->activity->name ?? 'No Activity' }}
+                        </td>
+
+                        <td class="px-6 py-4 text-gray-600">
+                            {{ $text->title ?: 'No Label' }}
+                        </td>
+
+                        <td class="px-6 py-4 text-gray-600 text-sm">
+                            {{ Str::limit($text->text, 150) }}
+                        </td>
+
+                        <td class="px-6 py-4 text-right space-x-4">
+                            <button
+                                class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                                @click="editText({{ $text->id }})">
+                                Edit
+                            </button>
+
+                            <form action="{{ route('activity-text.destroy', $text->id) }}"
+                                method="POST" class="inline">
+                                @csrf @method('DELETE')
+                                <button
+                                    onclick="return confirm('Delete this text?')"
+                                    class="text-red-600 font-semibold hover:text-red-700 hover:underline transition">
                                     Delete
                                 </button>
                             </form>
@@ -335,24 +378,20 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">No text content added yet.</td>
+                        <td colspan="4" class="px-6 py-6 text-center text-gray-500">
+                            No text content yet.
+                        </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
-    <!-- Text Content Modal -->
-    <div 
-        x-show="showTextModal" 
-        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-        x-cloak
-    >
-        <div 
-            @click.away="showTextModal = false" 
-            class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6"
-        >
-            <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
+    {{-- TEXT Modal --}}
+    <div x-show="showTextModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" x-transition.opacity>
+        <div @click.away="showTextModal = false" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-7 border border-gray-200">
+
+            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
 
             <form
                 id="textUploadForm"
@@ -381,41 +420,35 @@
                 </div>
 
             
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Label</label>
-                    <input 
-                        type="text" 
-                        name="label" 
-                        x-model="form.label" 
-                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Label</label>
+                    <input
+                        type="text"
+                        name="label"
+                        x-model="form.label"
+                        class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         placeholder="Optional"
                     >
                 </div>
 
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Text</label>
-                    <textarea 
-                        name="text" 
-                        x-model="form.text" 
-                        rows="4" 
-                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        placeholder="Enter text text..."
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Text</label>
+                    <textarea
+                        name="text"
+                        x-model="form.text"
+                        rows="4"
+                        class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        placeholder="Enter text..."
                         required
                     ></textarea>
                 </div>
 
-                <div class="flex justify-end space-x-2">
-                    <button 
-                        type="button" 
-                        @click="showTextModal = false" 
-                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
-                    >
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" @click="showTextModal = false" class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">
                         Cancel
                     </button>
-                    <button 
-                        type="submit" 
-                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                    >
+
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition">
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
                     </button>
                 </div>
@@ -429,6 +462,7 @@
 <script>
 function activityComponent(texts, activities) {
     return {
+        isLoading: false,
         showModal: false,
         showActivityModal: false,
         showTextModal: false,

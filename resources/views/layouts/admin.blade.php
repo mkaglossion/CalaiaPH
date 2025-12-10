@@ -47,7 +47,7 @@
               ['label'=>'Accommodations','route'=>'admin.stay.accommodations']
             ]],
             ['title'=>'What to Do','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.do.activities'],
+              ['label'=>'Page Information','route'=>'admin.do.whattodo'],
               ['label'=>'Items','route'=>'admin.do.activities']
             ]],
             ['title'=>'Special Events','icon'=>'calendar','route'=>'admin.specialEvents.*','sub'=>[
