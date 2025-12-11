@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('name'); // e.g. "Family Fun Day Tour"
             $table->text('description')->nullable();
             $table->decimal('price', 10, 2)->nullable();
+            $table->string('image_path');
+            $table->text('public_id');
             $table->timestamps();
         });
     }

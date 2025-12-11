@@ -6,56 +6,116 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Staycation;
 use App\Models\StaycationAccommodation;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class StaycationAccommodationController extends Controller
 {
     public function index()
     {
         $accommodations = StaycationAccommodation::with('accommodationVariants')->get();
-        return view('admin.accommodation', compact('accommodation'));
+        return view('admin.accommodation', compact('accommodations'));
     }
 
-   public function store(Request $request)
+    public function store(Request $request)
     {
         // Validate incoming request
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255|unique:staycation_accommodations,name',
+            'description' => 'nullable|string',
+            'price' => 'nullable|numeric',
             'staycation_ids' => 'nullable|array',
-            'staycation_ids.*' => 'exists:staycations,id', // make sure IDs exist
+            'staycation_ids.*' => 'exists:staycations,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:20480',
         ]);
 
-        // Create the accommodation
-        $accommodation = StaycationAccommodation::create($request->only(['name', 'description', 'price']));
+        $imageUrl = null;
+        $publicId = null;
 
-        // Sync the related staycations (variants)
-        $accommodation->accommodationVariants()->sync($request->staycation_ids ?? []);
-
-        // Return JSON if AJAX
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'message' => 'Accommodation created!',
-                'accommodation' => $accommodation->load('accommodationVariants'), // eager load variants
+        // Upload image if exists
+        if ($request->hasFile('image')) {
+            $filePath = $request->file('image')->getRealPath();
+            $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
+                'folder' => 'staycation_accommodations',
             ]);
+
+            $imageUrl = $uploadResult['secure_url'];
+            $publicId = $uploadResult['public_id'];
         }
 
-        // fallback for normal form submit
-        return back()->with('success', 'Accommodation created successfully!');
+        // Create accommodation
+        $accommodation = StaycationAccommodation::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'price' => $validated['price'] ?? null,
+            'image_path' => $imageUrl,
+            'public_id' => $publicId,
+        ]);
+
+        // Sync related staycations
+        $accommodation->accommodationVariants()->sync($request->staycation_ids ?? []);
+
+        return $request->wantsJson() || $request->ajax()
+            ? response()->json([
+                'message' => 'Accommodation created!',
+                'accommodation' => $accommodation->load('accommodationVariants'),
+            ])
+            : back()->with('success', 'Accommodation created successfully!');
     }
 
-
-    public function update(Request $request, StaycationAccommodation $dayTour)
+    public function update(Request $request, StaycationAccommodation $staycationAccommodation)
     {
-        $StaycationAccommodation->update($request->only(['name', 'description', 'price']));
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:staycation_accommodations,name,' . $staycationAccommodation->id,
+            'description' => 'nullable|string',
+            'price' => 'nullable|numeric',
+            'staycation_ids' => 'nullable|array',
+            'staycation_ids.*' => 'exists:staycations,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:20480',
+        ]);
 
-        $StaycationAccommodation->accommodationVariants()->sync($request->staycation_variant_id);
+        // Handle new image
+        if ($request->hasFile('image')) {
+            $filePath = $request->file('image')->getRealPath();
+            $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
+                'folder' => 'staycation_accommodations',
+            ]);
 
-        return back()->with('success', 'Day accommodation updated!');
+            // Delete old image from Cloudinary
+            if ($staycationAccommodation->public_id) {
+                Cloudinary::uploadApi()->destroy($staycationAccommodation->public_id);
+            }
+
+            $staycationAccommodation->image_path = $uploadResult['secure_url'];
+            $staycationAccommodation->public_id = $uploadResult['public_id'];
+        }
+
+        // Update other fields
+        $staycationAccommodation->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'price' => $validated['price'] ?? null,
+        ]);
+
+        // Sync related staycations
+        $staycationAccommodation->accommodationVariants()->sync($request->staycation_ids ?? []);
+
+        return $request->wantsJson() || $request->ajax()
+            ? response()->json([
+                'message' => 'Accommodation updated successfully!',
+                'accommodation' => $staycationAccommodation->load('accommodationVariants'),
+            ])
+            : back()->with('success', 'Day accommodation updated!');
     }
 
-    public function destroy(StaycationAccommodation $dayTour)
+    public function destroy(StaycationAccommodation $staycationAccommodation)
     {
-        $StaycationAccommodation->delete();
+        // Optional: delete image from Cloudinary
+        if ($staycationAccommodation->public_id) {
+            Cloudinary::uploadApi()->destroy($staycationAccommodation->public_id);
+        }
+
+        $staycationAccommodation->delete();
+
         return back()->with('success', 'Day accommodation deleted!');
     }
 }
-

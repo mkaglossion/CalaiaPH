@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\StaySwiperImage;
 use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+
 
 class StaySwiperImageController extends Controller
 {
@@ -22,7 +24,7 @@ class StaySwiperImageController extends Controller
             'title' => 'nullable|string|max:255',
         ]);
 
-       // Upload image to Cloudinary
+        // Upload image to Cloudinary
         $filePath = $request->file('image')->getRealPath();
         $uploadResult = Cloudinary::uploadApi()->upload($filePath);
 
