@@ -281,113 +281,59 @@ $galleryData = [
 
    {{-- 3 cards sa isang grid: Glamping, Camping, Booking Summary --}}
    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-       {{-- Glamping card --}}
-       <div class="bg-white rounded-2xl shadow-[0_18px_40px_rgba(15,23,42,0.08)] border border-gray-100 overflow-hidden flex flex-col">
-           <img
-               src="{{ $glampingImage }}"
-               alt="Glamping Options"
-               class="w-full object-cover"
-               style="height: 280px;">
+        @forelse($accommodations as $accommodation)
+            <div class="bg-white rounded-2xl shadow-[0_18px_40px_rgba(15,23,42,0.08)] border border-gray-100 overflow-hidden flex flex-col">
+                
+                {{-- Image --}}
+                <img 
+                    src="{{ $accommodation->image_path ?? 'https://via.placeholder.com/400x280?text=No+Image' }}" 
+                    alt="{{ $accommodation->name }}" 
+                    class="w-full object-cover"
+                    style="height: 280px;">
 
-           <div class="flex flex-col p-6 h-full">
-               <div class="flex items-start justify-between gap-3 mb-2">
-                   <h3 class="text-2xl font-extrabold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
-                       Glamping Options
-                   </h3>
-                   <span
-                       class="inline-flex items-center px-3 py-1 rounded-full text-base font-semibold"
-                       style="background: #ffc44c; color: #2b1b00;">
-                       GLAMPING
-                   </span>
-               </div>
+                <div class="flex flex-col p-6 h-full">
+                    {{-- Name and Type Badge --}}
+                    <div class="flex items-start justify-between gap-3 mb-2">
+                        <h3 class="text-2xl font-extrabold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
+                            {{ $accommodation->name }}
+                        </h3>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-base font-semibold bg-gray-200 text-gray-800">
+                            Accommodation
+                        </span>
+                    </div>
 
-               <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
-                   {{ $glampingDescription }}
-               </p>
+                    {{-- Description --}}
+                    <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
+                        {{ Str::limit($accommodation->description, 150) ?: '-' }}
+                    </p>
 
-               <p class="text-xs text-gray-500 mb-4" style="font-family: 'Gotham Book', sans-serif;">
-                   Includes:
-                   <span class="font-semibold text-gray-800">Standard</span> and
-                   <span class="font-semibold text-gray-800">Premium</span> glamping tents.
-               </p>
+                    {{-- Included activities --}}
+                    @if($accommodation->accommodationVariants->count() > 0)
+                        <div class="flex flex-wrap gap-1 mb-3">
+                            @foreach($accommodation->accommodationVariants as $activity)
+                                <span class="inline-block bg-gray-200 px-2 py-1 rounded text-xs">{{ $activity->name }}</span>
+                            @endforeach
+                        </div>
+                    @endif
 
-               @if($glampingCount > 0)
-                   <p class="font-semibold mb-1" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
-                       Starts at ₱5,760/night (Weekdays: Sun.-Thu.)<br>• ₱7,200/night (Weekends: Fri.-Sat.)
-                   </p>
-                   <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">
-                       {{ $glampingCount }} {{ Str::plural('option', $glampingCount) }} available
-                   </p>
-               @else
-                   <p class="text-base text-gray-400 mb-6">No glamping options available.</p>
-               @endif
+                    {{-- Price --}}
+                    <p class="font-semibold mb-3" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
+                        {{ $accommodation->price ? '₱'.number_format($accommodation->price, 2) : 'Price not available' }}
+                    </p>
 
-               <button
-                   type="button"
-                   class="select-category-btn mt-auto w-full inline-flex items-center justify-center rounded-full text-lg font-semibold text-white px-6 py-3 transition"
-                   data-category="glamping"
-                   data-staycations='@json($glampingStaycations)'
-                   @if($glampingCount === 0) disabled @endif
-                   style="background-color:#8f5d54; box-shadow:0 10px 20px rgba(143,93,84,0.35);">
-                   Select Glamping Options
-               </button>
-           </div>
-       </div>
-
-       {{-- Camping card --}}
-       <div class="bg-white rounded-2xl shadow-[0_18px_40px_rgba(15,23,42,0.08)] border border-gray-100 overflow-hidden flex flex-col">
-           <img
-               src="{{ $campingImage }}"
-               alt="Camping Options"
-               class="w-full object-cover"
-               style="height: 280px;">
-
-           <div class="flex flex-col p-6 h-full">
-               <div class="flex items-start justify-between gap-3 mb-2">
-                   <h3 class="text-2xl font-extrabold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
-                       Camping Options
-                   </h3>
-                   <span
-                       class="inline-flex items-center px-3 py-1 rounded-full text-base font-semibold"
-                       style="background:#31b44b; color:#ffffff;">
-                       CAMPING
-                   </span>
-               </div>
-
-               <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
-                   {{ $campingDescription }}
-               </p>
-
-               <p class="text-xs text-gray-500 mb-4" style="font-family: 'Gotham Book', sans-serif;">
-                   Includes:
-                   <span class="font-semibold text-gray-800">Bell Tent</span>,
-                   <span class="font-semibold text-gray-800">Dome Tent</span>,
-                   <span class="font-semibold text-gray-800">BYOT</span>, and
-                   <span class="font-semibold text-gray-800">Car Camping</span>.
-               </p>
-
-               @if($campingCount > 0)
-                   <p class="font-semibold mb-1" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
-                       Starts at ₱300/night (BYOT/Car Camping)<br>• ₱3,000/night (Bell/Dome Tents)
-                   </p>
-                   <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">
-                       {{ $campingCount }} {{ Str::plural('option', $campingCount) }} available
-                   </p>
-               @else
-                   <p class="text-base text-gray-400 mb-6">No camping options available.</p>
-               @endif
-
-               <button
-                   type="button"
-                   class="select-category-btn mt-auto w-full inline-flex items-center justify-center rounded-full text-lg font-semibold text-white px-6 py-3 transition"
-                   data-category="camping"
-                   data-staycations='@json($campingStaycations)'
-                   @if($campingCount === 0) disabled @endif
-                   style="background-color:#8f5d54; box-shadow:0 10px 20px rgba(143,93,84,0.35);">
-                   Select Camping Options
-               </button>
-           </div>
-       </div>
+                    {{-- Button --}}
+                    <button
+                        type="button"
+                        class="select-category-btn mt-auto w-full inline-flex items-center justify-center rounded-full text-lg font-semibold text-white px-6 py-3 transition"
+                        data-accommodation='@json($accommodation)'
+                        style="background-color:#8f5d54; box-shadow:0 10px 20px rgba(143,93,84,0.35);">
+                        Select Accommodation
+                    </button>
+                </div>
+            </div>
+        @empty
+            <p class="text-gray-500 col-span-full">No accommodations available.</p>
+        @endforelse
 
        {{-- Booking summary card (right) --}}
        <div class="bg-white rounded-xl shadow-md p-6 lg:sticky lg:top-6">
