@@ -221,7 +221,7 @@ $galleryData = [
 @endphp
 
 
-<div class="pt-6 md:pt-12"
+<div class="pt-6 md:px-12 sm:px-12"
      data-root-dir="{{ url('/') }}"
      data-accommodation-data='@json($accommodationData ?? [])'
      data-selected-activities='@json($booking['selected_activities'] ?? [])'>
@@ -279,131 +279,154 @@ $galleryData = [
        </div>
    </div>
 
-   {{-- 3 cards sa isang grid: Glamping, Camping, Booking Summary --}}
-   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-        @forelse($accommodations as $accommodation)
-            <div class="bg-white rounded-2xl shadow-[0_18px_40px_rgba(15,23,42,0.08)] border border-gray-100 overflow-hidden flex flex-col">
-                
-                {{-- Image --}}
-                <img 
-                    src="{{ $accommodation->image_path ?? 'https://via.placeholder.com/400x280?text=No+Image' }}" 
-                    alt="{{ $accommodation->name }}" 
-                    class="w-full object-cover"
-                    style="height: 280px;">
+    <div class="flex flex-col lg:flex-row gap-6 md:gap-8">
 
-                <div class="flex flex-col p-6 h-full">
-                    {{-- Name and Type Badge --}}
-                    <div class="flex items-start justify-between gap-3 mb-2">
-                        <h3 class="text-2xl font-extrabold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">
+        {{-- Left column: Accommodations cards (2x2 grid) --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:flex-1">
+            @forelse($accommodations as $accommodation)
+                <div class="bg-white rounded-2xl shadow-[0_18px_40px_rgba(15,23,42,0.08)] border border-gray-100 overflow-hidden flex flex-col">
+                    
+                    {{-- Image --}}
+                    <img 
+                        src="{{ $accommodation->image_path ?? 'https://via.placeholder.com/400x280?text=No+Image' }}" 
+                        alt="{{ $accommodation->name }}" 
+                        class="w-full object-cover"
+                        style="height: 280px;">
+
+                    <div class="flex flex-col p-6 h-full">
+                        {{-- Name --}}
+                        <h3 class="text-2xl font-extrabold text-gray-900 mb-2" style="font-family: 'Gotham Book', sans-serif;">
                             {{ $accommodation->name }}
                         </h3>
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-base font-semibold bg-gray-200 text-gray-800">
-                            Accommodation
-                        </span>
+
+                        {{-- Description --}}
+                        <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
+                            {{ Str::limit($accommodation->description, 150) ?: '-' }}
+                        </p>
+
+                        {{-- Includes --}}
+                        <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
+                        Includes: Standard and Premium glamping tents (static)
+                        </p>
+
+                        {{-- Activities --}}
+                        @if($accommodation->accommodationVariants->count() > 0)
+                            <div class="flex flex-wrap gap-1 mb-3">
+                                @foreach($accommodation->accommodationVariants as $activity)
+                                    <span class="inline-block bg-gray-200 px-2 py-1 rounded text-xs">{{ $activity->name }}</span>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        {{-- Price --}}
+                        @php
+                            $priceText = $accommodation->accommodationTexts
+                                ->where('title', 'Price')
+                                ->first()
+                                ->content ?? null;
+                        @endphp
+
+                        <p class="font-semibold mb-3" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
+                            {{ $priceText ? $priceText : 'Price not available' }}
+                        </p>
+
+                        {{-- Options --}}
+                        <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
+                        4 options available (static)
+                        </p>
+
+                        {{-- Button --}}
+                        <button
+                            type="button"
+                            class="select-category-btn mt-auto w-full inline-flex items-center justify-center rounded-full text-lg font-semibold text-white px-6 py-3 transition"
+                            data-accommodation='@json($accommodation)'
+                            style="background-color:#8f5d54; box-shadow:0 10px 20px rgba(143,93,84,0.35);">
+                            Select Accommodation
+                        </button>
+                    </div>
+                </div>
+            @empty
+                <p class="text-gray-500 col-span-full">No accommodations available.</p>
+            @endforelse
+        </div>
+
+        {{-- Right column: Booking Summary --}}
+        <div class="lg:w-1/3 bg-white rounded-xl shadow-md p-6 lg:sticky lg:top-6 transition-all duration-300">
+            <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
+
+            @if($datesSelected)
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Check-in:</span>
+                        <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkinDate)->format('M j, Y') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Check-out:</span>
+                        <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkoutDate)->format('M j, Y') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Nights:</span>
+                        <span class="text-sm font-medium">{{ $nights }}</span>
                     </div>
 
-                    {{-- Description --}}
-                    <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
-                        {{ Str::limit($accommodation->description, 150) ?: '-' }}
-                    </p>
+                    <hr class="my-3">
 
-                    {{-- Included activities --}}
-                    @if($accommodation->accommodationVariants->count() > 0)
-                        <div class="flex flex-wrap gap-1 mb-3">
-                            @foreach($accommodation->accommodationVariants as $activity)
-                                <span class="inline-block bg-gray-200 px-2 py-1 rounded text-xs">{{ $activity->name }}</span>
-                            @endforeach
-                        </div>
-                    @endif
+                    {{-- Accommodations --}}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Accommodations:</span>
+                        <span class="text-sm font-medium" id="selected-accommodations-count">0 selected</span>
+                    </div>
 
-                    {{-- Price --}}
-                    <p class="font-semibold mb-3" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
-                        {{ $accommodation->price ? '₱'.number_format($accommodation->price, 2) : 'Price not available' }}
-                    </p>
+                    {{-- Selected accommodations list --}}
+                    <div id="selected-accommodations-summary" class="mt-2 space-y-1 max-h-0 overflow-hidden transition-all duration-300">
+                        <!-- JS will populate -->
+                    </div>
 
-                    {{-- Button --}}
-                    <button
-                        type="button"
-                        class="select-category-btn mt-auto w-full inline-flex items-center justify-center rounded-full text-lg font-semibold text-white px-6 py-3 transition"
-                        data-accommodation='@json($accommodation)'
-                        style="background-color:#8f5d54; box-shadow:0 10px 20px rgba(143,93,84,0.35);">
-                        Select Accommodation
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Total Guests:</span>
+                        <span class="text-sm font-medium" id="total-guests">0</span>
+                    </div>
+
+                    <div class="flex justify-between items-center text-lg font-bold">
+                        <span>Total:</span>
+                        <span id="total-price">₱ 0</span>
+                    </div>
+                </div>
+
+                <div class="mt-6 space-y-3">
+                    <button class="w-full bg-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="proceed-btn" disabled onclick="proceedToActivities(event)">
+                        Proceed to Activities
+                    </button>
+
+                    <button class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="skip-btn" disabled onclick="skipToPayment()">
+                        Skip Activities & Go to Payment
                     </button>
                 </div>
-            </div>
-        @empty
-            <p class="text-gray-500 col-span-full">No accommodations available.</p>
-        @endforelse
 
-       {{-- Booking summary card (right) --}}
-       <div class="bg-white rounded-xl shadow-md p-6 lg:sticky lg:top-6">
-           <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="text-center">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">Secure Booking</h4>
+                        <div class="flex justify-center items-center space-x-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-lock text-green-600 mr-2"></i>
+                                <span class="text-xs text-gray-600">SSL Secured</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
+                                <span class="text-xs text-gray-600">Data Protected</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Your information is safe with us</p>
+                    </div>
+                </div>
+            @else
+                <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
+            @endif
+        </div>
 
-           @if($datesSelected)
-               <div class="space-y-3">
-                   <div class="flex justify-between items-center">
-                       <span class="text-sm text-gray-600">Check-in:</span>
-                       <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkinDate)->format('M j, Y') }}</span>
-                   </div>
-                   <div class="flex justify-between items-center">
-                       <span class="text-sm text-gray-600">Check-out:</span>
-                       <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkoutDate)->format('M j, Y') }}</span>
-                   </div>
-                   <div class="flex justify-between items-center">
-                       <span class="text-sm text-gray-600">Nights:</span>
-                       <span class="text-sm font-medium">{{ $nights }}</span>
-                   </div>
-                   <hr class="my-3">
-                   <div class="flex justify-between items-center">
-                       <span class="text-sm text-gray-600">Accommodations:</span>
-                       <span class="text-sm font-medium" id="selected-accommodations-count">0 selected</span>
-                   </div>
-                   <div id="selected-accommodations-summary" class="mt-2 space-y-1">
-                       <!-- JS will populate -->
-                   </div>
-                   <div class="flex justify-between items-center">
-                       <span class="text-sm text-gray-600">Total Guests:</span>
-                       <span class="text-sm font-medium" id="total-guests">0</span>
-                   </div>
+    </div>
 
 
-                   <div class="flex justify-between items-center text-lg font-bold">
-                       <span>Total:</span>
-                       <span id="total-price">₱ 0</span>
-                   </div>
-               </div>
-
-               <div class="mt-6 space-y-3">
-                   <button class="w-full bg-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="proceed-btn" disabled onclick="proceedToActivities(event)">
-                       Proceed to Activities
-                   </button>
-
-                   <button class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="skip-btn" disabled onclick="skipToPayment()">
-                       Skip Activities & Go to Payment
-                   </button>
-               </div>
-
-               <div class="mt-6 pt-6 border-t border-gray-200">
-                   <div class="text-center">
-                       <h4 class="text-sm font-semibold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">Secure Booking</h4>
-                       <div class="flex justify-center items-center space-x-4">
-                           <div class="flex items-center">
-                               <i class="fas fa-lock text-green-600 mr-2"></i>
-                               <span class="text-xs text-gray-600">SSL Secured</span>
-                           </div>
-                           <div class="flex items-center">
-                               <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
-                               <span class="text-xs text-gray-600">Data Protected</span>
-                           </div>
-                       </div>
-                       <p class="text-xs text-gray-500 mt-2">Your information is safe with us</p>
-                   </div>
-               </div>
-           @else
-               <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
-           @endif
-       </div>
-   </div>
 
    {{-- Selected accommodations (cards under the 3 main cards) --}}
    <div class="mt-6 mb-8 w-full">
@@ -707,6 +730,20 @@ $galleryData = [
 // Global dates from Blade
 const CHECKIN = '{{ $checkinDate }}';
 const CHECKOUT = '{{ $checkoutDate }}';
+
+
+function matchBookingHeight() {
+    const left = document.querySelector('.accommodations-grid'); // left column
+    const right = document.querySelector('.booking-summary'); // right column
+    if (left && right) {
+        right.style.height = `${left.offsetHeight}px`;
+    }
+}
+
+// run on page load and resize
+window.addEventListener('load', matchBookingHeight);
+window.addEventListener('resize', matchBookingHeight);
+
 
 // Single source of truth for all pricing
 function computeStaycationTotals(staycation, options = {}) {
