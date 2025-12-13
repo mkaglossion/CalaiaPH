@@ -637,11 +637,12 @@ class BookingController extends Controller
             session()->forget('booking');
         }
 
-        // Handle POST request to set dates and accommodations
+        // Handle POST request
         if ($request->isMethod('post')) {
             $request->validate(ValidationService::staycationPostRules());
 
             $booking = session('booking', []);
+
             if ($request->has('check_in') && $request->has('check_out')) {
                 $booking['checkin'] = $request->check_in;
                 $booking['checkout'] = $request->check_out;
@@ -653,7 +654,9 @@ class BookingController extends Controller
 
             if ($request->has('accommodations')) {
                 $booking['accommodations'] = $request->input('accommodations', []);
-                $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [2]));
+                $booking['completed_steps'] = array_unique(
+                    array_merge($booking['completed_steps'] ?? [], [2])
+                );
                 $booking['current_step'] = 2;
             }
 
@@ -663,13 +666,27 @@ class BookingController extends Controller
                 return redirect()->route('booking.staycationPayment');
             } elseif ($request->input('proceed_to_activities')) {
                 return redirect()->route('booking.staycationActivities');
-            } else {
-                return redirect()->route('booking.staycation');
             }
+
+            return redirect()->route('booking.staycation');
         }
 
-        // Fetch accommodations from DB with texts
-        $accommodations = StaycationAccommodation::with('accommodationTexts')->get();
+        /**
+         * 🔥 IMPORTANT PART
+         * Eager-load variants so the modal can be DB-driven
+         */
+        // $accommodations = StaycationAccommodation::with([
+        //     'accommodationTexts', // texts for the accommodation itself
+        //     'variants.texts',     // texts for the variants (via staycation)
+        // ])->get();
+
+        $accommodations = StaycationAccommodation::with([
+            'accommodationTexts',
+            'accommodationVariants', // first load variants
+            'accommodationVariants.staycation', // load their staycation
+            'accommodationVariants.staycation.texts', // load texts for the staycation
+            'accommodationVariants.staycation.swiperImages', // load images
+        ])->get();
 
         $booking = session('booking', []);
         $checkinDate = $booking['checkin'] ?? null;
@@ -678,17 +695,22 @@ class BookingController extends Controller
         $availability = [];
         if ($checkinDate && $checkoutDate) {
             $staycationIds = $accommodations->pluck('id')->toArray();
-            $availability = $this->checkAvailabilityInternal($checkinDate, $checkoutDate, $staycationIds);
+            $availability = $this->checkAvailabilityInternal(
+                $checkinDate,
+                $checkoutDate,
+                $staycationIds
+            );
         }
 
         // Pre-select accommodation if package is provided
         if ($request->has('package')) {
             $packageName = urldecode($request->get('package'));
-            $selectedStaycation = $accommodations->firstWhere('name', $packageName);
-            if ($selectedStaycation) {
+            $selectedAccommodation = $accommodations->firstWhere('name', $packageName);
+
+            if ($selectedAccommodation) {
                 $booking['accommodations'][0] = [
-                    'staycation' => $selectedStaycation,
-                    'guests' => $selectedStaycation->adults ?? 2, // fallback
+                    'staycation' => $selectedAccommodation,
+                    'guests' => $selectedAccommodation->adults ?? 2,
                 ];
                 session(['booking' => $booking]);
             }
@@ -696,6 +718,7 @@ class BookingController extends Controller
 
         return view('booking.staycation', compact('accommodations', 'availability'));
     }
+
 
     private function checkAvailabilityInternal($checkin, $checkout, $staycationIds)
     {

@@ -12,8 +12,9 @@ class StaycationAccommodationController extends Controller
 {
     public function index()
     {
-        $accommodations = StaycationAccommodation::with('accommodationVariants')->get();
-        return view('admin.accommodation', compact('accommodations'));
+        $accommodations = StaycationAccommodation::with('variants')->get(); // use variants
+        $staycations = Staycation::all();
+        return view('admin.accommodation', compact('accommodations', 'staycations'));
     }
 
     public function store(Request $request)
@@ -52,12 +53,14 @@ class StaycationAccommodationController extends Controller
         ]);
 
         // Sync related staycations
-        $accommodation->accommodationVariants()->sync($request->staycation_ids ?? []);
+        // $accommodation->accommodationVariants()->sync($request->staycation_ids ?? []);
+        $accommodation->variants()->sync($request->staycation_ids ?? []);
+        
 
         return $request->wantsJson() || $request->ajax()
             ? response()->json([
                 'message' => 'Accommodation created!',
-                'accommodation' => $accommodation->load('accommodationVariants'),
+                'accommodation' => $accommodation->load('variants'),
             ])
             : back()->with('success', 'Accommodation created successfully!');
     }
@@ -97,14 +100,17 @@ class StaycationAccommodationController extends Controller
         ]);
 
         // Sync related staycations
-        $staycationAccommodation->accommodationVariants()->sync($request->staycation_ids ?? []);
+        // $staycationAccommodation->accommodationVariants()->sync($request->staycation_ids ?? []);
+        $staycationAccommodation->variants()->sync($request->staycation_ids ?? []);
+
 
         return $request->wantsJson() || $request->ajax()
             ? response()->json([
                 'message' => 'Accommodation updated successfully!',
-                'accommodation' => $staycationAccommodation->load('accommodationVariants'),
+                'accommodation' => $staycationAccommodation->load('variants'),
             ])
             : back()->with('success', 'Day accommodation updated!');
+
     }
 
     public function destroy(StaycationAccommodation $staycationAccommodation)

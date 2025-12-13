@@ -8,19 +8,25 @@ class Staycation extends Model
 {
     protected $fillable = ['name'];
 
-    public function swiperImages()
-    {
-        return $this->hasMany(StaycationSwiperImage::class);
-    }
-
     public function texts()
     {
         return $this->hasMany(StaycationText::class);
     }
 
-    // 🔥 Reverse relation for Day Tour Packages
+    public function swiperImages()
+    {
+        return $this->hasMany(StaycationSwiperImage::class);
+    }
+
+    // Accommodations via variants
     public function staycationAccommodations()
     {
-        return $this->belongsToMany(StaycationAccommodation::class, 'accommodation_variants');
+        return $this->belongsToMany(
+            StaycationAccommodation::class,
+            'accommodation_variants',
+            'staycation_id',
+            'staycation_accommodation_id'
+        );
     }
 }
+

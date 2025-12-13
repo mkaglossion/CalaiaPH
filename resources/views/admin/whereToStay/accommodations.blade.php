@@ -52,9 +52,13 @@
                 <!-- <p class="text-gray-600 mt-2 font-medium">{{ $accommodation->price ? '₱'.number_format($accommodation->price, 2) : '-' }}</p> -->
 
                 <div class="mt-3 flex flex-wrap gap-1">
-                    @foreach($accommodation->accommodationVariants as $activity)
-                        <span class="inline-block bg-gray-200 px-2 py-1 rounded text-xs">{{ $activity->name }}</span>
-                    @endforeach
+                    @forelse($accommodation->variants as $activity)
+                        <span class="inline-block bg-gray-200 px-2 py-1 rounded text-xs">
+                            {{ $activity->name }}
+                        </span>
+                    @empty
+                        <span class="text-xs text-gray-400">No activities</span>
+                    @endforelse
                 </div>
 
                 <p class="text-gray-400 text-xs mt-2">Created: {{ $accommodation->created_at->format('Y-m-d') }}</p>
@@ -349,6 +353,8 @@ function dayTourManager() {
             this.editMode = false;
         },
 
+
+
         // Edit Day Tour Package
 
         editAccommodation(id) {
@@ -358,14 +364,14 @@ function dayTourManager() {
                 this.form.name = accommodation.name;
                 this.form.description = accommodation.description;
                 this.form.price = accommodation.price;
-                this.form.staycation_ids = (accommodation.accommodation_variants || []).map(a => a.id);
-                this.form.current_image = accommodation.image_path; 
+                // Use the variants relation instead of accommodation_variants
+                this.form.staycation_ids = (accommodation.variants || []).map(a => a.id);
+                this.form.current_image = accommodation.image_path;
                 this.form.image = null;
                 this.editMode = true;
                 this.showAccommodationModal = true;
             }
         },
-
 
         // Edit Text Content
         editText(id) {
@@ -390,7 +396,7 @@ function dayTourManager() {
                 const formData = new FormData();
                 formData.append('name', this.form.name);
                 formData.append('description', this.form.description);
-                formData.append('price', this.form.price);
+                formData.append('price', 0);
                 this.form.staycation_ids.forEach(id => formData.append('staycation_ids[]', id));
 
                 // Only append image if user selected a new file
@@ -565,6 +571,9 @@ function dayTourManager() {
             });
         }
     };
+
+    console.log(this.accommodations);
+
 }
 </script>
 

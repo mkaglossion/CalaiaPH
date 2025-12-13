@@ -10,6 +10,14 @@
     <meta name="author" content="CalaiaPH">
     @vite(['resources/css/app.css'])
     <title>Booking Staycation - Calaia Farm</title>
+
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   </head>
@@ -309,14 +317,21 @@ $galleryData = [
                         Includes: Standard and Premium glamping tents (static)
                         </p>
 
-                        {{-- Activities --}}
-                        @if($accommodation->accommodationVariants->count() > 0)
+                        {{-- Variants --}}
+                        @if($accommodation->accommodationVariants?->count())
                             <div class="flex flex-wrap gap-1 mb-3">
-                                @foreach($accommodation->accommodationVariants as $activity)
-                                    <span class="inline-block bg-gray-200 px-2 py-1 rounded text-xs">{{ $activity->name }}</span>
+                                @foreach($accommodation->accommodationVariants as $variant)
+                                    @php
+                                        $variantName = $variant->text('Name') ?? $variant->staycation->name;
+                                    @endphp
+                                    <span class="inline-block bg-gray-200 px-2 py-1 rounded text-xs">
+                                        {{ $variantName }}
+                                    </span>
                                 @endforeach
                             </div>
                         @endif
+
+
 
                         {{-- Price --}}
                         @php
@@ -332,23 +347,88 @@ $galleryData = [
 
                         {{-- Options --}}
                         <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
-                        4 options available (static)
+                            {{ $accommodation->accommodationVariants->count() }} option{{ $accommodation->accommodationVariants->count() !== 1 ? 's' : '' }} available
                         </p>
 
+
                         {{-- Button --}}
+                        @php
+                        $variantsJson = $accommodation->accommodationVariants->map(fn($v) => $v->load('staycation.texts','staycation.swiperImages'));
+                        @endphp
+
                         <button
                             type="button"
-                            class="select-category-btn mt-auto w-full inline-flex items-center justify-center rounded-full text-lg font-semibold text-white px-6 py-3 transition"
-                            data-accommodation='@json($accommodation)'
-                            style="background-color:#8f5d54; box-shadow:0 10px 20px rgba(143,93,84,0.35);">
+                            class="select-category-btn mt-auto w-full rounded-full text-lg font-semibold text-white px-6 py-3"
+                            data-name="{{ $accommodation->name }}"
+                            data-variants='@json($variantsJson)'
+                            onclick="openVariantsModal(this)"
+                            style="background-color:#8f5d54;">
                             Select Accommodation
                         </button>
+
+
+
+
+
                     </div>
                 </div>
             @empty
                 <p class="text-gray-500 col-span-full">No accommodations available.</p>
             @endforelse
         </div>
+
+        {{-- Dynamic Variants Modal --}}
+        <div id="variants-modal" class="fixed inset-0 z-[9999] hidden">
+            <!-- Backdrop -->
+            <div
+                class="absolute inset-0 bg-black/40"
+                onclick="closeModal('variants-modal')">
+            </div>
+
+            <!-- Modal content -->
+            <div class="relative flex items-center justify-center min-h-screen px-4">
+                <div
+                    class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden z-10"
+                    onclick="event.stopPropagation()">
+
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 id="variants-modal-title"
+                                class="font-bold text-gray-900 text-2xl"
+                                style="font-family: 'Gotham Book', sans-serif;">
+                                Select Options
+                            </h2>
+
+                            <!-- ❌ CLOSE BUTTON -->
+                            <button
+                                type="button"
+                                onclick="closeModal('variants-modal')"
+                                class="text-3xl leading-none text-gray-500 hover:text-gray-800">
+                                ×
+                            </button>
+                        </div>
+
+                        <div
+                            class="grid grid-cols-1 md:grid-cols-2 gap-6"
+                            id="variants-container">
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t flex justify-end">
+                            <button
+                                type="button"
+                                onclick="closeModal('variants-modal')"
+                                class="px-6 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+
 
         {{-- Right column: Booking Summary --}}
         <div class="lg:w-1/3 bg-white rounded-xl shadow-md p-6 lg:sticky lg:top-6 transition-all duration-300">
@@ -442,136 +522,8 @@ $galleryData = [
 </div>
 </div>
 
-{{-- Modals --}}
-{{-- Glamping Modal --}}
-<div id="glamping-modal" class="fixed inset-0 hidden z-50" role="dialog" aria-modal="true" aria-labelledby="glamping-modal-title">
-    <div class="flex items-center justify-center min-h-screen px-4">
-        <!-- Backdrop -->
-        <div class="absolute inset-0 transition-opacity duration-300" id="glamping-modal-backdrop" onclick="if (!event.target.closest('#glamping-modal-content')) closeModal('glamping-modal')"></div>
-
-        <!-- Modal content -->
-        <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden border border-gray-200 relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="glamping-modal-content">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 id="glamping-modal-title" class="font-bold text-gray-900" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Select Glamping Options</h2>
-                    <button type="button" class="close-modal text-gray-400 hover:text-gray-600 text-3xl font-light leading-none focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" data-modal="glamping-modal" aria-label="Close modal" style="line-height: 1;">
-                        ×
-                    </button>
-                </div>
-
-                <div class="max-h-[70vh] overflow-y-auto">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="glamping-options">
-                        @foreach($glampingStaycations as $staycation)
-                            <div class="staycation-card bg-white border-2 border-gray-200 rounded-xl p-4 flex items-center gap-4 hover:border-[#8f5d54] hover:shadow-md transition-all duration-200 cursor-pointer" data-staycation-id="{{ $staycation['id'] }}">
-                                <input type="checkbox"
-                                       class="staycation-checkbox hidden"
-                                       data-category="glamping"
-                                       data-staycation='@json($staycation)'
-                                       id="glamping-{{ $staycation['id'] }}">
-                                <label for="glamping-{{ $staycation['id'] }}" class="flex-1 cursor-pointer flex items-center gap-3">
-                                    <div class="selection-indicator w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
-                                        <div class="w-3 h-3 bg-[#8f5d54] rounded-full opacity-0 transition-opacity"></div>
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="font-semibold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">{{ $staycation['name'] }}</div>
-                                        <div class="text-gray-600 text-sm" style="font-family: 'Gotham Book', sans-serif;">₱{{ number_format($staycation['price']) }}/night</div>
-                                    </div>
-                                </label>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="mt-6 pt-4 border-t border-gray-200">
-                    <div class="flex justify-end">
-                        <button type="button" class="close-modal px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition focus:outline-none focus:ring-2 focus:ring-gray-400" data-modal="glamping-modal">
-                            Close
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 
-{{-- Camping Modal --}}
-<div id="camping-modal" class="fixed inset-0 hidden z-50" role="dialog" aria-modal="true" aria-labelledby="camping-modal-title">
-    <div class="flex items-center justify-center min-h-screen px-4">
-        <!-- Backdrop -->
-        <div class="absolute inset-0 transition-opacity duration-300" id="camping-modal-backdrop" onclick="if (!event.target.closest('#camping-modal-content')) closeModal('camping-modal')"></div>
-
-        <!-- Modal content -->
-        <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden border border-gray-200 relative z-10 transform transition-all duration-300 scale-95 opacity-0" id="camping-modal-content">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 id="camping-modal-title" class="font-bold text-gray-900" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Select Camping Options</h2>
-                    <button type="button" class="close-modal text-gray-400 hover:text-gray-600 text-3xl font-light leading-none focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" data-modal="camping-modal" aria-label="Close modal" style="line-height: 1;">
-                        ×
-                    </button>
-                </div>
-
-                <div class="max-h-[70vh] overflow-y-auto">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="camping-options">
-                        @foreach($campingStaycations as $staycation)
-                            <div class="staycation-card bg-white border-2 border-gray-200 rounded-xl p-4 flex items-center gap-4 hover:border-[#8f5d54] hover:shadow-md transition-all duration-200 cursor-pointer" data-staycation-id="{{ $staycation['id'] }}">
-                                <input type="checkbox"
-                                       class="staycation-checkbox hidden"
-                                       data-category="camping"
-                                       data-staycation='@json($staycation)'
-                                       id="camping-{{ $staycation['id'] }}">
-                                <label for="camping-{{ $staycation['id'] }}" class="flex-1 cursor-pointer flex items-center gap-3">
-                                    <div class="selection-indicator w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
-                                        <div class="w-3 h-3 bg-[#8f5d54] rounded-full opacity-0 transition-opacity"></div>
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="flex items-center gap-2">
-                                            <div class="font-semibold text-gray-900" style="font-family: 'Gotham Book', sans-serif;">{{ $staycation['name'] }}</div>
-                                            @if(str_contains(strtolower($staycation['name']), 'byot'))
-                                                <div class="relative group">
-                                                    <i class="fas fa-info-circle text-gray-400 text-xs cursor-help"></i>
-                                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                                                        Bring Your Own Tent
-                                                    </div>
-                                                </div>
-                                            @elseif(str_contains(strtolower($staycation['name']), 'dome'))
-                                                <div class="relative group">
-                                                    <i class="fas fa-info-circle text-gray-400 text-xs cursor-help"></i>
-                                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                                                        Spacious tent for groups
-                                                    </div>
-                                                </div>
-                                            @elseif(str_contains(strtolower($staycation['name']), 'bell'))
-                                                <div class="relative group">
-                                                    <i class="fas fa-info-circle text-gray-400 text-xs cursor-help"></i>
-                                                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                                                        Traditional bell-shaped tent
-                                                    </div>
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <div class="text-gray-600 text-sm" style="font-family: 'Gotham Book', sans-serif;">₱{{ number_format($staycation['price']) }}/night</div>
-                                        <div class="text-xs text-green-600 mt-1" style="font-family: 'Gotham Book', sans-serif;">
-                                            <i class="fas fa-check-circle mr-1"></i>Available ({{ $staycation['capacity'] ?? 6 }} guests max)
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="mt-6 pt-4 border-t border-gray-200">
-                    <div class="flex justify-end">
-                        <button type="button" class="close-modal px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition focus:outline-none focus:ring-2 focus:ring-gray-400" data-modal="camping-modal">
-                            Close
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 {{-- Pet Policy Modal --}}
 <div id="pet-policy-modal" class="fixed inset-0 hidden z-50" role="dialog" aria-modal="true" aria-labelledby="pet-policy-modal-title">
@@ -718,6 +670,188 @@ $galleryData = [
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   </body>
   <script>
+
+
+// Open and close modal helpers
+// Open and close modal helpers
+window.openModal = function (id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+};
+
+window.closeModal = function (id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+
+    modal.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+
+    console.log('Closing modal:', id);
+    document.getElementById(id)?.classList.add('hidden');
+};
+
+
+// Global functions
+function incrementGuest(id) {
+    const input = document.getElementById(id);
+    let val = parseInt(input.value) || 1;
+    if (val < 10) input.value = val + 1;
+}
+
+function decrementGuest(id) {
+    const input = document.getElementById(id);
+    let val = parseInt(input.value) || 1;
+    if (val > 1) input.value = val - 1;
+}
+
+// Open variants modal with dynamic content
+// Open variants modal with dynamic content
+window.openVariantsModal = function(button) {
+    const variants = JSON.parse(button.dataset.variants || '[]');
+    const title = button.dataset.name || 'Accommodation';
+
+    // Set modal title
+    document.getElementById('variants-modal-title').innerText = `Select ${title} Options`;
+
+    // Clear previous variants
+    const container = document.getElementById('variants-container');
+    container.innerHTML = '';
+
+    // Increment/Decrement guest functions
+    window.incrementGuest = function(id) {
+        const input = document.getElementById(id);
+        let val = parseInt(input.value) || 1;
+        if (val < 10) input.value = val + 1;
+    }
+
+    window.decrementGuest = function(id) {
+        const input = document.getElementById(id);
+        let val = parseInt(input.value) || 1;
+        if (val > 1) input.value = val - 1;
+    }
+
+    // Select Staycation globally
+    window.selectStaycation = function(index) {
+        const guests = document.getElementById(`guests-${index}`).value;
+        const pets = document.querySelector(`input[name="pets-${index}"]:checked`).value;
+        const variantName = variants[index].staycation?.name || variants[index].name;
+
+        console.log(`Selected variant ${index}: Guests=${guests}, Pets=${pets}`);
+        alert(`You selected "${variantName}" with ${guests} guests, Pets: ${pets}`);
+
+        closeModal('variants-modal');
+    }
+
+    // Render each variant
+    window.openVariantsModal = function (button) {
+        const variants = JSON.parse(button.dataset.variants || '[]');
+        const title = button.dataset.name;
+
+        document.getElementById('variants-modal-title').innerText =
+            `Select ${title} Options`;
+
+        const container = document.getElementById('variants-container');
+        container.innerHTML = '';
+
+        const swiperIds = [];
+
+        variants.forEach((variant, index) => {
+            const staycation = variant.staycation || {};
+            const texts = staycation.texts || [];
+            const images = staycation.swiper_images || [];
+            const name = staycation.name || variant.name || 'No Name';
+
+            const featureTexts = texts
+                .filter(t => t.title === 'Features')
+                .map(t => t.content);
+
+            const priceText =
+                texts.find(t => t.title === 'Price')?.content ||
+                `₱${variant.price || 0}/night`;
+
+            const swiperId = `swiper-${index}`;
+            swiperIds.push({ id: swiperId, images });
+
+            const slidesHtml = images.length
+                ? images.map(img => `
+                    <div class="swiper-slide">
+                        <img src="${img.image_path}"
+                            class="w-full h-full object-cover rounded-t-xl">
+                    </div>
+                `).join('')
+                : `
+                    <div class="swiper-slide flex items-center justify-center bg-gray-200">
+                        <span class="text-gray-600">No Image Available</span>
+                    </div>
+                `;
+
+            container.insertAdjacentHTML('beforeend', `
+                <div class="border-2 rounded-xl overflow-hidden hover:border-[#8f5d54] transition">
+
+                    <div class="swiper ${swiperId} h-48 md:h-64">
+                        <div class="swiper-wrapper">
+                            ${slidesHtml}
+                        </div>
+
+                        <div class="swiper-pagination" style="--swiper-pagination-color: white;"></div> 
+                        <div class="swiper-button-prev !text-white !w-5 !h-5"></div> 
+                        <div class="swiper-button-next !text-white !w-5 !h-5"></div>
+                    </div>
+
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg">${name}</h3>
+                        <ul class="text-sm text-gray-600 list-disc pl-5">
+                            ${featureTexts.map(f => `<li>${f}</li>`).join('')}
+                        </ul>
+                        <div class="mt-2 font-semibold text-[#7a7d52]">${priceText}</div>
+                    </div>
+                </div>
+            `);
+        });
+
+        openModal('variants-modal');
+
+        /** 🔥 CRITICAL: Init Swipers AFTER modal is visible */
+        setTimeout(() => {
+            swiperIds.forEach(swiper => {
+                if (swiper.images.length <= 1) return;
+
+                new Swiper(`.${swiper.id}`, {
+                    slidesPerView: 1,
+                    loop: true,
+                    autoplay: {
+                        delay: 3000,
+                        disableOnInteraction: false,
+                    },
+                    pagination: {
+                        el: `.${swiper.id} .swiper-pagination`,
+                        clickable: true,
+                    },
+                    navigation: {
+                        nextEl: `.${swiper.id} .swiper-button-next`,
+                        prevEl: `.${swiper.id} .swiper-button-prev`,
+                    },
+                    observer: true,
+                    observeParents: true,
+                });
+            });
+        }, 150);
+    };
+
+
+    // Show modal
+    openModal('variants-modal');
+};
+
+
+
+
+
+
+
     const el = document.querySelector('.pt-6.md\\:pt-12');
     window.ROOT_DIR = el.dataset.rootDir;
     window.accommodationData = JSON.parse(el.dataset.accommodationData || '[]');
