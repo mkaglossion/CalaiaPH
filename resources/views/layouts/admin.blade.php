@@ -43,11 +43,16 @@
             ]],
             ['title'=>'Where to Stay','icon'=>'building','route'=>'admin.stay.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.stay.wheretostay'],
-              ['label'=>'Items','route'=>'admin.stay.staycations'],
+              ['label'=>'Variants','route'=>'admin.stay.staycations'],
               ['label'=>'Accommodations','route'=>'admin.stay.accommodations']
             ]],
             ['title'=>'What to Do','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.do.activities'],
+              ['label'=>'Items','route'=>'admin.do.activities']
+            ]],
+            ['title'=>'Food & Beverage','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
+              ['label'=>'Pages Information','route'=>'admin.food.foodandbeverage'],
+              ['label'=>'Items','route'=>'admin.food.menus'],
               ['label'=>'Items','route'=>'admin.do.activities']
             ]],
             ['title'=>'Special Events','icon'=>'calendar','route'=>'admin.specialEvents.*','sub'=>[

@@ -11,6 +11,11 @@
     @vite(['resources/css/app.css'])
     <title>Booking Staycation - Calaia Farm</title>
 
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Swiper CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
@@ -353,7 +358,10 @@ $galleryData = [
 
                         {{-- Button --}}
                         @php
-                        $variantsJson = $accommodation->accommodationVariants->map(fn($v) => $v->load('staycation.texts','staycation.swiperImages'));
+                        $variantsJson = $accommodation->accommodationVariants->map(function($v) use ($accommodation) {
+                            $v->accommodation_id = $accommodation->id; // Add accommodation ID
+                            return $v->load('staycation.texts','staycation.swiperImages');
+                        });
                         @endphp
 
                         <button
@@ -365,6 +373,7 @@ $galleryData = [
                             style="background-color:#8f5d54;">
                             Select Accommodation
                         </button>
+
 
 
 
@@ -391,7 +400,7 @@ $galleryData = [
                     class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden z-10"
                     onclick="event.stopPropagation()">
 
-                    <div class="p-6">
+                    <div class="p-6 flex flex-col h-full">
                         <div class="flex justify-between items-center mb-6">
                             <h2 id="variants-modal-title"
                                 class="font-bold text-gray-900 text-2xl"
@@ -408,9 +417,11 @@ $galleryData = [
                             </button>
                         </div>
 
+                        <!-- Variants container scrollable -->
                         <div
-                            class="grid grid-cols-1 md:grid-cols-2 gap-6"
-                            id="variants-container">
+                            class="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto flex-1"
+                            id="variants-container"
+                            style="max-height: calc(95vh - 160px);">
                         </div>
 
                         <div class="mt-6 pt-4 border-t flex justify-end">
@@ -426,6 +437,7 @@ $galleryData = [
                 </div>
             </div>
         </div>
+
 
 
 
@@ -475,12 +487,12 @@ $galleryData = [
 
                 <div class="mt-6 space-y-3">
                     <button class="w-full bg-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="proceed-btn" disabled onclick="proceedToActivities(event)">
-                        Proceed to Activities
+                        Proceed to Food & Beverages
                     </button>
 
-                    <button class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="skip-btn" disabled onclick="skipToPayment()">
+                    <!-- <button class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="skip-btn" disabled onclick="skipToPayment()">
                         Skip Activities & Go to Payment
-                    </button>
+                    </button> -->
                 </div>
 
                 <div class="mt-6 pt-6 border-t border-gray-200">
@@ -709,145 +721,305 @@ function decrementGuest(id) {
 
 // Open variants modal with dynamic content
 // Open variants modal with dynamic content
-window.openVariantsModal = function(button) {
+// Global helpers
+window.incrementGuest = function (id) {
+    const input = document.getElementById(id);
+    let val = parseInt(input.value) || 1;
+    if (val < 10) input.value = val + 1;
+};
+
+window.decrementGuest = function (id) {
+    const input = document.getElementById(id);
+    let val = parseInt(input.value) || 1;
+    if (val > 1) input.value = val - 1;
+};
+
+window.selectStaycation = function (index) {
+    const guests = document.getElementById(`guests-${index}`)?.value || 1;
+    const pets = document.querySelector(
+        `input[name="pets-${index}"]:checked`
+    )?.value || 'no';
+
+    console.log({
+        variantIndex: index,
+        guests,
+        pets,
+    });
+
+    alert(`Staycation selected!
+Guests: ${guests}
+Pets: ${pets}`);
+
+    closeModal('variants-modal');
+};
+
+// Open variants modal
+window.openVariantsModal = function (button) {
     const variants = JSON.parse(button.dataset.variants || '[]');
     const title = button.dataset.name || 'Accommodation';
 
-    // Set modal title
-    document.getElementById('variants-modal-title').innerText = `Select ${title} Options`;
+    document.getElementById('variants-modal-title').innerText =
+        `Select ${title} Options`;
 
-    // Clear previous variants
     const container = document.getElementById('variants-container');
     container.innerHTML = '';
 
+    const swiperIds = [];
+
     // Increment/Decrement guest functions
-    window.incrementGuest = function(id) {
+    window.incrementGuest = function (id) {
         const input = document.getElementById(id);
         let val = parseInt(input.value) || 1;
         if (val < 10) input.value = val + 1;
     }
 
-    window.decrementGuest = function(id) {
+    window.decrementGuest = function (id) {
         const input = document.getElementById(id);
         let val = parseInt(input.value) || 1;
         if (val > 1) input.value = val - 1;
     }
 
     // Select Staycation globally
-    window.selectStaycation = function(index) {
+    window.selectStaycation = function (index) {
         const guests = document.getElementById(`guests-${index}`).value;
         const pets = document.querySelector(`input[name="pets-${index}"]:checked`).value;
-        const variantName = variants[index].staycation?.name || variants[index].name;
 
-        console.log(`Selected variant ${index}: Guests=${guests}, Pets=${pets}`);
-        alert(`You selected "${variantName}" with ${guests} guests, Pets: ${pets}`);
+        // Get the selected variant
+        const selectedVariant = variants[index];
+        const variantName = selectedVariant.staycation?.name || selectedVariant.name;
+        
+        // Save the IDs
+        const accommodationId = selectedVariant.accommodation_id || null;
+        const variantId = selectedVariant.id || null;
 
-        closeModal('variants-modal');
-    }
+        // Log everything to the console
+        console.log('--- Staycation Selected ---');
+        console.log('Accommodation ID:', accommodationId);
+        console.log('Variant ID:', variantId);
+        console.log('Variant Name:', variantName);
+        console.log('Guests:', guests);
+        console.log('Pets:', pets);
+        console.log('---------------------------');
 
-    // Render each variant
-    window.openVariantsModal = function (button) {
-        const variants = JSON.parse(button.dataset.variants || '[]');
-        const title = button.dataset.name;
+        // Optional: Save globally for later use
+        window.selectedStaycation = {
+            accommodationId,
+            variantId,
+            guests,
+            pets,
+            name: variantName
+        };
 
-        document.getElementById('variants-modal-title').innerText =
-            `Select ${title} Options`;
-
-        const container = document.getElementById('variants-container');
-        container.innerHTML = '';
-
-        const swiperIds = [];
-
-        variants.forEach((variant, index) => {
-            const staycation = variant.staycation || {};
-            const texts = staycation.texts || [];
-            const images = staycation.swiper_images || [];
-            const name = staycation.name || variant.name || 'No Name';
-
-            const featureTexts = texts
-                .filter(t => t.title === 'Features')
-                .map(t => t.content);
-
-            const priceText =
-                texts.find(t => t.title === 'Price')?.content ||
-                `₱${variant.price || 0}/night`;
-
-            const swiperId = `swiper-${index}`;
-            swiperIds.push({ id: swiperId, images });
-
-            const slidesHtml = images.length
-                ? images.map(img => `
-                    <div class="swiper-slide">
-                        <img src="${img.image_path}"
-                            class="w-full h-full object-cover rounded-t-xl">
-                    </div>
-                `).join('')
-                : `
-                    <div class="swiper-slide flex items-center justify-center bg-gray-200">
-                        <span class="text-gray-600">No Image Available</span>
-                    </div>
-                `;
-
-            container.insertAdjacentHTML('beforeend', `
-                <div class="border-2 rounded-xl overflow-hidden hover:border-[#8f5d54] transition">
-
-                    <div class="swiper ${swiperId} h-48 md:h-64">
-                        <div class="swiper-wrapper">
-                            ${slidesHtml}
-                        </div>
-
-                        <div class="swiper-pagination" style="--swiper-pagination-color: white;"></div> 
-                        <div class="swiper-button-prev !text-white !w-5 !h-5"></div> 
-                        <div class="swiper-button-next !text-white !w-5 !h-5"></div>
-                    </div>
-
-                    <div class="p-4">
-                        <h3 class="font-semibold text-lg">${name}</h3>
-                        <ul class="text-sm text-gray-600 list-disc pl-5">
-                            ${featureTexts.map(f => `<li>${f}</li>`).join('')}
-                        </ul>
-                        <div class="mt-2 font-semibold text-[#7a7d52]">${priceText}</div>
-                    </div>
-                </div>
-            `);
+        // Notify the user
+        Swal.fire({
+            icon: 'success',
+            title: 'Staycation Selected',
+            text: `You selected "${variantName}" with ${guests} guest(s), Pets: ${pets}`,
         });
 
-        openModal('variants-modal');
-
-        /** 🔥 CRITICAL: Init Swipers AFTER modal is visible */
-        setTimeout(() => {
-            swiperIds.forEach(swiper => {
-                if (swiper.images.length <= 1) return;
-
-                new Swiper(`.${swiper.id}`, {
-                    slidesPerView: 1,
-                    loop: true,
-                    autoplay: {
-                        delay: 3000,
-                        disableOnInteraction: false,
-                    },
-                    pagination: {
-                        el: `.${swiper.id} .swiper-pagination`,
-                        clickable: true,
-                    },
-                    navigation: {
-                        nextEl: `.${swiper.id} .swiper-button-next`,
-                        prevEl: `.${swiper.id} .swiper-button-prev`,
-                    },
-                    observer: true,
-                    observeParents: true,
-                });
-            });
-        }, 150);
+        closeModal('variants-modal');
     };
 
 
-    // Show modal
+    // VR Mode globally
+    window.openVRMode = function () {
+        closeModal('variants-modal');
+
+        Swal.fire({
+            icon: 'info',
+            title: 'Under Development',
+            text: 'This feature is under development!',
+            confirmButtonText: 'OK'
+        }).then(() => {
+            openModal('variants-modal');
+        });
+    }
+
+    // Photo Gallery globally
+    window.openPhotoGallery = function(index) {
+        // Close variants modal first
+        closeModal('variants-modal');
+
+        const variant = JSON.parse(document.querySelector('[data-variants]').dataset.variants || '[]')[index];
+        const images = variant.staycation?.swiper_images || [];
+
+        if (images.length === 0) {
+            Swal.fire('No images available!').then(() => {
+                openModal('variants-modal');
+            });
+            return;
+        }
+
+        // Build Swiper HTML
+        const swiperId = `gallery-swiper-${index}`;
+        const slidesHtml = images.map(img => `
+            <div class="swiper-slide">
+                <img src="${img.image_path}" class="w-full h-200 object-cover rounded">
+            </div>
+        `).join('');
+
+        const html = `
+            <div class="swiper ${swiperId}">
+                <div class="swiper-wrapper">
+                    ${slidesHtml}
+                </div>
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-prev !text-white !w-5 !h-5"></div>
+                <div class="swiper-button-next !text-white !w-5 !h-5"></div>
+            </div>
+        `;
+
+        Swal.fire({
+            title: 'Photo Gallery',
+            html,
+            showCloseButton: true,
+            showConfirmButton: false,
+            width: '70%',
+            scrollbarPadding: false,
+            didOpen: () => {
+                // Initialize Swiper inside Swal
+                new Swiper(`.${swiperId}`, {
+                    loop: true,
+                    autoplay: { delay: 3000, disableOnInteraction: false },
+                    pagination: { el: `.${swiperId} .swiper-pagination`, clickable: true },
+                    navigation: { 
+                        nextEl: `.${swiperId} .swiper-button-next`, 
+                        prevEl: `.${swiperId} .swiper-button-prev`
+                    },
+                });
+            }
+        }).then(() => {
+            // Reopen variants modal after closing gallery
+            openModal('variants-modal');
+        });
+    }
+
+
+    // Render each variant
+    variants.forEach((variant, index) => {
+        const staycation = variant.staycation || {};
+        const texts = staycation.texts || [];
+        const images = staycation.swiper_images || [];
+        const name = staycation.name || variant.name || 'No Name';
+
+        const features = texts
+            .filter(t => t.title === 'Features')
+            .map(t => `<li>${t.content}</li>`)
+            .join('');
+
+        const priceText =
+            texts.find(t => t.title === 'Price')?.content ||
+            `₱${variant.price || 0}/night`;
+
+        const swiperId = `swiper-${index}`;
+        swiperIds.push({ id: swiperId, images });
+
+        const slidesHtml = images.length
+            ? images.map(img => ` 
+                <div class="swiper-slide">
+                    <img src="${img.image_path}" class="w-full h-full object-cover rounded-t-xl">
+                </div>
+            `).join('')
+            : `
+                <div class="swiper-slide flex items-center justify-center bg-gray-200">
+                    <span class="text-gray-600">No Image Available</span>
+                </div>
+            `;
+
+        container.insertAdjacentHTML('beforeend', `
+            <div class="rounded-xl overflow-hidden transition border border-gray-200 shadow-sm hover:shadow-md mb-4">
+
+                <!-- Swiper -->
+                <div class="swiper ${swiperId} h-48 md:h-44">
+                    <div class="swiper-wrapper">${slidesHtml}</div>
+                    <div class="swiper-pagination" style="--swiper-pagination-color: white;"></div>
+                    <div class="swiper-button-prev !text-white !w-5 !h-5"></div>
+                    <div class="swiper-button-next !text-white !w-5 !h-5"></div>
+                </div>
+
+                <div class="p-4 space-y-3">
+                    <h3 class="font-semibold text-lg">${name}</h3>
+
+                    <!-- Features -->
+                    <div>
+                        <h4 class="text-sm font-semibold mb-1">Features</h4>
+                        <ul class="list-disc pl-5 text-sm text-gray-600">
+                            ${features}
+                        </ul>
+                    </div>
+
+                    <!-- Guests -->
+                    <div>
+                        <label class="text-sm font-medium block mb-1">Number of Guests</label>
+                        <div class="flex border rounded-lg overflow-hidden w-full">
+                            <button class="px-3 bg-gray-100" onclick="decrementGuest('guests-${index}')">−</button>
+                            <input id="guests-${index}" value="1" readonly class="flex-1 text-center border-none focus:ring-0">
+                            <button class="px-3 bg-gray-100" onclick="incrementGuest('guests-${index}')">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Pets (inline) -->
+                    <div>
+                        <label class="text-sm font-medium block mb-1">Will you be bringing pets?</label>
+                        <div class="flex gap-4">
+                            <label class="flex gap-2 items-center">
+                                <input type="radio" name="pets-${index}" value="no" checked>
+                                <span class="text-sm">No pets</span>
+                            </label>
+                            <label class="flex gap-2 items-center">
+                                <input type="radio" name="pets-${index}" value="yes">
+                                <span class="text-sm">Bringing pets (+₱2,000/pet)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="font-semibold text-[#7a7d52]">${priceText}</div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col gap-2">
+                        <button class="py-2 bg-[#8f5d54] text-white rounded-lg font-semibold hover:bg-[#7a4e48] transition"
+                                onclick="selectStaycation(${index})">
+                            Select This Staycation
+                        </button>
+                        <button class="py-2 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition"
+                                onclick="openPhotoGallery(${index})">
+                            Photo Gallery
+                        </button>
+                        <button class="py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition"
+                                onclick="openVRMode()">
+                            VR Mode
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `);
+    });
+
     openModal('variants-modal');
+
+    // Init Swipers AFTER modal is visible
+    setTimeout(() => {
+        swiperIds.forEach(s => {
+            if (s.images.length <= 1) return;
+
+            new Swiper(`.${s.id}`, {
+                loop: true,
+                autoplay: { delay: 3000, disableOnInteraction: false },
+                pagination: {
+                    el: `.${s.id} .swiper-pagination`,
+                    clickable: true,
+                },
+                navigation: {
+                    nextEl: `.${s.id} .swiper-button-next`,
+                    prevEl: `.${s.id} .swiper-button-prev`,
+                },
+                observer: true,
+                observeParents: true,
+            });
+        });
+    }, 150);
 };
-
-
-
 
 
 
