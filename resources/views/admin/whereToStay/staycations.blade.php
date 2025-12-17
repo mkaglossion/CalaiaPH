@@ -61,58 +61,112 @@
         </table>
     </div>
 
-    <!-- Staycation Modal -->
-    <div 
-        x-show="showStaycationModal" 
-        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-        x-cloak
-    >
-        <div 
-            @click.away="showStaycationModal = false" 
-            class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6"
-        >
+    <div x-show="showStaycationModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" x-cloak>
+        <div @click.away="showStaycationModal = false" class="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto">
+
             <h3 class="text-lg font-semibold mb-4" x-text="editModeStaycation ? 'Edit Staycation' : 'Add Staycation'"></h3>
 
-            <form
-                id="staycationForm"
-                class="space-y-5"
-                @submit.prevent="saveStaycation()"
-            >
+            <form id="staycationForm" @submit.prevent="saveStaycation()" class="space-y-5">
                 @csrf
                 <template x-if="editModeStaycation">
                     <input type="hidden" name="_method" value="PUT">
                 </template>
 
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Name</label>
-                    <input 
-                        type="text" 
-                        name="name" 
-                        x-model="form.name" 
-                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        placeholder="Staycation Name"
-                        required
-                    >
+                <!-- Staycation Name & Quantity -->
+                <div class="flex space-x-2">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium mb-1">Staycation Name</label>
+                        <input type="text" x-model="form.name" class="w-full border rounded px-3 py-2" placeholder="Premium Glamping Tent" required>
+                    </div>
+                    <div class="w-32">
+                        <label class="block text-sm font-medium mb-1">Quantity</label>
+                        <input type="number" x-model.number="form.quantity" min="1" class="w-full border rounded px-3 py-2" placeholder="Rooms" required>
+                    </div>
                 </div>
 
-                <div class="flex justify-end space-x-2">
-                    <button 
-                        type="button" 
-                        @click="showStaycationModal = false; resetForm()" 
-                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        type="submit" 
-                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                    >
-                        <span x-text="editModeStaycation ? 'Update' : 'Add'"></span>
-                    </button>
+                <!-- Dynamic Price Configs -->
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium">Price Configurations</label>
+                    <template x-for="(config, index) in form.priceConfigs" :key="index">
+                        <div class="border p-3 rounded space-y-2">
+
+                            <!-- Config Name and Type -->
+                            <div class="flex space-x-2 items-center">
+                                <input type="text" x-model="config.name" placeholder="Config Name (Weekend, Holiday, etc.)" class="flex-1 border rounded px-2 py-1" required>
+
+                                <select x-model="config.type" class="border rounded px-2 py-1">
+                                    <option value="day">Day Type</option>
+                                    <option value="date">Specific Dates</option>
+                                </select>
+
+                                <button type="button" @click="removePriceConfig(index)" class="text-red-500 font-bold">&times;</button>
+                            </div>
+
+                            <!-- Days checkboxes -->
+                            <div x-show="config.type === 'day'" class="flex space-x-2">
+                                <template x-for="day in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="day">
+                                    <label class="flex items-center space-x-1">
+                                        <input type="checkbox" :value="day" x-model="config.days">
+                                        <span x-text="day"></span>
+                                    </label>
+                                </template>
+                            </div>
+
+                            <!-- Dates input -->
+                            <div x-show="config.type === 'date'" class="space-y-2">
+                                <label class="block text-sm font-medium">Select Date(s)</label>
+
+                                <!-- Single date -->
+                                <template x-if="!config.multipleDates">
+                                    <input type="date" x-model="config.dates" class="w-full border rounded px-2 py-1">
+                                </template>
+
+                                <!-- Multiple dates (comma-separated) -->
+                                <template x-if="config.multipleDates">
+                                    <input type="text" x-model="config.dates" placeholder="YYYY-MM-DD, YYYY-MM-DD" class="w-full border rounded px-2 py-1">
+                                </template>
+
+                                <!-- Toggle for single/multiple dates -->
+                                <label class="flex items-center space-x-2 mt-1">
+                                    <input type="checkbox" x-model="config.multipleDates">
+                                    <span class="text-sm text-gray-600">Allow multiple dates (comma-separated)</span>
+                                </label>
+                            </div>
+
+                            <!-- Rates per season -->
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="flex flex-col">
+                                    <label class="text-sm font-semibold mb-1">Non-Peak</label>
+                                    <input type="number" x-model.number="config.rates.nonPeak" class="border rounded px-2 py-1" min="0">
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="text-sm font-semibold mb-1">Peak</label>
+                                    <input type="number" x-model.number="config.rates.peak" class="border rounded px-2 py-1" min="0">
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="text-sm font-semibold mb-1">Super Peak</label>
+                                    <input type="number" x-model.number="config.rates.superPeak" class="border rounded px-2 py-1" min="0">
+                                </div>
+                            </div>
+
+                        </div>
+                    </template>
+
+                    <button type="button" @click="addPriceConfig()" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">+ Add Price Config</button>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-end space-x-2 mt-4">
+                    <button type="button" @click="showStaycationModal = false; resetForm()" class="px-4 py-2 border rounded hover:bg-gray-100">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" x-text="editModeStaycation ? 'Update' : 'Add'"></button>
                 </div>
             </form>
         </div>
     </div>
+
+
+
+
 
     <hr class="my-6">
 
@@ -428,98 +482,60 @@
 <script>
 function staycationComponent() {
     return {
-        showModal: false,
         showStaycationModal: false,
-        showTextModal: false,
-        editMode: false,
         editModeStaycation: false,
-        texts: @js($texts),
         staycations: @js($staycations),
-        form: { id: null, name: '', label: '', text: '' },
+        form: {
+            id: null,
+            name: '',
+            quantity: 1,
+            priceConfigs: []
+        },
 
         resetForm() {
-            this.form = { id: null, name: '', label: '', text: '' };
-            this.editMode = false;
+            this.form = { id: null, name: '', quantity: 1, priceConfigs: [] };
             this.editModeStaycation = false;
         },
 
         editStaycation(id) {
-            const staycation = this.staycations.find(a => a.id === id);
+            const staycation = this.staycations.find(s => s.id === id);
             if (staycation) {
                 this.form.id = staycation.id;
                 this.form.name = staycation.name;
+                this.form.quantity = staycation.quantity;
+                this.form.priceConfigs = staycation.priceConfigs.map(pc => ({
+                    ...pc,
+                    multipleDates: Array.isArray(pc.dates) && pc.dates.length > 1,
+                    dates: Array.isArray(pc.dates) ? pc.dates.join(',') : pc.dates
+                })) || [];
                 this.editModeStaycation = true;
                 this.showStaycationModal = true;
             }
         },
 
-        editText(id) {
-            const text = this.texts.find(t => t.id === id);
-            if (text) {
-                this.form.id = text.id;
-                this.form.label = text.label;
-                this.form.text = text.text;
-                this.form.staycation = text.staycation;
-                this.editMode = true;
-                this.showTextModal = true;
-            }
+        addPriceConfig() {
+            this.form.priceConfigs.push({
+                name: '',
+                type: 'day',
+                days: [],
+                dates: '',
+                multipleDates: false,
+                rates: { nonPeak: 0, peak: 0, superPeak: 0 }
+            });
         },
 
-        saveText: async function() {
-            const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
-            const formData = new FormData();
-
-            formData.append('title', this.form.label);
-            formData.append('content', this.form.text);
-            formData.append('staycation_id', this.form.staycation_id); // make sure this is populated
-
-            let url = '{{ route('staycation-text.store') }}';
-
-            if (this.editMode && this.form.id) {
-                url = `/admin/staycation-text/${this.form.id}`;
-                formData.append('_method', 'PUT');
-            }
-
-            const btn = document.querySelector('#textUploadForm button[type=submit]');
-            btn.innerText = this.editMode ? 'Updating...' : 'Uploading...';
-            btn.disabled = true;
-
-            try {
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-                    body: formData,
-                    credentials: 'same-origin'
-                });
-
-                const data = await res.json();
-
-                if (res.ok) {
-                    alert(data.message || (this.editMode ? 'Text updated successfully!' : 'Text added successfully!'));
-                    this.resetForm();
-                    this.showTextModal = false;
-                    window.location.reload();
-                } else if (data.errors) {
-                    alert(Object.values(data.errors).flat().join('\n'));
-                } else {
-                    alert(data.message || 'Operation failed.');
-                }
-            } catch(err) {
-                console.error(err);
-                alert('Error submitting text.');
-            } finally {
-                btn.innerText = this.editMode ? 'Update' : 'Add';
-                btn.disabled = false;
-            }
+        removePriceConfig(index) {
+            this.form.priceConfigs.splice(index, 1);
         },
-
 
         saveStaycation: async function() {
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             const formData = new FormData();
             formData.append('name', this.form.name);
+            formData.append('quantity', this.form.quantity);
+            formData.append('priceConfigs', JSON.stringify(this.form.priceConfigs));
 
-            let url = '{{ route('staycation-list.store') }}';
+            let url = '{{ route("staycation-list.store") }}';
             if (this.editModeStaycation && this.form.id) {
                 url = `/admin/staycation-list/${this.form.id}`;
                 formData.append('_method', 'PUT');
@@ -557,5 +573,8 @@ function staycationComponent() {
         }
     };
 }
+
 </script>
+
+
 @endsection

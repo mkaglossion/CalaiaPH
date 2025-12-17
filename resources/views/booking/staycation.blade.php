@@ -367,12 +367,15 @@ $galleryData = [
                         <button
                             type="button"
                             class="select-category-btn mt-auto w-full rounded-full text-lg font-semibold text-white px-6 py-3"
-                            data-name="{{ $accommodation->name }}"
+                            data-accommodation-id="{{ $accommodation->id }}"
+                            data-accommodation-name="{{ $accommodation->name }}"
                             data-variants='@json($variantsJson)'
                             onclick="openVariantsModal(this)"
-                            style="background-color:#8f5d54;">
+                            style="background-color:#8f5d54;"
+                        >
                             Select Accommodation
                         </button>
+
 
 
 
@@ -683,6 +686,8 @@ $galleryData = [
   </body>
   <script>
 
+    window.selectedAccommodations = {};
+
 
 // Open and close modal helpers
 // Open and close modal helpers
@@ -755,62 +760,98 @@ Pets: ${pets}`);
 
 // Open variants modal
 window.openVariantsModal = function (button) {
-    const variants = JSON.parse(button.dataset.variants || '[]');
-    const title = button.dataset.name || 'Accommodation';
 
+    /* ===============================
+       FIX 1: Read correct button data
+    =============================== */
+    const accommodationId = button.dataset.accommodationId;
+    const accommodationName = button.dataset.accommodationName;
+    const variants = JSON.parse(button.dataset.variants || '[]');
+
+    // KEEP: modal title (fixed variable)
     document.getElementById('variants-modal-title').innerText =
-        `Select ${title} Options`;
+        `Select ${accommodationName} Options`;
+
+    // KEEP: active accommodation
+    window.activeAccommodation = {
+        id: accommodationId,
+        name: accommodationName
+    };
 
     const container = document.getElementById('variants-container');
     container.innerHTML = '';
 
     const swiperIds = [];
 
-    // Increment/Decrement guest functions
+    /* ===============================
+       KEEP: Guest controls
+    =============================== */
     window.incrementGuest = function (id) {
         const input = document.getElementById(id);
         let val = parseInt(input.value) || 1;
         if (val < 10) input.value = val + 1;
-    }
+    };
 
     window.decrementGuest = function (id) {
         const input = document.getElementById(id);
         let val = parseInt(input.value) || 1;
         if (val > 1) input.value = val - 1;
-    }
+    };
 
-    // Select Staycation globally
+    /* ===============================
+       FIX 2: Multi-selection support
+       (no overwrite)
+    =============================== */
     window.selectStaycation = function (index) {
+
         const guests = document.getElementById(`guests-${index}`).value;
         const pets = document.querySelector(`input[name="pets-${index}"]:checked`).value;
 
-        // Get the selected variant
         const selectedVariant = variants[index];
         const variantName = selectedVariant.staycation?.name || selectedVariant.name;
-        
-        // Save the IDs
-        const accommodationId = selectedVariant.accommodation_id || null;
         const variantId = selectedVariant.id || null;
+        const price = parseFloat(selectedVariant.price || 0);
 
-        // Log everything to the console
+        const accId = window.activeAccommodation.id;
+        const accName = window.activeAccommodation.name;
+
+        // KEEP + EXTEND: initialize accommodation
+        if (!selectedAccommodations[accId]) {
+            selectedAccommodations[accId] = {
+                accommodationName: accName,
+                variants: []
+            };
+        }
+
+        // ADD: prevent duplicates
+        const exists = selectedAccommodations[accId].variants
+            .some(v => v.variantId === variantId);
+
+        if (!exists) {
+            selectedAccommodations[accId].variants.push({
+                variantId,
+                name: variantName,
+                price,
+                guests,
+                pets
+            });
+        }
+
+        // KEEP: logging
         console.log('--- Staycation Selected ---');
-        console.log('Accommodation ID:', accommodationId);
+        console.log('Accommodation ID:', accId);
         console.log('Variant ID:', variantId);
         console.log('Variant Name:', variantName);
         console.log('Guests:', guests);
         console.log('Pets:', pets);
         console.log('---------------------------');
 
-        // Optional: Save globally for later use
-        window.selectedStaycation = {
-            accommodationId,
-            variantId,
-            guests,
-            pets,
-            name: variantName
-        };
+        // ADD: sync booking summary
+        if (typeof updateBookingSummary === 'function') {
+            updateBookingSummary();
+        }
 
-        // Notify the user
+        // KEEP: alert
         Swal.fire({
             icon: 'success',
             title: 'Staycation Selected',
@@ -820,8 +861,9 @@ window.openVariantsModal = function (button) {
         closeModal('variants-modal');
     };
 
-
-    // VR Mode globally
+    /* ===============================
+       KEEP: VR Mode
+    =============================== */
     window.openVRMode = function () {
         closeModal('variants-modal');
 
@@ -833,14 +875,16 @@ window.openVariantsModal = function (button) {
         }).then(() => {
             openModal('variants-modal');
         });
-    }
+    };
 
-    // Photo Gallery globally
+    /* ===============================
+       FIX 3: Photo gallery uses local variants
+    =============================== */
     window.openPhotoGallery = function(index) {
-        // Close variants modal first
+
         closeModal('variants-modal');
 
-        const variant = JSON.parse(document.querySelector('[data-variants]').dataset.variants || '[]')[index];
+        const variant = variants[index];
         const images = variant.staycation?.swiper_images || [];
 
         if (images.length === 0) {
@@ -850,7 +894,6 @@ window.openVariantsModal = function (button) {
             return;
         }
 
-        // Build Swiper HTML
         const swiperId = `gallery-swiper-${index}`;
         const slidesHtml = images.map(img => `
             <div class="swiper-slide">
@@ -877,7 +920,6 @@ window.openVariantsModal = function (button) {
             width: '70%',
             scrollbarPadding: false,
             didOpen: () => {
-                // Initialize Swiper inside Swal
                 new Swiper(`.${swiperId}`, {
                     loop: true,
                     autoplay: { delay: 3000, disableOnInteraction: false },
@@ -889,13 +931,13 @@ window.openVariantsModal = function (button) {
                 });
             }
         }).then(() => {
-            // Reopen variants modal after closing gallery
             openModal('variants-modal');
         });
-    }
+    };
 
-
-    // Render each variant
+    /* ===============================
+       KEEP: Variant rendering (UNCHANGED)
+    =============================== */
     variants.forEach((variant, index) => {
         const staycation = variant.staycation || {};
         const texts = staycation.texts || [];
@@ -929,7 +971,6 @@ window.openVariantsModal = function (button) {
         container.insertAdjacentHTML('beforeend', `
             <div class="rounded-xl overflow-hidden transition border border-gray-200 shadow-sm hover:shadow-md mb-4">
 
-                <!-- Swiper -->
                 <div class="swiper ${swiperId} h-48 md:h-44">
                     <div class="swiper-wrapper">${slidesHtml}</div>
                     <div class="swiper-pagination" style="--swiper-pagination-color: white;"></div>
@@ -940,7 +981,6 @@ window.openVariantsModal = function (button) {
                 <div class="p-4 space-y-3">
                     <h3 class="font-semibold text-lg">${name}</h3>
 
-                    <!-- Features -->
                     <div>
                         <h4 class="text-sm font-semibold mb-1">Features</h4>
                         <ul class="list-disc pl-5 text-sm text-gray-600">
@@ -948,7 +988,6 @@ window.openVariantsModal = function (button) {
                         </ul>
                     </div>
 
-                    <!-- Guests -->
                     <div>
                         <label class="text-sm font-medium block mb-1">Number of Guests</label>
                         <div class="flex border rounded-lg overflow-hidden w-full">
@@ -958,7 +997,6 @@ window.openVariantsModal = function (button) {
                         </div>
                     </div>
 
-                    <!-- Pets (inline) -->
                     <div>
                         <label class="text-sm font-medium block mb-1">Will you be bringing pets?</label>
                         <div class="flex gap-4">
@@ -973,10 +1011,8 @@ window.openVariantsModal = function (button) {
                         </div>
                     </div>
 
-                    <!-- Price -->
                     <div class="font-semibold text-[#7a7d52]">${priceText}</div>
 
-                    <!-- Action Buttons -->
                     <div class="flex flex-col gap-2">
                         <button class="py-2 bg-[#8f5d54] text-white rounded-lg font-semibold hover:bg-[#7a4e48] transition"
                                 onclick="selectStaycation(${index})">
@@ -998,7 +1034,9 @@ window.openVariantsModal = function (button) {
 
     openModal('variants-modal');
 
-    // Init Swipers AFTER modal is visible
+    /* ===============================
+       KEEP: Swiper init
+    =============================== */
     setTimeout(() => {
         swiperIds.forEach(s => {
             if (s.images.length <= 1) return;
@@ -1020,6 +1058,66 @@ window.openVariantsModal = function (button) {
         });
     }, 150);
 };
+
+// Initialize global variable
+    window.selectedAccommodations = window.selectedAccommodations || {};
+
+    window.updateBookingSummary = function () {
+        const listEl = document.getElementById('selected-accommodations-summary');
+        const countEl = document.getElementById('selected-accommodations-count');
+        const guestsEl = document.getElementById('total-guests');
+        const priceEl = document.getElementById('total-price');
+        const proceedBtn = document.getElementById('proceed-btn');
+
+        let totalGuests = 0;
+        let totalPrice = 0;
+        let html = '';
+
+        const accommodations = Object.values(window.selectedAccommodations || {});
+
+        accommodations.forEach(acc => {
+            acc.variants.forEach(variant => {
+                const guests = parseInt(variant.guests) || 0;
+                const price = parseFloat(variant.price) || 0;
+
+                totalGuests += guests;
+                totalPrice += price;
+
+                html += `
+                    <div class="flex justify-between text-sm text-gray-700">
+                        <span>${variant.name} (${guests} guest${guests > 1 ? 's' : ''})</span>
+                        <span>₱ ${price.toLocaleString()}</span>
+                    </div>
+                `;
+            });
+        });
+
+        listEl.innerHTML = html;
+        countEl.textContent = `${accommodations.reduce((sum, acc) => sum + acc.variants.length, 0)} selected`;
+        guestsEl.textContent = totalGuests;
+        priceEl.textContent = `₱ ${totalPrice.toLocaleString()}`;
+
+        console.log('=== Booking Summary Data ===');
+        accommodations.forEach(acc => {
+            console.log(`Accommodation: ${acc.accommodationName}`);
+            acc.variants.forEach(variant => {
+                console.log(`  Variant: ${variant.name}`);
+                console.log(`    Guests: ${variant.guests || 0}`);
+                console.log(`    Pets: ${variant.pets || 'no'}`);
+                console.log(`    Price: ₱${variant.price || 0}`);
+            });
+        });
+        console.log('Total Guests:', totalGuests);
+        console.log('Total Price: ₱', totalPrice);
+        console.log('============================');
+
+        // Expand / collapse list
+        listEl.style.maxHeight = html ? '500px' : '0';
+
+        // Enable proceed
+        proceedBtn.disabled = !html;
+    };
+
 
 
 
@@ -1192,135 +1290,8 @@ function computeStaycationTotals(staycation, options = {}) {
     };
 
 
-    window.updateBookingSummary = function() {
-        const summaryContainer = document.getElementById('selected-accommodations-summary');
-        if (!summaryContainer) return;
+    
 
-        summaryContainer.innerHTML = '';
-        let selectedCount = 0;
-        let totalPrice = 0;
-        let totalGuests = 0;
-
-        Object.entries(window.selectedAccommodations).forEach(([key, accommodation]) => {
-            if (!accommodation || !accommodation.staycation) return;
-
-            selectedCount++;
-
-            const guests = accommodation.guests || 1;
-            totalGuests += guests;
-            const staycation = accommodation.staycation;
-            const name = staycation.name;
-
-            const result = computeStaycationTotals(staycation, {
-                guests,
-                checkinStr: CHECKIN,
-                checkoutStr: CHECKOUT,
-                numPets: accommodation.num_pets || 0,
-                hasPetAgreement: accommodation.pet_agreement,
-                hasBreakfast: accommodation.has_breakfast
-            });
-
-            totalPrice += result.total;
-
-            const summaryItem = document.createElement('div');
-            summaryItem.className = 'text-xs text-gray-600 space-y-1';
-
-            const nights = result.nights || 1;
-
-            // Base accommodation line with remove button
-            const accommodationDiv = document.createElement('div');
-            accommodationDiv.className = 'flex justify-between items-center';
-
-            const perNightBase = result.basePriceTotal > 0
-                ? Math.round(result.basePriceTotal / nights)
-                : 0;
-
-            const accommodationText = document.createElement('span');
-            accommodationText.textContent =
-                `ACCOMMODATION: ${name} - ₱ ${perNightBase.toLocaleString()}/night (${guests} guest${guests > 1 ? 's' : ''})`;
-            accommodationDiv.appendChild(accommodationText);
-
-            // Add remove button
-            const removeButton = document.createElement('button');
-            removeButton.className = 'text-red-600 hover:text-red-800 text-sm font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors';
-            removeButton.innerHTML = '<i class="fas fa-trash-alt mr-1"></i>';
-            removeButton.dataset.key = key;
-            removeButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                // Remove from selected accommodations
-                delete window.selectedAccommodations[key];
-
-                // Update UI
-                window.updateBookingSummary();
-
-                // Show toast notification
-                showToast(`Removed ${name} from your booking`, 'info');
-            });
-
-            accommodationDiv.appendChild(removeButton);
-            summaryItem.appendChild(accommodationDiv);
-
-            // Extra mattress line
-            if (result.extraPriceTotal > 0) {
-                const extraGuests = Math.max(0, guests - 4);
-                const perNightExtra = Math.round(result.extraPriceTotal / nights);
-
-                const extraDiv = document.createElement('div');
-                extraDiv.textContent =
-                    `Extra Mattress (${extraGuests} guest${extraGuests > 1 ? 's' : ''}): ₱ ${perNightExtra.toLocaleString()}/night`;
-                summaryItem.appendChild(extraDiv);
-            }
-
-            // Pet fee
-            if (result.petFee > 0) {
-                const numPets = accommodation.num_pets || 0;
-                const petDiv = document.createElement('div');
-                petDiv.textContent =
-                    `Pet Fee (${numPets} pet${numPets > 1 ? 's' : ''}): ₱ ${result.petFee.toLocaleString()}`;
-                summaryItem.appendChild(petDiv);
-            }
-
-            // Breakfast fee
-            if (result.breakfastFee > 0) {
-                const breakfastDiv = document.createElement('div');
-                breakfastDiv.textContent =
-                    `Breakfast (${guests} guest${guests > 1 ? 's' : ''}): ₱ ${result.breakfastFee.toLocaleString()}`;
-                summaryItem.appendChild(breakfastDiv);
-            }
-
-            summaryContainer.appendChild(summaryItem);
-        });
-
-        // Activities are handled on the activities page, not here
-        // const selectedActivities = JSON.parse(el.dataset.selectedActivities || '[]');
-        // const activitiesTotal = selectedActivities.reduce(
-        //     (sum, activity) => sum + (activity.price * activity.guests),
-        //     0
-        // );
-        // totalPrice += activitiesTotal;
-
-        const totalPriceEl = document.getElementById('total-price');
-        if (totalPriceEl) totalPriceEl.textContent = `₱ ${totalPrice.toLocaleString()}`;
-
-        const totalGuestsEl = document.getElementById('total-guests');
-        if (totalGuestsEl) totalGuestsEl.textContent = totalGuests;
-
-        const selectedAccText = document.getElementById('selected-accommodations-count');
-        if (selectedAccText) selectedAccText.textContent = `${selectedCount} selected`;
-
-        const proceedBtn = document.getElementById('proceed-btn');
-        const skipBtn = document.getElementById('skip-btn');
-        if (proceedBtn) proceedBtn.disabled = selectedCount === 0;
-        if (skipBtn) skipBtn.disabled = selectedCount === 0;
-
-        saveSelectionsToStorage();
-    };
-
-    window.initializeBookingSummary = function() {
-        window.updateBookingSummary();
-    };
 
 
 
