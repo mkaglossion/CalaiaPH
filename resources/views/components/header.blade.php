@@ -25,28 +25,25 @@
     {{-- MOBILE LOGO LEFT --}}
     <div class="md:hidden">
       <a href="{{ url('/') }}">
-        <div class="bg-[#f6f0eb] w-20 h-20 rounded-full flex items-center justify-center shadow-md overflow-hidden">
-          <img
-            src="{{ asset('assets/logo/CALAIA LOGO RUST.png') }}"
-            alt="CALAIA LOGO RUST"
-            class="w-[70%] h-[70%] object-contain"
-          >
-        </div>
+        <img
+          src="{{ asset('assets/logo/CALAIA LOGO RUST.png') }}"
+          alt="CALAIA LOGO RUST"
+          class="w-56 h-20 object-contain"
+        >
       </a>
     </div>
 
     {{-- DESKTOP LOGO --}}
-    <div x-show="!$store.modals.showLogin && !$store.modals.showSignup" class="hidden md:block fixed -top-4 -left-4 z-50">
+    <div x-show="!$store.modals.showLogin && !$store.modals.showSignup" class="hidden md:block fixed">
       <a href="{{ url('/') }}">
-        <div class="bg-[#f6f0eb] w-56 h-56 rounded-full flex items-center justify-center shadow-md overflow-hidden">
-          <img
-            src="{{ asset('assets/logo/CALAIA LOGO RUST.png') }}"
-            alt="CALAIA LOGO RUST"
-            class="w-[65%] h-[65%] object-contain"
-          >
-        </div>
+        <img
+          src="{{ asset('assets/logo/CALAIA LOGO RUST.png') }}"
+          alt="CALAIA LOGO RUST"
+          class="w-56 h-56 object-contain"
+        >
       </a>
     </div>
+
 
     {{-- MAIN NAV CENTER --}}
     <nav class="hidden md:flex flex-1 justify-center space-x-6 text-center ml-45">
@@ -54,7 +51,7 @@
       <a href="{{ url('/daytour') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Day Tour</a>
       <a href="{{ url('/staycation') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Where to Stay</a>
       <a href="{{ url('/activities') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">What to Do</a>
-      <a href="{{ url('/dining') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Food & Beverage</a>
+      <a href="{{ url('/dining') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Dinning</a>
       <a href="{{ url('/special-events') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'special-events' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Special Events</a>
       <a href="{{ url('/farm') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Our Farm</a>
     </nav>
