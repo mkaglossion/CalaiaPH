@@ -66,6 +66,9 @@
               ['label'=>'Pages Information','route'=>'admin.farm.ourfarm'],
               ['label'=>'Items','route'=>'admin.farm.farmInfos']
             ]],
+            ['title'=>'Pricing','icon'=>'coins','route'=>'admin.farm.*','sub'=>[
+              ['label'=>'Configurations','route'=>'admin.pricingConfig.index'],
+            ]],
 
           ];
         @endphp

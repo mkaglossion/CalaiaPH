@@ -60,7 +60,7 @@ use App\Http\Controllers\Admin\FarmInfoController;
 use App\Http\Controllers\Admin\DayTourController as AdminDayTourController;
 use App\Http\Controllers\Admin\StaycationAccommodationController;
 use App\Http\Controllers\CartController;
-
+use App\Http\Controllers\PricingConfigController;
 // ========== Root Route ==========
 Route::get('/', function () {
     return redirect('/home');
@@ -201,6 +201,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
             Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farm.farmInfos');
             Route::get('/our-farm', [AdminPagesController::class, 'ourFarm'])->name('admin.farm.ourfarm');
     });
+    Route::prefix('/pricing')->group(function () {
+            Route::get('/config', [AdminController::class, 'config'])->name('admin.pricingConfig.index');
+    });
     Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.staycations');
     Route::get('/events', [AdminController::class, 'event'])->name('admin.events');
     // adminRoute('/reports', AdminController::class, 'admin.reports', 'reports');
@@ -260,5 +263,28 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     
     Route::resource('staycation-accommodations', StaycationAccommodationController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('accommodations-text', AccommodationTextController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    Route::prefix('admin')->group(function () {
+
+        // Pricing Config - list & add
+        Route::get('pricing-configs', [PricingConfigController::class, 'index'])
+            ->name('admin.pricing-configs.index');
+
+        Route::post('pricing-configs', [PricingConfigController::class, 'store'])
+            ->name('admin.pricing-configs.store');
+
+        // Optional: Weekday/Weekend update
+        Route::put('day-types', [PricingConfigController::class, 'updateDayTypes'])
+            ->name('admin.dayTypes.update');
+
+        // Optional: Add holiday
+        Route::post('holidays', [PricingConfigController::class, 'storeHoliday'])
+            ->name('admin.holidays.store');
+
+        // Optional: Add peak period (Non-Peak / Peak / Super-Peak)
+        Route::post('peak-periods', [PricingConfigController::class, 'storePeakPeriod'])
+            ->name('admin.peakPeriods.store');
+    });
+
 
 });
