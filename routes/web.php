@@ -265,26 +265,14 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('accommodations-text', AccommodationTextController::class)->only(['index', 'store', 'update', 'destroy']);
 
     Route::prefix('admin')->group(function () {
+        Route::get('pricing-configs', [PricingConfigController::class, 'index'])->name('pricing-configs.index');
+        Route::post('pricing-configs', [PricingConfigController::class, 'store'])->name('pricing-configs.store');
 
-        // Pricing Config - list & add
-        Route::get('pricing-configs', [PricingConfigController::class, 'index'])
-            ->name('admin.pricing-configs.index');
-
-        Route::post('pricing-configs', [PricingConfigController::class, 'store'])
-            ->name('admin.pricing-configs.store');
-
-        // Optional: Weekday/Weekend update
-        Route::put('day-types', [PricingConfigController::class, 'updateDayTypes'])
-            ->name('admin.dayTypes.update');
-
-        // Optional: Add holiday
-        Route::post('holidays', [PricingConfigController::class, 'storeHoliday'])
-            ->name('admin.holidays.store');
-
-        // Optional: Add peak period (Non-Peak / Peak / Super-Peak)
-        Route::post('peak-periods', [PricingConfigController::class, 'storePeakPeriod'])
-            ->name('admin.peakPeriods.store');
+        Route::put('day-types', [PricingConfigController::class, 'updateDayTypes'])->name('admin.dayTypes.update');
+        Route::post('holidays', [PricingConfigController::class, 'storeHoliday'])->name('admin.holidays.store');
+        Route::post('peak-periods', [PricingConfigController::class, 'storePeakPeriod'])->name('admin.peakPeriods.store');
     });
+
 
 
 });

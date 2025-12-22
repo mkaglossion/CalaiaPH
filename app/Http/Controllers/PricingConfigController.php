@@ -22,11 +22,15 @@ class PricingConfigController extends Controller
         $durationSets = DurationSet::all();
         $pricingConfigs = PricingConfig::with(['peakPeriod', 'holiday', 'durationSet', 'dayType'])->get();
 
+        // Get the IDs for Weekday and Weekend dynamically
+        $weekdayId = DayType::where('name', 'Weekday')->value('id');
+        $weekendId = DayType::where('name', 'Weekend')->value('id');
+
         // Array of weekend days (0=Sun, 6=Sat) for checkboxes
-        $weekendDays = DayTypeDay::where('day_type_id', 2)->pluck('weekday')->toArray();
+        $weekendDays = DayTypeDay::where('day_type_id', $weekendId)->pluck('weekday')->toArray();
 
         return view('pricing-config.index', compact(
-            'dayTypes', 'peakTypes', 'holidays', 'durationSets', 'pricingConfigs', 'weekendDays'
+            'dayTypes', 'peakTypes', 'holidays', 'durationSets', 'pricingConfigs', 'weekendDays', 'weekdayId', 'weekendId'
         ));
     }
 
@@ -46,16 +50,19 @@ class PricingConfigController extends Controller
         return redirect()->back()->with('success', 'Pricing config added successfully.');
     }
 
-    // Update Weekday/Weekend
+    // Update Weekday / Weekend mapping
     public function updateDayTypes(Request $request)
     {
         $weekendDays = $request->input('weekend', []);
 
-        // Update each day (0=Sun, 6=Sat)
-        foreach(range(0,6) as $i) {
-            $dayType = DayTypeDay::firstOrNew(['weekday' => $i]);
-            $dayType->day_type_id = in_array($i, $weekendDays) ? 2 : 1; // 2=Weekend, 1=Weekday
-            $dayType->save();
+        // Ensure DayType entries exist
+        $weekday = DayType::firstOrCreate(['name' => 'Weekday']);
+        $weekend = DayType::firstOrCreate(['name' => 'Weekend']);
+
+        foreach (range(0, 6) as $i) {
+            $dayTypeDay = DayTypeDay::firstOrNew(['weekday' => $i]);
+            $dayTypeDay->day_type_id = in_array($i, $weekendDays) ? $weekend->id : $weekday->id;
+            $dayTypeDay->save();
         }
 
         return redirect()->back()->with('success', 'Weekdays/Weekends updated successfully.');
@@ -78,20 +85,26 @@ class PricingConfigController extends Controller
     public function storePeakPeriod(Request $request)
     {
         $request->validate([
-            'start_date.*' => 'required|date',
-            'end_date.*' => 'required|date|after_or_equal:start_date.*'
+            'peak_type_id' => 'required|exists:peak_types,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
-        foreach($request->start_date as $peakTypeId => $startDate) {
-            if($startDate && $request->end_date[$peakTypeId]) {
-                PeakPeriod::create([
-                    'peak_type_id' => $peakTypeId,
-                    'start_date' => $startDate,
-                    'end_date' => $request->end_date[$peakTypeId]
-                ]);
-            }
+        $period = PeakPeriod::create([
+            'peak_type_id' => $request->peak_type_id,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Peak period added successfully',
+                'period' => $period
+            ]);
         }
 
-        return redirect()->back()->with('success', 'Peak periods saved successfully.');
+        return redirect()->back()->with('success', 'Peak period added successfully.');
     }
+
 }
