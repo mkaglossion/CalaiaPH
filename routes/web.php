@@ -57,7 +57,6 @@ use App\Http\Controllers\Admin\StaycationController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\FarmInfoController;
-use App\Http\Controllers\Admin\DayTourController as AdminDayTourController;
 use App\Http\Controllers\Admin\StaycationAccommodationController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\PricingConfigController;
@@ -258,7 +257,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('farmInfo-image', FarmInfoSwiperImageController::class)->only(['index', 'store', 'destroy']);
     Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
 
-    Route::resource('day-tours', AdminDayTourController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('day-tours', DayTourController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('day-text', DayPackageTextController::class)->only(['index', 'store', 'update', 'destroy']);
     
     Route::resource('staycation-accommodations', StaycationAccommodationController::class)->only(['index', 'store', 'update', 'destroy']);
