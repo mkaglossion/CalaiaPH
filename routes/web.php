@@ -19,7 +19,7 @@ use App\Http\Controllers\Admin\AdminPagesController;
 use App\Http\Controllers\Admin\AdminController;
 
 use App\Http\Controllers\Admin\SwiperImageController;
-use App\Http\Controllers\Admin\DaytourSwiperImageController;
+use App\Http\Controllers\Admin\DayTourSwiperImageController;
 use App\Http\Controllers\Admin\StaySwiperImageController;
 use App\Http\Controllers\Admin\DoSwiperImageController;
 use App\Http\Controllers\Admin\FoodSwiperImageController;
@@ -215,7 +215,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('swiper-images', [SwiperImageController::class, 'index'])->name('swiper-images.index');
     Route::post('swiper-images', [SwiperImageController::class, 'store'])->name('swiper-images.store');
     Route::delete('swiper-images/{swiperImage}', [SwiperImageController::class, 'destroy'])->name('swiper-images.destroy');
-    Route::resource('day-tour-swiper-images', DaytourSwiperImageController::class)->only(['index', 'store', 'destroy']);
+    Route::resource('day-tour-swiper-images', DayTourSwiperImageController::class)->only(['index', 'store', 'destroy']);
     Route::resource('stay-swiper-images', StaySwiperImageController::class)->only(['index', 'store', 'destroy']);
     Route::resource('do-swiper-images', DoSwiperImageController::class)->only(['index', 'store', 'destroy']);
     Route::resource('food-swiper-images', FoodSwiperImageController::class)->only(['index', 'store', 'destroy']);
