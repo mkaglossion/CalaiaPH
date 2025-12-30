@@ -9,5 +9,10 @@ class DayTourText extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['label', 'text'];
+    protected $fillable = ['title', 'content', 'daytour_id'];
+
+    public function dayTour()
+    {
+        return $this->belongsTo(DayTour::class);
+    }
 }

@@ -17,11 +17,12 @@ class DayTourTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255|unique:day_tour_texts,label',
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255|unique:day_tour_texts,title',
+            'content' => 'nullable|string',
+            'daytour_id' => 'nullable|exists:day_tours,id',
         ]);
 
-        DayTourText::create($request->only(['label', 'text']));
+        DayTourText::create($request->only(['title', 'content', 'daytour_id']));
 
         return response()->json(['message' => 'Text content added successfully.']);
     }
@@ -29,11 +30,12 @@ class DayTourTextController extends Controller
     public function update(Request $request, DayTourText $dayTourText)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255|unique:day_tour_texts,label,' . $dayTourText->id,
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255|unique:day_tour_texts,title,' . $dayTourText->id,
+            'content' => 'nullable|string',
+            'daytour_id' => 'nullable|exists:day_tours,id',
         ]);
 
-        $dayTourText->update($request->only(['label', 'text']));
+        $dayTourText->update($request->only(['title', 'content', 'daytour_id']));
 
         return response()->json(['message' => 'Text content updated successfully.']);
     }

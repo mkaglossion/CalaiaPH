@@ -11,8 +11,8 @@ class DayTourController extends Controller
     public function index()
     {
         $swiperImages = DayTourSwiperImage::all();
-        $texts = DayTourText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($text, $label) {
-            return [strtolower($label) => $text];
+        $texts = DayTourText::whereNotNull('title')->pluck('content', 'title')->mapWithKeys(function ($content, $title) {
+            return [strtolower($title) => $content];
         })->toArray();
 
         $packages = config('daytour.packages');
