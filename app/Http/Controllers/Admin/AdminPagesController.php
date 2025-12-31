@@ -23,7 +23,7 @@ class AdminPagesController extends Controller
     private $pageConfigs = [
         'home' => [SwiperImage::class, HomeText::class, 'admin.home.home'],
         'dayTour' => [DayTourSwiperImage::class, DayTourText::class, 'admin.dayTour.daytour'],
-        'whereToStay' => [StaySwiperImage::class, StayText::class, 'admin.wheretoStay.wheretostay'],
+        'whereToStay' => [StaySwiperImage::class, StayText::class, 'admin.whereToStay.wheretostay'],
         'whatToDo' => [DoSwiperImage::class, DoText::class, 'admin.whatToDo.whattodo'],
         'foodAndBeverage' => [FoodSwiperImage::class, FoodText::class, 'admin.foodBeverages.foodandbeverage'],
         'specialEvents' => [SpecialSwiperImage::class, SpecialText::class, 'admin.specialEvents.specialevents'],
