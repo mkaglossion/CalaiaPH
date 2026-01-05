@@ -7,7 +7,7 @@
 {{-- Swiper CSS --}}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
-<div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]" data-slides-count="{{ count($images) }}">
+<div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-125 xl:h-150" data-slides-count="{{ count($images) }}">
   <div class="swiper-wrapper">
     @if(count($images) > 0)
       @php $texts_array = array_values($texts); $labels_array = array_keys($texts); @endphp
