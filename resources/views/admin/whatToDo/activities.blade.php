@@ -4,7 +4,7 @@
 
 @section('content')
 <div
-    x-data="activityComponent(@js($texts), @js($activities))"
+    x-data="activityComponent(@js($texts), @js(\App\Models\Activity::all()))"
 
 >
     <hr class="my-6">
@@ -25,6 +25,8 @@
                 <tr>
                     <th class="px-4 py-2">#</th>
                     <th class="px-4 py-2">Name</th>
+                    <th class="px-4 py-2">Description</th>
+                    <th class="px-4 py-2">Duration</th>
                     <th class="px-4 py-2">Uploaded</th>
                     <th class="px-4 py-2 text-right">Actions</th>
                 </tr>
@@ -32,8 +34,10 @@
             <tbody>
                 @forelse($activities as $index => $act)
                 <tr class="border-b hover:bg-gray-50">
-                    <td class="px-4 py-2">{{ $index + 1 }}</td>
+                    <td class="px-4 py-2">{{ ($activities->currentPage() - 1) * $activities->perPage() + $index + 1 }}</td>
                     <td class="px-4 py-2">{{ $act->name ?? 'Untitled' }}</td>
+                    <td class="px-4 py-2">{{ $act->description ?? 'No description' }}</td>
+                    <td class="px-4 py-2">{{ $act->duration ?? 'N/A' }}</td>
                     <td class="px-4 py-2">{{ $act->created_at->format('Y-m-d') }}</td>
                     <td class="px-4 py-2 text-right space-x-2">
                         <button class="text-blue-600 hover:underline" @click="editActivity({{ $act->id }})">
@@ -54,11 +58,16 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="px-4 py-4 text-center text-gray-500">No activities added yet.</td>
+                    <td colspan="6" class="px-4 py-4 text-center text-gray-500">No activities added yet.</td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-4">
+        {{ $activities->links() }}
     </div>
 
     <!-- Activity Modal -->
@@ -92,6 +101,28 @@
                         class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         placeholder="Activity Name"
                         required
+                    >
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Description</label>
+                    <textarea
+                        name="description"
+                        x-model="form.description"
+                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        placeholder="Activity Description"
+                        rows="3"
+                    ></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Duration</label>
+                    <input
+                        type="text"
+                        name="duration"
+                        x-model="form.duration"
+                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        placeholder="e.g., 2 hours"
                     >
                 </div>
 
@@ -435,11 +466,11 @@ function activityComponent(texts, activities) {
         editMode: false,
         editModeActivity: false,
         texts,
-        activities,
-        form: { id: null, name: '', label: '', text: '' },
+        activities: activities.data || activities,
+        form: { id: null, name: '', description: '', duration: '', label: '', text: '' },
 
         resetForm() {
-            this.form = { id: null, name: '', label: '', text: '' };
+            this.form = { id: null, name: '', description: '', duration: '', label: '', text: '' };
             this.editMode = false;
             this.editModeActivity = false;
         },
@@ -449,6 +480,8 @@ function activityComponent(texts, activities) {
             if (activity) {
                 this.form.id = activity.id;
                 this.form.name = activity.name;
+                this.form.description = activity.description || '';
+                this.form.duration = activity.duration || '';
                 this.editModeActivity = true;
                 this.showActivityModal = true;
             }
@@ -519,6 +552,8 @@ function activityComponent(texts, activities) {
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             const formData = new FormData();
             formData.append('name', this.form.name);
+            formData.append('description', this.form.description);
+            formData.append('duration', this.form.duration);
 
             let url = "{{ route('activity-list.store') }}";
             if (this.editModeActivity && this.form.id) {

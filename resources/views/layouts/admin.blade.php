@@ -52,13 +52,12 @@
               ['label'=>'Accommodations','route'=>'admin.stay.accommodations']
             ]],
             ['title'=>'What to Do','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.do.activities'],
+              ['label'=>'Pages Information','route'=>'admin.do.whattodo'],
               ['label'=>'Items','route'=>'admin.do.activities']
             ]],
             ['title'=>'Food & Beverage','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.food.foodandbeverage'],
               ['label'=>'Items','route'=>'admin.food.menus'],
-              ['label'=>'Items','route'=>'admin.do.activities']
             ]],
             ['title'=>'Special Events','icon'=>'calendar','route'=>'admin.specialEvents.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.specialEvents.specialevents']

@@ -43,7 +43,7 @@ class AdminController extends Controller
 
     public function activity()
     {
-        $activities = Activity::all();
+        $activities = Activity::orderBy('sort_order')->paginate(10);
         $images = ActivitySwiperImage::all();
         $texts = ActivityText::all();
         return view('admin.whatToDo.activities', compact('activities', 'images', 'texts'));

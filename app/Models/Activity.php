@@ -6,7 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class Activity extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = [
+        'name',
+        'description',
+        'duration',
+        'price',
+        'availability',
+        'image',
+        'category',
+        'is_active',
+        'sort_order',
+        'active'
+    ];
 
     public function swiperImages()
     {
