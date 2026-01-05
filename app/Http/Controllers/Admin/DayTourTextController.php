@@ -22,9 +22,13 @@ class DayTourTextController extends Controller
             'daytour_id' => 'nullable|exists:day_tours,id',
         ]);
 
-        DayTourText::create($request->only(['title', 'content', 'daytour_id']));
+        try {
+            DayTourText::create($request->only(['title', 'content', 'daytour_id']));
 
-        return response()->json(['message' => 'Text content added successfully.']);
+            return response()->json(['message' => 'Text content added successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to add text: ' . $e->getMessage()], 500);
+        }
     }
 
     public function update(Request $request, DayTourText $dayTourText)
@@ -35,9 +39,13 @@ class DayTourTextController extends Controller
             'daytour_id' => 'nullable|exists:day_tours,id',
         ]);
 
-        $dayTourText->update($request->only(['title', 'content', 'daytour_id']));
+        try {
+            $dayTourText->update($request->only(['title', 'content', 'daytour_id']));
 
-        return response()->json(['message' => 'Text content updated successfully.']);
+            return response()->json(['message' => 'Text content updated successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to update text: ' . $e->getMessage()], 500);
+        }
     }
 
     public function destroy(DayTourText $dayTourText)

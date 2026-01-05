@@ -9,5 +9,5 @@ class DayTourSwiperImage extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'image_path', 'public_id'];
+    protected $fillable = ['title', 'image_path', 'public_id', 'daytour_id'];
 }

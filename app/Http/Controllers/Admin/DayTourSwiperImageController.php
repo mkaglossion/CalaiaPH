@@ -23,21 +23,25 @@ class DayTourSwiperImageController extends Controller
             'title' => 'nullable|string|max:255',
         ]);
 
-        // Upload image to Cloudinary
-        $filePath = $request->file('image')->getRealPath();
-        $uploadResult = Cloudinary::uploadApi()->upload($filePath);
+        try {
+            // Upload image to Cloudinary
+            $filePath = $request->file('image')->getRealPath();
+            $uploadResult = Cloudinary::uploadApi()->upload($filePath);
 
-        $uploadedFileUrl = $uploadResult['secure_url']; // Cloudinary secure URL
-        $publicId = $uploadResult['public_id'];
+            $uploadedFileUrl = $uploadResult['secure_url']; // Cloudinary secure URL
+            $publicId = $uploadResult['public_id'];
 
-        // Save to DB
-        DayTourSwiperImage::create([
-            'title' => $validated['title'] ?? null,
-            'image_path' => $uploadedFileUrl, // store Cloudinary URL
-            'public_id' => $publicId,
-        ]);
+            // Save to DB
+            DayTourSwiperImage::create([
+                'title' => $validated['title'] ?? null,
+                'image_path' => $uploadedFileUrl, // store Cloudinary URL
+                'public_id' => $publicId,
+            ]);
 
-        return response()->json(['message' => 'Image uploaded successfully!']);
+            return response()->json(['message' => 'Image uploaded successfully!']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Upload failed: ' . $e->getMessage()], 500);
+        }
     }
 
 

@@ -93,11 +93,11 @@
                 @forelse($texts as $text)
                     <tr class="hover:bg-gray-50/70 transition">
                         <td class="px-6 py-4 font-medium text-gray-900">
-                            {{ $text->label ?: 'No Label' }}
+                            {{ $text->title ?: 'No Label' }}
                         </td>
 
                         <td class="px-6 py-4 text-gray-600 text-sm">
-                            {{ Str::limit($text->text, 150) }}
+                            {{ Str::limit($text->content, 150) }}
                         </td>
 
                         <td class="px-6 py-4 text-right space-x-4">
@@ -190,12 +190,12 @@
 
                 <div>
                     <label class="block font-medium mb-1 text-gray-700">Label</label>
-                    <input type="text" x-model="form.label" class="w-full border rounded-xl px-3 py-2" placeholder="Optional">
+                    <input type="text" x-model="form.title" class="w-full border rounded-xl px-3 py-2" placeholder="Optional">
                 </div>
 
                 <div>
                     <label class="block font-medium mb-1 text-gray-700">Text</label>
-                    <textarea x-model="form.text" rows="4" class="w-full border rounded-xl px-3 py-2" placeholder="Enter text..." required></textarea>
+                    <textarea x-model="form.content" rows="4" class="w-full border rounded-xl px-3 py-2" placeholder="Enter text..." required></textarea>
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">
@@ -236,17 +236,17 @@ function dayTourManager() {
         showTextModal: false,
         editMode: false,
         texts: @js($texts),
-        form: { id: null, label: '', text: '' },
+        form: { id: null, title: '', content: '' },
 
         resetForm() {
-            this.form = { id: null, label: '', text: '' };
+            this.form = { id: null, title: '', content: '' };
             this.editMode = false;
         },
 
         editText(id) {
             const text = this.texts.find(t => t.id === id);
             if (text) {
-                this.form = { id: text.id, label: text.label, text: text.text };
+                this.form = { id: text.id, title: text.title, content: text.content };
                 this.editMode = true;
                 this.showTextModal = true;
             }
@@ -258,8 +258,8 @@ function dayTourManager() {
             const csrf = document.querySelector('meta[name=csrf-token]').content;
             const formData = new FormData();
 
-            formData.append('label', this.form.label);
-            formData.append('text', this.form.text);
+            formData.append('title', this.form.title);
+            formData.append('content', this.form.content);
 
             let url = '{{ route('day-tour-texts.store') }}';
 
