@@ -54,6 +54,7 @@
       <a href="{{ url('/dining') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Dinning</a>
       <a href="{{ url('/special-events') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'special-events' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Special Events</a>
       <a href="{{ url('/farm') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Our Farm</a>
+      <a href="{{ url('/shop') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'shop' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Shop</a>
     </nav>
 
     {{-- DESKTOP USER / GUEST BUTTONS RIGHT --}}
@@ -172,6 +173,7 @@
         <a href="{{ url('/dining') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Food & Beverage</a>
         <a href="{{ url('/special-events') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'special-events' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Special Events</a>
         <a href="{{ url('/farm') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Our Farm</a>
+        <a href="{{ url('/shop') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'shop' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Shop</a>
 
         <a href="{{ route('cart.index') }}" data-js-cart-button
            @click="open = false"

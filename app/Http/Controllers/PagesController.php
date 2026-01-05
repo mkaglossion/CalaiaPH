@@ -84,6 +84,11 @@ class PagesController extends Controller
         return $this->renderPage(FarmSwiperImage::class, FarmText::class, 'farm', 'farm');
     }
 
+    public function shop()
+    {
+        return $this->renderPage(FarmSwiperImage::class, FarmText::class, 'shop', 'shop');
+    }
+
     public function stay()
     {
         return $this->renderPage(StaySwiperImage::class, StayText::class, 'stay', 'stay');

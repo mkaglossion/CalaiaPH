@@ -74,6 +74,7 @@ Route::get('/dining', [PagesController::class, 'dining'])->name('dining');
 Route::get('/groups', [PagesController::class, 'groups'])->name('groups');
 Route::get('/special-events', [PagesController::class, 'specialEvents'])->name('special-events');
 Route::get('/farm', [PagesController::class, 'farm'])->name('farm');
+Route::get('/shop', [PagesController::class, 'shop'])->name('shop');
 Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
 
 Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show');
