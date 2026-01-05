@@ -682,10 +682,9 @@ class BookingController extends Controller
 
         $accommodations = StaycationAccommodation::with([
             'accommodationTexts',
-            'accommodationVariants', // first load variants
-            'accommodationVariants.staycation', // load their staycation
-            'accommodationVariants.staycation.texts', // load texts for the staycation
-            'accommodationVariants.staycation.swiperImages', // load images
+            'variants', // load variants (staycations)
+            'variants.texts', // load texts for the variants
+            'variants.swiperImages', // load images
         ])->get();
 
         $booking = session('booking', []);

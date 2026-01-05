@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Staycation;
 use App\Models\StaycationAccommodation;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Support\Facades\Log;
 
 class StaycationAccommodationController extends Controller
 {
@@ -34,13 +35,18 @@ class StaycationAccommodationController extends Controller
 
         // Upload image if exists
         if ($request->hasFile('image')) {
-            $filePath = $request->file('image')->getRealPath();
-            $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
-                'folder' => 'staycation_accommodations',
-            ]);
+            try {
+                $filePath = $request->file('image')->getRealPath();
+                $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
+                    'folder' => 'staycation_accommodations',
+                ]);
 
-            $imageUrl = $uploadResult['secure_url'];
-            $publicId = $uploadResult['public_id'];
+                $imageUrl = $uploadResult['secure_url'];
+                $publicId = $uploadResult['public_id'];
+            } catch (\Exception $e) {
+                // Log the error but continue without image
+                Log::error('Cloudinary upload failed: ' . $e->getMessage());
+            }
         }
 
         // Create accommodation
@@ -78,18 +84,22 @@ class StaycationAccommodationController extends Controller
 
         // Handle new image
         if ($request->hasFile('image')) {
-            $filePath = $request->file('image')->getRealPath();
-            $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
-                'folder' => 'staycation_accommodations',
-            ]);
+            try {
+                $filePath = $request->file('image')->getRealPath();
+                $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
+                    'folder' => 'staycation_accommodations',
+                ]);
 
-            // Delete old image from Cloudinary
-            if ($staycationAccommodation->public_id) {
-                Cloudinary::uploadApi()->destroy($staycationAccommodation->public_id);
+                // Delete old image from Cloudinary
+                if ($staycationAccommodation->public_id) {
+                    Cloudinary::uploadApi()->destroy($staycationAccommodation->public_id);
+                }
+
+                $staycationAccommodation->image_path = $uploadResult['secure_url'];
+                $staycationAccommodation->public_id = $uploadResult['public_id'];
+            } catch (\Exception $e) {
+                Log::error('Cloudinary upload failed: ' . $e->getMessage());
             }
-
-            $staycationAccommodation->image_path = $uploadResult['secure_url'];
-            $staycationAccommodation->public_id = $uploadResult['public_id'];
         }
 
         // Update other fields
@@ -117,7 +127,11 @@ class StaycationAccommodationController extends Controller
     {
         // Optional: delete image from Cloudinary
         if ($staycationAccommodation->public_id) {
-            Cloudinary::uploadApi()->destroy($staycationAccommodation->public_id);
+            try {
+                Cloudinary::uploadApi()->destroy($staycationAccommodation->public_id);
+            } catch (\Exception $e) {
+                Log::error('Cloudinary delete failed: ' . $e->getMessage());
+            }
         }
 
         $staycationAccommodation->delete();
