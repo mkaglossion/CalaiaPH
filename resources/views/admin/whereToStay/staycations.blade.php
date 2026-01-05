@@ -11,8 +11,9 @@
 
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Staycations</h2>
-        <button 
-            @click="showStaycationModal = true; resetForm()" 
+        <button
+            type="button"
+            @click="showStaycationModal = true; resetForm()"
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
             + Add Staycation
@@ -36,7 +37,7 @@
                     <td class="px-4 py-2">{{ $act->name ?? 'Untitled' }}</td>
                     <td class="px-4 py-2">{{ $act->created_at->format('Y-m-d') }}</td>
                     <td class="px-4 py-2 text-right space-x-2">
-                        <button class="text-blue-600 hover:underline" @click="editStaycation({{ $act->id }})">
+                        <button type="button" class="text-blue-600 hover:underline" @click="editStaycation({{ $act->id }})">
                             Edit
                         </button>
                         <form action="{{ route('staycation-list.destroy', $act->id) }}" method="POST" class="inline">
@@ -504,16 +505,21 @@ function staycationComponent() {
         },
 
         editStaycation(id) {
+            this.resetForm();
             const staycation = this.staycations.find(s => s.id === id);
             if (staycation) {
                 this.form.id = staycation.id;
                 this.form.name = staycation.name;
                 this.form.quantity = staycation.quantity;
-                this.form.priceConfigs = staycation.price_configs.map(pc => ({
-                    ...pc,
-                    multipleDates: Array.isArray(pc.dates) && pc.dates.length > 1,
-                    dates: Array.isArray(pc.dates) ? pc.dates.join(',') : pc.dates
-                })) || [];
+                this.form.priceConfigs = (staycation.price_configs || []).map(pc => {
+                    const datesStr = pc.dates || '';
+                    const isMultiple = datesStr.includes(',');
+                    return {
+                        ...pc,
+                        multipleDates: isMultiple,
+                        dates: datesStr
+                    };
+                });
                 this.editModeStaycation = true;
                 this.showStaycationModal = true;
             }
