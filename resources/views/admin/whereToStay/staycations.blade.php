@@ -482,14 +482,20 @@
 <script>
 function staycationComponent() {
     return {
+        showModal: false,
         showStaycationModal: false,
         editModeStaycation: false,
+        showTextModal: false,
+        editMode: false,
         staycations: @js($staycations),
         form: {
             id: null,
             name: '',
             quantity: 1,
-            priceConfigs: []
+            priceConfigs: [],
+            staycation_id: '',
+            label: '',
+            text: ''
         },
 
         resetForm() {
@@ -503,7 +509,7 @@ function staycationComponent() {
                 this.form.id = staycation.id;
                 this.form.name = staycation.name;
                 this.form.quantity = staycation.quantity;
-                this.form.priceConfigs = staycation.priceConfigs.map(pc => ({
+                this.form.priceConfigs = staycation.price_configs.map(pc => ({
                     ...pc,
                     multipleDates: Array.isArray(pc.dates) && pc.dates.length > 1,
                     dates: Array.isArray(pc.dates) ? pc.dates.join(',') : pc.dates
@@ -568,6 +574,53 @@ function staycationComponent() {
                 alert('Error submitting staycation.');
             } finally {
                 btn.innerText = this.editModeStaycation ? 'Update' : 'Add';
+                btn.disabled = false;
+            }
+        },
+
+        saveText: async function() {
+            const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+            const formData = new FormData();
+            formData.append('staycation_id', this.form.staycation_id);
+            formData.append('title', this.form.label);
+            formData.append('content', this.form.text);
+
+            let url = '{{ route("staycation-text.store") }}';
+            if (this.editMode && this.form.id) {
+                url = `/admin/staycation-text/${this.form.id}`;
+                formData.append('_method', 'PUT');
+            }
+
+            const btn = document.querySelector('#textUploadForm button[type=submit]');
+            btn.innerText = this.editMode ? 'Updating...' : 'Adding...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                    body: formData,
+                    credentials: 'same-origin'
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || (this.editMode ? 'Text updated!' : 'Text added!'));
+                    this.form.staycation_id = '';
+                    this.form.label = '';
+                    this.form.text = '';
+                    this.editMode = false;
+                    this.showTextModal = false;
+                    window.location.reload();
+                } else if (data.errors) {
+                    alert(Object.values(data.errors).flat().join('\n'));
+                } else {
+                    alert(data.message || 'Operation failed.');
+                }
+            } catch(err) {
+                console.error(err);
+                alert('Error submitting text.');
+            } finally {
+                btn.innerText = this.editMode ? 'Update' : 'Add';
                 btn.disabled = false;
             }
         }

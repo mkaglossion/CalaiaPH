@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Staycation extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'quantity', 'price_configs'];
+
+    protected $casts = [
+        'price_configs' => 'array',
+    ];
 
     public function texts()
     {

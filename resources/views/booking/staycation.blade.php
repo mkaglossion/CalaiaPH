@@ -390,7 +390,7 @@ $galleryData = [
         </div>
 
         {{-- Dynamic Variants Modal --}}
-        <div id="variants-modal" class="fixed inset-0 z-[9999] hidden">
+        <div id="variants-modal" class="fixed inset-0 z-9999 hidden">
             <!-- Backdrop -->
             <div
                 class="absolute inset-0 bg-black/40"

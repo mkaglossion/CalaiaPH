@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Menu;
 use App\Models\MenuSwiperImage;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 
@@ -54,17 +55,17 @@ class MenuSwiperImageController extends Controller
 
     public function destroy(MenuSwiperImage $menu_image)
     {
-        \Log::info('Deleting image', $menu_image->toArray());
+        Log::info('Deleting image', $menu_image->toArray());
 
         // Delete from Cloudinary if public_id exists
         if (!empty($menu_image->public_id)) {
             try {
                 Cloudinary::uploadApi()->destroy($menu_image->public_id);
-                \Log::info('✅ Deleted image from Cloudinary', [
+                Log::info('✅ Deleted image from Cloudinary', [
                     'public_id' => $menu_image->public_id
                 ]);
             } catch (\Exception $e) {
-                \Log::error('❌ Failed to delete from Cloudinary', [
+                Log::error('❌ Failed to delete from Cloudinary', [
                     'public_id' => $menu_image->public_id,
                     'error' => $e->getMessage()
                 ]);
@@ -75,9 +76,9 @@ class MenuSwiperImageController extends Controller
         $path = $menu_image->image_path;
         if ($path && Storage::disk('public')->exists($path)) {
             Storage::disk('public')->delete($path);
-            \Log::info('✅ Deleted local file', ['path' => $path]);
+            Log::info('✅ Deleted local file', ['path' => $path]);
         } else {
-            \Log::warning('⚠️ Local file not found or path null', ['path' => $path]);
+            Log::warning('⚠️ Local file not found or path null', ['path' => $path]);
         }
 
         // Delete DB record
