@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class PricingConfig extends Model
 {
     protected $fillable = [
-        'unit_type', 'peak_type_id', 'peak_period_id', 'holiday_id', 'day_type_id', 'price'
+        'unit_type', 'peak_type_id', 'peak_period_id', 'holiday_id', 'day_type_id', 'duration_set_id', 'price'
     ];
 
     /**

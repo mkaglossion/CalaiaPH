@@ -56,9 +56,9 @@ class PricingConfigController extends Controller
 
     /**
      * Store new pricing config in the rate matrix
-     * 
+     *
      * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
@@ -69,7 +69,27 @@ class PricingConfigController extends Controller
             'price' => 'required|numeric|min:0'
         ]);
 
-        PricingConfig::create($validated);
+        // Get the default duration set (Nightly Rate)
+        $durationSet = DurationSet::where('name', 'Nightly Rate')->first();
+        if (!$durationSet) {
+            $error = 'Default duration set not found.';
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $error], 500);
+            }
+            return redirect()->back()->withErrors(['duration_set' => $error]);
+        }
+
+        $validated['duration_set_id'] = $durationSet->id;
+
+        $pricingConfig = PricingConfig::create($validated);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pricing config added successfully.',
+                'pricing_config' => $pricingConfig
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Pricing config added successfully.');
     }
@@ -607,12 +627,23 @@ class PricingConfigController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $pricingConfig->update($validator->validated());
+        $validated = $validator->validated();
+
+        // Ensure duration_set_id is set (should already be, but just in case)
+        if (!$pricingConfig->duration_set_id) {
+            $durationSet = DurationSet::where('name', 'Nightly Rate')->first();
+            if ($durationSet) {
+                $validated['duration_set_id'] = $durationSet->id;
+            }
+        }
+
+        $pricingConfig->update($validated);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Pricing config updated successfully.'
+                'message' => 'Pricing config updated successfully.',
+                'pricing_config' => $pricingConfig
             ]);
         }
 
@@ -622,12 +653,20 @@ class PricingConfigController extends Controller
     /**
      * Delete a pricing config
      *
+     * @param Request $request
      * @param PricingConfig $pricingConfig
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
-    public function destroy(PricingConfig $pricingConfig)
+    public function destroy(Request $request, PricingConfig $pricingConfig)
     {
         $pricingConfig->delete();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pricing config deleted successfully.'
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Pricing config deleted successfully.');
     }
