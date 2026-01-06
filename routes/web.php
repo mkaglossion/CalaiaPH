@@ -264,14 +264,17 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('staycation-accommodations', StaycationAccommodationController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('accommodations-text', AccommodationTextController::class)->only(['index', 'store', 'update', 'destroy']);
 
-    Route::prefix('admin')->group(function () {
-        Route::get('pricing-configs', [PricingConfigController::class, 'index'])->name('pricing-configs.index');
-        Route::post('pricing-configs', [PricingConfigController::class, 'store'])->name('pricing-configs.store');
+    Route::prefix('pricing')->group(function () {
+    Route::get('pricing-configs', [PricingConfigController::class, 'index'])->name('pricing-configs.index');
+    Route::post('pricing-configs', [PricingConfigController::class, 'store'])->name('pricing-configs.store');
 
-        Route::put('day-types', [PricingConfigController::class, 'updateDayTypes'])->name('admin.dayTypes.update');
-        Route::post('holidays', [PricingConfigController::class, 'storeHoliday'])->name('admin.holidays.store');
-        Route::post('peak-periods', [PricingConfigController::class, 'storePeakPeriod'])->name('admin.peakPeriods.store');
+    Route::put('day-types', [PricingConfigController::class, 'updateDayTypes'])->name('admin.dayTypes.update');
+    Route::post('peak-periods', [PricingConfigController::class, 'storePeakPeriod'])->name('admin.peakPeriods.store');
     });
+
+    Route::post('holidays', [PricingConfigController::class, 'storeHoliday'])->name('admin.holidays.store');
+    Route::put('holidays/{holiday}', [PricingConfigController::class, 'updateHoliday'])->name('admin.holidays.update');
+    Route::delete('holidays/{holiday}', [PricingConfigController::class, 'destroyHoliday'])->name('admin.holidays.destroy');
 
 
 

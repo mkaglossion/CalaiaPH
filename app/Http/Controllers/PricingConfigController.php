@@ -78,7 +78,42 @@ class PricingConfigController extends Controller
 
         Holiday::create($request->all());
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Holiday added successfully.'
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Holiday added successfully.');
+    }
+
+    // Update holiday
+    public function updateHoliday(Request $request, Holiday $holiday)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'date' => 'required|date|unique:holidays,date,' . $holiday->id
+        ]);
+
+        $holiday->update($request->all());
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Holiday updated successfully.'
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Holiday updated successfully.');
+    }
+
+    // Delete holiday
+    public function destroyHoliday(Holiday $holiday)
+    {
+        $holiday->delete();
+
+        return redirect()->back()->with('success', 'Holiday deleted successfully.');
     }
 
     // Store peak period (Non-Peak / Peak / Super-Peak)

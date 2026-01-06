@@ -139,7 +139,83 @@
     {{-- ========================= --}}
     {{-- Section 3: Holidays --}}
     {{-- ========================= --}}
-    <div class="bg-white p-5 rounded shadow" x-data="holidayModal()">
+    <div class="bg-white p-5 rounded shadow" x-data="{
+            open: false,
+            editMode: false,
+            holidays: @js($holidays),
+            form: { id: null, name: '', date: '' },
+
+            resetForm() {
+                this.form = { id: null, name: '', date: '' };
+                this.editMode = false;
+            },
+
+            editHoliday(id) {
+                const holiday = this.holidays.find(h => h.id === id);
+                if (holiday) {
+                    this.form = { id: holiday.id, name: holiday.name, date: holiday.date };
+                    this.editMode = true;
+                    this.open = true;
+                }
+            },
+
+            close() {
+                this.open = false;
+                this.resetForm();
+            },
+
+            async saveHoliday() {
+                const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+                const formData = new FormData();
+                formData.append('name', this.form.name);
+                formData.append('date', this.form.date);
+
+                let url = '{{ route('admin.holidays.store') }}';
+                let method = 'POST';
+
+                if (this.editMode && this.form.id) {
+                    url = `/admin/holidays/${this.form.id}`;
+                    formData.append('_method', 'PUT');
+                    method = 'POST';
+                }
+
+                const btn = document.querySelector('#holidayForm button[type=submit]');
+                btn.innerText = this.editMode ? 'Updating...' : 'Saving...';
+                btn.disabled = true;
+
+                try {
+                    const res = await fetch(url, {
+                        method,
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json',
+                        },
+                        body: formData,
+                        credentials: 'same-origin'
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        alert(data.message || (this.editMode ? 'Holiday updated successfully!' : 'Holiday added successfully!'));
+                        this.resetForm();
+                        this.open = false;
+                        window.location.reload();
+                    } else if (data.errors) {
+                        const errorMessages = Object.values(data.errors).flat().join('\n');
+                        alert(errorMessages);
+                    } else {
+                        alert(data.message || 'Operation failed.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Error submitting holiday.');
+                } finally {
+                    btn.innerText = this.editMode ? 'Update' : 'Save';
+                    btn.disabled = false;
+                }
+            }
+        }">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold">Declared Holidays</h2>
             <button @click="open = true" class="px-4 py-2 bg-blue-600 text-white rounded">+ Add Holiday</button>
@@ -150,6 +226,7 @@
                 <tr>
                     <th class="border px-2 py-1">Name</th>
                     <th class="border px-2 py-1">Date</th>
+                    <th class="border px-2 py-1 text-right">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -157,6 +234,25 @@
                     <tr>
                         <td class="border px-2 py-1">{{ $holiday->name }}</td>
                         <td class="border px-2 py-1">{{ $holiday->date }}</td>
+                        <td class="border px-2 py-1 text-right space-x-2">
+                            <button
+                                class="text-blue-600 hover:underline"
+                                @click="editHoliday({{ $holiday->id }})"
+                            >
+                                Edit
+                            </button>
+                            <form action="{{ route('admin.holidays.destroy', $holiday->id) }}" method="POST" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button
+                                    type="submit"
+                                    class="text-red-600 hover:underline"
+                                    onclick="return confirm('Delete this holiday?')"
+                                >
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                 @endforeach
             </tbody>
@@ -170,23 +266,42 @@
             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 
             <div @click.away="close()" class="bg-white w-full max-w-md rounded-lg shadow-lg p-6">
-                <h3 class="text-lg font-semibold mb-4">Add Holiday</h3>
+                <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Holiday' : 'Add Holiday'"></h3>
 
-                <form action="{{ route('admin.holidays.store') }}" method="POST">
+                <form
+                    id="holidayForm"
+                    @submit.prevent="saveHoliday()"
+                >
                     @csrf
+                    <template x-if="editMode">
+                        <input type="hidden" name="_method" value="PUT">
+                    </template>
+
                     <div class="mb-4">
                         <label class="block font-semibold mb-1">Holiday Name</label>
-                        <input type="text" name="name" class="border rounded w-full p-2" required>
+                        <input
+                            type="text"
+                            x-model="form.name"
+                            class="border rounded w-full p-2"
+                            required
+                        >
                     </div>
 
                     <div class="mb-4">
                         <label class="block font-semibold mb-1">Holiday Date</label>
-                        <input type="date" name="date" class="border rounded w-full p-2" required>
+                        <input
+                            type="date"
+                            x-model="form.date"
+                            class="border rounded w-full p-2"
+                            required
+                        >
                     </div>
 
                     <div class="flex justify-end gap-2">
                         <button type="button" @click="close()" class="px-4 py-2 border rounded">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            <span x-text="editMode ? 'Update' : 'Save'"></span>
+                        </button>
                     </div>
                 </form>
             </div>
