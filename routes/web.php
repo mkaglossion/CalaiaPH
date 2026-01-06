@@ -265,6 +265,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::delete('/activity-text/{text}', [ActivityTextController::class, 'destroy'])->name('activity-text.destroy');
 
     Route::post('/staycation-text', [StaycationTextController::class, 'store'])->name('staycation-text.store');
+    Route::put('/staycation-text/{text}', [StaycationTextController::class, 'update'])->name('staycation-text.update');
     Route::delete('/staycation-text/{text}', [StaycationTextController::class, 'destroy'])->name('staycation-text.destroy');
 
     Route::post('/menu-text', [MenuTextController::class, 'store'])->name('menu-text.store');
@@ -323,7 +324,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::delete('/activity-list/{activity}', [ActivityController::class, 'destroy'])->name('activity-list.destroy');
 
     Route::post('/staycation-list', [StaycationController::class, 'store'])->name('staycation-list.store');
-    Route::delete('/staycation-list/{staycation}', [StaycationController::class, 'destroy'])->name('staycation-list.destroy');
+    Route::match(['PUT', 'POST'], '/staycation-list/{id}', [StaycationController::class, 'update'])->name('staycation-list.update');
+    Route::delete('/staycation-list/{id}', [StaycationController::class, 'destroy'])->name('staycation-list.destroy');
 
     Route::post('/menu-list', [MenuController::class, 'store'])->name('menu-list.store');
     Route::delete('/menu-list/{menu}', [MenuController::class, 'destroy'])->name('menu-list.destroy');

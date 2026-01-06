@@ -38,15 +38,15 @@ class StaycationController extends Controller
     //     return view('admin.activities', compact('staycation'));
     // }
 
-    public function update(Request $request, Staycation $staycation_list)
+    public function update(Request $request, Staycation $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:staycations,name,' . $staycation_list->id,
+            'name' => 'required|string|max:255|unique:staycations,name,' . $id->id,
             'quantity' => 'required|integer|min:1',
             'priceConfigs' => 'required|json',
         ]);
 
-        $staycation_list->update([
+        $id->update([
             'name' => $request->name,
             'quantity' => $request->quantity,
             'price_configs' => json_decode($request->priceConfigs, true),
@@ -55,9 +55,9 @@ class StaycationController extends Controller
         return response()->json(['message' => 'Staycation updated successfully.']);
     }
 
-    public function destroy(Staycation $staycation_list)
+    public function destroy(Staycation $id)
     {
-        $staycation_list->delete();
+        $id->delete();
         return redirect()->back()->with('success', 'Staycation deleted successfully!');
     }
 }

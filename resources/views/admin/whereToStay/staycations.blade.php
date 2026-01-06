@@ -69,9 +69,6 @@
 
             <form id="staycationForm" @submit.prevent="saveStaycation()" class="space-y-5">
                 @csrf
-                <template x-if="editModeStaycation">
-                    <input type="hidden" name="_method" value="PUT">
-                </template>
 
                 <!-- Staycation Name & Quantity -->
                 <div class="flex space-x-2">
@@ -541,15 +538,31 @@ function staycationComponent() {
         },
 
         saveStaycation: async function() {
+            // Validate form data
+            if (!this.form.name.trim()) {
+                alert('Please enter a staycation name.');
+                return;
+            }
+            if (!this.form.quantity || this.form.quantity < 1) {
+                alert('Please enter a valid quantity.');
+                return;
+            }
+            if (!this.form.priceConfigs || this.form.priceConfigs.length === 0) {
+                alert('Please add at least one price configuration.');
+                return;
+            }
+
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             const formData = new FormData();
+            formData.append('_token', csrf);
             formData.append('name', this.form.name);
             formData.append('quantity', this.form.quantity);
             formData.append('priceConfigs', JSON.stringify(this.form.priceConfigs));
 
             let url = '{{ route("staycation-list.store") }}';
+            let method = 'POST';
             if (this.editModeStaycation && this.form.id) {
-                url = `/admin/staycation-list/${this.form.id}`;
+                url = `{{ url('/admin/staycation-list') }}/${this.form.id}`;
                 formData.append('_method', 'PUT');
             }
 
@@ -559,8 +572,10 @@ function staycationComponent() {
 
             try {
                 const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                    method: method,
+                    headers: {
+                        'Accept': 'application/json'
+                    },
                     body: formData,
                     credentials: 'same-origin'
                 });
@@ -576,8 +591,8 @@ function staycationComponent() {
                     alert(data.message || 'Operation failed.');
                 }
             } catch(err) {
-                console.error(err);
-                alert('Error submitting staycation.');
+                console.error('Error submitting staycation:', err);
+                alert('Error submitting staycation: ' + (err.message || 'Unknown error'));
             } finally {
                 btn.innerText = this.editModeStaycation ? 'Update' : 'Add';
                 btn.disabled = false;
@@ -592,9 +607,10 @@ function staycationComponent() {
             formData.append('content', this.form.text);
 
             let url = '{{ route("staycation-text.store") }}';
+            let method = 'POST';
             if (this.editMode && this.form.id) {
-                url = `/admin/staycation-text/${this.form.id}`;
-                formData.append('_method', 'PUT');
+                url = `{{ url('/admin/staycation-text') }}/${this.form.id}`;
+                method = 'PUT';
             }
 
             const btn = document.querySelector('#textUploadForm button[type=submit]');
@@ -603,7 +619,7 @@ function staycationComponent() {
 
             try {
                 const res = await fetch(url, {
-                    method: 'POST',
+                    method: method,
                     headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
                     body: formData,
                     credentials: 'same-origin'
