@@ -69,6 +69,10 @@
             ['title'=>'Pricing','icon'=>'coins','route'=>'admin.farm.*','sub'=>[
               ['label'=>'Configurations','route'=>'admin.pricingConfig.index'],
             ]],
+            ['title'=>'Shop','icon'=>'shopping-bag','route'=>'admin.shop.*','sub'=>[
+              ['label'=>'Pages Information','route'=>'admin.shop.shopstore'],
+              ['label'=>'Items','route'=>'admin.shop.shopitems']
+            ]],
 
           ];
         @endphp

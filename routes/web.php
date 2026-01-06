@@ -198,11 +198,16 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::get('/', [AdminPagesController::class, 'specialEvents'])->name('admin.specialEvents.specialevents');
     });
     Route::prefix('/farm')->group(function () {
-            Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farm.farmInfos');
-            Route::get('/our-farm', [AdminPagesController::class, 'ourFarm'])->name('admin.farm.ourfarm');
-    });
-    
-    // ========== Pricing Configuration Routes ==========
+             Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farm.farmInfos');
+             Route::get('/our-farm', [AdminPagesController::class, 'ourFarm'])->name('admin.farm.ourfarm');
+     });
+
+     Route::prefix('/shop')->group(function () {
+         Route::get('/shopstore', [AdminController::class, 'shopstore'])->name('admin.shop.shopstore');
+         Route::get('/shopitems', [AdminController::class, 'shopitems'])->name('admin.shop.shopitems');
+     });
+
+     // ========== Pricing Configuration Routes ==========
     Route::prefix('/pricing')->group(function () {
         // Main config page
         Route::get('/config', [PricingConfigController::class, 'index'])->name('admin.pricingConfig.index');

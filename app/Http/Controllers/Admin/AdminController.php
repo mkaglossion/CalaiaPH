@@ -28,6 +28,8 @@ use App\Models\PeakPeriod;
 use App\Models\Holiday;
 use App\Models\DurationSet;
 use App\Models\PricingConfig;
+use App\Models\FarmSwiperImage;
+use App\Models\FarmText;
 
 
 
@@ -100,6 +102,20 @@ class AdminController extends Controller
         return view('admin.pricingConfig.index', compact(
             'dayTypes', 'peakTypes', 'holidays', 'durationSets', 'pricingConfigs'
         ));
+    }
+
+    public function shopstore()
+    {
+        $images = FarmSwiperImage::all();
+        $texts = FarmText::all();
+        return view('admin.ShopStore.shopstore', compact('images', 'texts'));
+    }
+
+    public function shopitems()
+    {
+        // TODO: Implement shop items management
+        // For now, return a basic view
+        return view('admin.ShopStore.shopitems');
     }
 
 }
