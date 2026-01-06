@@ -201,80 +201,42 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
             Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farm.farmInfos');
             Route::get('/our-farm', [AdminPagesController::class, 'ourFarm'])->name('admin.farm.ourfarm');
     });
-    Route::prefix('/pricing')->group(function () {
-            Route::get('/config', [AdminController::class, 'config'])->name('admin.pricingConfig.index');
-    });
-    Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.staycations');
-    Route::get('/events', [AdminController::class, 'event'])->name('admin.events');
-    // adminRoute('/reports', AdminController::class, 'admin.reports', 'reports');
-
-    // Pages Submenu
-
-
-    // 🖼️ Swiper Images CRUD
-    Route::get('swiper-images', [SwiperImageController::class, 'index'])->name('swiper-images.index');
-    Route::post('swiper-images', [SwiperImageController::class, 'store'])->name('swiper-images.store');
-    Route::delete('swiper-images/{swiperImage}', [SwiperImageController::class, 'destroy'])->name('swiper-images.destroy');
-    Route::resource('day-tour-swiper-images', DayTourSwiperImageController::class)->only(['index', 'store', 'destroy']);
-    Route::resource('stay-swiper-images', StaySwiperImageController::class)->only(['index', 'store', 'destroy']);
-    Route::resource('do-swiper-images', DoSwiperImageController::class)->only(['index', 'store', 'destroy']);
-    Route::resource('food-swiper-images', FoodSwiperImageController::class)->only(['index', 'store', 'destroy']);
-    Route::resource('special-swiper-images', SpecialSwiperImageController::class)->only(['index', 'store', 'destroy']);
-    Route::resource('farm-swiper-images', FarmSwiperImageController::class)->only(['index', 'store', 'destroy']);
-    Route::resource('activity-swiper-images', ActivitySwiperImageController::class)->only(['store', 'destroy']);
-
-    // Text CRUD
-    Route::resource('home-texts', HomeTextController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('day-tour-texts', DayTourTextController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('stay-texts', StayTextController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('do-texts', DoTextController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('food-texts', FoodTextController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('special-texts', SpecialTextController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('farm-texts', FarmTextController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('activity-texts', ActivityTextController::class)->only(['store', 'update', 'destroy']);
-
-    // activities CRUD
-    Route::resource('activity-list', ActivityController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('activity-image', ActivitySwiperImageController::class)->only(['index', 'store', 'destroy']);
-    Route::resource('activity-text', ActivityTextController::class)->only(['store', 'update', 'destroy']);
-
-    // staycation CRUD
-    Route::resource('staycation-list', StaycationController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('staycation-image', StaycationSwiperImageController::class)->only(['index', 'store', 'destroy']);
-    Route::resource('staycation-text', StaycationTextController::class)->only(['store', 'update', 'destroy']);
-
-    // menu CRUD
-    Route::resource('menu-list', MenuController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('menu-image', MenuSwiperImageController::class)->only(['index', 'store', 'destroy']);
-    Route::resource('menu-text', MenuTextController::class)->only(['store', 'update', 'destroy']);
-
-    // event CRUD
-    Route::resource('event-list', EventController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('event-image', EventSwiperImageController::class)->only(['index', 'store', 'destroy']);
-    Route::resource('event-text', EventTextController::class)->only(['store', 'update', 'destroy']);
-
-    // farmInfo CRUD
-    Route::resource('farmInfo-list', FarmInfoController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('farmInfo-image', FarmInfoSwiperImageController::class)->only(['index', 'store', 'destroy']);
-    Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
-
-    Route::resource('day-tours', DayTourController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('day-text', DayPackageTextController::class)->only(['index', 'store', 'update', 'destroy']);
     
-    Route::resource('staycation-accommodations', StaycationAccommodationController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('accommodations-text', AccommodationTextController::class)->only(['index', 'store', 'update', 'destroy']);
+    // ========== Pricing Configuration Routes ==========
+    Route::prefix('/pricing')->group(function () {
+        // Main config page
+        Route::get('/config', [PricingConfigController::class, 'index'])->name('admin.pricingConfig.index');
+        
+        // Rate Matrix (Pricing Configs)
+        Route::get('pricing-configs', [PricingConfigController::class, 'index'])->name('pricing-configs.index');
+        Route::post('pricing-configs', [PricingConfigController::class, 'store'])->name('admin.pricing-configs.store');
+        Route::put('pricing-configs/{pricingConfig}', [PricingConfigController::class, 'update'])->name('admin.pricing-configs.update');
+        Route::delete('pricing-configs/{pricingConfig}', [PricingConfigController::class, 'destroy'])->name('admin.pricing-configs.destroy');
 
-    Route::prefix('pricing')->group(function () {
-    Route::get('pricing-configs', [PricingConfigController::class, 'index'])->name('pricing-configs.index');
-    Route::post('pricing-configs', [PricingConfigController::class, 'store'])->name('pricing-configs.store');
+        // Weekend/Weekday Configuration
+        Route::put('day-types', [PricingConfigController::class, 'updateDayTypes'])->name('admin.dayTypes.update');
 
-    Route::put('day-types', [PricingConfigController::class, 'updateDayTypes'])->name('admin.dayTypes.update');
-    Route::post('peak-periods', [PricingConfigController::class, 'storePeakPeriod'])->name('admin.peakPeriods.store');
+        // Peak Periods (Durations)
+        Route::post('peak-periods', [PricingConfigController::class, 'storePeakPeriod'])->name('admin.peakPeriods.store');
+        Route::put('peak-periods/{peakPeriod}', [PricingConfigController::class, 'updatePeakPeriod'])->name('admin.peakPeriods.update');
+        Route::delete('peak-periods/{peakPeriod}', [PricingConfigController::class, 'destroyPeakPeriod'])->name('admin.peak-periods.destroy');
+
+        // Holidays
+        Route::post('holidays', [PricingConfigController::class, 'storeHoliday'])->name('admin.holidays.store');
+        Route::put('holidays/{holiday}', [PricingConfigController::class, 'updateHoliday'])->name('admin.holidays.update');
+        Route::delete('holidays/{holiday}', [PricingConfigController::class, 'destroyHoliday'])->name('admin.holidays.destroy');
+
+        // Price Calculator (API)
+        Route::post('calculate-price', [PricingConfigController::class, 'calculatePrice'])->name('admin.pricing.calculate');
+
+        // Seed Peak Types
+        Route::get('seed-peak-types', [PricingConfigController::class, 'seedPeakTypes'])->name('admin.pricing.seedPeakTypes');
+
+        // API Endpoints
+        Route::get('api/peak-types', [PricingConfigController::class, 'getPeakTypes'])->name('api.pricing.peakTypes');
+        Route::get('api/holidays', [PricingConfigController::class, 'getHolidays'])->name('api.pricing.holidays');
+        Route::get('api/weekend-config', [PricingConfigController::class, 'getWeekendConfig'])->name('api.pricing.weekendConfig');
     });
-
-    Route::post('holidays', [PricingConfigController::class, 'storeHoliday'])->name('admin.holidays.store');
-    Route::put('holidays/{holiday}', [PricingConfigController::class, 'updateHoliday'])->name('admin.holidays.update');
-    Route::delete('holidays/{holiday}', [PricingConfigController::class, 'destroyHoliday'])->name('admin.holidays.destroy');
 
 
 

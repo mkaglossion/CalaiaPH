@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\DayType;
+use App\Models\DayTypeDay;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -15,6 +17,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             HolidaySeeder::class,
+            DayTypeSeeder::class,
+            PeakTypeSeeder::class,
+            DurationSetSeeder::class,
+            DayTypeDaySeeder::class,
+            PricingConfigSeeder::class,
         ]);
 
         // --- Users Seeder ---

@@ -4,61 +4,103 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\DayType;
-use App\Models\DayTypeDay; // for storing weekday/weekend mapping
+use App\Models\DayTypeDay;
 use App\Models\PeakType;
 use App\Models\PeakPeriod;
 use App\Models\Holiday;
 use App\Models\DurationSet;
 use App\Models\PricingConfig;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class PricingConfigController extends Controller
 {
-    // Show all configurations
+    /**
+     * Show all pricing configurations
+     * 
+     * This displays:
+     * - Weekend Rules (checkboxes for Fri-Sat)
+     * - Durations (Non-Peak/Peak/Super-Peak with multiple date ranges)
+     * - Declared Holidays
+     * - Rate Matrix (unit_type, season_type, day_type)
+     */
     public function index()
     {
         $dayTypes = DayType::with('days')->get();
-        $peakTypes = PeakType::with('periods')->get();
-        $holidays = Holiday::all();
+        $peakTypes = PeakType::with(['periods' => function($query) {
+            $query->orderBy('start_date', 'asc');
+        }])->orderBy('priority', 'desc')->get();
+        $holidays = Holiday::orderBy('date', 'asc')->get();
         $durationSets = DurationSet::all();
-        $pricingConfigs = PricingConfig::with(['peakPeriod', 'holiday', 'durationSet', 'dayType'])->get();
+        
+        // Get pricing configs grouped by unit_type for the rate matrix
+        $pricingConfigs = PricingConfig::with(['peakType', 'dayType', 'durationSet'])
+            ->get()
+            ->groupBy('unit_type');
 
-        // Get the IDs for Weekday and Weekend dynamically
-        $weekdayId = DayType::where('name', 'Weekday')->value('id');
+        // Get weekend days configuration
         $weekendId = DayType::where('name', 'Weekend')->value('id');
-
-        // Array of weekend days (0=Sun, 6=Sat) for checkboxes
         $weekendDays = DayTypeDay::where('day_type_id', $weekendId)->pluck('weekday')->toArray();
 
-        return view('pricing-config.index', compact(
-            'dayTypes', 'peakTypes', 'holidays', 'durationSets', 'pricingConfigs', 'weekendDays', 'weekdayId', 'weekendId'
+        // Default to Fri (5) and Sat (6) if no configuration exists
+        if (empty($weekendDays)) {
+            $weekendDays = [5, 6];
+        }
+
+        return view('admin.pricingConfig.index', compact(
+            'dayTypes', 'peakTypes', 'holidays', 'durationSets', 
+            'pricingConfigs', 'weekendDays'
         ));
     }
 
-    // Store new pricing config
+    /**
+     * Store new pricing config in the rate matrix
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
-        $request->validate([
-            'peak_period_id' => 'nullable|exists:peak_periods,id',
-            'holiday_id' => 'nullable|exists:holidays,id',
-            'duration_set_id' => 'required|exists:duration_sets,id',
+        $validated = $request->validate([
+            'unit_type' => 'required|string|max:255',
+            'peak_type_id' => 'required|exists:peak_types,id',
             'day_type_id' => 'required|exists:day_types,id',
             'price' => 'required|numeric|min:0'
         ]);
 
-        PricingConfig::create($request->all());
+        PricingConfig::create($validated);
 
         return redirect()->back()->with('success', 'Pricing config added successfully.');
     }
 
-    // Update Weekday / Weekend mapping
+    /**
+     * Update Weekend/Weekday configuration
+     * 
+     * Weekend = Fri (5) and Sat (6) by default
+     * Weekday = Sun (0), Mon (1), Tue (2), Wed (3), Thu (4)
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function updateDayTypes(Request $request)
     {
-        $weekendDays = $request->input('weekend', []);
+        $validator = Validator::make($request->all(), [
+            'weekend_days' => 'required|array',
+            'weekend_days.*' => 'integer|between:0,6'
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $weekendDays = $request->input('weekend_days', []);
 
         // Ensure DayType entries exist
         $weekday = DayType::firstOrCreate(['name' => 'Weekday']);
         $weekend = DayType::firstOrCreate(['name' => 'Weekend']);
 
+        // Update each weekday (0-6) mapping
         foreach (range(0, 6) as $i) {
             $dayTypeDay = DayTypeDay::firstOrNew(['weekday' => $i]);
             $dayTypeDay->day_type_id = in_array($i, $weekendDays) ? $weekend->id : $weekday->id;
@@ -68,35 +110,61 @@ class PricingConfigController extends Controller
         return redirect()->back()->with('success', 'Weekdays/Weekends updated successfully.');
     }
 
-    // Store new holiday
+    /**
+     * Store a new declared holiday
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function storeHoliday(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'date' => 'required|date|unique:holidays,date'
         ]);
 
-        Holiday::create($request->all());
+        if ($validator->fails()) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            }
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        Holiday::create($validator->validated());
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Holiday added successfully.'
+                'message' => 'Holiday added successfully.',
+                'holiday' => Holiday::latest()->first()
             ]);
         }
 
         return redirect()->back()->with('success', 'Holiday added successfully.');
     }
 
-    // Update holiday
+    /**
+     * Update a holiday
+     * 
+     * @param Request $request
+     * @param Holiday $holiday
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function updateHoliday(Request $request, Holiday $holiday)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'date' => 'required|date|unique:holidays,date,' . $holiday->id
         ]);
 
-        $holiday->update($request->all());
+        if ($validator->fails()) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            }
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $holiday->update($validator->validated());
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -108,7 +176,12 @@ class PricingConfigController extends Controller
         return redirect()->back()->with('success', 'Holiday updated successfully.');
     }
 
-    // Delete holiday
+    /**
+     * Delete a holiday
+     * 
+     * @param Holiday $holiday
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function destroyHoliday(Holiday $holiday)
     {
         $holiday->delete();
@@ -116,30 +189,446 @@ class PricingConfigController extends Controller
         return redirect()->back()->with('success', 'Holiday deleted successfully.');
     }
 
-    // Store peak period (Non-Peak / Peak / Super-Peak)
+    /**
+     * Store a new peak period (Duration)
+     * 
+     * Supports multiple date ranges per type:
+     * - Non-Peak: Jun 16 – Aug 31
+     * - Peak: Jan 5 – Jun 15, Sep 1 – Dec 19
+     * - Super-Peak: Apr 2 – Apr 6 (Holy Week), Oct 31 – Nov 2 (Halloween), 
+     *               Dec 20 – Dec 31 & Jan 1 – Jan 4 (Holiday Season - split as Option A)
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
     public function storePeakPeriod(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'peak_type_id' => 'required|exists:peak_types,id',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'name' => 'nullable|string|max:255' // Optional: Holy Week, Halloween, etc.
         ]);
+
+        if ($validator->fails()) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            }
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // Check for overlaps with same or higher priority peak types
+        $overlapWarning = $this->checkPeakPeriodOverlap(
+            $request->peak_type_id,
+            $request->start_date,
+            $request->end_date
+        );
 
         $period = PeakPeriod::create([
             'peak_type_id' => $request->peak_type_id,
             'start_date' => $request->start_date,
-            'end_date' => $request->end_date
+            'end_date' => $request->end_date,
+            'name' => $request->name
         ]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Peak period added successfully',
-                'period' => $period
+                'message' => 'Peak period added successfully' . ($overlapWarning ? '. Note: This period overlaps with existing periods.' : ''),
+                'period' => $period,
+                'overlap_warning' => $overlapWarning
             ]);
+        }
+
+        if ($overlapWarning) {
+            return redirect()->back()->with('warning', 'Peak period added. Note: This period overlaps with existing periods.');
         }
 
         return redirect()->back()->with('success', 'Peak period added successfully.');
     }
 
+    /**
+     * Update a peak period
+     * 
+     * @param Request $request
+     * @param PeakPeriod $peakPeriod
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function updatePeakPeriod(Request $request, PeakPeriod $peakPeriod)
+    {
+        $validator = Validator::make($request->all(), [
+            'peak_type_id' => 'required|exists:peak_types,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'name' => 'nullable|string|max:255'
+        ]);
+
+        if ($validator->fails()) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            }
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $peakPeriod->update($validator->validated());
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Peak period updated successfully.'
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Peak period updated successfully.');
+    }
+
+    /**
+     * Delete a peak period
+     * 
+     * @param PeakPeriod $peakPeriod
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroyPeakPeriod(PeakPeriod $peakPeriod)
+    {
+        $peakPeriod->delete();
+
+        return redirect()->back()->with('success', 'Peak period deleted successfully.');
+    }
+
+    /**
+     * Check for overlapping peak periods
+     * 
+     * Higher priority peak types (Super-Peak > Peak > Non-Peak) take precedence
+     * when overlaps occur
+     * 
+     * @param int $peakTypeId
+     * @param string $startDate
+     * @param string $endDate
+     * @return string|null
+     */
+    private function checkPeakPeriodOverlap($peakTypeId, $startDate, $endDate)
+    {
+        $newStart = Carbon::parse($startDate);
+        $newEnd = Carbon::parse($endDate);
+
+        $overlaps = PeakPeriod::where(function($query) use ($newStart, $newEnd) {
+                $query->where(function($q) use ($newStart, $newEnd) {
+                    $q->where('start_date', '<=', $newEnd)
+                      ->where('end_date', '>=', $newStart);
+                });
+            })
+            ->where('id', '!=', request()->route('peakPeriod') ? request()->route('peakPeriod')->id : 0)
+            ->with('peakType')
+            ->get();
+
+        if ($overlaps->isEmpty()) {
+            return null;
+        }
+
+        $overlapNames = $overlaps->pluck('peakType.name')->unique()->implode(', ');
+        return "Overlaps with existing period(s): {$overlapNames}";
+    }
+
+    /**
+     * Calculate total price for a booking
+     * 
+     * This is the CORE pricing decision rule:
+     * 1. For each night (check-in inclusive, check-out exclusive):
+     *    a. Determine Season Type (Priority: Super-Peak > Peak > Non-Peak)
+     *    b. Determine Day Type (Holiday > Weekend > Weekday)
+     *    c. Get rate from price_matrix[unit_type][season_type][day_type]
+     * 2. Sum all nightly rates
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function calculatePrice(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'unit_type' => 'required|string|max:255',
+            'check_in' => 'required|date',
+            'check_out' => 'required|date|after:check_in'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $unitType = $request->unit_type;
+        $checkIn = Carbon::parse($request->check_in);
+        $checkOut = Carbon::parse($request->check_out);
+        
+        $pricingConfigs = PricingConfig::where('unit_type', $unitType)
+            ->with(['peakType', 'dayType'])
+            ->get();
+
+        if ($pricingConfigs->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No pricing configuration found for unit type: ' . $unitType
+            ], 404);
+        }
+
+        // Build price lookup table
+        $priceMatrix = [];
+        foreach ($pricingConfigs as $config) {
+            $priceMatrix[$config->peakType->name][$config->dayType->name] = $config->price;
+        }
+
+        $totalPrice = 0;
+        $breakdown = [];
+
+        // Get holiday dates for the booking period
+        $holidayDates = Holiday::whereBetween('date', [$checkIn, $checkOut->copy()->subDay()])
+            ->pluck('date')
+            ->map(function($date) {
+                return Carbon::parse($date)->format('Y-m-d');
+            })
+            ->toArray();
+
+        // Get weekend configuration
+        $weekendId = DayType::where('name', 'Weekend')->value('id');
+        $weekendDayIds = DayTypeDay::where('day_type_id', $weekendId)->pluck('weekday')->toArray();
+
+        // Get peak type priorities (higher number = higher priority)
+        $peakTypePriorities = PeakType::pluck('priority', 'name')->toArray();
+
+        // Calculate price per night
+        $current = $checkIn->copy();
+        while ($current->lt($checkOut)) {
+            $nightDate = $current->format('Y-m-d');
+            
+            // Step A: Determine Season Type (Duration)
+            $seasonType = $this->determineSeasonType($current, $peakTypePriorities);
+            
+            // Step B: Determine Day Type
+            $dayType = $this->determineDayType($current, $holidayDates, $weekendDayIds);
+            
+            // Step C: Get Rate
+            $nightlyRate = $priceMatrix[$seasonType][$dayType] ?? null;
+            
+            if ($nightlyRate === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "No rate found for {$unitType} | {$seasonType} | {$dayType} on {$nightDate}"
+                ], 404);
+            }
+
+            $totalPrice += $nightlyRate;
+            $breakdown[] = [
+                'date' => $nightDate,
+                'season_type' => $seasonType,
+                'day_type' => $dayType,
+                'rate' => $nightlyRate
+            ];
+
+            $current->addDay();
+        }
+
+        return response()->json([
+            'success' => true,
+            'unit_type' => $unitType,
+            'check_in' => $checkIn->format('Y-m-d'),
+            'check_out' => $checkOut->format('Y-m-d'),
+            'nights' => count($breakdown),
+            'total_price' => $totalPrice,
+            'breakdown' => $breakdown
+        ]);
+    }
+
+    /**
+     * Determine the season type for a given date
+     * 
+     * Priority: Super-Peak > Peak > Non-Peak
+     * If no configured period matches, returns null (no pricing)
+     * 
+     * @param Carbon $date
+     * @param array $priorities
+     * @return string|null
+     */
+    private function determineSeasonType($date, $priorities)
+    {
+        $dateStr = $date->format('Y-m-d');
+        
+        // Find all matching periods
+        $matchingPeriods = PeakPeriod::where(function($query) use ($dateStr) {
+                $query->where(function($q) use ($dateStr) {
+                    $q->where('start_date', '<=', $dateStr)
+                      ->where('end_date', '>=', $dateStr);
+                });
+            })
+            ->with('peakType')
+            ->get();
+
+        if ($matchingPeriods->isEmpty()) {
+            return null; // No season configured for this date
+        }
+
+        // Return the period with highest priority
+        $highestPriority = -999;
+        $selectedType = null;
+
+        foreach ($matchingPeriods as $period) {
+            $priority = $priorities[$period->peakType->name] ?? 0;
+            if ($priority > $highestPriority) {
+                $highestPriority = $priority;
+                $selectedType = $period->peakType->name;
+            }
+        }
+
+        return $selectedType;
+    }
+
+    /**
+     * Determine the day type for a given date
+     * 
+     * Priority: Holiday > Weekend > Weekday
+     * 
+     * @param Carbon $date
+     * @param array $holidayDates
+     * @param array $weekendDayIds
+     * @return string
+     */
+    private function determineDayType($date, $holidayDates, $weekendDayIds)
+    {
+        $dateStr = $date->format('Y-m-d');
+        $dayOfWeek = (int) $date->dayOfWeek; // 0=Sun, 1=Mon, ..., 6=Sat
+
+        // 1. Check if it's a declared holiday
+        if (in_array($dateStr, $holidayDates)) {
+            return 'Holiday';
+        }
+
+        // 2. Check if it's a weekend
+        if (in_array($dayOfWeek, $weekendDayIds)) {
+            return 'Weekend';
+        }
+
+        // 3. Otherwise, it's a weekday
+        return 'Weekday';
+    }
+
+    /**
+     * Seed initial peak types with priorities
+     * 
+     * Run this once to set up the peak types:
+     * - Super-Peak: priority 3 (highest)
+     * - Peak: priority 2
+     * - Non-Peak: priority 1
+     * 
+     * @return void
+     */
+    public function seedPeakTypes()
+    {
+        $peakTypes = [
+            ['name' => 'Super-Peak', 'priority' => 3],
+            ['name' => 'Peak', 'priority' => 2],
+            ['name' => 'Non-Peak', 'priority' => 1],
+        ];
+
+        foreach ($peakTypes as $type) {
+            PeakType::updateOrCreate(
+                ['name' => $type['name']],
+                ['priority' => $type['priority']]
+            );
+        }
+
+        return redirect()->back()->with('success', 'Peak types seeded successfully.');
+    }
+
+    /**
+     * API: Get all peak types
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getPeakTypes()
+    {
+        $peakTypes = PeakType::with(['periods' => function($query) {
+            $query->orderBy('start_date', 'asc');
+        }])->orderBy('priority', 'desc')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $peakTypes
+        ]);
+    }
+
+    /**
+     * API: Get all holidays
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getHolidays()
+    {
+        $holidays = Holiday::orderBy('date', 'asc')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $holidays
+        ]);
+    }
+
+    /**
+     * API: Get weekend configuration
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getWeekendConfig()
+    {
+        $weekendId = DayType::where('name', 'Weekend')->value('id');
+        $weekendDays = DayTypeDay::where('day_type_id', $weekendId)->pluck('weekday')->toArray();
+
+        return response()->json([
+            'success' => true,
+            'weekend_days' => $weekendDays
+        ]);
+    }
+
+    /**
+     * Update a pricing config
+     *
+     * @param Request $request
+     * @param PricingConfig $pricingConfig
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function update(Request $request, PricingConfig $pricingConfig)
+    {
+        $validator = Validator::make($request->all(), [
+            'unit_type' => 'required|string|max:255',
+            'peak_type_id' => 'required|exists:peak_types,id',
+            'day_type_id' => 'required|exists:day_types,id',
+            'price' => 'required|numeric|min:0'
+        ]);
+
+        if ($validator->fails()) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            }
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $pricingConfig->update($validator->validated());
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pricing config updated successfully.'
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Pricing config updated successfully.');
+    }
+
+    /**
+     * Delete a pricing config
+     *
+     * @param PricingConfig $pricingConfig
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy(PricingConfig $pricingConfig)
+    {
+        $pricingConfig->delete();
+
+        return redirect()->back()->with('success', 'Pricing config deleted successfully.');
+    }
 }

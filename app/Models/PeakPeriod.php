@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PeakPeriod extends Model
 {
-    protected $fillable = ['peak_type_id', 'start_date', 'end_date'];
+    protected $fillable = ['peak_type_id', 'start_date', 'end_date', 'name'];
 
     public function peakType()
     {
