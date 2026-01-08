@@ -57,6 +57,7 @@ use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\FarmInfoController;
 use App\Http\Controllers\Admin\StaycationAccommodationController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\PricingConfigController;
 // ========== Root Route ==========
@@ -271,6 +272,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('menu-list', MenuController::class)->only(['store', 'destroy']);
     Route::resource('event-list', EventController::class)->only(['store', 'destroy']);
     Route::resource('farmInfo-list', FarmInfoController::class)->only(['store', 'destroy']);
+    Route::resource('products', ProductController::class);
 
     // Other CRUD
     Route::resource('day-tours', DayTourController::class)->only(['store', 'destroy']);

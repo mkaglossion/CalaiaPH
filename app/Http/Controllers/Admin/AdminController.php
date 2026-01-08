@@ -30,6 +30,7 @@ use App\Models\DurationSet;
 use App\Models\PricingConfig;
 use App\Models\FarmSwiperImage;
 use App\Models\FarmText;
+use App\Models\Product;
 
 
 
@@ -113,9 +114,8 @@ class AdminController extends Controller
 
     public function shopitems()
     {
-        // TODO: Implement shop items management
-        // For now, return a basic view
-        return view('admin.ShopStore.shopitems');
+        $products = Product::all();
+        return view('admin.ShopStore.shopitems', compact('products'));
     }
 
 }
