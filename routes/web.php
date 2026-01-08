@@ -46,7 +46,6 @@ use App\Http\Controllers\Admin\FarmInfoTextController;
 use App\Http\Controllers\Admin\DayPackageTextController;
 use App\Http\Controllers\Admin\AccommodationTextController;
 
-
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\DayTourController;
 use App\Http\Controllers\BookingController;
@@ -65,7 +64,7 @@ Route::get('/', function () {
     return redirect('/home');
 });
 
-// ========== Public Route ==========
+// ========== Public Routes ==========
 Route::get('/home', [PagesController::class, 'home'])->name('home');
 Route::get('/daytour', [DayTourController::class, 'index'])->name('daytour');
 Route::get('/staycation', [PagesController::class, 'staycation'])->name('staycation');
@@ -112,8 +111,7 @@ Route::get('/booking/dayvisit/activities', [BookingController::class, 'dayvisitA
 Route::post('/booking/dayvisit/activities', [BookingController::class, 'storeDayvisitActivities'])->name('booking.storeDayvisitActivities');
 Route::get('/booking/dayvisit/payment', [BookingController::class, 'dayvisitPayment'])->name('booking.dayvisitPayment');
 
-
-// Cart Routes
+// ========== Cart Routes ==========
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::patch('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
@@ -154,15 +152,7 @@ Route::middleware('auth')->group(function () {
 });
 
 
-// // ========== Helper Function for Admin Auth ==========
-// function adminRoute($uri, $controller, $name, $method = 'index') {
-//     Route::get($uri, function () use ($controller, $method) {
-//         if (!Auth::check() || Auth::user()->user_type !== 'admin') {
-//             abort(403, 'Unauthorized access.');
-//         }
-//         return app($controller)->$method();
-//     })->name($name);
-// }
+
 // ========== Admin Routes ==========
 Route::middleware(['auth'])->prefix('admin')->group(function () {
     // Main Sections
@@ -244,108 +234,47 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     });
 
     // ========== Admin CRUD Routes ==========
+
     // Text Controllers
-    Route::post('/home-texts', [HomeTextController::class, 'store'])->name('home-texts.store');
-    Route::delete('/home-texts/{text}', [HomeTextController::class, 'destroy'])->name('home-texts.destroy');
-
-    Route::post('/day-tour-texts', [DayTourTextController::class, 'store'])->name('day-tour-texts.store');
-    Route::delete('/day-tour-texts/{text}', [DayTourTextController::class, 'destroy'])->name('day-tour-texts.destroy');
-
-    Route::post('/stay-texts', [StayTextController::class, 'store'])->name('stay-texts.store');
-    Route::delete('/stay-texts/{text}', [StayTextController::class, 'destroy'])->name('stay-texts.destroy');
-
-    Route::post('/do-texts', [DoTextController::class, 'store'])->name('do-texts.store');
-    Route::delete('/do-texts/{DoText}', [DoTextController::class, 'destroy'])->name('do-texts.destroy');
-
-    Route::post('/food-texts', [FoodTextController::class, 'store'])->name('food-texts.store');
-    Route::delete('/food-texts/{text}', [FoodTextController::class, 'destroy'])->name('food-texts.destroy');
-
-    Route::post('/special-texts', [SpecialTextController::class, 'store'])->name('special-texts.store');
-    Route::delete('/special-texts/{text}', [SpecialTextController::class, 'destroy'])->name('special-texts.destroy');
-
-    Route::post('/farm-texts', [FarmTextController::class, 'store'])->name('farm-texts.store');
-    Route::delete('/farm-texts/{text}', [FarmTextController::class, 'destroy'])->name('farm-texts.destroy');
-
-    Route::post('/activity-text', [ActivityTextController::class, 'store'])->name('activity-text.store');
-    Route::delete('/activity-text/{text}', [ActivityTextController::class, 'destroy'])->name('activity-text.destroy');
-
-    Route::post('/staycation-text', [StaycationTextController::class, 'store'])->name('staycation-text.store');
-    Route::put('/staycation-text/{text}', [StaycationTextController::class, 'update'])->name('staycation-text.update');
-    Route::delete('/staycation-text/{text}', [StaycationTextController::class, 'destroy'])->name('staycation-text.destroy');
-
-    Route::post('/menu-text', [MenuTextController::class, 'store'])->name('menu-text.store');
-    Route::delete('/menu-text/{text}', [MenuTextController::class, 'destroy'])->name('menu-text.destroy');
-
-    Route::post('/event-text', [EventTextController::class, 'store'])->name('event-text.store');
-    Route::delete('/event-text/{text}', [EventTextController::class, 'destroy'])->name('event-text.destroy');
-
-    Route::post('/farmInfo-text', [FarmInfoTextController::class, 'store'])->name('farmInfo-text.store');
-    Route::delete('/farmInfo-text/{text}', [FarmInfoTextController::class, 'destroy'])->name('farmInfo-text.destroy');
-
-    Route::post('/day-text', [DayPackageTextController::class, 'store'])->name('day-text.store');
-    Route::delete('/day-text/{text}', [DayPackageTextController::class, 'destroy'])->name('day-text.destroy');
-
+    Route::resource('home-texts', HomeTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('day-tour-texts', DayTourTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('stay-texts', StayTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('do-texts', DoTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('food-texts', FoodTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('special-texts', SpecialTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('farm-texts', FarmTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('activity-text', ActivityTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('staycation-text', StaycationTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('menu-text', MenuTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('event-text', EventTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('day-text', DayPackageTextController::class)->only(['store', 'update', 'destroy']);
     Route::post('/accommodations-text', [AccommodationTextController::class, 'store'])->name('accommodations-text.store');
 
     // Swiper Image Controllers
-    Route::post('/swiper-images', [SwiperImageController::class, 'store'])->name('swiper-images.store');
-    Route::delete('/swiper-images/{image}', [SwiperImageController::class, 'destroy'])->name('swiper-images.destroy');
-
-    Route::post('/day-tour-swiper-images', [DayTourSwiperImageController::class, 'store'])->name('day-tour-swiper-images.store');
-    Route::delete('/day-tour-swiper-images/{image}', [DayTourSwiperImageController::class, 'destroy'])->name('day-tour-swiper-images.destroy');
-
-    Route::post('/stay-swiper-images', [StaySwiperImageController::class, 'store'])->name('stay-swiper-images.store');
-    Route::delete('/stay-swiper-images/{image}', [StaySwiperImageController::class, 'destroy'])->name('stay-swiper-images.destroy');
-
-    Route::post('/do-swiper-images', [DoSwiperImageController::class, 'store'])->name('do-swiper-images.store');
-    Route::delete('/do-swiper-images/{image}', [DoSwiperImageController::class, 'destroy'])->name('do-swiper-images.destroy');
-
-    Route::post('/food-swiper-images', [FoodSwiperImageController::class, 'store'])->name('food-swiper-images.store');
-    Route::delete('/food-swiper-images/{image}', [FoodSwiperImageController::class, 'destroy'])->name('food-swiper-images.destroy');
-
-    Route::post('/special-swiper-images', [SpecialSwiperImageController::class, 'store'])->name('special-swiper-images.store');
-    Route::delete('/special-swiper-images/{image}', [SpecialSwiperImageController::class, 'destroy'])->name('special-swiper-images.destroy');
-
-    Route::post('/farm-swiper-images', [FarmSwiperImageController::class, 'store'])->name('farm-swiper-images.store');
-    Route::delete('/farm-swiper-images/{image}', [FarmSwiperImageController::class, 'destroy'])->name('farm-swiper-images.destroy');
-
-    Route::post('/activity-image', [ActivitySwiperImageController::class, 'store'])->name('activity-image.store');
-    Route::delete('/activity-image/{image}', [ActivitySwiperImageController::class, 'destroy'])->name('activity-image.destroy');
-
-    Route::post('/staycation-image', [StaycationSwiperImageController::class, 'store'])->name('staycation-image.store');
-    Route::delete('/staycation-image/{image}', [StaycationSwiperImageController::class, 'destroy'])->name('staycation-image.destroy');
-
-    Route::post('/menu-image', [MenuSwiperImageController::class, 'store'])->name('menu-image.store');
-    Route::delete('/menu-image/{image}', [MenuSwiperImageController::class, 'destroy'])->name('menu-image.destroy');
-
-    Route::post('/event-image', [EventSwiperImageController::class, 'store'])->name('event-image.store');
-    Route::delete('/event-image/{image}', [EventSwiperImageController::class, 'destroy'])->name('event-image.destroy');
-
-    Route::post('/farmInfo-image', [FarmInfoSwiperImageController::class, 'store'])->name('farmInfo-image.store');
-    Route::delete('/farmInfo-image/{image}', [FarmInfoSwiperImageController::class, 'destroy'])->name('farmInfo-image.destroy');
+    Route::resource('swiper-images', SwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('day-tour-swiper-images', DayTourSwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('stay-swiper-images', StaySwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('do-swiper-images', DoSwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('food-swiper-images', FoodSwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('special-swiper-images', SpecialSwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('farm-swiper-images', FarmSwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('activity-image', ActivitySwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('staycation-image', StaycationSwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('menu-image', MenuSwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('event-image', EventSwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('farmInfo-image', FarmInfoSwiperImageController::class)->only(['store', 'destroy']);
 
     // List Controllers
-    Route::post('/activity-list', [ActivityController::class, 'store'])->name('activity-list.store');
-    Route::delete('/activity-list/{activity}', [ActivityController::class, 'destroy'])->name('activity-list.destroy');
+    Route::resource('activity-list', ActivityController::class)->only(['store', 'destroy']);
+    Route::resource('staycation-list', StaycationController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('menu-list', MenuController::class)->only(['store', 'destroy']);
+    Route::resource('event-list', EventController::class)->only(['store', 'destroy']);
+    Route::resource('farmInfo-list', FarmInfoController::class)->only(['store', 'destroy']);
 
-    Route::post('/staycation-list', [StaycationController::class, 'store'])->name('staycation-list.store');
-    Route::match(['PUT', 'POST'], '/staycation-list/{id}', [StaycationController::class, 'update'])->name('staycation-list.update');
-    Route::delete('/staycation-list/{id}', [StaycationController::class, 'destroy'])->name('staycation-list.destroy');
-
-    Route::post('/menu-list', [MenuController::class, 'store'])->name('menu-list.store');
-    Route::delete('/menu-list/{menu}', [MenuController::class, 'destroy'])->name('menu-list.destroy');
-
-    Route::post('/event-list', [EventController::class, 'store'])->name('event-list.store');
-    Route::delete('/event-list/{event}', [EventController::class, 'destroy'])->name('event-list.destroy');
-
-    Route::post('/farmInfo-list', [FarmInfoController::class, 'store'])->name('farmInfo-list.store');
-    Route::delete('/farmInfo-list/{farmInfo}', [FarmInfoController::class, 'destroy'])->name('farmInfo-list.destroy');
-
-    // Other
-    Route::post('/day-tours', [DayTourController::class, 'store'])->name('day-tours.store');
-    Route::delete('/day-tours/{tour}', [DayTourController::class, 'destroy'])->name('day-tours.destroy');
-    Route::post('/staycation-accommodations', [StaycationAccommodationController::class, 'store'])->name('staycation-accommodations.store');
-    Route::delete('/staycation-accommodations/{accommodation}', [StaycationAccommodationController::class, 'destroy'])->name('staycation-accommodations.destroy');
+    // Other CRUD
+    Route::resource('day-tours', DayTourController::class)->only(['store', 'destroy']);
+    Route::resource('staycation-accommodations', StaycationAccommodationController::class)->only(['store', 'destroy']);
 
 
 
