@@ -7,11 +7,26 @@
     x-data="{
         showModal: false,
         editMode: false,
-        form: { id: null, title: '', description: '', price: '', image: '', category: 'frozen', is_active: true },
+        form: { id: null, title: '', description: '', price: '', image: null, imagePreview: null, category: 'frozen', is_active: true },
 
         resetForm() {
-            this.form = { id: null, title: '', description: '', price: '', image: '', category: 'frozen', is_active: true };
+            this.form = { id: null, title: '', description: '', price: '', image: null, imagePreview: null, category: 'frozen', is_active: true };
             this.editMode = false;
+        },
+
+        handleImageChange(event) {
+            const file = event.target.files[0];
+            if (file) {
+                this.form.image = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.form.imagePreview = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                this.form.image = null;
+                this.form.imagePreview = null;
+            }
         },
 
         editProduct(product) {
@@ -20,7 +35,8 @@
                 title: product.title,
                 description: product.description,
                 price: product.price,
-                image: product.image,
+                image: null,
+                imagePreview: product.image ? '/storage/' + product.image : null,
                 category: product.category,
                 is_active: product.is_active
             };
@@ -34,7 +50,9 @@
             formData.append('title', this.form.title);
             formData.append('description', this.form.description);
             formData.append('price', this.form.price);
-            formData.append('image', this.form.image);
+            if (this.form.image) {
+                formData.append('image', this.form.image);
+            }
             formData.append('category', this.form.category);
             if (this.form.is_active) formData.append('is_active', '1');
 
@@ -121,7 +139,7 @@
             <tbody>
                 @forelse($products as $index => $product)
                     <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ $index + 1 }}</td>
+                        <td class="px-4 py-2">{{ ($products->currentPage() - 1) * $products->perPage() + $index + 1 }}</td>
                         <td class="px-4 py-2">{{ $product->title }}</td>
                         <td class="px-4 py-2">{{ ucfirst($product->category) }}</td>
                         <td class="px-4 py-2">₱{{ number_format($product->price, 2) }}</td>
@@ -159,6 +177,11 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-4">
+        {{ $products->links() }}
     </div>
 
     {{-- Modal --}}
@@ -205,7 +228,10 @@
 
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Image</label>
-                    <input type="text" x-model="form.image" name="image" class="border rounded p-2 w-full" placeholder="e.g. product.jpg" required>
+                    <input type="file" @change="handleImageChange($event)" name="image" class="border rounded p-2 w-full" accept="image/*" x-ref="imageInput">
+                    <div x-show="form.imagePreview" class="mt-2">
+                        <img :src="form.imagePreview" alt="Preview" class="max-w-32 max-h-32 object-cover border rounded">
+                    </div>
                 </div>
 
                 <div class="mb-3">

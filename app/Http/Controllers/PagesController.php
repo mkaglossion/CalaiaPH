@@ -21,6 +21,7 @@ use App\Models\Menu;
 use App\Models\MenuText;
 use App\Models\Event;
 use App\Models\DayTour;
+use App\Models\Product;
 
 use Illuminate\Http\Request;
 

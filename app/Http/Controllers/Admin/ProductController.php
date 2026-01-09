@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -13,7 +14,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::all();
+        $products = Product::paginate(10);
         return view('admin.ShopStore.shopitems', compact('products'));
     }
 
@@ -34,19 +35,30 @@ class ProductController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'image' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'category' => 'required|in:frozen,fresh',
             'is_active' => 'nullable|boolean',
+        ], [
+            'image.max' => 'The image field must not be greater than 2048 kilobytes.',
         ]);
 
-        Product::create([
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('products', 'public');
+        }
+
+        $product = Product::create([
             'title' => $request->title,
             'description' => $request->description,
             'price' => $request->price,
-            'image' => $request->image,
+            'image' => $imagePath,
             'category' => $request->category,
             'is_active' => $request->has('is_active'),
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Product created successfully.', 'product' => $product]);
+        }
 
         return redirect()->route('admin.shop.shopitems')->with('success', 'Product created successfully.');
     }
@@ -76,20 +88,36 @@ class ProductController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'image' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'category' => 'required|in:frozen,fresh',
             'is_active' => 'nullable|boolean',
+        ], [
+            'image.max' => 'The image field must not be greater than 2048 kilobytes.',
         ]);
 
         $product = Product::findOrFail($id);
+
+        $imagePath = $product->image;
+        if ($request->hasFile('image')) {
+            // Optionally delete old image
+            if ($product->image && Storage::disk('public')->exists($product->image)) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $imagePath = $request->file('image')->store('products', 'public');
+        }
+
         $product->update([
             'title' => $request->title,
             'description' => $request->description,
             'price' => $request->price,
-            'image' => $request->image,
+            'image' => $imagePath,
             'category' => $request->category,
             'is_active' => $request->has('is_active'),
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Product updated successfully.', 'product' => $product]);
+        }
 
         return redirect()->route('admin.shop.shopitems')->with('success', 'Product updated successfully.');
     }
@@ -101,6 +129,10 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
         $product->delete();
+
+        if (request()->expectsJson()) {
+            return response()->json(['message' => 'Product deleted successfully.']);
+        }
 
         return redirect()->route('admin.shop.shopitems')->with('success', 'Product deleted successfully.');
     }

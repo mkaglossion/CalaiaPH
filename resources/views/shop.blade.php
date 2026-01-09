@@ -24,7 +24,7 @@
           <x-shop-products />
         </div>
       </section>
-    </main> 
+    </main>
     {{-- Floating Buttons --}}
     <x-floating-buttons />
 </x-page-layout>
