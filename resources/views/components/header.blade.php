@@ -69,7 +69,7 @@
       <div class="w-16"></div>
 
       <!-- NAV centered -->
-      <nav class="flex-1 flex justify-center gap-5"
+      <nav class="flex-1 flex justify-center gap-8"
            style="font-family: 'Gotham Book', sans-serif;">
         @foreach ($nav as $item)
           <a
