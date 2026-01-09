@@ -1,81 +1,90 @@
-<section class="rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm overflow-hidden text-slate-800 max-w-4xl mx-auto my-12">
-  <!-- Header Section with Gradient -->
-  <div class="bg-white text-black p-4 border-b border-gray-200">
-    <div class="flex items-center justify-between mb-2">
-      <h1 class="text-2xl font-bold" style="font-size: 20px;">Weather Forecast</h1>
-      <div class="inline-flex items-center gap-2 text-gray-600">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                d="M12 11.5a3 3 0 100-6 3 3 0 000 6z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                d="M19.5 10.5c0 5.25-7.5 11.25-7.5 11.25S4.5 15.75 4.5 10.5a7.5 7.5 0 1115 0z"/>
-        </svg>
-        <span class="font-medium" style="font-size: 13px;">{{ $data['location'] }}</span>
-      </div>
-    </div>
+<section class="max-w-4xl mx-auto my-12 px-4">
+  {{-- CARD --}}
+  <div class="bg-white overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.12)] text-slate-800 rounded-t-[22px] rounded-b-[22px]">
 
-    <!-- Current Weather -->
-    <div class="flex items-center justify-between mt-4">
-      <div>
-        <div class="text-5xl font-bold" style="font-size: 30px;">{{ $data['now']['temp'] }}°C</div>
-        <div class="text-lg mt-1 opacity-90" style="font-size: 13px;">{{ $data['now']['condition'] }}</div>
-      </div>
-      <div class="text-5xl opacity-90">
-        <i class="fas fa-cloud-sun"></i>
-      </div>
-    </div>
+    {{-- HEADER / CURRENT --}}
+    <div class="p-6 rounded-t-[22px]">
+      <div class="flex items-center justify-between gap-4">
+        <h1 class="font-bold text-slate-900"
+            style="font-family:'Gotham Book', sans-serif; font-size:25px;">
+          Weather Forecast
+        </h1>
 
-    <!-- Weather Details -->
-    <div class="grid grid-cols-3 gap-4 lg:gap-2 mt-6 text-center">
-      <div>
-        <div class="text-sm opacity-80" style="font-size: 13px;">Feels like</div>
-        <div class="text-lg font-semibold" style="font-size: 13px;">{{ $data['now']['feels_like'] }}°C</div>
-      </div>
-      <div>
-        <div class="text-sm opacity-80" style="font-size: 13px;">Humidity</div>
-        <div class="text-lg font-semibold" style="font-size: 13px;">{{ $data['now']['humidity'] }}%</div>
-      </div>
-      <div>
-        <div class="text-sm opacity-80" style="font-size: 13px;">Rain</div>
-        <div class="text-lg font-semibold" style="font-size: 13px;">{{ $data['now']['rain'] }}%</div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Hourly Forecast -->
-  <div class="p-4">
-    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif; font-size: 25px;">
-      <i class="fas fa-clock text-amber-500"></i>
-      Hourly Forecast
-    </h2>
-
-    <div class="overflow-x-auto">
-      <div class="flex space-x-4 min-w-max lg:w-full lg:justify-center gap-8">
-        @foreach($data['hourly'] as $hour)
-        <div class="text-center min-w-20">
-          <div class="text-sm font-medium text-gray-700" style="font-size: 13px;">{{ $hour['time'] }}</div>
-          <div class="text-2xl font-bold my-2" style="font-size: 20px;">{{ $hour['temp'] }}°C</div>
-          <div class="text-xs text-gray-500 bg-gray-100 rounded-full py-1" style="font-size: 10px;">{{ $hour['rain'] }}%</div>
+        <div class="inline-flex items-center gap-2 text-slate-700">
+          {{-- location icon --}}
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M12 11.5a3 3 0 100-6 3 3 0 000 6z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M19.5 10.5c0 5.25-7.5 11.25-7.5 11.25S4.5 15.75 4.5 10.5a7.5 7.5 0 1115 0z"/>
+          </svg>
+          <span class="uppercase tracking-wide font-semibold"
+                style="font-family:'Gotham Book', sans-serif; font-size:13px;">
+            {{ $data['location'] }}
+          </span>
         </div>
-        @endforeach
+      </div>
+
+      <div class="mt-4">
+        <div class="font-bold text-slate-900 leading-none"
+             style="font-family:'Gotham Book', sans-serif; font-size:22px;">
+          {{ $data['now']['temp'] }}°C
+        </div>
+        <div class="text-slate-600 mt-1"
+             style="font-family:'Gotham Book', sans-serif; font-size:11.5px;">
+          {{ $data['now']['condition'] }}
+        </div>
+      </div>
+
+      {{-- HOURLY TITLE --}}
+      <h1 class="mt-4 font-bold text-slate-900"
+           style="font-family:'Gotham Book', sans-serif; font-size:25px;">
+        Hourly Forecast
+      </h1>
+
+      {{-- HOURLY ROW --}}
+      <div class="mt-3 overflow-x-auto">
+        <div class="flex gap-8 min-w-max pb-2 justify-center">
+          @foreach($data['hourly'] as $hour)
+            <div class="text-center">
+              <div class="text-slate-500"
+                   style="font-family:'Gotham Book', sans-serif; font-size:17px;">
+                {{ $hour['time'] }}
+              </div>
+
+              <div class="font-bold text-slate-900 mt-1"
+                   style="font-family:'Gotham Book', sans-serif; font-size:22px;">
+                {{ $hour['temp'] }}°C
+              </div>
+
+              <div class="mt-1 inline-flex items-center justify-center rounded-full px-3 py-0.5
+                          bg-[#566057] text-white/95"
+                   style="font-family:'Gotham Book', sans-serif; font-size:14px;">
+                {{ $hour['rain'] }}%
+              </div>
+            </div>
+          @endforeach
+        </div>
       </div>
     </div>
-  </div>
-  
-  <!-- Weather Tips -->
-  <div class="bg-blue-50 p-4 border-t border-blue-100">
-    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif; font-size: 25px;">
-      <i class="fas fa-lightbulb text-cyan-600"></i>
-      Weather Tips For Your Visit
-    </h2>
 
-    <ul class="space-y-3">
-      @foreach($data['tips'] as $tip)
-      <li class="flex items-start">
-        <i class="fas fa-lightbulb text-blue-500 mt-1 mr-3"></i>
-        <span class="text-slate-700" style="font-family: 'Gotham Book', sans-serif; font-size: 13px;">{{ $tip }}</span>
-      </li>
-      @endforeach
-    </ul>
+    {{-- TIPS PANEL (dark teal like screenshot) --}}
+    <div class="bg-[#3F6771] px-6 sm:px-8 py-6 rounded-b-[22px]">
+      <ul class="space-y-3">
+        @foreach($data['tips'] as $tip)
+          <li class="flex items-start gap-3 text-white/90">
+            {{-- leaf icon --}}
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20.77 3.23c-4.1-4.1-12.1.19-14.5 2.58C3.9 8.18 3 10.6 3 13c0 4.42 3.58 8 8 8 2.4 0 4.82-.9 7.19-3.27 2.39-2.4 6.68-10.4 2.58-14.5ZM7.7 15.3c-.39.39-1.02.39-1.41 0-.39-.39-.39-1.02 0-1.41l5.5-5.5c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41l-5.5 5.5Z"/>
+            </svg>
+
+            <span style="font-family:'Gotham Book', sans-serif; font-size:11.5px; line-height:1.7;">
+              {{ $tip }}
+            </span>
+          </li>
+        @endforeach
+      </ul>
+    </div>
+
   </div>
 </section>
