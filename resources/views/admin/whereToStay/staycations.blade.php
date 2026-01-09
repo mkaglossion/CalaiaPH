@@ -327,8 +327,8 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="block font-semibold mb-1">Upload Image</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*" class="border rounded p-2 w-full" required>
+                    <label class="block font-semibold mb-1">Upload Image/Video</label>
+                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" required>
                 </div>
 
                 <div class="flex justify-end space-x-2">

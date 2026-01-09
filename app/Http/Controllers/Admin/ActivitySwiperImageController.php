@@ -21,10 +21,14 @@ class ActivitySwiperImageController extends Controller
     {
         $request->validate([
             'activity_id' => 'required|exists:activities,id',
-            'image' => 'required|image|max:20480',
+            'image' => 'required|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
         ]);
 
-        $path = $request->file('image')->store('activities', 'public');
+        $file = $request->file('image');
+        $mimeType = $file->getMimeType();
+        $isVideo = str_starts_with($mimeType, 'video/');
+
+        $path = $file->store('activities', 'public');
 
         ActivitySwiperImage::create([
             'activity_id' => $request->activity_id,
@@ -32,16 +36,18 @@ class ActivitySwiperImageController extends Controller
             'image_path' => $path,
         ]);
 
+        $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
+
         // Return JSON if request expects JSON
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => 'Image uploaded successfully!',
+                'message' => $message,
                 'image_path' => $path
             ]);
         }
 
         // Fallback for normal form submission
-        return back()->with('success', 'Image uploaded successfully!');
+        return back()->with('success', $message);
     }
 
     public function destroy(ActivitySwiperImage $activity_image)

@@ -83,12 +83,12 @@
     <hr class="my-6">
 
     <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Swiper Images Management</h2>
-        <button 
-            @click="showModal = true" 
+        <h2 class="text-xl font-semibold">Swiper Media Management</h2>
+        <button
+            @click="showModal = true"
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-            + Add Image
+            + Add Media
         </button>
     </div>
 
@@ -115,18 +115,22 @@
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-2">{{ $index + 1 }}</td>
                         <td class="px-4 py-2">
-                            <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
+                            @if(str_contains($img->image_path, '/video/'))
+                                <video src="{{ $img->image_path }}" class="w-20 h-12 object-cover rounded" muted></video>
+                            @else
+                                <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
+                            @endif
                         </td>
                         <td class="px-4 py-2">{{ $img->title ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ $img->created_at->format('Y-m-d') }}</td>
                         <td class="px-4 py-2 text-right">
-                            <form action="{{ route('swiper-images.destroy', $img->id) }}" method="POST" class="inline">
+                            <form action="{{ route('home-swiper-images.destroy', $img->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
-                                <button 
+                                <button
                                     type="submit"
                                     class="text-red-600 hover:underline"
-                                    onclick="return confirm('Delete this image?')"
+                                    onclick="return confirm('Delete this media?')"
                                 >
                                     Delete
                                 </button>
@@ -135,7 +139,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">No images uploaded yet.</td>
+                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">No media uploaded yet.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -155,7 +159,7 @@
                 class="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4">Upload New Swiper Image</h3>
+            <h3 class="text-lg font-semibold mb-4">Upload New Swiper Media</h3>
 
             <form
                 id="swiperUploadForm"
@@ -167,7 +171,7 @@
                     const title = $refs.title.value;
 
                     if (!fileInput) {
-                        alert('Please select an image before uploading.');
+                        alert('Please select a file before uploading.');
                         return;
                     }
 
@@ -179,7 +183,7 @@
                     btn.innerText = 'Uploading...';
                     btn.disabled = true;
 
-                    fetch('{{ route('swiper-images.store') }}', {
+                    fetch('{{ route('home-swiper-images.store') }}', {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': csrf,
@@ -197,11 +201,11 @@
                         }
 
                         if (res.ok) {
-                            alert(data.message || 'Image uploaded successfully!');
+                            alert(data.message || 'Media uploaded successfully!');
                             $refs.image.value = '';
                             $refs.title.value = '';
                             showModal = false;
-                            window.location.reload(); // Refresh to show new image
+                            window.location.reload(); // Refresh to show new media
                         } else if (data.errors) {
                             const errorMessages = Object.values(data.errors).flat().join('\\n');
                             alert(errorMessages);
@@ -211,7 +215,7 @@
                     })
                     .catch(err => {
                         console.error(err);
-                        alert('Error uploading image.');
+                        alert('Error uploading media.');
                     })
                     .finally(() => {
                         btn.innerText = 'Upload';
@@ -226,8 +230,8 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="block font-semibold mb-1">Upload Image</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*" class="border rounded p-2 w-full" required>
+                    <label class="block font-semibold mb-1">Upload Image/Video</label>
+                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" required>
                 </div>
 
                 <div class="flex justify-end space-x-2">

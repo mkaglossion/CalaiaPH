@@ -23,16 +23,21 @@ class StaycationSwiperImageController extends Controller
     {
         $request->validate([
             'staycation_id' => 'required|exists:staycations,id',
-            'image' => 'required|image|max:20480',
+            'image' => 'required|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
         ]);
 
-        // Upload image to Cloudinary
-        $filePath = $request->file('image')->getRealPath();
-        $uploadResult = Cloudinary::uploadApi()->upload($filePath);
+        $file = $request->file('image');
+        $mimeType = $file->getMimeType();
+        $isVideo = str_starts_with($mimeType, 'video/');
+        $resourceType = $isVideo ? 'video' : 'image';
+
+        // Upload to Cloudinary
+        $filePath = $file->getRealPath();
+        $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
 
         $uploadedFileUrl = $uploadResult['secure_url']; // Cloudinary secure URL
         $publicId = $uploadResult['public_id']; // Store this if you want to delete later
-        
+
         StaycationSwiperImage::create([
             'staycation_id' => $request->staycation_id,
             'title' => $request->title ?? null,
@@ -40,17 +45,19 @@ class StaycationSwiperImageController extends Controller
             'public_id' => $publicId,
         ]);
 
+        $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
+
         // Return JSON if request expects JSON
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => 'Image uploaded successfully!',
+                'message' => $message,
                 'image_path' => $uploadedFileUrl, // store Cloudinary URL
                 'public_id' => $publicId,
             ]);
         }
 
         // Fallback for normal form submission
-        return back()->with('success', 'Image uploaded successfully!');
+        return back()->with('success', $message);
     }
 
     public function destroy(StaycationSwiperImage $staycation_image)

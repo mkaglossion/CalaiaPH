@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SwiperImage;
+use App\Models\HomeSwiperImage;
 use App\Models\DayTourSwiperImage;
 use App\Models\DoSwiperImage;
 use App\Models\FarmSwiperImage;
@@ -43,7 +43,7 @@ class PagesController extends Controller
 
     public function home()
     {
-        return $this->renderPage(SwiperImage::class, HomeText::class, 'home', 'home');
+        return $this->renderPage(HomeSwiperImage::class, HomeText::class, 'home', 'home');
     }
 
     public function daytour()

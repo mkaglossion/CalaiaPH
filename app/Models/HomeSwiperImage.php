@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class SwiperImage extends Model
+class HomeSwiperImage extends Model
 {
     use HasFactory;
+
+    protected $table = 'home_swiper_images';
 
     protected $fillable = ['title', 'image_path', 'public_id'];
 }

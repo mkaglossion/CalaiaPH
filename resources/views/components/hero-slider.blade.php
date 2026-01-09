@@ -13,12 +13,16 @@
       @php $texts_array = array_values($texts); $labels_array = array_keys($texts); @endphp
       @foreach($images as $index => $image)
       <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-        <img
-          src="{{ $image->image_path ?? $image }}"
-          alt="{{ $image->title ?? 'Slide Image' }}"
-          class="w-full h-full object-cover object-center"
-          loading="lazy"
-        >
+        @if(str_contains($image->image_path ?? $image, '/video/'))
+          <video src="{{ $image->image_path ?? $image }}" class="w-full h-full object-cover object-center" autoplay muted loop loading="lazy"></video>
+        @else
+          <img
+            src="{{ $image->image_path ?? $image }}"
+            alt="{{ $image->title ?? 'Slide Image' }}"
+            class="w-full h-full object-cover object-center"
+            loading="lazy"
+          >
+        @endif
         <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
         <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
           <div class="text-center px-4">
@@ -66,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const slidesCount = parseInt(slider.dataset.slidesCount);
     const swiper = new Swiper(slider, {
       autoplay: {
-        delay: 3000,
+        delay: 10000,
         disableOnInteraction: false,
       },
       loop: slidesCount > 1,

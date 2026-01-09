@@ -35,7 +35,11 @@
         @forelse($images as $img)
             <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition">
                 <div class="overflow-hidden rounded-xl">
-                    <img src="{{ $img->image_path }}" class="w-full h-48 object-cover transition hover:scale-105">
+                    @if(str_contains($img->image_path, '/video/'))
+                        <video src="{{ $img->image_path }}" class="w-full h-48 object-cover transition hover:scale-105" muted></video>
+                    @else
+                        <img src="{{ $img->image_path }}" class="w-full h-48 object-cover transition hover:scale-105">
+                    @endif
                 </div>
 
                 <div class="mt-4">
@@ -157,8 +161,8 @@
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Upload Image</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*" class="border rounded-xl p-3 w-full" required>
+                    <label class="block font-medium mb-1 text-gray-700">Upload Image/Video</label>
+                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded-xl p-3 w-full" required>
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">

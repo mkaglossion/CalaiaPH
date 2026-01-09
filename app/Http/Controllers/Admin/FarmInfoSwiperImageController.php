@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\FarmInfo;
 use App\Models\FarmInfoSwiperImage;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class FarmInfoSwiperImageController extends Controller
@@ -21,12 +22,17 @@ class FarmInfoSwiperImageController extends Controller
     {
         $request->validate([
             'farm_info_id' => 'required|exists:farm_infos,id',
-            'image' => 'required|image|max:20480',
+            'image' => 'required|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
         ]);
 
-         // Upload image to Cloudinary
-        $filePath = $request->file('image')->getRealPath();
-        $uploadResult = Cloudinary::uploadApi()->upload($filePath);
+        $file = $request->file('image');
+        $mimeType = $file->getMimeType();
+        $isVideo = str_starts_with($mimeType, 'video/');
+        $resourceType = $isVideo ? 'video' : 'image';
+
+         // Upload to Cloudinary
+        $filePath = $file->getRealPath();
+        $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
 
         $uploadedFileUrl = $uploadResult['secure_url']; // Cloudinary secure URL
         $publicId = $uploadResult['public_id']; // Store this if you want to delete later
@@ -38,10 +44,12 @@ class FarmInfoSwiperImageController extends Controller
             'public_id' => $publicId,
         ]);
 
+        $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
+
         // Return JSON if request expects JSON
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => 'Image uploaded successfully!',
+                'message' => $message,
                 'image_path' => $uploadedFileUrl
             ]);
         }
@@ -52,17 +60,17 @@ class FarmInfoSwiperImageController extends Controller
 
     public function destroy(FarmInfoSwiperImage $farmInfo_image)
     {
-        \Log::info('Deleting image', $farmInfo_image->toArray());
+        Log::info('Deleting image', $farmInfo_image->toArray());
 
         // Delete from Cloudinary if public_id exists
         if (!empty($farmInfo_image->public_id)) {
             try {
                 Cloudinary::uploadApi()->destroy($farmInfo_image->public_id);
-                \Log::info('✅ Deleted image from Cloudinary', [
+                Log::info('✅ Deleted image from Cloudinary', [
                     'public_id' => $farmInfo_image->public_id
                 ]);
             } catch (\Exception $e) {
-                \Log::error('❌ Failed to delete from Cloudinary', [
+                Log::error('❌ Failed to delete from Cloudinary', [
                     'public_id' => $farmInfo_image->public_id,
                     'error' => $e->getMessage()
                 ]);
@@ -73,9 +81,9 @@ class FarmInfoSwiperImageController extends Controller
         $path = $farmInfo_image->image_path;
         if ($path && Storage::disk('public')->exists($path)) {
             Storage::disk('public')->delete($path);
-            \Log::info('✅ Deleted local file', ['path' => $path]);
+            Log::info('✅ Deleted local file', ['path' => $path]);
         } else {
-            \Log::warning('⚠️ Local file not found or path null', ['path' => $path]);
+            Log::warning('⚠️ Local file not found or path null', ['path' => $path]);
         }
 
         // Delete DB record

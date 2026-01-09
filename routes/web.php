@@ -18,7 +18,7 @@ use App\Http\Controllers\Admin\AdminReportsController;
 use App\Http\Controllers\Admin\AdminPagesController;
 use App\Http\Controllers\Admin\AdminController;
 
-use App\Http\Controllers\Admin\SwiperImageController;
+use App\Http\Controllers\Admin\HomeSwiperImageController;
 use App\Http\Controllers\Admin\DayTourSwiperImageController;
 use App\Http\Controllers\Admin\StaySwiperImageController;
 use App\Http\Controllers\Admin\DoSwiperImageController;
@@ -253,7 +253,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::post('/accommodations-text', [AccommodationTextController::class, 'store'])->name('accommodations-text.store');
 
     // Swiper Image Controllers
-    Route::resource('swiper-images', SwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('home-swiper-images', HomeSwiperImageController::class)->only(['store', 'destroy']);
     Route::resource('day-tour-swiper-images', DayTourSwiperImageController::class)->only(['store', 'destroy']);
     Route::resource('stay-swiper-images', StaySwiperImageController::class)->only(['store', 'destroy']);
     Route::resource('do-swiper-images', DoSwiperImageController::class)->only(['store', 'destroy']);

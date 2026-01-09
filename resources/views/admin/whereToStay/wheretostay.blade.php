@@ -116,7 +116,11 @@
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-2">{{ $index + 1 }}</td>
                         <td class="px-4 py-2">
-                            <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
+                            @if(str_contains($img->image_path, '/video/'))
+                                <video src="{{ $img->image_path }}" class="w-20 h-12 object-cover rounded" muted></video>
+                            @else
+                                <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
+                            @endif
                         </td>
                         <td class="px-4 py-2">{{ $img->title ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ $img->created_at->format('Y-m-d') }}</td>
@@ -226,8 +230,8 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="block font-semibold mb-1">Upload Image</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*" class="border rounded p-2 w-full" required>
+                    <label class="block font-semibold mb-1">Upload Image/Video</label>
+                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" required>
                 </div>
 
                 <div class="flex justify-end space-x-2">

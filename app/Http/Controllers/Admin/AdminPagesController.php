@@ -15,13 +15,13 @@ use App\Models\SpecialSwiperImage;
 use App\Models\SpecialText;
 use App\Models\FarmSwiperImage;
 use App\Models\FarmText;
-use App\Models\SwiperImage;
+use App\Models\HomeSwiperImage;
 use App\Models\HomeText;
 
 class AdminPagesController extends Controller
 {
     private $pageConfigs = [
-        'home' => [SwiperImage::class, HomeText::class, 'admin.home.home'],
+        'home' => [HomeSwiperImage::class, HomeText::class, 'admin.home.home'],
         'dayTour' => [DayTourSwiperImage::class, DayTourText::class, 'admin.dayTour.daytour'],
         'whereToStay' => [StaySwiperImage::class, StayText::class, 'admin.whereToStay.wheretostay'],
         'whatToDo' => [DoSwiperImage::class, DoText::class, 'admin.whatToDo.whattodo'],
