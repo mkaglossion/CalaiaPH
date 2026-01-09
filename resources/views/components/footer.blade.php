@@ -1,4 +1,4 @@
-<footer class="bg-[#8f5d54] text-white mt-0">
+<footer class="bg-[#b0775c] text-white mt-0">
   <!-- Social Media Banner -->
   <div class="bg-[#7a4d44] py-4">
     <div class="max-w-7xl mx-auto px-6">

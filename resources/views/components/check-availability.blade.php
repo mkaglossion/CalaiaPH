@@ -27,7 +27,7 @@
         <div class="flex bg-gray-100 rounded-lg p-1 mb-4">
             <button
                 @click="setTab('room')"
-                :class="activeTab === 'room' ? 'bg-[#8f5d54] text-white shadow-sm' : 'text-gray-600 hover:text-[#8f5d54]'"
+                :class="activeTab === 'room' ? 'bg-[#b0775c] text-white shadow-sm' : 'text-gray-600 hover:text-[#b0775c]'"
                 class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
             >
                 <i class="bi bi-house-door"></i>
@@ -35,7 +35,7 @@
             </button>
             <button
                 @click="setTab('day-visit')"
-                :class="activeTab === 'day-visit' ? 'bg-[#8f5d54] text-white shadow-sm' : 'text-gray-600 hover:text-[#8f5d54]'"
+                :class="activeTab === 'day-visit' ? 'bg-[#b0775c] text-white shadow-sm' : 'text-gray-600 hover:text-[#b0775c]'"
                 class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
             >
                 <i class="bi bi-sun"></i>
@@ -43,7 +43,7 @@
             </button>
             <button
                 @click="setTab('special-event')"
-                :class="activeTab === 'special-event' ? 'bg-[#8f5d54] text-white shadow-sm' : 'text-gray-600 hover:text-[#8f5d54]'"
+                :class="activeTab === 'special-event' ? 'bg-[#b0775c] text-white shadow-sm' : 'text-gray-600 hover:text-[#b0775c]'"
                 class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
             >
                 <i class="bi bi-moon"></i>
@@ -59,103 +59,124 @@
         @csrf
         <input type="hidden" name="type" x-ref="type" value="room">
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <!-- Check-in / Visit Date -->
-                <div :class="activeTab === 'day-visit' ? 'md:col-span-2' : 'md:col-span-1'">
-                    <label for="check_in" class="block text-sm font-medium text-gray-700 mb-2" x-text="activeTab === 'day-visit' ? 'Visit Date' : 'Check-in'" style="font-family: 'Gotham Book', sans-serif;">
-                    </label>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-                    <div class="relative">
-                        <input
-                            type="text"
-                            name="check_in"
-                            id="check_in"
-                            x-ref="checkIn"
-                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none transition-colors text-sm hover:border-[#8f5d54]/70 hover:bg-gray-50"
-                            placeholder="Select date"
-                            required
-                            readonly
-                        >
-                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
-                            <i class="bi bi-calendar3"></i>
-                        </div>
-                    </div>
-
-                    <!-- Availability text -->
-                    <p class="text-xs text-gray-500 mt-1" x-show="availabilityText" x-text="availabilityText" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"></p>
+              {{-- COL 1: CHECK-IN / VISIT DATE --}}
+              <div :class="activeTab === 'day-visit' ? 'md:col-span-2' : ''" class="flex flex-col">
+                <div class="relative">
+                  <input
+                    type="text"
+                    name="check_in"
+                    id="check_in"
+                    x-ref="checkIn"
+                    class="w-full h-12 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#b0775c] focus:border-[#b0775c] outline-none transition-colors text-sm hover:border-[#b0775c]/70 hover:bg-gray-50"
+                    placeholder="Select check-in date"
+                    required
+                    readonly
+                  >
+                  <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                    <i class="bi bi-calendar3"></i>
+                  </div>
                 </div>
 
-                <!-- Check-out (ROOM only) -->
-                <div x-show="activeTab === 'room'" class="md:col-span-1">
-                    <label for="check_out" class="block text-sm font-medium text-gray-700 mb-2" style="font-family: 'Gotham Book', sans-serif;">
-                        Check-out
-                    </label>
-                    <div class="relative">
-                        <input
-                            type="text"
-                            name="check_out"
-                            id="check_out"
-                            x-ref="checkOut"
-                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none transition-colors text-sm hover:border-[#8f5d54]/70 hover:bg-gray-50"
-                            placeholder="Select date"
-                            required
-                            readonly
-                        >
-                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
-                            <i class="bi bi-calendar3"></i>
-                        </div>
-                    </div>
+                {{-- reserved helper space para hindi umaangat yung button --}}
+                <div class="min-h-10px mt-1">
+                  <p class="text-xs text-gray-500"
+                     x-text="activeTab === 'day-visit' ? 'Visit Time (1:00 PM)' : 'Check-in Time (1:00 PM)'"
+                     style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+                  </p>
+
+                  <p class="text-xs text-gray-500"
+                     x-show="availabilityText"
+                     x-text="availabilityText"
+                     style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+                  </p>
+                </div>
+              </div>
+
+              {{-- COL 2: CHECK-OUT (ROOM ONLY) --}}
+              <div x-show="activeTab === 'room'" x-cloak class="flex flex-col">
+                {{-- ROOM: real check-out input --}}
+                <div class="relative" x-show="activeTab === 'room'" x-cloak>
+                  <input
+                    type="text"
+                    name="check_out"
+                    id="check_out"
+                    x-ref="checkOut"
+                    class="w-full h-12 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#b0775c] focus:border-[#b0775c] outline-none transition-colors text-sm hover:border-[#b0775c]/70 hover:bg-gray-50"
+                    placeholder="Select check-out date"
+                    required
+                    readonly
+                  >
+                  <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                    <i class="bi bi-calendar3"></i>
+                  </div>
                 </div>
 
-                <!-- Button -->
-                <div class="md:col-span-1 flex items-end h-full">
-                    <button
-                        type="submit"
-                        name="start_booking"
-                        class="w-full bg-[#8f5d54] text-white hover:bg-[#8f5d54]/90 transition-colors font-medium py-3 px-6 rounded-lg text-sm h-[46px] flex items-center justify-center"
-                        id="check-availability-btn"
-                    >
-                        Search
-                    </button>
-                </div>
 
-                <!-- Stay summary row: full width, aligned with grid -->
-                <div
-                    class="mt-2 text-xs md:text-sm text-gray-700 col-span-1 md:col-span-3"
-                    x-show="staySummary || activeTab === 'room' || activeTab === 'day-visit' || activeTab === 'special-event'"
+                <div class="min-h-10px mt-1">
+                  <p class="text-xs text-gray-500"
+                     x-show="activeTab === 'room'"
+                     style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+                    Check-out Time (11:00 PM)
+                  </p>
+                </div>
+              </div>
+
+              {{-- COL 3: BUTTON (ALIGNED WITH INPUTS) --}}
+              <div class="flex flex-col">
+                <button
+                  type="submit"
+                  name="start_booking"
+                  class="w-full h-12 bg-[#b0775c] text-white hover:bg-[#b0775c]/90 transition-colors font-medium rounded-lg text-sm flex items-center justify-center"
+                  id="check-availability-btn"
+                  style="font-family: 'Gotham Book', sans-serif;"
                 >
-                    <div class="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-3">
-                        <!-- e.g. "2 days and 1 night" -->
-                        <span x-show="staySummary" x-text="staySummary"></span>
+                  Check Availability
+                </button>
 
-                        <!-- Room helper text -->
-                        <span
-                            x-show="activeTab === 'room'"
-                            class="text-[11px] md:text-xs text-gray-500"
-                            style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"
-                        >
-                            Select the date range for your room booking.
-                        </span>
+                {{-- reserved helper space para pantay pa rin --}}
+                <div class="min-h-10px mt-1"></div>
+              </div>
 
-                        <!-- Day Visit helper text -->
-                        <span
-                            x-show="activeTab === 'day-visit'"
-                            class="text-[11px] md:text-xs text-gray-500"
-                            style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"
-                        >
-                            Select the date for your day visit.
-                        </span>
+            </div>
 
-                        <!-- Special Event helper text -->
-                        <span
-                            x-show="activeTab === 'special-event'"
-                            class="text-[11px] md:text-xs text-gray-500"
-                            style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"
-                        >
-                            Contact us for special event arrangements.
-                        </span>
+            {{-- Stay summary row: full width, outside grid --}}
+            <div
+                class="mt-2 text-xs md:text-sm text-gray-700"
+                x-show="staySummary || activeTab === 'room' || activeTab === 'day-visit' || activeTab === 'special-event'"
+            >
+                <div class="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-3">
+                    <!-- e.g. "2 days and 1 night" -->
+                    <span x-show="staySummary" x-text="staySummary"></span>
 
-                    </div>
+                    <!-- Room helper text -->
+                    <span
+                        x-show="activeTab === 'room'"
+                        class="text-[11px] md:text-xs text-gray-500"
+                        style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"
+                    >
+                        Select the date range for your room booking.
+                    </span>
+
+                    <!-- Day Visit helper text -->
+                    <span
+                        x-show="activeTab === 'day-visit'"
+                        class="text-[11px] md:text-xs text-gray-500"
+                        style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"
+                    >
+                        Select the date for your day visit.
+                    </span>
+
+                    <!-- Special Event helper text -->
+                    <span
+                        x-show="activeTab === 'special-event'"
+                        class="text-[11px] md:text-xs text-gray-500"
+                        style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"
+                    >
+                        Contact us for special event arrangements.
+                    </span>
+
                 </div>
             </div>
         </form>
@@ -177,7 +198,7 @@
                     </a>
                     <a
                         href="mailto:calaia.ph@gmail.com?subject=Special Event Inquiry"
-                        class="inline-flex items-center gap-2 bg-[#8f5d54] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#8f5d54]/90 transition-colors"
+                        class="inline-flex items-center gap-2 bg-[#b0775c] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#b0775c]/90 transition-colors"
                     >
                         <i class="bi bi-envelope"></i>
                         Send Email
@@ -203,24 +224,24 @@
     }
 
     .flatpickr-day.today {
-        border-color: #8f5d54;
+        border-color: #b0775c;
     }
 
     .flatpickr-day.selected,
     .flatpickr-day.startRange,
     .flatpickr-day.endRange {
-        background: #8f5d54;
-        border-color: #8f5d54;
+        background: #b0775c;
+        border-color: #b0775c;
         color: #ffffff;
     }
 
     .flatpickr-day.inRange {
-        background: rgba(143, 93, 84, 0.12);
+        background: rgba(177, 119, 92, 0.12);
     }
 
     .flatpickr-day.weekend {
-        background-color: #8f5d54;
-        border-color: #8f5d54;
+        background-color: #b0775c;
+        border-color: #b0775c;
         color: #ffffff;
         border-radius: 9999px;
     }
