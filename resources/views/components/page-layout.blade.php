@@ -3,7 +3,7 @@
     'title' => 'CalaiaPH',
     'description' => 'Welcome to CalaiaPH, your ultimate destination for farm stays, day tours, and outdoor adventures.',
     'keywords' => 'farm stay, day tours, outdoor activities, nature retreat, CalaiaPH, Philippines farm experience',
-    'bodyClass' => 'bg-[#f5efe7]',
+    'bodyClass' => 'bg-[#EADAC3]',
     'activeHeader' => 'home'
 ])
 
