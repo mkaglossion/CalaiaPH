@@ -52,14 +52,14 @@
         "beige_swatch" => [
             "bg" => "bg-[#EADAC3]",   // ✅ exact swatch
             "title" => "text-[#8b5a52]",
-            "text" => "text-[#8b5a52]",
-            "btn" => "bg-[#8b5a52] text-white hover:bg-[#744842]",
+            "text" => "text-[#393a35]",
+            "btn" => "bg-[#b0775c] text-white hover:bg-[#9d6a50]",
         ],
         "white" => [
             "bg" => "bg-white",
             "title" => "text-[#8b5a52]",
-            "text" => "text-[#8b5a52]",
-            "btn" => "bg-[#8b5a52] text-white hover:bg-[#744842]",
+            "text" => "text-[#393a35]",
+            "btn" => "bg-[#b0775c] text-white hover:bg-[#9d6a50]",
         ],
         "tan" => [
             "bg" => "bg-[#b57c63]",
@@ -119,7 +119,7 @@
 
                             <a
                                 href="{{ $section['linkPath'] }}"
-                                class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md transition-colors duration-300 self-center lg:self-start {{ $t['btn'] }}"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full transition-colors duration-300 self-center lg:self-start {{ $t['btn'] }}"
                                 style="font-family:'Gotham Book', sans-serif;"
                             >
                                 LEARN MORE
