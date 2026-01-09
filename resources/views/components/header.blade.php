@@ -1,220 +1,300 @@
 @props(['active' => 'home'])
 
 @php
-   $cart = session('cart', []);
-   $cartCount = 0;
+  $cart = session('cart', []);
+  $cartCount = 0;
 
-   if (is_array($cart)) {
-       foreach ($cart as $item) {
-           $cartCount += $item['quantity'] ?? 0;
-       }
-   }
+  if (is_array($cart)) {
+    foreach ($cart as $item) {
+      $cartCount += $item['quantity'] ?? 0;
+    }
+  }
+
+  $nav = [
+    ['key' => 'home',          'label' => 'Home',          'href' => url('/')],
+    ['key' => 'daytour',       'label' => 'Day Tour',      'href' => url('/daytour')],
+    ['key' => 'staycation',    'label' => 'Where to Stay', 'href' => url('/staycation')],
+    ['key' => 'activities',    'label' => 'What to Do',    'href' => url('/activities')],
+    ['key' => 'dining',        'label' => 'Dining',        'href' => url('/dining')],
+    ['key' => 'special-events','label' => 'Special Events','href' => url('/special-events')],
+    ['key' => 'farm',          'label' => 'Our Farm',      'href' => url('/farm')],
+    ['key' => 'shop',          'label' => 'Shop',          'href' => url('/shop')],
+  ];
 @endphp
 
 <header
-  x-data="{ open: false }"
-  x-init="
-    Alpine.store('modals', { showLogin: false, showSignup: false, signupSuccess: false, showCart: false });
-    $watch('open', value => document.body.style.overflow = value ? 'hidden' : '')
+  x-data="{
+    mobileOpen: false,
+    init() {
+      Alpine.store('modals') || Alpine.store('modals', {
+        showLogin: false,
+        showSignup: false,
+        signupSuccess: false,
+        showCart: false
+      });
+    },
+    closeAll() {
+      this.mobileOpen = false;
+      const m = Alpine.store('modals');
+      if (m) { m.showLogin = false; m.showSignup = false; }
+    }
+  }"
+  x-init="init()"
+  x-effect="
+    const m = Alpine.store('modals');
+    const lock = mobileOpen || (m && (m.showLogin || m.showSignup));
+    document.body.style.overflow = lock ? 'hidden' : '';
   "
-  class="bg-[#f6f0eb] text-[#8f5d54] shadow-lg sticky top-0 z-50"
+  @keydown.escape.window="closeAll()"
+  class="bg-[#8f5d54] text-white shadow-lg top-0 z-50"
 >
 
-  <div class="container mx-auto flex items-center justify-between py-4 px-4 md:py-6 md:px-6 text-center">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
-    {{-- MOBILE LOGO LEFT --}}
-    <div class="md:hidden">
-      <a href="{{ url('/') }}">
+    <!-- ✅ DESKTOP LOGO ROW (ABOVE NAV) -->
+    <div class="hidden md:flex justify-center py-3">
+      <a href="{{ url('/') }}" class="inline-flex items-center justify-center">
         <img
-          src="{{ asset('assets/logo/CALAIA LOGO RUST.png') }}"
-          alt="CALAIA LOGO RUST"
-          class="w-56 h-20 object-contain"
+          src="{{ asset('assets/logo/CALAIA LOGO WHITE_1.png') }}"
+          alt="CALAIA LOGO WHITE_1"
+          class="h-20 w-auto object-contain"
         >
       </a>
     </div>
 
-    {{-- DESKTOP LOGO --}}
-    <div x-show="!$store.modals.showLogin && !$store.modals.showSignup" class="hidden md:block fixed">
-      <a href="{{ url('/') }}">
-        <img
-          src="{{ asset('assets/logo/CALAIA LOGO RUST.png') }}"
-          alt="CALAIA LOGO RUST"
-          class="w-56 h-56 object-contain"
-        >
-      </a>
-    </div>
+    <!-- ✅ NAV + ACTIONS ROW (DESKTOP) -->
+    <div class="hidden md:flex items-center justify-between pb-3">
 
+      <!-- left spacer (for balance) -->
+      <div class="w-16"></div>
 
-    {{-- MAIN NAV CENTER --}}
-    <nav class="hidden md:flex flex-1 justify-center space-x-6 text-center ml-45">
-      <a href="{{ url('/') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'home' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Home</a>
-      <a href="{{ url('/daytour') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Day Tour</a>
-      <a href="{{ url('/staycation') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Where to Stay</a>
-      <a href="{{ url('/activities') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">What to Do</a>
-      <a href="{{ url('/dining') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Dinning</a>
-      <a href="{{ url('/special-events') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'special-events' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Special Events</a>
-      <a href="{{ url('/farm') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Our Farm</a>
-      <a href="{{ url('/shop') }}" class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150 uppercase {{ $active === 'shop' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Shop</a>
-    </nav>
-
-    {{-- DESKTOP USER / GUEST BUTTONS RIGHT --}}
-    <nav class="hidden md:flex items-center space-x-4 relative" x-data="{ open: false }">
-      @auth
-        <!-- User Menu -->
-        <div class="relative inline-block text-left">
-          <button
-            @click="open = !open"
-            class="flex items-center space-x-2 focus:outline-none"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg"
-               fill="none" viewBox="0 0 24 24"
-               stroke-width="2" stroke="currentColor"
-               class="w-6 h-6 text-[#8f5d54]">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z" />
-           </svg>
-          </button>
-
-          <!-- Dropdown Menu -->
-          <div
-            x-show="open"
-            @click.away="open = false"
-            x-transition
-            class="absolute right-0 mt-2 w-48 lg:w-55 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
-          >
-            <a
-              href="{{ route('profile.show') }}"
-              class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
-              <i class="bi bi-person me-2"></i>My Profile
-            </a>
-
-            <a
-              href="/booking/staycation"
-              class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
-              <i class="bi bi-calendar-check me-2"></i>Book Now
-            </a>
-
-            <a
-              href="{{ route('booking.history') }}"
-              class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
-              <i class="bi bi-calendar-event me-2"></i>My Bookings
-            </a>
-
-            @if (Auth::user()->user_type === 'admin')
-              <a
-                href="{{ route('admin.dashboard') }}"
-                class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
-                 <i class="bi bi-gear me-2"></i>Go to Admin Panel
-              </a>
-            @endif
-
-            <a
-              href="{{ route('checkinout') }}"
-              class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
-              <i class="bi bi-person-check me-2"></i>Check-in / Check-out
-            </a>
-
-            <form method="POST" action="{{ route('logout') }}">
-              @csrf
-              <button
-                type="submit"
-                class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
-                <i class="bi bi-box-arrow-right me-2"></i>Log Out
-              </button>
-            </form>
-          </div>
-        </div>
-
-        {{-- CART BUTTON (DESKTOP) --}}
-        <x-cart />
-      @else
-        <!-- Guest Buttons -->
-        <button
-          @click="$store.modals.showLogin = true"
-          class="text-[#8f5d54] hover:text-[#8f5d54]/80 font-medium transition-all duration-150"
-          style="font-family: 'Gotham Book', sans-serif;">
-          Log In
-        </button>
-        <button
-          @click="$store.modals.showSignup = true"
-          class="bg-[#8f5d54] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#8f5d54]/90 transition-all shadow-md"
-          style="font-family: 'Gotham Book', sans-serif;">
-          Sign Up
-        </button>
-
-        {{-- CART BUTTON (DESKTOP) --}}
-        <x-cart />
-      @endauth
-    </nav>
-
-    {{-- MOBILE MENU BUTTON --}}
-    <div class="md:hidden">
-      <button @click="open = !open" class="text-[#8f5d54] p-4">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          <path x-show="open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
-      <div
-        x-show="open"
-        @click.away="open = false"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 -translate-y-2"
-        x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 -translate-y-2"
-        class="fixed top-16 left-0 right-0 bg-white px-4 py-2 z-50 shadow-lg text-left"
-      >
-        <a href="{{ url('/') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'home' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Home</a>
-        <a href="{{ url('/daytour') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'daytour' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Day Tour</a>
-        <a href="{{ url('/staycation') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'staycation' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Where to Stay</a>
-        <a href="{{ url('/activities') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'activities' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">What to Do</a>
-        <a href="{{ url('/dining') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'dining' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Food & Beverage</a>
-        <a href="{{ url('/special-events') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'special-events' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Special Events</a>
-        <a href="{{ url('/farm') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'farm' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Our Farm</a>
-        <a href="{{ url('/shop') }}" @click="open = false" class="block py-2 text-[#8f5d54] uppercase {{ $active === 'shop' ? 'border-b-2 border-[#8f5d54]' : '' }}" style="font-family: 'Gotham Book', sans-serif;">Shop</a>
-
-        <a href="{{ route('cart.index') }}" data-js-cart-button
-           @click="open = false"
-           class="flex items-center justify-between py-2 text-[#8f5d54] uppercase"
+      <!-- NAV centered -->
+      <nav class="flex-1 flex justify-center gap-5"
            style="font-family: 'Gotham Book', sans-serif;">
+        @foreach ($nav as $item)
+          <a
+            href="{{ $item['href'] }}"
+            @class([
+              'relative uppercase font-medium tracking-wide transition',
+              'text-white hover:text-white/80',
+            ])
+            aria-current="{{ $active === $item['key'] ? 'page' : 'false' }}"
+          >
+            <span @class([
+              'inline-block py-1',
+              // underline without layout shift
+              'after:absolute after:left-0 after:-bottom-1 after:h-[1px] after:w-full after:bg-white after:content-[\'\'] after:transition after:opacity-0',
+              $active === $item['key'] ? 'border-b-2 border-white' : 'hover:after:opacity-100'
+            ])>
+              {{ $item['label'] }}
+            </span>
+          </a>
+        @endforeach
+      </nav>
+
+      <!-- Actions right -->
+      <div class="flex items-center gap-4">
+        @auth
+          <!-- User dropdown -->
+          <div class="relative" x-data="{ userOpen: false }">
+            <button
+              type="button"
+              @click="userOpen = !userOpen"
+              class="inline-flex items-center justify-center rounded-lg p-2 hover:bg-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8f5d54]/40"
+              :aria-expanded="userOpen.toString()"
+            >
+              <span class="sr-only">Open user menu</span>
+              <svg xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24"
+                stroke-width="2" stroke="currentColor"
+                class="w-6 h-6 text-white">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z" />
+              </svg>
+            </button>
+
+            <div
+              x-cloak
+              x-show="userOpen"
+              @click.away="userOpen = false"
+              x-transition
+              class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50"
+            >
+              <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                <i class="bi bi-person me-2"></i>My Profile
+              </a>
+              <a href="/booking/staycation" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                <i class="bi bi-calendar-check me-2"></i>Book Now
+              </a>
+              <a href="{{ route('booking.history') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                <i class="bi bi-calendar-event me-2"></i>My Bookings
+              </a>
+
+              @if (Auth::user()->user_type === 'admin')
+                <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                  <i class="bi bi-gear me-2"></i>Go to Admin Panel
+                </a>
+              @endif
+
+              <a href="{{ route('checkinout') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                <i class="bi bi-person-check me-2"></i>Check-in / Check-out
+              </a>
+
+              <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                  <i class="bi bi-box-arrow-right me-2"></i>Log Out
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <x-cart />
+        @else
+          <div class="flex items-center gap-3" style="font-family: 'Gotham Book', sans-serif;">
+            <button
+              @click="$store.modals.showLogin = true"
+              class="text-white hover:text-white/80 font-medium transition"
+            >
+              Log In
+            </button>
+            <button
+              @click="$store.modals.showSignup = true"
+              class="bg-white text-[#8f5d54] px-5 py-2 rounded-lg font-semibold hover:bg-gray-100 transition shadow-md"
+            >
+              Sign Up
+            </button>
+          </div>
+
+          <x-cart />
+        @endauth
+      </div>
+    </div>
+
+    <!-- ✅ MOBILE TOP BAR -->
+    <div class="md:hidden flex items-center justify-between py-3">
+      <!-- Logo -->
+      <a href="{{ url('/') }}" class="inline-flex items-center">
+        <img
+          src="{{ asset('assets/logo/CALAIA LOGO WHITE_1.png') }}"
+          alt="CALAIA LOGO WHITE_1"
+          class="h-16 w-auto object-contain"
+        >
+      </a>
+
+      <!-- Actions + Hamburger -->
+      <div class="flex items-center gap-2">
+        <x-cart />
+
+        <button
+          type="button"
+          class="inline-flex items-center justify-center rounded-lg p-2 hover:bg-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8f5d54]/40"
+          @click="mobileOpen = !mobileOpen"
+          aria-controls="mobile-menu"
+          :aria-expanded="mobileOpen.toString()"
+        >
+          <span class="sr-only">Open menu</span>
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path x-show="!mobileOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            <path x-show="mobileOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ MOBILE OFF-CANVAS MENU -->
+  <div x-cloak x-show="mobileOpen" class="md:hidden">
+    <div class="fixed inset-0 bg-black/40" @click="mobileOpen = false"></div>
+
+    <div
+      id="mobile-menu"
+      class="fixed top-0 left-0 h-full w-[85%] max-w-sm bg-[#8f5d54] shadow-2xl z-50"
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="-translate-x-4 opacity-0"
+      x-transition:enter-end="translate-x-0 opacity-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="translate-x-0 opacity-100"
+      x-transition:leave-end="-translate-x-4 opacity-0"
+    >
+      <div class="flex items-center justify-between px-4 py-4 border-b border-[#8f5d54]/15">
+        <span class="font-semibold tracking-wide text-white" style="font-family: 'Gotham Book', sans-serif;">Menu</span>
+        <button class="rounded-lg p-2 hover:bg-white/50" @click="mobileOpen = false">✕</button>
+      </div>
+
+      <div class="px-4 py-3 space-y-1" style="font-family: 'Gotham Book', sans-serif;">
+        @foreach ($nav as $item)
+          <a
+            href="{{ $item['href'] }}"
+            @click="mobileOpen = false"
+            @class([
+              'block rounded-lg px-3 py-2 uppercase tracking-wide transition text-white',
+              $active === $item['key'] ? 'bg-white/70 font-semibold' : 'hover:bg-white/50'
+            ])
+          >
+            {{ $item['label'] }}
+          </a>
+        @endforeach
+
+        <a
+          href="{{ route('cart.index') }}"
+          data-js-cart-button
+          @click="mobileOpen = false"
+          class="mt-2 flex items-center justify-between rounded-lg px-3 py-2 uppercase tracking-wide hover:bg-white/50 transition text-white"
+        >
           <span>Cart</span>
           @if($cartCount > 0)
-            <span data-js-cart-count class="inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-[#8f5d54] text-white text-xs">
+            <span data-js-cart-count class="inline-flex items-center justify-center min-w-6 h-6 rounded-full bg-[#8f5d54] text-white text-xs px-2">
               {{ $cartCount }}
             </span>
           @endif
         </a>
 
-        @auth
-          <a href="{{ route('profile.show') }}" @click="open = false" class="block py-2 text-gray-700 border-t border-[#8f5d54]/20 mt-2 pt-2">
-            <i class="bi bi-person me-2"></i>Profile
-          </a>
-          <a href="/booking/staycation" @click="open = false" class="block py-2 text-gray-700">
-            <i class="bi bi-calendar-check me-2"></i>Book Now
-          </a>
-          <a href="{{ route('booking.history') }}" @click="open = false" class="block py-2 text-gray-700">
-            <i class="bi bi-calendar-event me-2"></i>My Bookings
-          </a>
-          @if (Auth::user()->user_type === 'admin')
-            <a href="{{ route('admin.dashboard') }}" @click="open = false" class="block py-2 text-gray-700">
-              <i class="bi bi-gear me-2"></i>Admin Panel
+        <div class="pt-3 mt-3 border-t border-[#8f5d54]/15">
+          @auth
+            <a href="{{ route('profile.show') }}" @click="mobileOpen = false" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+              <i class="bi bi-person me-2"></i>Profile
             </a>
-          @endif
-          <a href="{{ route('checkinout') }}" @click="open = false" class="block py-2 text-gray-700">
-            <i class="bi bi-person-check me-2"></i>Check-in / Check-out
-          </a>
-          <form method="POST" action="{{ route('logout') }}" @submit="open = false">
-            @csrf
-            <button type="submit" class="block py-2 text-gray-700 w-full text-left">
-              <i class="bi bi-box-arrow-right me-2"></i>Log Out
+            <a href="/booking/staycation" @click="mobileOpen = false" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+              <i class="bi bi-calendar-check me-2"></i>Book Now
+            </a>
+            <a href="{{ route('booking.history') }}" @click="mobileOpen = false" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+              <i class="bi bi-calendar-event me-2"></i>My Bookings
+            </a>
+
+            @if (Auth::user()->user_type === 'admin')
+              <a href="{{ route('admin.dashboard') }}" @click="mobileOpen = false" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+                <i class="bi bi-gear me-2"></i>Admin Panel
+              </a>
+            @endif
+
+            <a href="{{ route('checkinout') }}" @click="mobileOpen = false" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+              <i class="bi bi-person-check me-2"></i>Check-in / Check-out
+            </a>
+
+            <form method="POST" action="{{ route('logout') }}" @submit="mobileOpen = false" class="px-3 pt-1">
+              @csrf
+              <button type="submit" class="w-full text-left py-2 rounded-lg hover:bg-white/50 transition text-white">
+                <i class="bi bi-box-arrow-right me-2"></i>Log Out
+              </button>
+            </form>
+          @else
+            <button
+              @click="$store.modals.showLogin = true; mobileOpen = false"
+              class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/50 transition text-white"
+              style="font-family: 'Gotham Book', sans-serif;"
+            >
+              Log In
             </button>
-          </form>
-        @else
-          <button @click="$store.modals.showLogin = true; open = false" class="block py-2 text-gray-700 border-t border-[#8f5d54]/20 mt-2 pt-2" style="font-family: 'Gotham Book', sans-serif;">Log In</button>
-          <button @click="$store.modals.showSignup = true; open = false" class="block text-white bg-[#8f5d54] px-4 py-2 rounded mt-2" style="font-family: 'Gotham Book', sans-serif;">Sign Up</button>
-        @endauth
+            <button
+              @click="$store.modals.showSignup = true; mobileOpen = false"
+              class="w-full mt-2 bg-white text-[#8f5d54] px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-100 transition shadow"
+              style="font-family: 'Gotham Book', sans-serif;"
+            >
+              Sign Up
+            </button>
+          @endauth
+        </div>
       </div>
     </div>
   </div>
@@ -236,7 +316,7 @@
 
       <!-- STEP 1 FORM -->
       <template x-if="!$store.modals.signupSuccess">
-        <form 
+        <form
           id="signupForm"
           class="space-y-5"
           @submit.prevent="
@@ -349,7 +429,7 @@
           </button>
 
           <p class="text-center text-sm text-gray-500 mt-3">
-            Already have an account? 
+            Already have an account?
             <a href="#" @click.prevent="$store.modals.showSignup = false; $store.modals.showLogin = true" class="text-blue-600 hover:underline font-medium">Log in</a>
           </p>
         </form>
@@ -407,10 +487,9 @@
         </button>
       </form>
       <p class="text-center text-sm text-gray-500 mt-3">
-        Don’t have an account? 
+        Don't have an account?
         <a href="#" @click.prevent="$store.modals.showLogin = false; $store.modals.showSignup = true" class="text-blue-600 hover:underline font-medium">Sign up</a>
       </p>
     </div>
   </div>
 </header>
-
