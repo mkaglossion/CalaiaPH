@@ -117,13 +117,15 @@
                                 {{ $section['description2'] }}
                             </p>
 
-                            <a
-                                href="{{ $section['linkPath'] }}"
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full transition-colors duration-300 self-center lg:self-start {{ $t['btn'] }}"
-                                style="font-family:'Gotham Book', sans-serif;"
-                            >
-                                LEARN MORE
-                            </a>
+                            <div class="text-center md:text-left">
+                                <a
+                                    href="{{ $section['linkPath'] }}"
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full transition-colors duration-300 {{ $t['btn'] }}"
+                                    style="font-family:'Gotham Book', sans-serif;"
+                                >
+                                    LEARN MORE
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

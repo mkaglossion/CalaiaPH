@@ -30,7 +30,7 @@
       <section class="container mx-auto px-4 py-12">
         <div class="max-w-7xl mx-auto">
           <div class="text-center mb-12">
-            <h2 class="text-3xl md:text-4xl font-bold text-[#8f5d54] mb-4" style="font-family: 'Gotham Book', sans-serif;">
+            <h2 class="text-3xl md:text-4xl font-bold text-[#b0775c] mb-4" style="font-family: 'Gotham Book', sans-serif;">
               Our Special Events
             </h2>
             <p class="text-lg text-gray-600 max-w-3xl mx-auto" style="font-family: 'Gotham Book', sans-serif;">
@@ -58,7 +58,7 @@
                   @endif
                   <div class="absolute inset-0 bg-black bg-opacity-20"></div>
                   <div class="absolute top-4 left-4">
-                    <span class="bg-[#8f5d54] text-white px-3 py-1 rounded-full text-sm font-semibold">
+                    <span class="bg-[#b0775c] text-white px-3 py-1 rounded-full text-sm font-semibold">
                       Special Event
                     </span>
                   </div>
@@ -91,7 +91,7 @@
                             @foreach(array_slice($features, 0, 3) as $feature)
                               @if(trim($feature))
                                 <li class="flex items-center">
-                                  <i class="bi bi-check-circle-fill text-[#8f5d54] mr-2 text-xs"></i>
+                                  <i class="bi bi-check-circle-fill text-[#b0775c] mr-2 text-xs"></i>
                                   {{ trim($feature) }}
                                 </li>
                               @endif
@@ -100,15 +100,15 @@
                         @endforeach
                       @else
                         <li class="flex items-center">
-                          <i class="bi bi-check-circle-fill text-[#8f5d54] mr-2 text-xs"></i>
+                          <i class="bi bi-check-circle-fill text-[#b0775c] mr-2 text-xs"></i>
                           Custom event planning
                         </li>
                         <li class="flex items-center">
-                          <i class="bi bi-check-circle-fill text-[#8f5d54] mr-2 text-xs"></i>
+                          <i class="bi bi-check-circle-fill text-[#b0775c] mr-2 text-xs"></i>
                           Beautiful farm setting
                         </li>
                         <li class="flex items-center">
-                          <i class="bi bi-check-circle-fill text-[#8f5d54] mr-2 text-xs"></i>
+                          <i class="bi bi-check-circle-fill text-[#b0775c] mr-2 text-xs"></i>
                           Professional coordination
                         </li>
                       @endif
@@ -118,7 +118,7 @@
                   {{-- Contact Button --}}
                   <a
                     href="mailto:calaia.ph@gmail.com?subject=Inquiry about {{ $event->name }}"
-                    class="w-full inline-flex items-center justify-center gap-2 bg-[#8f5d54] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#a0675a] transition-colors duration-300"
+                    class="w-full inline-flex items-center justify-center gap-2 bg-[#b0775c] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#b0775c] transition-colors duration-300"
                   >
                     <i class="bi bi-envelope"></i>
                     Inquire About This Event
@@ -140,7 +140,7 @@
                 </p>
                 <a
                   href="{{ route('home') }}#contact"
-                  class="inline-flex items-center gap-2 bg-[#8f5d54] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#a0675a] transition-colors duration-300"
+                  class="inline-flex items-center gap-2 bg-[#b0775c] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#b0775c] transition-colors duration-300"
                 >
                   <i class="bi bi-envelope"></i>
                   Contact Us
@@ -160,14 +160,14 @@
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="mailto:calaia.ph@gmail.com?subject=Custom Event Planning Inquiry"
-                class="inline-flex items-center justify-center gap-2 bg-[#8f5d54] text-white px-8 py-4 rounded-xl font-semibold hover:bg-[#a0675a] transition-colors duration-300"
+                class="inline-flex items-center justify-center gap-2 bg-[#b0775c] text-white px-8 py-4 rounded-xl font-semibold hover:bg-[#b0775c] transition-colors duration-300"
               >
                 <i class="bi bi-envelope"></i>
                 Plan Custom Event
               </a>
               <a
                 href="tel:+639051294741"
-                class="inline-flex items-center justify-center gap-2 border-2 border-[#8f5d54] text-[#8f5d54] px-8 py-4 rounded-xl font-semibold hover:bg-[#8f5d54] hover:text-white transition-colors duration-300"
+                class="inline-flex items-center justify-center gap-2 border-2 border-[#b0775c] text-[#b0775c] px-8 py-4 rounded-xl font-semibold hover:bg-[#b0775c] hover:text-white transition-colors duration-300"
               >
                 <i class="bi bi-telephone"></i>
                 Call Us Now

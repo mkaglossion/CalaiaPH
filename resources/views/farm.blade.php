@@ -213,7 +213,7 @@
                   </div>
                 </div>
                 <a href="#contact"
-                   class="w-full inline-flex items-center justify-center border-2 border-[#8f5d54] text-[#8f5d54] hover:bg-[#8f5d54] hover:text-white rounded-xl px-6 py-3 font-medium transition-all duration-300">
+                   class="w-full inline-flex items-center justify-center border-2 border-[#b0775c] text-[#b0775c] hover:bg-[#b0775c] hover:text-white rounded-xl px-6 py-3 font-medium transition-all duration-300">
                   {{ $experience['cta'] }}
                 </a>
               </div>

@@ -93,9 +93,9 @@
                     type="button"
                     class="px-6 py-2.5 rounded-full text-white text-xs md:text-sm font-semibold tracking-wider shadow
                            transition-all duration-300 hover:-translate-y-0.5"
-                    style="background-color:#8f5d54;"
-                    onmouseover="this.style.backgroundColor='#a0675a'"
-                    onmouseout="this.style.backgroundColor='#8f5d54'"
+                    style="background-color:#b0775c;"
+                    onmouseover="this.style.backgroundColor='#b0775c'"
+                    onmouseout="this.style.backgroundColor='#b0775c'"
                     data-title="{{ $title }}"
                     data-price="{{ is_array($package) ? 'PHP 1,500 per person' : $package->price }}"
                     data-details='@json(is_array($package) ? $package["details"] : explode("\n", $package->description ?? ""))'

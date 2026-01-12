@@ -101,17 +101,18 @@ class CartController extends Controller
             $cart = [];
         }
 
-        if (isset($cart[$data['id']])) {
+        $id = md5($data['id']);
+        if (isset($cart[$id])) {
             // update existing
-            $cart[$data['id']]['quantity'] += $data['quantity'];
-            $cart[$data['id']]['price']     = $data['price']; // just in case price changed
+            $cart[$id]['quantity'] += $data['quantity'];
+            $cart[$id]['price']     = $data['price']; // just in case price changed
             if (!empty($data['image'])) {
-                $cart[$data['id']]['image'] = $data['image'];
+                $cart[$id]['image'] = $data['image'];
             }
-            $cart[$data['id']]['isDining'] = ($data['isDining'] ?? '0') == '1';
+            $cart[$id]['isDining'] = ($data['isDining'] ?? '0') == '1';
         } else {
             // new item
-            $cart[$data['id']] = [
+            $cart[$id] = [
                 'title'    => $data['title'],
                 'price'    => $data['price'],
                 'image'    => $data['image'] ?? '',
@@ -144,6 +145,8 @@ class CartController extends Controller
             $cart = [];
         }
 
+        $id = urldecode($id);
+
         if (isset($cart[$id])) {
             $cart[$id]['quantity'] = $data['quantity'];
 
@@ -160,6 +163,25 @@ class CartController extends Controller
             }
 
             session()->put('cart', $cart);
+        } else {
+            $old_key = str_replace('-', '%2F', $id);
+            if (isset($cart[$old_key])) {
+                $cart[$old_key]['quantity'] = $data['quantity'];
+
+                // Recalculate price
+                if (isset($cart[$old_key]['isDining']) && $cart[$old_key]['isDining']) {
+                    $qty = $data['quantity'];
+                    if ($qty <= 4) {
+                        $cart[$old_key]['price'] = 5980.00;
+                    } elseif ($qty <= 6) {
+                        $cart[$old_key]['price'] = 8790.00;
+                    } else {
+                        $cart[$old_key]['price'] = 12900.00;
+                    }
+                }
+
+                session()->put('cart', $cart);
+            }
         }
 
         // Support both normal form & AJAX
@@ -180,9 +202,17 @@ class CartController extends Controller
             $cart = [];
         }
 
+        $id = urldecode($id);
+
         if (isset($cart[$id])) {
             unset($cart[$id]);
             session()->put('cart', $cart);
+        } else {
+            $old_key = str_replace('-', '%2F', $id);
+            if (isset($cart[$old_key])) {
+                unset($cart[$old_key]);
+                session()->put('cart', $cart);
+            }
         }
 
         // IMPORTANT: for dropdown X button (AJAX)

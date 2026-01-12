@@ -105,7 +105,7 @@
                             <span class="text-sm text-gray-600">Set Menu</span>
                           </div>
                         @else
-                          <form action="{{ route('cart.update', $id) }}" method="POST" class="flex items-center bg-gray-50 rounded-xl p-1">
+                          <form action="{{ route('cart.update', str_replace('%2F', '-', urlencode($id))) }}" method="POST" class="flex items-center bg-gray-50 rounded-xl p-1">
                             @csrf
                             @method('PATCH')
                             <button
@@ -141,7 +141,7 @@
                           <div class="text-2xl font-bold text-[#8f5d54] mb-2">
                             ₱{{ number_format($item['price'] * $item['quantity'], 2) }}
                           </div>
-                          <form action="{{ route('cart.remove', $id) }}" method="POST" class="inline">
+                          <form action="{{ route('cart.remove', str_replace('%2F', '-', urlencode($id))) }}" method="POST" class="inline">
                             @csrf
                             @method('DELETE')
                             <button

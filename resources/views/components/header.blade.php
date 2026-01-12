@@ -63,13 +63,13 @@
     </div>
 
     <!-- ✅ NAV + ACTIONS ROW (DESKTOP) -->
-    <div class="hidden md:flex items-center justify-between pb-3">
+    <div class="hidden md:flex items-center justify-between pb-4">
 
       <!-- left spacer (for balance) -->
       <div class="w-16"></div>
 
       <!-- NAV centered -->
-      <nav class="flex-1 flex justify-center gap-8"
+      <nav class="flex-1 flex justify-center gap-5"
            style="font-family: 'Gotham Book', sans-serif;">
         @foreach ($nav as $item)
           <a
@@ -93,7 +93,7 @@
       </nav>
 
       <!-- Actions right -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-6">
         @auth
           <!-- User dropdown -->
           <div class="relative" x-data="{ userOpen: false }">

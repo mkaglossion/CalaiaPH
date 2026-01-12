@@ -75,7 +75,7 @@
                 data-images='@json($menu1Images)'
                 onclick="openModal(this)"
                 aria-label="Learn more about {{ $menus[0]->name ?? 'SET MENUS' }}"
-                class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4 bg-[#97655A] text-white hover:bg-[#8a5a4a] transition-colors focus:ring-2 focus:ring-[#97655A] focus:outline-none">
+                class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4 bg-[#b0775c] text-white hover:bg-[#b0775c] transition-colors focus:ring-2 focus:ring-[#b0775c] focus:outline-none">
                 LEARN MORE
               </button>
             </div>
@@ -112,7 +112,7 @@
                 data-images='@json($menu2Images)'
                 onclick="openModal(this)"
                 aria-label="Learn more about {{ $menus[1]->name ?? 'SPECIAL MENUS' }}"
-                class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4 bg-[#97655A] text-white hover:bg-[#8a5a4a] transition-colors focus:ring-2 focus:ring-[#97655A] focus:outline-none">
+                class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4 bg-[#b0775c] text-white hover:bg-[#b0775c] transition-colors focus:ring-2 focus:ring-[#b0775c] focus:outline-none">
                 LEARN MORE
               </button>
             </div>
@@ -149,7 +149,7 @@
                 data-images='@json($menu3Images)'
                 onclick="openModal(this)"
                 aria-label="Learn more about {{ $menus[2]->name ?? 'SNACK BAR' }}"
-                class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4 bg-[#97655A] text-white hover:bg-[#8a5a4a] transition-colors focus:ring-2 focus:ring-[#97655A] focus:outline-none">
+                class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4 bg-[#b0775c] text-white hover:bg-[#b0775c] transition-colors focus:ring-2 focus:ring-[#b0775c] focus:outline-none">
                 LEARN MORE
               </button>
             </div>

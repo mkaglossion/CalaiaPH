@@ -115,8 +115,8 @@ Route::get('/booking/dayvisit/payment', [BookingController::class, 'dayvisitPaym
 // ========== Cart Routes ==========
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-Route::patch('/cart/{id}', [CartController::class, 'update'])->name('cart.update');
-Route::delete('/cart/{id}', [CartController::class, 'remove'])->name('cart.remove');
+Route::patch('/cart/{id}', [CartController::class, 'update'])->where('id', '.*')->name('cart.update');
+Route::delete('/cart/{id}', [CartController::class, 'remove'])->where('id', '.*')->name('cart.remove');
 
 Route::get('/checkout', [CartController::class, 'checkoutForm'])->name('checkout.form');
 Route::post('/checkout', [CartController::class, 'checkoutSubmit'])->name('checkout.submit');
