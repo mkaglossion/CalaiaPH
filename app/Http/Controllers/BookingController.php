@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use App\Mail\BookingConfirmation;
 use DateTime;
 use App\Services\BookingService;
@@ -13,6 +14,13 @@ use App\Services\InventoryService;
 use App\Services\ValidationService;
 
 use App\Models\StaycationAccommodation;
+use App\Models\Staycation;
+use App\Models\Holiday;
+use App\Models\DayType;
+use App\Models\DayTypeDay;
+use App\Models\PeakPeriod;
+use App\Models\PeakType;
+use App\Services\PricingService;
 
 
 class BookingController extends Controller
@@ -280,72 +288,14 @@ class BookingController extends Controller
         // Note: We need to update the session booking array, so handle differently
         $booking['selected_activities'] = $request->activities ?? [];
 
-        // Calculate final totals (same calculation as JavaScript)
+        // Calculate final totals using dynamic pricing
         $checkinDate = $booking['checkin'] ?? null;
         $checkoutDate = $booking['checkout'] ?? null;
         $datesSelected = !empty($checkinDate) && !empty($checkoutDate);
 
-        $nights = 0;
-        if ($datesSelected) {
-            $start = new DateTime($checkinDate);
-            $end = new DateTime($checkoutDate);
-            $diff = $start->diff($end);
-            $nights = max(1, $diff->days);
-        }
-
-        $totalGuests = collect($booking['accommodations'])->sum('guests');
-
         $accommodationTotal = 0;
-        if ($datesSelected) {
-            $start = new DateTime($checkinDate);
-            $end = new DateTime($checkoutDate);
-
-            foreach ($booking['accommodations'] ?? [] as $acc) {
-                if (!empty($acc) && !empty($acc['staycation'])) {
-                    $quantity = $acc['guests'] ?? 1;
-                    $name = strtolower($acc['staycation']['name']);
-                    $isBYOT = str_contains($name, 'byot');
-                    $isCarCamping = str_contains($name, 'car camping');
-
-                            if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
-                                $current = clone $start;
-                                while ($current < $end) {
-                                    $day = (int)$current->format('w');
-                                    $isWeekend = $day === 5 || $day === 6;
-                                    $basePrice = 0;
-                                    // Use room-level base rates (matches the view): standard/premium per-room prices
-                                    if (str_contains($name, 'standard')) {
-                                        $basePrice = $isWeekend ? 6000 : 4800;
-                                    } elseif (str_contains($name, 'premium')) {
-                                        $basePrice = $isWeekend ? 7200 : 5760;
-                                    }
-                                    $extraGuests = max(0, $quantity - 4);
-                                    $accommodationTotal += $basePrice + ($extraGuests * 400);
-                                    $current->modify('+1 day');
-                                }
-                    } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
-                        $accommodationTotal += 3000 * $nights;
-                    } elseif ($isBYOT || $isCarCamping) {
-                        $accommodationTotal += (300 * $nights) + (500 * $quantity * $nights);
-                    }
-                }
-            }
-
-            // Add pet fees
-            foreach ($booking['accommodations'] ?? [] as $acc) {
-                if (!empty($acc['pet_agreement']) && !empty($acc['num_pets'])) {
-                    $accommodationTotal += 2000 * $acc['num_pets'];
-                }
-            }
-
-            // Add breakfast fees
-            $breakfastTotal = 0;
-            foreach ($booking['accommodations'] ?? [] as $acc) {
-                if (!empty($acc['has_breakfast'])) {
-                    $breakfastTotal += 500 * ($acc['guests'] ?? 1);
-                }
-            }
-            $accommodationTotal += $breakfastTotal;
+        if ($datesSelected && !empty($booking['accommodations'])) {
+            $accommodationTotal = $this->calculateStaycationTotal($booking['accommodations'], $checkinDate, $checkoutDate);
         }
 
         $activitiesTotal = collect($request->activities)->sum(function($activity) {
@@ -364,6 +314,122 @@ class BookingController extends Controller
         session(['booking' => $booking]);
 
         return response()->json(['success' => true, 'message' => 'Activities saved successfully.']);
+    }
+
+    /**
+     * Calculate total price for staycation accommodations
+     */
+    private function calculateStaycationTotal(array $accommodations, string $checkinDate, string $checkoutDate): float
+    {
+        $total = 0;
+
+        foreach ($accommodations as $acc) {
+            if (empty($acc['room_id'])) continue;
+
+            $staycation = Staycation::find($acc['room_id']);
+            if (!$staycation || empty($staycation->price_configs)) continue;
+
+            $roomTotal = $this->calculateStaycationRoomPrice($staycation, $checkinDate, $checkoutDate, $acc);
+            $total += $roomTotal;
+        }
+
+        return $total;
+    }
+
+    /**
+     * Calculate price for a single staycation room
+     */
+    private function calculateStaycationRoomPrice(Staycation $staycation, string $checkinDate, string $checkoutDate, array $acc): float
+    {
+        $total = 0;
+        $checkin = \Carbon\Carbon::parse($checkinDate);
+        $checkout = \Carbon\Carbon::parse($checkoutDate);
+
+        // Get holiday dates
+        $holidayDates = Holiday::whereBetween('date', [$checkinDate, $checkout->copy()->subDay()->format('Y-m-d')])
+            ->pluck('date')
+            ->map(fn($d) => \Carbon\Carbon::parse($d)->format('Y-m-d'))
+            ->toArray();
+
+        // Get weekend day IDs
+        $weekendDayIds = DayTypeDay::whereHas('dayType', fn($q) => $q->where('name', 'Weekend'))
+            ->pluck('weekday')
+            ->toArray();
+
+        $current = $checkin->copy();
+        while ($current->lt($checkout)) {
+            $dateStr = $current->format('Y-m-d');
+            $dayOfWeek = (int)$current->dayOfWeek;
+
+            // Determine day type: Holiday > Weekend > Weekday
+            $dayType = 'nonPeak'; // default
+            if (in_array($dateStr, $holidayDates)) {
+                $dayType = 'superPeak';
+            } elseif (in_array($dayOfWeek, $weekendDayIds)) {
+                $dayType = 'peak';
+            }
+
+            // Find applicable price config for this date
+            $rate = $this->getStaycationRateForDate($staycation->price_configs, $current, $dayType);
+
+            if ($rate > 0) {
+                $total += $rate;
+            }
+
+            $current->addDay();
+        }
+
+        // Add extra mattress fee (assuming ₱400 per night per mattress)
+        $extraMattresses = $acc['extra_mattress'] ?? 0;
+        $nights = $checkin->diffInDays($checkout);
+        $total += $extraMattresses * 400 * $nights;
+
+        // Add pet fees
+        if (!empty($acc['pet_agreement']) && !empty($acc['num_pets'])) {
+            $total += 2000 * $acc['num_pets'];
+        }
+
+        return $total;
+    }
+
+    /**
+     * Get the applicable rate for a staycation on a specific date
+     */
+    private function getStaycationRateForDate(array $priceConfigs, \Carbon\Carbon $date, string $dayType): float
+    {
+        $dateStr = $date->format('Y-m-d');
+        $dayOfWeek = (int)$date->dayOfWeek;
+
+        foreach ($priceConfigs as $config) {
+            $applies = false;
+
+            if (($config['type'] ?? 'day') === 'day') {
+                // Check if day matches
+                $configDays = $config['days'] ?? [];
+                if (in_array($date->format('D'), $configDays)) {
+                    $applies = true;
+                }
+            } elseif (($config['type'] ?? 'day') === 'date') {
+                // Check specific dates
+                $configDates = $config['dates'] ?? '';
+                if (str_contains($configDates, $dateStr) || $configDates === $dateStr) {
+                    $applies = true;
+                }
+            }
+
+            if ($applies) {
+                $rates = $config['rates'] ?? [];
+                return (float)($rates[$dayType] ?? 0);
+            }
+        }
+
+        // Fallback to first config's rate
+        if (!empty($priceConfigs)) {
+            $rates = $priceConfigs[0]['rates'] ?? [];
+            return (float)($rates[$dayType] ?? 0);
+        }
+
+        return 0;
     }
 
     public function staycationPayment()
@@ -639,6 +705,112 @@ class BookingController extends Controller
 
         // Handle POST request
         if ($request->isMethod('post')) {
+            $data = $request->all();
+
+            // Handle selected_rooms from availability page
+            if ($request->has('selected_rooms')) {
+                $validator = \Illuminate\Support\Facades\Validator::make($data, [
+                    'selected_rooms' => ['required', 'array', 'min:1'],
+                    'selected_rooms.*.id' => ['nullable'],
+                    'selected_rooms.*.adults' => ['required', 'integer', 'min:1', 'max:20'],
+                    'selected_rooms.*.children' => ['nullable', 'integer', 'min:0', 'max:20'],
+                    'selected_rooms.*.extra_mattress' => ['nullable', 'integer', 'min:0', 'max:8'],
+                    'selected_rooms.*.pets' => ['required', 'in:yes,no'],
+                    'selected_rooms.*.pet_agreement' => ['nullable', 'boolean'],
+                    'selected_rooms.*.num_pets' => ['nullable', 'integer', 'min:0', 'max:2'],
+                    'proceed_to_activities' => ['nullable', 'boolean'],
+                ]);
+
+                if ($validator->fails()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid selection data.',
+                        'errors' => $validator->errors(),
+                    ], 422);
+                }
+
+                $selectedRooms = $data['selected_rooms'];
+
+                // Extra validation: if pets=yes => must agree + must have num_pets >= 1
+                foreach ($selectedRooms as $roomId => $room) {
+                    if (($room['pets'] ?? 'no') === 'yes') {
+                        $agreed = (bool)($room['pet_agreement'] ?? false);
+                        $numPets = (int)($room['num_pets'] ?? 0);
+
+                        if (!$agreed) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => "Pet policy agreement is required for room ID {$roomId}.",
+                            ], 422);
+                        }
+
+                        if ($numPets < 1 || $numPets > 2) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => "Please set number of pets (1-2) for room ID {$roomId}.",
+                            ], 422);
+                        }
+                    }
+                }
+
+                // Read current booking session
+                $booking = session('booking', [
+                    'checkin'         => null,
+                    'checkout'        => null,
+                    'accommodations'  => [],
+                    'booking_type'    => 'staycation',
+                    'timestamp'       => now()->timestamp,
+                    'completed_steps' => [],
+                    'current_step'    => 1,
+                ]);
+
+                // Ensure booking type
+                $booking['booking_type'] = 'staycation';
+
+                /**
+                 * Normalize to a clean "accommodations" array for downstream steps:
+                 * - Key by room_id so easy update/remove
+                 */
+                $normalized = [];
+
+                foreach ($selectedRooms as $roomId => $room) {
+                    $roomId = (int)$roomId;
+
+                    $normalized[$roomId] = [
+                        'room_id'        => $roomId,
+                        'adults'         => (int)($room['adults'] ?? 1),
+                        'children'       => (int)($room['children'] ?? 0),
+                        'extra_mattress' => (int)($room['extra_mattress'] ?? 0),
+                        'pets'           => ($room['pets'] ?? 'no'),
+                        'pet_agreement'  => (bool)($room['pet_agreement'] ?? false),
+                        'num_pets'       => (int)($room['num_pets'] ?? 0),
+                    ];
+                }
+
+                $booking['accommodations'] = $normalized;
+
+                // mark step1 complete
+                $completed = $booking['completed_steps'] ?? [];
+                if (!in_array(1, $completed)) $completed[] = 1;
+                $booking['completed_steps'] = $completed;
+                $booking['current_step'] = 2;
+
+                session(['booking' => $booking]);
+
+                // If your JS expects JSON success (as in the merged blade), return JSON:
+                if (!empty($data['proceed_to_activities'])) {
+                    return response()->json([
+                        'success' => true,
+                    ]);
+                }
+
+                // Otherwise fallback
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Selection saved.',
+                ]);
+            }
+
             $request->validate(ValidationService::staycationPostRules());
 
             $booking = session('booking', []);
@@ -650,25 +822,43 @@ class BookingController extends Controller
                 $booking['completed_steps'] = [1];
                 $booking['current_step'] = 1;
                 $booking['timestamp'] = now()->timestamp;
+                session(['booking' => $booking]);
+                return redirect()->route('booking.staycationAvailability');
             }
 
-            if ($request->has('accommodations')) {
-                $booking['accommodations'] = $request->input('accommodations', []);
+            if ($request->has('accommodation_type')) {
+                $booking['accommodation_type'] = $request->accommodation_type;
+                if ($request->has('selected_room_id')) {
+                    $booking['selected_room_id'] = $request->selected_room_id;
+                }
                 $booking['completed_steps'] = array_unique(
-                    array_merge($booking['completed_steps'] ?? [], [2])
+                    array_merge($booking['completed_steps'] ?? [], [1.5])
                 );
-                $booking['current_step'] = 2;
+                session(['booking' => $booking]);
+                return redirect()->route('booking.staycation');
             }
 
-            session(['booking' => $booking]);
-
-            if ($request->input('skip_to_payment')) {
-                return redirect()->route('booking.staycationPayment');
-            } elseif ($request->input('proceed_to_activities')) {
-                return redirect()->route('booking.staycationActivities');
+            if ($request->has('selected_room_id') && $request->input('proceed_to_activities')) {
+                // Handle room selection from availability page
+                $selectedStaycation = Staycation::with('texts')->find($request->selected_room_id);
+                if ($selectedStaycation) {
+                    $booking['accommodations'] = [
+                        [
+                            'staycation' => $selectedStaycation,
+                            'guests' => 2, // Default guests, can be modified later
+                            'has_breakfast' => false,
+                            'pet_agreement' => false,
+                            'num_pets' => 0
+                        ]
+                    ];
+                    $booking['completed_steps'] = array_unique(
+                        array_merge($booking['completed_steps'] ?? [], [2])
+                    );
+                    $booking['current_step'] = 3; // Mark availability as completed
+                }
+                session(['booking' => $booking]);
+                return response()->json(['success' => true]);
             }
-
-            return redirect()->route('booking.staycation');
         }
 
         /**
@@ -715,7 +905,164 @@ class BookingController extends Controller
             }
         }
 
-        return view('booking.staycation', compact('accommodations', 'availability'));
+        $accommodationType = $booking['accommodation_type'] ?? null;
+
+        return view('booking.staycation', compact('accommodations', 'availability', 'accommodationType'));
+    }
+
+    public function staycationAvailability()
+    {
+        $booking = session('booking', []);
+
+        // If no dates selected, use default dates for demo purposes
+        if (empty($booking['checkin']) || empty($booking['checkout'])) {
+            $checkin = now()->format('Y-m-d');
+            $checkout = now()->addDays(2)->format('Y-m-d');
+        } else {
+            $checkin = $booking['checkin'];
+            $checkout = $booking['checkout'];
+        }
+
+        // Get all staycations from admin panel
+        $staycations = Staycation::with([
+            'texts',
+            'swiperImages'
+        ])->get();
+
+        // Commented out dummy data creation for production
+        // if ($staycations->isEmpty()) {
+        //     $dummyStaycations = collect([
+        //         (object) [
+        //             'id' => 1,
+        //             'name' => 'Standard Glamping',
+        //             'texts' => collect([(object)['description' => 'Experience luxury camping with our standard glamping tents.']]),
+        //             'swiperImages' => collect([(object)['image_path' => asset('assets/images/carousel/Glamping-1.jpg')]]),
+        //             'inventories' => collect([])
+        //         ],
+        //         (object) [
+        //             'id' => 2,
+        //             'name' => 'Premium Glamping',
+        //             'texts' => collect([(object)['description' => 'Indulge in premium glamping with enhanced amenities.']]),
+        //             'swiperImages' => collect([(object)['image_path' => asset('assets/images/carousel/Glamping-1.jpg')]]),
+        //             'inventories' => collect([])
+        //         ],
+        //         (object) [
+        //             'id' => 3,
+        //             'name' => 'Dome Tent',
+        //             'texts' => collect([(object)['description' => 'Cozy dome tents perfect for families.']]),
+        //             'swiperImages' => collect([(object)['image_path' => asset('assets/images/carousel/Car-camping3.jpg')]]),
+        //             'inventories' => collect([])
+        //         ]
+        //     ]);
+        //     $staycations = $dummyStaycations;
+        // }
+
+        // Calculate availability and details for each staycation
+        $availability = [];
+        $roomDetails = [];
+
+        foreach ($staycations as $staycation) {
+            $totalNights = \Carbon\Carbon::parse($checkin)->diffInDays(\Carbon\Carbon::parse($checkout));
+            $isAvailable = $staycation->quantity > 0;
+
+            $availability[$staycation->id] = [
+                'available' => $isAvailable,
+                'partially_available' => false,
+                'available_nights' => $totalNights,
+                'total_nights' => $totalNights,
+                'inventory_details' => [],
+                'total_quantity' => $staycation->quantity,
+                'min_quantity' => $staycation->quantity,
+                'has_inventory' => false
+            ];
+
+            // Prepare room details for display
+            $description = $staycation->texts->first()->description ?? 'Experience the beauty of nature with our premium accommodation options.';
+            $image = $staycation->image ?? asset('assets/images/carousel/Glamping-1.jpg');
+
+            $name = strtolower($staycation->name);
+            if (strpos($name, 'glamping') !== false) {
+                $type = 'glamping';
+            } elseif (strpos($name, 'tent') !== false || strpos($name, 'camping') !== false) {
+                $type = 'camping';
+            } else {
+                $type = 'camping'; // default
+            }
+
+            $roomDetails[$staycation->id] = [
+                'id' => $staycation->id,
+                'name' => $staycation->name,
+                'type' => $type,
+                'description' => $description,
+                'image' => $image,
+                'status' => $isAvailable ? 'available' : 'unavailable',
+                'available_quantity' => $staycation->quantity,
+                'total_quantity' => $staycation->quantity,
+                'price' => $this->calculatePrice($staycation, $checkin),
+                'price_configs' => $staycation->price_configs ?? []
+            ];
+        }
+
+        return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout'));
+    }
+
+    public function getStaycationAvailabilityApi(Request $request)
+    {
+        $request->validate([
+            'checkin' => 'required|date',
+            'checkout' => 'required|date|after:checkin',
+            'type' => 'nullable|string|in:glamping,camping'
+        ]);
+
+        $checkin = $request->checkin;
+        $checkout = $request->checkout;
+        $type = $request->type;
+
+        // Get staycations
+        $query = Staycation::with([
+            'texts',
+            'swiperImages'
+        ]);
+
+        if ($type) {
+            if ($type === 'glamping') {
+                $query->where('name', 'like', '%Glamping%');
+            } else {
+                $query->where(function($q) {
+                    $q->where('name', 'like', '%Camping%')
+                      ->orWhere('name', 'like', '%Tent%')
+                      ->orWhere('name', 'like', '%BYOT%')
+                      ->orWhere('name', 'like', '%Car%');
+                });
+            }
+        }
+
+        $staycations = $query->get();
+
+        // Calculate availability
+        $availability = [];
+        foreach ($staycations as $staycation) {
+            $totalNights = \Carbon\Carbon::parse($checkin)->diffInDays(\Carbon\Carbon::parse($checkout));
+            $isAvailable = $staycation->quantity > 0;
+
+            $availability[$staycation->id] = [
+                'available' => $isAvailable,
+                'available_nights' => $totalNights,
+                'total_nights' => $totalNights,
+                'inventory_details' => [],
+                'has_inventory' => false
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'staycations' => $staycations->values(),
+                'availability' => $availability,
+                'checkin' => $checkin,
+                'checkout' => $checkout
+            ]
+        ]);
     }
 
 
@@ -860,6 +1207,194 @@ class BookingController extends Controller
     public function dayvisitPayment()
     {
         return $this->getBookingPayment('dayvisit');
+    }
+
+    private function calculatePrice($staycation, $date, $guests = 2)
+    {
+        // Use staycation's price_configs from admin panel
+        $priceConfigs = $staycation->price_configs ?? [];
+
+        if (count($priceConfigs) > 0) {
+            // Determine day type and season type for the date
+            $dayType = $this->determineDayTypeForDate($date);
+            $seasonType = $this->determineSeasonTypeForDate($date);
+
+            // Map season types to rate keys
+            $rateKeyMap = [
+                'non-peak' => 'nonPeak',
+                'peak' => 'peak',
+                'super-peak' => 'superPeak'
+            ];
+
+            $rateKey = $rateKeyMap[$seasonType] ?? 'nonPeak';
+
+            // Find applicable price config for this date and day type
+            foreach ($priceConfigs as $config) {
+                $applies = false;
+
+                if (($config['type'] ?? 'day') === 'day') {
+                    // Check if day matches
+                    $configDays = $config['days'] ?? [];
+                    $dateDay = \Carbon\Carbon::parse($date)->format('D'); // Mon, Tue, etc.
+                    if (in_array($dateDay, $configDays)) {
+                        $applies = true;
+                    }
+                } elseif (($config['type'] ?? 'day') === 'date') {
+                    // Check specific dates
+                    $configDates = $config['dates'] ?? '';
+                    if (str_contains($configDates, $date) || $configDates === $date) {
+                        $applies = true;
+                    }
+                }
+
+                if ($applies) {
+                    $rates = $config['rates'] ?? [];
+                    $baseRate = $rates[$rateKey] ?? 0;
+
+                    // For staycations, price is fixed regardless of guests (up to max capacity)
+                    return $baseRate;
+                }
+            }
+
+            // If no specific config applies, use first config's rate
+            $config = $priceConfigs[0];
+            $rates = $config['rates'] ?? [];
+            $baseRate = $rates[$rateKey] ?? 0;
+
+            // Apply guest-based pricing
+            $baseGuests = 2;
+            $extraGuestRate = 500;
+
+            if ($guests > $baseGuests) {
+                $extraGuests = $guests - $baseGuests;
+                $baseRate += $extraGuests * $extraGuestRate;
+            }
+
+            return $baseRate;
+        }
+
+        // Fallback to hardcoded pricing if no price configs
+        $baseRate = $staycation->name && strpos(strtolower($staycation->name), 'glamping') !== false ? 5500 : 3000;
+
+        // Apply guest-based pricing to fallback
+        $baseGuests = 2;
+        $extraGuestRate = 500;
+
+        if ($guests > $baseGuests) {
+            $extraGuests = $guests - $baseGuests;
+            $baseRate += $extraGuests * $extraGuestRate;
+        }
+
+        return $baseRate;
+    }
+
+    /**
+     * Determine day type for a specific date (Holiday > Weekend > Weekday)
+     */
+    private function determineDayTypeForDate($date)
+    {
+        $carbonDate = \Carbon\Carbon::parse($date);
+        $dateStr = $carbonDate->format('Y-m-d');
+        $dayOfWeek = (int)$carbonDate->dayOfWeek;
+
+        // Check if it's a declared holiday
+        $isHoliday = Holiday::whereDate('date', $dateStr)->exists();
+        if ($isHoliday) {
+            return 'holiday';
+        }
+
+        // Check if it's a weekend
+        $weekendDayIds = DayTypeDay::whereHas('dayType', fn($q) => $q->where('name', 'Weekend'))
+            ->pluck('weekday')
+            ->toArray();
+
+        if (in_array($dayOfWeek, $weekendDayIds)) {
+            return 'weekend';
+        }
+
+        return 'weekday';
+    }
+
+    /**
+     * Determine season type for a specific date (Super-Peak > Peak > Non-Peak)
+     */
+    private function determineSeasonTypeForDate($date)
+    {
+        $dateStr = \Carbon\Carbon::parse($date)->format('Y-m-d');
+
+        // Get all peak periods that include this date
+        $peakPeriods = PeakPeriod::where('start_date', '<=', $dateStr)
+            ->where('end_date', '>=', $dateStr)
+            ->with('peakType')
+            ->get();
+
+        if ($peakPeriods->isEmpty()) {
+            return 'non-peak';
+        }
+
+        // Find the highest priority peak type
+        $highestPriority = -999;
+        $selectedType = 'non-peak';
+
+        foreach ($peakPeriods as $period) {
+            $priority = $period->peakType->priority ?? 0;
+            if ($priority > $highestPriority) {
+                $highestPriority = $priority;
+                $selectedType = $period->peakType->name;
+            }
+        }
+
+        return strtolower($selectedType);
+    }
+
+    /**
+     * AJAX endpoint to calculate dynamic pricing for staycations
+     */
+    public function getDynamicPrice(Request $request)
+    {
+        $request->validate([
+            'unit_type' => 'required|string',
+            'check_in' => 'required|date',
+            'check_out' => 'required|date|after:check_in',
+            'guests' => 'required|integer|min:1|max:50'
+        ]);
+
+        $unitType = $request->unit_type;
+        $checkIn = $request->check_in;
+        $checkOut = $request->check_out;
+        $guests = $request->guests;
+
+        // Extract staycation ID from unit_type (format: staycation-{id})
+        if (!preg_match('/^staycation-(\d+)$/', $unitType, $matches)) {
+            return response()->json(['success' => false, 'message' => 'Invalid unit type']);
+        }
+
+        $staycationId = $matches[1];
+        $staycation = Staycation::find($staycationId);
+
+        if (!$staycation) {
+            return response()->json(['success' => false, 'message' => 'Staycation not found']);
+        }
+
+        // Calculate total price for the stay
+        $totalPrice = 0;
+        $checkinDate = \Carbon\Carbon::parse($checkIn);
+        $checkoutDate = \Carbon\Carbon::parse($checkOut);
+
+        $current = $checkinDate->copy();
+        while ($current->lt($checkoutDate)) {
+            $dateStr = $current->format('Y-m-d');
+            $price = $this->calculatePrice($staycation, $dateStr, $guests);
+            $totalPrice += $price;
+            $current->addDay();
+        }
+
+        return response()->json([
+            'success' => true,
+            'total_price' => $totalPrice,
+            'nights' => $checkinDate->diffInDays($checkoutDate),
+            'guests' => $guests
+        ]);
     }
 
 

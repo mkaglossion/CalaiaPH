@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Staycation;
+use App\Models\StaycationSwiperImage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class StaycationController extends Controller
 {
@@ -19,45 +21,80 @@ class StaycationController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:staycations,name',
             'quantity' => 'required|integer|min:1',
+            'adults' => 'required|integer|min:0',
+            'children' => 'required|integer|min:0',
             'priceConfigs' => 'required|json',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        Staycation::create([
+        $capacity = $request->adults + $request->children;
+
+        // Handle image upload
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filePath = $file->getRealPath();
+            $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
+            $imagePath = $uploadResult['secure_url'];
+        }
+
+        $staycation = Staycation::create([
             'name' => $request->name,
             'quantity' => $request->quantity,
+            'capacity' => $capacity,
+            'adults' => $request->adults,
+            'children' => $request->children,
             'price_configs' => json_decode($request->priceConfigs, true),
+            'image' => $imagePath,
         ]);
 
         return response()->json(['message' => 'Staycation added successfully.']);
 
     }
 
-    // public function show(Staycation $staycation)
-    // {
-    //     $staycation->load(['swiperImages', 'texts']);
-    //     return view('admin.activities', compact('staycation'));
-    // }
+    public function show(Staycation $staycation)
+    {
+        return response()->json($staycation);
+    }
 
-    public function update(Request $request, Staycation $id)
+    public function update(Request $request, Staycation $staycation_list)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:staycations,name,' . $id->id,
+            'name' => 'required|string|max:255|unique:staycations,name,' . $staycation_list->id,
             'quantity' => 'required|integer|min:1',
+            'adults' => 'required|integer|min:0',
+            'children' => 'required|integer|min:0',
             'priceConfigs' => 'required|json',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
-        $id->update([
+        $capacity = $request->adults + $request->children;
+
+        // Handle image upload
+        $updateData = [
             'name' => $request->name,
             'quantity' => $request->quantity,
+            'capacity' => $capacity,
+            'adults' => $request->adults,
+            'children' => $request->children,
             'price_configs' => json_decode($request->priceConfigs, true),
-        ]);
+        ];
+
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filePath = $file->getRealPath();
+            $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
+            $updateData['image'] = $uploadResult['secure_url'];
+        }
+
+        $staycation_list->update($updateData);
 
         return response()->json(['message' => 'Staycation updated successfully.']);
     }
 
-    public function destroy(Staycation $id)
+    public function destroy(Staycation $staycation_list)
     {
-        $id->delete();
+        $staycation_list->delete();
         return redirect()->back()->with('success', 'Staycation deleted successfully!');
     }
 }

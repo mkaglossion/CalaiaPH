@@ -1,4 +1,4 @@
-{{-- resources/views/booking/staycation.blade.php --}}
+ {{-- resources/views/booking/staycation.blade.php --}}
 <!doctype html>
 <html lang="en">
   <head>
@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    @vite(['resources/js/booking/staycation.js'])
   </head>
   <body class="bg-[#f5efe7]">
         <div class="flex flex-col items-center justify-center px-4">
@@ -249,28 +250,7 @@ $galleryData = [
 <div class="mx-0 md:mx-10">
    {{-- Progress + nav --}}
    <div class="mb-6">
-       {{-- Progress indicator --}}
-       <div class="mb-4">
-           {{-- limit width + center --}}
-           <div class="max-w-4xl md:max-w-5xl mx-auto">
-               <div class="flex justify-between items-center mb-2">
-                   <small class="text-gray-500 text-sm">
-                       @if($bookingType === 'staycation')
-                           Step 1 of 3: Select Your Staycation
-                       @else
-                           Steps {{ $stepNumber }} of {{ $totalSteps }}
-                       @endif
-                   </small>
-                   <small class="text-gray-500 text-sm">33% Complete</small>
-               </div>
-               <div class="w-full bg-gray-200 rounded-full h-1.5 md:h-2">
-                   <div
-                       class="bg-[#8f5d54] h-1.5 md:h-2 rounded-full transition-all duration-300"
-                       style="width: 33%">
-                   </div>
-               </div>
-           </div>
-       </div>
+       <x-booking.progress-indicator :stepNumber="$stepNumber" :totalSteps="$totalSteps" :bookingType="$bookingType" />
 
        {{-- Back + guest mode --}}
        <div class="flex items-end justify-between">
@@ -390,134 +370,14 @@ $galleryData = [
         </div>
 
         {{-- Dynamic Variants Modal --}}
-        <div id="variants-modal" class="fixed inset-0 z-9999 hidden">
-            <!-- Backdrop -->
-            <div
-                class="absolute inset-0 bg-black/40"
-                onclick="closeModal('variants-modal')">
-            </div>
-
-            <!-- Modal content -->
-            <div class="relative flex items-center justify-center min-h-screen px-4">
-                <div
-                    class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden z-10"
-                    onclick="event.stopPropagation()">
-
-                    <div class="p-6 flex flex-col h-full">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 id="variants-modal-title"
-                                class="font-bold text-gray-900 text-2xl"
-                                style="font-family: 'Gotham Book', sans-serif;">
-                                Select Options
-                            </h2>
-
-                            <!-- ❌ CLOSE BUTTON -->
-                            <button
-                                type="button"
-                                onclick="closeModal('variants-modal')"
-                                class="text-3xl leading-none text-gray-500 hover:text-gray-800">
-                                ×
-                            </button>
-                        </div>
-
-                        <!-- Variants container scrollable -->
-                        <div
-                            class="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto flex-1"
-                            id="variants-container"
-                            style="max-height: calc(95vh - 160px);">
-                        </div>
-
-                        <div class="mt-6 pt-4 border-t flex justify-end">
-                            <button
-                                type="button"
-                                onclick="closeModal('variants-modal')"
-                                class="px-6 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
-                                Close
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
+        <x-booking.variants-modal />
 
 
 
 
 
         {{-- Right column: Booking Summary --}}
-        <div class="lg:w-1/3 bg-white rounded-xl shadow-md p-6 lg:sticky lg:top-6 transition-all duration-300">
-            <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
-
-            @if($datesSelected)
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Check-in:</span>
-                        <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkinDate)->format('M j, Y') }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Check-out:</span>
-                        <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkoutDate)->format('M j, Y') }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Nights:</span>
-                        <span class="text-sm font-medium">{{ $nights }}</span>
-                    </div>
-
-                    <hr class="my-3">
-
-                    {{-- Accommodations --}}
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Accommodations:</span>
-                        <span class="text-sm font-medium" id="selected-accommodations-count">0 selected</span>
-                    </div>
-
-                    {{-- Selected accommodations list --}}
-                    <div id="selected-accommodations-summary" class="mt-2 space-y-1 max-h-0 overflow-hidden transition-all duration-300">
-                        <!-- JS will populate -->
-                    </div>
-
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Total Guests:</span>
-                        <span class="text-sm font-medium" id="total-guests">0</span>
-                    </div>
-
-                    <div class="flex justify-between items-center text-lg font-bold">
-                        <span>Total:</span>
-                        <span id="total-price">₱ 0</span>
-                    </div>
-                </div>
-
-                <div class="mt-6 space-y-3">
-                    <button class="w-full bg-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="proceed-btn" disabled onclick="proceedToActivities(event)">
-                        Proceed to Food & Beverages
-                    </button>
-
-                    <!-- <button class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed" id="skip-btn" disabled onclick="skipToPayment()">
-                        Skip Activities & Go to Payment
-                    </button> -->
-                </div>
-
-                <div class="mt-6 pt-6 border-t border-gray-200">
-                    <div class="text-center">
-                        <h4 class="text-sm font-semibold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">Secure Booking</h4>
-                        <div class="flex justify-center items-center space-x-4">
-                            <div class="flex items-center">
-                                <i class="fas fa-lock text-green-600 mr-2"></i>
-                                <span class="text-xs text-gray-600">SSL Secured</span>
-                            </div>
-                            <div class="flex items-center">
-                                <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
-                                <span class="text-xs text-gray-600">Data Protected</span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2">Your information is safe with us</p>
-                    </div>
-                </div>
-            @else
-                <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
-            @endif
-        </div>
+        <x-booking.booking-summary :datesSelected="$datesSelected" :checkinDate="$checkinDate" :checkoutDate="$checkoutDate" :nights="$nights" :bookingType="$bookingType" />
 
     </div>
 

@@ -26,6 +26,8 @@
                 <tr>
                     <th class="px-4 py-2">#</th>
                     <th class="px-4 py-2">Name</th>
+                    <th class="px-4 py-2">Quantity</th>
+                    <th class="px-4 py-2">Pricing</th>
                     <th class="px-4 py-2">Uploaded</th>
                     <th class="px-4 py-2 text-right">Actions</th>
                 </tr>
@@ -35,6 +37,15 @@
                 <tr class="border-b hover:bg-gray-50">
                     <td class="px-4 py-2">{{ $index + 1 }}</td>
                     <td class="px-4 py-2">{{ $act->name ?? 'Untitled' }}</td>
+                    <td class="px-4 py-2">{{ $act->quantity ?? 'N/A' }}</td>
+                    <td class="px-4 py-2">
+                        @if($act->price_configs && count($act->price_configs) > 0)
+                            @php $config = $act->price_configs[0]; @endphp
+                            Non-Peak: ₱{{ $config['rates']['nonPeak'] ?? 0 }}, Peak: ₱{{ $config['rates']['peak'] ?? 0 }}, Super Peak: ₱{{ $config['rates']['superPeak'] ?? 0 }}
+                        @else
+                            N/A
+                        @endif
+                    </td>
                     <td class="px-4 py-2">{{ $act->created_at->format('Y-m-d') }}</td>
                     <td class="px-4 py-2 text-right space-x-2">
                         <button type="button" class="text-blue-600 hover:underline" @click="editStaycation({{ $act->id }})">
@@ -55,7 +66,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="px-4 py-4 text-center text-gray-500">No staycations added yet.</td>
+                    <td colspan="6" class="px-4 py-4 text-center text-gray-500">No staycations added yet.</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -70,15 +81,23 @@
             <form id="staycationForm" @submit.prevent="saveStaycation()" class="space-y-5">
                 @csrf
 
-                <!-- Staycation Name & Quantity -->
-                <div class="flex space-x-2">
-                    <div class="flex-1">
+                <!-- Staycation Name, Quantity, Adults & Children -->
+                <div class="grid grid-cols-4 gap-4">
+                    <div>
                         <label class="block text-sm font-medium mb-1">Staycation Name</label>
                         <input type="text" x-model="form.name" class="w-full border rounded px-3 py-2" placeholder="Premium Glamping Tent" required>
                     </div>
-                    <div class="w-32">
+                    <div>
                         <label class="block text-sm font-medium mb-1">Quantity</label>
-                        <input type="number" x-model.number="form.quantity" min="1" class="w-full border rounded px-3 py-2" placeholder="Rooms" required>
+                        <input type="number" x-model.number="form.quantity" min="1" class="w-full border rounded px-3 py-2" placeholder="1" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Adults</label>
+                        <input type="number" x-model.number="form.adults" min="0" class="w-full border rounded px-3 py-2" placeholder="0" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Children</label>
+                        <input type="number" x-model.number="form.children" min="0" class="w-full border rounded px-3 py-2" placeholder="0" required>
                     </div>
                 </div>
 
@@ -151,6 +170,16 @@
                     </template>
 
                     <button type="button" @click="addPriceConfig()" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">+ Add Price Config</button>
+                </div>
+
+                <!-- Image Upload Section -->
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium">Upload Image (optional)</label>
+                    <input type="file" accept="image/*" x-ref="imageInput" @change="handleImageUpload($event)" class="w-full border rounded px-3 py-2">
+                    <div x-show="form.imagePreview" class="mt-2">
+                        <img :src="form.imagePreview" class="w-32 h-20 object-cover rounded border">
+                        <button type="button" @click="removeImage()" class="ml-2 text-red-500 hover:underline">Remove</button>
+                    </div>
                 </div>
 
                 <!-- Actions -->
@@ -490,16 +519,23 @@ function staycationComponent() {
             id: null,
             name: '',
             quantity: 1,
+            adults: 0,
+            children: 0,
             priceConfigs: [],
+            images: [],
             staycation_id: '',
             label: '',
             text: ''
         },
 
         resetForm() {
-            this.form = { id: null, name: '', quantity: 1, priceConfigs: [] };
+            this.form = { id: null, name: '', quantity: 1, adults: 0, children: 0, priceConfigs: [], image: null, imagePreview: null };
             this.editModeStaycation = false;
+            if (this.$refs.imageInput) {
+                this.$refs.imageInput.value = '';
+            }
         },
+
 
         editStaycation(id) {
             this.resetForm();
@@ -508,6 +544,8 @@ function staycationComponent() {
                 this.form.id = staycation.id;
                 this.form.name = staycation.name;
                 this.form.quantity = staycation.quantity;
+                this.form.adults = staycation.adults;
+                this.form.children = staycation.children;
                 this.form.priceConfigs = (staycation.price_configs || []).map(pc => {
                     const datesStr = pc.dates || '';
                     const isMultiple = datesStr.includes(',');
@@ -517,6 +555,10 @@ function staycationComponent() {
                         dates: datesStr
                     };
                 });
+                // Handle existing image
+                if (staycation.image) {
+                    this.form.imagePreview = staycation.image;
+                }
                 this.editModeStaycation = true;
                 this.showStaycationModal = true;
             }
@@ -537,6 +579,28 @@ function staycationComponent() {
             this.form.priceConfigs.splice(index, 1);
         },
 
+        handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.form.image = file;
+                    this.form.imagePreview = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        },
+
+        removeImage() {
+            this.form.image = null;
+            this.form.imagePreview = null;
+            if (this.$refs.imageInput) {
+                this.$refs.imageInput.value = '';
+            }
+        },
+
+
+
         saveStaycation: async function() {
             // Validate form data
             if (!this.form.name.trim()) {
@@ -545,6 +609,14 @@ function staycationComponent() {
             }
             if (!this.form.quantity || this.form.quantity < 1) {
                 alert('Please enter a valid quantity.');
+                return;
+            }
+            if (this.form.adults < 0 || this.form.children < 0) {
+                alert('Please enter valid numbers for adults and children.');
+                return;
+            }
+            if (this.form.adults + this.form.children === 0) {
+                alert('At least one adult or child is required.');
                 return;
             }
             if (!this.form.priceConfigs || this.form.priceConfigs.length === 0) {
@@ -557,7 +629,12 @@ function staycationComponent() {
             formData.append('_token', csrf);
             formData.append('name', this.form.name);
             formData.append('quantity', this.form.quantity);
+            formData.append('adults', this.form.adults);
+            formData.append('children', this.form.children);
             formData.append('priceConfigs', JSON.stringify(this.form.priceConfigs));
+            if (this.form.image) {
+                formData.append('image', this.form.image);
+            }
 
             let url = '{{ route("staycation-list.store") }}';
             let method = 'POST';
@@ -645,7 +722,8 @@ function staycationComponent() {
                 btn.innerText = this.editMode ? 'Update' : 'Add';
                 btn.disabled = false;
             }
-        }
+        },
+
     };
 }
 

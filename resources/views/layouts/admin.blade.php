@@ -124,6 +124,25 @@
 
   {{-- Main Content --}}
   <main class="flex-1 ml-64 overflow-y-auto h-screen p-8">
+    {{-- Flash Messages --}}
+    @if (session('success'))
+      <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+        <span class="block sm:inline">{{ session('success') }}</span>
+        <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.style.display='none'">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    @endif
+
+    @if (session('error'))
+      <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <span class="block sm:inline">{{ session('error') }}</span>
+        <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.style.display='none'">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    @endif
+
     @yield('content')
   </main>
 

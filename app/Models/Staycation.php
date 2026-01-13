@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Staycation extends Model
 {
-    protected $fillable = ['name', 'quantity', 'price_configs'];
+    protected $fillable = ['name', 'quantity', 'type', 'capacity', 'adults', 'children', 'price', 'image', 'price_configs'];
 
     protected $casts = [
         'price_configs' => 'array',
@@ -32,5 +32,6 @@ class Staycation extends Model
             'staycation_accommodation_id'
         );
     }
+
 }
 

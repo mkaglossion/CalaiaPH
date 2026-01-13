@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use App\Models\Activity;
 use App\Models\ActivitySwiperImage;
 use App\Models\ActivityText;
@@ -117,5 +118,6 @@ class AdminController extends Controller
         $products = Product::paginate(10);
         return view('admin.ShopStore.shopitems', compact('products'));
     }
+
 
 }
