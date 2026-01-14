@@ -7,12 +7,28 @@
             showModal: false,
             showTextModal: false,
             editMode: false,
+            editImageMode: false,
+            currentImageId: null,
+            currentImageTitle: '',
             texts: @js($texts),
             form: { id: null, label: '', text: '' },
 
             resetForm() {
                 this.form = { id: null, label: '', text: '' };
                 this.editMode = false;
+            },
+
+            resetImageForm() {
+                this.editImageMode = false;
+                this.currentImageId = null;
+                this.currentImageTitle = '';
+            },
+
+            editImage(id, title) {
+                this.currentImageId = id;
+                this.currentImageTitle = title || '';
+                this.editImageMode = true;
+                this.showModal = true;
             },
 
             editText(id) {
@@ -84,8 +100,8 @@
 
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Swiper Images Management</h2>
-        <button 
-            @click="showModal = true" 
+        <button
+            @click="showModal = true"
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
             + Add Image
@@ -123,11 +139,14 @@
                         </td>
                         <td class="px-4 py-2">{{ $img->title ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ $img->created_at->format('Y-m-d') }}</td>
-                        <td class="px-4 py-2 text-right">
+                        <td class="px-4 py-2 text-right space-x-2">
+                            <button class="text-blue-600 hover:underline" @click="editImage({{ $img->id }}, '{{ $img->title }}')">
+                                Edit
+                            </button>
                             <form action="{{ route('food-swiper-images.destroy', $img->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
-                                <button 
+                                <button
                                     type="submit"
                                     class="text-red-600 hover:underline"
                                     onclick="return confirm('Delete this image?')"
@@ -147,18 +166,18 @@
     </div>
 
     {{-- Modal --}}
-    <div 
+    <div
         x-show="showModal"
         class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
         x-transition
     >
         <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-            <button 
-                @click="showModal = false"
+            <button
+                @click="showModal = false; resetImageForm()"
                 class="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4">Upload New Swiper Image</h3>
+            <h3 class="text-lg font-semibold mb-4" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
 
             <form
                 id="swiperUploadForm"
@@ -169,20 +188,30 @@
                     const fileInput = $refs.image.files[0];
                     const title = $refs.title.value;
 
-                    if (!fileInput) {
+                    if (!editImageMode && !fileInput) {
                         alert('Please select an image before uploading.');
                         return;
                     }
 
                     const formData = new FormData();
-                    formData.append('image', fileInput);
+                    if (fileInput) {
+                        formData.append('image', fileInput);
+                    }
                     formData.append('title', title);
 
+                    let url = '{{ route('food-swiper-images.store') }}';
+                    let method = 'POST';
+
+                    if (editImageMode && currentImageId) {
+                        url = `/admin/food-swiper-images/${currentImageId}`;
+                        formData.append('_method', 'PUT');
+                    }
+
                     const btn = $el.querySelector('button[type=submit]');
-                    btn.innerText = 'Uploading...';
+                    btn.innerText = editImageMode ? 'Updating...' : 'Uploading...';
                     btn.disabled = true;
 
-                    fetch('{{ route('food-swiper-images.store') }}', {
+                    fetch(url, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': csrf,
@@ -200,24 +229,25 @@
                         }
 
                         if (res.ok) {
-                            alert(data.message || 'Image uploaded successfully!');
+                            alert(data.message || (editImageMode ? 'Image updated successfully!' : 'Image uploaded successfully!'));
                             $refs.image.value = '';
                             $refs.title.value = '';
+                            resetImageForm();
                             showModal = false;
-                            window.location.reload(); // Refresh to show new image
+                            window.location.reload(); // Refresh to show updated image
                         } else if (data.errors) {
                             const errorMessages = Object.values(data.errors).flat().join('\\n');
                             alert(errorMessages);
                         } else {
-                            alert(data.message || 'Upload failed.');
+                            alert(data.message || 'Operation failed.');
                         }
                     })
                     .catch(err => {
                         console.error(err);
-                        alert('Error uploading image.');
+                        alert('Error ' + (editImageMode ? 'updating' : 'uploading') + ' image.');
                     })
                     .finally(() => {
-                        btn.innerText = 'Upload';
+                        btn.innerText = editImageMode ? 'Update' : 'Upload';
                         btn.disabled = false;
                     });
                 "
@@ -225,17 +255,17 @@
                 @csrf
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Title (optional)</label>
-                    <input type="text" x-ref="title" name="title" class="border rounded p-2 w-full">
+                    <input type="text" x-ref="title" x-model="currentImageTitle" name="title" class="border rounded p-2 w-full">
                 </div>
 
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" required>
+                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" :required="!editImageMode">
                 </div>
 
                 <div class="flex justify-end space-x-2">
-                    <button type="button" @click="showModal = false" class="px-4 py-2 border rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Upload</button>
+                    <button type="button" @click="showModal = false; resetImageForm()" class="px-4 py-2 border rounded">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded" x-text="editImageMode ? 'Update' : 'Upload'"></button>
                 </div>
             </form>
         </div>
@@ -245,8 +275,8 @@
 
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Text Content Management</h2>
-        <button 
-            @click="showTextModal = true" 
+        <button
+            @click="showTextModal = true"
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
             + Add Text Content
@@ -271,7 +301,7 @@
                         <td class="px-4 py-2">{{ $text->label ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ Str::limit($text->text, 60) }}</td>
                         <td class="px-4 py-2 text-right space-x-2">
-                            <button 
+                            <button
                                 class="text-blue-600 hover:underline"
                                 @click="editText({{ $text->id }})"
                             >
@@ -280,7 +310,7 @@
                             <form action="{{ route('food-texts.destroy', $text->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
-                                <button 
+                                <button
                                     type="submit"
                                     class="text-red-600 hover:underline"
                                     onclick="return confirm('Delete this text content?')"
@@ -300,13 +330,13 @@
     </div>
 
     <!-- Text Content Modal -->
-    <div 
-        x-show="showTextModal" 
+    <div
+        x-show="showTextModal"
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
         x-cloak
     >
-        <div 
-            @click.away="showTextModal = false" 
+        <div
+            @click.away="showTextModal = false"
             class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6"
         >
             <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
@@ -321,13 +351,13 @@
                 <template x-if="editMode">
                     <input type="hidden" name="_method" value="PUT">
                 </template>
-            
+
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1">Label</label>
-                    <input 
-                        type="text" 
-                        name="label" 
-                        x-model="form.label" 
+                    <input
+                        type="text"
+                        name="label"
+                        x-model="form.label"
                         class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         placeholder="Optional"
                     >
@@ -335,10 +365,10 @@
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1">Text</label>
-                    <textarea 
-                        name="text" 
-                        x-model="form.text" 
-                        rows="4" 
+                    <textarea
+                        name="text"
+                        x-model="form.text"
+                        rows="4"
                         class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         placeholder="Enter text text..."
                         required
@@ -346,15 +376,15 @@
                 </div>
 
                 <div class="flex justify-end space-x-2">
-                    <button 
-                        type="button" 
-                        @click="showTextModal = false" 
+                    <button
+                        type="button"
+                        @click="showTextModal = false"
                         class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
                     >
                         Cancel
                     </button>
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                     >
                         <span x-text="editMode ? 'Update' : 'Add'"></span>

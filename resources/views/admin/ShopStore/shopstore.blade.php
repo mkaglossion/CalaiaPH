@@ -3,11 +3,102 @@
 @section('title', 'Shop Page Information')
 
 @section('content')
-<div x-data="shopComponent()">
+<div
+    x-data="{
+            showModal: false,
+            showTextModal: false,
+            editMode: false,
+            editImageMode: false,
+            currentImageId: null,
+            currentImageTitle: '',
+            texts: @js($texts),
+            form: { id: null, label: '', text: '' },
+
+            resetForm() {
+                this.form = { id: null, label: '', text: '' };
+                this.editMode = false;
+            },
+
+            resetImageForm() {
+                this.editImageMode = false;
+                this.currentImageId = null;
+                this.currentImageTitle = '';
+            },
+
+            editImage(id, title) {
+                this.currentImageId = id;
+                this.currentImageTitle = title || '';
+                this.editImageMode = true;
+                this.showModal = true;
+            },
+
+            editText(id) {
+                const text = this.texts.find(t => t.id === id);
+                if (text) {
+                    this.form = { id: text.id, label: text.label, text: text.text };
+                    this.editMode = true;
+                    this.showTextModal = true;
+                }
+            },
+
+            async saveText() {
+                const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+                const formData = new FormData();
+                formData.append('label', this.form.label);
+                formData.append('text', this.form.text);
+
+                let url = '{{ route('farm-texts.store') }}';
+                let method = 'POST';
+
+                // If editing → use PUT route
+                if (this.editMode && this.form.id) {
+                    url = `/admin/farm-texts/${this.form.id}`;
+                    formData.append('_method', 'PUT');
+                    method = 'POST'; // Laravel requires POST with _method=PUT
+                }
+
+                const btn = document.querySelector('#textUploadForm button[type=submit]');
+                btn.innerText = this.editMode ? 'Updating...' : 'Uploading...';
+                btn.disabled = true;
+
+                try {
+                    const res = await fetch(url, {
+                        method,
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json',
+                        },
+                        body: formData,
+                        credentials: 'same-origin'
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        alert(data.message || (this.editMode ? 'Text updated successfully!' : 'Text added successfully!'));
+                        this.resetForm();
+                        this.showTextModal = false;
+                        window.location.reload();
+                    } else if (data.errors) {
+                        const errorMessages = Object.values(data.errors).flat().join('\n');
+                        alert(errorMessages);
+                    } else {
+                        alert(data.message || 'Operation failed.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Error submitting text.');
+                } finally {
+                    btn.innerText = this.editMode ? 'Update' : 'Add';
+                    btn.disabled = false;
+                }
+            }
+        }"
+    >
     <h1 class="text-2xl font-bold mb-4">Shop Page</h1>
+
     <hr class="my-6">
 
-    {{-- Swiper Images Section --}}
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Swiper Images Management</h2>
         <button
@@ -24,8 +115,8 @@
         </div>
     @endif
 
-    {{-- Images Table --}}
-    <div class="overflow-x-auto border rounded-lg shadow mb-8">
+    {{-- Table --}}
+    <div class="overflow-x-auto border rounded-lg shadow">
         <table class="min-w-full text-sm text-left">
             <thead class="bg-gray-100 border-b">
                 <tr>
@@ -49,7 +140,10 @@
                         </td>
                         <td class="px-4 py-2">{{ $img->title ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ $img->created_at->format('Y-m-d') }}</td>
-                        <td class="px-4 py-2 text-right">
+                        <td class="px-4 py-2 text-right space-x-2">
+                            <button class="text-blue-600 hover:underline" @click="editImage({{ $img->id }}, '{{ $img->title }}')">
+                                Edit
+                            </button>
                             <form action="{{ route('farm-swiper-images.destroy', $img->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
@@ -72,7 +166,7 @@
         </table>
     </div>
 
-    {{-- Image Upload Modal --}}
+    {{-- Modal --}}
     <div
         x-show="showModal"
         class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
@@ -84,7 +178,7 @@
                 class="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4">Upload New Swiper Image</h3>
+            <h3 class="text-lg font-semibold mb-4" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
 
             <form
                 id="swiperUploadForm"
@@ -95,20 +189,30 @@
                     const fileInput = $refs.image.files[0];
                     const title = $refs.title.value;
 
-                    if (!fileInput) {
+                    if (!editImageMode && !fileInput) {
                         alert('Please select an image before uploading.');
                         return;
                     }
 
                     const formData = new FormData();
-                    formData.append('image', fileInput);
+                    if (fileInput) {
+                        formData.append('image', fileInput);
+                    }
                     formData.append('title', title);
 
+                    let url = '{{ route('farm-swiper-images.store') }}';
+                    let method = 'POST';
+
+                    if (editImageMode && currentImageId) {
+                        url = `/admin/farm-swiper-images/${currentImageId}`;
+                        formData.append('_method', 'PUT');
+                    }
+
                     const btn = $el.querySelector('button[type=submit]');
-                    btn.innerText = 'Uploading...';
+                    btn.innerText = editImageMode ? 'Updating...' : 'Uploading...';
                     btn.disabled = true;
 
-                    fetch('{{ route('farm-swiper-images.store') }}', {
+                    fetch(url, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': csrf,
@@ -119,27 +223,32 @@
                     })
                     .then(async res => {
                         let data;
-                        try { data = await res.json(); } catch { throw new Error('Invalid JSON'); }
+                        try {
+                            data = await res.json();
+                        } catch {
+                            throw new Error('Invalid JSON');
+                        }
 
                         if (res.ok) {
-                            alert(data.message || 'Image uploaded successfully!');
+                            alert(data.message || (editImageMode ? 'Image updated successfully!' : 'Image uploaded successfully!'));
                             $refs.image.value = '';
                             $refs.title.value = '';
+                            resetImageForm();
                             showModal = false;
-                            window.location.reload();
+                            window.location.reload(); // Refresh to show updated image
                         } else if (data.errors) {
                             const errorMessages = Object.values(data.errors).flat().join('\\n');
                             alert(errorMessages);
                         } else {
-                            alert(data.message || 'Upload failed.');
+                            alert(data.message || 'Operation failed.');
                         }
                     })
                     .catch(err => {
                         console.error(err);
-                        alert('Error uploading image.');
+                        alert('Error ' + (editImageMode ? 'updating' : 'uploading') + ' image.');
                     })
                     .finally(() => {
-                        btn.innerText = 'Upload';
+                        btn.innerText = editImageMode ? 'Update' : 'Upload';
                         btn.disabled = false;
                     });
                 "
@@ -165,11 +274,10 @@
 
     <hr class="my-6">
 
-    {{-- Text Content Section --}}
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Text Content Management</h2>
         <button
-            @click="showTextModal = true; resetForm()"
+            @click="showTextModal = true"
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
             + Add Text Content
@@ -215,14 +323,14 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="px-4 py-4 text-center text-gray-500">No text content added yet.</td>
+                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">No text content added yet.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
-    {{-- Text Content Modal --}}
+    <!-- Text Content Modal -->
     <div
         x-show="showTextModal"
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
@@ -263,7 +371,7 @@
                         x-model="form.text"
                         rows="4"
                         class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        placeholder="Enter text content..."
+                        placeholder="Enter text text..."
                         required
                     ></textarea>
                 </div>
@@ -271,7 +379,7 @@
                 <div class="flex justify-end space-x-2">
                     <button
                         type="button"
-                        @click="showTextModal = false; resetForm()"
+                        @click="showTextModal = false"
                         class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
                     >
                         Cancel
@@ -284,84 +392,8 @@
                     </button>
                 </div>
             </form>
+
         </div>
     </div>
 </div>
-
-<script>
-function shopComponent() {
-    return {
-        showModal: false,
-        showTextModal: false,
-        editMode: false,
-        texts: @js($texts),
-        form: { id: null, label: '', text: '' },
-
-        resetForm() {
-            this.form = { id: null, label: '', text: '' };
-            this.editMode = false;
-        },
-
-        editText(id) {
-            const text = this.texts.find(t => t.id === id);
-            if (text) {
-                this.form = { id: text.id, label: text.label, text: text.text };
-                this.editMode = true;
-                this.showTextModal = true;
-            }
-        },
-
-        async saveText() {
-            const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
-            const formData = new FormData();
-            formData.append('label', this.form.label);
-            formData.append('text', this.form.text);
-
-            let url = '{{ route('farm-texts.store') }}';
-            let method = 'POST';
-
-            if (this.editMode && this.form.id) {
-                url = `/admin/farm-texts/${this.form.id}`;
-                formData.append('_method', 'PUT');
-                method = 'POST';
-            }
-
-            const btn = document.querySelector('#textUploadForm button[type=submit]');
-            btn.innerText = this.editMode ? 'Updating...' : 'Uploading...';
-            btn.disabled = true;
-
-            try {
-                const res = await fetch(url, {
-                    method,
-                    headers: {
-                        'X-CSRF-TOKEN': csrf,
-                        'Accept': 'application/json',
-                    },
-                    body: formData,
-                    credentials: 'same-origin'
-                });
-
-                const data = await res.json();
-
-                if (res.ok) {
-                    alert(data.message || (this.editMode ? 'Text updated successfully!' : 'Text added successfully!'));
-                    this.resetForm();
-                    this.showTextModal = false;
-                    window.location.reload();
-                } else if (data.errors) {
-                    alert(Object.values(data.errors).flat().join('\n'));
-                } else {
-                    alert(data.message || 'Operation failed.');
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Error submitting text.');
-            } finally {
-                btn.innerText = this.editMode ? 'Update' : 'Add';
-                btn.disabled = false;
-            }
-        }
-    };
-}
-</script>
 @endsection

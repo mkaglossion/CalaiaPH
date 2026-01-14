@@ -27,7 +27,6 @@ class FoodSwiperImageController extends Controller
         $file = $request->file('image');
         $mimeType = $file->getMimeType();
         $isVideo = str_starts_with($mimeType, 'video/');
-        $resourceType = $isVideo ? 'video' : 'image';
 
         // Upload to Cloudinary
         $filePath = $file->getRealPath();
@@ -44,6 +43,37 @@ class FoodSwiperImageController extends Controller
         ]);
 
         $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
+
+        return response()->json(['message' => $message]);
+    }
+
+    public function update(Request $request, FoodSwiperImage $foodSwiperImage)
+    {
+        $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
+            'image' => 'nullable|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
+        ]);
+
+        $data = ['title' => $validated['title'] ?? null];
+
+        if ($request->hasFile('image')) {
+            // Delete old image from Cloudinary
+            if ($foodSwiperImage->public_id) {
+                Cloudinary::uploadApi()->destroy($foodSwiperImage->public_id);
+            }
+
+            // Upload new image to Cloudinary
+            $file = $request->file('image');
+            $filePath = $file->getRealPath();
+            $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
+
+            $data['image_path'] = $uploadResult['secure_url'];
+            $data['public_id'] = $uploadResult['public_id'];
+        }
+
+        $foodSwiperImage->update($data);
+
+        $message = $request->hasFile('image') ? 'Image updated successfully!' : 'Image details updated successfully!';
 
         return response()->json(['message' => $message]);
     }

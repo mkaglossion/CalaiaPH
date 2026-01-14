@@ -11,6 +11,7 @@
             editImageMode: false,
             currentImageId: null,
             currentImageTitle: '',
+            submitting: false,
             texts: @js($texts),
             form: { id: null, label: '', text: '' },
 
@@ -23,6 +24,7 @@
                 this.editImageMode = false;
                 this.currentImageId = null;
                 this.currentImageTitle = '';
+                this.showModal = false;
             },
 
             editImage(id, title) {
@@ -185,12 +187,14 @@
                 class="space-y-5"
                 enctype="multipart/form-data"
                 @submit.prevent="
+                    submitting = true;
                     const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
                     const fileInput = $refs.image.files[0];
-                    const title = $refs.title.value;
+                    const title = currentImageTitle;
 
                     if (!editImageMode && !fileInput) {
                         alert('Please select an image before uploading.');
+                        submitting = false;
                         return;
                     }
 
@@ -207,10 +211,6 @@
                         url = `/admin/stay-swiper-images/${currentImageId}`;
                         formData.append('_method', 'PUT');
                     }
-
-                    const btn = $el.querySelector('button[type=submit]');
-                    btn.innerText = editImageMode ? 'Updating...' : 'Uploading...';
-                    btn.disabled = true;
 
                     fetch(url, {
                         method: 'POST',
@@ -232,7 +232,7 @@
                         if (res.ok) {
                             alert(data.message || (editImageMode ? 'Image updated successfully!' : 'Image uploaded successfully!'));
                             $refs.image.value = '';
-                            $refs.title.value = '';
+                            currentImageTitle = '';
                             resetImageForm();
                             showModal = false;
                             window.location.reload(); // Refresh to show updated image
@@ -248,25 +248,24 @@
                         alert('Error ' + (editImageMode ? 'updating' : 'uploading') + ' image.');
                     })
                     .finally(() => {
-                        btn.innerText = editImageMode ? 'Update' : 'Upload';
-                        btn.disabled = false;
+                        submitting = false;
                     });
                 "
             >
                 @csrf
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Title (optional)</label>
-                    <input type="text" x-ref="title" name="title" class="border rounded p-2 w-full">
+                    <input type="text" x-ref="title" x-model="currentImageTitle" name="title" class="border rounded p-2 w-full">
                 </div>
 
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" required>
+                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full">
                 </div>
 
                 <div class="flex justify-end space-x-2">
                     <button type="button" @click="showModal = false" class="px-4 py-2 border rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Upload</button>
+                    <button type="submit" :disabled="submitting" class="bg-blue-600 text-white px-4 py-2 rounded" x-text="submitting ? (editImageMode ? 'Updating...' : 'Uploading...') : (editImageMode ? 'Update' : 'Upload')"></button>
                 </div>
             </form>
         </div>

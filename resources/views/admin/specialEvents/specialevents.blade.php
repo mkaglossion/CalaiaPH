@@ -7,12 +7,28 @@
             showModal: false,
             showTextModal: false,
             editMode: false,
+            editImageMode: false,
+            currentImageId: null,
+            currentImageTitle: '',
             texts: @js($texts),
             form: { id: null, label: '', text: '' },
 
             resetForm() {
                 this.form = { id: null, label: '', text: '' };
                 this.editMode = false;
+            },
+
+            resetImageForm() {
+                this.editImageMode = false;
+                this.currentImageId = null;
+                this.currentImageTitle = '';
+            },
+
+            editImage(id, title) {
+                this.currentImageId = id;
+                this.currentImageTitle = title || '';
+                this.editImageMode = true;
+                this.showModal = true;
             },
 
             editText(id) {
@@ -123,11 +139,14 @@
                         </td>
                         <td class="px-4 py-2">{{ $img->title ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ $img->created_at->format('Y-m-d') }}</td>
-                        <td class="px-4 py-2 text-right">
+                        <td class="px-4 py-2 text-right space-x-2">
+                            <button class="text-blue-600 hover:underline" @click="editImage({{ $img->id }}, '{{ $img->title }}')">
+                                Edit
+                            </button>
                             <form action="{{ route('special-swiper-images.destroy', $img->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
-                                <button 
+                                <button
                                     type="submit"
                                     class="text-red-600 hover:underline"
                                     onclick="return confirm('Delete this image?')"
@@ -147,18 +166,18 @@
     </div>
 
     {{-- Modal --}}
-    <div 
+    <div
         x-show="showModal"
         class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
         x-transition
     >
         <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-            <button 
-                @click="showModal = false"
+            <button
+                @click="showModal = false; resetImageForm()"
                 class="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4">Upload New Swiper Image</h3>
+            <h3 class="text-lg font-semibold mb-4" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
 
             <form
                 id="swiperUploadForm"
@@ -169,20 +188,30 @@
                     const fileInput = $refs.image.files[0];
                     const title = $refs.title.value;
 
-                    if (!fileInput) {
+                    if (!editImageMode && !fileInput) {
                         alert('Please select an image before uploading.');
                         return;
                     }
 
                     const formData = new FormData();
-                    formData.append('image', fileInput);
+                    if (fileInput) {
+                        formData.append('image', fileInput);
+                    }
                     formData.append('title', title);
 
+                    let url = '{{ route('special-swiper-images.store') }}';
+                    let method = 'POST';
+
+                    if (editImageMode && currentImageId) {
+                        url = `/admin/special-swiper-images/${currentImageId}`;
+                        formData.append('_method', 'PUT');
+                    }
+
                     const btn = $el.querySelector('button[type=submit]');
-                    btn.innerText = 'Uploading...';
+                    btn.innerText = editImageMode ? 'Updating...' : 'Uploading...';
                     btn.disabled = true;
 
-                    fetch('{{ route('special-swiper-images.store') }}', {
+                    fetch(url, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': csrf,
@@ -200,24 +229,25 @@
                         }
 
                         if (res.ok) {
-                            alert(data.message || 'Image uploaded successfully!');
+                            alert(data.message || (editImageMode ? 'Image updated successfully!' : 'Image uploaded successfully!'));
                             $refs.image.value = '';
                             $refs.title.value = '';
+                            resetImageForm();
                             showModal = false;
-                            window.location.reload(); // Refresh to show new image
+                            window.location.reload(); // Refresh to show updated image
                         } else if (data.errors) {
                             const errorMessages = Object.values(data.errors).flat().join('\\n');
                             alert(errorMessages);
                         } else {
-                            alert(data.message || 'Upload failed.');
+                            alert(data.message || 'Operation failed.');
                         }
                     })
                     .catch(err => {
                         console.error(err);
-                        alert('Error uploading image.');
+                        alert('Error ' + (editImageMode ? 'updating' : 'uploading') + ' image.');
                     })
                     .finally(() => {
-                        btn.innerText = 'Upload';
+                        btn.innerText = editImageMode ? 'Update' : 'Upload';
                         btn.disabled = false;
                     });
                 "
@@ -225,17 +255,17 @@
                 @csrf
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Title (optional)</label>
-                    <input type="text" x-ref="title" name="title" class="border rounded p-2 w-full">
+                    <input type="text" x-ref="title" x-model="currentImageTitle" name="title" class="border rounded p-2 w-full">
                 </div>
 
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" required>
+                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" :required="!editImageMode">
                 </div>
 
                 <div class="flex justify-end space-x-2">
-                    <button type="button" @click="showModal = false" class="px-4 py-2 border rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Upload</button>
+                    <button type="button" @click="showModal = false; resetImageForm()" class="px-4 py-2 border rounded">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded" x-text="editImageMode ? 'Update' : 'Upload'"></button>
                 </div>
             </form>
         </div>

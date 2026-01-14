@@ -13,6 +13,7 @@
             currentImageTitle: '',
             texts: @js($texts),
             form: { id: null, label: '', text: '' },
+            submitting: false,
 
             resetForm() {
                 this.form = { id: null, label: '', text: '' };
@@ -23,6 +24,7 @@
                 this.editImageMode = false;
                 this.currentImageId = null;
                 this.currentImageTitle = '';
+                this.showModal = false;
             },
 
             editImage(id, title) {
@@ -102,7 +104,7 @@
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Swiper Images Management</h2>
         <button
-            @click="showModal = true"
+            @click="editImageMode = false; showModal = true"
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
             + Add Image
@@ -174,7 +176,7 @@
     >
         <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
             <button
-                @click="showModal = false; resetImageForm()"
+                @click="showModal = false"
                 class="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
             >&times;</button>
 
@@ -209,7 +211,8 @@
                     }
 
                     const btn = $el.querySelector('button[type=submit]');
-                    btn.innerText = editImageMode ? 'Updating...' : 'Uploading...';
+                    const btnText = document.getElementById('submitBtnText');
+                    btnText.innerText = editImageMode ? 'Updating...' : 'Uploading...';
                     btn.disabled = true;
 
                     fetch(url, {
@@ -265,8 +268,8 @@
                 </div>
 
                 <div class="flex justify-end space-x-2">
-                    <button type="button" @click="showModal = false; resetImageForm()" class="px-4 py-2 border rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Upload</button>
+                    <button type="button" @click="showModal = false" class="px-4 py-2 border rounded">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded"><span id="submitBtnText" x-text="editImageMode ? 'Update' : 'Upload'"></span></button>
                 </div>
             </form>
         </div>

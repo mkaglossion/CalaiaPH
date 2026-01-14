@@ -260,9 +260,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('day-tour-swiper-images', DayTourSwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('stay-swiper-images', StaySwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('do-swiper-images', DoSwiperImageController::class)->only(['store', 'update', 'destroy']);
-    Route::resource('food-swiper-images', FoodSwiperImageController::class)->only(['store', 'destroy']);
-    Route::resource('special-swiper-images', SpecialSwiperImageController::class)->only(['store', 'destroy']);
-    Route::resource('farm-swiper-images', FarmSwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('food-swiper-images', FoodSwiperImageController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('special-swiper-images', SpecialSwiperImageController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('farm-swiper-images', FarmSwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('activity-image', ActivitySwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('staycation-image', StaycationSwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('menu-image', MenuSwiperImageController::class)->only(['store', 'destroy']);
