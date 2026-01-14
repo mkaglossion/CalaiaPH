@@ -202,7 +202,7 @@
 
                         if (res.ok) {
                             alert(data.message || 'Image uploaded successfully!');
-                            $refs.image.value = '';
+                            $refs.image.value = '';an 
                             $refs.title.value = '';
                             showModal = false;
                             window.location.reload(); // Refresh to show new image

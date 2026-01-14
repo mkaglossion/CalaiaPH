@@ -961,19 +961,33 @@ class BookingController extends Controller
         $availability = [];
         $roomDetails = [];
 
+        $checkinCarbon = \Carbon\Carbon::parse($checkin);
+        $checkoutCarbon = \Carbon\Carbon::parse($checkout);
+
         foreach ($staycations as $staycation) {
-            $totalNights = \Carbon\Carbon::parse($checkin)->diffInDays(\Carbon\Carbon::parse($checkout));
+            $totalNights = $checkinCarbon->diffInDays($checkoutCarbon);
             $isAvailable = $staycation->quantity > 0;
+
+            $inventoryDetails = [];
+            $current = $checkinCarbon->copy();
+            while ($current->lt($checkoutCarbon)) {
+                $dateStr = $current->format('Y-m-d');
+                $inventoryDetails[$dateStr] = [
+                    'min_quantity' => $staycation->quantity,
+                    'is_available' => $staycation->quantity > 0
+                ];
+                $current->addDay();
+            }
 
             $availability[$staycation->id] = [
                 'available' => $isAvailable,
                 'partially_available' => false,
                 'available_nights' => $totalNights,
                 'total_nights' => $totalNights,
-                'inventory_details' => [],
+                'inventory_details' => $inventoryDetails,
                 'total_quantity' => $staycation->quantity,
                 'min_quantity' => $staycation->quantity,
-                'has_inventory' => false
+                'has_inventory' => true
             ];
 
             // Prepare room details for display

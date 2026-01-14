@@ -6,6 +6,49 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <style>
+        [x-cloak]{display:none!important;}
+
+        /* base rounding */
+        .flatpickr-day { border-radius: 6px; }
+
+        /* availability tiers */
+        .fp-avail-high { background:#d4edda !important; color:#155724 !important; }
+        .fp-avail-low  { background:#fff3cd !important; color:#856404 !important; }
+        .fp-not-avail  { background:#f8d7da !important; color:#721c24 !important; }
+        .fp-invalid    { background:#d3d3d3 !important; color:#6c757d !important; }
+
+        /* range highlights (optional) */
+        .fp-checkin    { background:#3b82f6 !important; color:#fff !important; }
+        .fp-checkout   { background:#2563eb !important; color:#fff !important; }
+        .fp-inrange    { background:#93c5fd !important; color:#0f172a !important; }
+
+        /* Swiper styles */
+        .swiper {
+            height: 384px; /* h-96 = 24rem = 384px */
+        }
+        .swiper-button-next, .swiper-button-prev {
+            color: white;
+            background: rgba(0,0,0,0.3);
+            border-radius: 50%;
+            width: 40px !important;
+            height: 40px !important;
+            margin-top: -20px !important;
+        }
+        .swiper-button-next::after, .swiper-button-prev::after {
+            font-size: 16px !important;
+        }
+        .swiper-pagination {
+            bottom: 10px !important;
+        }
+        .swiper-pagination-bullet-active {
+            background: #8f5d54 !important;
+        }
+    </style>
+
     <div class="bg-[#f5efe7] min-h-screen">
         <div class="pt-6 px-4 sm:px-6 lg:px-12">
             {{-- Header --}}
@@ -94,7 +137,22 @@
 
                                 {{-- Image --}}
                                 <div class="relative">
-                                    <img src="{{ $roomDetail['image'] }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
+                                    @if($staycation->swiperImages && $staycation->swiperImages->count() > 1)
+                                        <div class="swiper staycation-swiper-{{ $staycation->id }}">
+                                            <div class="swiper-wrapper">
+                                                @foreach($staycation->swiperImages as $image)
+                                                    <div class="swiper-slide">
+                                                        <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $roomDetail['name'] }}" class="w-full h-96 object-cover">
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                            <div class="swiper-pagination swiper-pagination-{{ $staycation->id }}"></div>
+                                            <div class="swiper-button-next swiper-button-next-{{ $staycation->id }}"></div>
+                                            <div class="swiper-button-prev swiper-button-prev-{{ $staycation->id }}"></div>
+                                        </div>
+                                    @else
+                                        <img src="{{ $staycation->swiperImages && $staycation->swiperImages->count() > 0 ? $staycation->swiperImages->first()->image_path : $roomDetail['image'] }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
+                                    @endif
 
                                     {{-- Status badge --}}
                                     <div class="absolute top-4 right-4">
@@ -434,19 +492,10 @@
                         </div>
 
                         <div class="mx-auto" style="max-width:400px;">
-                            <div x-ref="calendar"></div>
+                            <input x-ref="calendar" type="text" class="w-full border rounded-lg px-3 py-2" readonly />
                         </div>
 
-                        <div class="mt-4 text-sm text-gray-600">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="inline-block w-4 h-4 rounded" style="background:#d4edda;"></span>
-                                <span>Available</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="inline-block w-4 h-4 rounded" style="background:#f8d7da;"></span>
-                                <span>Not Available</span>
-                            </div>
-                        </div>
+                        <div class="mt-4 text-sm text-gray-600" x-html="generateLegend()"></div>
                     </div>
                 </div>
 
@@ -504,6 +553,10 @@
                 currentRoomName: '',
                 calendarInstance: null,
 
+                // legend variables
+                legendMaxQty: 0,
+                legendLowThreshold: 2, // <=2 = limited (yellow)
+
                 // selected rooms map: { [id]: {id,name,type,adults,children,extra_mattress,pets,pet_agreement,num_pets} }
                 selectedRooms: {},
 
@@ -526,7 +579,7 @@
                     }
 
                     // select with defaults
-                    const defaultAdults = (type || '').toLowerCase() === 'glamping' ? 2 : 1;
+                    const defaultAdults = 2;
                     this.selectedRooms[roomId] = {
                         id: roomId,
                         name: room.name || 'Room',
@@ -608,74 +661,107 @@
                     const checkin = '{{ $checkin }}';
                     const checkout = '{{ $checkout }}';
 
+                    const stayAvail = availabilityData[this.currentRoomId];
+
+                    // Calculate max quantity for legend
+                    this.legendMaxQty = 0;
+                    if (stayAvail && stayAvail.inventory_details) {
+                        for (const [dateString, details] of Object.entries(stayAvail.inventory_details)) {
+                            const qty = details.min_quantity || 0;
+                            if (qty > this.legendMaxQty) {
+                                this.legendMaxQty = qty;
+                            }
+                        }
+                    }
+
+                    // Disabled dates = min_quantity 0
+                    const disabledDates = [];
+                    if (stayAvail && stayAvail.inventory_details) {
+                        for (const [dateString, details] of Object.entries(stayAvail.inventory_details)) {
+                            if ((details.min_quantity || 0) === 0) {
+                                disabledDates.push(dateString);
+                            }
+                        }
+                    }
+
+                    if (!this.$refs.calendar) {
+                        console.error('Calendar element not found');
+                        return;
+                    }
+
                     this.calendarInstance = flatpickr(this.$refs.calendar, {
                         mode: 'range',
                         dateFormat: 'Y-m-d',
                         defaultDate: [checkin, checkout],
-                        minDate: new Date(),
 
-                        onReady: (selectedDates, dateStr, instance) => {
-                            instance.calendarContainer.style.background = 'white';
-                            instance.calendarContainer.style.borderRadius = '12px';
-                            instance.calendarContainer.style.boxShadow = '0 10px 25px rgba(0,0,0,0.10)';
-                            instance.calendarContainer.style.padding = '8px';
-                        },
+                        // ✅ para laging visible
+                        inline: true,
+
+                        // ✅ important: modal calendar should not be blocked by minDate new Date()
+                        // if you still want it, pwede mo ibalik
+                        // minDate: "today",
+
+                        disable: disabledDates,
 
                         onDayCreate: (selectedDates, dateStr, instance, dayElem) => {
                             const date = dayElem.dateObj;
                             const dateString = instance.formatDate(date, 'Y-m-d');
                             dayElem.style.borderRadius = '6px';
 
-                            // color only in selected range (same as your old logic)
-                            if (dateString >= checkin && dateString < checkout) {
-                                const stayAvail = availabilityData[this.currentRoomId];
-                                let isAvailable = false;
+                            const isDisabled = disabledDates.includes(dateString);
 
-                                if (stayAvail && stayAvail.inventory_details && stayAvail.inventory_details[dateString]) {
-                                    isAvailable = !!stayAvail.inventory_details[dateString].is_available;
-                                }
+                            let isAvailable = false;
+                            let quantity = 0;
 
-                                if (isAvailable) {
+                            if (stayAvail && stayAvail.inventory_details && stayAvail.inventory_details[dateString]) {
+                                isAvailable = !!stayAvail.inventory_details[dateString].is_available;
+                                quantity = stayAvail.inventory_details[dateString].min_quantity || 0; // ✅ fixed
+                            }
+
+                            if (isDisabled) {
+                                dayElem.style.background = '#d3d3d3';
+                                dayElem.style.color = '#6c757d';
+                                return;
+                            }
+
+                            // ✅ show availability colors based on quantity levels
+                            if (isAvailable && quantity > 0) {
+                                if (quantity > this.legendLowThreshold) {
+                                    // High availability - green
                                     dayElem.style.background = '#d4edda';
                                     dayElem.style.color = '#155724';
                                 } else {
-                                    dayElem.style.background = '#f8d7da';
-                                    dayElem.style.color = '#721c24';
+                                    // Limited availability - yellow
+                                    dayElem.style.background = '#fff3cd';
+                                    dayElem.style.color = '#856404';
                                 }
+
+                                const qtySpan = document.createElement('small');
+                                qtySpan.textContent = quantity;
+                                qtySpan.style.display = 'block';
+                                qtySpan.style.fontSize = '10px';
+                                qtySpan.style.fontWeight = 'bold';
+                                qtySpan.style.marginTop = '2px';
+                                dayElem.appendChild(qtySpan);
+                            } else {
+                                dayElem.style.background = '#f8d7da';
+                                dayElem.style.color = '#721c24';
+                            }
+
+                            // Optional: highlight selected range overlay
+                            if (dateString >= checkin && dateString < checkout) {
+                                dayElem.style.outline = '2px solid #3b82f6';
+                                dayElem.style.outlineOffset = '-2px';
                             }
                         }
                     });
                 },
 
-                async calculateBasePrice(room) {
+                calculateBasePrice(room) {
                     const nights = {{ \Carbon\Carbon::parse($checkin)->diffInDays(\Carbon\Carbon::parse($checkout)) }};
                     const totalGuests = (room.adults || 0) + (room.children || 0);
 
-                    try {
-                        // Get dynamic price from backend
-                        const response = await fetch('{{ route("booking.calculatePrice") }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                            },
-                            body: JSON.stringify({
-                                unit_type: 'staycation-' + room.id,
-                                check_in: '{{ $checkin }}',
-                                check_out: '{{ $checkout }}',
-                                guests: totalGuests
-                            })
-                        });
-
-                        const data = await response.json();
-                        if (data.success) {
-                            return '₱' + (data.total_price * nights).toLocaleString();
-                        }
-                    } catch (e) {
-                        console.error('Error calculating price:', e);
-                    }
-
-                    // Fallback to hardcoded pricing
+                    // Use hardcoded pricing for consistency
                     const basePrice = room.type === 'glamping' ? 5500 : 3000;
                     // Add guest surcharge: base covers 2 guests, ₱500 per additional guest
                     const baseGuests = 2;
@@ -712,6 +798,51 @@
                         total += price;
                     }
                     return '₱' + total.toLocaleString();
+                },
+
+                generateLegend() {
+                    return `
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-4 h-4 rounded" style="background:#d4edda;"></span>
+                                <span>Available (up to <span class="font-semibold" x-text="legendMaxQty"></span> slots)</span>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-4 h-4 rounded" style="background:#fff3cd;"></span>
+                                <span>Limited (1–<span class="font-semibold" x-text="legendLowThreshold"></span> slots)</span>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-4 h-4 rounded" style="background:#f8d7da;"></span>
+                                <span>Not Available (0)</span>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-4 h-4 rounded bg-blue-500"></span>
+                                <span>Check-in Date</span>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-4 h-4 rounded bg-blue-600"></span>
+                                <span>Check-out Date</span>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-4 h-4 rounded bg-blue-400"></span>
+                                <span>Period of Stay</span>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="inline-block w-4 h-4 rounded bg-gray-400"></span>
+                                <span>Invalid Date</span>
+                            </div>
+                        </div>
+                    `;
+                },
+
+                mounted() {
+                    // Swiper initialization moved to DOMContentLoaded
                 },
 
                 submitAndProceed() {
@@ -757,5 +888,28 @@
                 }
             }
         }
+
+        // Initialize swipers
+        document.addEventListener('DOMContentLoaded', function() {
+            @foreach($staycations as $staycation)
+                @if($staycation->swiperImages && $staycation->swiperImages->count() > 1)
+                    new Swiper('.staycation-swiper-{{ $staycation->id }}', {
+                        loop: true,
+                        pagination: {
+                            el: '.swiper-pagination-{{ $staycation->id }}',
+                            clickable: true,
+                        },
+                        navigation: {
+                            nextEl: '.swiper-button-next-{{ $staycation->id }}',
+                            prevEl: '.swiper-button-prev-{{ $staycation->id }}',
+                        },
+                        autoplay: {
+                            delay: 3000,
+                            disableOnInteraction: false,
+                        },
+                    });
+                @endif
+            @endforeach
+        });
     </script>
 </x-app-layout>

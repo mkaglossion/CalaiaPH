@@ -25,6 +25,29 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <style>
+        .swiper {
+            height: 280px;
+        }
+        .swiper-button-next, .swiper-button-prev {
+            color: white;
+            background: transparent;
+            border-radius: 50%;
+            width: 40px !important;
+            height: 40px !important;
+            margin-top: -20px !important;
+        }
+        .swiper-button-next::after, .swiper-button-prev::after {
+            font-size: 16px !important;
+        }
+        .swiper-pagination {
+            bottom: 10px !important;
+        }
+        .swiper-pagination-bullet-active {
+            background: #8f5d54 !important;
+        }
+    </style>
     @vite(['resources/js/booking/staycation.js'])
   </head>
   <body class="bg-[#f5efe7]">
@@ -280,11 +303,27 @@ $galleryData = [
                 <div class="bg-white rounded-2xl shadow-[0_18px_40px_rgba(15,23,42,0.08)] border border-gray-100 overflow-hidden flex flex-col">
                     
                     {{-- Image --}}
-                    <img 
-                        src="{{ $accommodation->image_path ?? 'https://via.placeholder.com/400x280?text=No+Image' }}" 
-                        alt="{{ $accommodation->name }}" 
-                        class="w-full object-cover"
-                        style="height: 280px;">
+                    <div class="relative overflow-hidden" style="height: 280px;">
+                        @php
+                            $images = $accommodation->variants->first()->swiperImages ?? collect();
+                        @endphp
+                        @if($images->count() > 0)
+                            <div class="swiper accommodation-swiper-{{ $accommodation->id }}">
+                                <div class="swiper-wrapper">
+                                    @foreach($images as $image)
+                                        <div class="swiper-slide">
+                                            <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $accommodation->name }}" class="w-full h-full object-cover">
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <div class="swiper-pagination swiper-pagination-{{ $accommodation->id }}"></div>
+                                <div class="swiper-button-next swiper-button-next-{{ $accommodation->id }}"></div>
+                                <div class="swiper-button-prev swiper-button-prev-{{ $accommodation->id }}"></div>
+                            </div>
+                        @else
+                            <img src="{{ $accommodation->image_path ?? 'https://via.placeholder.com/400x280?text=No+Image' }}" alt="{{ $accommodation->name }}" class="w-full object-cover" style="height: 280px;">
+                        @endif
+                    </div>
 
                     <div class="flex flex-col p-6 h-full">
                         {{-- Name --}}
@@ -2548,6 +2587,30 @@ function updateSelectionUI(card, checkbox, isSelected) {
             counter.textContent = (window.galleryCurrentIndex + 1) + ' / ' + window.galleryImages.length;
         }
     }
+
+    // Initialize accommodation swipers
+    document.addEventListener('DOMContentLoaded', function() {
+        @foreach($accommodations as $accommodation)
+            @php $images = $accommodation->variants->first()->swiperImages ?? collect(); @endphp
+            @if($images->count() > 1)
+                new Swiper('.accommodation-swiper-{{ $accommodation->id }}', {
+                    loop: true,
+                    pagination: {
+                        el: '.swiper-pagination-{{ $accommodation->id }}',
+                        clickable: true,
+                    },
+                    navigation: {
+                        nextEl: '.swiper-button-next-{{ $accommodation->id }}',
+                        prevEl: '.swiper-button-prev-{{ $accommodation->id }}',
+                    },
+                    autoplay: {
+                        delay: 3000,
+                        disableOnInteraction: false,
+                    },
+                });
+            @endif
+        @endforeach
+    });
 </script>
 </html>
 

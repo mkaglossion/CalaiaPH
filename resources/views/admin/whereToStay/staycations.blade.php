@@ -27,6 +27,8 @@
                     <th class="px-4 py-2">#</th>
                     <th class="px-4 py-2">Name</th>
                     <th class="px-4 py-2">Quantity</th>
+                    <th class="px-4 py-2">Adults</th>
+                    <th class="px-4 py-2">Children</th>
                     <th class="px-4 py-2">Pricing</th>
                     <th class="px-4 py-2">Uploaded</th>
                     <th class="px-4 py-2 text-right">Actions</th>
@@ -38,6 +40,8 @@
                     <td class="px-4 py-2">{{ $index + 1 }}</td>
                     <td class="px-4 py-2">{{ $act->name ?? 'Untitled' }}</td>
                     <td class="px-4 py-2">{{ $act->quantity ?? 'N/A' }}</td>
+                    <td class="px-4 py-2">{{ $act->adults ?? 'N/A' }}</td>
+                    <td class="px-4 py-2">{{ $act->children ?? 'N/A' }}</td>
                     <td class="px-4 py-2">
                         @if($act->price_configs && count($act->price_configs) > 0)
                             @php $config = $act->price_configs[0]; @endphp
@@ -54,7 +58,7 @@
                         <form action="{{ route('staycation-list.destroy', $act->id) }}" method="POST" class="inline">
                             @csrf
                             @method('DELETE')
-                            <button 
+                            <button
                                 type="submit"
                                 class="text-red-600 hover:underline"
                                 onclick="return confirm('Delete this staycation?')"
@@ -66,7 +70,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="px-4 py-4 text-center text-gray-500">No staycations added yet.</td>
+                    <td colspan="8" class="px-4 py-4 text-center text-gray-500">No staycations added yet.</td>
                 </tr>
                 @endforelse
             </tbody>
