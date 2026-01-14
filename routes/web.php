@@ -60,6 +60,7 @@ use App\Http\Controllers\Admin\StaycationAccommodationController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\PricingConfigController;
+use App\Http\Controllers\BookingCalendarController;
 // ========== Root Route ==========
 Route::get('/', function () {
     return redirect('/home');
@@ -82,6 +83,7 @@ Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show')
 // Booking Routes
 Route::get('/booking', [BookingController::class, 'create'])->name('booking.create');
 Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
+Route::get('/booking/calendar', [BookingCalendarController::class, 'show'])->name('booking.calendar');
 // Centralized API for activities
 Route::get('/api/activities', [BookingController::class, 'getActivitiesApi'])->name('api.activities');
 Route::get('/api/booking/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.activities');

@@ -62,12 +62,12 @@
 
             {{-- Progress --}}
             <div class="mb-6">
-                <x-booking.progress-indicator :stepNumber="1" :totalSteps="3" :bookingType="'staycation'" />
+                <x-booking.progress-indicator :stepNumber="2" :totalSteps="4" :bookingType="'staycation'" />
             </div>
 
             {{-- Back + Guest mode --}}
             <div class="flex items-end justify-between mb-6">
-                <a href="{{ route('booking.staycation') }}"
+                <a href="{{ route('booking.calendar') }}"
                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                     <i class="bi bi-arrow-left mr-2"></i>
                     Back to Dates
