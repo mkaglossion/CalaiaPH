@@ -207,346 +207,7 @@
     </main>
     {{-- ========= END ACTIVITIES SECTION ========= --}}
 
-    {{-- ===== Build activities data (grouped by category) ===== --}}
-    @php
-      $activitiesByCategory = [
-        'adventure' => [
-          [
-            'title' => 'Go-Kart (15yo above)',
-            'images' => [
-              asset('assets/images/carousel/go-cart2.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-            ],
-            'price' => 500,
-            'details' => [
-              '4 rounds / 10 mins (approx)',
-              'Duration: 10 minutes',
-            ],
-          ],
-          [
-            'title' => 'ATV (15yo above)',
-            'images' => [
-              asset('assets/images/carousel/atv.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-            ],
-            'price' => 800,
-            'details' => [
-              '20 minutes',
-              'Duration: 20 minutes',
-            ],
-          ],
-          [
-            'title' => 'Wet Inflatable Slide',
-            'images' => [
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-              asset('assets/images/carousel/slip-slide-2.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-            ],
-            'price' => 350,
-            'details' => [
-              '₱350 per child per hour, Minimum of 3 children or ₱1,050',
-              'Duration: 1 hour',
-            ],
-          ],
-          [
-            'title' => 'Mini Kalesa',
-            'images' => [
-              asset('assets/images/carousel/minikalesa.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 600,
-            'details' => [
-              '30 minutes (200 lbs max)',
-              'Duration: 30 minutes',
-            ],
-          ],
-          [
-            'title' => 'Horseback Riding',
-            'images' => [
-              asset('assets/images/carousel/our-farm2.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 600,
-            'details' => [
-              '30 minutes',
-              'Duration: 30 minutes',
-            ],
-          ],
-        ],
 
-        'sports' => [
-          [
-            'title' => 'Mountain Bike',
-            'images' => [
-              asset('assets/images/carousel/Retreat-900.jpg'),
-              asset('assets/images/carousel/bikes.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-            ],
-            'price' => 300,
-            'details' => [
-              'Duration: 1 hour',
-            ],
-          ],
-          [
-            'title' => 'Archery Tag | Target',
-            'images' => [
-              asset('assets/images/carousel/archery.jpg'),
-              asset('assets/images/carousel/Calaia-26.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-            ],
-            'price' => 150,
-            'details' => [
-              'Duration: 45 minutes',
-            ],
-          ],
-          [
-            'title' => 'Disc Golf',
-            'images' => [
-              asset('assets/images/carousel/slides CALAIA-01.png'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 250,
-            'details' => [
-              'Rate: ₱250 per game',
-              'Duration: 1 hour',
-            ],
-          ],
-          [
-            'title' => 'Kiteflying',
-            'images' => [
-              asset('assets/images/carousel/slides CALAIA-01.png'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 150,
-            'details' => [
-              'Duration: 1 hour',
-            ],
-          ],
-          [
-            'title' => 'Board Games / Cards',
-            'images' => [
-              asset('assets/images/carousel/slides CALAIA-01.png'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 0,
-            'details' => [
-              'Casual indoor board and card games.',
-              'Duration: 1 hour',
-            ],
-          ],
-          [
-            'title' => 'Sandy Pickle',
-            'images' => [
-              asset('assets/images/carousel/games-grounds4.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 0,
-            'details' => [
-              'Sand pickleball-style game.',
-              'Duration: 1 hour',
-            ],
-          ],
-          [
-            'title' => 'Frisbee',
-            'images' => [
-              asset('assets/images/carousel/games-grounds4.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 0,
-            'details' => [
-              'Casual throwing game in the field.',
-              'Duration: 1 hour',
-            ],
-          ],
-          [
-            'title' => 'Field Volleyball',
-            'images' => [
-              asset('assets/images/carousel/games-grounds4.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 0,
-            'details' => [
-              'Outdoor volleyball on the grass field.',
-              'Duration: 1 hour',
-            ],
-          ],
-        ],
-
-        'rrcamp' => [
-          [
-            'title' => 'Kawa Bath',
-            'images' => [
-              asset('assets/images/carousel/Kawa bath.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 1000,
-            'details' => [
-              '1 hour (1–4 persons), ₱1,000 hot / ₱2,000 cold',
-              'Duration: 1 hour',
-            ],
-          ],
-          [
-            'title' => 'Bonfire & S\'mores',
-            'images' => [
-              asset('assets/images/carousel/bonfire.jpg'),
-              asset('assets/images/carousel/Retreat-705.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-            ],
-            'price' => 350,
-            'details' => [
-              '₱350 bonfire, ₱450 s\'mores (25 pcs)',
-              'Duration: 2 hours',
-            ],
-          ],
-          [
-            'title' => 'Hiking',
-            'images' => [
-              asset('assets/images/carousel/slides CALAIA-01.png'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 0,
-            'details' => [
-              'Enjoy scenic nature trails around the property.',
-              'Duration: 2 hours',
-            ],
-          ],
-          [
-            'title' => 'Fishing',
-            'images' => [
-              asset('assets/images/carousel/OUTDOOR MOVIE.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 250,
-            'details' => [
-              '1 hour with cup of bait, ₱250 per rod',
-              'Duration: 1 hour',
-            ],
-          ],
-          [
-            'title' => 'Outdoor Movie',
-            'images' => [
-              asset('assets/images/carousel/OUTDOOR MOVIE.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 1500,
-            'details' => [
-              'Strictly 6–9 PM only',
-              'Duration: 3 hours',
-            ],
-          ],
-        ],
-
-        'farm' => [
-          [
-            'title' => 'Tree Planting',
-            'images' => [
-              asset('assets/images/carousel/Retreat-1164.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 200,
-            'details' => [
-              '₱200 per tree, Includes name label on the tree',
-              'Duration: 1 hour',
-            ],
-          ],
-          [
-            'title' => 'Farm Tour / Animal Feeding',
-            'images' => [
-              asset('assets/images/carousel/Retreat-880.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 150,
-            'details' => [
-              'Guided tour with friendly farm animals',
-              'Duration: 1 hour',
-            ],
-          ],
-          [
-            'title' => 'Veggie Picking',
-            'images' => [
-              asset('assets/images/carousel/Retreat-880.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 0,
-            'details' => [
-              'Prices based on market price that day',
-              'Duration: 30 minutes',
-            ],
-          ],
-          [
-            'title' => 'Animal Encounters',
-            'images' => [
-              asset('assets/images/carousel/our-farm2.jpg'),
-              asset('assets/images/carousel/activities-1.jpg'),
-              asset('assets/images/carousel/slide-n-go2.jpg'),
-            ],
-            'price' => 0,
-            'details' => [
-              'Close-up interactions with farm animals',
-              'Duration: 30 minutes',
-            ],
-          ],
-        ],
-      ];
-
-      // Pair activities (2 per slide) for each category
-      $slidesByCategory = [];
-
-      foreach ($activitiesByCategory as $key => $activities) {
-        $pairs = array_chunk($activities, 2);
-        $slides = [];
-
-        foreach ($pairs as $pair) {
-          $left  = $pair[0] ?? null;
-          $right = $pair[1] ?? null;
-
-          $slide = [];
-          if ($left) {
-            $slide['left'] = [
-              'id'      => $left['title'],
-              'title'   => $left['title'],
-              'img'     => $left['images'][0] ?? '',
-              'alt'     => $left['title'],
-              'price'   => $left['price'] ?? 0,
-              'details' => $left['details'] ?? [],
-              'images'  => $left['images'] ?? [],
-            ];
-          }
-          if ($right) {
-            $slide['right'] = [
-              'id'      => $right['title'],
-              'title'   => $right['title'],
-              'img'     => $right['images'][0] ?? '',
-              'alt'     => $right['title'],
-              'price'   => $right['price'] ?? 0,
-              'details' => $right['details'] ?? [],
-              'images'  => $right['images'] ?? [],
-            ];
-          }
-
-          $slides[] = $slide;
-        }
-
-        $slidesByCategory[$key] = $slides;
-      }
-    @endphp
 
     {{-- JSON for each category --}}
     <script type="application/json" id="slides-data-adventure">
@@ -564,7 +225,7 @@
 
     {{-- Alpine-powered Details Modal --}}
     <div x-data="{ open:false, modal:{ title:'', details:[], images:[], price:0, id:'' } }"
-         x-on:open-activity.window="modal=$event.detail; open=true"
+         x-on:open-activity.window="modal=$event.detail; open=true; $nextTick(() => { initModalSwiper(); })"
          class="relative z-50">
       <div x-show="open" class="fixed inset-0 bg-black/50" x-transition.opacity></div>
       <div x-show="open"
@@ -656,6 +317,40 @@
         window.dispatchEvent(new CustomEvent('open-activity', {
           detail: { title, details, images, price, id }
         }));
+      }
+
+      // Initialize modal swiper
+      function initModalSwiper() {
+        const modalSwiperEl = document.querySelector('.modal-swiper');
+        if (!modalSwiperEl) return;
+
+        // Destroy existing swiper if it exists
+        if (window.modalSwiperInstance) {
+          window.modalSwiperInstance.destroy();
+        }
+
+        const images = modalSwiperEl.querySelectorAll('.swiper-slide');
+        if (images.length > 0) {
+          window.modalSwiperInstance = new Swiper('.modal-swiper', {
+            loop: images.length > 1,
+            autoplay: {
+              delay: 3000,
+              disableOnInteraction: false,
+            },
+            pagination: {
+              el: '.modal-pagination',
+              clickable: true,
+            },
+            navigation: {
+              nextEl: '.modal-next',
+              prevEl: '.modal-prev',
+            },
+            a11y: {
+              prevSlideMessage: 'Previous slide',
+              nextSlideMessage: 'Next slide',
+            },
+          });
+        }
       }
 
       function initActivityCarousel(config) {

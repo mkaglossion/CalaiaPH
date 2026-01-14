@@ -3,16 +3,16 @@
 @section('title', 'Activities')
 
 @section('content')
-<div
-    x-data="activityComponent(@js($texts), @js(\App\Models\Activity::all()))"
-
->
+<div x-data="activityComponent(@js($texts), @js(\App\Models\Activity::all()))">
     <hr class="my-6">
 
+    {{-- =======================
+        ACTIVITIES MANAGEMENT
+    ======================== --}}
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Activities</h2>
-        <button 
-            @click="showActivityModal = true; resetForm()" 
+        <button
+            @click="showActivityModal = true; resetForm()"
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
             + Add Activity
@@ -25,86 +25,92 @@
                 <tr>
                     <th class="px-4 py-2">#</th>
                     <th class="px-4 py-2">Name</th>
+                    <th class="px-4 py-2">Category</th>
                     <th class="px-4 py-2">Description</th>
                     <th class="px-4 py-2">Duration</th>
+                    <th class="px-4 py-2">Pricing</th>
                     <th class="px-4 py-2">Uploaded</th>
                     <th class="px-4 py-2 text-right">Actions</th>
                 </tr>
             </thead>
+
             <tbody>
                 @forelse($activities as $index => $act)
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="px-4 py-2">{{ ($activities->currentPage() - 1) * $activities->perPage() + $index + 1 }}</td>
-                    <td class="px-4 py-2">{{ $act->name ?? 'Untitled' }}</td>
-                    <td class="px-4 py-2">{{ $act->description ?? 'No description' }}</td>
-                    <td class="px-4 py-2">{{ $act->duration ?? 'N/A' }}</td>
-                    <td class="px-4 py-2">{{ $act->created_at->format('Y-m-d') }}</td>
-                    <td class="px-4 py-2 text-right space-x-2">
-                        <button class="text-blue-600 hover:underline" @click="editActivity({{ $act->id }})">
-                            Edit
-                        </button>
-                        <form action="{{ route('activity-list.destroy', $act->id) }}" method="POST" class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <button 
-                                type="submit"
-                                class="text-red-600 hover:underline"
-                                onclick="return confirm('Delete this activity?')"
-                            >
-                                Delete
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-4 py-2">
+                            {{ ($activities->currentPage() - 1) * $activities->perPage() + $index + 1 }}
+                        </td>
+                        <td class="px-4 py-2">{{ $act->name ?? 'Untitled' }}</td>
+                        <td class="px-4 py-2">{{ ucfirst($act->category) ?? 'No category' }}</td>
+                        <td class="px-4 py-2">{{ $act->description ?? 'No description' }}</td>
+                        <td class="px-4 py-2">{{ $act->duration ?? 'N/A' }}</td>
+                        <td class="px-4 py-2">{{ $act->price ? '₱' . number_format($act->price, 2) : 'N/A' }}</td>
+                        <td class="px-4 py-2">{{ $act->created_at->format('Y-m-d') }}</td>
+                        <td class="px-4 py-2 text-right space-x-2">
+                            <button class="text-blue-600 hover:underline" @click="editActivity({{ $act->id }})">
+                                Edit
                             </button>
-                        </form>
-                    </td>
-                </tr>
+
+                            <form action="{{ route('activity-list.destroy', $act->id) }}" method="POST" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button
+                                    type="submit"
+                                    class="text-red-600 hover:underline"
+                                    onclick="return confirm('Delete this activity?')"
+                                >
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
                 @empty
-                <tr>
-                    <td colspan="6" class="px-4 py-4 text-center text-gray-500">No activities added yet.</td>
-                </tr>
+                    <tr>
+                        <td colspan="8" class="px-4 py-4 text-center text-gray-500">
+                            No activities added yet.
+                        </td>
+                    </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
-    <!-- Pagination -->
     <div class="mt-4">
         {{ $activities->links() }}
     </div>
 
-    <!-- Activity Modal -->
-    <div 
-        x-show="showActivityModal" 
+    {{-- Activity Modal --}}
+    <div
+        x-show="showActivityModal"
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
         x-cloak
     >
-        <div 
-            @click.away="showActivityModal = false" 
+        <div
+            @click.away="showActivityModal = false"
             class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6"
         >
             <h3 class="text-lg font-semibold mb-4" x-text="editModeActivity ? 'Edit Activity' : 'Add Activity'"></h3>
 
-            <form
-                id="activityForm"
-                class="space-y-5"
-                @submit.prevent="saveActivity()"
-            >
+            <form id="activityForm" class="space-y-5" @submit.prevent="saveActivity()">
                 @csrf
+
                 <template x-if="editModeActivity">
                     <input type="hidden" name="_method" value="PUT">
                 </template>
 
-                <div class="mb-4">
+                <div>
                     <label class="block text-sm font-medium mb-1">Name</label>
-                    <input 
-                        type="text" 
-                        name="name" 
-                        x-model="form.name" 
+                    <input
+                        type="text"
+                        name="name"
+                        x-model="form.name"
                         class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         placeholder="Activity Name"
                         required
                     >
                 </div>
 
-                <div class="mb-4">
+                <div>
                     <label class="block text-sm font-medium mb-1">Description</label>
                     <textarea
                         name="description"
@@ -115,7 +121,7 @@
                     ></textarea>
                 </div>
 
-                <div class="mb-4">
+                <div>
                     <label class="block text-sm font-medium mb-1">Duration</label>
                     <input
                         type="text"
@@ -126,16 +132,63 @@
                     >
                 </div>
 
+                <div>
+                    <label class="block text-sm font-medium mb-1">Price</label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        name="price"
+                        x-model="form.price"
+                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        placeholder="e.g., 500.00"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">Category</label>
+                    <select
+                        name="category"
+                        x-model="form.category"
+                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        required
+                    >
+                        <option value="">Select Category</option>
+                        <option value="adventure">Adventure</option>
+                        <option value="sports">Sports & Games</option>
+                        <option value="rrcamp">R & R & Camp</option>
+                        <option value="farm">Farm</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">Upload Image</label>
+                    <input
+                        type="file"
+                        name="image"
+                        x-ref="activityImage"
+                        accept="image/*"
+                        @change="handleImageUpload($event)"
+                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        :required="!editModeActivity"
+                    >
+                    <small class="text-gray-500">Supported formats: JPG, PNG, GIF. Max size: 5MB</small>
+                    <div x-show="form.imagePreview" class="mt-2">
+                        <img :src="form.imagePreview" class="w-32 h-20 object-cover rounded border">
+                        <button type="button" @click="removeImage()" class="ml-2 text-red-500 hover:underline">Remove</button>
+                    </div>
+                </div>
+
                 <div class="flex justify-end space-x-2">
-                    <button 
-                        type="button" 
-                        @click="showActivityModal = false; resetForm()" 
+                    <button
+                        type="button"
+                        @click="showActivityModal = false; resetForm()"
                         class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
                     >
                         Cancel
                     </button>
-                    <button 
-                        type="submit" 
+
+                    <button
+                        type="submit"
                         class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                     >
                         <span x-text="editModeActivity ? 'Update' : 'Add'"></span>
@@ -145,12 +198,15 @@
         </div>
     </div>
 
+    {{-- =======================
+        SWIPER IMAGES MANAGEMENT
+    ======================== --}}
     <hr class="my-6">
 
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Swiper Images Management</h2>
-        <button 
-            @click="showModal = true" 
+        <button
+            @click="showModal = true"
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
             + Add Image
@@ -163,7 +219,6 @@
         </div>
     @endif
 
-    {{-- Table --}}
     <div class="overflow-x-auto border rounded-lg shadow">
         <table class="min-w-full text-sm text-left">
             <thead class="bg-gray-100 border-b">
@@ -176,6 +231,7 @@
                     <th class="px-4 py-2 text-right">Actions</th>
                 </tr>
             </thead>
+
             <tbody>
                 @forelse($images as $index => $img)
                     <tr class="border-b hover:bg-gray-50">
@@ -187,9 +243,13 @@
                         <td class="px-4 py-2">{{ $img->title ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ $img->created_at->format('Y-m-d') }}</td>
                         <td class="px-4 py-2 text-right space-x-2">
-                            <button class="text-blue-600 hover:underline" @click="editImage({{ $img->id }}, '{{ $img->activity_id }}', '{{ $img->title }}')">
+                            <button
+                                class="text-blue-600 hover:underline"
+                                @click="editImage({{ $img->id }}, '{{ $img->activity_id }}', '{{ $img->title }}')"
+                            >
                                 Edit
                             </button>
+
                             <form action="{{ route('activity-image.destroy', $img->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
@@ -205,21 +265,21 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">No images uploaded yet.</td>
+                        <td colspan="6" class="px-4 py-4 text-center text-gray-500">No images uploaded yet.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
-    {{-- Modal --}}
-    <div 
+    {{-- Swiper Modal (unchanged logic, just kept as-is) --}}
+    <div
         x-show="showModal"
         class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
         x-transition
     >
         <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-            <button 
+            <button
                 @click="showModal = false"
                 class="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
             >&times;</button>
@@ -230,76 +290,11 @@
                 id="swiperUploadForm"
                 class="space-y-5"
                 enctype="multipart/form-data"
-                :action="editImageMode ? '/admin/activity-image/' + currentImageId : '{{ route('activity-image.store') }}'"
                 method="POST"
-                @submit.prevent="
-                    const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
-                    const fileInput = $refs.image.files[0];
-                    const title = $refs.title.value;
-                    const activityId = $refs.activity.value;
-
-                    if (!fileInput && !editImageMode) {
-                        alert('Please select an image before uploading.');
-                        return;
-                    }
-
-                    if (!activityId) {
-                        alert('Please select an activity.');
-                        return;
-                    }
-
-                    const formData = new FormData();
-                    if (fileInput) formData.append('image', fileInput);
-                    formData.append('title', title);
-                    formData.append('activity_id', activityId);
-                    if (editImageMode) formData.append('_method', 'PUT');
-
-                    const btn = $el.querySelector('button[type=submit]');
-                    btn.innerText = editImageMode ? 'Updating...' : 'Uploading...';
-                    btn.disabled = true;
-
-                    const url = editImageMode ? '/admin/activity-image/' + currentImageId : '{{ route('activity-image.store') }}';
-
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrf,
-                            'Accept': 'application/json',
-                        },
-                        body: formData,
-                        credentials: 'same-origin'
-                    })
-                    .then(async res => {
-                        let data;
-                        try { data = await res.json(); } catch { throw new Error('Invalid JSON'); }
-
-                        if (res.ok) {
-                            alert(data.message || (editImageMode ? 'Image updated successfully!' : 'Image uploaded successfully!'));
-                            $refs.image.value = '';
-                            $refs.title.value = '';
-                            $refs.activity.value = '';
-                            showModal = false;
-                            resetImageForm();
-                            window.location.reload();
-                        } else if (data.errors) {
-                            const errorMessages = Object.values(data.errors).flat().join('\\n');
-                            alert(errorMessages);
-                        } else {
-                            alert(data.message || 'Operation failed.');
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        alert('Error ' + (editImageMode ? 'updating' : 'uploading') + ' image.');
-                    })
-                    .finally(() => {
-                        btn.innerText = editImageMode ? 'Update' : 'Upload';
-                        btn.disabled = false;
-                    });
-                "
+                @submit.prevent="uploadOrUpdateImage($el)"
             >
                 @csrf
-                <input type="hidden" name="_method" value="POST" x-bind:value="editImageMode ? 'PUT' : 'POST'">
+
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Activity</label>
                     <select x-ref="activity" name="activity_id" class="border rounded p-2 w-full" required>
@@ -317,7 +312,7 @@
 
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" x-bind:required="!editImageMode">
+                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" :required="!editImageMode">
                 </div>
 
                 <div class="flex justify-end space-x-2">
@@ -328,19 +323,21 @@
         </div>
     </div>
 
+    {{-- =======================
+        TEXT CONTENT MANAGEMENT
+    ======================== --}}
     <hr class="my-6">
 
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Text Content Management</h2>
-        <button 
-            @click="showTextModal = true" 
+        <button
+            @click="showTextModal = true; resetForm()"
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
             + Add Text Content
         </button>
     </div>
 
-    {{-- Text Table --}}
     <div class="overflow-x-auto border rounded-lg shadow">
         <table class="min-w-full text-sm text-left">
             <thead class="bg-gray-100 border-b">
@@ -352,19 +349,22 @@
                     <th class="px-4 py-2 text-right">Actions</th>
                 </tr>
             </thead>
+
             <tbody>
                 @forelse($texts as $index => $text)
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-2">{{ $index + 1 }}</td>
                         <td class="px-4 py-2">{{ $text->activity->name ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $text->title ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $text->content ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ Str::limit($text->text, 60) }}</td>
+                        <td class="px-4 py-2">{{ $text->title ?? '—' }}</td>
+                        <td class="px-4 py-2">{{ \Illuminate\Support\Str::limit($text->content ?? '', 80) }}</td>
                         <td class="px-4 py-2 text-right space-x-2">
+                            {{-- Optional: add Edit button if you want --}}
+                            {{-- <button class="text-blue-600 hover:underline" @click="editText({{ $text->id }})">Edit</button> --}}
+
                             <form action="{{ route('activity-text.destroy', $text->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
-                                <button 
+                                <button
                                     type="submit"
                                     class="text-red-600 hover:underline"
                                     onclick="return confirm('Delete this text content?')"
@@ -383,35 +383,31 @@
         </table>
     </div>
 
-    <!-- Text Content Modal -->
-    <div 
-        x-show="showTextModal" 
+    {{-- Text Modal --}}
+    <div
+        x-show="showTextModal"
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
         x-cloak
     >
-        <div 
-            @click.away="showTextModal = false" 
+        <div
+            @click.away="showTextModal = false"
             class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6"
         >
             <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
 
-            <form
-                id="textUploadForm"
-                class="space-y-5"
-                enctype="multipart/form-data"
-                @submit.prevent="saveText()"
-            >
+            <form id="textUploadForm" class="space-y-5" @submit.prevent="saveText()">
                 @csrf
+
                 <template x-if="editMode">
                     <input type="hidden" name="_method" value="PUT">
                 </template>
 
-                <div class="mb-3">
+                <div>
                     <label class="block font-semibold mb-1">Activity</label>
-                    <select 
-                        name="activity_id" 
-                        x-model="form.activity_id" 
-                        class="border rounded p-2 w-full" 
+                    <select
+                        name="activity_id"
+                        x-model="form.activity_id"
+                        class="border rounded p-2 w-full"
                         required
                     >
                         <option value="">Select Activity</option>
@@ -421,128 +417,170 @@
                     </select>
                 </div>
 
-            
-                <div class="mb-4">
+                <div>
                     <label class="block text-sm font-medium mb-1">Label</label>
-                    <input 
-                        type="text" 
-                        name="label" 
-                        x-model="form.label" 
+                    <input
+                        type="text"
+                        name="label"
+                        x-model="form.label"
                         class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         placeholder="Optional"
                     >
                 </div>
 
-                <div class="mb-4">
+                <div>
                     <label class="block text-sm font-medium mb-1">Text</label>
-                    <textarea 
-                        name="text" 
-                        x-model="form.text" 
-                        rows="4" 
+                    <textarea
+                        name="text"
+                        x-model="form.text"
+                        rows="4"
                         class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        placeholder="Enter text text..."
+                        placeholder="Enter text..."
                         required
                     ></textarea>
                 </div>
 
                 <div class="flex justify-end space-x-2">
-                    <button 
-                        type="button" 
-                        @click="showTextModal = false" 
+                    <button
+                        type="button"
+                        @click="showTextModal = false; resetForm()"
                         class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
                     >
                         Cancel
                     </button>
-                    <button 
-                        type="submit" 
-                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                    >
+
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
                     </button>
                 </div>
             </form>
-
         </div>
     </div>
-
 </div>
 
 <script>
 function activityComponent(texts, activities) {
     return {
+        // modals
         showModal: false,
         showActivityModal: false,
         showTextModal: false,
+
+        // edit states
         editMode: false,
         editModeActivity: false,
         editImageMode: false,
+
         currentImageId: null,
+
+        // data
         texts,
         activities: activities.data || activities,
-        form: { id: null, name: '', description: '', duration: '', label: '', text: '', activity_id: '', title: '' },
+
+        // one form object, consistent keys
+        form: {
+            id: null,
+            name: '',
+            description: '',
+            duration: '',
+            price: '',
+            category: '',
+            activity_id: '',
+            label: '',
+            text: '',
+            title: '',
+            image: null,
+            imagePreview: null,
+        },
 
         resetForm() {
-            this.form = { id: null, name: '', description: '', duration: '', label: '', text: '', activity_id: '', title: '' };
+            this.form = {
+                id: null,
+                name: '',
+                description: '',
+                duration: '',
+                price: '',
+                category: '',
+                activity_id: '',
+                label: '',
+                text: '',
+                title: '',
+            };
             this.editMode = false;
             this.editModeActivity = false;
+
+            if (this.$refs.activityImage) this.$refs.activityImage.value = '';
         },
 
         resetImageForm() {
             this.editImageMode = false;
             this.currentImageId = null;
-            this.form.activity_id = '';
-            this.form.title = '';
+            if (this.$refs.image) this.$refs.image.value = '';
+            if (this.$refs.title) this.$refs.title.value = '';
+            if (this.$refs.activity) this.$refs.activity.value = '';
         },
 
         editActivity(id) {
             const activity = this.activities.find(a => a.id === id);
-            if (activity) {
-                this.form.id = activity.id;
-                this.form.name = activity.name;
-                this.form.description = activity.description || '';
-                this.form.duration = activity.duration || '';
-                this.editModeActivity = true;
-                this.showActivityModal = true;
+            if (!activity) return;
+
+            this.form.id = activity.id;
+            this.form.name = activity.name || '';
+            this.form.description = activity.description || '';
+            this.form.duration = activity.duration || '';
+            this.form.price = activity.price || '';
+            this.form.category = activity.category || '';
+
+            // Handle existing image
+            if (activity.image) {
+                this.form.imagePreview = '/storage/' + activity.image;
             }
+
+            this.editModeActivity = true;
+            this.showActivityModal = true;
         },
 
         editText(id) {
             const text = this.texts.find(t => t.id === id);
-            if (text) {
-                this.form.id = text.id;
-                this.form.label = text.label;
-                this.form.text = text.text;
-                this.form.activity = text.activity;
-                this.editMode = true;
-                this.showTextModal = true;
-            }
+            if (!text) return;
+
+            this.form.id = text.id;
+            this.form.label = text.title || '';
+            this.form.text = text.content || '';
+            this.form.activity_id = text.activity_id || '';
+
+            this.editMode = true;
+            this.showTextModal = true;
         },
 
         editImage(id, activityId, title) {
             this.currentImageId = id;
-            this.form.activity_id = activityId;
-            this.form.title = title || '';
             this.editImageMode = true;
             this.showModal = true;
+
+            // fill modal refs after open
+            this.$nextTick(() => {
+                if (this.$refs.activity) this.$refs.activity.value = activityId || '';
+                if (this.$refs.title) this.$refs.title.value = title || '';
+            });
         },
 
-        saveText: async function() {
+        async saveText() {
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             const formData = new FormData();
 
             formData.append('title', this.form.label);
             formData.append('content', this.form.text);
-            formData.append('activity_id', this.form.activity_id); // make sure this is populated
+            formData.append('activity_id', this.form.activity_id);
 
             let url = "{{ route('activity-text.store') }}";
-
             if (this.editMode && this.form.id) {
                 url = `/admin/activity-text/${this.form.id}`;
                 formData.append('_method', 'PUT');
             }
 
             const btn = document.querySelector('#textUploadForm button[type=submit]');
-            btn.innerText = this.editMode ? 'Updating...' : 'Uploading...';
+            btn.innerText = this.editMode ? 'Updating...' : 'Adding...';
             btn.disabled = true;
 
             try {
@@ -565,7 +603,7 @@ function activityComponent(texts, activities) {
                 } else {
                     alert(data.message || 'Operation failed.');
                 }
-            } catch(err) {
+            } catch (err) {
                 console.error(err);
                 alert('Error submitting text.');
             } finally {
@@ -574,13 +612,20 @@ function activityComponent(texts, activities) {
             }
         },
 
-
-        saveActivity: async function() {
+        async saveActivity() {
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             const formData = new FormData();
+
             formData.append('name', this.form.name);
             formData.append('description', this.form.description);
             formData.append('duration', this.form.duration);
+            formData.append('price', this.form.price);
+            formData.append('category', this.form.category);
+
+            // Handle image upload
+            if (this.form.image) {
+                formData.append('image', this.form.image);
+            }
 
             let url = "{{ route('activity-list.store') }}";
             if (this.editModeActivity && this.form.id) {
@@ -599,7 +644,9 @@ function activityComponent(texts, activities) {
                     body: formData,
                     credentials: 'same-origin'
                 });
+
                 const data = await res.json();
+
                 if (res.ok) {
                     alert(data.message || (this.editModeActivity ? 'Activity updated!' : 'Activity added!'));
                     this.resetForm();
@@ -610,14 +657,76 @@ function activityComponent(texts, activities) {
                 } else {
                     alert(data.message || 'Operation failed.');
                 }
-            } catch(err) {
+            } catch (err) {
                 console.error(err);
                 alert('Error submitting activity.');
             } finally {
                 btn.innerText = this.editModeActivity ? 'Update' : 'Add';
                 btn.disabled = false;
             }
-        }
+        },
+
+        async uploadOrUpdateImage(formEl) {
+            const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+
+            const fileInput = this.$refs.image?.files?.[0];
+            const title = this.$refs.title?.value || '';
+            const activityId = this.$refs.activity?.value || '';
+
+            if (!fileInput && !this.editImageMode) {
+                alert('Please select an image before uploading.');
+                return;
+            }
+            if (!activityId) {
+                alert('Please select an activity.');
+                return;
+            }
+
+            const formData = new FormData();
+            if (fileInput) formData.append('image', fileInput);
+            formData.append('title', title);
+            formData.append('activity_id', activityId);
+            if (this.editImageMode) formData.append('_method', 'PUT');
+
+            const btn = formEl.querySelector('button[type=submit]');
+            btn.innerText = this.editImageMode ? 'Updating...' : 'Uploading...';
+            btn.disabled = true;
+
+            const url = this.editImageMode
+                ? `/admin/activity-image/${this.currentImageId}`
+                : "{{ route('activity-image.store') }}";
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                    credentials: 'same-origin'
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert(data.message || (this.editImageMode ? 'Image updated successfully!' : 'Image uploaded successfully!'));
+                    this.showModal = false;
+                    this.resetImageForm();
+                    window.location.reload();
+                } else if (data.errors) {
+                    alert(Object.values(data.errors).flat().join('\n'));
+                } else {
+                    alert(data.message || 'Operation failed.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error processing image.');
+            } finally {
+                btn.innerText = this.editImageMode ? 'Update' : 'Upload';
+                btn.disabled = false;
+            }
+        },
     };
 }
 </script>

@@ -270,7 +270,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('farmInfo-image', FarmInfoSwiperImageController::class)->only(['store', 'destroy']);
 
     // List Controllers
-    Route::resource('activity-list', ActivityController::class)->only(['store', 'destroy']);
+    Route::resource('activity-list', ActivityController::class)->only(['store', 'update', 'destroy']);
     Route::resource('staycation-list', StaycationController::class)->only(['store', 'update', 'destroy']);
     Route::resource('menu-list', MenuController::class)->only(['store', 'destroy']);
     Route::resource('event-list', EventController::class)->only(['store', 'destroy']);

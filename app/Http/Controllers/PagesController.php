@@ -22,6 +22,7 @@ use App\Models\MenuText;
 use App\Models\Event;
 use App\Models\DayTour;
 use App\Models\Product;
+use App\Models\Activity;
 
 use Illuminate\Http\Request;
 
@@ -60,7 +61,98 @@ class PagesController extends Controller
 
     public function activities()
     {
-        return $this->renderPage(DoSwiperImage::class, DoText::class, 'activities', 'activities');
+        // Get swiper images and texts for the hero slider
+        $swiperImages = DoSwiperImage::all();
+        $texts = DoText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
+            return [strtolower($field) => $content];
+        })->toArray();
+
+        // Fetch activities from database with swiper images and group by category
+        $activities = Activity::with('swiperImages')->get();
+        $slidesByCategory = $this->formatActivitiesForSlides($activities, $activities);
+
+        return view('activities', compact('swiperImages', 'texts', 'slidesByCategory') + ['active' => 'activities']);
+    }
+
+    /**
+     * Format activities data for carousel slides
+     */
+    private function formatActivitiesForSlides($activities, $originalActivities)
+    {
+        $activitiesByCategory = [];
+
+        foreach ($activities as $activity) {
+            $category = $activity->category;
+            if (!isset($activitiesByCategory[$category])) {
+                $activitiesByCategory[$category] = [];
+            }
+
+            // Collect swiper images for modal display
+            $modalImages = [];
+            foreach ($activity->swiperImages as $swiperImage) {
+                $modalImages[] = $swiperImage->image_path; // Already a full Cloudinary URL
+            }
+
+            // Use main activity image for carousel display, fallback to first swiper image
+            $carouselImage = $activity->image ? asset('storage/' . $activity->image) : ($modalImages[0] ?? '');
+
+            $activitiesByCategory[$category][] = [
+                'title' => $activity->name,
+                'images' => $modalImages, // Only swiper images for modal
+                'price' => $activity->price,
+                'details' => array_filter([$activity->description, $activity->duration ? 'Duration: ' . $activity->duration : null]),
+            ];
+        }
+
+        // Pair activities (2 per slide) for each category
+        $slidesByCategory = [];
+        foreach ($activitiesByCategory as $key => $activities) {
+            $pairs = array_chunk($activities, 2);
+            $slides = [];
+
+            foreach ($pairs as $pair) {
+                $left  = $pair[0] ?? null;
+                $right = $pair[1] ?? null;
+
+                $slide = [];
+                if ($left) {
+                    // Find the activity to get its main image for carousel
+                    $activity = $originalActivities->firstWhere('name', $left['title']);
+                    $carouselImg = $activity && $activity->image ? asset('storage/' . $activity->image) : ($left['images'][0] ?? '');
+
+                    $slide['left'] = [
+                        'id'      => $left['title'],
+                        'title'   => $left['title'],
+                        'img'     => $carouselImg, // Use activity image for carousel
+                        'alt'     => $left['title'],
+                        'price'   => $left['price'] ?? 0,
+                        'details' => $left['details'] ?? [],
+                        'images'  => $left['images'] ?? [], // Swiper images for modal
+                    ];
+                }
+                if ($right) {
+                    // Find the activity to get its main image for carousel
+                    $activity = $originalActivities->firstWhere('name', $right['title']);
+                    $carouselImg = $activity && $activity->image ? asset('storage/' . $activity->image) : ($right['images'][0] ?? '');
+
+                    $slide['right'] = [
+                        'id'      => $right['title'],
+                        'title'   => $right['title'],
+                        'img'     => $carouselImg, // Use activity image for carousel
+                        'alt'     => $right['title'],
+                        'price'   => $right['price'] ?? 0,
+                        'details' => $right['details'] ?? [],
+                        'images'  => $right['images'] ?? [], // Swiper images for modal
+                    ];
+                }
+
+                $slides[] = $slide;
+            }
+
+            $slidesByCategory[$key] = $slides;
+        }
+
+        return $slidesByCategory;
     }
 
     public function dining()
