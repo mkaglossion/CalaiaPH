@@ -49,7 +49,11 @@
                     </p>
                 </div>
 
-                <div class="mt-5 flex justify-end">
+                <div class="mt-5 flex justify-end space-x-3">
+                    <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                        @click="editImage({{ $img->id }}, '{{ $img->title }}')">
+                        Edit
+                    </button>
                     <form action="{{ route('day-tour-swiper-images.destroy', $img->id) }}" method="POST">
                         @csrf @method('DELETE')
                         <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
@@ -150,33 +154,34 @@
                 class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
             >&times;</button>
 
-            <h3 class="text-xl font-bold mb-4 text-gray-900">Upload Swiper Image</h3>
+            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload Swiper Image'"></h3>
 
             <form id="swiperUploadForm" class="space-y-5" enctype="multipart/form-data" @submit.prevent="uploadImage">
                 @csrf
+                <input type="hidden" name="_method" value="POST" x-bind:value="editImageMode ? 'PUT' : 'POST'">
 
                 <div>
                     <label class="block font-medium mb-1 text-gray-700">Title (optional)</label>
-                    <input type="text" x-ref="title" name="title" class="border rounded-xl p-3 w-full">
+                    <input type="text" x-ref="title" name="title" class="border rounded-xl p-3 w-full" x-bind:value="editImageMode ? currentImageTitle : ''">
                 </div>
 
                 <div>
                     <label class="block font-medium mb-1 text-gray-700">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded-xl p-3 w-full" required>
+                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded-xl p-3 w-full" x-bind:required="!editImageMode">
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">
-                    <button 
-                        type="button" 
-                        @click="showModal = false" 
+                    <button
+                        type="button"
+                        @click="showModal = false; resetImageForm()"
                         class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">
                         Cancel
                     </button>
 
-                    <button 
-                        type="submit" 
-                        class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition">
-                        Upload
+                    <button
+                        type="submit"
+                        class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition"
+                        x-text="editImageMode ? 'Update' : 'Upload'">
                     </button>
                 </div>
             </form>
@@ -239,12 +244,28 @@ function dayTourManager() {
         showModal: false,
         showTextModal: false,
         editMode: false,
+        editImageMode: false,
+        currentImageId: null,
+        currentImageTitle: '',
         texts: @js($texts),
         form: { id: null, title: '', content: '' },
 
         resetForm() {
             this.form = { id: null, title: '', content: '' };
             this.editMode = false;
+        },
+
+        resetImageForm() {
+            this.editImageMode = false;
+            this.currentImageId = null;
+            this.currentImageTitle = '';
+        },
+
+        editImage(id, title) {
+            this.currentImageId = id;
+            this.currentImageTitle = title || '';
+            this.editImageMode = true;
+            this.showModal = true;
         },
 
         editText(id) {
@@ -318,12 +339,26 @@ function dayTourManager() {
 
             const csrf = document.querySelector('meta[name=csrf-token]').content;
             const formData = new FormData();
+            const fileInput = this.$refs.image.files[0];
+
+            if (!fileInput && !this.editImageMode) {
+                alert('Please select an image before uploading.');
+                this.isLoading = false;
+                return;
+            }
 
             formData.append('title', this.$refs.title.value);
-            formData.append('image', this.$refs.image.files[0]);
+            if (fileInput) {
+                formData.append('image', fileInput);
+            }
+            if (this.editImageMode) {
+                formData.append('_method', 'PUT');
+            }
+
+            const url = this.editImageMode ? '/admin/day-tour-swiper-images/' + this.currentImageId : '{{ route('day-tour-swiper-images.store') }}';
 
             try {
-                const res = await fetch('{{ route('day-tour-swiper-images.store') }}', {
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': csrf,
@@ -337,17 +372,18 @@ function dayTourManager() {
                 if (res.ok) {
                     Swal.fire({
                         icon: "success",
-                        title: "Upload Complete",
-                        text: data.message || "Image uploaded successfully!",
+                        title: this.editImageMode ? "Update Complete" : "Upload Complete",
+                        text: data.message || (this.editImageMode ? "Image updated successfully!" : "Image uploaded successfully!"),
                         confirmButtonColor: "#2563eb"
                     }).then(() => {
                         this.showModal = false;
+                        this.resetImageForm();
                         window.location.reload();
                     });
                 } else if (data.errors) {
                     Swal.fire({
                         icon: "error",
-                        title: "Upload Failed",
+                        title: "Failed",
                         html: Object.values(data.errors).flat().join("<br>")
                     });
                 }

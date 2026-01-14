@@ -52,6 +52,37 @@ class DayTourSwiperImageController extends Controller
     }
 
 
+    public function update(Request $request, DayTourSwiperImage $dayTourSwiperImage)
+    {
+        $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
+            'image' => 'nullable|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
+        ]);
+
+        $data = ['title' => $validated['title'] ?? null];
+
+        if ($request->hasFile('image')) {
+            // Delete old image from Cloudinary
+            if ($dayTourSwiperImage->public_id) {
+                Cloudinary::uploadApi()->destroy($dayTourSwiperImage->public_id);
+            }
+
+            // Upload new image to Cloudinary
+            $file = $request->file('image');
+            $filePath = $file->getRealPath();
+            $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
+
+            $data['image_path'] = $uploadResult['secure_url'];
+            $data['public_id'] = $uploadResult['public_id'];
+        }
+
+        $dayTourSwiperImage->update($data);
+
+        $message = $request->hasFile('image') ? 'Image updated successfully!' : 'Image details updated successfully!';
+
+        return response()->json(['message' => $message]);
+    }
+
     public function destroy(DayTourSwiperImage $DayTourSwiperImage)
     {
         if ($DayTourSwiperImage->public_id ?? false) {

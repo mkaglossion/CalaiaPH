@@ -240,11 +240,14 @@
                         <td class="px-4 py-2">{{ $img->staycation->name ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ $img->title ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ $img->created_at->format('Y-m-d') }}</td>
-                        <td class="px-4 py-2 text-right">
+                        <td class="px-4 py-2 text-right space-x-2">
+                            <button class="text-blue-600 hover:underline" @click="editImage({{ $img->id }}, '{{ $img->staycation_id }}', '{{ $img->title }}')">
+                                Edit
+                            </button>
                             <form action="{{ route('staycation-image.destroy', $img->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
-                                <button 
+                                <button
                                     type="submit"
                                     class="text-red-600 hover:underline"
                                     onclick="return confirm('Delete this image?')"
@@ -275,19 +278,21 @@
                 class="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4">Upload New Swiper Image</h3>
+            <h3 class="text-lg font-semibold mb-4" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
 
             <form
                 id="swiperUploadForm"
                 class="space-y-5"
                 enctype="multipart/form-data"
+                :action="editImageMode ? '/admin/staycation-image/' + currentImageId : '{{ route('staycation-image.store') }}'"
+                method="POST"
                 @submit.prevent="
                     const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
                     const fileInput = $refs.image.files[0];
                     const title = $refs.title.value;
                     const staycationId = $refs.staycation.value;
 
-                    if (!fileInput) {
+                    if (!editImageMode && !fileInput) {
                         alert('Please select an image before uploading.');
                         return;
                     }
@@ -298,15 +303,18 @@
                     }
 
                     const formData = new FormData();
-                    formData.append('image', fileInput);
+                    if (fileInput) formData.append('image', fileInput);
                     formData.append('title', title);
                     formData.append('staycation_id', staycationId);
+                    if (editImageMode) formData.append('_method', 'PUT');
 
                     const btn = $el.querySelector('button[type=submit]');
-                    btn.innerText = 'Uploading...';
+                    btn.innerText = editImageMode ? 'Updating...' : 'Uploading...';
                     btn.disabled = true;
 
-                    fetch('{{ route('staycation-image.store') }}', {
+                    const url = editImageMode ? '/admin/staycation-image/' + currentImageId : '{{ route('staycation-image.store') }}';
+
+                    fetch(url, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': csrf,
@@ -320,33 +328,35 @@
                         try { data = await res.json(); } catch { throw new Error('Invalid JSON'); }
 
                         if (res.ok) {
-                            alert(data.message || 'Image uploaded successfully!');
+                            alert(data.message || (editImageMode ? 'Image updated successfully!' : 'Image uploaded successfully!'));
                             $refs.image.value = '';
                             $refs.title.value = '';
                             $refs.staycation.value = '';
                             showModal = false;
+                            resetImageForm();
                             window.location.reload();
                         } else if (data.errors) {
                             const errorMessages = Object.values(data.errors).flat().join('\\n');
                             alert(errorMessages);
                         } else {
-                            alert(data.message || 'Upload failed.');
+                            alert(data.message || 'Operation failed.');
                         }
                     })
                     .catch(err => {
                         console.error(err);
-                        alert('Error uploading image.');
+                        alert('Error ' + (editImageMode ? 'updating' : 'uploading') + ' image.');
                     })
                     .finally(() => {
-                        btn.innerText = 'Upload';
+                        btn.innerText = editImageMode ? 'Update' : 'Upload';
                         btn.disabled = false;
                     });
                 "
             >
                 @csrf
+                <input type="hidden" name="_method" value="POST" x-bind:value="editImageMode ? 'PUT' : 'POST'">
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Staycation</label>
-                    <select x-ref="staycation" name="staycation_id" class="border rounded p-2 w-full" required>
+                    <select x-ref="staycation" name="staycation_id" class="border rounded p-2 w-full" x-bind:value="editImageMode ? currentStaycationId : ''" required>
                         <option value="">Select Staycation</option>
                         @foreach($staycations as $staycation)
                             <option value="{{ $staycation->id }}">{{ $staycation->name }}</option>
@@ -356,17 +366,17 @@
 
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Title (optional)</label>
-                    <input type="text" x-ref="title" name="title" class="border rounded p-2 w-full">
+                    <input type="text" x-ref="title" name="title" class="border rounded p-2 w-full" x-bind:value="editImageMode ? currentImageTitle : ''">
                 </div>
 
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" required>
+                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" x-bind:required="!editImageMode">
                 </div>
 
                 <div class="flex justify-end space-x-2">
-                    <button type="button" @click="showModal = false" class="px-4 py-2 border rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Upload</button>
+                    <button type="button" @click="showModal = false; resetImageForm()" class="px-4 py-2 border rounded">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded" x-text="editImageMode ? 'Update' : 'Upload'"></button>
                 </div>
             </form>
         </div>
@@ -518,6 +528,10 @@ function staycationComponent() {
         editModeStaycation: false,
         showTextModal: false,
         editMode: false,
+        editImageMode: false,
+        currentImageId: null,
+        currentStaycationId: '',
+        currentImageTitle: '',
         staycations: @js($staycations),
         form: {
             id: null,
@@ -538,6 +552,21 @@ function staycationComponent() {
             if (this.$refs.imageInput) {
                 this.$refs.imageInput.value = '';
             }
+        },
+
+        resetImageForm() {
+            this.editImageMode = false;
+            this.currentImageId = null;
+            this.currentStaycationId = '';
+            this.currentImageTitle = '';
+        },
+
+        editImage(id, staycationId, title) {
+            this.currentImageId = id;
+            this.currentStaycationId = staycationId;
+            this.currentImageTitle = title || '';
+            this.editImageMode = true;
+            this.showModal = true;
         },
 
 

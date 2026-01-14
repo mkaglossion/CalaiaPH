@@ -49,6 +49,37 @@ class StaySwiperImageController extends Controller
     }
 
 
+    public function update(Request $request, StaySwiperImage $staySwiperImage)
+    {
+        $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
+            'image' => 'nullable|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
+        ]);
+
+        $data = ['title' => $validated['title'] ?? null];
+
+        if ($request->hasFile('image')) {
+            // Delete old image from Cloudinary
+            if ($staySwiperImage->public_id) {
+                Cloudinary::uploadApi()->destroy($staySwiperImage->public_id);
+            }
+
+            // Upload new image to Cloudinary
+            $file = $request->file('image');
+            $filePath = $file->getRealPath();
+            $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
+
+            $data['image_path'] = $uploadResult['secure_url'];
+            $data['public_id'] = $uploadResult['public_id'];
+        }
+
+        $staySwiperImage->update($data);
+
+        $message = $request->hasFile('image') ? 'Image updated successfully!' : 'Image details updated successfully!';
+
+        return response()->json(['message' => $message]);
+    }
+
     public function destroy(StaySwiperImage $StaySwiperImage)
     {
          // Delete from Cloudinary if public_id is stored

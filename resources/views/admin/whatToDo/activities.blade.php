@@ -186,11 +186,14 @@
                         <td class="px-4 py-2">{{ $img->activity->name ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ $img->title ?? 'Untitled' }}</td>
                         <td class="px-4 py-2">{{ $img->created_at->format('Y-m-d') }}</td>
-                        <td class="px-4 py-2 text-right">
+                        <td class="px-4 py-2 text-right space-x-2">
+                            <button class="text-blue-600 hover:underline" @click="editImage({{ $img->id }}, '{{ $img->activity_id }}', '{{ $img->title }}')">
+                                Edit
+                            </button>
                             <form action="{{ route('activity-image.destroy', $img->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
-                                <button 
+                                <button
                                     type="submit"
                                     class="text-red-600 hover:underline"
                                     onclick="return confirm('Delete this image?')"
@@ -221,19 +224,21 @@
                 class="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4">Upload New Swiper Image</h3>
+            <h3 class="text-lg font-semibold mb-4" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
 
             <form
                 id="swiperUploadForm"
                 class="space-y-5"
                 enctype="multipart/form-data"
+                :action="editImageMode ? '/admin/activity-image/' + currentImageId : '{{ route('activity-image.store') }}'"
+                method="POST"
                 @submit.prevent="
                     const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
                     const fileInput = $refs.image.files[0];
                     const title = $refs.title.value;
                     const activityId = $refs.activity.value;
 
-                    if (!fileInput) {
+                    if (!fileInput && !editImageMode) {
                         alert('Please select an image before uploading.');
                         return;
                     }
@@ -244,15 +249,18 @@
                     }
 
                     const formData = new FormData();
-                    formData.append('image', fileInput);
+                    if (fileInput) formData.append('image', fileInput);
                     formData.append('title', title);
                     formData.append('activity_id', activityId);
+                    if (editImageMode) formData.append('_method', 'PUT');
 
                     const btn = $el.querySelector('button[type=submit]');
-                    btn.innerText = 'Uploading...';
+                    btn.innerText = editImageMode ? 'Updating...' : 'Uploading...';
                     btn.disabled = true;
 
-                    fetch('{{ route('activity-image.store') }}', {
+                    const url = editImageMode ? '/admin/activity-image/' + currentImageId : '{{ route('activity-image.store') }}';
+
+                    fetch(url, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': csrf,
@@ -266,30 +274,32 @@
                         try { data = await res.json(); } catch { throw new Error('Invalid JSON'); }
 
                         if (res.ok) {
-                            alert(data.message || 'Image uploaded successfully!');
+                            alert(data.message || (editImageMode ? 'Image updated successfully!' : 'Image uploaded successfully!'));
                             $refs.image.value = '';
                             $refs.title.value = '';
                             $refs.activity.value = '';
                             showModal = false;
+                            resetImageForm();
                             window.location.reload();
                         } else if (data.errors) {
                             const errorMessages = Object.values(data.errors).flat().join('\\n');
                             alert(errorMessages);
                         } else {
-                            alert(data.message || 'Upload failed.');
+                            alert(data.message || 'Operation failed.');
                         }
                     })
                     .catch(err => {
                         console.error(err);
-                        alert('Error uploading image.');
+                        alert('Error ' + (editImageMode ? 'updating' : 'uploading') + ' image.');
                     })
                     .finally(() => {
-                        btn.innerText = 'Upload';
+                        btn.innerText = editImageMode ? 'Update' : 'Upload';
                         btn.disabled = false;
                     });
                 "
             >
                 @csrf
+                <input type="hidden" name="_method" value="POST" x-bind:value="editImageMode ? 'PUT' : 'POST'">
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Activity</label>
                     <select x-ref="activity" name="activity_id" class="border rounded p-2 w-full" required>
@@ -307,12 +317,12 @@
 
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" required>
+                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" x-bind:required="!editImageMode">
                 </div>
 
                 <div class="flex justify-end space-x-2">
-                    <button type="button" @click="showModal = false" class="px-4 py-2 border rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Upload</button>
+                    <button type="button" @click="showModal = false; resetImageForm()" class="px-4 py-2 border rounded">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded" x-text="editImageMode ? 'Update' : 'Upload'"></button>
                 </div>
             </form>
         </div>
@@ -465,14 +475,23 @@ function activityComponent(texts, activities) {
         showTextModal: false,
         editMode: false,
         editModeActivity: false,
+        editImageMode: false,
+        currentImageId: null,
         texts,
         activities: activities.data || activities,
-        form: { id: null, name: '', description: '', duration: '', label: '', text: '' },
+        form: { id: null, name: '', description: '', duration: '', label: '', text: '', activity_id: '', title: '' },
 
         resetForm() {
-            this.form = { id: null, name: '', description: '', duration: '', label: '', text: '' };
+            this.form = { id: null, name: '', description: '', duration: '', label: '', text: '', activity_id: '', title: '' };
             this.editMode = false;
             this.editModeActivity = false;
+        },
+
+        resetImageForm() {
+            this.editImageMode = false;
+            this.currentImageId = null;
+            this.form.activity_id = '';
+            this.form.title = '';
         },
 
         editActivity(id) {
@@ -497,6 +516,14 @@ function activityComponent(texts, activities) {
                 this.editMode = true;
                 this.showTextModal = true;
             }
+        },
+
+        editImage(id, activityId, title) {
+            this.currentImageId = id;
+            this.form.activity_id = activityId;
+            this.form.title = title || '';
+            this.editImageMode = true;
+            this.showModal = true;
         },
 
         saveText: async function() {

@@ -60,6 +60,45 @@ class StaycationSwiperImageController extends Controller
         return back()->with('success', $message);
     }
 
+    public function update(Request $request, StaycationSwiperImage $staycation_image)
+    {
+        $request->validate([
+            'staycation_id' => 'required|exists:staycations,id',
+            'title' => 'nullable|string|max:255',
+            'image' => 'nullable|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
+        ]);
+
+        $data = [
+            'staycation_id' => $request->staycation_id,
+            'title' => $request->title ?? null,
+        ];
+
+        if ($request->hasFile('image')) {
+            // Delete old image from Cloudinary
+            if ($staycation_image->public_id) {
+                Cloudinary::uploadApi()->destroy($staycation_image->public_id);
+            }
+
+            // Upload new image to Cloudinary
+            $file = $request->file('image');
+            $filePath = $file->getRealPath();
+            $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
+
+            $data['image_path'] = $uploadResult['secure_url'];
+            $data['public_id'] = $uploadResult['public_id'];
+        }
+
+        $staycation_image->update($data);
+
+        $message = $request->hasFile('image') ? 'Image updated successfully!' : 'Image details updated successfully!';
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('success', $message);
+    }
+
     public function destroy(StaycationSwiperImage $staycation_image)
     {
         Log::info('Deleting image', $staycation_image->toArray());

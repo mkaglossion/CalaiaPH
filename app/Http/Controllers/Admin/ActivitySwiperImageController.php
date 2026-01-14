@@ -50,6 +50,43 @@ class ActivitySwiperImageController extends Controller
         return back()->with('success', $message);
     }
 
+    public function update(Request $request, ActivitySwiperImage $activity_image)
+    {
+        $request->validate([
+            'activity_id' => 'required|exists:activities,id',
+            'title' => 'nullable|string|max:255',
+            'image' => 'nullable|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
+        ]);
+
+        $data = [
+            'activity_id' => $request->activity_id,
+            'title' => $request->title ?? null,
+        ];
+
+        if ($request->hasFile('image')) {
+            // Delete old image
+            $oldPath = $activity_image->image_path;
+            if ($oldPath && Storage::disk('public')->exists($oldPath)) {
+                Storage::disk('public')->delete($oldPath);
+            }
+
+            // Store new image
+            $file = $request->file('image');
+            $path = $file->store('activities', 'public');
+            $data['image_path'] = $path;
+        }
+
+        $activity_image->update($data);
+
+        $message = $request->hasFile('image') ? 'Image updated successfully!' : 'Image details updated successfully!';
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('success', $message);
+    }
+
     public function destroy(ActivitySwiperImage $activity_image)
     {
         Log::info('Deleting image', $activity_image->toArray());

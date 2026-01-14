@@ -256,15 +256,15 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::post('/accommodations-text', [AccommodationTextController::class, 'store'])->name('accommodations-text.store');
 
     // Swiper Image Controllers
-    Route::resource('home-swiper-images', HomeSwiperImageController::class)->only(['store', 'destroy']);
-    Route::resource('day-tour-swiper-images', DayTourSwiperImageController::class)->only(['store', 'destroy']);
-    Route::resource('stay-swiper-images', StaySwiperImageController::class)->only(['store', 'destroy']);
-    Route::resource('do-swiper-images', DoSwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('home-swiper-images', HomeSwiperImageController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('day-tour-swiper-images', DayTourSwiperImageController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('stay-swiper-images', StaySwiperImageController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('do-swiper-images', DoSwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('food-swiper-images', FoodSwiperImageController::class)->only(['store', 'destroy']);
     Route::resource('special-swiper-images', SpecialSwiperImageController::class)->only(['store', 'destroy']);
     Route::resource('farm-swiper-images', FarmSwiperImageController::class)->only(['store', 'destroy']);
-    Route::resource('activity-image', ActivitySwiperImageController::class)->only(['store', 'destroy']);
-    Route::resource('staycation-image', StaycationSwiperImageController::class)->only(['store', 'destroy']);
+    Route::resource('activity-image', ActivitySwiperImageController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('staycation-image', StaycationSwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('menu-image', MenuSwiperImageController::class)->only(['store', 'destroy']);
     Route::resource('event-image', EventSwiperImageController::class)->only(['store', 'destroy']);
     Route::resource('farmInfo-image', FarmInfoSwiperImageController::class)->only(['store', 'destroy']);

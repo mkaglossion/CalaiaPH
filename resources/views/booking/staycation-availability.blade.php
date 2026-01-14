@@ -155,7 +155,7 @@
                                     @endif
 
                                     {{-- Status badge --}}
-                                    <div class="absolute top-4 right-4">
+                                    <div class="absolute top-4 right-4 z-10">
                                         <span class="px-3 py-1 rounded-full text-xs font-bold text-white {{ $bgClass }}">
                                             @if($status === 'available')
                                                 <i class="bi bi-check-circle-fill mr-1"></i>Available
@@ -168,7 +168,7 @@
                                     </div>
 
                                     {{-- Type badge --}}
-                                    <div class="absolute bottom-4 left-4">
+                                    <div class="absolute bottom-4 left-4 z-10">
                                         <span class="px-3 py-1 bg-[#8f5d54] text-white text-sm font-semibold rounded-full">
                                             {{ ucfirst($roomDetail['type']) }}
                                         </span>
@@ -176,7 +176,7 @@
 
                                     {{-- Qty badge --}}
                                     @if(($avail['min_quantity'] ?? 0) > 0)
-                                        <div class="absolute bottom-4 right-4">
+                                        <div class="absolute bottom-4 right-4 z-10">
                                             <span class="px-2 py-1 bg-black/70 text-white text-xs font-semibold rounded-full">
                                                 {{ $avail['min_quantity'] }} available
                                             </span>
