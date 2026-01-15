@@ -1,23 +1,21 @@
 @props([
     'active' => 'room',
-    // galing Admin Panel (per day capacity)
-    'dayVisitCapacity' => null,
-    'roomCapacity' => null,
-    // optional: per-date remaining slots (array from backend)
+    // Inventory data from StaycationInventory (per date availability)
     // [
-    //   'day-visit' => ['2025-11-20' => 5, ...],
-    //   'room'      => ['2025-11-20' => 2, ...],
+    //   '2025-11-20' => ['is_available' => true, 'min_quantity' => 5],
+    //   '2025-11-21' => ['is_available' => false, 'min_quantity' => 0],
     // ]
     'inventory' => null,
+    // Total quantity for fallback when no inventory data exists
+    'totalQuantity' => null,
 ])
 
 <div class="max-w-7xl mx-auto p-4 relative z-10 -mt-20">
     <div
         class="bg-white rounded-xl shadow-lg p-6"
         x-data='bookingWidget({
-            dayVisitCapacity: @json($dayVisitCapacity),
-            roomCapacity: @json($roomCapacity),
-            inventory: @json($inventory ?? ["day-visit" => (object)[], "room" => (object)[]]),
+            inventory: @json($inventory ?? (object)[]),
+            totalQuantity: @json($totalQuantity ?? 0),
         })'
         x-init="initDatepickers()"
         x-cloak
@@ -220,7 +218,6 @@
     .flatpickr-day.flatpickr-disabled {
         opacity: 0.35;
         cursor: not-allowed;
-        text-decoration: line-through;
     }
 
     .flatpickr-day.today {
@@ -246,6 +243,8 @@
         border-radius: 9999px;
     }
 
+
+
     [x-cloak] { display: none !important; }
 </style>
 
@@ -259,15 +258,11 @@
             availabilityText: '',
             staySummary: '',
 
-            // capacities galing Admin Panel (per day)
-            dayVisitCapacity: config.dayVisitCapacity ?? null,
-            roomCapacity: config.roomCapacity ?? null,
+            // inventory data from StaycationInventory (per date availability)
+            inventory: config.inventory ?? {},
 
-            // remaining slots per date per type (puwedeng i-override ng backend)
-            inventory: config.inventory ?? {
-                'day-visit': {},
-                'room': {}
-            },
+            // total quantity for fallback
+            totalQuantity: config.totalQuantity ?? 0,
 
             setTab(type) {
                 this.activeTab = type;
@@ -345,11 +340,6 @@
 
                         self.updateAvailabilityText();
                         self.updateStaySummary();
-
-                        // Auto-submit if room tab and dates selected
-                        if (self.activeTab === 'room' && self.$refs.checkOut && self.$refs.checkOut.value) {
-                            document.getElementById('booking-form').submit();
-                        }
                     }
                 });
 
@@ -369,6 +359,29 @@
                 }
             },
 
+            applyAvailabilityColor(dayElem, instance) {
+                if (!dayElem || !dayElem.dateObj) return;
+                const dateString = instance.formatDate(dayElem.dateObj, 'Y-m-d');
+
+                // reset
+                dayElem.classList.remove('fp-avail-high','fp-avail-low','fp-not-avail','fp-invalid');
+
+                const details = this.inventory[dateString];
+                const qty = Number(details?.min_quantity || 0);
+
+                if (!details?.is_available || qty <= 0) {
+                    dayElem.classList.add('fp-not-avail');
+                    return;
+                }
+
+                const lowThreshold = Math.floor(this.totalQuantity * 0.3); // 30% threshold
+                if (qty <= lowThreshold) {
+                    dayElem.classList.add('fp-avail-low');
+                } else {
+                    dayElem.classList.add('fp-avail-high');
+                }
+            },
+
             updateAvailabilityText() {
                 const date = this.$refs.checkIn.value;
                 if (!date) {
@@ -376,30 +389,19 @@
                     return;
                 }
 
-                const type = this.activeTab;
-                const typeInventory = this.inventory[type] || {};
-                const remaining = typeInventory[date];
+                const dateData = this.inventory[date];
+                if (!dateData) {
+                    // No inventory data for this date, use total quantity as fallback
+                    this.availabilityText = `Up to ${this.totalQuantity} slot(s) available per day.`;
+                    return;
+                }
 
-                const capacityMap = {
-                    'day-visit': this.dayVisitCapacity,
-                    'room': this.roomCapacity,
-                };
-                const capacity = capacityMap[type] ?? null;
+                const { is_available, min_quantity } = dateData;
 
-                if (remaining === 0) {
+                if (!is_available || min_quantity <= 0) {
                     this.availabilityText = 'Fully booked na po for this date.';
-                } else if (typeof remaining === 'number') {
-                    if (capacity !== null) {
-                        const used = capacity - remaining;
-                        this.availabilityText = `${remaining} slot(s) remaining out of ${capacity} (booked ${used}).`;
-                    } else {
-                        this.availabilityText = `${remaining} slot(s) remaining for this date.`;
-                    }
-                } else if (capacity !== null) {
-                    // may base capacity pero wala pang per-date data
-                    this.availabilityText = `Up to ${capacity} slot(s) available per day.`;
                 } else {
-                    this.availabilityText = '';
+                    this.availabilityText = `${min_quantity} slot(s) available for this date.`;
                 }
             },
 

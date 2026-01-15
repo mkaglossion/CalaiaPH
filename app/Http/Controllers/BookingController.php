@@ -527,13 +527,44 @@ class BookingController extends Controller
 
     public function widget()
     {
-        $settings = (object) config('booking.capacities');
-        $remainingPerDateArray = $this->inventoryService->getAllInventory();
+        // Get inventory data from StaycationInventory (similar to BookingCalendarController)
+        $start = \Carbon\Carbon::today();
+        $end = (clone $start)->addMonths(6);
+
+        $inventory = [];
+        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+            $key = $d->format('Y-m-d');
+
+            // Past dates invalid
+            if ($d->lt(\Carbon\Carbon::today())) {
+                $inventory[$key] = [
+                    'is_available' => false,
+                    'min_quantity' => 0
+                ];
+                continue;
+            }
+
+            // Get total available quantity for this date from inventory table
+            $totalAvailable = \App\Models\StaycationInventory::where('date', $key)
+                ->sum('available_quantity');
+
+            // If no inventory records exist for this date, fall back to staycation quantity
+            if ($totalAvailable == 0) {
+                $totalAvailable = \App\Models\Staycation::sum('quantity');
+            }
+
+            $inventory[$key] = [
+                'is_available' => $totalAvailable > 0,
+                'min_quantity' => $totalAvailable
+            ];
+        }
+
+        // Get total quantity for fallback
+        $totalQuantity = \App\Models\Staycation::sum('quantity');
 
         return view('booking.widget', [
-            'dayVisitCapacity'    => $settings->day_visit_capacity,
-            'roomCapacity'        => $settings->room_capacity,
-            'inventory'           => $remainingPerDateArray, // optional
+            'inventory'     => $inventory,
+            'totalQuantity' => $totalQuantity,
         ]);
     }
 

@@ -8,7 +8,7 @@
     <x-hero-slider :images="$swiperImages" :texts="$texts" />
 
     {{-- Check Availability --}}
-    <x-check-availability />
+    <x-check-availability :inventory="$availability" :totalQuantity="$totalQuantity" />
 
     {{-- Event Experience --}}
     <x-event-experience />
