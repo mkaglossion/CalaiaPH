@@ -26,7 +26,7 @@
                 <tr>
                     <th class="px-4 py-2">#</th>
                     <th class="px-4 py-2">Name</th>
-                    <th class="px-4 py-2">Quantity</th>
+                    <th class="px-4 py-2">Today Avail</th>
                     <th class="px-4 py-2">Adults</th>
                     <th class="px-4 py-2">Children</th>
                     <th class="px-4 py-2">Pricing</th>
@@ -39,7 +39,16 @@
                 <tr class="border-b hover:bg-gray-50">
                     <td class="px-4 py-2">{{ $index + 1 }}</td>
                     <td class="px-4 py-2">{{ $act->name ?? 'Untitled' }}</td>
-                    <td class="px-4 py-2">{{ $act->quantity ?? 'N/A' }}</td>
+                    <td class="px-4 py-2">
+                        @php
+                            $today = \Carbon\Carbon::today()->format('Y-m-d');
+                            $inv = \App\Models\StaycationInventory::where('staycation_id', $act->id)
+                                ->whereDate('date', $today)
+                                ->first();
+                            $todayAvail = $inv ? $inv->available_quantity : ($act->quantity ?? 0);
+                        @endphp
+                        {{ $todayAvail }}
+                    </td>
                     <td class="px-4 py-2">{{ $act->adults ?? 'N/A' }}</td>
                     <td class="px-4 py-2">{{ $act->children ?? 'N/A' }}</td>
                     <td class="px-4 py-2">
@@ -85,23 +94,31 @@
             <form id="staycationForm" @submit.prevent="saveStaycation()" class="space-y-5">
                 @csrf
 
-                <!-- Staycation Name, Quantity, Adults & Children -->
+                <!-- Staycation Name, Max Capacity, Adults & Children -->
                 <div class="grid grid-cols-4 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Staycation Name</label>
-                        <input type="text" x-model="form.name" class="w-full border rounded px-3 py-2" placeholder="Premium Glamping Tent" required>
+                        <input type="text" x-model="form.name" class="w-full border rounded px-3 py-2 h-10" placeholder="Premium Glamping Tent" required>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Quantity</label>
-                        <input type="number" x-model.number="form.quantity" min="1" class="w-full border rounded px-3 py-2" placeholder="1" required>
+                        <label class="block text-sm font-medium mb-1">Max Capacity</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" x-model.number="form.quantity" min="1" class="w-full border rounded px-3 py-2 h-10" placeholder="1" @input="updateThresholdFromQuantity()">
+                            <button type="button" class="shrink-0 text-xs px-3 py-2 h-10 rounded border bg-white hover:bg-gray-50" @click="computeAutoCapacity()">
+                                Suggest
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Base capacity; per-date inventory can be lower. Threshold (30%): <span class="font-semibold" x-text="computedThreshold"></span>
+                        </p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Adults</label>
-                        <input type="number" x-model.number="form.adults" min="0" class="w-full border rounded px-3 py-2" placeholder="0" required>
+                        <input type="number" x-model.number="form.adults" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Children</label>
-                        <input type="number" x-model.number="form.children" min="0" class="w-full border rounded px-3 py-2" placeholder="0" required>
+                        <input type="number" x-model.number="form.children" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
                     </div>
                 </div>
 
@@ -175,6 +192,81 @@
 
                     <button type="button" @click="addPriceConfig()" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">+ Add Price Config</button>
                 </div>
+
+                <!-- ===== INVENTORY MANAGEMENT ===== -->
+                <div class="border-t pt-5 mt-5">
+                    <h4 class="text-lg font-semibold mb-4 text-gray-900">📅 Inventory Management</h4>
+                    
+                    <div x-show="!form.id" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                        <p class="text-sm text-yellow-800">💡 <strong>Tip:</strong> Save the staycation first, then return to this section to set inventory for specific dates.</p>
+                    </div>
+
+                    <div x-show="form.id">
+                        <!-- Tab Selection -->
+                        <div class="flex gap-2 mb-4 border-b">
+                            <button type="button" @click="inventoryTab = 'quick'" :class="inventoryTab === 'quick' ? 'border-b-2 border-green-600 text-green-600 font-semibold' : 'text-gray-600'" class="pb-2 px-4">
+                                ⚡ Quick Set (30 days)
+                            </button>
+                            <button type="button" @click="inventoryTab = 'custom'" :class="inventoryTab === 'custom' ? 'border-b-2 border-blue-600 text-blue-600 font-semibold' : 'text-gray-600'" class="pb-2 px-4">
+                                📆 Custom Date Range
+                            </button>
+                        </div>
+
+                        <!-- Quick Set Tab -->
+                        <div x-show="inventoryTab === 'quick'" class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                            <p class="text-sm text-green-900 mb-3">Set the same quantity for the next 30 days</p>
+                            <div class="flex gap-2 items-end">
+                                <div class="flex-1">
+                                    <label class="block text-sm font-medium mb-1">Quantity per day</label>
+                                    <input type="number" x-model.number="inventoryQty" min="1" value="10" class="w-full border rounded px-3 py-2">
+                                </div>
+                                <button type="button" @click="quickSetInventory()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-semibold whitespace-nowrap">
+                                    Apply Quick Set
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Custom Date Range Tab -->
+                        <div x-show="inventoryTab === 'custom'" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <p class="text-sm text-blue-900 mb-3">Set inventory for a specific date range</p>
+                            <div class="space-y-3">
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">Start Date</label>
+                                        <input type="date" x-model="inventoryStartDate" class="w-full border rounded px-3 py-2">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">End Date</label>
+                                        <input type="date" x-model="inventoryEndDate" class="w-full border rounded px-3 py-2">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">Quantity</label>
+                                        <input type="number" x-model.number="inventoryQtyRange" min="0" value="10" class="w-full border rounded px-3 py-2">
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" x-model="inventoryAvailable" checked>
+                                        <span class="text-sm font-medium">Available for booking</span>
+                                    </label>
+                                    <button type="button" @click="addDateRangeInventory()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold">
+                                        Add Range
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Inventory Preview -->
+                        <div class="bg-gray-50 border rounded-lg p-4 max-h-64 overflow-y-auto">
+                            <h5 class="font-semibold text-gray-800 mb-3">📋 Upcoming Inventory (Next 30 Days)</h5>
+                            <div id="inventoryPreview" class="text-sm text-gray-700">
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== END INVENTORY MANAGEMENT ===== -->
 
                 <!-- Image Upload Section -->
                 <div class="space-y-3">
@@ -546,12 +638,12 @@ function staycationComponent() {
             text: ''
         },
 
+        computedThreshold: 0,
+
         resetForm() {
-            this.form = { id: null, name: '', quantity: 1, adults: 0, children: 0, priceConfigs: [], image: null, imagePreview: null };
+            this.form = { id: null, name: '', quantity: 1, adults: 0, children: 0, priceConfigs: [], image: null, imagePreview: null, existingImage: null, removeImage: false };
             this.editModeStaycation = false;
-            if (this.$refs.imageInput) {
-                this.$refs.imageInput.value = '';
-            }
+            this.removeImage(); // Explicitly clear image and input
         },
 
         resetImageForm() {
@@ -579,6 +671,12 @@ function staycationComponent() {
                 this.form.quantity = staycation.quantity;
                 this.form.adults = staycation.adults;
                 this.form.children = staycation.children;
+                // Align inventory inputs with base capacity
+                this.inventoryQty = Number(staycation.quantity || 1);
+                this.inventoryQtyRange = Number(staycation.quantity || 1);
+                this.inventoryTab = 'quick';
+                // Compute initial threshold and optionally auto capacity
+                this.updateThresholdFromQuantity();
                 this.form.priceConfigs = (staycation.price_configs || []).map(pc => {
                     const datesStr = pc.dates || '';
                     const isMultiple = datesStr.includes(',');
@@ -591,10 +689,36 @@ function staycationComponent() {
                 // Handle existing image
                 if (staycation.image) {
                     this.form.imagePreview = staycation.image;
+                    this.form.existingImage = staycation.image; // Store original
+                    this.form.removeImage = false; // Track if user wants to remove
                 }
                 this.editModeStaycation = true;
                 this.showStaycationModal = true;
+                // Load preview for this staycation
+                this.$nextTick(() => this.loadInventoryPreview());
             }
+        },
+
+        async computeAutoCapacity() {
+            if (!this.form.id) { this.updateThresholdFromQuantity(); return; }
+            try {
+                const r = await fetch(`/api/inventory/${this.form.id}`, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+                const data = await r.json();
+                const items = Array.isArray(data.items) ? data.items : [];
+                const maxQty = items.length ? Math.max(...items.map(i => Number(i.min_quantity || 0))) : Number(this.form.quantity || 1);
+                this.form.quantity = isFinite(maxQty) && maxQty > 0 ? maxQty : 1;
+                this.inventoryQty = this.form.quantity;
+                this.inventoryQtyRange = this.form.quantity;
+                this.updateThresholdFromQuantity();
+            } catch (e) {
+                this.updateThresholdFromQuantity();
+            }
+        },
+
+        updateThresholdFromQuantity() {
+            const base = Number(this.form.quantity || 0);
+            const thr = Math.max(1, Math.floor(base * 0.3));
+            this.computedThreshold = base > 0 ? thr : 0;
         },
 
         addPriceConfig() {
@@ -627,6 +751,7 @@ function staycationComponent() {
         removeImage() {
             this.form.image = null;
             this.form.imagePreview = null;
+            this.form.removeImage = true; // Mark for deletion
             if (this.$refs.imageInput) {
                 this.$refs.imageInput.value = '';
             }
@@ -667,6 +792,10 @@ function staycationComponent() {
             formData.append('priceConfigs', JSON.stringify(this.form.priceConfigs));
             if (this.form.image) {
                 formData.append('image', this.form.image);
+            }
+            // Explicitly mark image for deletion if user removed it
+            if (this.form.removeImage) {
+                formData.append('remove_image', '1');
             }
 
             let url = '{{ route("staycation-list.store") }}';
@@ -755,6 +884,128 @@ function staycationComponent() {
                 btn.innerText = this.editMode ? 'Update' : 'Add';
                 btn.disabled = false;
             }
+        },
+
+        // ===== INVENTORY FUNCTIONS =====
+        inventoryTab: 'quick',
+        inventoryQty: 10,
+        inventoryStartDate: '',
+        inventoryEndDate: '',
+        inventoryQtyRange: 10,
+        inventoryAvailable: true,
+
+        quickSetInventory() {
+            if (!this.form.id) {
+                alert('❌ Save the staycation first!');
+                return;
+            }
+            const qty = this.inventoryQty;
+            if (!qty || qty < 1) {
+                alert('❌ Please enter a valid quantity');
+                return;
+            }
+            this.sendInventoryRequest({
+                room_id: this.form.id,
+                quantity: qty,
+                type: 'quickset'
+            });
+        },
+
+        addDateRangeInventory() {
+            if (!this.form.id) {
+                alert('❌ Save the staycation first!');
+                return;
+            }
+            if (!this.inventoryStartDate || !this.inventoryEndDate) {
+                alert('❌ Please select start and end dates');
+                return;
+            }
+            if (this.inventoryStartDate > this.inventoryEndDate) {
+                alert('❌ Start date must be before end date');
+                return;
+            }
+            this.sendInventoryRequest({
+                room_id: this.form.id,
+                start_date: this.inventoryStartDate,
+                end_date: this.inventoryEndDate,
+                quantity: this.inventoryQtyRange,
+                is_available: this.inventoryAvailable,
+                type: 'range'
+            });
+        },
+
+        sendInventoryRequest(data) {
+            const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+            let endpoint = '/admin/inventory/store';
+            
+            if (data.type === 'quickset') {
+                endpoint = '/admin/inventory/quickset';
+            }
+
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(data)
+            })
+            .then(async (r) => {
+                const raw = await r.text();
+                let res;
+                try {
+                    res = raw ? JSON.parse(raw) : {};
+                } catch (e) {
+                    throw new Error(`${r.status} ${r.statusText} - response not JSON`);
+                }
+
+                if (!r.ok || res.success === false) {
+                    const msg = res.message
+                        || (res.errors ? Object.values(res.errors).flat().join('\n') : null)
+                        || `Request failed (${r.status})`;
+                    throw new Error(msg);
+                }
+
+                alert('✅ ' + (res.message || 'Saved'));
+                this.inventoryStartDate = '';
+                this.inventoryEndDate = '';
+                this.inventoryQtyRange = 10;
+                this.loadInventoryPreview();
+                // Refresh the page so the listing table reflects new availability
+                setTimeout(() => window.location.reload(), 300);
+            })
+            .catch(err => alert('❌ ' + err.message));
+        },
+
+        loadInventoryPreview() {
+            if (!this.form.id) return;
+            const previewDiv = document.getElementById('inventoryPreview');
+            if (!previewDiv) return;
+
+            previewDiv.innerHTML = '<span class="text-gray-600">Loading...</span>';
+
+            fetch(`/api/inventory/${this.form.id}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.items || data.items.length === 0) {
+                        previewDiv.innerHTML = '<span class="text-gray-500">No inventory set yet</span>';
+                        return;
+                    }
+                    let html = '<table class="w-full text-sm"><tr class="border-b"><th class="text-left py-1">Date</th><th class="text-center py-1">Qty</th><th class="text-center py-1">Status</th></tr>';
+                    data.items.forEach(inv => {
+                        const dateObj = new Date(inv.date);
+                        const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        const status = inv.is_available ? '✅ Available' : '🚫 Blocked';
+                        html += `<tr class="border-b"><td class="py-1">${dateStr}</td><td class="text-center">${inv.min_quantity}</td><td class="text-center text-xs">${status}</td></tr>`;
+                    });
+                    html += '</table>';
+                    previewDiv.innerHTML = html;
+                })
+                .catch(err => {
+                    previewDiv.innerHTML = '<span class="text-red-500">Error loading inventory</span>';
+                });
         },
 
     };

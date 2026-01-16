@@ -997,27 +997,53 @@ class BookingController extends Controller
 
         foreach ($staycations as $staycation) {
             $totalNights = $checkinCarbon->diffInDays($checkoutCarbon);
-            $isAvailable = $staycation->quantity > 0;
+
+            // Fetch inventory for this staycation in the selected range
+            $inventories = \App\Models\StaycationInventory::where('staycation_id', $staycation->id)
+                ->whereBetween('date', [$checkinCarbon->format('Y-m-d'), $checkoutCarbon->copy()->subDay()->format('Y-m-d')])
+                ->get(['date', 'available_quantity'])
+                ->keyBy(function ($i) { return \Carbon\Carbon::parse($i->date)->format('Y-m-d'); });
 
             $inventoryDetails = [];
             $current = $checkinCarbon->copy();
+            $minOverRange = null;
+            $availableNights = 0;
+
             while ($current->lt($checkoutCarbon)) {
                 $dateStr = $current->format('Y-m-d');
+                $qty = (int) ($inventories[$dateStr]->available_quantity ?? $staycation->quantity);
                 $inventoryDetails[$dateStr] = [
-                    'min_quantity' => $staycation->quantity,
-                    'is_available' => $staycation->quantity > 0
+                    'min_quantity' => $qty,
+                    'is_available' => $qty > 0,
                 ];
+                $minOverRange = is_null($minOverRange) ? $qty : min($minOverRange, $qty);
+                if ($qty > 0) $availableNights++;
                 $current->addDay();
+            }
+
+            $minOverRange = $minOverRange ?? 0;
+            $isAvailable = $minOverRange > 0;
+
+            // Dynamic status based on threshold (30% of base quantity)
+            $baseQty = max(0, (int)$staycation->quantity);
+            $threshold = max(1, (int) floor($baseQty * 0.3));
+            $status = 'unavailable';
+            if ($minOverRange === 0) {
+                $status = 'unavailable';
+            } elseif ($minOverRange <= $threshold) {
+                $status = 'limited';
+            } else {
+                $status = 'available';
             }
 
             $availability[$staycation->id] = [
                 'available' => $isAvailable,
-                'partially_available' => false,
-                'available_nights' => $totalNights,
+                'partially_available' => $isAvailable && $availableNights < $totalNights,
+                'available_nights' => $availableNights,
                 'total_nights' => $totalNights,
                 'inventory_details' => $inventoryDetails,
-                'total_quantity' => $staycation->quantity,
-                'min_quantity' => $staycation->quantity,
+                'total_quantity' => $baseQty,
+                'min_quantity' => $minOverRange,
                 'has_inventory' => true
             ];
 
@@ -1040,9 +1066,9 @@ class BookingController extends Controller
                 'type' => $type,
                 'description' => $description,
                 'image' => $image,
-                'status' => $isAvailable ? 'available' : 'unavailable',
-                'available_quantity' => $staycation->quantity,
-                'total_quantity' => $staycation->quantity,
+                'status' => $status,
+                'available_quantity' => $minOverRange,
+                'total_quantity' => $baseQty,
                 'price' => $this->calculatePrice($staycation, $checkin),
                 'price_configs' => $staycation->price_configs ?? []
             ];

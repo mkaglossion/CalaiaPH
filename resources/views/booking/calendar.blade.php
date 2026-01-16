@@ -55,79 +55,194 @@
 
         /* ===== RESPONSIVE FLATPICKR (CENTERED) ===== */
         .booking-calendar{
-          display:flex;
-          justify-content:center;
-          width:100%;
+          display: flex;
+          justify-content: center;
+          width: 100%;
+          margin: 0;
+          padding: 0;
         }
 
-        /* make inline calendar not fixed width */
-        .booking-calendar .flatpickr-calendar.inline{
+        /* make inline calendar centered */
+        .booking-calendar .flatpickr-calendar{
+          position: relative !important;
           margin: 0 auto !important;
-          width: auto !important;
+          padding: 0 !important;
+          width: 100% !important;
           max-width: 100% !important;
           box-shadow: none !important;
-          border: 0 !important;
+          border: none !important;
+          left: auto !important;
+          top: auto !important;
+          transform: none !important;
+          background: transparent !important;
+          font-family: inherit !important;
         }
 
-        /* allow 2-month layout to shrink properly */
-        .booking-calendar .flatpickr-rContainer,
-        .booking-calendar .flatpickr-days,
-        .booking-calendar .dayContainer{
-          width: 100% !important;
-          min-width: 0 !important;
-        }
-
-        /* prevent overflow on mobile */
-        .booking-calendar .flatpickr-innerContainer{
-          max-width: 100% !important;
-          overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-        }
-
-        /* nicer spacing between 2 months */
-        .booking-calendar .flatpickr-innerContainer{
-          gap: 16px !important;
+        .booking-calendar .flatpickr-calendar.inline{
+          display: flex !important;
           justify-content: center !important;
         }
 
-        /* day cell grid look & consistent sizing */
+        /* center the container */
+        .booking-calendar .flatpickr-rContainer{
+          display: flex !important;
+          justify-content: center !important;
+          align-items: flex-start !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          margin: 0 !important;
+        }
+
+        /* inner container - holds months */
+        .booking-calendar .flatpickr-innerContainer{
+          display: flex !important;
+          justify-content: center !important;
+          align-items: flex-start !important;
+          gap: 20px !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          overflow: visible !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          flex-wrap: nowrap !important;
+        }
+
+        /* month wrapper */
+        .booking-calendar .flatpickr-months{
+          width: auto !important;
+          flex: 1 !important;
+          max-width: 400px !important;
+          margin: 0 !important;
+        }
+
+        /* individual month */
+        .booking-calendar .flatpickr-month{
+          width: 100% !important;
+          margin: 0 !important;
+        }
+
+        /* navigation arrows */
+        .booking-calendar .flatpickr-prev-month,
+        .booking-calendar .flatpickr-next-month{
+          fill: #1a1a1a !important;
+          padding: 10px !important;
+        }
+
+        /* day cell sizing */
         .booking-calendar .flatpickr-day{
           border: 1px solid #e5e7eb !important;
           margin: 0 !important;
+          padding: 0.5rem !important;
+          width: 14.2857% !important;
           max-width: none !important;
+          min-height: 40px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          font-size: 14px !important;
         }
 
-        /* MOBILE: force 1 month and prevent squeezing */
-        @media (max-width: 767px){
-          .booking-calendar .flatpickr-calendar.inline{
-            width: 100% !important;
-          }
-          .booking-calendar .flatpickr-innerContainer{
-            overflow-x: hidden; /* no horizontal scroll in 1 month mode */
-          }
+        /* days container */
+        .booking-calendar .flatpickr-days{
+          width: 100% !important;
+          margin: 0 !important;
         }
 
-        /* ===== SCREENSHOT STYLING ===== */
-        /* Month headers green background */
+        /* week container */
+        .booking-calendar .dayContainer{
+          width: 100% !important;
+          min-width: 100% !important;
+          max-width: 100% !important;
+          margin: 0 !important;
+          display: flex !important;
+          flex-wrap: wrap !important;
+        }
+
+        /* Month headers */
         .booking-calendar .flatpickr-monthDropdown-months,
         .booking-calendar .flatpickr-current-month{
-          background: #91b474 !important;
-          color: white !important;
+          background: transparent !important;
+          color: #1a1a1a !important;
+          font-weight: 600 !important;
+          font-size: 16px !important;
+          padding: 8px 0 !important;
         }
 
-        /* Weekdays row green with white text */
+        /* Weekdays row */
         .booking-calendar .flatpickr-weekdays{
-          background: #91b474 !important;
+          background: transparent !important;
+          color: #666 !important;
+          font-weight: 500 !important;
+          padding: 8px 0 !important;
+          width: 100% !important;
         }
+        
         .booking-calendar .flatpickr-weekday{
-          color: white !important;
-          font-weight: bold !important;
+          color: #666 !important;
+          font-weight: 500 !important;
+          width: 14.2857% !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          padding: 8px 0 !important;
+          font-size: 12px !important;
         }
 
-        /* Continue button align right on desktop */
-        @media (min-width: 768px){
-          .booking-calendar + .booking-calendar + .booking-calendar + .booking-calendar + section + section + div{
-            text-align: right !important;
+        /* MOBILE RESPONSIVE - Stack months vertically */
+        @media (max-width: 767px){
+          .booking-calendar .flatpickr-innerContainer{
+            flex-direction: column !important;
+            gap: 20px !important;
+            width: 100% !important;
+          }
+          
+          .booking-calendar .flatpickr-months{
+            width: 100% !important;
+            max-width: 100% !important;
+            flex: none !important;
+          }
+          
+          .booking-calendar .flatpickr-month{
+            width: 100% !important;
+          }
+          
+          .booking-calendar .flatpickr-day{
+            min-height: 44px !important;
+            font-size: 14px !important;
+          }
+          
+          .booking-calendar .flatpickr-weekday{
+            font-size: 11px !important;
+          }
+        }
+
+        /* TABLET RESPONSIVE */
+        @media (min-width: 768px) and (max-width: 1023px){
+          .booking-calendar .flatpickr-innerContainer{
+            gap: 16px !important;
+          }
+          
+          .booking-calendar .flatpickr-months{
+            max-width: 350px !important;
+          }
+          
+          .booking-calendar .flatpickr-day{
+            min-height: 38px !important;
+            font-size: 13px !important;
+            padding: 0.4rem !important;
+          }
+        }
+
+        /* DESKTOP - Ensure proper spacing */
+        @media (min-width: 1024px){
+          .booking-calendar .flatpickr-innerContainer{
+            gap: 24px !important;
+          }
+          
+          .booking-calendar .flatpickr-months{
+            max-width: 420px !important;
+          }
+        }
           }
         }
     </style>
@@ -176,7 +291,8 @@
             initialCheckin: @js($checkin),
             initialCheckout: @js($checkout),
             lowThreshold: @js($totalQuantity - 1),
-            totalQuantity: @js($totalQuantity)
+            totalQuantity: @js($totalQuantity),
+            maxQty: @js($maxQty)
           })"
           x-init="init()"
         >
@@ -245,17 +361,17 @@
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div class="flex items-center gap-2">
                       <span class="w-4 h-4 inline-block rounded fp-avail-high"></span>
-                      <span class="text-sm" x-text="`Available (up to ${totalQuantity} slots)`"></span>
+                      <span class="text-sm">Available (<span x-text="legendLowThreshold + 1"></span>+ slots)</span>
                     </div>
 
                     <div class="flex items-center gap-2">
                       <span class="w-4 h-4 inline-block rounded fp-avail-low"></span>
-                      <span class="text-sm" x-text="`Limited (1–${legendLowThreshold} slots)`"></span>
+                      <span class="text-sm">Limited (1–<span x-text="legendLowThreshold"></span> slots)</span>
                     </div>
 
                     <div class="flex items-center gap-2">
                       <span class="w-4 h-4 inline-block rounded fp-not-avail"></span>
-                      <span class="text-sm">Not Available (0)</span>
+                      <span class="text-sm">Fully Booked (0)</span>
                     </div>
 
                     <div class="flex items-center gap-2">
@@ -294,15 +410,15 @@
     </div>
 
   <script>
-    function dateRangePicker({ availability, initialCheckin, initialCheckout, lowThreshold, totalQuantity }) {
+    function dateRangePicker({ availability, initialCheckin, initialCheckout, lowThreshold, totalQuantity, maxQty }) {
       return {
         availability: availability || {},
         checkin: null,
         checkout: null,
         calendarInstance: null,
 
-        legendMaxQty: 0,
-        legendLowThreshold: lowThreshold || 2,
+        legendMaxQty: maxQty || 0,
+        legendLowThreshold: 2,
         totalQuantity: totalQuantity || 0,
 
         _months: 2,
@@ -311,6 +427,15 @@
         init() {
           if (initialCheckin) this.checkin = initialCheckin;
           if (initialCheckout) this.checkout = initialCheckout;
+
+          // ✅ Calculate dynamic threshold: 30% of max inventory per date (min 1)
+          if (this.legendMaxQty > 0) {
+            this.legendLowThreshold = Math.max(1, Math.floor(this.legendMaxQty * 0.3));
+          } else if (this.totalQuantity > 0) {
+            this.legendLowThreshold = Math.max(1, Math.floor(this.totalQuantity * 0.3));
+          } else {
+            this.legendLowThreshold = lowThreshold || 2;
+          }
 
           this._months = this.getResponsiveMonths();
           this.$nextTick(() => this.initCalendar());
@@ -357,20 +482,28 @@
             this.calendarInstance = null;
           }
 
-          // max quantity calc (optional)
+          // Recalculate max quantity from current availability data
           this.legendMaxQty = 0;
           for (const [dateString, details] of Object.entries(this.availability)) {
             const qty = details.min_quantity || 0;
             if (qty > this.legendMaxQty) this.legendMaxQty = qty;
           }
 
-          // disabled dates
+          // ✅ Recalculate dynamic threshold based on max quantity found
+          if (this.legendMaxQty > 0) {
+            this.legendLowThreshold = Math.max(1, Math.floor(this.legendMaxQty * 0.3));
+          }
+
+          // disabled dates (only is_available=false)
           const disabledDates = [];
           for (const [dateString, details] of Object.entries(this.availability)) {
             if (!details.is_available) disabledDates.push(dateString);
           }
 
           if (!this.$refs.calendar) return;
+
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
 
           const months = this._months;
 
@@ -385,7 +518,19 @@
             // ✅ keep selection when re-init
             defaultDate: selected ? selected.filter(Boolean) : [this.checkin, this.checkout].filter(Boolean),
 
-            disable: disabledDates,
+            // Disable past dates and unavailable dates
+            disable: [
+              (date) => {
+                // past dates are disabled
+                const checkDate = new Date(date);
+                checkDate.setHours(0, 0, 0, 0);
+                if (checkDate < today) return true;
+                
+                // unavailable dates are disabled
+                const dateStr = this.formatDateForCompare(date);
+                return disabledDates.includes(dateStr);
+              }
+            ],
 
             onDayCreate: (_, __, fp, dayElem) => {
               const dateString = fp.formatDate(dayElem.dateObj, 'Y-m-d');
@@ -393,8 +538,13 @@
               // reset
               dayElem.classList.remove('fp-avail-high','fp-avail-low','fp-not-avail','fp-invalid');
 
-              // disabled
-              if (disabledDates.includes(dateString)) {
+              // Check if past date
+              const checkDate = new Date(dayElem.dateObj);
+              checkDate.setHours(0, 0, 0, 0);
+              const isPast = checkDate < today;
+
+              // disabled or past = invalid (gray)
+              if (disabledDates.includes(dateString) || isPast) {
                 dayElem.classList.add('fp-invalid');
                 return;
               }
@@ -402,25 +552,39 @@
               const details = this.availability[dateString];
               const qty = Number(details?.min_quantity || 0);
 
-              if (!details?.is_available || qty <= 0) {
+              // ✅ No inventory = not available (fully booked)
+              if (qty === 0) {
                 dayElem.classList.add('fp-not-avail');
-                return;
-              }
-
-              if (qty <= this.legendLowThreshold) {
+              } else if (qty <= this.legendLowThreshold) {
+                // ✅ Limited availability (1–threshold)
                 dayElem.classList.add('fp-avail-low');
               } else {
+                // ✅ Available (threshold+1+)
                 dayElem.classList.add('fp-avail-high');
               }
 
               // qty badge
-              const badge = document.createElement('small');
-              badge.textContent = qty;
-              badge.style.display = 'block';
-              badge.style.fontSize = '10px';
-              badge.style.fontWeight = 'bold';
-              badge.style.marginTop = '2px';
-              dayElem.appendChild(badge);
+              if (qty > 0) {
+                const badge = document.createElement('small');
+                badge.textContent = qty;
+                badge.style.display = 'block';
+                badge.style.fontSize = '10px';
+                badge.style.fontWeight = 'bold';
+                badge.style.marginTop = '2px';
+                dayElem.appendChild(badge);
+              }
+
+              // range overlay (keep availability background, add outline)
+              const hasRange = !!this.checkin && !!this.checkout;
+              if (hasRange) {
+                if (dateString === this.checkin || dateString === this.checkout) {
+                  dayElem.style.outline = '2px solid #2563eb';
+                  dayElem.style.outlineOffset = '-2px';
+                } else if (dateString > this.checkin && dateString < this.checkout) {
+                  dayElem.style.outline = '2px solid #93c5fd';
+                  dayElem.style.outlineOffset = '-2px';
+                }
+              }
             },
 
             onChange: (selectedDates, _, fp) => {
@@ -434,6 +598,9 @@
                 this.checkin = null;
                 this.checkout = null;
               }
+
+              // redraw to apply range outlines consistently
+              this.initCalendar(true);
             }
           });
         },
@@ -455,6 +622,13 @@
           const d = this.parseDate(dateStr);
           if (!d) return '';
           return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+        },
+
+        formatDateForCompare(date) {
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, '0');
+          const d = String(date.getDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
         }
       }
     }

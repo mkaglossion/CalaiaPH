@@ -65,13 +65,20 @@ class PagesController extends Controller
                 continue;
             }
 
-            // Get total available quantity for this date from inventory table
-            $totalAvailable = StaycationInventory::where('date', $key)
-                ->sum('available_quantity');
+            // Compute total availability by summing per staycation:
+            // - if an inventory record exists for the date, use its available_quantity
+            // - otherwise, fall back to the staycation's base quantity
+            $staycations = Staycation::select('id', 'quantity')->get();
+            $inventoryForDate = StaycationInventory::where('date', $key)
+                ->select('staycation_id', 'available_quantity')
+                ->get()
+                ->keyBy('staycation_id');
 
-            // If no inventory records exist for this date, fall back to staycation quantity
-            if ($totalAvailable == 0) {
-                $totalAvailable = Staycation::sum('quantity');
+            $totalAvailable = 0;
+            foreach ($staycations as $s) {
+                $inv = $inventoryForDate->get($s->id);
+                $qty = $inv ? (int) $inv->available_quantity : (int) $s->quantity;
+                $totalAvailable += max(0, $qty);
             }
 
             $availability[$key] = [

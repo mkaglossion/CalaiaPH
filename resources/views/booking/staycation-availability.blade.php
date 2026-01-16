@@ -374,18 +374,38 @@
                             </h4>
 
                             <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                                @php
+                                    $selCheckin = request('checkin') ?? ($checkin ?? null);
+                                    $selCheckout = request('checkout') ?? ($checkout ?? null);
+                                @endphp
                                 <div class="flex justify-between items-center">
                                     <span class="text-sm text-gray-600">Check-in</span>
-                                    <span class="font-semibold">{{ \Carbon\Carbon::parse($checkin)->format('M j, Y') }}</span>
+                                    <span class="font-semibold">
+                                        @if ($selCheckin)
+                                            {{ \Carbon\Carbon::parse($selCheckin)->format('M j, Y') }}
+                                        @else
+                                            —
+                                        @endif
+                                    </span>
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-sm text-gray-600">Check-out</span>
-                                    <span class="font-semibold">{{ \Carbon\Carbon::parse($checkout)->format('M j, Y') }}</span>
+                                    <span class="font-semibold">
+                                        @if ($selCheckout)
+                                            {{ \Carbon\Carbon::parse($selCheckout)->format('M j, Y') }}
+                                        @else
+                                            —
+                                        @endif
+                                    </span>
                                 </div>
                                 <div class="flex justify-between items-center border-t pt-3">
                                     <span class="text-sm text-gray-600">Total Nights</span>
                                     <span class="font-semibold text-[#8f5d54]">
-                                        {{ \Carbon\Carbon::parse($checkin)->diffInDays(\Carbon\Carbon::parse($checkout)) }}
+                                        @if ($selCheckin && $selCheckout)
+                                            {{ \Carbon\Carbon::parse($selCheckin)->diffInDays(\Carbon\Carbon::parse($selCheckout)) }}
+                                        @else
+                                            —
+                                        @endif
                                     </span>
                                 </div>
                             </div>
@@ -495,7 +515,47 @@
                             <input x-ref="calendar" type="text" class="w-full border rounded-lg px-3 py-2" readonly />
                         </div>
 
-                        <div class="mt-4 text-sm text-gray-600" x-html="generateLegend()"></div>
+                        <div class="mt-4 text-sm text-gray-600">
+                            <div x-show="legendLowThreshold === 0" class="text-center text-gray-500">
+                                Loading availability...
+                            </div>
+                            <div x-show="legendLowThreshold > 0" class="grid grid-cols-2 gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-block w-4 h-4 rounded" style="background:#d4edda;"></span>
+                                    <span x-text="'Available (' + (legendLowThreshold + 1) + '+ slots)'"></span>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-block w-4 h-4 rounded" style="background:#fff3cd;"></span>
+                                    <span x-text="'Limited (1–' + legendLowThreshold + ' slots)'"></span>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-block w-4 h-4 rounded" style="background:#f8d7da;"></span>
+                                    <span>Fully Booked (0)</span>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-block w-4 h-4 rounded bg-blue-500"></span>
+                                    <span>Check-in Date</span>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-block w-4 h-4 rounded bg-blue-600"></span>
+                                    <span>Check-out Date</span>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-block w-4 h-4 rounded bg-blue-400"></span>
+                                    <span>Period of Stay</span>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-block w-4 h-4 rounded bg-gray-400"></span>
+                                    <span>Invalid Date</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -546,6 +606,9 @@
             return {
                 roomType: 'all',
 
+                // room details for thresholds and base capacity
+                roomDetailsMap: @json($roomDetails),
+
                 // modals
                 calendarModal: false,
                 petPolicyModal: false,
@@ -555,7 +618,7 @@
 
                 // legend variables
                 legendMaxQty: 0,
-                legendLowThreshold: 2, // <=2 = limited (yellow)
+                legendLowThreshold: 0, // will be calculated dynamically
 
                 // selected rooms map: { [id]: {id,name,type,adults,children,extra_mattress,pets,pet_agreement,num_pets} }
                 selectedRooms: {},
@@ -657,103 +720,126 @@
                 initCalendar() {
                     if (this.calendarInstance) this.calendarInstance.destroy();
 
-                    const availabilityData = @json($availability);
-                    const checkin = '{{ $checkin }}';
-                    const checkout = '{{ $checkout }}';
-
-                    const stayAvail = availabilityData[this.currentRoomId];
-
-                    // Calculate max quantity for legend
-                    this.legendMaxQty = 0;
-                    if (stayAvail && stayAvail.inventory_details) {
-                        for (const [dateString, details] of Object.entries(stayAvail.inventory_details)) {
-                            const qty = details.min_quantity || 0;
-                            if (qty > this.legendMaxQty) {
-                                this.legendMaxQty = qty;
-                            }
-                        }
-                    }
-
-                    // Disabled dates = min_quantity 0
-                    const disabledDates = [];
-                    if (stayAvail && stayAvail.inventory_details) {
-                        for (const [dateString, details] of Object.entries(stayAvail.inventory_details)) {
-                            if ((details.min_quantity || 0) === 0) {
-                                disabledDates.push(dateString);
-                            }
-                        }
-                    }
+                    const checkin = '{{ request('checkin') ?? ($checkin ?? '') }}';
+                    const checkout = '{{ request('checkout') ?? ($checkout ?? '') }}';
 
                     if (!this.$refs.calendar) {
                         console.error('Calendar element not found');
                         return;
                     }
 
-                    this.calendarInstance = flatpickr(this.$refs.calendar, {
-                        mode: 'range',
-                        dateFormat: 'Y-m-d',
-                        defaultDate: [checkin, checkout],
+                    const roomId = this.currentRoomId;
+                    const roomInfo = this.roomDetailsMap && this.roomDetailsMap[roomId] ? this.roomDetailsMap[roomId] : null;
+                    const baseQty = Math.max(0, parseInt((roomInfo && roomInfo.total_quantity) ? roomInfo.total_quantity : 0, 10));
 
-                        // ✅ para laging visible
-                        inline: true,
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0); // reset to start of today
+                    
+                    const fmt = (d) => {
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth()+1).padStart(2,'0');
+                        const da = String(d.getDate()).padStart(2,'0');
+                        return `${y}-${m}-${da}`;
+                    };
 
-                        // ✅ important: modal calendar should not be blocked by minDate new Date()
-                        // if you still want it, pwede mo ibalik
-                        // minDate: "today",
+                    // Fetch per-room inventory (next 30 days). We'll fallback to baseQty for other dates.
+                    fetch(`/api/inventory/${roomId}`, {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin'
+                    })
+                    .then(async (r) => {
+                        const text = await r.text();
+                        try { return JSON.parse(text); } catch { return { items: [] }; }
+                    })
+                    .then((data) => {
+                        const items = (data && data.items) ? data.items : [];
+                        const invMap = {};
+                        for (const it of items) {
+                            if (it && it.date) invMap[it.date] = parseInt(it.min_quantity || 0, 10);
+                        }
 
-                        disable: disabledDates,
+                        // Threshold: 30% of base capacity (fallback to max from inventory if baseQty missing)
+                        let legendMax = baseQty;
+                        if (!legendMax) {
+                            for (const q of Object.values(invMap)) legendMax = Math.max(legendMax, q || 0);
+                        }
+                        this.legendMaxQty = legendMax;
+                        this.legendLowThreshold = legendMax > 0 ? Math.max(1, Math.floor(legendMax * 0.3)) : 1;
 
-                        onDayCreate: (selectedDates, dateStr, instance, dayElem) => {
-                            const date = dayElem.dateObj;
-                            const dateString = instance.formatDate(date, 'Y-m-d');
-                            dayElem.style.borderRadius = '6px';
+                        // Create calendar AFTER inventory data is loaded
+                        this.calendarInstance = flatpickr(this.$refs.calendar, {
+                            mode: 'range',
+                            dateFormat: 'Y-m-d',
+                            defaultDate: [checkin, checkout],
+                            inline: true,
+                            // Disable past dates and zero-quantity dates
+                            disable: [
+                                (date) => {
+                                    // Check if date is in the past
+                                    const checkDate = new Date(date);
+                                    checkDate.setHours(0, 0, 0, 0);
+                                    if (checkDate < today) return true; // past date = disabled
+                                    
+                                    // Check inventory
+                                    const ds = fmt(date);
+                                    const qty = (ds in invMap) ? invMap[ds] : baseQty;
+                                    return (qty || 0) === 0; // zero quantity = disabled
+                                }
+                            ],
+                            onDayCreate: (selectedDates, dateStr, instance, dayElem) => {
+                                const date = dayElem.dateObj;
+                                const ds = instance.formatDate(date, 'Y-m-d');
+                                dayElem.style.borderRadius = '6px';
 
-                            const isDisabled = disabledDates.includes(dateString);
+                                // Check if past
+                                const checkDate = new Date(date);
+                                checkDate.setHours(0, 0, 0, 0);
+                                const isPast = checkDate < today;
 
-                            let isAvailable = false;
-                            let quantity = 0;
+                                const qty = (ds in invMap) ? invMap[ds] : baseQty;
 
-                            if (stayAvail && stayAvail.inventory_details && stayAvail.inventory_details[dateString]) {
-                                isAvailable = !!stayAvail.inventory_details[dateString].is_available;
-                                quantity = stayAvail.inventory_details[dateString].min_quantity || 0; // ✅ fixed
-                            }
+                                // Past or zero = invalid (gray)
+                                if (isPast || (qty || 0) === 0) {
+                                    dayElem.style.background = '#d3d3d3';
+                                    dayElem.style.color = '#6c757d';
+                                    return;
+                                }
 
-                            if (isDisabled) {
-                                dayElem.style.background = '#d3d3d3';
-                                dayElem.style.color = '#6c757d';
-                                return;
-                            }
-
-                            // ✅ show availability colors based on quantity levels
-                            if (isAvailable && quantity > 0) {
-                                if (quantity > this.legendLowThreshold) {
-                                    // High availability - green
-                                    dayElem.style.background = '#d4edda';
-                                    dayElem.style.color = '#155724';
-                                } else {
-                                    // Limited availability - yellow
+                                // Limited or available
+                                if (qty <= this.legendLowThreshold) {
                                     dayElem.style.background = '#fff3cd';
                                     dayElem.style.color = '#856404';
+                                } else {
+                                    dayElem.style.background = '#d4edda';
+                                    dayElem.style.color = '#155724';
                                 }
 
                                 const qtySpan = document.createElement('small');
-                                qtySpan.textContent = quantity;
+                                qtySpan.textContent = qty;
                                 qtySpan.style.display = 'block';
                                 qtySpan.style.fontSize = '10px';
                                 qtySpan.style.fontWeight = 'bold';
                                 qtySpan.style.marginTop = '2px';
                                 dayElem.appendChild(qtySpan);
-                            } else {
-                                dayElem.style.background = '#f8d7da';
-                                dayElem.style.color = '#721c24';
-                            }
 
-                            // Optional: highlight selected range overlay
-                            if (dateString >= checkin && dateString < checkout) {
-                                dayElem.style.outline = '2px solid #3b82f6';
-                                dayElem.style.outlineOffset = '-2px';
+                                if (ds >= checkin && ds < checkout) {
+                                    dayElem.style.outline = '2px solid #3b82f6';
+                                    dayElem.style.outlineOffset = '-2px';
+                                }
                             }
-                        }
+                        });
+                    })
+                    .catch((err) => {
+                        console.error('Failed to fetch inventory:', err);
+                        // Fallback: no API data; render calendar with baseQty only
+                        this.legendMaxQty = baseQty;
+                        this.legendLowThreshold = baseQty > 0 ? Math.max(1, Math.floor(baseQty * 0.3)) : 1;
+                        this.calendarInstance = flatpickr(this.$refs.calendar, {
+                            mode: 'range',
+                            dateFormat: 'Y-m-d',
+                            defaultDate: [checkin, checkout],
+                            inline: true
+                        });
                     });
                 },
 
@@ -801,21 +887,26 @@
                 },
 
                 generateLegend() {
+                    // Don't show legend until threshold is calculated
+                    if (this.legendLowThreshold === 0) {
+                        return '<div class="text-center text-gray-500">Loading availability...</div>';
+                    }
+                    
                     return `
                         <div class="grid grid-cols-2 gap-2">
                             <div class="flex items-center gap-2">
                                 <span class="inline-block w-4 h-4 rounded" style="background:#d4edda;"></span>
-                                <span>Available (up to <span class="font-semibold" x-text="legendMaxQty"></span> slots)</span>
+                                <span>Available (${this.legendLowThreshold + 1}+ slots)</span>
                             </div>
 
                             <div class="flex items-center gap-2">
                                 <span class="inline-block w-4 h-4 rounded" style="background:#fff3cd;"></span>
-                                <span>Limited (1–<span class="font-semibold" x-text="legendLowThreshold"></span> slots)</span>
+                                <span>Limited (1–${this.legendLowThreshold} slots)</span>
                             </div>
 
                             <div class="flex items-center gap-2">
                                 <span class="inline-block w-4 h-4 rounded" style="background:#f8d7da;"></span>
-                                <span>Not Available (0)</span>
+                                <span>Fully Booked (0)</span>
                             </div>
 
                             <div class="flex items-center gap-2">

@@ -66,6 +66,7 @@ class StaycationController extends Controller
             'children' => 'required|integer|min:0',
             'priceConfigs' => 'required|json',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'remove_image' => 'nullable|in:1',
         ]);
 
         $capacity = $request->adults + $request->children;
@@ -80,7 +81,11 @@ class StaycationController extends Controller
             'price_configs' => json_decode($request->priceConfigs, true),
         ];
 
-        if ($request->hasFile('image')) {
+        if ($request->has('remove_image') && $request->remove_image == '1') {
+            // Clear image from database
+            // Note: Cloudinary asset will remain but won't be referenced
+            $updateData['image'] = null;
+        } elseif ($request->hasFile('image')) {
             $file = $request->file('image');
             $filePath = $file->getRealPath();
             $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);

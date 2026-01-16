@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\AdminActivitiesController;
 use App\Http\Controllers\Admin\AdminReportsController;
 use App\Http\Controllers\Admin\AdminPagesController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\InventoryController;
 
 use App\Http\Controllers\Admin\HomeSwiperImageController;
 use App\Http\Controllers\Admin\DayTourSwiperImageController;
@@ -95,6 +96,7 @@ Route::get('/booking/staycation/payment', [BookingController::class, 'staycation
 Route::match(['GET', 'POST'], '/booking/staycation', [BookingController::class, 'staycation'])->name('booking.staycation');
 Route::get('/booking/staycation/availability', [BookingController::class, 'staycationAvailability'])->name('booking.staycationAvailability');
 Route::get('/api/booking/staycation/availability', [BookingController::class, 'getStaycationAvailabilityApi'])->name('api.booking.staycationAvailability');
+Route::get('/api/inventory/{roomId}', [InventoryController::class, 'getInventory'])->name('api.inventory.get');
 Route::post('/booking/select-dates', [BookingController::class, 'selectDates'])->name('booking.selectDates');
 Route::post('/booking/check-availability', [BookingController::class, 'checkAvailability'])->name('booking.checkAvailability');
 Route::get('/booking/payment', [BookingController::class, 'payment'])->name('booking.payment');
@@ -283,6 +285,12 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('day-tours', DayTourController::class)->only(['store', 'destroy']);
     Route::resource('staycation-accommodations', StaycationAccommodationController::class)->only(['store', 'destroy']);
 
-
+    // ========== Inventory Management Routes ==========
+    Route::prefix('/inventory')->group(function () {
+        Route::post('store', [InventoryController::class, 'store'])->name('admin.inventory.store');
+        Route::post('bulk', [InventoryController::class, 'bulk'])->name('admin.inventory.bulk');
+        Route::post('quickset', [InventoryController::class, 'quickset'])->name('admin.inventory.quickset');
+        Route::post('delete', [InventoryController::class, 'delete'])->name('admin.inventory.delete');
+    });
 
 });

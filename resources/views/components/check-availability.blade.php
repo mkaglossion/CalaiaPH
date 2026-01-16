@@ -383,26 +383,94 @@
             },
 
             updateAvailabilityText() {
-                const date = this.$refs.checkIn.value;
-                if (!date) {
+                const checkInVal = this.$refs.checkIn.value;
+                const checkOutVal = this.$refs.checkOut ? this.$refs.checkOut.value : '';
+
+                if (!checkInVal) {
                     this.availabilityText = '';
                     return;
                 }
 
-                const dateData = this.inventory[date];
-                if (!dateData) {
-                    // No inventory data for this date, use total quantity as fallback
-                    this.availabilityText = `Up to ${this.totalQuantity} slot(s) available per day.`;
+                // DAY VISIT - single date only
+                if (this.activeTab === 'day-visit') {
+                    const dateData = this.inventory[checkInVal];
+                    if (!dateData) {
+                        this.availabilityText = `Up to ${this.totalQuantity} slot(s) available (total across all staycations).`;
+                        return;
+                    }
+
+                    const quantity = dateData.available_quantity ?? dateData.min_quantity ?? 0;
+                    const isAvailable = dateData.is_available ?? (quantity > 0);
+
+                    if (!isAvailable || quantity <= 0) {
+                        this.availabilityText = 'Fully booked for this date.';
+                    } else {
+                        this.availabilityText = `${quantity} slot(s) available (total across all staycations).`;
+                    }
                     return;
                 }
 
-                const { is_available, min_quantity } = dateData;
+                // ROOM - check entire range (all nights)
+                if (!checkOutVal) {
+                    // Only check-in selected, show that date's availability
+                    const dateData = this.inventory[checkInVal];
+                    if (!dateData) {
+                        this.availabilityText = `Up to ${this.totalQuantity} slot(s) available per day (total across all staycations).`;
+                        return;
+                    }
 
-                if (!is_available || min_quantity <= 0) {
-                    this.availabilityText = 'Fully booked na po for this date.';
-                } else {
-                    this.availabilityText = `${min_quantity} slot(s) available for this date.`;
+                    const quantity = dateData.available_quantity ?? dateData.min_quantity ?? 0;
+                    const isAvailable = dateData.is_available ?? (quantity > 0);
+
+                    if (!isAvailable || quantity <= 0) {
+                        this.availabilityText = 'Fully booked for this date.';
+                    } else {
+                        this.availabilityText = `${quantity} slot(s) available for this date (total across all staycations).`;
+                    }
+                    return;
                 }
+
+                // Both check-in and check-out selected - find minimum across all nights
+                const start = new Date(checkInVal + 'T00:00:00');
+                const end = new Date(checkOutVal + 'T00:00:00');
+                
+                // Helper to format local date as YYYY-MM-DD
+                const fmtLocal = (d) => {
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${day}`;
+                };
+
+                let minQty = Infinity;
+                let anyDateProcessed = false;
+                let currentDate = new Date(start);
+
+                // Loop through all nights (excluding check-out day)
+                while (currentDate < end) {
+                    const dateString = fmtLocal(currentDate);
+                    const dateData = this.inventory[dateString];
+                    const qty = (dateData?.available_quantity ?? dateData?.min_quantity ?? null);
+                    const effectiveQty = (qty === null) ? this.totalQuantity : qty;
+                    const isAvailable = (dateData?.is_available ?? (effectiveQty > 0));
+
+                    anyDateProcessed = true;
+
+                    if (!isAvailable || effectiveQty <= 0) {
+                        this.availabilityText = `Fully booked for ${dateString}.`;
+                        return; // Stop immediately if any night is unavailable
+                    }
+
+                    minQty = Math.min(minQty, effectiveQty);
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                if (!anyDateProcessed || !isFinite(minQty)) {
+                    this.availabilityText = '0 slot(s) available across all nights.';
+                    return;
+                }
+
+                this.availabilityText = `${minQty} slot(s) available across all nights.`;
             },
 
 
