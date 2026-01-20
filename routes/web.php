@@ -55,6 +55,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\StaycationController;
 use App\Http\Controllers\Admin\MenuController;
+use App\Http\Controllers\Admin\FoodController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\FarmInfoController;
 use App\Http\Controllers\Admin\StaycationAccommodationController;
@@ -95,6 +96,8 @@ Route::post('/booking/staycation/activities', [BookingController::class, 'storeS
 Route::get('/booking/staycation/payment', [BookingController::class, 'staycationPayment'])->name('booking.staycationPayment');
 Route::match(['GET', 'POST'], '/booking/staycation', [BookingController::class, 'staycation'])->name('booking.staycation');
 Route::get('/booking/staycation/availability', [BookingController::class, 'staycationAvailability'])->name('booking.staycationAvailability');
+Route::get('/booking/staycation/food', [BookingController::class, 'staycationFood'])->name('booking.staycationFood');
+Route::post('/booking/staycation/food/save', [BookingController::class, 'saveFoodSelection'])->name('booking.saveFoodSelection');
 Route::get('/api/booking/staycation/availability', [BookingController::class, 'getStaycationAvailabilityApi'])->name('api.booking.staycationAvailability');
 Route::get('/api/inventory/{roomId}', [InventoryController::class, 'getInventory'])->name('api.inventory.get');
 Route::post('/booking/select-dates', [BookingController::class, 'selectDates'])->name('booking.selectDates');
@@ -188,6 +191,14 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::prefix('/food')->group(function () {
             Route::get('/food-and-beverage', [AdminPagesController::class, 'foodAndBeverage'])->name('admin.food.foodandbeverage');
             Route::get('/menus', [AdminController::class, 'menu'])->name('admin.food.menus');
+            Route::resource('foods', FoodController::class, ['names' => [
+                'index' => 'admin.foods.index',
+                'create' => 'admin.foods.create',
+                'store' => 'admin.foods.store',
+                'edit' => 'admin.foods.edit',
+                'update' => 'admin.foods.update',
+                'destroy' => 'admin.foods.destroy'
+            ]]);
     });
     Route::prefix('/events')->group(function () {
         Route::get('/events', [AdminController::class, 'event'])->name('admin.events.events');

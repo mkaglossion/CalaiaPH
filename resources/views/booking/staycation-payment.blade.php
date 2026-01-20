@@ -152,7 +152,7 @@ $grandTotal = $accommodationTotal + $breakfastTotal + $activitiesTotal;
                 <div class="mb-6">
                     <div class="flex justify-between items-center mb-2">
                         <small class="text-gray-500 text-sm">
-                            Step 3 of 3: Payment
+                            Step 5 of 5: Payment & Checkout
                         </small>
                         <small class="text-gray-500 text-sm">100% Complete</small>
                     </div>

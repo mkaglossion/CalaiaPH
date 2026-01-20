@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('food_swiper_images', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('food_id')->constrained()->onDelete('cascade');
             $table->string('title')->nullable();
             $table->string('image_path');
             $table->text('public_id');

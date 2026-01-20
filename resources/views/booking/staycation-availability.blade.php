@@ -62,7 +62,7 @@
 
             {{-- Progress --}}
             <div class="mb-6">
-                <x-booking.progress-indicator :stepNumber="2" :totalSteps="4" :bookingType="'staycation'" />
+                <x-booking.progress-indicator :stepNumber="2" :totalSteps="5" :bookingType="'staycation'" />
             </div>
 
             {{-- Back + Guest mode --}}
@@ -481,7 +481,14 @@
                                 class="w-full bg-[#8f5d54] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#7a4e48] transition disabled:opacity-50 disabled:cursor-not-allowed"
                                 :disabled="selectedCount() === 0"
                             >
-                                Continue to Activities <i class="bi bi-arrow-right ml-2"></i>
+                                Proceed to Food <i class="bi bi-arrow-right ml-2"></i>
+                            </button>
+
+                            <button type="button"
+                                    class="w-full py-3 rounded-xl font-semibold text-white bg-green-600 hover:bg-green-700 transition"
+                                    @click="submitAndProceed()">
+                                <i class="bi bi-credit-card mr-2"></i>
+                                Proceed to Payment
                             </button>
 
                             <button
@@ -970,7 +977,7 @@
                     .then(r => r.json())
                     .then(data => {
                         if (data.success) {
-                            window.location.href = '{{ route("booking.staycationActivities") }}';
+                            window.location.href = '{{ route("booking.staycationFood") }}';
                         } else {
                             Swal.fire('Error', data.message || 'Failed to save selection', 'error');
                         }

@@ -28,7 +28,7 @@ $booking = session('booking', [
 
 $bookingType  = $booking['booking_type'] ?? 'general';
 $stepNumber   = '1'; // landing page
-$totalSteps   = $bookingType === 'staycation' ? '3' : '4';
+$totalSteps   = $bookingType === 'staycation' ? '5' : '5';
 $backLink     = url('/home');
 
 $completedSteps  = $booking['completed_steps'] ?? [];
@@ -140,12 +140,12 @@ if ($datesSelected) {
                 <div class="mb-6">
                     <div class="flex justify-between items-center mb-2">
                         <small class="text-gray-500 text-sm">
-                            Step 2 of 3: Select Activities
+                            Step 4 of 5: Select Activities
                         </small>
-                        <small class="text-gray-500 text-sm">67% Complete</small>
+                        <small class="text-gray-500 text-sm">80% Complete</small>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-[#8f5d54] h-2 rounded-full transition-all duration-300" style="width: 67%"></div>
+                        <div class="bg-[#8f5d54] h-2 rounded-full transition-all duration-300" style="width: 80%"></div>
                     </div>
                 </div>
 

@@ -58,6 +58,7 @@
             ['title'=>'Food & Beverage','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.food.foodandbeverage'],
               ['label'=>'Items','route'=>'admin.food.menus'],
+              ['label'=>'Food Management','route'=>'admin.foods.index'],
             ]],
             ['title'=>'Special Events','icon'=>'calendar','route'=>'admin.specialEvents.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.specialEvents.specialevents']

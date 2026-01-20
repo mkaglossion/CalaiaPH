@@ -15,6 +15,7 @@ use App\Services\ValidationService;
 
 use App\Models\StaycationAccommodation;
 use App\Models\Staycation;
+use App\Models\Food;
 use App\Models\Holiday;
 use App\Models\DayType;
 use App\Models\DayTypeDay;
@@ -245,6 +246,9 @@ class BookingController extends Controller
 
     public function staycationActivities()
     {
+            // Fetch staycations from the database
+            $staycations = Staycation::all(); // Adjust this query as needed to filter staycations
+
         $booking = session('booking', []);
 
         if (empty($booking['checkin']) || empty($booking['checkout']) || empty($booking['accommodations'])) {
@@ -253,7 +257,7 @@ class BookingController extends Controller
 
         $activities = $this->bookingService->getActivitiesData();
 
-        return view('booking.staycation-activities', compact('booking', 'activities'));
+            return view('booking.staycation-activities', compact('booking', 'activities', 'staycations'));
     }
 
     public function storeStaycationActivities(Request $request)
@@ -842,6 +846,49 @@ class BookingController extends Controller
                 ]);
             }
 
+            // Handle selected_foods from the food selection step
+            if ($request->has('selected_foods')) {
+                $validator = \Illuminate\Support\Facades\Validator::make($data, [
+                    'selected_foods' => ['required', 'array', 'min:1'],
+                    'selected_foods.*.id' => ['required'],
+                    'selected_foods.*.name' => ['required', 'string'],
+                    'selected_foods.*.category' => ['nullable', 'string'],
+                    'selected_foods.*.price' => ['required', 'numeric', 'min:0'],
+                    'selected_foods.*.quantity' => ['required', 'integer', 'min:1', 'max:20'],
+                    'selected_foods.*.notes' => ['nullable', 'string', 'max:500'],
+                    'proceed_to_activities' => ['nullable', 'boolean'],
+                ]);
+
+                if ($validator->fails()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid food selection data.',
+                        'errors' => $validator->errors(),
+                    ], 422);
+                }
+
+                $booking = session('booking', [
+                    'checkin' => null,
+                    'checkout' => null,
+                    'accommodations' => [],
+                    'booking_type' => 'staycation',
+                    'timestamp' => now()->timestamp,
+                    'completed_steps' => [],
+                    'current_step' => 1,
+                ]);
+
+                $booking['booking_type'] = 'staycation';
+                $booking['selected_foods'] = $data['selected_foods'];
+                $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [2]));
+                $booking['current_step'] = 3;
+
+                session(['booking' => $booking]);
+
+                return response()->json([
+                    'success' => true,
+                ]);
+            }
+
             $request->validate(ValidationService::staycationPostRules());
 
             $booking = session('booking', []);
@@ -866,7 +913,7 @@ class BookingController extends Controller
                     array_merge($booking['completed_steps'] ?? [], [1.5])
                 );
                 session(['booking' => $booking]);
-                return redirect()->route('booking.staycation');
+                return redirect()->route('booking.staycationAvailability');
             }
 
             if ($request->has('selected_room_id') && $request->input('proceed_to_activities')) {
@@ -892,53 +939,8 @@ class BookingController extends Controller
             }
         }
 
-        /**
-         * 🔥 IMPORTANT PART
-         * Eager-load variants so the modal can be DB-driven
-         */
-        // $accommodations = StaycationAccommodation::with([
-        //     'accommodationTexts', // texts for the accommodation itself
-        //     'variants.texts',     // texts for the variants (via staycation)
-        // ])->get();
-
-        $accommodations = StaycationAccommodation::with([
-            'accommodationTexts',
-            'variants', // load variants (staycations)
-            'variants.texts', // load texts for the variants
-            'variants.swiperImages', // load images
-        ])->get();
-
-        $booking = session('booking', []);
-        $checkinDate = $booking['checkin'] ?? null;
-        $checkoutDate = $booking['checkout'] ?? null;
-
-        $availability = [];
-        if ($checkinDate && $checkoutDate) {
-            $staycationIds = $accommodations->pluck('id')->toArray();
-            $availability = $this->checkAvailabilityInternal(
-                $checkinDate,
-                $checkoutDate,
-                $staycationIds
-            );
-        }
-
-        // Pre-select accommodation if package is provided
-        if ($request->has('package')) {
-            $packageName = urldecode($request->get('package'));
-            $selectedAccommodation = $accommodations->firstWhere('name', $packageName);
-
-            if ($selectedAccommodation) {
-                $booking['accommodations'][0] = [
-                    'staycation' => $selectedAccommodation,
-                    'guests' => $selectedAccommodation->adults ?? 2,
-                ];
-                session(['booking' => $booking]);
-            }
-        }
-
-        $accommodationType = $booking['accommodation_type'] ?? null;
-
-        return view('booking.staycation', compact('accommodations', 'availability', 'accommodationType'));
+        // For GET requests, delegate to the availability page builder
+        return $this->staycationAvailability();
     }
 
     public function staycationAvailability()
@@ -1075,6 +1077,47 @@ class BookingController extends Controller
         }
 
         return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout'));
+    }
+
+    public function staycationFood()
+    {
+        $booking = session('booking', []);
+
+        // Ensure rooms were selected first
+        if (empty($booking['accommodations'])) {
+            return redirect()->route('booking.staycationAvailability')
+                ->with('error', 'Please select your room(s) first.');
+        }
+
+        // Pull food items from database with images and texts, sorted by category then name
+        $foodMenus = Food::with(['swiperImages', 'texts'])
+            ->where('is_active', true)
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get();
+
+        return view('booking.staycation-food', compact('booking', 'foodMenus'));
+    }
+
+    public function saveFoodSelection(Request $request)
+    {
+        $validated = $request->validate([
+            'selected_foods' => 'required|array',
+            'selected_foods.*.id' => 'required|integer',
+            'selected_foods.*.name' => 'required|string',
+            'selected_foods.*.category' => 'required|string',
+            'selected_foods.*.price' => 'required|numeric',
+            'selected_foods.*.quantity' => 'required|integer|min:1',
+            'selected_foods.*.notes' => 'nullable|string'
+        ]);
+
+        // Store selected foods in session
+        session(['selected_foods' => $validated['selected_foods']]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Food selection saved successfully'
+        ]);
     }
 
     public function getStaycationAvailabilityApi(Request $request)

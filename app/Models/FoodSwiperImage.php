@@ -9,5 +9,10 @@ class FoodSwiperImage extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'image_path', 'public_id'];
+    protected $fillable = ['food_id', 'title', 'image_path', 'public_id'];
+
+    public function food()
+    {
+        return $this->belongsTo(Food::class);
+    }
 }

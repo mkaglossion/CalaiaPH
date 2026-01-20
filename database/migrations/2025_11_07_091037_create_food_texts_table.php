@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('food_texts', function (Blueprint $table) {
             $table->id();
-            $table->string('label')->unique(); // e.g., 'hero_title', 'about_text'
-            $table->text('text')->nullable();  // actual editable content
+            $table->foreignId('food_id')->constrained()->onDelete('cascade');
+            $table->string('label')->nullable();
+            $table->text('text')->nullable();
             $table->timestamps();
         });
     }

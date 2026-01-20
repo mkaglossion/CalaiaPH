@@ -9,5 +9,10 @@ class FoodText extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['label', 'text'];
+    protected $fillable = ['food_id', 'label', 'text'];
+
+    public function food()
+    {
+        return $this->belongsTo(Food::class);
+    }
 }
