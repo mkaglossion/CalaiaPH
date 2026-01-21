@@ -147,7 +147,7 @@
                                         <img src="{{ $food->image }}" alt="{{ $food->name }}" class="w-full h-96 object-cover">
                                     @else
                                         {{-- Placeholder --}}
-                                        <div class="w-full h-96 bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center">
+                                        <div class="w-full h-96 bg-linear-to-br from-gray-300 to-gray-400 flex items-center justify-center">
                                             <i class="bi bi-image text-6xl text-gray-300"></i>
                                         </div>
                                     @endif

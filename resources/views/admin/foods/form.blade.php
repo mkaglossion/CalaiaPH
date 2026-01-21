@@ -18,7 +18,7 @@
     @if ($errors->any())
         <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
             <div class="flex gap-3">
-                <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0"></i>
+                <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
                 <div>
                     <p class="font-semibold">Validation Errors</p>
                     <ul class="mt-2 space-y-1 text-sm">
