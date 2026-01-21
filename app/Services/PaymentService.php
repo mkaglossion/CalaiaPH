@@ -12,23 +12,50 @@ class PaymentService
     {
         // Process staycation payment logic here
         // For now, just send confirmation email and redirect
+        
+        // Calculate nights and total guests
+        $nights = 0;
+        if (!empty($staycationBooking['checkin']) && !empty($staycationBooking['checkout'])) {
+            $start = new \DateTime($staycationBooking['checkin']);
+            $end = new \DateTime($staycationBooking['checkout']);
+            $diff = $start->diff($end);
+            $nights = max(1, $diff->days);
+        }
+        
+        // Calculate total guests from accommodations (adults + children)
+        $totalGuests = 0;
+        foreach ($staycationBooking['accommodations'] ?? [] as $acc) {
+            $totalGuests += ($acc['adults'] ?? 0) + ($acc['children'] ?? 0);
+        }
 
-        // Add payment details
+        // Add payment details and calculated values
         $staycationBooking['transaction_id'] = 'TXN-' . strtoupper(uniqid());
         $staycationBooking['payment_method'] = $paymentData['payment_method'] ?? 'N/A';
         $staycationBooking['payment_date'] = now()->toDateTimeString();
+        $staycationBooking['nights'] = $nights;
+        $staycationBooking['total_guests'] = $totalGuests;
+
+        // Fetch staycation and food models for email display
+        $staycations = \App\Models\Staycation::all()->keyBy('id');
+        $foods = \App\Models\Food::all()->keyBy('id');
 
         // Send confirmation email
         Mail::to($paymentData['email'])->send(new BookingConfirmation([
             'bookingData' => $staycationBooking,
             'selectedActivities' => $staycationBooking['selected_activities'] ?? [],
+            'selectedFoods' => $staycationBooking['selected_foods'] ?? [],
+            'staycations' => $staycations,
+            'foods' => $foods,
             'grandTotal' => $staycationBooking['final_totals']['grand_total'] ?? 0,
             'customerInfo' => $paymentData,
             'isStaycation' => true
         ]));
 
-        // Store customer info in session for confirmation page
-        session(['staycation_customer_info' => $paymentData]);
+        // Store customer info and selected foods in session for confirmation page
+        session([
+            'staycation_customer_info' => $paymentData,
+            'staycation_selected_foods' => $staycationBooking['selected_foods'] ?? []
+        ]);
 
         return redirect()->route('booking.confirmation')->with('success', 'Payment processed successfully!');
     }

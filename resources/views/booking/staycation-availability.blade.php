@@ -189,9 +189,9 @@
                                         {{ $roomDetail['name'] }}
                                     </h3>
 
-                                        <span class="text-lg font-bold text-[#8f5d54]">
-                                            ₱{{ number_format($roomDetail['price'] ?? ($roomDetail['type'] === 'glamping' ? 5500 : 3000), 0, ',', ',') }}
-                                        </span>
+                                    <div class="text-lg font-bold text-[#8f5d54] mb-2">
+                                        ₱{{ number_format($roomDetail['price'], 0) }} / night
+                                    </div>
 
                                     <p class="text-gray-600 mb-4 text-sm">
                                         {{ $roomDetail['description'] }}
@@ -245,98 +245,165 @@
                                             Guest details (edit anytime)
                                         </div>
 
-                                        <div class="grid grid-cols-3 gap-2">
-                                            <div>
-                                                <label class="text-xs text-gray-600">Adults</label>
-                                                <input type="number" min="1" max="20"
-                                                       class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
-                                                       :value="getRoom({{ $staycation->id }}).adults"
-                                                       @input="setField({{ $staycation->id }}, 'adults', $event.target.value)"
-                                                >
-                                            </div>
-                                            <div>
-                                                <label class="text-xs text-gray-600">Children</label>
-                                                <input type="number" min="0" max="20"
-                                                       class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
-                                                       :value="getRoom({{ $staycation->id }}).children"
-                                                       @input="setField({{ $staycation->id }}, 'children', $event.target.value)"
-                                                >
-                                            </div>
-                                            <div>
-                                                <label class="text-xs text-gray-600">Extra Mattress</label>
-                                                <input type="number" min="0" max="8"
-                                                       class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
-                                                       :value="getRoom({{ $staycation->id }}).extra_mattress"
-                                                       @input="setField({{ $staycation->id }}, 'extra_mattress', $event.target.value)"
-                                                >
-                                            </div>
-                                        </div>
+                                        @php
+                                            $roomNameLower = strtolower($roomDetail['name']);
+                                            $isBYOT = str_contains($roomNameLower, 'byot') || str_contains($roomNameLower, 'bring your own tent');
+                                            $isCarCamping = str_contains($roomNameLower, 'car camping');
+                                        @endphp
 
-                                        {{-- Pet policy per room --}}
-                                        <div class="mt-4 border-t pt-4">
-                                            <div class="flex items-center justify-between">
-                                                <div class="text-sm font-semibold text-gray-800">Pets</div>
-                                                <button type="button"
-                                                        class="text-xs text-blue-700 underline hover:text-blue-900"
-                                                        @click="petPolicyModal=true"
+                                        @if($isBYOT)
+                                            {{-- BYOT: Show "How many BYOT", Adults, and Children --}}
+                                            <div class="grid grid-cols-3 gap-2">
+                                                <div>
+                                                    <label class="text-xs text-gray-600">How many BYOT</label>
+                                                    <input type="number" min="1" max="{{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }}"
+                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           :value="getRoom({{ $staycation->id }}).extra_mattress || 1"
+                                                           @input="validateQuantity({{ $staycation->id }}, 'extra_mattress', $event.target.value, {{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }})"
+                                                    >
+                                                </div>
+                                                <div>
+                                                    <label class="text-xs text-gray-600">Adults (Max {{ $staycation->adults ?? $staycation->capacity ?? 20 }})</label>
+                                                    <input type="number" min="1" max="{{ $staycation->adults ?? $staycation->capacity ?? 20 }}"
+                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           :value="getRoom({{ $staycation->id }}).adults"
+                                                           @input="validateAdultLimit({{ $staycation->id }}, $event.target.value, {{ $staycation->adults ?? $staycation->capacity ?? 20 }})"
+                                                    >
+                                                </div>
+                                                <div>
+                                                    <label class="text-xs text-gray-600">Children</label>
+                                                    <input type="number" min="0" max="20"
+                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           :value="getRoom({{ $staycation->id }}).children || 0"
+                                                           @input="setField({{ $staycation->id }}, 'children', $event.target.value)"
+                                                    >
+                                                </div>
+                                            </div>
+                                        @elseif($isCarCamping)
+                                            {{-- Car Camping: Show "Number of Vehicles", Adults, and Children --}}
+                                            <div class="grid grid-cols-3 gap-2">
+                                                <div>
+                                                    <label class="text-xs text-gray-600">Number of Vehicles</label>
+                                                    <input type="number" min="1" max="{{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }}"
+                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           :value="getRoom({{ $staycation->id }}).extra_mattress || 1"
+                                                           @input="validateQuantity({{ $staycation->id }}, 'extra_mattress', $event.target.value, {{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }})"
+                                                    >
+                                                </div>
+                                                <div>
+                                                    <label class="text-xs text-gray-600">Adults (Max {{ $staycation->adults ?? $staycation->capacity ?? 20 }})</label>
+                                                    <input type="number" min="1" max="{{ $staycation->adults ?? $staycation->capacity ?? 20 }}"
+                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           :value="getRoom({{ $staycation->id }}).adults"
+                                                           @input="validateAdultLimit({{ $staycation->id }}, $event.target.value, {{ $staycation->adults ?? $staycation->capacity ?? 20 }})"
+                                                    >
+                                                </div>
+                                                <div>
+                                                    <label class="text-xs text-gray-600">Children</label>
+                                                    <input type="number" min="0" max="20"
+                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           :value="getRoom({{ $staycation->id }}).children || 0"
+                                                           @input="setField({{ $staycation->id }}, 'children', $event.target.value)"
+                                                    >
+                                                </div>
+                                            </div>
+                                        @else
+                                            {{-- Regular rooms: Adults, Children, Extra Mattress --}}
+                                            <div class="grid grid-cols-3 gap-2">
+                                                <div>
+                                                    <label class="text-xs text-gray-600">Adults</label>
+                                                    <input type="number" min="1" max="20"
+                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           :value="getRoom({{ $staycation->id }}).adults"
+                                                           @input="validateAndSetGuests({{ $staycation->id }}, 'adults', $event.target.value, '{{ strtolower($roomDetail['name']) }}')"
+                                                    >
+                                                </div>
+                                                <div>
+                                                    <label class="text-xs text-gray-600">Children</label>
+                                                    <input type="number" min="0" max="20"
+                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           :value="getRoom({{ $staycation->id }}).children"
+                                                           @input="validateAndSetGuests({{ $staycation->id }}, 'children', $event.target.value, '{{ strtolower($roomDetail['name']) }}')"
+                                                    >
+                                                </div>
+                                                <div>
+                                                    <label class="text-xs text-gray-600">Extra Mattress</label>
+                                                    <input type="number" min="0" max="8"
+                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           :value="getRoom({{ $staycation->id }}).extra_mattress"
+                                                           @input="setField({{ $staycation->id }}, 'extra_mattress', $event.target.value)"
+                                                    >
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        {{-- Pet policy per room (Not applicable for BYOT and Car Camping) --}}
+                                        @if(!$isBYOT && !$isCarCamping)
+                                            <div class="mt-4 border-t pt-4">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="text-sm font-semibold text-gray-800">Pets</div>
+                                                    <button type="button"
+                                                            class="text-xs text-blue-700 underline hover:text-blue-900"
+                                                            @click="petPolicyModal=true"
+                                                    >
+                                                        View Pet Policy
+                                                    </button>
+                                                </div>
+
+                                                <div class="mt-2 flex gap-4 text-sm">
+                                                    <label class="inline-flex items-center gap-2">
+                                                        <input type="radio"
+                                                               :name="'pets_'+{{ $staycation->id }}"
+                                                               value="no"
+                                                               :checked="getRoom({{ $staycation->id }}).pets === 'no'"
+                                                               @change="setField({{ $staycation->id }}, 'pets', 'no')"
+                                                        >
+                                                        <span>No pets</span>
+                                                    </label>
+                                                    <label class="inline-flex items-center gap-2">
+                                                        <input type="radio"
+                                                               :name="'pets_'+{{ $staycation->id }}"
+                                                               value="yes"
+                                                               :checked="getRoom({{ $staycation->id }}).pets === 'yes'"
+                                                               @change="setField({{ $staycation->id }}, 'pets', 'yes')"
+                                                        >
+                                                        <span>Bringing pets (+₱2,000/pet)</span>
+                                                    </label>
+                                                </div>
+
+                                                <div class="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3"
+                                                     x-show="getRoom({{ $staycation->id }}).pets === 'yes'"
+                                                     x-transition
                                                 >
-                                                    View Pet Policy
-                                                </button>
-                                            </div>
-
-                                            <div class="mt-2 flex gap-4 text-sm">
-                                                <label class="inline-flex items-center gap-2">
-                                                    <input type="radio"
-                                                           :name="'pets_'+{{ $staycation->id }}"
-                                                           value="no"
-                                                           :checked="getRoom({{ $staycation->id }}).pets === 'no'"
-                                                           @change="setField({{ $staycation->id }}, 'pets', 'no')"
-                                                    >
-                                                    <span>No pets</span>
-                                                </label>
-                                                <label class="inline-flex items-center gap-2">
-                                                    <input type="radio"
-                                                           :name="'pets_'+{{ $staycation->id }}"
-                                                           value="yes"
-                                                           :checked="getRoom({{ $staycation->id }}).pets === 'yes'"
-                                                           @change="setField({{ $staycation->id }}, 'pets', 'yes')"
-                                                    >
-                                                    <span>Bringing pets (+₱2,000/pet)</span>
-                                                </label>
-                                            </div>
-
-                                            <div class="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3"
-                                                 x-show="getRoom({{ $staycation->id }}).pets === 'yes'"
-                                                 x-transition
-                                            >
-                                                <label class="inline-flex items-start gap-2 text-sm text-blue-900">
-                                                    <input type="checkbox"
-                                                           class="mt-1"
-                                                           :checked="getRoom({{ $staycation->id }}).pet_agreement"
-                                                           @change="setField({{ $staycation->id }}, 'pet_agreement', $event.target.checked)"
-                                                    >
-                                                    <span>
-                                                        I agree to the pet policy
-                                                        <span class="block text-xs text-blue-800 mt-1">
-                                                            Max 2 pets. Fee required to confirm.
+                                                    <label class="inline-flex items-start gap-2 text-sm text-blue-900">
+                                                        <input type="checkbox"
+                                                               class="mt-1"
+                                                               :checked="getRoom({{ $staycation->id }}).pet_agreement"
+                                                               @change="setField({{ $staycation->id }}, 'pet_agreement', $event.target.checked)"
+                                                        >
+                                                        <span>
+                                                            I agree to the pet policy
+                                                            <span class="block text-xs text-blue-800 mt-1">
+                                                                Max 2 pets. Fee required to confirm.
+                                                            </span>
                                                         </span>
-                                                    </span>
-                                                </label>
+                                                    </label>
 
-                                                <div class="mt-3">
-                                                    <label class="text-xs text-gray-700">Number of pets</label>
-                                                    <input type="number" min="0" max="2"
-                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                                           :disabled="!getRoom({{ $staycation->id }}).pet_agreement"
-                                                           :value="getRoom({{ $staycation->id }}).num_pets"
-                                                           @input="setField({{ $staycation->id }}, 'num_pets', $event.target.value)"
-                                                    >
-                                                    <div class="text-xs text-gray-600 mt-1" x-show="!getRoom({{ $staycation->id }}).pet_agreement">
-                                                        Please check agreement to enable pets count.
+                                                    <div class="mt-3">
+                                                        <label class="text-xs text-gray-700">Number of pets</label>
+                                                        <input type="number" min="0" max="2"
+                                                               class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                               :disabled="!getRoom({{ $staycation->id }}).pet_agreement"
+                                                               :value="getRoom({{ $staycation->id }}).num_pets"
+                                                               @input="setField({{ $staycation->id }}, 'num_pets', $event.target.value)"
+                                                        >
+                                                        <div class="text-xs text-gray-600 mt-1" x-show="!getRoom({{ $staycation->id }}).pet_agreement">
+                                                            Please check agreement to enable pets count.
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        @endif
 
                                         {{-- Quick remove --}}
                                         <div class="mt-4">
@@ -412,7 +479,7 @@
                         </div>
 
                         {{-- Selected rooms list --}}
-                        <div class="mb-6">
+                        <div class="mb-6" x-effect="$watch('selectedRooms', () => {}, { deep: true })">
                             <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
                                 <i class="bi bi-house mr-2 text-[#8f5d54]"></i> Selected Rooms
                             </h4>
@@ -428,22 +495,42 @@
                                             <div>
                                                 <div class="font-semibold text-gray-900 text-sm" x-text="item.name"></div>
                                                 <div class="text-xs text-gray-600 mt-1">
-                                                    Adults: <span class="font-semibold" x-text="item.adults"></span>,
-                                                    Children: <span class="font-semibold" x-text="item.children"></span>,
-                                                    Extra Mattress: <span class="font-semibold" x-text="item.extra_mattress"></span>
-                                                </div>
-                                                <div class="text-xs text-gray-600 mt-1">
-                                                    Pets: <span class="font-semibold" x-text="item.pets"></span>
-                                                    <template x-if="item.pets === 'yes'">
-                                                        <span> • # pets: <span class="font-semibold" x-text="item.num_pets"></span></span>
+                                                    <template x-if="item.name.toLowerCase().includes('byot') || item.name.toLowerCase().includes('bring your own tent')">
+                                                        <span>
+                                                            BYOT Qty: <span class="font-semibold" x-text="item.extra_mattress || 1"></span>,
+                                                            Adults: <span class="font-semibold" x-text="item.adults"></span>,
+                                                            Children: <span class="font-semibold" x-text="item.children || 0"></span>
+                                                        </span>
+                                                    </template>
+                                                    <template x-if="item.name.toLowerCase().includes('car camping')">
+                                                        <span>
+                                                            Vehicles: <span class="font-semibold" x-text="item.extra_mattress || 1"></span>,
+                                                            Adults: <span class="font-semibold" x-text="item.adults"></span>,
+                                                            Children: <span class="font-semibold" x-text="item.children || 0"></span>
+                                                        </span>
+                                                    </template>
+                                                    <template x-if="!item.name.toLowerCase().includes('byot') && !item.name.toLowerCase().includes('bring your own tent') && !item.name.toLowerCase().includes('car camping')">
+                                                        <span>
+                                                            Adults: <span class="font-semibold" x-text="item.adults"></span>,
+                                                            Children: <span class="font-semibold" x-text="item.children"></span>,
+                                                            Extra Mattress: <span class="font-semibold" x-text="item.extra_mattress"></span>
+                                                        </span>
                                                     </template>
                                                 </div>
+                                                <template x-if="!item.name.toLowerCase().includes('byot') && !item.name.toLowerCase().includes('bring your own tent') && !item.name.toLowerCase().includes('car camping')">
+                                                    <div class="text-xs text-gray-600 mt-1">
+                                                        Pets: <span class="font-semibold" x-text="item.pets"></span>
+                                                        <template x-if="item.pets === 'yes'">
+                                                            <span> • # pets: <span class="font-semibold" x-text="item.num_pets"></span></span>
+                                                        </template>
+                                                    </div>
+                                                </template>
                                                 <div class="text-xs text-gray-600 mt-2 space-y-1">
                                                     <div class="text-xs text-gray-500">Price Breakdown:</div>
                                                     <div class="pl-2 space-y-0.5">
-                                                        <div>Accommodation: <span class="font-semibold text-green-600" x-text="calculateBasePrice(item)"></span></div>
-                                                        <div x-show="item.extra_mattress > 0">Extra Mattress: <span class="font-semibold text-green-600" x-text="calculateMattressPrice(item)"></span></div>
-                                                        <div x-show="item.pets === 'yes' && item.num_pets > 0">Pets: <span class="font-semibold text-green-600" x-text="calculatePetPrice(item)"></span></div>
+                                                        <div>Accommodation: <span class="font-semibold text-green-600" x-text="'₱' + calculateBasePrice(item).toLocaleString()"></span></div>
+                                                        <div x-show="item.extra_mattress > 0 && !item.name.toLowerCase().includes('byot') && !item.name.toLowerCase().includes('car camping') && !item.name.toLowerCase().includes('bring your own tent')">Extra Mattress: <span class="font-semibold text-green-600" x-text="'₱' + calculateMattressPrice(item).toLocaleString()"></span></div>
+                                                        <div x-show="item.pets === 'yes' && item.num_pets > 0 && !item.name.toLowerCase().includes('byot') && !item.name.toLowerCase().includes('car camping') && !item.name.toLowerCase().includes('bring your own tent')">Pets: <span class="font-semibold text-green-600" x-text="'₱' + calculatePetPrice(item).toLocaleString()"></span></div>
                                                         <div class="border-t pt-1 font-semibold">Total: <span class="text-green-600" x-text="calculateRoomPrice(item)"></span></div>
                                                     </div>
                                                 </div>
@@ -477,7 +564,7 @@
                         <div class="space-y-3">
                             <button
                                 type="button"
-                                @click="submitAndProceed()"
+                                @click="submitAndProceed('{{ route('booking.staycationFood') }}')"
                                 class="w-full bg-[#8f5d54] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#7a4e48] transition disabled:opacity-50 disabled:cursor-not-allowed"
                                 :disabled="selectedCount() === 0"
                             >
@@ -486,7 +573,7 @@
 
                             <button type="button"
                                     class="w-full py-3 rounded-xl font-semibold text-white bg-green-600 hover:bg-green-700 transition"
-                                    @click="submitAndProceed()">
+                                    @click="submitAndProceed('{{ route('booking.staycationPayment') }}')">
                                 <i class="bi bi-credit-card mr-2"></i>
                                 Proceed to Payment
                             </button>
@@ -612,6 +699,10 @@
         function staycationAvailabilityMerged() {
             return {
                 roomType: 'all',
+                
+                // Store checkin/checkout for dynamic calculation
+                checkin: '{{ $checkin }}',
+                checkout: '{{ $checkout }}',
 
                 // room details for thresholds and base capacity
                 roomDetailsMap: @json($roomDetails),
@@ -650,13 +741,17 @@
 
                     // select with defaults
                     const defaultAdults = 2;
+                    const roomNameLower = (room.name || '').toLowerCase();
+                    const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
+                    const isCarCamping = roomNameLower.includes('car camping');
+                    
                     this.selectedRooms[roomId] = {
                         id: roomId,
                         name: room.name || 'Room',
                         type: (type || '').toLowerCase(),
                         adults: defaultAdults,
                         children: 0,
-                        extra_mattress: 0,
+                        extra_mattress: (isBYOT || isCarCamping) ? 1 : 0, // Default to 1 for BYOT/Car Camping
                         pets: 'no',
                         pet_agreement: false,
                         num_pets: 0,
@@ -696,6 +791,18 @@
                         if (field === 'adults' && value < 1) value = 1;
                         if (['children','extra_mattress','num_pets'].includes(field) && value < 0) value = 0;
                         if (field === 'num_pets' && value > 2) value = 2;
+                        
+                        // Max 8 for BYOT/Car Camping quantity
+                        if (field === 'extra_mattress') {
+                            const roomNameLower = (this.selectedRooms[roomId].name || '').toLowerCase();
+                            const isBYOTorCar = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent') || roomNameLower.includes('car camping');
+                            if (isBYOTorCar) {
+                                if (value > 8) value = 8;
+                                if (value < 1) value = 1;
+                            } else {
+                                if (value > 8) value = 8;
+                            }
+                        }
                     }
 
                     this.selectedRooms[roomId][field] = value;
@@ -708,6 +815,88 @@
                     if (field === 'pet_agreement' && value === false) {
                         this.selectedRooms[roomId].num_pets = 0;
                     }
+                },
+
+                validateAndSetGuests(roomId, field, value, roomName) {
+                    const normalizedValue = parseInt(value || 0, 10);
+                    if (!isFinite(normalizedValue)) {
+                        this.setField(roomId, field, 0);
+                        return;
+                    }
+
+                    // Get total guests for this room
+                    const currentRoom = this.getRoom(roomId);
+                    let adults = field === 'adults' ? normalizedValue : (currentRoom.adults || 1);
+                    let children = field === 'children' ? normalizedValue : (currentRoom.children || 0);
+                    const totalGuests = adults + children;
+
+                    // Check guest limit for standard and premium
+                    if ((roomName.includes('standard') || roomName.includes('premium')) && totalGuests > 6) {
+                        Swal.fire({
+                            title: 'Guest Limit Exceeded',
+                            text: 'Maximum 6 guests (adults + children) allowed for Standard and Premium rooms',
+                            icon: 'warning',
+                            confirmButtonColor: '#8f5d54'
+                        });
+                        // Revert to previous value
+                        return;
+                    }
+
+                    // Set the field normally
+                    this.setField(roomId, field, normalizedValue);
+                },
+
+                validateAdultLimit(roomId, value, maxAdults) {
+                    const normalizedValue = parseInt(value || 0, 10);
+                    if (!isFinite(normalizedValue)) {
+                        this.setField(roomId, 'adults', 1);
+                        return;
+                    }
+
+                    if (normalizedValue > maxAdults) {
+                        Swal.fire({
+                            title: 'Adult Limit Exceeded',
+                            text: `Maximum ${maxAdults} adults allowed for this accommodation`,
+                            icon: 'warning',
+                            confirmButtonColor: '#8f5d54'
+                        });
+                        this.setField(roomId, 'adults', maxAdults);
+                        return;
+                    }
+
+                    if (normalizedValue < 1) {
+                        this.setField(roomId, 'adults', 1);
+                        return;
+                    }
+
+                    this.setField(roomId, 'adults', normalizedValue);
+                },
+
+                validateQuantity(roomId, fieldName, value, maxQuantity) {
+                    const normalizedValue = parseInt(value || 1, 10);
+                    if (!isFinite(normalizedValue)) {
+                        this.setField(roomId, fieldName, 1);
+                        return;
+                    }
+
+                    if (normalizedValue > maxQuantity) {
+                        const fieldLabel = fieldName === 'extra_mattress' ? 'Quantity' : fieldName;
+                        Swal.fire({
+                            title: 'Availability Limit Exceeded',
+                            text: `Only ${maxQuantity} available for this accommodation during the selected dates.`,
+                            icon: 'warning',
+                            confirmButtonColor: '#8f5d54'
+                        });
+                        this.setField(roomId, fieldName, maxQuantity);
+                        return;
+                    }
+
+                    if (normalizedValue < 1) {
+                        this.setField(roomId, fieldName, 1);
+                        return;
+                    }
+
+                    this.setField(roomId, fieldName, normalizedValue);
                 },
 
                 resetAll() {
@@ -851,37 +1040,93 @@
                 },
 
                 calculateBasePrice(room) {
-                    const nights = {{ \Carbon\Carbon::parse($checkin)->diffInDays(\Carbon\Carbon::parse($checkout)) }};
-                    const totalGuests = (room.adults || 0) + (room.children || 0);
-
-                    // Use hardcoded pricing for consistency
-                    const basePrice = room.type === 'glamping' ? 5500 : 3000;
-                    // Add guest surcharge: base covers 2 guests, ₱500 per additional guest
-                    const baseGuests = 2;
-                    const extraGuestRate = 500;
-                    const extraGuests = Math.max(0, totalGuests - baseGuests);
-                    const adjustedPrice = basePrice + (extraGuests * extraGuestRate);
-
-                    return '₱' + (adjustedPrice * nights).toLocaleString();
+                    // Calculate nights dynamically from stored checkin/checkout
+                    let nights = 1;
+                    if (this.checkin && this.checkout) {
+                        const checkinDate = new Date(this.checkin);
+                        const checkoutDate = new Date(this.checkout);
+                        nights = Math.max(1, Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24)));
+                    }
+                    
+                    // Get room details from roomDetailsMap which includes dynamic pricing from admin panel
+                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[room.id] ? this.roomDetailsMap[room.id] : null;
+                    
+                    // Use the exact base price from admin panel without modifications
+                    let basePrice = (roomDetail && roomDetail.price) ? roomDetail.price : 0;
+                    
+                    // If no price from admin, use type-based default
+                    if (basePrice === 0) {
+                        basePrice = room.type === 'glamping' ? 5500 : 3000;
+                    }
+                    
+                    // Check if BYOT or Car Camping (per quantity pricing)
+                    const roomNameLower = (room.name || '').toLowerCase();
+                    const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
+                    const isCarCamping = roomNameLower.includes('car camping');
+                    
+                    let totalPrice = 0;
+                    
+                    if (isBYOT || isCarCamping) {
+                        // Per quantity pricing: base price × quantity (tents/vehicles) × nights
+                        const quantity = parseInt(room.extra_mattress || 1);
+                        totalPrice = basePrice * quantity * nights;
+                    } else {
+                        // Regular rooms: base price × nights (fixed per room)
+                        totalPrice = basePrice * nights;
+                    }
+                    
+                    return totalPrice;
                 },
 
                 calculateMattressPrice(room) {
-                    const nights = {{ \Carbon\Carbon::parse($checkin)->diffInDays(\Carbon\Carbon::parse($checkout)) }};
+                    // Calculate nights dynamically from stored checkin/checkout
+                    let nights = 1;
+                    if (this.checkin && this.checkout) {
+                        const checkinDate = new Date(this.checkin);
+                        const checkoutDate = new Date(this.checkout);
+                        nights = Math.max(1, Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24)));
+                    }
+                    
+                    // Check if BYOT or Car Camping
+                    const roomNameLower = (room.name || '').toLowerCase();
+                    const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
+                    const isCarCamping = roomNameLower.includes('car camping');
+                    
+                    // For BYOT/Car Camping, extra_mattress field stores quantity (tents/vehicles)
+                    // No additional charge for this
+                    if (isBYOT || isCarCamping) {
+                        return 0;
+                    }
+                    
+                    // Regular rooms: mattress pricing
                     const price = (room.extra_mattress || 0) * 500 * nights;
-                    return price > 0 ? '₱' + price.toLocaleString() : '';
+                    return price;
                 },
 
                 calculatePetPrice(room) {
-                    if (room.pets !== 'yes' || !room.num_pets) return '';
+                    if (room.pets !== 'yes' || !room.num_pets) return 0;
+                    
+                    // Check if BYOT or Car Camping - no pet policy for these
+                    const roomNameLower = (room.name || '').toLowerCase();
+                    const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
+                    const isCarCamping = roomNameLower.includes('car camping');
+                    
+                    if (isBYOT || isCarCamping) {
+                        return 0;
+                    }
+                    
+                    // Pet fee is ONE-TIME, not per night
                     const price = room.num_pets * 2000;
-                    return '₱' + price.toLocaleString();
+                    return price;
                 },
 
                 calculateRoomPrice(room) {
-                    const base = this.calculateBasePrice(room).replace(/[₱,]/g, '') * 1;
-                    const mattress = this.calculateMattressPrice(room).replace(/[₱,]/g, '') * 1 || 0;
-                    const pet = this.calculatePetPrice(room).replace(/[₱,]/g, '') * 1 || 0;
-                    return '₱' + (base + mattress + pet).toLocaleString();
+                    const base = this.calculateBasePrice(room);
+                    const mattress = this.calculateMattressPrice(room);
+                    const pet = this.calculatePetPrice(room);
+                    
+                    const total = base + mattress + pet;
+                    return '₱' + total.toLocaleString();
                 },
 
                 calculateTotalPrice() {
@@ -943,11 +1188,13 @@
                     // Swiper initialization moved to DOMContentLoaded
                 },
 
-                submitAndProceed() {
+                submitAndProceed(nextUrl = '{{ route("booking.staycationFood") }}') {
                     if (this.selectedCount() === 0) {
                         Swal.fire('Select at least one room', 'Please select a room before continuing.', 'warning');
                         return;
                     }
+
+                    const targetUrl = nextUrl || '{{ route("booking.staycationFood") }}';
 
                     // validation: pet agreement required if pets yes and num pets > 0
                     for (const r of Object.values(this.selectedRooms)) {
@@ -977,7 +1224,7 @@
                     .then(r => r.json())
                     .then(data => {
                         if (data.success) {
-                            window.location.href = '{{ route("booking.staycationFood") }}';
+                            window.location.href = targetUrl;
                         } else {
                             Swal.fire('Error', data.message || 'Failed to save selection', 'error');
                         }

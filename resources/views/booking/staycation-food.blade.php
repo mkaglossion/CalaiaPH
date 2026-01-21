@@ -38,6 +38,16 @@
         }
     </style>
 
+    @php
+    // Calculate accommodation total from stored room prices
+    $accommodationTotal = 0;
+    foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
+        if (!empty($acc)) {
+            $accommodationTotal += $acc['total_price'] ?? 0;
+        }
+    }
+    @endphp
+
     <div class="bg-[#f5efe7] min-h-screen">
         <div class="pt-6 px-4 sm:px-6 lg:px-12">
             {{-- Header --}}
@@ -71,7 +81,7 @@
             </div>
 
             <div
-                x-data="staycationFoodSelection()"
+                x-data="staycationFoodSelection({{ $accommodationTotal }})"
                 class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10"
             >
                 {{-- LEFT --}}
@@ -200,65 +210,226 @@
                 {{-- RIGHT SIDEBAR --}}
                 <div class="lg:col-span-1">
                     <div class="bg-white rounded-2xl shadow-lg p-6 lg:sticky lg:top-6 space-y-6">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-xl font-bold" style="font-family:'Gotham Book', sans-serif;">Order Summary</h3>
-                            <button type="button" class="text-xs font-semibold text-gray-500 hover:text-gray-800" @click="resetAll()">Reset</button>
+                        {{-- Selected Dates Section --}}
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="bi bi-calendar-check mr-2 text-[#8f5d54]"></i> Selected Dates
+                            </h4>
+                            <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
+                                @php
+                                    $checkin = $booking['checkin'] ?? null;
+                                    $checkout = $booking['checkout'] ?? null;
+                                @endphp
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Check-in:</span>
+                                    <span class="font-semibold">{{ $checkin ? \Carbon\Carbon::parse($checkin)->format('M j, Y') : '—' }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Check-out:</span>
+                                    <span class="font-semibold">{{ $checkout ? \Carbon\Carbon::parse($checkout)->format('M j, Y') : '—' }}</span>
+                                </div>
+                                @if($checkin && $checkout)
+                                    <div class="flex justify-between border-t border-gray-200 pt-2">
+                                        <span class="text-gray-600">Total Nights:</span>
+                                        <span class="font-semibold text-[#8f5d54]">{{ \Carbon\Carbon::parse($checkin)->diffInDays(\Carbon\Carbon::parse($checkout)) }}</span>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
 
-                        <template x-if="selectedFoods.length === 0">
-                            <div class="text-center text-gray-500 py-6">
-                                <i class="bi bi-clipboard text-4xl mb-2 block text-gray-300"></i>
-                                <p class="text-sm">No items selected yet.</p>
+                        <hr class="border-gray-200">
+
+                        {{-- Selected Rooms Section --}}
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="bi bi-house mr-2 text-[#8f5d54]"></i> Selected Rooms
+                            </h4>
+                            <div class="bg-gray-50 rounded-lg p-3 space-y-2">
+                                @php
+                                    $accommodations = $booking['accommodations'] ?? [];
+                                    $roomIds = array_keys($accommodations);
+                                @endphp
+
+                                @if(count($accommodations) > 0)
+                                    @foreach($roomIds as $roomId)
+                                        @php
+                                            $room = $accommodations[$roomId];
+                                            $staycation = $staycations->find($roomId);
+                                            $roomNameLower = strtolower($staycation->name ?? '');
+                                            $isBYOT = str_contains($roomNameLower, 'byot') || str_contains($roomNameLower, 'bring your own tent');
+                                            $isCarCamping = str_contains($roomNameLower, 'car camping');
+                                        @endphp
+                                        <div class="bg-white rounded border border-gray-200 p-3 text-xs">
+                                            <div class="font-semibold text-gray-900 mb-2">{{ $staycation->name ?? 'Room #' . $roomId }}</div>
+                                            <div class="text-gray-600 space-y-1">
+                                                @if($isBYOT)
+                                                    <div>BYOT Qty: <span class="font-semibold">{{ $room['extra_mattress'] ?? 1 }}</span>, Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
+                                                @elseif($isCarCamping)
+                                                    <div>Vehicles: <span class="font-semibold">{{ $room['extra_mattress'] ?? 1 }}</span>, Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
+                                                @else
+                                                    <div>Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
+                                                    <div>Mattress: <span class="font-semibold">{{ $room['extra_mattress'] ?? 0 }}</span></div>
+                                                @endif
+                                                @if(!$isBYOT && !$isCarCamping)
+                                                    <div>Pets: <span class="font-semibold">{{ $room['pets'] ?? 'no' }}</span>
+                                                        @if(($room['pets'] ?? 'no') === 'yes')
+                                                            <span>(#{{ $room['num_pets'] ?? 0 }})</span>
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            <div class="border-t border-gray-200 mt-2 pt-2 space-y-1">
+                                                @if($isBYOT || $isCarCamping)
+                                                    {{-- For BYOT/Car Camping, show breakdown: unit price × quantity × nights --}}
+                                                    @php
+                                                        $quantity = $room['extra_mattress'] ?? 1;
+                                                        $checkin = !empty($booking['checkin']) ? \Carbon\Carbon::parse($booking['checkin']) : null;
+                                                        $checkout = !empty($booking['checkout']) ? \Carbon\Carbon::parse($booking['checkout']) : null;
+                                                        $nights = $checkin && $checkout ? max(1, $checkout->diffInDays($checkin)) : 1;
+                                                        $unitPrice = $room['base_price'] > 0 && $nights > 0 ? ($room['base_price'] / $quantity / $nights) : 0;
+                                                    @endphp
+                                                    <div class="flex justify-between text-xs">
+                                                        <span class="text-gray-600">Unit Price/Night:</span>
+                                                        <span>₱{{ number_format($unitPrice, 0) }}</span>
+                                                    </div>
+                                                    <div class="flex justify-between text-xs">
+                                                        <span class="text-gray-600">Quantity:</span>
+                                                        <span>{{ $quantity }}</span>
+                                                    </div>
+                                                    <div class="flex justify-between text-xs">
+                                                        <span class="text-gray-600">Nights:</span>
+                                                        <span>{{ $nights }}</span>
+                                                    </div>
+                                                    <div class="flex justify-between text-xs border-t pt-1 mt-1">
+                                                        <span class="text-gray-600">Calculation:</span>
+                                                        <span>₱{{ number_format($unitPrice, 0) }} × {{ $quantity }} × {{ $nights }}</span>
+                                                    </div>
+                                                @else
+                                                    {{-- For regular rooms --}}
+                                                    @php
+                                                        $checkin = !empty($booking['checkin']) ? \Carbon\Carbon::parse($booking['checkin']) : null;
+                                                        $checkout = !empty($booking['checkout']) ? \Carbon\Carbon::parse($booking['checkout']) : null;
+                                                        $nights = $checkin && $checkout ? max(1, $checkout->diffInDays($checkin)) : 1;
+                                                        $baseNightlyPrice = $room['base_price'] > 0 && $nights > 0 ? ($room['base_price'] / $nights) : 0;
+                                                    @endphp
+                                                    <div class="flex justify-between text-xs">
+                                                        <span class="text-gray-600">Price/Night:</span>
+                                                        <span>₱{{ number_format($baseNightlyPrice, 0) }}</span>
+                                                    </div>
+                                                    <div class="flex justify-between text-xs">
+                                                        <span class="text-gray-600">Nights:</span>
+                                                        <span>{{ $nights }}</span>
+                                                    </div>
+                                                    <div class="flex justify-between text-xs border-t pt-1 mt-1">
+                                                        <span class="text-gray-600">Room Subtotal:</span>
+                                                        <span>₱{{ number_format($baseNightlyPrice * $nights, 0) }}</span>
+                                                    </div>
+                                                @endif
+                                                <div class="flex justify-between">
+                                                    <span class="text-gray-600">Room:</span>
+                                                    <span class="font-semibold text-gray-900">₱{{ number_format($room['base_price'] ?? 0, 0) }}</span>
+                                                </div>
+                                                @if(($room['mattress_price'] ?? 0) > 0 && !$isBYOT && !$isCarCamping)
+                                                    <div class="flex justify-between">
+                                                        <span class="text-gray-600">Mattress:</span>
+                                                        <span class="font-semibold text-gray-900">₱{{ number_format($room['mattress_price'] ?? 0, 0) }}</span>
+                                                    </div>
+                                                @endif
+                                                @if(($room['pet_price'] ?? 0) > 0 && !$isBYOT && !$isCarCamping)
+                                                    <div class="flex justify-between">
+                                                        <span class="text-gray-600">Pets:</span>
+                                                        <span class="font-semibold text-gray-900">₱{{ number_format($room['pet_price'] ?? 0, 0) }}</span>
+                                                    </div>
+                                                @endif
+                                                <div class="flex justify-between border-t border-gray-200 pt-1">
+                                                    <span class="font-semibold text-gray-800">Total:</span>
+                                                    <span class="font-bold text-[#8f5d54]">₱{{ number_format($room['total_price'] ?? 0, 0) }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <p class="text-gray-500 text-xs">No rooms selected</p>
+                                @endif
                             </div>
-                        </template>
+                        </div>
 
-                        <template x-if="selectedFoods.length > 0">
-                            <div class="space-y-4">
-                                <template x-for="food in selectedFoods" :key="food.id">
-                                    <div class="border border-gray-200 rounded-xl p-4 shadow-sm">
-                                        <div class="flex items-start justify-between gap-2 mb-3">
-                                            <div class="flex-1">
-                                                <p class="text-sm font-semibold" x-text="food.name"></p>
-                                                <p class="text-xs text-gray-500 capitalize" x-text="food.category"></p>
-                                                <p class="text-sm font-bold text-[#8f5d54] mt-1" x-text="'₱' + Number(food.price).toLocaleString()"></p>
-                                            </div>
-                                            <button type="button" class="text-gray-400 hover:text-red-600 transition" @click="removeFood(food.id)">
-                                                <i class="bi bi-x-lg"></i>
-                                            </button>
-                                        </div>
+                        <hr class="border-gray-200">
 
-                                        <div class="flex items-center justify-between gap-2">
-                                            <div class="flex items-center gap-2">
-                                                <button type="button" class="w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" @click="decreaseQty(food.id)">-</button>
-                                                <input type="number" min="1" max="20" class="w-16 text-center border border-gray-300 rounded-md py-1 text-sm" :value="food.quantity" @change="setField(food.id, 'quantity', $event.target.value)">
-                                                <button type="button" class="w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" @click="increaseQty(food.id)">+</button>
-                                            </div>
-                                            <div class="text-right text-[#8f5d54] font-bold text-sm" x-text="'₱' + (food.price * food.quantity).toLocaleString()"></div>
-                                        </div>
+                        {{-- Order Summary --}}
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-semibold text-gray-800 flex items-center">
+                                    <i class="bi bi-cart mr-2 text-[#8f5d54]"></i> Order Summary
+                                </h4>
+                                <button type="button" class="text-xs font-semibold text-gray-500 hover:text-gray-800" @click="resetAll()">Reset</button>
+                            </div>
 
-                                        <div class="mt-3">
-                                            <textarea rows="2" class="w-full border border-gray-200 rounded-lg p-2 text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54] placeholder-gray-400" placeholder="Notes or dietary preferences..." :value="food.notes || ''" @input="setField(food.id, 'notes', $event.target.value)"></textarea>
-                                        </div>
-                                    </div>
-                                </template>
-
-                                <div class="border-t pt-4 flex items-center justify-between">
-                                    <span class="text-sm font-semibold">Subtotal</span>
-                                    <span class="text-lg font-bold text-[#8f5d54]" x-text="calculateTotal()"></span>
+                            {{-- Accommodation Total --}}
+                            <div class="bg-gray-50 rounded-lg p-3 mb-4 space-y-2 border border-gray-200">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-semibold text-gray-700">Accommodation:</span>
+                                    <span class="font-bold text-[#8f5d54]">₱{{ number_format($accommodationTotal, 0) }}</span>
                                 </div>
                             </div>
-                        </template>
+
+                            <template x-if="selectedFoods.length === 0">
+                                <div class="text-center text-gray-500 py-6">
+                                    <i class="bi bi-clipboard text-4xl mb-2 block text-gray-300"></i>
+                                    <p class="text-sm">No items selected yet.</p>
+                                </div>
+                            </template>
+
+                            <template x-if="selectedFoods.length > 0">
+                                <div class="space-y-4">
+                                    <template x-for="food in selectedFoods" :key="food.id">
+                                        <div class="border border-gray-200 rounded-xl p-4 shadow-sm">
+                                            <div class="flex items-start justify-between gap-2 mb-3">
+                                                <div class="flex-1">
+                                                    <p class="text-sm font-semibold" x-text="food.name"></p>
+                                                    <p class="text-xs text-gray-500 capitalize" x-text="food.category"></p>
+                                                    <p class="text-sm font-bold text-[#8f5d54] mt-1" x-text="'₱' + Number(food.price).toLocaleString()"></p>
+                                                </div>
+                                                <button type="button" class="text-gray-400 hover:text-red-600 transition" @click="removeFood(food.id)">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </div>
+
+                                            <div class="flex items-center justify-between gap-2">
+                                                <div class="flex items-center gap-2">
+                                                    <button type="button" class="w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" @click="decreaseQty(food.id)">-</button>
+                                                    <input type="number" min="1" max="20" class="w-16 text-center border border-gray-300 rounded-md py-1 text-sm" :value="food.quantity" @change="setField(food.id, 'quantity', $event.target.value)">
+                                                    <button type="button" class="w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" @click="increaseQty(food.id)">+</button>
+                                                </div>
+                                                <div class="text-right text-[#8f5d54] font-bold text-sm" x-text="'₱' + (food.price * food.quantity).toLocaleString()"></div>
+                                            </div>
+
+                                            <div class="mt-3">
+                                                <textarea rows="2" class="w-full border border-gray-200 rounded-lg p-2 text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54] placeholder-gray-400" placeholder="Notes or dietary preferences..." :value="food.notes || ''" @input="setField(food.id, 'notes', $event.target.value)"></textarea>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <div class="border-t pt-4 flex items-center justify-between">
+                                        <span class="text-sm font-semibold">Grand Total</span>
+                                        <span class="text-lg font-bold text-[#8f5d54]" x-text="calculateTotal()"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <hr class="border-gray-200">
 
                         <div class="flex flex-col gap-3">
                             <button type="button"
                                     class="w-full py-3 rounded-xl font-semibold text-white bg-[#8f5d54] hover:bg-[#7a4e48] transition"
-                                    @click="submitAndProceed()">
+                                    @click="submitAndProceed('{{ route('booking.staycationActivities') }}')">
                                 <i class="bi bi-arrow-right mr-2"></i>
                                 Proceed to Activities
                             </button>
                             <button type="button"
                                     class="w-full py-3 rounded-xl font-semibold text-white bg-green-600 hover:bg-green-700 transition"
-                                    @click="submitAndProceed()">
+                                    @click="submitAndProceed('{{ route('booking.staycationPayment') }}')">
                                 <i class="bi bi-credit-card mr-2"></i>
                                 Proceed to Payment
                             </button>
@@ -270,10 +441,11 @@
     </div>
 
     <script>
-        function staycationFoodSelection() {
+        function staycationFoodSelection(accommodationTotal = 0) {
             return {
-                selectedFoods: @json(session('selected_foods', [])),
+                selectedFoods: @json($booking['selected_foods'] ?? session('selected_foods', [])),
                 selectedCategory: 'all',
+                accommodationTotal: accommodationTotal,
 
                 toggleFood(foodId, name, category, price) {
                     const index = this.selectedFoods.findIndex(f => f.id === foodId);
@@ -342,16 +514,17 @@
                 },
 
                 calculateTotal() {
-                    const total = this.selectedFoods.reduce((sum, food) => sum + (food.price * food.quantity), 0);
-                    return '₱' + total.toLocaleString();
+                    const foodTotal = this.selectedFoods.reduce((sum, food) => sum + (food.price * food.quantity), 0);
+                    const grandTotal = this.accommodationTotal + foodTotal;
+                    return '₱' + grandTotal.toLocaleString();
                 },
 
-                submitAndProceed() {
-                    // Store selected foods in session via fetch
-                    const endpoint = this.selectedFoods.length > 0 ? '{{ route("booking.saveFoodSelection") }}' : '{{ route("booking.staycationActivities") }}';
+                submitAndProceed(nextUrl = '{{ route("booking.staycationActivities") }}') {
+                    // Store selected foods in session then move to provided step
+                    const targetUrl = nextUrl || '{{ route("booking.staycationActivities") }}';
 
                     if (this.selectedFoods.length === 0) {
-                        window.location.href = '{{ route("booking.staycationActivities") }}';
+                        window.location.href = targetUrl;
                         return;
                     }
 
@@ -368,7 +541,7 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            window.location.href = '{{ route("booking.staycationActivities") }}';
+                            window.location.href = targetUrl;
                         } else {
                             Swal.fire('Error', data.message || 'Failed to save food selection', 'error');
                         }

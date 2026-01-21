@@ -256,8 +256,18 @@ class BookingController extends Controller
         }
 
         $activities = $this->bookingService->getActivitiesData();
+        
+        // Get selected foods from session
+        $selectedFoods = $booking['selected_foods'] ?? session('selected_foods', []);
+        
+        // Fetch food details if we have selected foods
+        $foods = [];
+        if (!empty($selectedFoods)) {
+            $foodIds = array_column($selectedFoods, 'id');
+            $foods = \App\Models\Food::whereIn('id', $foodIds)->get()->keyBy('id');
+        }
 
-            return view('booking.staycation-activities', compact('booking', 'activities', 'staycations'));
+            return view('booking.staycation-activities', compact('booking', 'activities', 'staycations', 'selectedFoods', 'foods'));
     }
 
     public function storeStaycationActivities(Request $request)
@@ -306,11 +316,20 @@ class BookingController extends Controller
             return 500 * ($activity['guests'] ?? 1);
         });
 
+        // Calculate food total if foods were selected
+        $foodTotal = 0;
+        if (!empty($booking['selected_foods'])) {
+            foreach ($booking['selected_foods'] as $foodData) {
+                $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
+            }
+        }
+
         // Store final totals in session
         $booking['final_totals'] = [
             'accommodation_total' => $accommodationTotal,
             'activities_total' => $activitiesTotal,
-            'grand_total' => $accommodationTotal + $activitiesTotal
+            'food_total' => $foodTotal,
+            'grand_total' => $accommodationTotal + $activitiesTotal + $foodTotal
         ];
 
         $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [3]));
@@ -348,6 +367,12 @@ class BookingController extends Controller
         $total = 0;
         $checkin = \Carbon\Carbon::parse($checkinDate);
         $checkout = \Carbon\Carbon::parse($checkoutDate);
+        $nights = $checkin->diffInDays($checkout);
+
+        // Detect if this is a BYOT or Car Camping room
+        $roomName = strtolower($staycation->name);
+        $isBYOT = strpos($roomName, 'byot') !== false || strpos($roomName, 'bring your own tent') !== false;
+        $isCarCamping = strpos($roomName, 'car camping') !== false;
 
         // Get holiday dates
         $holidayDates = Holiday::whereBetween('date', [$checkinDate, $checkout->copy()->subDay()->format('Y-m-d')])
@@ -360,37 +385,68 @@ class BookingController extends Controller
             ->pluck('weekday')
             ->toArray();
 
-        $current = $checkin->copy();
-        while ($current->lt($checkout)) {
-            $dateStr = $current->format('Y-m-d');
-            $dayOfWeek = (int)$current->dayOfWeek;
+        // For BYOT/Car Camping, calculate base price per night per unit (quantity)
+        if ($isBYOT || $isCarCamping) {
+            $quantity = $acc['extra_mattress'] ?? 1;
+            
+            $current = $checkin->copy();
+            while ($current->lt($checkout)) {
+                $dateStr = $current->format('Y-m-d');
+                $dayOfWeek = (int)$current->dayOfWeek;
 
-            // Determine day type: Holiday > Weekend > Weekday
-            $dayType = 'nonPeak'; // default
-            if (in_array($dateStr, $holidayDates)) {
-                $dayType = 'superPeak';
-            } elseif (in_array($dayOfWeek, $weekendDayIds)) {
-                $dayType = 'peak';
+                // Determine day type: Holiday > Weekend > Weekday
+                $dayType = 'nonPeak'; // default
+                if (in_array($dateStr, $holidayDates)) {
+                    $dayType = 'superPeak';
+                } elseif (in_array($dayOfWeek, $weekendDayIds)) {
+                    $dayType = 'peak';
+                }
+
+                // Find applicable price config for this date
+                $rate = $this->getStaycationRateForDate($staycation->price_configs, $current, $dayType);
+
+                if ($rate > 0) {
+                    // For BYOT/Car Camping: multiply rate by quantity
+                    $total += $rate * $quantity;
+                }
+
+                $current->addDay();
+            }
+            
+            // No mattress or pet fees for BYOT/Car Camping
+        } else {
+            // Regular rooms: calculate nightly rates and add additional charges
+            $current = $checkin->copy();
+            while ($current->lt($checkout)) {
+                $dateStr = $current->format('Y-m-d');
+                $dayOfWeek = (int)$current->dayOfWeek;
+
+                // Determine day type: Holiday > Weekend > Weekday
+                $dayType = 'nonPeak'; // default
+                if (in_array($dateStr, $holidayDates)) {
+                    $dayType = 'superPeak';
+                } elseif (in_array($dayOfWeek, $weekendDayIds)) {
+                    $dayType = 'peak';
+                }
+
+                // Find applicable price config for this date
+                $rate = $this->getStaycationRateForDate($staycation->price_configs, $current, $dayType);
+
+                if ($rate > 0) {
+                    $total += $rate;
+                }
+
+                $current->addDay();
             }
 
-            // Find applicable price config for this date
-            $rate = $this->getStaycationRateForDate($staycation->price_configs, $current, $dayType);
+            // Add extra mattress fee (assuming ₱400 per night per mattress)
+            $extraMattresses = $acc['extra_mattress'] ?? 0;
+            $total += $extraMattresses * 400 * $nights;
 
-            if ($rate > 0) {
-                $total += $rate;
+            // Add pet fees
+            if (!empty($acc['pet_agreement']) && !empty($acc['num_pets'])) {
+                $total += 2000 * $acc['num_pets'];
             }
-
-            $current->addDay();
-        }
-
-        // Add extra mattress fee (assuming ₱400 per night per mattress)
-        $extraMattresses = $acc['extra_mattress'] ?? 0;
-        $nights = $checkin->diffInDays($checkout);
-        $total += $extraMattresses * 400 * $nights;
-
-        // Add pet fees
-        if (!empty($acc['pet_agreement']) && !empty($acc['num_pets'])) {
-            $total += 2000 * $acc['num_pets'];
         }
 
         return $total;
@@ -443,8 +499,21 @@ class BookingController extends Controller
         if (empty($booking['checkin']) || empty($booking['checkout']) || empty($booking['accommodations'])) {
             return redirect()->route('booking.staycation')->with('error', 'Please complete your staycation booking first.');
         }
+        
+        // Get selected foods from session
+        $selectedFoods = $booking['selected_foods'] ?? session('selected_foods', []);
+        
+        // Fetch food details if we have selected foods
+        $foods = [];
+        if (!empty($selectedFoods)) {
+            $foodIds = array_column($selectedFoods, 'id');
+            $foods = \App\Models\Food::whereIn('id', $foodIds)->get()->keyBy('id');
+        }
+        
+        // Fetch staycations for room names
+        $staycations = \App\Models\Staycation::all()->keyBy('id');
 
-        return view('booking.staycation-payment', compact('booking'));
+        return view('booking.staycation-payment', compact('booking', 'selectedFoods', 'foods', 'staycations'));
     }
 
     public function payment()
@@ -457,9 +526,16 @@ class BookingController extends Controller
         // Handle staycation confirmation separately since it uses 'booking' session
         $staycationBooking = session('booking', []);
         if (!empty($staycationBooking) && isset($staycationBooking['booking_type']) && $staycationBooking['booking_type'] === 'staycation') {
+            // Fetch food and staycation models for confirmation display
+            $foods = Food::all();
+            $staycations = Staycation::all()->keyBy('id');
+            
             $data = [
                 'bookingData' => $staycationBooking,
                 'selectedActivities' => $staycationBooking['selected_activities'] ?? [],
+                'selectedFoods' => $staycationBooking['selected_foods'] ?? [],
+                'foods' => $foods,
+                'staycations' => $staycations,
                 'grandTotal' => $staycationBooking['final_totals']['grand_total'] ?? 0,
                 'customerInfo' => session('staycation_customer_info', []),
                 'isStaycation' => true
@@ -494,9 +570,41 @@ class BookingController extends Controller
         // Validate payment form
         $request->validate(ValidationService::paymentRules());
 
-        // Get booking data from session
-        $bookingData = session('booking_data');
+        // Get booking data from session first, then use posted data as backup
         $staycationBooking = session('booking', []);
+        
+        // If booking data was posted, merge it with session data to ensure we have everything
+        if ($request->has('accommodations')) {
+            $postedAccommodations = json_decode($request->input('accommodations', '[]'), true);
+            if (!empty($postedAccommodations)) {
+                $staycationBooking['accommodations'] = $postedAccommodations;
+            }
+        }
+        
+        if ($request->has('selected_foods')) {
+            $postedFoods = json_decode($request->input('selected_foods', '[]'), true);
+            if (!empty($postedFoods)) {
+                $staycationBooking['selected_foods'] = $postedFoods;
+            }
+        }
+        
+        if ($request->has('selected_activities')) {
+            $postedActivities = json_decode($request->input('selected_activities', '[]'), true);
+            if (!empty($postedActivities)) {
+                $staycationBooking['selected_activities'] = $postedActivities;
+            }
+        }
+        
+        if ($request->has('checkin')) {
+            $staycationBooking['checkin'] = $request->input('checkin');
+        }
+        
+        if ($request->has('checkout')) {
+            $staycationBooking['checkout'] = $request->input('checkout');
+        }
+
+        // Get other booking data
+        $bookingData = session('booking_data');
         $dayvisitBooking = session('dayvisit_booking_data');
 
         // Check if we have any booking data
@@ -507,7 +615,7 @@ class BookingController extends Controller
         // Define payment processors for each booking type
         $paymentProcessors = [
             [
-                'condition' => !empty($staycationBooking) && $staycationBooking['booking_type'] === 'staycation',
+                'condition' => !empty($staycationBooking) && isset($staycationBooking['booking_type']) && $staycationBooking['booking_type'] === 'staycation',
                 'processor' => fn() => $this->paymentService->processStaycationPayment($staycationBooking, $request->all())
             ],
             [
@@ -810,15 +918,74 @@ class BookingController extends Controller
 
                 foreach ($selectedRooms as $roomId => $room) {
                     $roomId = (int)$roomId;
+                    
+                    // Fetch staycation to get pricing info
+                    $staycation = Staycation::find($roomId);
+                    
+                    // Get checkin/checkout dates from booking session
+                    $checkinDate = $booking['checkin'] ?? null;
+                    $checkoutDate = $booking['checkout'] ?? null;
+                    
+                    // If dates not in booking, try to get from request
+                    if (!$checkinDate && $request->has('checkin')) {
+                        $checkinDate = $request->input('checkin');
+                    }
+                    if (!$checkoutDate && $request->has('checkout')) {
+                        $checkoutDate = $request->input('checkout');
+                    }
+                    
+                    // Calculate nights - make sure we have valid dates
+                    $nights = 1; // Default minimum
+                    if ($checkinDate && $checkoutDate) {
+                        $nights = max(1, \Carbon\Carbon::parse($checkinDate)->diffInDays(\Carbon\Carbon::parse($checkoutDate)));
+                    }
+                    
+                    // Calculate base price using same method as availability page
+                    $basePrice = $this->calculatePrice($staycation, $checkinDate ?? now()->format('Y-m-d')) ?? ($staycation->price ?? 0);
+                    
+                    // Check if BYOT or Car Camping
+                    $roomNameLower = strtolower($staycation->name ?? '');
+                    $isBYOT = str_contains($roomNameLower, 'byot') || str_contains($roomNameLower, 'bring your own tent');
+                    $isCarCamping = str_contains($roomNameLower, 'car camping');
+                    
+                    // Calculate costs
+                    $quantity = (int)($room['extra_mattress'] ?? 1); // Quantity for BYOT/Car Camping
+                    $numPets = (int)($room['num_pets'] ?? 0);
+                    $adults = (int)($room['adults'] ?? 1);
+                    
+                    if ($isBYOT || $isCarCamping) {
+                        // For BYOT/Car Camping: price = base price × quantity × nights
+                        // Base price is already per night, so multiply by quantity and nights
+                        $roomPrice = $basePrice * $quantity * $nights;
+                        $mattressPrice = 0; // No separate mattress charge for BYOT/Car Camping
+                        $totalPrice = $roomPrice;
+                    } else {
+                        // For regular rooms: price = base price × nights + extras
+                        $roomPrice = $basePrice * $nights;
+                        $extraMattress = (int)($room['extra_mattress'] ?? 0);
+                        $mattressPrice = $extraMattress * 500 * $nights; // ₱500 per extra mattress per night
+                        $totalPrice = $roomPrice + $mattressPrice;
+                    }
+                    
+                    // Pet charge applies to all room types (one-time, not per night)
+                    $petPrice = $numPets * 2000;
+                    if (!($isBYOT || $isCarCamping)) {
+                        // Only add pet price for non-BYOT/Car Camping rooms
+                        $totalPrice += $petPrice;
+                    }
 
                     $normalized[$roomId] = [
                         'room_id'        => $roomId,
-                        'adults'         => (int)($room['adults'] ?? 1),
+                        'adults'         => $adults,
                         'children'       => (int)($room['children'] ?? 0),
                         'extra_mattress' => (int)($room['extra_mattress'] ?? 0),
                         'pets'           => ($room['pets'] ?? 'no'),
                         'pet_agreement'  => (bool)($room['pet_agreement'] ?? false),
-                        'num_pets'       => (int)($room['num_pets'] ?? 0),
+                        'num_pets'       => $numPets,
+                        'base_price'     => $roomPrice,
+                        'mattress_price' => $mattressPrice,
+                        'pet_price'      => $petPrice,
+                        'total_price'    => $totalPrice,
                     ];
                 }
 
@@ -1096,7 +1263,11 @@ class BookingController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('booking.staycation-food', compact('booking', 'foodMenus'));
+        // Fetch staycation data for display in summary (array keys are room IDs)
+        $accommodationIds = array_keys($booking['accommodations'] ?? []);
+        $staycations = Staycation::whereIn('id', $accommodationIds)->get();
+
+        return view('booking.staycation-food', compact('booking', 'foodMenus', 'staycations'));
     }
 
     public function saveFoodSelection(Request $request)
@@ -1111,8 +1282,49 @@ class BookingController extends Controller
             'selected_foods.*.notes' => 'nullable|string'
         ]);
 
-        // Store selected foods in session
+        // Store selected foods in session (legacy key)
         session(['selected_foods' => $validated['selected_foods']]);
+
+        // Also persist inside booking session so next steps have rooms + foods together
+        $booking = session('booking', [
+            'checkin' => null,
+            'checkout' => null,
+            'accommodations' => [],
+            'booking_type' => 'staycation',
+            'timestamp' => now()->timestamp,
+            'completed_steps' => [],
+            'current_step' => 1,
+        ]);
+
+        $booking['booking_type'] = 'staycation';
+        $booking['selected_foods'] = $validated['selected_foods'];
+        
+        // Calculate food total from selected foods
+        $foodTotal = 0;
+        foreach ($validated['selected_foods'] as $foodData) {
+            $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
+        }
+        
+        // Update final_totals to include food cost
+        if (!isset($booking['final_totals'])) {
+            $booking['final_totals'] = [
+                'accommodation_total' => 0,
+                'activities_total' => 0,
+                'food_total' => $foodTotal,
+                'grand_total' => $foodTotal
+            ];
+        } else {
+            $booking['final_totals']['food_total'] = $foodTotal;
+            $booking['final_totals']['grand_total'] = 
+                ($booking['final_totals']['accommodation_total'] ?? 0) + 
+                ($booking['final_totals']['activities_total'] ?? 0) + 
+                $foodTotal;
+        }
+        
+        $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [2]));
+        $booking['current_step'] = 3;
+
+        session(['booking' => $booking]);
 
         return response()->json([
             'success' => true,
@@ -1366,40 +1578,30 @@ class BookingController extends Controller
                     $baseRate = $rates[$rateKey] ?? 0;
 
                     // For staycations, price is fixed regardless of guests (up to max capacity)
-                    return $baseRate;
+                    if ($baseRate > 0) {
+                        return $baseRate;
+                    }
                 }
             }
 
             // If no specific config applies, use first config's rate
-            $config = $priceConfigs[0];
-            $rates = $config['rates'] ?? [];
-            $baseRate = $rates[$rateKey] ?? 0;
-
-            // Apply guest-based pricing
-            $baseGuests = 2;
-            $extraGuestRate = 500;
-
-            if ($guests > $baseGuests) {
-                $extraGuests = $guests - $baseGuests;
-                $baseRate += $extraGuests * $extraGuestRate;
+            if (!empty($priceConfigs[0])) {
+                $config = $priceConfigs[0];
+                $rates = $config['rates'] ?? [];
+                $baseRate = $rates[$rateKey] ?? 0;
+                if ($baseRate > 0) {
+                    return $baseRate;
+                }
             }
-
-            return $baseRate;
         }
 
-        // Fallback to hardcoded pricing if no price configs
-        $baseRate = $staycation->name && strpos(strtolower($staycation->name), 'glamping') !== false ? 5500 : 3000;
-
-        // Apply guest-based pricing to fallback
-        $baseGuests = 2;
-        $extraGuestRate = 500;
-
-        if ($guests > $baseGuests) {
-            $extraGuests = $guests - $baseGuests;
-            $baseRate += $extraGuests * $extraGuestRate;
+        // Fallback to staycation's price field if it exists
+        if (!empty($staycation->price) && $staycation->price > 0) {
+            return $staycation->price;
         }
 
-        return $baseRate;
+        // Final fallback to type-based pricing
+        return $staycation->name && strpos(strtolower($staycation->name), 'glamping') !== false ? 5500 : 3000;
     }
 
     /**

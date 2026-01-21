@@ -43,6 +43,9 @@ class BookingConfirmation extends Mailable
             with: [
                 'bookingData' => $this->data['bookingData'] ?? [],
                 'selectedActivities' => $this->data['selectedActivities'] ?? [],
+                'selectedFoods' => $this->data['selectedFoods'] ?? [],
+                'staycations' => $this->data['staycations'] ?? collect(),
+                'foods' => $this->data['foods'] ?? collect(),
                 'grandTotal' => $this->data['grandTotal'] ?? 0,
                 'customerInfo' => $this->data['customerInfo'] ?? [],
                 'isStaycation' => $this->data['isStaycation'] ?? false,

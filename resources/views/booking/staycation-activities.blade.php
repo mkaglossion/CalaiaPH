@@ -60,55 +60,12 @@ if ($bookingType === 'staycation') {
     }
 }
 
-// Calculate accommodation total with dynamic pricing
+// Calculate accommodation total from stored room prices
 $accommodationTotal = 0;
-if ($datesSelected) {
-    $start = new DateTime($checkinDate);
-    $end = new DateTime($checkoutDate);
-
-    foreach ($booking['accommodations'] ?? [] as $acc) {
-        if (!empty($acc) && !empty($acc['staycation'])) {
-            $quantity = $acc['guests'] ?? 1;
-            $name = strtolower($acc['staycation']['name']);
-            $isBYOT = str_contains($name, 'byot');
-            $isCarCamping = str_contains($name, 'car camping');
-
-            if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
-                $current = clone $start;
-                while ($current < $end) {
-                    $day = (int)$current->format('w'); // 0=Sun, 6=Sat
-                    $isWeekend = $day === 5 || $day === 6; // Fri=5, Sat=6
-                    $basePrice = 0;
-                    if (str_contains($name, 'standard')) {
-                        $basePrice = $isWeekend ? 6000 : 4800;
-                    } elseif (str_contains($name, 'premium')) {
-                        $basePrice = $isWeekend ? 7200 : 5760;
-                    }
-                    $extraGuests = max(0, $quantity - 4);
-                    $accommodationTotal += $basePrice + ($extraGuests * 400);
-                    $current->modify('+1 day');
-                }
-            } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
-                $accommodationTotal += 3000 * $nights;
-            } elseif ($isBYOT || $isCarCamping) {
-                $accommodationTotal += 300 * $quantity * $nights;
-            }
-        }
-    }
-
-    // Add pet fees
-    foreach ($booking['accommodations'] ?? [] as $acc) {
-        if (!empty($acc['pet_agreement']) && !empty($acc['num_pets'])) {
-            $accommodationTotal += 2000 * $acc['num_pets'];
-        }
-    }
-
-    // Add breakfast fees
-    $breakfastTotal = 0;
-    foreach ($booking['accommodations'] ?? [] as $acc) {
-        if (!empty($acc['has_breakfast'])) {
-            $breakfastTotal += 500 * ($acc['guests'] ?? 1);
-        }
+$breakfastTotal = 0;
+foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
+    if (!empty($acc)) {
+        $accommodationTotal += $acc['total_price'] ?? 0;
     }
 }
 @endphp
@@ -187,178 +144,185 @@ if ($datesSelected) {
 
         {{-- Sidebar: booking summary --}}
         <div class="lg:col-span-1">
-            <div class="bg-white rounded-xl shadow-md p-6 sticky top-6">
-                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
-
-                @if($datesSelected)
-                    <div class="space-y-3 mb-6">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Check-in:</span>
-                            <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkinDate)->format('M j, Y') }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Check-out:</span>
-                            <span class="text-sm font-medium">{{ \Carbon\Carbon::parse($checkoutDate)->format('M j, Y') }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Nights:</span>
-                            <span class="text-sm font-medium">{{ $nights }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Guests:</span>
-                            <span class="text-sm font-medium">{{ $totalGuests }}</span>
-                        </div>
-                        <hr class="my-3">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Accommodations:</span>
-                            <span class="text-sm font-medium">{{ count(array_filter($booking['accommodations'] ?? [])) }} selected</span>
-                        </div>
-                        @if($bookingType === 'staycation')
-                        <div class="mt-2 space-y-1">
-                            @if(!empty($booking['accommodations']))
-                                @php
-                                $start = new DateTime($checkinDate);
-                                $end = new DateTime($checkoutDate);
-                                @endphp
-                                @foreach($booking['accommodations'] as $index => $accommodation)
-                                    @if(!empty($accommodation) && !empty($accommodation['staycation']))
-                                        @php
-                                        $quantity = $accommodation['guests'] ?? 1;
-                                        $name = strtolower($accommodation['staycation']['name']);
-                                        $isBYOT = str_contains($name, 'byot');
-                                        $isCarCamping = str_contains($name, 'car camping');
-                                        $accommodationPrice = 0;
-                                        $basePriceTotal = 0;
-                                        $extraPriceTotal = 0;
-                                        $extraGuests = 0;
-
-                                        if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
-                                            $current = clone $start;
-                                            while ($current < $end) {
-                                                $day = (int)$current->format('w');
-                                                $isWeekend = $day === 5 || $day === 6;
-                                                $basePrice = 0;
-                                                if (str_contains($name, 'standard')) {
-                                                    $basePrice = $isWeekend ? 6000 : 4800;
-                                                } elseif (str_contains($name, 'premium')) {
-                                                    $basePrice = $isWeekend ? 7200 : 5760;
-                                                }
-                                                $extraGuests = max(0, $quantity - 4);
-                                                $accommodationPrice += $basePrice + ($extraGuests * 400);
-                                                $basePriceTotal += $basePrice;
-                                                $extraPriceTotal += $extraGuests * 400;
-                                                $current->modify('+1 day');
-                                            }
-                                        } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
-                                            $accommodationPrice = 3000 * $nights;
-                                        } elseif ($isBYOT || $isCarCamping) {
-                                            $accommodationPrice = 300 * $quantity * $nights;
-                                        }
-
-                                        $petFee = (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) ? 2000 * $accommodation['num_pets'] : 0;
-                                        $totalPrice = $accommodationPrice + $petFee;
-
-                                        // Calculate base rate per night (weekday rate for standard/premium)
-                                        $baseRate = 0;
-                                        if (str_contains($name, 'standard')) {
-                                            $baseRate = 4800; // weekday rate
-                                        } elseif (str_contains($name, 'premium')) {
-                                            $baseRate = 5760; // weekday rate
-                                        } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
-                                            $baseRate = 3000;
-                                        } elseif ($isBYOT || $isCarCamping) {
-                                            $baseRate = 300 * $quantity;
-                                        }
-
-                                        $extraRate = $extraGuests * 400; // ₱400 per extra guest per night
-                                        @endphp
-                                        <div class="text-xs text-gray-600 space-y-1">
-                                            <div>ACCOMMODATION {{ (int)$index + 1 }}: {{ $accommodation['staycation']['name'] }} - ₱{{ number_format($baseRate) }}/night ({{ $accommodation['guests'] }} guests)</div>
-                                            @if($extraGuests > 0)
-                                                <div>Extra Mattress ({{ $extraGuests }} guest{{ $extraGuests > 1 ? 's' : '' }}): ₱{{ number_format($extraRate) }}/night</div>
-                                            @endif
-                                            @if($petFee > 0)
-                                                <div>Pet Fee ({{ $accommodation['num_pets'] }} pet{{ $accommodation['num_pets'] > 1 ? 's' : '' }}): ₱{{ number_format($petFee) }}</div>
-                                            @endif
-                                        </div>
-                                    @endif
-                                @endforeach
-                            @endif
-                        </div>
+            <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-6 space-y-6">
+                {{-- Selected Dates Section --}}
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="bi bi-calendar-check mr-2 text-[#8f5d54]"></i> Selected Dates
+                    </h4>
+                    <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
+                        @if($datesSelected)
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Check-in:</span>
+                                <span class="font-semibold">{{ \Carbon\Carbon::parse($checkinDate)->format('M j, Y') }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Check-out:</span>
+                                <span class="font-semibold">{{ \Carbon\Carbon::parse($checkoutDate)->format('M j, Y') }}</span>
+                            </div>
+                            <div class="flex justify-between border-t border-gray-200 pt-2">
+                                <span class="text-gray-600">Total Nights:</span>
+                                <span class="font-semibold text-[#8f5d54]">{{ $nights }}</span>
+                            </div>
+                        @else
+                            <p class="text-gray-500 text-xs">No dates selected</p>
                         @endif
-                         @if($breakfastTotal > 0)
-                         <div class="flex justify-between items-center">
-                             <span class="text-sm text-gray-600">Breakfast:</span>
-                             <span class="text-sm font-medium">₱ {{ number_format($breakfastTotal) }}</span>
-                         </div>
-                         @endif
-                         <div class="flex justify-between items-center text-lg font-bold pt-2 border-t border-gray-200">
-                             <span>Accommodation Total:</span>
-                             <span>₱ {{ number_format($accommodationTotal + $breakfastTotal) }}</span>
-                         </div>
                     </div>
-                @else
-                    <p class="text-xs text-gray-500 mb-6" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
+                </div>
+
+                <hr class="border-gray-200">
+
+                {{-- Selected Rooms Section --}}
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="bi bi-house mr-2 text-[#8f5d54]"></i> Selected Rooms
+                    </h4>
+                    <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
+                        @if(!empty($booking['accommodations']))
+                            @foreach($booking['accommodations'] as $roomId => $room)
+                                @if(!empty($room))
+                                    <div class="bg-white rounded border border-gray-200 p-3">
+                                        <div class="font-semibold text-gray-900 mb-2">Room #{{ (int)$roomId }}</div>
+                                        <div class="text-gray-600 space-y-1 mb-2">
+                                            <div>Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
+                                            <div>Mattress: <span class="font-semibold">{{ $room['extra_mattress'] ?? 0 }}</span></div>
+                                            <div>Pets: <span class="font-semibold">{{ $room['pets'] ?? 'no' }}</span>
+                                                @if(($room['pets'] ?? 'no') === 'yes')
+                                                    <span>(#{{ $room['num_pets'] ?? 0 }})</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="border-t border-gray-200 pt-2 space-y-1">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Room:</span>
+                                                <span class="font-semibold">₱{{ number_format($room['base_price'] ?? 0, 0) }}</span>
+                                            </div>
+                                            @if(($room['mattress_price'] ?? 0) > 0)
+                                                <div class="flex justify-between">
+                                                    <span class="text-gray-600">Mattress:</span>
+                                                    <span class="font-semibold">₱{{ number_format($room['mattress_price'] ?? 0, 0) }}</span>
+                                                </div>
+                                            @endif
+                                            @if(($room['pet_price'] ?? 0) > 0)
+                                                <div class="flex justify-between">
+                                                    <span class="text-gray-600">Pets:</span>
+                                                    <span class="font-semibold">₱{{ number_format($room['pet_price'] ?? 0, 0) }}</span>
+                                                </div>
+                                            @endif
+                                            <div class="flex justify-between border-t border-gray-200 pt-1">
+                                                <span class="font-semibold text-gray-800">Total:</span>
+                                                <span class="font-bold text-[#8f5d54]">₱{{ number_format($room['total_price'] ?? 0, 0) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
+                        @else
+                            <p class="text-gray-500 text-xs">No rooms selected</p>
+                        @endif
+                    </div>
+                </div>
+
+                <hr class="border-gray-200">
+
+                {{-- Selected Food Section --}}
+                @if(!empty($selectedFoods) && count($selectedFoods) > 0)
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="bi bi-cup-straw mr-2 text-[#8f5d54]"></i> Selected Food & Beverages
+                    </h4>
+                    <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
+                        @php $foodTotal = 0; @endphp
+                        @foreach($selectedFoods as $selectedFood)
+                            @php
+                                $food = $foods->get($selectedFood['id']);
+                                if ($food) {
+                                    $quantity = $selectedFood['quantity'] ?? 1;
+                                    $itemTotal = $food->price * $quantity;
+                                    $foodTotal += $itemTotal;
+                                }
+                            @endphp
+                            @if($food)
+                            <div class="bg-white rounded border border-gray-200 p-2">
+                                <div class="flex justify-between items-start mb-1">
+                                    <span class="font-semibold text-gray-900">{{ $food->name }}</span>
+                                    <span class="font-bold text-[#8f5d54]">₱{{ number_format($itemTotal, 0) }}</span>
+                                </div>
+                                <div class="text-gray-600">
+                                    <div>Qty: <span class="font-semibold">{{ $quantity }}</span> × ₱{{ number_format($food->price, 0) }}</div>
+                                    @if(!empty($selectedFood['notes']))
+                                        <div class="text-xs text-gray-500 italic mt-1">{{ $selectedFood['notes'] }}</div>
+                                    @endif
+                                </div>
+                            </div>
+                            @endif
+                        @endforeach
+                        <div class="border-t border-gray-200 pt-2 flex justify-between">
+                            <span class="font-semibold text-gray-800">Food Subtotal:</span>
+                            <span class="font-bold text-[#8f5d54]">₱{{ number_format($foodTotal, 0) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="border-gray-200">
                 @endif
 
-                <hr class="my-4">
-
-                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Selected Activities</h3>
-
-                <div id="selected-activities" class="space-y-3 mb-4">
-                  <!-- Selected activities will be added here -->
-                </div>
-
-                <div class="border-t border-gray-200 pt-4">
-                  <div class="flex justify-between items-center text-lg font-bold">
-                    <span>Activities Total:</span>
-                    <span id="total-cost">₱0.00</span>
-                  </div>
-                </div>
-
-                <div class="border-t border-gray-200 pt-4 mt-4">
-                  <div class="flex justify-between items-center text-xl font-bold text-[#8f5d54]">
-                    <span>Grand Total:</span>
-                    <span id="grand-total">₱ {{ number_format($accommodationTotal + $breakfastTotal) }}</span>
-                  </div>
-                </div>
-
-                <div class="mt-6 space-y-3">
-                  <button
-                    type="button"
-                    id="skip-btn"
-                    class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
-                  >
-                    Proceed to Payment Without Activities
-                    <i class="bi bi-arrow-right"></i>
-                  </button>
-
-                  <button
-                    type="button"
-                    id="confirm-btn"
-                    class="w-full bg-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled
-                  >
-                    Confirm and Proceed
-                  </button>
-                </div>
-
-                {{-- Trust elements --}}
-                <div class="mt-6 pt-6 border-t border-gray-200">
-                    <div class="text-center">
-                        <h4 class="text-sm font-semibold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">Secure Booking</h4>
-                        <div class="flex justify-center items-center space-x-4">
-                            <div class="flex items-center">
-                                <i class="fas fa-lock text-green-600 mr-2"></i>
-                                <span class="text-xs text-gray-600">SSL Secured</span>
-                            </div>
-                            <div class="flex items-center">
-                                <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
-                                <span class="text-xs text-gray-600">Data Protected</span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2">Your information is safe with us</p>
+                {{-- Selected Activities Section --}}
+                <div>
+                    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="bi bi-ticket-detailed mr-2 text-[#8f5d54]"></i> Selected Activities
+                    </h4>
+                    <div id="selected-activities" class="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
+                        <p class="text-gray-500">No activities selected</p>
                     </div>
+                </div>
+
+                <hr class="border-gray-200">
+
+                {{-- Pricing Summary --}}
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">Accommodation:</span>
+                        <span class="font-semibold">₱{{ number_format($accommodationTotal + $breakfastTotal, 0) }}</span>
+                    </div>
+                    @if(!empty($selectedFoods) && count($selectedFoods) > 0)
+                    <div class="flex justify-between items-center text-sm border-t border-gray-200 pt-2">
+                        <span class="text-gray-600">Food & Beverages:</span>
+                        <span class="font-semibold">₱{{ number_format($foodTotal ?? 0, 0) }}</span>
+                    </div>
+                    @endif
+                    <div class="flex justify-between items-center text-sm border-t border-gray-200 pt-2">
+                        <span class="text-gray-600">Activities:</span>
+                        <span class="font-semibold" id="activities-total">₱0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-lg font-bold border-t border-gray-200 pt-2">
+                        <span>Grand Total:</span>
+                        <span class="text-[#8f5d54]" id="grand-total" data-food-total="{{ $foodTotal ?? 0 }}">₱{{ number_format($accommodationTotal + $breakfastTotal + ($foodTotal ?? 0), 0) }}</span>
+                    </div>
+                </div>
+
+                <hr class="border-gray-200">
+
+                {{-- Action Buttons --}}
+                <div class="flex flex-col gap-3">
+                    <button
+                        type="button"
+                        id="skip-btn"
+                        class="w-full py-3 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+                    >
+                        <i class="bi bi-credit-card mr-2"></i>
+                        Proceed to Payment Without Activities
+                    </button>
+
+                    <button
+                        type="button"
+                        id="confirm-btn"
+                        class="w-full py-3 rounded-xl font-semibold text-white bg-green-600 hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        <i class="bi bi-check-circle mr-2"></i>
+                        Confirm and Proceed
+                    </button>
                 </div>
             </div>
         </div>

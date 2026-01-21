@@ -96,6 +96,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const autoGuests = root.dataset.autoGuests === '1';
     const isStaycation = root.dataset.isStaycation === '1';
     const accommodationTotal = parseFloat(root.dataset.accommodationTotal) || 0;
+    
+    // Get food total from grand-total element's data attribute
+    const grandTotalElement = document.getElementById('grand-total');
+    const foodTotal = parseFloat(grandTotalElement?.dataset.foodTotal) || 0;
 
     // Helpers
     function showToast(message) {
@@ -115,76 +119,131 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateSummary() {
         const container = document.querySelector('#selected-activities');
         const totalElement = document.querySelector('#total-cost');
+        const activitiesTotalElement = document.querySelector('#activities-total');
         const confirmBtn = document.querySelector('#confirm-btn');
 
-        if (!container || !totalElement || !confirmBtn) return; // If elements not found, skip
-
-        container.innerHTML = '';
-
-        if (selectedActivities.length === 0) {
-            container.innerHTML =
-                '<p class="text-xs text-gray-500" style="font-family: \'Gotham Book\', sans-serif;">No activities selected</p>';
-            confirmBtn.disabled = true;
-        } else {
-            selectedActivities.forEach(activity => {
-                const item = document.createElement('div');
-                item.className = 'flex justify-between items-start p-2 bg-white rounded border';
-                const minGuests = autoGuests ? 1 : 0;
-
-                item.innerHTML = `
-                  <div class="flex-1">
-                    <p class="text-xs font-medium text-gray-900" style="font-family: 'Gotham Book', sans-serif;">${activity.name}</p>
-                    <div class="mt-2">
-                      <label class="block text-xs text-gray-600 mb-1" style="font-family: 'Gotham Book', sans-serif;">Number of Guests</label>
-                      <input type="number"
-                        class="activity-guests w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent"
-                        value="${activity.guests}"
-                        min="${minGuests}"
-                        max="${totalGuests}"
-                        data-activity-id="${activity.id}">
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-semibold text-[#8f5d54]">₱${(activity.price * activity.guests).toFixed(2)}</span>
-                    <button type="button" class="text-red-500 hover:text-red-700 remove-activity-btn" data-activity-id="${activity.id}">
-                      <i class="bi bi-x"></i>
-                    </button>
-                  </div>
-                `;
-                container.appendChild(item);
-
-                // guest input handler
-                const guestInput = item.querySelector('.activity-guests');
-                guestInput.addEventListener('input', function() {
-                    let newGuests = parseInt(this.value);
-                    if (isNaN(newGuests)) newGuests = autoGuests ? 1 : 0;
-                    if (newGuests < (autoGuests ? 1 : 0)) newGuests = autoGuests ? 1 : 0;
-                    if (newGuests > totalGuests) newGuests = totalGuests;
-
-                    const index = selectedActivities.findIndex(a => a.id === activity.id);
-                    if (index > -1) {
-                        const oldGuests = selectedActivities[index].guests;
-                        selectedActivities[index].guests = newGuests;
-                        totalCost += (newGuests - oldGuests) * activity.price;
-                        totalElement.textContent = `₱${totalCost.toFixed(2)}`;
-                        // update only this row's value
-                        item.querySelector('span.text-sm.font-semibold').textContent =
-                            `₱${(activity.price * newGuests).toFixed(2)}`;
-                    }
-                });
-            });
-            confirmBtn.disabled = false;
+        // Update total cost display (if element exists)
+        if (totalElement) {
+            totalElement.textContent = `₱${totalCost.toFixed(2)}`;
         }
 
-        totalElement.textContent = `₱${totalCost.toFixed(2)}`;
+        // Update activities total in sidebar (if element exists)
+        if (activitiesTotalElement) {
+            activitiesTotalElement.textContent = `₱${totalCost.toLocaleString('en-PH', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+        }
 
         // Update grand total for staycation
         if (isStaycation) {
             const grandTotalElement = document.getElementById('grand-total');
             if (grandTotalElement) {
-                const grandTotal = accommodationTotal + totalCost;
-                grandTotalElement.textContent = `₱${grandTotal.toFixed(2)}`;
+                const grandTotal = accommodationTotal + foodTotal + totalCost;
+                grandTotalElement.textContent = `₱${grandTotal.toLocaleString('en-PH', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
             }
+        }
+
+        // Update selected activities list (if container exists)
+        if (container) {
+            container.innerHTML = '';
+
+            if (selectedActivities.length === 0) {
+                container.innerHTML =
+                    '<p class="text-xs text-gray-500" style="font-family: \'Gotham Book\', sans-serif;">No activities selected</p>';
+            } else {
+                selectedActivities.forEach(activity => {
+                    const item = document.createElement('div');
+                    item.className = 'flex justify-between items-start p-2 bg-white rounded border';
+                    const minGuests = autoGuests ? 1 : 0;
+
+                    item.innerHTML = `
+                      <div class="flex-1">
+                        <p class="text-xs font-medium text-gray-900" style="font-family: 'Gotham Book', sans-serif;">${activity.name}</p>
+                        <p class="text-xs text-gray-500 mt-1">₱${activity.price.toLocaleString()} / pax</p>
+                        <div class="mt-2">
+                          <label class="block text-xs text-gray-600 mb-1" style="font-family: 'Gotham Book', sans-serif;">Number of Guests</label>
+                          <div class="flex items-center gap-2">
+                            <button type="button" class="decrease-guest-btn w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" data-activity-id="${activity.id}">-</button>
+                            <input type="number"
+                              class="activity-guests w-16 text-center border border-gray-300 rounded-md py-1 text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent"
+                              value="${activity.guests}"
+                              min="1"
+                              data-activity-id="${activity.id}">
+                            <button type="button" class="increase-guest-btn w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" data-activity-id="${activity.id}">+</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-[#8f5d54]">₱${(activity.price * activity.guests).toLocaleString()}</span>
+                        <button type="button" class="text-red-500 hover:text-red-700 remove-activity-btn" data-activity-id="${activity.id}">
+                          <i class="bi bi-x"></i>
+                        </button>
+                      </div>
+                    `;
+                    container.appendChild(item);
+
+                    // guest input handler - both input and change events for real-time updates
+                    const guestInput = item.querySelector('.activity-guests');
+                    const updateComputation = function() {
+                        let newGuests = parseInt(this.value);
+                        if (isNaN(newGuests) || newGuests < 1) newGuests = 1;
+                        
+                        // Update the input value to the validated value
+                        this.value = newGuests;
+
+                        const index = selectedActivities.findIndex(a => a.id === activity.id);
+                        if (index > -1) {
+                            const oldGuests = selectedActivities[index].guests;
+                            selectedActivities[index].guests = newGuests;
+                            totalCost += (newGuests - oldGuests) * activity.price;
+                            
+                            // Update displays
+                            const totalElement = document.querySelector('#total-cost');
+                            const activitiesTotalElement = document.querySelector('#activities-total');
+                            const grandTotalElement = document.getElementById('grand-total');
+                            
+                            if (totalElement) {
+                                totalElement.textContent = `₱${totalCost.toFixed(2)}`;
+                            }
+                            if (activitiesTotalElement) {
+                                activitiesTotalElement.textContent = `₱${Math.round(totalCost).toLocaleString()}`;
+                            }
+                            if (isStaycation && grandTotalElement) {
+                                const grandTotal = accommodationTotal + foodTotal + totalCost;
+                                grandTotalElement.textContent = `₱${Math.round(grandTotal).toLocaleString()}`;
+                            }
+                            
+                            // update only this row's value
+                            item.querySelector('span.text-sm.font-semibold').textContent =
+                                `₱${Math.round(activity.price * newGuests).toLocaleString()}`;
+                        }
+                    };
+                    
+                    guestInput.addEventListener('input', updateComputation);
+                    guestInput.addEventListener('change', updateComputation);
+                    
+                    // Add +/- button listeners
+                    const decreaseBtn = item.querySelector('.decrease-guest-btn');
+                    const increaseBtn = item.querySelector('.increase-guest-btn');
+                    
+                    decreaseBtn.addEventListener('click', function() {
+                        let currentValue = parseInt(guestInput.value);
+                        if (currentValue > 1) {
+                            guestInput.value = currentValue - 1;
+                            updateComputation.call(guestInput);
+                        }
+                    });
+                    
+                    increaseBtn.addEventListener('click', function() {
+                        let currentValue = parseInt(guestInput.value);
+                        guestInput.value = currentValue + 1;
+                        updateComputation.call(guestInput);
+                    });
+                });
+            }
+        }
+
+        // Update confirm button state (if exists)
+        if (confirmBtn) {
+            confirmBtn.disabled = selectedActivities.length === 0;
         }
     }
 
@@ -220,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <span class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">
                                       <i class="bi bi-clock mr-1"></i>${activity.duration}
                                     </span>
-                                    <span class="text-xs font-semibold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">₱${parseFloat(activity.price).toFixed(2)}</span>
+                                    <span class="text-xs font-semibold text-[#8f5d54]" style="font-family: 'Gotham Book', sans-serif;">₱${parseFloat(activity.price).toFixed(2)} / pax</span>
                                   </div>
                                   <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full" style="font-family: 'Gotham Book', sans-serif;">
                                     ${activity.availability}
