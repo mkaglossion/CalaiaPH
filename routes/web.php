@@ -150,8 +150,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/booking/history', function () {
-        // TODO: Implement booking history logic
-        $bookings = []; // Fetch user's bookings from database
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Fetch user's bookings from database by email or customer email
+        $bookings = \App\Models\Booking::where('customer_email', $user->email)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
         return view('booking_history', compact('bookings'));
     })->name('booking.history');
 
@@ -169,7 +175,15 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     // Main Sections
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/users', [AdminUsersController::class, 'index'])->name('admin.users');
-    // adminRoute('/bookings', AdminController::class, 'admin.bookings', 'bookings');
+    
+    // Bookings Management
+    Route::prefix('bookings')->group(function () {
+        Route::get('/', [AdminBookingsController::class, 'index'])->name('admin.bookings.index');
+        Route::get('/inventory', [AdminBookingsController::class, 'inventory'])->name('admin.bookings.inventory');
+        Route::get('/{id}', [AdminBookingsController::class, 'show'])->name('admin.bookings.show');
+        Route::post('/{id}/cancel', [AdminBookingsController::class, 'cancel'])->name('admin.bookings.cancel');
+    });
+    
     // adminRoute('/staycations', AdminController::class, 'admin.staycations', 'staycations');
     // adminRoute('/activities', AdminController::class, 'admin.activities', 'activity');
     Route::prefix('/home')->group(function () {

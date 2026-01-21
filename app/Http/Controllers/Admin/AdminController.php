@@ -10,6 +10,7 @@ use App\Models\ActivityText;
 use App\Models\Staycation;
 use App\Models\StaycationSwiperImage;
 use App\Models\StaycationText;
+use App\Models\StaycationInventory;
 use App\Models\Menu;
 use App\Models\MenuSwiperImage;
 use App\Models\MenuText;
@@ -40,6 +41,13 @@ class AdminController extends Controller
     public function staycation()
     {
         $staycations = Staycation::all();
+        
+        // Add today's available inventory to each staycation
+        $today = now()->format('Y-m-d');
+        foreach ($staycations as $staycation) {
+            $staycation->today_available = StaycationInventory::getAvailableForDate($staycation->id, $today);
+        }
+        
         $images = StaycationSwiperImage::all();
         $texts = StaycationText::all();
         return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts'));

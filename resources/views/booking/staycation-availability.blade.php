@@ -261,6 +261,7 @@
                                                            :value="getRoom({{ $staycation->id }}).extra_mattress || 1"
                                                            @input="validateQuantity({{ $staycation->id }}, 'extra_mattress', $event.target.value, {{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }})"
                                                     >
+                                                    <span class="text-xs text-gray-500 mt-1 block" x-text="'Remaining: ' + ({{ $roomDetails[$staycation->id]['available_quantity'] ?? 0 }} - (getRoom({{ $staycation->id }}).extra_mattress || 1))"></span>
                                                 </div>
                                                 <div>
                                                     <label class="text-xs text-gray-600">Adults (Max {{ $staycation->adults ?? $staycation->capacity ?? 20 }})</label>
@@ -289,6 +290,7 @@
                                                            :value="getRoom({{ $staycation->id }}).extra_mattress || 1"
                                                            @input="validateQuantity({{ $staycation->id }}, 'extra_mattress', $event.target.value, {{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }})"
                                                     >
+                                                    <span class="text-xs text-gray-500 mt-1 block" x-text="'Remaining: ' + ({{ $roomDetails[$staycation->id]['available_quantity'] ?? 0 }} - (getRoom({{ $staycation->id }}).extra_mattress || 1))"></span>
                                                 </div>
                                                 <div>
                                                     <label class="text-xs text-gray-600">Adults (Max {{ $staycation->adults ?? $staycation->capacity ?? 20 }})</label>

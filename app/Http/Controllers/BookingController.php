@@ -21,6 +21,7 @@ use App\Models\DayType;
 use App\Models\DayTypeDay;
 use App\Models\PeakPeriod;
 use App\Models\PeakType;
+use App\Models\StaycationInventory;
 use App\Services\PricingService;
 
 
@@ -309,7 +310,9 @@ class BookingController extends Controller
 
         $accommodationTotal = 0;
         if ($datesSelected && !empty($booking['accommodations'])) {
-            $accommodationTotal = $this->calculateStaycationTotal($booking['accommodations'], $checkinDate, $checkoutDate);
+            $accommodations = $booking['accommodations'];
+            $accommodationTotal = $this->calculateStaycationTotal($accommodations, $checkinDate, $checkoutDate);
+            $booking['accommodations'] = $accommodations;
         }
 
         $activitiesTotal = collect($request->activities)->sum(function($activity) {
@@ -342,19 +345,46 @@ class BookingController extends Controller
     /**
      * Calculate total price for staycation accommodations
      */
-    private function calculateStaycationTotal(array $accommodations, string $checkinDate, string $checkoutDate): float
+    private function calculateStaycationTotal(array &$accommodations, string $checkinDate, string $checkoutDate): float
     {
         $total = 0;
 
-        foreach ($accommodations as $acc) {
+        foreach ($accommodations as &$acc) {
             if (empty($acc['room_id'])) continue;
 
             $staycation = Staycation::find($acc['room_id']);
             if (!$staycation || empty($staycation->price_configs)) continue;
 
-            $roomTotal = $this->calculateStaycationRoomPrice($staycation, $checkinDate, $checkoutDate, $acc);
-            $total += $roomTotal;
+                // Recalculate prices properly
+                $roomTotal = $this->calculateStaycationRoomPrice($staycation, $checkinDate, $checkoutDate, $acc);
+            
+                // Update accommodation prices in session
+                $nights = \Carbon\Carbon::parse($checkinDate)->diffInDays(\Carbon\Carbon::parse($checkoutDate));
+                $roomName = strtolower($staycation->name);
+                $isBYOT = strpos($roomName, 'byot') !== false;
+                $isCarCamping = strpos($roomName, 'car camping') !== false;
+            
+                if (!($isBYOT || $isCarCamping)) {
+                    $extraMattresses = $acc['extra_mattress'] ?? 0;
+                    $mattressPrice = $extraMattresses * 400 * $nights;
+                    $petPrice = ($acc['pet_agreement'] ?? false) ? ($acc['num_pets'] ?? 0) * 2000 : 0;
+                    $basePrice = $roomTotal - $mattressPrice - $petPrice;
+                
+                    $acc['base_price'] = $basePrice;
+                    $acc['mattress_price'] = $mattressPrice;
+                    $acc['pet_price'] = $petPrice;
+                    $acc['total_price'] = $roomTotal;
+                } else {
+                    $acc['base_price'] = $roomTotal;
+                    $acc['mattress_price'] = 0;
+                    $acc['pet_price'] = 0;
+                    $acc['total_price'] = $roomTotal;
+                }
+            
+                $total += $roomTotal;
         }
+
+            unset($acc);
 
         return $total;
     }
@@ -362,7 +392,7 @@ class BookingController extends Controller
     /**
      * Calculate price for a single staycation room
      */
-    private function calculateStaycationRoomPrice(Staycation $staycation, string $checkinDate, string $checkoutDate, array $acc): float
+    private function calculateStaycationRoomPrice(Staycation $staycation, string $checkinDate, string $checkoutDate, array &$acc): float
     {
         $total = 0;
         $checkin = \Carbon\Carbon::parse($checkinDate);
@@ -949,21 +979,24 @@ class BookingController extends Controller
                     $isCarCamping = str_contains($roomNameLower, 'car camping');
                     
                     // Calculate costs
-                    $quantity = (int)($room['extra_mattress'] ?? 1); // Quantity for BYOT/Car Camping
                     $numPets = (int)($room['num_pets'] ?? 0);
                     $adults = (int)($room['adults'] ?? 1);
                     
                     if ($isBYOT || $isCarCamping) {
+                        // For BYOT/Car Camping: quantity is from extra_mattress field
+                        $quantity = (int)($room['extra_mattress'] ?? 1);
                         // For BYOT/Car Camping: price = base price × quantity × nights
                         // Base price is already per night, so multiply by quantity and nights
                         $roomPrice = $basePrice * $quantity * $nights;
                         $mattressPrice = 0; // No separate mattress charge for BYOT/Car Camping
                         $totalPrice = $roomPrice;
                     } else {
+                        // For regular rooms: quantity is always 1
+                        $quantity = 1;
                         // For regular rooms: price = base price × nights + extras
                         $roomPrice = $basePrice * $nights;
                         $extraMattress = (int)($room['extra_mattress'] ?? 0);
-                        $mattressPrice = $extraMattress * 500 * $nights; // ₱500 per extra mattress per night
+                        $mattressPrice = $extraMattress * 400 * $nights; // ₱400 per extra mattress per night
                         $totalPrice = $roomPrice + $mattressPrice;
                     }
                     
@@ -976,9 +1009,11 @@ class BookingController extends Controller
 
                     $normalized[$roomId] = [
                         'room_id'        => $roomId,
+                        'accommodation_id' => $roomId,
                         'adults'         => $adults,
                         'children'       => (int)($room['children'] ?? 0),
                         'extra_mattress' => (int)($room['extra_mattress'] ?? 0),
+                        'quantity'       => $quantity, // Add quantity for inventory reduction
                         'pets'           => ($room['pets'] ?? 'no'),
                         'pet_agreement'  => (bool)($room['pet_agreement'] ?? false),
                         'num_pets'       => $numPets,
@@ -1168,7 +1203,7 @@ class BookingController extends Controller
             $totalNights = $checkinCarbon->diffInDays($checkoutCarbon);
 
             // Fetch inventory for this staycation in the selected range
-            $inventories = \App\Models\StaycationInventory::where('staycation_id', $staycation->id)
+            $inventories = StaycationInventory::where('staycation_id', $staycation->id)
                 ->whereBetween('date', [$checkinCarbon->format('Y-m-d'), $checkoutCarbon->copy()->subDay()->format('Y-m-d')])
                 ->get(['date', 'available_quantity'])
                 ->keyBy(function ($i) { return \Carbon\Carbon::parse($i->date)->format('Y-m-d'); });
@@ -1180,7 +1215,8 @@ class BookingController extends Controller
 
             while ($current->lt($checkoutCarbon)) {
                 $dateStr = $current->format('Y-m-d');
-                $qty = (int) ($inventories[$dateStr]->available_quantity ?? $staycation->quantity);
+                // Get from inventory table, if not exists use 0 (not available)
+                $qty = isset($inventories[$dateStr]) ? (int) $inventories[$dateStr]->available_quantity : 0;
                 $inventoryDetails[$dateStr] = [
                     'min_quantity' => $qty,
                     'is_available' => $qty > 0,
@@ -1255,6 +1291,10 @@ class BookingController extends Controller
             return redirect()->route('booking.staycationAvailability')
                 ->with('error', 'Please select your room(s) first.');
         }
+
+        // Clear any previous food selections to start fresh
+        session()->forget('selected_foods');
+        $booking['selected_foods'] = [];
 
         // Pull food items from database with images and texts, sorted by category then name
         $foodMenus = Food::with(['swiperImages', 'texts'])

@@ -16,7 +16,7 @@
 
     @if ($message = Session::get('success'))
         <div class="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-start gap-3">
-            <i data-lucide="check-circle" class="w-5 h-5 flex-shrink-0 mt-0.5"></i>
+            <i data-lucide="check-circle" class="w-5 h-5 shrink-0 mt-0.5"></i>
             <div>
                 <p class="font-semibold">Success</p>
                 <p class="text-sm">{{ $message }}</p>

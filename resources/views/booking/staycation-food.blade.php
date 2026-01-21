@@ -443,7 +443,7 @@
     <script>
         function staycationFoodSelection(accommodationTotal = 0) {
             return {
-                selectedFoods: @json($booking['selected_foods'] ?? session('selected_foods', [])),
+                selectedFoods: [],
                 selectedCategory: 'all',
                 accommodationTotal: accommodationTotal,
 

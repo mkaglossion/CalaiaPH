@@ -40,14 +40,7 @@
                     <td class="px-4 py-2">{{ $index + 1 }}</td>
                     <td class="px-4 py-2">{{ $act->name ?? 'Untitled' }}</td>
                     <td class="px-4 py-2">
-                        @php
-                            $today = \Carbon\Carbon::today()->format('Y-m-d');
-                            $inv = \App\Models\StaycationInventory::where('staycation_id', $act->id)
-                                ->whereDate('date', $today)
-                                ->first();
-                            $todayAvail = $inv ? $inv->available_quantity : ($act->quantity ?? 0);
-                        @endphp
-                        {{ $todayAvail }}
+                        {{ $act->today_available ?? 0 }}
                     </td>
                     <td class="px-4 py-2">{{ $act->adults ?? 'N/A' }}</td>
                     <td class="px-4 py-2">{{ $act->children ?? 'N/A' }}</td>

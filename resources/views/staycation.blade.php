@@ -87,9 +87,9 @@
           </div>
 
           <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {{-- Standard --}}
+            {{-- Standard Glamping --}}
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif;"><i class="bi bi-house-fill"></i> Standard Family Glamping Tent</h4></div>
+              <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif;"><i class="bi bi-house-fill"></i> Standard Glamping</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -111,7 +111,7 @@
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
                    <p class="font-bold leading-tight" style="color:#7a7d52; font-size: 20px; font-family: 'Gotham Book', sans-serif;">Start at ₱4,800/night (Weekdays: Sun.-Thu.)<br>₱6,000/night (Weekends: Fri.-Sat.)</p>
-                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Standard</span>
+                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Standard Glamping</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
                 <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
@@ -135,9 +135,9 @@
               </div>
             </div>
 
-            {{-- Premium --}}
+            {{-- Premium Glamping --}}
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif;"><i class="bi bi-star-fill"></i> Premium Family Glamping Tent</h4></div>
+              <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif;"><i class="bi bi-star-fill"></i> Premium Glamping</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -159,7 +159,7 @@
                 <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
                 <div class="flex items-center justify-between">
                    <p class="font-bold leading-tight" style="color:#7a7d52; font-size: 20px; font-family: 'Gotham Book', sans-serif;">Starts at ₱7,200/night (Weekends: Fri.-Sat.)<br>₱5,760/night (Weekdays: Sun.-Thu.)</p>
-                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Exclusive</span>
+                   <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Premium Glamping</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
                 <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">

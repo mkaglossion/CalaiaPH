@@ -48,23 +48,23 @@
                             @foreach ($bookingData['accommodations'] as $roomId => $accommodation)
                                 @if (!empty($accommodation))
                                     @php
-                                    $staycation = $staycations->get($accommodation['accommodation_id'] ?? $roomId);
+                                    $staycation = $staycations->get($accommodation['room_id'] ?? $accommodation['accommodation_id'] ?? $roomId);
                                     $adultsCount = $accommodation['adults'] ?? 0;
                                     $childrenCount = $accommodation['children'] ?? 0;
                                     $quantity = $accommodation['quantity'] ?? 1;
                                     $basePrice = $accommodation['base_price'] ?? 0;
-                                    $nights = $bookingData['nights'] ?? 1;
-                                    $roomTotal = $basePrice * $quantity * $nights;
                                     $mattressPrice = $accommodation['mattress_price'] ?? 0;
                                     $petPrice = $accommodation['pet_price'] ?? 0;
+                                    $totalPrice = $accommodation['total_price'] ?? ($basePrice + $mattressPrice + $petPrice);
                                     @endphp
                                     @if($staycation)
-                                        <li>{{ $staycation->name }}
+                                        <li>
+                                            {{ $staycation->name }}
                                             @if($quantity > 1)
                                                 - {{ $quantity }} units
                                             @endif
                                             ({{ $adultsCount }} adult{{ $adultsCount !== 1 ? 's' : '' }}, {{ $childrenCount }} child{{ $childrenCount !== 1 ? 'ren' : '' }})
-                                            - ₱{{ number_format($roomTotal, 2) }}
+                                            - ₱{{ number_format($basePrice, 2) }}
                                             @if($mattressPrice > 0)
                                                 + Mattress: ₱{{ number_format($mattressPrice, 2) }}
                                             @endif
@@ -81,7 +81,7 @@
                     @if(!empty($selectedFoods))
                         <p><strong>Selected Foods:</strong></p>
                         <ul>
-                            @forelse($selectedFoods as $foodData)
+                            @foreach($selectedFoods as $foodData)
                                 @php
                                 $foodName = $foodData['name'] ?? 'Unknown Food';
                                 $foodPrice = $foodData['price'] ?? 0;
@@ -90,9 +90,7 @@
                                 $foodItemTotal = $foodPrice * $foodQuantity * $nights;
                                 @endphp
                                 <li>{{ $foodName }} - ₱{{ number_format($foodPrice, 2) }}/night × {{ $foodQuantity }} × {{ $nights }} night{{ $nights !== 1 ? 's' : '' }} = ₱{{ number_format($foodItemTotal, 2) }}</li>
-                            @empty
-                                <li>No foods selected</li>
-                            @endforelse
+                            @endforeach
                         </ul>
                     @endif
                     
@@ -112,7 +110,9 @@
                     @if($activitiesTotal > 0)
                         <p><strong>Activities Total:</strong> ₱{{ number_format($activitiesTotal, 2) }}</p>
                     @endif
+                    @if($grandTotal > 0)
                     <p><strong>Total Amount Paid:</strong> ₱{{ number_format($grandTotal, 2) }}</p>
+                    @endif
                 @else
                     @php
                     $accommodationTotal = 0;
@@ -138,12 +138,16 @@
                         return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
                     });
                     @endphp
+                    @if($activitiesTotal > 0)
                     <p><strong>Activities Total:</strong> ₱{{ number_format($activitiesTotal, 2) }}</p>
+                    @endif
                     @endif
                     @php
                     $grandTotal = ($bookingData['price'] ?? 0) + $activitiesTotal;
                     @endphp
+                    @if($grandTotal > 0)
                     <p><strong>Total Amount Paid:</strong> ₱{{ number_format($grandTotal, 2) }}</p>
+                    @endif
                     @if($bookingData['special_requests'] ?? $bookingData['customer_info']['special_requests'] ?? false)
                     <p><strong>Special Requests:</strong> {{ $bookingData['special_requests'] ?? $bookingData['customer_info']['special_requests'] ?? '' }}</p>
                     @endif

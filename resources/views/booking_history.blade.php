@@ -15,7 +15,7 @@
         <div class="max-w-7xl mx-auto py-12">
             <h1 class="mb-6 ml-24 text-3xl font-bold text-[#4d3327]">My Bookings</h1>
 
-            @if(empty($bookings ?? []))
+            @if(!isset($bookings) || $bookings->isEmpty())
                 {{-- Empty state --}}
                 <div class="rounded-2xl bg-white border border-[#cccbbd] p-8 text-center shadow-sm">
                     <i class="bi bi-info-circle text-4xl mb-3 text-[#00848d]" aria-hidden="true"></i>
@@ -43,6 +43,7 @@
                                 'confirmed'   => 'bg-[#00848d]/10 text-[#00848d]',
                                 'pending'     => 'bg-[#db8636]/10 text-[#db8636]',
                                 'completed'   => 'bg-[#7a7d52]/10 text-[#7a7d52]',
+                                'cancelled'   => 'bg-red-100 text-red-800',
                                 default       => 'bg-[#f6f3ec] text-[#4d3327]',
                             };
 
@@ -56,17 +57,17 @@
                             $primaryBtnIcon  = '';
 
                             if ($status === 'confirmed') {
-                                $primaryBtnLabel = 'Check In';
-                                $primaryBtnIcon  = 'bi-box-arrow-in-right';
+                                $primaryBtnLabel = 'Confirmed';
+                                $primaryBtnIcon  = 'bi-check-circle';
                                 $primaryBtnClass = 'bg-[#00848d] hover:bg-[#00848d]/90';
-                            } elseif ($status === 'checked_in') {
-                                $primaryBtnLabel = 'Check Out';
-                                $primaryBtnIcon  = 'bi-box-arrow-right';
-                                $primaryBtnClass = 'bg-[#db8636] hover:bg-[#db8636]/90';
                             } elseif ($status === 'completed') {
                                 $primaryBtnLabel = 'Completed';
                                 $primaryBtnIcon  = 'bi-check-circle';
                                 $primaryBtnClass = 'bg-[#7a7d52]';
+                            } elseif ($status === 'cancelled') {
+                                $primaryBtnLabel = 'Cancelled';
+                                $primaryBtnIcon  = 'bi-x-circle';
+                                $primaryBtnClass = 'bg-red-600';
                             }
                         @endphp
 
@@ -75,7 +76,7 @@
                             <div class="p-6 border-b border-[#cccbbd]">
                                 <div class="flex items-start justify-between gap-3 mb-4">
                                     <h2 class="text-lg font-semibold text-[#4d3327] truncate">
-                                        Booking #{{ $booking->id ?? 'N/A' }}
+                                        {{ $booking->transaction_id ?? 'N/A' }}
                                     </h2>
                                     <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide {{ $statusClass }}">
                                         {{ ucfirst($status) }}
@@ -86,9 +87,25 @@
                                     <div class="flex items-center justify-between gap-4">
                                         <dt class="text-[#7a7d52] font-medium">Booking Type</dt>
                                         <dd class="text-[#4d3327] capitalize">
-                                            {{ $booking->type ?? 'Staycation' }}
+                                            {{ ucfirst($booking->booking_type ?? 'Staycation') }}
                                         </dd>
                                     </div>
+
+                                    <div class="flex items-center justify-between gap-4">
+                                        <dt class="text-[#7a7d52] font-medium">Check-in</dt>
+                                        <dd class="text-[#4d3327]">
+                                            {{ $booking->checkin_date ? \Carbon\Carbon::parse($booking->checkin_date)->format('M d, Y') : 'N/A' }}
+                                        </dd>
+                                    </div>
+
+                                    @if($booking->checkout_date)
+                                    <div class="flex items-center justify-between gap-4">
+                                        <dt class="text-[#7a7d52] font-medium">Check-out</dt>
+                                        <dd class="text-[#4d3327]">
+                                            {{ \Carbon\Carbon::parse($booking->checkout_date)->format('M d, Y') }}
+                                        </dd>
+                                    </div>
+                                    @endif
 
                                     <div class="flex items-center justify-between gap-4">
                                         <dt class="text-[#7a7d52] font-medium">Total Amount</dt>
@@ -105,7 +122,7 @@
                                     </div>
 
                                     <div class="flex items-center justify-between gap-4">
-                                        <dt class="text-[#7a7d52] font-medium">Created</dt>
+                                        <dt class="text-[#7a7d52] font-medium">Booked On</dt>
                                         <dd class="text-[#4d3327]">
                                             {{ $booking->created_at ? \Carbon\Carbon::parse($booking->created_at)->format('M d, Y') : 'N/A' }}
                                         </dd>
@@ -117,23 +134,13 @@
                             <div class="p-6 mt-auto">
                                 <div class="flex gap-2">
                                     @if($primaryBtnLabel)
-                                        <button
-                                            class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg text-[#f6f3ec]
-                                                   transition transform hover:-translate-y-0.5 hover:shadow-md {{ $primaryBtnClass }}"
-                                            @if($status === 'completed') disabled @endif
+                                        <div
+                                            class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg text-[#f6f3ec] {{ $primaryBtnClass }}"
                                         >
                                             <i class="bi {{ $primaryBtnIcon }}" aria-hidden="true"></i>
                                             {{ $primaryBtnLabel }}
-                                        </button>
+                                        </div>
                                     @endif
-
-                                    <button
-                                        class="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg
-                                               border border-[#cccbbd] text-[#4d3327] bg-white hover:bg-[#f6f3ec] transition"
-                                    >
-                                        <i class="bi bi-eye" aria-hidden="true"></i>
-                                        Details
-                                    </button>
                                 </div>
                             </div>
                         </article>

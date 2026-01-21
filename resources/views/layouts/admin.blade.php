@@ -39,6 +39,10 @@
       <nav class="mt-4 space-y-1 overflow-y-auto" style="max-height: calc(100vh - 100px);">
         @php
           $menuItems = [
+            ['title'=>'Bookings','icon'=>'calendar-check','route'=>'admin.bookings.*','sub'=>[
+              ['label'=>'All Bookings','route'=>'admin.bookings.index'],
+              ['label'=>'Inventory Monitor','route'=>'admin.bookings.inventory']
+            ]],
             ['title'=>'Home','icon'=>'home','route'=>'admin.home.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.home.home']
             ]],

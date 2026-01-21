@@ -340,10 +340,12 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
 
             <div class="mt-4 pt-4 border-t border-gray-200">
               <div class="space-y-2">
+                @if($accommodationTotal > 0)
                 <div class="flex justify-between items-center text-sm">
                   <span>Accommodation Total:</span>
                   <span>₱{{ number_format($accommodationTotal, 2) }}</span>
                 </div>
+                @endif
                 @if($foodTotal > 0)
                 <div class="flex justify-between items-center text-sm">
                   <span>Food & Beverages Total:</span>
@@ -408,14 +410,21 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
 
             <div class="mt-4 pt-4 border-t border-gray-200">
               <div class="space-y-2">
+                @if(($bookingData['price'] ?? 0) > 0)
                 <div class="flex justify-between items-center text-sm">
                   <span>Accommodation Total:</span>
                   <span>₱{{ number_format($bookingData['price'] ?? 0, 2) }}</span>
                 </div>
+                @endif
+                @php
+                $activitiesTotal = collect($selectedActivities ?? [])->sum(function($activity) { return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1); });
+                @endphp
+                @if($activitiesTotal > 0)
                 <div class="flex justify-between items-center text-sm">
                   <span>Activities Total:</span>
-                  <span>₱{{ number_format(collect($selectedActivities ?? [])->sum(function($activity) { return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1); }), 2) }}</span>
+                  <span>₱{{ number_format($activitiesTotal, 2) }}</span>
                 </div>
+                @endif
                 <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
                   <span>Total Amount Paid:</span>
                   <span class="text-[#8f5d54]">₱{{ number_format($grandTotal, 2) }}</span>
