@@ -40,7 +40,7 @@
                     <td class="px-4 py-2">{{ $index + 1 }}</td>
                     <td class="px-4 py-2">{{ $act->name ?? 'Untitled' }}</td>
                     <td class="px-4 py-2">
-                        {{ $act->today_available ?? 0 }}
+                        <span class="today-avail-{{ $act->id }}">{{ $act->today_available ?? 0 }}</span>
                     </td>
                     <td class="px-4 py-2">{{ $act->adults ?? 'N/A' }}</td>
                     <td class="px-4 py-2">{{ $act->children ?? 'N/A' }}</td>
@@ -1003,6 +1003,39 @@ function staycationComponent() {
 
     };
 }
+
+// Real-time inventory updates for admin panel
+document.addEventListener('DOMContentLoaded', function() {
+    // Listen for inventory updates
+    window.Echo.channel('inventory')
+        .listen('.inventory.updated', (e) => {
+            console.log('Admin: Inventory updated:', e);
+
+            // Update the "Today Avail" column for the affected staycation
+            const availElement = document.querySelector(`.today-avail-${e.staycationId}`);
+            if (availElement) {
+                // Fetch updated availability for today
+                fetch(`/api/inventory/${e.staycationId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const items = data.items || [];
+                        const today = new Date().toISOString().split('T')[0];
+                        const todayItem = items.find(item => item.date === today);
+                        const todayAvail = todayItem ? todayItem.min_quantity : 0;
+
+                        availElement.textContent = todayAvail;
+
+                        // Optional: Add visual feedback
+                        availElement.style.transition = 'background-color 0.3s';
+                        availElement.style.backgroundColor = '#ffff99';
+                        setTimeout(() => {
+                            availElement.style.backgroundColor = '';
+                        }, 1000);
+                    })
+                    .catch(error => console.error('Failed to fetch updated inventory:', error));
+            }
+        });
+});
 
 </script>
 

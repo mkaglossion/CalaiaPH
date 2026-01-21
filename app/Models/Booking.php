@@ -95,11 +95,14 @@ class Booking extends Model
      */
     public function reduceInventory()
     {
-        if ($this->booking_type !== 'staycation') {
+        $bookingData = $this->booking_data ?? [];
+        $bookingType = $this->booking_type ?? ($bookingData['booking_type'] ?? null);
+        $staycationTypes = ['staycation', 'glamping', 'camping'];
+
+        if (!in_array($bookingType, $staycationTypes, true)) {
             return;
         }
 
-        $bookingData = $this->booking_data;
         $accommodations = $bookingData['accommodations'] ?? [];
         
         $checkin = Carbon::parse($this->checkin_date);
@@ -138,11 +141,14 @@ class Booking extends Model
      */
     public function restoreInventory()
     {
-        if ($this->booking_type !== 'staycation') {
+        $bookingData = $this->booking_data ?? [];
+        $bookingType = $this->booking_type ?? ($bookingData['booking_type'] ?? null);
+        $staycationTypes = ['staycation', 'glamping', 'camping'];
+
+        if (!in_array($bookingType, $staycationTypes, true)) {
             return;
         }
 
-        $bookingData = $this->booking_data;
         $accommodations = $bookingData['accommodations'] ?? [];
         
         $checkin = Carbon::parse($this->checkin_date);

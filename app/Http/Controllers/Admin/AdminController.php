@@ -45,7 +45,13 @@ class AdminController extends Controller
         // Add today's available inventory to each staycation
         $today = now()->format('Y-m-d');
         foreach ($staycations as $staycation) {
-            $staycation->today_available = StaycationInventory::getAvailableForDate($staycation->id, $today);
+            // Get actual inventory from database, not fallback
+            $inventory = StaycationInventory::where('staycation_id', $staycation->id)
+                ->where('date', $today)
+                ->first();
+            
+            // Use inventory available_quantity if exists, otherwise use base quantity
+            $staycation->today_available = $inventory ? $inventory->available_quantity : ($staycation->quantity ?? 0);
         }
         
         $images = StaycationSwiperImage::all();

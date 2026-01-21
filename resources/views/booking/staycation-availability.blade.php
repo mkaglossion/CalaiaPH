@@ -125,6 +125,7 @@
                             <div
                                 class="relative bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl
                                 {{ $status === 'available' ? 'ring-2 ring-green-200 hover:ring-green-300' : ($status === 'limited' ? 'ring-2 ring-yellow-200 hover:ring-yellow-300' : 'ring-2 ring-gray-200') }}"
+                                data-room-id="{{ $staycation->id }}"
                                 data-type="{{ $roomDetail['type'] }}"
                                 x-show="roomType === 'all' || roomType === '{{ $roomDetail['type'] }}'"
                             >
@@ -177,7 +178,7 @@
                                     {{-- Qty badge --}}
                                     @if(($avail['min_quantity'] ?? 0) > 0)
                                         <div class="absolute bottom-4 right-4 z-10">
-                                            <span class="px-2 py-1 bg-black/70 text-white text-xs font-semibold rounded-full">
+                                            <span class="availability-badge px-2 py-1 bg-black/70 text-white text-xs font-semibold rounded-full">
                                                 {{ $avail['min_quantity'] }} available
                                             </span>
                                         </div>
@@ -1012,13 +1013,37 @@
                                     dayElem.style.color = '#155724';
                                 }
 
-                                const qtySpan = document.createElement('small');
-                                qtySpan.textContent = qty;
-                                qtySpan.style.display = 'block';
-                                qtySpan.style.fontSize = '10px';
-                                qtySpan.style.fontWeight = 'bold';
-                                qtySpan.style.marginTop = '2px';
-                                dayElem.appendChild(qtySpan);
+                                // Create availability badge
+                                const badge = document.createElement('div');
+                                badge.textContent = qty;
+                                badge.style.position = 'absolute';
+                                badge.style.top = '2px';
+                                badge.style.right = '2px';
+                                badge.style.fontSize = '9px';
+                                badge.style.fontWeight = '600';
+                                badge.style.padding = '1px 3px';
+                                badge.style.borderRadius = '8px';
+                                badge.style.lineHeight = '1';
+                                badge.style.minWidth = '14px';
+                                badge.style.textAlign = 'center';
+
+                                // Color coding based on availability
+                                if (qty === 0) {
+                                    badge.style.backgroundColor = '#fee2e2';
+                                    badge.style.color = '#dc2626';
+                                    badge.style.border = '1px solid #fecaca';
+                                } else if (qty <= this.legendLowThreshold) {
+                                    badge.style.backgroundColor = '#fef3c7';
+                                    badge.style.color = '#d97706';
+                                    badge.style.border = '1px solid #fde68a';
+                                } else {
+                                    badge.style.backgroundColor = '#d1fae5';
+                                    badge.style.color = '#059669';
+                                    badge.style.border = '1px solid #a7f3d0';
+                                }
+
+                                dayElem.style.position = 'relative';
+                                dayElem.appendChild(badge);
 
                                 if (ds >= checkin && ds < checkout) {
                                     dayElem.style.outline = '2px solid #3b82f6';
@@ -1186,8 +1211,28 @@
                     `;
                 },
 
-                mounted() {
-                    // Swiper initialization moved to DOMContentLoaded
+                init() {
+                    this.$nextTick(() => {
+                        @foreach($staycations as $staycation)
+                            @if($staycation->swiperImages && $staycation->swiperImages->count() > 1)
+                                new Swiper('.staycation-swiper-{{ $staycation->id }}', {
+                                    loop: true,
+                                    pagination: {
+                                        el: '.swiper-pagination-{{ $staycation->id }}',
+                                        clickable: true,
+                                    },
+                                    navigation: {
+                                        nextEl: '.swiper-button-next-{{ $staycation->id }}',
+                                        prevEl: '.swiper-button-prev-{{ $staycation->id }}',
+                                    },
+                                    autoplay: {
+                                        delay: 3000,
+                                        disableOnInteraction: false,
+                                    },
+                                });
+                            @endif
+                        @endforeach
+                    });
                 },
 
                 submitAndProceed(nextUrl = '{{ route("booking.staycationFood") }}') {
@@ -1236,27 +1281,51 @@
             }
         }
 
-        // Initialize swipers
-        document.addEventListener('DOMContentLoaded', function() {
-            @foreach($staycations as $staycation)
-                @if($staycation->swiperImages && $staycation->swiperImages->count() > 1)
-                    new Swiper('.staycation-swiper-{{ $staycation->id }}', {
-                        loop: true,
-                        pagination: {
-                            el: '.swiper-pagination-{{ $staycation->id }}',
-                            clickable: true,
-                        },
-                        navigation: {
-                            nextEl: '.swiper-button-next-{{ $staycation->id }}',
-                            prevEl: '.swiper-button-prev-{{ $staycation->id }}',
-                        },
-                        autoplay: {
-                            delay: 3000,
-                            disableOnInteraction: false,
-                        },
-                    });
-                @endif
-            @endforeach
-        });
+        // Real-time inventory updates
+        window.Echo.channel('inventory')
+            .listen('.inventory.updated', (e) => {
+                console.log('Inventory updated:', e);
+                
+                // If calendar is open and matches the updated staycation
+                if (this.calendarModal && this.currentRoomId === e.staycationId) {
+                    this.initCalendar();
+                }
+
+                // Update room card availability (optional but recommended)
+                updateRoomAvailability(e.staycationId);
+            });
+
+        function updateRoomAvailability(staycationId) {
+            fetch(`/api/inventory/${staycationId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Find the room card
+                    const roomCard = document.querySelector(`[data-room-id="${staycationId}"]`);
+                    if (!roomCard) return;
+
+                    // Extract min quantity from new data
+                    const items = data.items || [];
+                    const minQty = items.length > 0 
+                        ? Math.min(...items.map(item => item.min_quantity)) 
+                        : 0;
+                    
+                    // Update availability badge
+                    const availabilityBadge = roomCard.querySelector('.availability-badge');
+                    if (availabilityBadge) {
+                        availabilityBadge.textContent = `${minQty} available`;
+                        
+                        // Update status class (available/limited/unavailable)
+                        if (minQty === 0) {
+                            availabilityBadge.className = 'availability-badge bg-gray-500 text-white';
+                        } else if (minQty <= 2) {
+                            availabilityBadge.className = 'availability-badge bg-yellow-500 text-white';
+                        } else {
+                            availabilityBadge.className = 'availability-badge bg-green-500 text-white';
+                        }
+                    }
+                })
+                .catch(error => console.error('Failed to fetch inventory:', error));
+        }
+
     </script>
 </x-app-layout>

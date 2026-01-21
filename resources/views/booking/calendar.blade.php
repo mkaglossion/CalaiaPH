@@ -131,15 +131,70 @@
         /* day cell sizing */
         .booking-calendar .flatpickr-day{
           border: 1px solid #e5e7eb !important;
-          margin: 0 !important;
-          padding: 0.5rem !important;
+          margin: 1px !important;
+          padding: 10px 4px !important;
           width: 14.2857% !important;
           max-width: none !important;
-          min-height: 40px !important;
+          min-height: 60px !important;
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
-          font-size: 14px !important;
+          font-size: 20px !important;
+          font-weight: 600 !important;
+          position: relative !important;
+          text-align: center !important;
+          transition: all 0.2s ease !important;
+        }
+        
+        /* Availability badge styling - always visible, positioned top-right */
+        .booking-calendar .flatpickr-day .avail-badge{
+          position: absolute !important;
+          top: 2px !important;
+          right: 2px !important;
+          display: block !important;
+          font-size: 9px !important;
+          font-weight: 600 !important;
+          padding: 1px 3px !important;
+          border-radius: 8px !important;
+          line-height: 1 !important;
+          min-width: 14px !important;
+          text-align: center !important;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+        }
+
+        /* Hover effect for interactive feedback */
+        .booking-calendar .flatpickr-day:hover:not(.flatpickr-disabled):not(.fp-invalid){
+          transform: scale(1.05) !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+          z-index: 10 !important;
+        }
+
+        /* High availability - green background with border */
+        .booking-calendar .fp-avail-high .avail-badge{
+          background: #d1fae5 !important;
+          color: #059669 !important;
+          border: 1px solid #a7f3d0 !important;
+        }
+
+        /* Low availability - yellow background with border */
+        .booking-calendar .fp-avail-low .avail-badge{
+          background: #fef3c7 !important;
+          color: #d97706 !important;
+          border: 1px solid #fde68a !important;
+        }
+
+        /* Not available - red background with border */
+        .booking-calendar .fp-not-avail .avail-badge{
+          background: #fee2e2 !important;
+          color: #dc2626 !important;
+          border: 1px solid #fecaca !important;
+        }
+
+        /* Invalid/disabled - gray background with border */
+        .booking-calendar .fp-invalid .avail-badge{
+          background: #f3f4f6 !important;
+          color: #6b7280 !important;
+          border: 1px solid #d1d5db !important;
         }
 
         /* days container */
@@ -207,8 +262,22 @@
           }
           
           .booking-calendar .flatpickr-day{
-            min-height: 44px !important;
-            font-size: 14px !important;
+            min-height: 54px !important;
+            padding: 8px 3px !important;
+            font-size: 16px !important;
+          }
+          
+          .booking-calendar .flatpickr-day .avail-badge{
+            font-size: 6px !important;
+            padding: 1px 3px !important;
+            min-width: 14px !important;
+            bottom: 2px !important;
+            right: 2px !important;
+          }
+          
+          /* On mobile, show badge on tap/touch */
+          .booking-calendar .flatpickr-day:active .avail-badge{
+            display: block !important;
           }
           
           .booking-calendar .flatpickr-weekday{
@@ -221,15 +290,21 @@
           .booking-calendar .flatpickr-innerContainer{
             gap: 16px !important;
           }
-          
-          .booking-calendar .flatpickr-months{
-            max-width: 350px !important;
+          58px !important;
+            padding: 9px 3px !important;
+            font-size: 18px !important;
           }
           
-          .booking-calendar .flatpickr-day{
-            min-height: 38px !important;
-            font-size: 13px !important;
-            padding: 0.4rem !important;
+          .booking-calendar .flatpickr-day .avail-badge{
+            font-size: 8px !important;
+            padding: 2px 6px !important;
+            min-width: 21ortant;
+          }
+          
+          .booking-calendar .flatpickr-day .avail-badge{
+            font-size: 6px !important;
+            padding: 1px 3px !important;
+            min-width: 14px !important;
           }
         }
 
@@ -241,8 +316,6 @@
           
           .booking-calendar .flatpickr-months{
             max-width: 420px !important;
-          }
-        }
           }
         }
     </style>
@@ -358,15 +431,23 @@
                     <i class="bi bi-info-circle mr-2 text-[#8f5d54]"></i> Legend
                 </h4>
 
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div x-show="legendLowThreshold === 0" class="text-center text-gray-500 py-4">
+                    Loading availability data...
+                </div>
+
+                <div x-show="legendLowThreshold > 0" class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div class="flex items-center gap-2">
                       <span class="w-4 h-4 inline-block rounded fp-avail-high"></span>
-                      <span class="text-sm">Available (<span x-text="legendLowThreshold + 1"></span>+ slots)</span>
+                      <span class="text-sm">
+                        Available (<span x-text="availableThresholdText"></span>)
+                      </span>
                     </div>
 
                     <div class="flex items-center gap-2">
                       <span class="w-4 h-4 inline-block rounded fp-avail-low"></span>
-                      <span class="text-sm">Limited (1–<span x-text="legendLowThreshold"></span> slots)</span>
+                      <span class="text-sm">
+                        Limited (<span x-text="limitedThresholdText"></span>)
+                      </span>
                     </div>
 
                     <div class="flex items-center gap-2">
@@ -428,14 +509,30 @@
           if (initialCheckin) this.checkin = initialCheckin;
           if (initialCheckout) this.checkout = initialCheckout;
 
+          // ✅ Calculate max quantity from availability data first
+          this.legendMaxQty = 0;
+          for (const [dateString, details] of Object.entries(this.availability)) {
+            const qty = details.min_quantity || 0;
+            if (qty > this.legendMaxQty) this.legendMaxQty = qty;
+          }
+
+          // ✅ If no data from availability, use passed maxQty or totalQuantity
+          if (this.legendMaxQty === 0) {
+            this.legendMaxQty = maxQty || totalQuantity || 0;
+          }
+
           // ✅ Calculate dynamic threshold: 30% of max inventory per date (min 1)
           if (this.legendMaxQty > 0) {
             this.legendLowThreshold = Math.max(1, Math.floor(this.legendMaxQty * 0.3));
-          } else if (this.totalQuantity > 0) {
-            this.legendLowThreshold = Math.max(1, Math.floor(this.totalQuantity * 0.3));
           } else {
-            this.legendLowThreshold = lowThreshold || 2;
+            this.legendLowThreshold = 0; // Will show loading state
           }
+
+          console.log('Initial threshold calculation:', {
+            legendMaxQty: this.legendMaxQty,
+            legendLowThreshold: this.legendLowThreshold,
+            availabilityCount: Object.keys(this.availability).length
+          });
 
           this._months = this.getResponsiveMonths();
           this.$nextTick(() => this.initCalendar());
@@ -474,6 +571,14 @@
           return this.nights ? `${this.nights} night(s)` : '—';
         },
 
+        get availableThresholdText() {
+          return this.legendLowThreshold > 0 ? `${this.legendLowThreshold + 1}+ slots` : 'Loading...';
+        },
+
+        get limitedThresholdText() {
+          return this.legendLowThreshold > 0 ? `1–${this.legendLowThreshold} slots` : 'Loading...';
+        },
+
         initCalendar(keepSelected = false) {
           const selected = keepSelected ? [this.checkin, this.checkout] : null;
 
@@ -492,7 +597,14 @@
           // ✅ Recalculate dynamic threshold based on max quantity found
           if (this.legendMaxQty > 0) {
             this.legendLowThreshold = Math.max(1, Math.floor(this.legendMaxQty * 0.3));
+          } else {
+            this.legendLowThreshold = 0; // Will show loading state
           }
+
+          console.log('Calendar threshold recalculation:', {
+            legendMaxQty: this.legendMaxQty,
+            legendLowThreshold: this.legendLowThreshold
+          });
 
           // disabled dates (only is_available=false)
           const disabledDates = [];
@@ -537,6 +649,8 @@
 
               // reset
               dayElem.classList.remove('fp-avail-high','fp-avail-low','fp-not-avail','fp-invalid');
+              dayElem.style.borderRadius = '6px';
+              dayElem.style.position = 'relative';
 
               // Check if past date
               const checkDate = new Date(dayElem.dateObj);
@@ -546,11 +660,29 @@
               // disabled or past = invalid (gray)
               if (disabledDates.includes(dateString) || isPast) {
                 dayElem.classList.add('fp-invalid');
+                // Add badge for disabled dates too
+                const badge = document.createElement('div');
+                badge.className = 'avail-badge';
+                badge.textContent = '-';
+                badge.style.position = 'absolute';
+                badge.style.top = '2px';
+                badge.style.right = '2px';
+                badge.style.fontSize = '9px';
+                badge.style.fontWeight = '600';
+                badge.style.padding = '1px 3px';
+                badge.style.borderRadius = '8px';
+                badge.style.lineHeight = '1';
+                badge.style.minWidth = '14px';
+                badge.style.textAlign = 'center';
+                badge.style.backgroundColor = '#f3f4f6';
+                badge.style.color = '#6b7280';
+                badge.style.border = '1px solid #d1d5db';
+                dayElem.appendChild(badge);
                 return;
               }
 
-              const details = this.availability[dateString];
-              const qty = Number(details?.min_quantity || 0);
+              const details = this.availability && this.availability[dateString];
+              const qty = details ? Number(details.min_quantity || 0) : 10; // Default to 10 if no data
 
               // ✅ No inventory = not available (fully booked)
               if (qty === 0) {
@@ -563,16 +695,36 @@
                 dayElem.classList.add('fp-avail-high');
               }
 
-              // qty badge
-              if (qty > 0) {
-                const badge = document.createElement('small');
-                badge.textContent = qty;
-                badge.style.display = 'block';
-                badge.style.fontSize = '10px';
-                badge.style.fontWeight = 'bold';
-                badge.style.marginTop = '2px';
-                dayElem.appendChild(badge);
+              // Create availability badge - always show quantity
+              const badge = document.createElement('div');
+              badge.className = 'avail-badge';
+              badge.textContent = qty > 0 ? qty : '0';
+              badge.style.position = 'absolute';
+              badge.style.top = '2px';
+              badge.style.right = '2px';
+              badge.style.fontSize = '9px';
+              badge.style.fontWeight = '600';
+              badge.style.padding = '1px 3px';
+              badge.style.borderRadius = '8px';
+              badge.style.lineHeight = '1';
+              badge.style.minWidth = '14px';
+              badge.style.textAlign = 'center';
+              
+              // Apply colors based on quantity
+              if (qty === 0) {
+                badge.style.backgroundColor = '#fee2e2';
+                badge.style.color = '#dc2626';
+                badge.style.border = '1px solid #fecaca';
+              } else if (qty <= this.legendLowThreshold) {
+                badge.style.backgroundColor = '#fef3c7';
+                badge.style.color = '#d97706';
+                badge.style.border = '1px solid #fde68a';
+              } else {
+                badge.style.backgroundColor = '#d1fae5';
+                badge.style.color = '#059669';
+                badge.style.border = '1px solid #a7f3d0';
               }
+              dayElem.appendChild(badge);
 
               // range overlay (keep availability background, add outline)
               const hasRange = !!this.checkin && !!this.checkout;

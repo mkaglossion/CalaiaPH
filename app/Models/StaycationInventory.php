@@ -53,6 +53,9 @@ class StaycationInventory extends Model
             $inventory->available_quantity -= $quantity;
             $inventory->save();
 
+            // Broadcast inventory update event
+            broadcast(new \App\Events\InventoryUpdated($staycationId, $date, $inventory->available_quantity));
+
             return $inventory;
         });
     }
@@ -76,6 +79,9 @@ class StaycationInventory extends Model
             $inventory->available_quantity = min($inventory->total_quantity, $inventory->available_quantity + $quantity);
             $inventory->save();
 
+            // Broadcast inventory update event
+            broadcast(new \App\Events\InventoryUpdated($staycationId, $date, $inventory->available_quantity));
+
             return $inventory;
         });
     }
@@ -89,6 +95,13 @@ class StaycationInventory extends Model
             ->where('date', $date)
             ->first();
 
-        return $inventory ? $inventory->available_quantity : 0;
+        // If inventory exists for this date, return it
+        if ($inventory) {
+            return $inventory->available_quantity;
+        }
+
+        // If no inventory set for this date, fallback to staycation's base quantity
+        $staycation = \App\Models\Staycation::find($staycationId);
+        return $staycation ? ($staycation->quantity ?? 0) : 0;
     }
 }

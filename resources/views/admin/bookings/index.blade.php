@@ -92,7 +92,6 @@
                     <option value="glamping" {{ request('booking_type') == 'glamping' ? 'selected' : '' }}>Glamping</option>
                     <option value="camping" {{ request('booking_type') == 'camping' ? 'selected' : '' }}>Camping</option>
                     <option value="dayvisit" {{ request('booking_type') == 'dayvisit' ? 'selected' : '' }}>Day Visit</option>
-                    <option value="staycation" {{ request('booking_type') == 'staycation' ? 'selected' : '' }}>Staycation (Legacy)</option>
                 </select>
             </div>
             <div>
@@ -221,8 +220,13 @@
         
         <!-- Pagination -->
         @if($bookings->hasPages())
-        <div class="px-6 py-4 border-t border-gray-200">
-            {{ $bookings->links('pagination::tailwind') }}
+        <div class="px-6 py-4 border-t border-gray-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-sm text-gray-600">
+                Showing {{ $bookings->firstItem() }} to {{ $bookings->lastItem() }} of {{ $bookings->total() }} results
+            </p>
+            <div class="sm:ml-auto">
+                {{ $bookings->onEachSide(1)->links('pagination::tailwind') }}
+            </div>
         </div>
         @endif
     </div>

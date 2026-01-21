@@ -45,7 +45,7 @@ class AdminBookingsController extends Controller
             $query->where('checkin_date', '<=', $request->date_to);
         }
         
-        $bookings = $query->orderBy('created_at', 'desc')->paginate(15);
+        $bookings = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
         
         // Get stats
         $stats = [
