@@ -887,7 +887,7 @@ class BookingController extends Controller
                     'selected_rooms.*.id' => ['nullable'],
                     'selected_rooms.*.adults' => ['required', 'integer', 'min:1', 'max:20'],
                     'selected_rooms.*.children' => ['nullable', 'integer', 'min:0', 'max:20'],
-                    'selected_rooms.*.extra_mattress' => ['nullable', 'integer', 'min:0', 'max:8'],
+                    'selected_rooms.*.extra_mattress' => ['nullable', 'integer', 'min:0', 'max:100'], // Increased to allow BYOT/Car Camping quantities
                     'selected_rooms.*.pets' => ['required', 'in:yes,no'],
                     'selected_rooms.*.pet_agreement' => ['nullable', 'boolean'],
                     'selected_rooms.*.num_pets' => ['nullable', 'integer', 'min:0', 'max:2'],

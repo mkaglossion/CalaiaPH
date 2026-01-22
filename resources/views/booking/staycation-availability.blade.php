@@ -793,14 +793,14 @@
                             }
                         }
                         
-                        // Max 8 for BYOT/Car Camping quantity
+                        // No hard cap for BYOT/Car Camping quantity - allow booking full available amount
                         if (field === 'extra_mattress') {
-                            if (isBYOTorCar) {
-                                if (value > 8) value = 8;
-                                if (value < 1) value = 1;
-                            } else {
+                            if (!isBYOTorCar) {
+                                // Regular rooms: max 8 extra mattress
                                 if (value > 8) value = 8;
                             }
+                            // For BYOT/Car Camping, no cap here - validateQuantity handles the limit
+                            if (value < 1) value = 1;
                         }
                     }
 
@@ -879,7 +879,6 @@
                     }
 
                     if (normalizedValue > maxQuantity) {
-                        const fieldLabel = fieldName === 'extra_mattress' ? 'Quantity' : fieldName;
                         Swal.fire({
                             title: 'Availability Limit Exceeded',
                             text: `Only ${maxQuantity} available for this accommodation during the selected dates.`,

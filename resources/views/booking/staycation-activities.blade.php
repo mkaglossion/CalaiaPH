@@ -181,29 +181,41 @@ foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
                         @if(!empty($booking['accommodations']))
                             @foreach($booking['accommodations'] as $roomId => $room)
                                 @if(!empty($room))
+                                    @php
+                                        $staycation = $staycations->get((int)$roomId);
+                                        $roomNameLower = strtolower($staycation->name ?? '');
+                                        $isBYOT = str_contains($roomNameLower, 'byot') || str_contains($roomNameLower, 'bring your own tent');
+                                        $isCarCamping = str_contains($roomNameLower, 'car camping');
+                                        $isSpecialRoom = $isBYOT || $isCarCamping;
+                                    @endphp
                                     <div class="bg-white rounded border border-gray-200 p-3">
-                                        <div class="font-semibold text-gray-900 mb-2">Room #{{ (int)$roomId }}</div>
+                                        <div class="font-semibold text-gray-900 mb-2">{{ $staycation->name ?? 'Room #' . $roomId }}</div>
                                         <div class="text-gray-600 space-y-1 mb-2">
-                                            <div>Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
-                                            <div>Mattress: <span class="font-semibold">{{ $room['extra_mattress'] ?? 0 }}</span></div>
-                                            <div>Pets: <span class="font-semibold">{{ $room['pets'] ?? 'no' }}</span>
-                                                @if(($room['pets'] ?? 'no') === 'yes')
-                                                    <span>(#{{ $room['num_pets'] ?? 0 }})</span>
-                                                @endif
-                                            </div>
+                                            @if($isSpecialRoom)
+                                                <div>Quantity: <span class="font-semibold">{{ $room['extra_mattress'] ?? 1 }}</span></div>
+                                                <div>Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
+                                            @else
+                                                <div>Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
+                                                <div>Mattress: <span class="font-semibold">{{ $room['extra_mattress'] ?? 0 }}</span></div>
+                                                <div>Pets: <span class="font-semibold">{{ $room['pets'] ?? 'no' }}</span>
+                                                    @if(($room['pets'] ?? 'no') === 'yes')
+                                                        <span>(#{{ $room['num_pets'] ?? 0 }})</span>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         </div>
                                         <div class="border-t border-gray-200 pt-2 space-y-1">
                                             <div class="flex justify-between">
                                                 <span class="text-gray-600">Room:</span>
                                                 <span class="font-semibold">₱{{ number_format($room['base_price'] ?? 0, 0) }}</span>
                                             </div>
-                                            @if(($room['mattress_price'] ?? 0) > 0)
+                                            @if(!$isSpecialRoom && ($room['mattress_price'] ?? 0) > 0)
                                                 <div class="flex justify-between">
                                                     <span class="text-gray-600">Mattress:</span>
                                                     <span class="font-semibold">₱{{ number_format($room['mattress_price'] ?? 0, 0) }}</span>
                                                 </div>
                                             @endif
-                                            @if(($room['pet_price'] ?? 0) > 0)
+                                            @if(!$isSpecialRoom && ($room['pet_price'] ?? 0) > 0)
                                                 <div class="flex justify-between">
                                                     <span class="text-gray-600">Pets:</span>
                                                     <span class="font-semibold">₱{{ number_format($room['pet_price'] ?? 0, 0) }}</span>
