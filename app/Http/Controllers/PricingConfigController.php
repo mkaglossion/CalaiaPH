@@ -10,6 +10,7 @@ use App\Models\PeakPeriod;
 use App\Models\Holiday;
 use App\Models\DurationSet;
 use App\Models\PricingConfig;
+use App\Events\PricingUpdated;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -83,6 +84,9 @@ class PricingConfigController extends Controller
 
         $pricingConfig = PricingConfig::create($validated);
 
+        // Broadcast pricing update
+        broadcast(new PricingUpdated($validated['unit_type']))->toOthers();
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
@@ -127,6 +131,9 @@ class PricingConfigController extends Controller
             $dayTypeDay->save();
         }
 
+        // Broadcast pricing update for all unit types
+        broadcast(new PricingUpdated())->toOthers();
+
         return redirect()->back()->with('success', 'Weekdays/Weekends updated successfully.');
     }
 
@@ -151,6 +158,9 @@ class PricingConfigController extends Controller
         }
 
         Holiday::create($validator->validated());
+
+        // Broadcast pricing update for all unit types
+        broadcast(new PricingUpdated())->toOthers();
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -186,6 +196,9 @@ class PricingConfigController extends Controller
 
         $holiday->update($validator->validated());
 
+        // Broadcast pricing update for all unit types
+        broadcast(new PricingUpdated())->toOthers();
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
@@ -205,6 +218,9 @@ class PricingConfigController extends Controller
     public function destroyHoliday(Holiday $holiday)
     {
         $holiday->delete();
+
+        // Broadcast pricing update for all unit types
+        broadcast(new PricingUpdated())->toOthers();
 
         return redirect()->back()->with('success', 'Holiday deleted successfully.');
     }
@@ -251,6 +267,9 @@ class PricingConfigController extends Controller
             'name' => $request->name
         ]);
 
+        // Broadcast pricing update for all unit types
+        broadcast(new PricingUpdated())->toOthers();
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
@@ -292,6 +311,9 @@ class PricingConfigController extends Controller
 
         $peakPeriod->update($validator->validated());
 
+        // Broadcast pricing update for all unit types
+        broadcast(new PricingUpdated())->toOthers();
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
@@ -311,6 +333,9 @@ class PricingConfigController extends Controller
     public function destroyPeakPeriod(PeakPeriod $peakPeriod)
     {
         $peakPeriod->delete();
+
+        // Broadcast pricing update for all unit types
+        broadcast(new PricingUpdated())->toOthers();
 
         return redirect()->back()->with('success', 'Peak period deleted successfully.');
     }
@@ -639,6 +664,9 @@ class PricingConfigController extends Controller
 
         $pricingConfig->update($validated);
 
+        // Broadcast pricing update
+        broadcast(new PricingUpdated($validated['unit_type']))->toOthers();
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
@@ -659,7 +687,11 @@ class PricingConfigController extends Controller
      */
     public function destroy(Request $request, PricingConfig $pricingConfig)
     {
+        $unitType = $pricingConfig->unit_type;
         $pricingConfig->delete();
+
+        // Broadcast pricing update
+        broadcast(new PricingUpdated($unitType))->toOthers();
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

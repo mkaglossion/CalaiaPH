@@ -1285,7 +1285,7 @@
         window.Echo.channel('inventory')
             .listen('.inventory.updated', (e) => {
                 console.log('Inventory updated:', e);
-                
+
                 // If calendar is open and matches the updated staycation
                 if (this.calendarModal && this.currentRoomId === e.staycationId) {
                     this.initCalendar();
@@ -1293,6 +1293,14 @@
 
                 // Update room card availability (optional but recommended)
                 updateRoomAvailability(e.staycationId);
+            });
+
+        // Real-time pricing updates
+        window.Echo.channel('pricing')
+            .listen('.pricing.updated', (e) => {
+                console.log('Pricing updated:', e);
+                // Reload the page to get updated prices
+                window.location.reload();
             });
 
         function updateRoomAvailability(staycationId) {
