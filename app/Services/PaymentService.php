@@ -45,6 +45,35 @@ class PaymentService
             'phone'      => $paymentData['phone'] ?? '',
         ];
 
+        // Calculate final totals if not already set
+        if (!isset($staycationBooking['final_totals'])) {
+            $accommodationTotal = 0;
+            foreach ($staycationBooking['accommodations'] ?? [] as $acc) {
+                $accommodationTotal += $acc['total_price'] ?? 0;
+            }
+
+            $foodTotal = 0;
+            if (!empty($staycationBooking['selected_foods'])) {
+                foreach ($staycationBooking['selected_foods'] as $foodData) {
+                    $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1) * $nights;
+                }
+            }
+
+            $activitiesTotal = 0;
+            if (!empty($staycationBooking['selected_activities'])) {
+                foreach ($staycationBooking['selected_activities'] as $activity) {
+                    $activitiesTotal += 500 * ($activity['guests'] ?? 1);
+                }
+            }
+
+            $staycationBooking['final_totals'] = [
+                'accommodation_total' => $accommodationTotal,
+                'food_total' => $foodTotal,
+                'activities_total' => $activitiesTotal,
+                'grand_total' => $accommodationTotal + $foodTotal + $activitiesTotal
+            ];
+        }
+
         // Create booking record in database
         $customerName = trim(
             ($paymentData['first_name'] ?? '') . ' ' . ($paymentData['last_name'] ?? '')
