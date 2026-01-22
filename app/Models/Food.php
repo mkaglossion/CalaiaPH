@@ -8,10 +8,11 @@ class Food extends Model
 {
     protected $table = 'foods';
 
-    protected $fillable = ['name', 'category', 'price', 'description', 'image', 'is_active'];
+    protected $fillable = ['name', 'category', 'price', 'description', 'image', 'is_active', 'is_special_option'];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_special_option' => 'boolean',
     ];
 
     public function texts()

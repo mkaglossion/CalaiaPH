@@ -174,10 +174,18 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                   @endif
                 </span>
               </div>
+              @php
+                $hasSpecialRoom = collect($bookingData['accommodations'] ?? [])->some(function($acc) {
+                  $name = $acc['accommodation_name'] ?? '';
+                  return stripos($name, 'byot') !== false || stripos($name, 'car camping') !== false || stripos($name, 'bring your own') !== false;
+                });
+              @endphp
+              @if (!$hasSpecialRoom)
               <div>
                 <span class="font-medium text-gray-500">Guests:</span>
                 <span class="ml-2 text-gray-900">{{ $bookingData['total_guests'] ?? $totalGuests }}</span>
               </div>
+              @endif
               <div>
                 <span class="font-medium text-gray-500">Name:</span>
                 <span class="ml-2 text-gray-900">{{ ($customerInfo['first_name'] ?? '') . ' ' . ($customerInfo['last_name'] ?? '') }}</span>
@@ -242,10 +250,18 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                 <span class="font-medium text-gray-500">Nights:</span>
                   <span class="ml-2 text-gray-900">{{ $nights ?? 0 }}</span>
               </div>
+              @php
+                $hasSpecialRoom = collect($bookingData['accommodations'] ?? [])->some(function($acc) {
+                  $name = $acc['accommodation_name'] ?? '';
+                  return stripos($name, 'byot') !== false || stripos($name, 'car camping') !== false || stripos($name, 'bring your own') !== false;
+                });
+              @endphp
+              @if (!$hasSpecialRoom)
               <div>
                 <span class="font-medium text-gray-500">Guests:</span>
                 <span class="ml-2 text-gray-900">{{ $totalGuests }}</span>
               </div>
+              @endif
               <div>
                 <span class="font-medium text-gray-500">Name:</span>
                 <span class="ml-2 text-gray-900">{{ ($customerInfo['first_name'] ?? '') . ' ' . ($customerInfo['last_name'] ?? '') }}</span>
@@ -281,11 +297,8 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                       @if($staycation)
                         <li>• {{ $staycation->name }}
                           @if($isBYOT || $isCarCamping)
-                            {{-- BYOT/Car Camping: Show quantity --}}
+                            {{-- BYOT/Car Camping: Show quantity only --}}
                             - {{ $quantity }} unit{{ $quantity !== 1 ? 's' : '' }}
-                            @if(!empty($accommodation['adults']) || !empty($accommodation['children']))
-                              ({{ $accommodation['adults'] ?? 0 }} adult{{ ($accommodation['adults'] ?? 0) !== 1 ? 's' : '' }}, {{ $accommodation['children'] ?? 0 }} child{{ ($accommodation['children'] ?? 0) !== 1 ? 'ren' : '' }})
-                            @endif
                             - ₱{{ number_format($totalPrice, 2) }}
                           @else
                             {{-- Regular rooms: Show guests --}}
@@ -383,10 +396,18 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                   @endif
                 </span>
               </div>
+              @php
+                $hasSpecialRoom = collect($bookingData['accommodations'] ?? [])->some(function($acc) {
+                  $name = $acc['accommodation_name'] ?? '';
+                  return stripos($name, 'byot') !== false || stripos($name, 'car camping') !== false || stripos($name, 'bring your own') !== false;
+                });
+              @endphp
+              @if (!$hasSpecialRoom)
               <div>
                 <span class="font-medium text-gray-500">Guests:</span>
                 <span class="ml-2 text-gray-900">{{ $bookingData['guests'] ?? '' }}</span>
               </div>
+              @endif
               <div>
                 <span class="font-medium text-gray-500">Name:</span>
                 <span class="ml-2 text-gray-900">{{ ($bookingData['first_name'] ?? '') . ' ' . ($bookingData['last_name'] ?? '') }}</span>

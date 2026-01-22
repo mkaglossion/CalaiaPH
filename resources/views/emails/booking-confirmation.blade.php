@@ -40,7 +40,15 @@
                     <p><strong>Check-in:</strong> {{ !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin'])->format('M d, Y') : 'N/A' }}</p>
                     <p><strong>Check-out:</strong> {{ !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout'])->format('M d, Y') : 'N/A' }}</p>
                     <p><strong>Nights:</strong> {{ $bookingData['nights'] ?? 'N/A' }}</p>
+                    @php
+                        $hasSpecialRoom = collect($bookingData['accommodations'] ?? [])->some(function($acc) {
+                            $name = $acc['accommodation_name'] ?? '';
+                            return stripos($name, 'byot') !== false || stripos($name, 'car camping') !== false || stripos($name, 'bring your own') !== false;
+                        });
+                    @endphp
+                    @if (!$hasSpecialRoom)
                     <p><strong>Guests:</strong> {{ $bookingData['total_guests'] ?? 'N/A' }}</p>
+                    @endif
                     
                     @if (!empty($bookingData['accommodations']))
                         <p><strong>Selected Accommodations:</strong></p>
@@ -56,6 +64,8 @@
                                     $mattressPrice = $accommodation['mattress_price'] ?? 0;
                                     $petPrice = $accommodation['pet_price'] ?? 0;
                                     $totalPrice = $accommodation['total_price'] ?? ($basePrice + $mattressPrice + $petPrice);
+                                    $roomName = $staycation->name ?? '';
+                                    $isSpecialRoom = stripos($roomName, 'byot') !== false || stripos($roomName, 'car camping') !== false || stripos($roomName, 'bring your own') !== false;
                                     @endphp
                                     @if($staycation)
                                         <li>
@@ -63,7 +73,9 @@
                                             @if($quantity > 1)
                                                 - {{ $quantity }} units
                                             @endif
+                                            @if(!$isSpecialRoom)
                                             ({{ $adultsCount }} adult{{ $adultsCount !== 1 ? 's' : '' }}, {{ $childrenCount }} child{{ $childrenCount !== 1 ? 'ren' : '' }})
+                                            @endif
                                             - ₱{{ number_format($basePrice, 2) }}
                                             @if($mattressPrice > 0)
                                                 + Mattress: ₱{{ number_format($mattressPrice, 2) }}

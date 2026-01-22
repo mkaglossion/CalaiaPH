@@ -30,7 +30,7 @@
     {{-- ========= ACTIVITIES SECTION ========= --}}
     <main id="main">
       <section class="container mx-auto px-4 py-12">
-        <div class="max-w-[1200px] mx-auto">
+        <div class="max-w-300 mx-auto">
           <h2 class="font-extrabold uppercase leading-tight tracking-wide mb-10 text-left" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
             Enhance your stay with our fun-filled activities.
           </h2>
@@ -167,8 +167,8 @@
                 <div class="absolute inset-0 pointer-events-none"
                      style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,.35) 85%);"></div>
                 <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
-                  <span class="bg-[#b0775c] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-[9px] px-3 leading-none cursor-pointer"></span>
-                  <a class="text-white text-[14px] tracking-[.08em] uppercase py-[9px] px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
+                  <span class="bg-[#b0775c] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-2.25 px-3 leading-none cursor-pointer"></span>
+                  <a class="text-white text-[14px] tracking-[.08em] uppercase py-2.25 px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
                   <form action="{{ route('cart.add') }}" method="POST" class="inline">
                     @csrf
                     <input type="hidden" name="id" value="">
@@ -188,8 +188,8 @@
                 <div class="absolute inset-0 pointer-events-none"
                      style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,.35) 85%);"></div>
                 <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
-                  <span class="bg-[#b0775c] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-[9px] px-3 leading-none cursor-pointer"></span>
-                  <a class="text-white text-[14px] tracking-[.08em] uppercase py-[9px] px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
+                  <span class="bg-[#b0775c] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-2.25 px-3 leading-none cursor-pointer"></span>
+                  <a class="text-white text-[14px] tracking-[.08em] uppercase py-2.25 px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
                   <form action="{{ route('cart.add') }}" method="POST" class="inline">
                     @csrf
                     <input type="hidden" name="id" value="">
@@ -245,7 +245,7 @@
               <template x-if="modal.images && modal.images.length">
                 <div>
                   <img :src="modal.images[i]" :alt="modal.title + ' image ' + (i+1)"
-                       class="w-full h-[300px] object-cover rounded-lg">
+                       class="w-full h-75 object-cover rounded-lg">
                   <button class="absolute top-1/2 -translate-y-1/2 left-2 grid place-items-center w-9 h-9 rounded-full bg-black/60 text-white"
                           @click="i = (i-1+modal.images.length)%modal.images.length">
                     <i class="fa-solid fa-chevron-left text-sm"></i>
@@ -283,17 +283,10 @@
 
           <div class="px-5 py-4 border-t flex flex-col md:flex-row items-center justify-end gap-3">
             <template x-if="modal.price > 0">
-              <form action="{{ route('cart.add') }}" method="POST" class="inline">
-                @csrf
-                <input type="hidden" name="id" :value="modal.id || modal.title">
-                <input type="hidden" name="title" :value="modal.title">
-                <input type="hidden" name="price" :value="modal.price">
-                <input type="hidden" name="image" :value="modal.images && modal.images.length ? modal.images[0] : ''">
-                <input type="hidden" name="quantity" value="1">
-                <button type="submit" class="bg-[#b0775c] text-white px-6 py-3 rounded-2xl hover:bg-[#b0775c] transition-colors duration-300 w-full md:w-auto font-semibold">
-                  Add to Cart
-                </button>
-              </form>
+              <a href="{{ route('booking.calendar') }}" class="bg-[#b0775c] text-white px-6 py-3 rounded-2xl hover:bg-[#a0675a] transition-colors duration-300 w-full md:w-auto font-semibold text-center inline-flex items-center justify-center">
+                <i class="bi bi-calendar-event mr-2"></i>
+                Book Now
+              </a>
             </template>
             <button type="button" @click="open=false" class="bg-gray-500 text-white px-6 py-3 rounded-2xl hover:bg-gray-600 transition-colors duration-300 w-full md:w-auto font-semibold">
               Close

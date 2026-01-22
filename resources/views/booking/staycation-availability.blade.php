@@ -122,12 +122,14 @@
                                 };
                             @endphp
 
-                            <div
-                                class="relative bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl
+                    <div
+                                class="relative bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl {{ $status === 'unavailable' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer' }}
                                 {{ $status === 'available' ? 'ring-2 ring-green-200 hover:ring-green-300' : ($status === 'limited' ? 'ring-2 ring-yellow-200 hover:ring-yellow-300' : 'ring-2 ring-gray-200') }}"
                                 data-room-id="{{ $staycation->id }}"
                                 data-type="{{ $roomDetail['type'] }}"
                                 x-show="roomType === 'all' || roomType === '{{ $roomDetail['type'] }}'"
+                                @click="{{ $status === 'unavailable' ? 'null' : "toggleRoom(" . $staycation->id . ", '" . $roomDetail['type'] . "')" }}"
+                                {{ $status === 'unavailable' ? 'style=pointer-events:none' : '' }}
                             >
                                 {{-- Selected indicator --}}
                                 <div class="absolute top-2 left-2 z-10" x-show="isSelected({{ $staycation->id }})" x-transition>
@@ -148,8 +150,8 @@
                                                 @endforeach
                                             </div>
                                             <div class="swiper-pagination swiper-pagination-{{ $staycation->id }}"></div>
-                                            <div class="swiper-button-next swiper-button-next-{{ $staycation->id }}"></div>
-                                            <div class="swiper-button-prev swiper-button-prev-{{ $staycation->id }}"></div>
+                                            <div class="swiper-button-next swiper-button-next-{{ $staycation->id }}" @click.stop></div>
+                                            <div class="swiper-button-prev swiper-button-prev-{{ $staycation->id }}" @click.stop></div>
                                         </div>
                                     @else
                                         <img src="{{ $staycation->swiperImages && $staycation->swiperImages->count() > 0 ? $staycation->swiperImages->first()->image_path : $roomDetail['image'] }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
@@ -191,7 +193,17 @@
                                     </h3>
 
                                     <div class="text-lg font-bold text-[#8f5d54] mb-2">
-                                        ₱{{ number_format($roomDetail['price'], 0) }} / night
+                                        ₱{{ number_format($roomDetail['price'], 0) }} / 
+                                        @php
+                                            $roomNameLower = strtolower($roomDetail['name']);
+                                            $isBYOT = str_contains($roomNameLower, 'byot') || str_contains($roomNameLower, 'bring your own tent');
+                                            $isCarCamping = str_contains($roomNameLower, 'car camping');
+                                        @endphp
+                                        @if($isBYOT || $isCarCamping)
+                                            slot
+                                        @else
+                                            night
+                                        @endif
                                     </div>
 
                                     <p class="text-gray-600 mb-4 text-sm">
@@ -241,7 +253,7 @@
                                     </div>
 
                                     {{-- Inline edit panel (shows when selected) --}}
-                                    <div x-show="isSelected({{ $staycation->id }})" x-transition class="mt-4 border-t pt-4">
+                                    <div x-show="isSelected({{ $staycation->id }})" x-transition class="mt-4 border-t pt-4" @click.stop @input.stop>
                                         <div class="text-sm font-semibold text-gray-800 mb-3">
                                             Guest details (edit anytime)
                                         </div>
@@ -253,61 +265,29 @@
                                         @endphp
 
                                         @if($isBYOT)
-                                            {{-- BYOT: Show "How many BYOT", Adults, and Children --}}
-                                            <div class="grid grid-cols-3 gap-2">
+                                            {{-- BYOT: Show "How many BYOT" only --}}
+                                            <div class="grid grid-cols-1 gap-2">
                                                 <div>
-                                                    <label class="text-xs text-gray-600">How many BYOT</label>
+                                                    <label class="text-xs text-gray-600 font-semibold">How many BYOT?</label>
                                                     <input type="number" min="1" max="{{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }}"
                                                            class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
                                                            :value="getRoom({{ $staycation->id }}).extra_mattress || 1"
                                                            @input="validateQuantity({{ $staycation->id }}, 'extra_mattress', $event.target.value, {{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }})"
                                                     >
                                                     <span class="text-xs text-gray-500 mt-1 block" x-text="'Remaining: ' + ({{ $roomDetails[$staycation->id]['available_quantity'] ?? 0 }} - (getRoom({{ $staycation->id }}).extra_mattress || 1))"></span>
-                                                </div>
-                                                <div>
-                                                    <label class="text-xs text-gray-600">Adults (Max {{ $staycation->adults ?? $staycation->capacity ?? 20 }})</label>
-                                                    <input type="number" min="1" max="{{ $staycation->adults ?? $staycation->capacity ?? 20 }}"
-                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
-                                                           :value="getRoom({{ $staycation->id }}).adults"
-                                                           @input="validateAdultLimit({{ $staycation->id }}, $event.target.value, {{ $staycation->adults ?? $staycation->capacity ?? 20 }})"
-                                                    >
-                                                </div>
-                                                <div>
-                                                    <label class="text-xs text-gray-600">Children</label>
-                                                    <input type="number" min="0" max="20"
-                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
-                                                           :value="getRoom({{ $staycation->id }}).children || 0"
-                                                           @input="setField({{ $staycation->id }}, 'children', $event.target.value)"
-                                                    >
                                                 </div>
                                             </div>
                                         @elseif($isCarCamping)
-                                            {{-- Car Camping: Show "Number of Vehicles", Adults, and Children --}}
-                                            <div class="grid grid-cols-3 gap-2">
+                                            {{-- Car Camping: Show "Number of Vehicles" only --}}
+                                            <div class="grid grid-cols-1 gap-2">
                                                 <div>
-                                                    <label class="text-xs text-gray-600">Number of Vehicles</label>
+                                                    <label class="text-xs text-gray-600 font-semibold">Number of Vehicles</label>
                                                     <input type="number" min="1" max="{{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }}"
                                                            class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
                                                            :value="getRoom({{ $staycation->id }}).extra_mattress || 1"
                                                            @input="validateQuantity({{ $staycation->id }}, 'extra_mattress', $event.target.value, {{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }})"
                                                     >
                                                     <span class="text-xs text-gray-500 mt-1 block" x-text="'Remaining: ' + ({{ $roomDetails[$staycation->id]['available_quantity'] ?? 0 }} - (getRoom({{ $staycation->id }}).extra_mattress || 1))"></span>
-                                                </div>
-                                                <div>
-                                                    <label class="text-xs text-gray-600">Adults (Max {{ $staycation->adults ?? $staycation->capacity ?? 20 }})</label>
-                                                    <input type="number" min="1" max="{{ $staycation->adults ?? $staycation->capacity ?? 20 }}"
-                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
-                                                           :value="getRoom({{ $staycation->id }}).adults"
-                                                           @input="validateAdultLimit({{ $staycation->id }}, $event.target.value, {{ $staycation->adults ?? $staycation->capacity ?? 20 }})"
-                                                    >
-                                                </div>
-                                                <div>
-                                                    <label class="text-xs text-gray-600">Children</label>
-                                                    <input type="number" min="0" max="20"
-                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
-                                                           :value="getRoom({{ $staycation->id }}).children || 0"
-                                                           @input="setField({{ $staycation->id }}, 'children', $event.target.value)"
-                                                    >
                                                 </div>
                                             </div>
                                         @else
@@ -793,12 +773,28 @@
                         if (!isFinite(value)) value = 0;
                         if (field === 'adults' && value < 1) value = 1;
                         if (['children','extra_mattress','num_pets'].includes(field) && value < 0) value = 0;
-                        if (field === 'num_pets' && value > 2) value = 2;
+
+                        const roomNameLower = (this.selectedRooms[roomId].name || '').toLowerCase();
+                        const isBYOTorCar = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent') || roomNameLower.includes('car camping');
+
+                        // Cap pets to 2 for all non-BYOT/Car Camping; force 0 for BYOT/Car Camping
+                        if (field === 'num_pets') {
+                            if (isBYOTorCar) {
+                                value = 0;
+                            } else if (value > 2) {
+                                value = 2;
+                                // Modal warning for exceeding pet limit
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Pet Limit Exceeded',
+                                    text: 'Maximum 2 pets allowed for this room',
+                                    confirmButtonColor: '#8f5d54',
+                                });
+                            }
+                        }
                         
                         // Max 8 for BYOT/Car Camping quantity
                         if (field === 'extra_mattress') {
-                            const roomNameLower = (this.selectedRooms[roomId].name || '').toLowerCase();
-                            const isBYOTorCar = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent') || roomNameLower.includes('car camping');
                             if (isBYOTorCar) {
                                 if (value > 8) value = 8;
                                 if (value < 1) value = 1;

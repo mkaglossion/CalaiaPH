@@ -1,0 +1,40 @@
+{{-- Selected Food Section --}}
+@php
+    $hasFoods = !empty($selectedFoods) && count($selectedFoods) > 0 && isset($foods) && count($foods) > 0;
+@endphp
+@if($hasFoods)
+<div>
+    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+        <i class="bi bi-cup-straw mr-2 text-[#8f5d54]"></i> Selected Food & Beverages
+    </h4>
+    <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
+        @php $foodTotal = 0; @endphp
+        @foreach($selectedFoods as $selectedFood)
+            @php
+                $food = $foods->get($selectedFood['id']);
+                if ($food) {
+                    $quantity = $selectedFood['quantity'] ?? 1;
+                    $itemTotal = $food->price * $quantity;
+                    $foodTotal += $itemTotal;
+                }
+            @endphp
+            @if($food)
+            <div class="bg-white rounded border border-gray-200 p-2">
+                <div class="flex justify-between items-start mb-1">
+                    <span class="font-semibold text-gray-900">{{ $food->name }}</span>
+                    <span class="font-bold text-[#8f5d54]">₱{{ number_format($itemTotal, 0) }}</span>
+                </div>
+                <div class="text-gray-600">
+                    <div>Qty: <span class="font-semibold">{{ $quantity }}</span> × ₱{{ number_format($food->price, 0) }}</div>
+                    @if(!empty($selectedFood['notes']))
+                        <div class="text-xs text-gray-500 italic mt-1">{{ $selectedFood['notes'] }}</div>
+                    @endif
+                </div>
+            </div>
+            @endif
+        @endforeach
+    </div>
+</div>
+
+<hr class="border-gray-200">
+@endif

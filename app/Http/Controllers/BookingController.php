@@ -529,17 +529,17 @@ class BookingController extends Controller
         if (empty($booking['checkin']) || empty($booking['checkout']) || empty($booking['accommodations'])) {
             return redirect()->route('booking.staycation')->with('error', 'Please complete your staycation booking first.');
         }
-        
-        // Get selected foods from session
-        $selectedFoods = $booking['selected_foods'] ?? session('selected_foods', []);
-        
+
+        // Get selected foods from current booking session only (not old session data)
+        $selectedFoods = $booking['selected_foods'] ?? [];
+
         // Fetch food details if we have selected foods
         $foods = [];
         if (!empty($selectedFoods)) {
             $foodIds = array_column($selectedFoods, 'id');
             $foods = \App\Models\Food::whereIn('id', $foodIds)->get()->keyBy('id');
         }
-        
+
         // Fetch staycations for room names
         $staycations = \App\Models\Staycation::all()->keyBy('id');
 

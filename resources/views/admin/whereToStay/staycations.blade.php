@@ -36,14 +36,32 @@
             </thead>
             <tbody>
                 @forelse($staycations as $index => $act)
+                @php
+                    $actName = strtolower($act->name ?? '');
+                    $isBYOT = strpos($actName, 'byot') !== false;
+                    $isCarCamping = strpos($actName, 'car camping') !== false;
+                    $isSpecial = $isBYOT || $isCarCamping;
+                @endphp
                 <tr class="border-b hover:bg-gray-50">
                     <td class="px-4 py-2">{{ $index + 1 }}</td>
                     <td class="px-4 py-2">{{ $act->name ?? 'Untitled' }}</td>
                     <td class="px-4 py-2">
                         <span class="today-avail-{{ $act->id }}">{{ $act->today_available ?? 0 }}</span>
                     </td>
-                    <td class="px-4 py-2">{{ $act->adults ?? 'N/A' }}</td>
-                    <td class="px-4 py-2">{{ $act->children ?? 'N/A' }}</td>
+                    <td class="px-4 py-2">
+                        @if(!$isSpecial)
+                            {{ $act->adults ?? 'N/A' }}
+                        @else
+                            <span class="text-gray-400 italic">N/A</span>
+                        @endif
+                    </td>
+                    <td class="px-4 py-2">
+                        @if(!$isSpecial)
+                            {{ $act->children ?? 'N/A' }}
+                        @else
+                            <span class="text-gray-400 italic">N/A</span>
+                        @endif
+                    </td>
                     <td class="px-4 py-2">
                         @if($act->price_configs && count($act->price_configs) > 0)
                             @php $config = $act->price_configs[0]; @endphp
@@ -88,10 +106,11 @@
                 @csrf
 
                 <!-- Staycation Name, Max Capacity, Adults & Children -->
-                <div class="grid grid-cols-4 gap-4">
+                <div class="grid gap-4" :class="isSpecialStaycation ? 'grid-cols-2' : 'grid-cols-4'">
                     <div>
                         <label class="block text-sm font-medium mb-1">Staycation Name</label>
-                        <input type="text" x-model="form.name" class="w-full border rounded px-3 py-2 h-10" placeholder="Premium Glamping Tent" required>
+                        <input type="text" x-model="form.name" @input="updateSpecialRoomStatus()" class="w-full border rounded px-3 py-2 h-10" placeholder="Premium Glamping Tent" required>
+                        <p x-show="isSpecialStaycation" class="text-xs text-blue-600 mt-1">BYOT/Car Camping - No adults/children required</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Max Capacity</label>
@@ -105,11 +124,11 @@
                             Base capacity; per-date inventory can be lower. Threshold (30%): <span class="font-semibold" x-text="computedThreshold"></span>
                         </p>
                     </div>
-                    <div>
+                    <div x-show="!isSpecialStaycation">
                         <label class="block text-sm font-medium mb-1">Adults</label>
                         <input type="number" x-model.number="form.adults" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
                     </div>
-                    <div>
+                    <div x-show="!isSpecialStaycation">
                         <label class="block text-sm font-medium mb-1">Children</label>
                         <input type="number" x-model.number="form.children" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
                     </div>
@@ -632,10 +651,17 @@ function staycationComponent() {
         },
 
         computedThreshold: 0,
+        isSpecialStaycation: false,
+
+        updateSpecialRoomStatus() {
+            const name = (this.form.name || '').toLowerCase();
+            this.isSpecialStaycation = name.includes('byot') || name.includes('car camping') || name.includes('bring your own');
+        },
 
         resetForm() {
             this.form = { id: null, name: '', quantity: 1, adults: 0, children: 0, priceConfigs: [], image: null, imagePreview: null, existingImage: null, removeImage: false };
             this.editModeStaycation = false;
+            this.isSpecialStaycation = false;
             this.removeImage(); // Explicitly clear image and input
         },
 
@@ -661,6 +687,7 @@ function staycationComponent() {
             if (staycation) {
                 this.form.id = staycation.id;
                 this.form.name = staycation.name;
+                this.updateSpecialRoomStatus();
                 this.form.quantity = staycation.quantity;
                 this.form.adults = staycation.adults;
                 this.form.children = staycation.children;

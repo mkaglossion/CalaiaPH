@@ -174,58 +174,58 @@
         </div>
     @endif
 
-    {{-- Carousel View --}}
-    @php
-        $imagesByMenu = $images->groupBy('menu_id');
-    @endphp
+    <div class="overflow-x-auto border rounded-lg shadow">
+        <table class="min-w-full text-sm text-left">
+            <thead class="bg-gray-100 border-b">
+                <tr>
+                    <th class="px-4 py-2">#</th>
+                    <th class="px-4 py-2">Preview</th>
+                    <th class="px-4 py-2">Menu Name</th>
+                    <th class="px-4 py-2">Title</th>
+                    <th class="px-4 py-2">Uploaded</th>
+                    <th class="px-4 py-2 text-right">Actions</th>
+                </tr>
+            </thead>
 
-    @if($images->count() > 0)
-        @foreach($imagesByMenu as $menuId => $menuImages)
-            @php
-                $menu = $menus->firstWhere('id', $menuId);
-            @endphp
-            <div class="mb-8">
-                <h3 class="text-lg font-semibold mb-4">{{ $menu->name ?? 'Untitled Menu' }}</h3>
-                
-                <div class="swiper admin-carousel admin-carousel-menu-{{ $menuId }}">
-                    <div class="swiper-wrapper">
-                        @foreach($menuImages as $img)
-                            <div class="swiper-slide">
-                                <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 p-4" style="max-width: 250px;">
-                                    <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-full h-48 object-cover rounded mb-3">
-                                    <div class="mb-3">
-                                        <p class="text-sm font-semibold text-gray-800">{{ $img->title ?? 'Untitled' }}</p>
-                                        <p class="text-xs text-gray-500">{{ $img->created_at->format('Y-m-d') }}</p>
-                                    </div>
-                                    <form action="{{ route('menu-image.destroy', $img->id) }}" method="POST" class="inline-block w-full">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button 
-                                            type="submit"
-                                            class="w-full bg-red-600 text-white py-2 rounded text-xs hover:bg-red-700 font-semibold"
-                                            onclick="return confirm('Delete this image?')"
-                                        >
-                                            Delete
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
+            <tbody>
+                @forelse($images as $index => $img)
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-4 py-2">{{ $index + 1 }}</td>
+                        <td class="px-4 py-2">
+                            <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
+                        </td>
+                        <td class="px-4 py-2">{{ $img->menu->name ?? 'Untitled' }}</td>
+                        <td class="px-4 py-2">{{ $img->title ?? 'Untitled' }}</td>
+                        <td class="px-4 py-2">{{ $img->created_at->format('Y-m-d') }}</td>
+                        <td class="px-4 py-2 text-right space-x-2">
+                            <button
+                                class="text-blue-600 hover:underline"
+                                @click="editImage({{ $img->id }}, '{{ $img->menu_id }}', '{{ $img->title }}')"
+                            >
+                                Edit
+                            </button>
 
-                    @if($menuImages->count() > 3)
-                        <div class="swiper-pagination admin-carousel-pagination admin-carousel-pagination-{{ $menuId }} mt-4"></div>
-                        <div class="swiper-button-prev admin-carousel-prev admin-carousel-prev-{{ $menuId }} absolute left-0 top-1/3"></div>
-                        <div class="swiper-button-next admin-carousel-next admin-carousel-next-{{ $menuId }} absolute right-0 top-1/3"></div>
-                    @endif
-                </div>
-            </div>
-        @endforeach
-    @else
-        <div class="text-center py-8 bg-gray-50 rounded-lg">
-            <p class="text-gray-500">No images uploaded yet.</p>
-        </div>
-    @endif
+                            <form action="{{ route('menu-image.destroy', $img->id) }}" method="POST" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button
+                                    type="submit"
+                                    class="text-red-600 hover:underline"
+                                    onclick="return confirm('Delete this image?')"
+                                >
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-4 py-4 text-center text-gray-500">No images uploaded yet.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 
     {{-- Modal --}}
     <div 

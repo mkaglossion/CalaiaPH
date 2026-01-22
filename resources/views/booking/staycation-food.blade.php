@@ -89,10 +89,11 @@
                     {{-- Filter --}}
                     <div class="mb-6 flex items-end gap-3 flex-wrap">
                         <div>
-                            <label for="foodCategory" class="block text-sm font-medium text-gray-700 mb-2" style="font-family:'Gotham Book', sans-serif;">Filter by Category:</label>
+                            <label for="foodCategory" class="block text-sm font-medium text-gray-700 mb-2" style="font-family:'Gotham Book', sans-serif;">Filter by:</label>
                             <select id="foodCategory" x-model="selectedCategory"
                                     class="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8f5d54] focus:border-[#8f5d54]">
-                                <option value="all">All Categories</option>
+                                <option value="all">All Items</option>
+                                <option value="special">Special Options</option>
                                 <option value="breakfast">Breakfast</option>
                                 <option value="lunch">Lunch</option>
                                 <option value="dinner">Dinner</option>
@@ -111,7 +112,99 @@
 
                     {{-- Food Grid --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        @forelse($foodMenus as $food)
+                        {{-- Special Options (like Cook Your Own) --}}
+                        @forelse($foodMenus->where('is_special_option', true) as $special)
+                            @php
+                                $category = $special->category ?? 'special';
+                                $specialColor = match($special->name) {
+                                    'Cook Your Own' => ['bg' => 'from-green-50 to-emerald-50', 'ring' => 'ring-green-200 hover:ring-green-400', 'border' => 'border-green-300', 'btn' => 'bg-green-600 hover:bg-green-700', 'badge' => 'bg-green-600', 'icon' => 'bi-fire'],
+                                    default => ['bg' => 'from-blue-50 to-cyan-50', 'ring' => 'ring-blue-200 hover:ring-blue-400', 'border' => 'border-blue-300', 'btn' => 'bg-blue-600 hover:bg-blue-700', 'badge' => 'bg-blue-600', 'icon' => 'bi-star']
+                                };
+                            @endphp
+                            <div
+                                class="relative bg-linear-to-br rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl ring-2 cursor-pointer"
+                                :class="'{{ $specialColor['bg'] }} {{ $specialColor['ring'] }} {{ $specialColor['border'] }}'"
+                                @click="toggleFood({{ $special->id }}, '{{ $special->name }}', '{{ $category }}', {{ $special->price }})"
+                                x-show="selectedCategory === 'all' || selectedCategory === 'special'"
+                            >
+                                {{-- Selected indicator --}}
+                                <div class="absolute top-2 left-2 z-10" x-show="isSelected({{ $special->id }})" x-transition>
+                                    <div class="w-6 h-6 rounded-full flex items-center justify-center" :style="'background: ' + ({{ $special->id }} === {{ $special->id }} ? '#16a34a' : '#0284c7')">
+                                        <i class="bi bi-check text-white text-sm"></i>
+                                    </div>
+                                </div>
+
+                                {{-- Image --}}
+                                <div class="relative overflow-hidden h-96 flex items-center justify-center bg-gray-100">
+                                    @php
+                                        $hasMultipleSwiperImages = $special->swiperImages && $special->swiperImages->count() > 1;
+                                        $hasSingleSwiperImage = $special->swiperImages && $special->swiperImages->count() == 1;
+                                    @endphp
+
+                                    @if($hasMultipleSwiperImages)
+                                        {{-- Multiple swiper images - carousel --}}
+                                        <div class="swiper special-swiper-{{ $special->id }}">
+                                            <div class="swiper-wrapper">
+                                                @foreach($special->swiperImages as $image)
+                                                    <div class="swiper-slide">
+                                                        <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $special->name }}" class="w-full h-96 object-cover">
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                            <div class="swiper-pagination swiper-pagination-special-{{ $special->id }}"></div>
+                                            <div class="swiper-button-next swiper-button-next-special-{{ $special->id }}"></div>
+                                            <div class="swiper-button-prev swiper-button-prev-special-{{ $special->id }}"></div>
+                                        </div>
+                                    @elseif($hasSingleSwiperImage)
+                                        {{-- Single swiper image --}}
+                                        <img src="{{ $special->swiperImages->first()->image_path }}" alt="{{ $special->swiperImages->first()->title ?? $special->name }}" class="w-full h-96 object-cover">
+                                    @elseif($special->image)
+                                        {{-- Main food image --}}
+                                        <img src="{{ $special->image }}" alt="{{ $special->name }}" class="w-full h-96 object-cover">
+                                    @else
+                                        {{-- Fallback to icon if no image --}}
+                                        <div class="text-center" :class="'bg-linear-to-br {{ $specialColor['bg'] }}'">
+                                            <i class="bi {{ $specialColor['icon'] }} text-6xl mb-4 block" :class="'{{ $specialColor['icon'] === 'bi-fire' ? 'text-green-600' : 'text-blue-600' }}'"></i>
+                                            <p class="font-semibold" :class="'{{ $specialColor['icon'] === 'bi-fire' ? 'text-green-700' : 'text-blue-700' }}'">{{ $special->name }}</p>
+                                        </div>
+                                    @endif
+                                    
+                                    {{-- Category badge --}}
+                                    <div class="absolute bottom-4 left-4 z-10">
+                                        <span class="px-3 py-1 text-white text-sm font-semibold rounded-full" :class="'{{ $specialColor['badge'] }}'">
+                                            Special
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="p-6">
+                                    <h3 class="text-xl font-bold mb-2" style="font-family:'Gotham Book', sans-serif;">
+                                        {{ $special->name }}
+                                    </h3>
+
+                                    <div class="mb-3">
+                                        <span class="text-lg font-bold" :class="{{ $special->price }} === 0 ? 'text-green-600' : 'text-[#8f5d54]'">
+                                            {{ $special->price === 0 ? 'FREE' : '₱' . number_format($special->price, 0) }}
+                                        </span>
+                                    </div>
+
+                                    <p class="text-gray-600 mb-4 text-sm">
+                                        {{ $special->description ?? 'Special option for your staycation' }}
+                                    </p>
+
+                                    <button type="button"
+                                            class="w-full py-2 rounded-lg font-semibold transition text-white"
+                                            :class="isSelected({{ $special->id }}) ? '{{ $specialColor['btn'] }}' : 'bg-gray-400 hover:bg-gray-500'"
+                                            @click.stop="toggleFood({{ $special->id }}, '{{ $special->name }}', '{{ $category }}', {{ $special->price }})">
+                                        <i :class="isSelected({{ $special->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
+                                        <span x-text="isSelected({{ $special->id }}) ? 'Selected' : 'Select Option'"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        @empty
+                        @endforelse
+
+                        @forelse($foodMenus->where('is_special_option', false) as $food)
                             @php
                                 $category = $food->category ?? 'package';
                             @endphp
@@ -120,6 +213,7 @@
                                 class="relative bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl ring-2 ring-gray-200 hover:ring-[#8f5d54] cursor-pointer"
                                 data-category="{{ $category }}"
                                 x-show="selectedCategory === 'all' || selectedCategory === '{{ $category }}'"
+                                @click="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})"
                             >
                                 {{-- Selected indicator --}}
                                 <div class="absolute top-2 left-2 z-10" x-show="isSelected({{ $food->id }})" x-transition>
@@ -188,7 +282,7 @@
                                     <button type="button"
                                             class="w-full py-2 rounded-lg font-semibold transition"
                                             :class="isSelected({{ $food->id }}) ? 'bg-[#8f5d54] text-white hover:bg-[#7a4e48]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-                                            @click="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
+                                            @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
                                         <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
                                         <span x-text="isSelected({{ $food->id }}) ? 'Added to Cart' : 'Add to Cart'"></span>
                                     </button>
@@ -383,31 +477,40 @@
                             <template x-if="selectedFoods.length > 0">
                                 <div class="space-y-4">
                                     <template x-for="food in selectedFoods" :key="food.id">
-                                        <div class="border border-gray-200 rounded-xl p-4 shadow-sm">
-                                            <div class="flex items-start justify-between gap-2 mb-3">
-                                                <div class="flex-1">
-                                                    <p class="text-sm font-semibold" x-text="food.name"></p>
-                                                    <p class="text-xs text-gray-500 capitalize" x-text="food.category"></p>
-                                                    <p class="text-sm font-bold text-[#8f5d54] mt-1" x-text="'₱' + Number(food.price).toLocaleString()"></p>
-                                                </div>
-                                                <button type="button" class="text-gray-400 hover:text-red-600 transition" @click="removeFood(food.id)">
-                                                    <i class="bi bi-x-lg"></i>
-                                                </button>
-                                            </div>
-
-                                            <div class="flex items-center justify-between gap-2">
-                                                <div class="flex items-center gap-2">
-                                                    <button type="button" class="w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" @click="decreaseQty(food.id)">-</button>
-                                                    <input type="number" min="1" max="20" class="w-16 text-center border border-gray-300 rounded-md py-1 text-sm" :value="food.quantity" @change="setField(food.id, 'quantity', $event.target.value)">
-                                                    <button type="button" class="w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" @click="increaseQty(food.id)">+</button>
-                                                </div>
-                                                <div class="text-right text-[#8f5d54] font-bold text-sm" x-text="'₱' + (food.price * food.quantity).toLocaleString()"></div>
-                                            </div>
-
-                                            <div class="mt-3">
-                                                <textarea rows="2" class="w-full border border-gray-200 rounded-lg p-2 text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54] placeholder-gray-400" placeholder="Notes or dietary preferences..." :value="food.notes || ''" @input="setField(food.id, 'notes', $event.target.value)"></textarea>
-                                            </div>
+                                <div class="border rounded-xl p-4 shadow-sm" :class="food.id === 'cook-your-own' ? 'border-green-200 bg-green-50' : 'border-gray-200'">
+                                    <div class="flex items-start justify-between gap-2 mb-3">
+                                        <div class="flex-1">
+                                            <p class="text-sm font-semibold" x-text="food.name"></p>
+                                            <p class="text-xs text-gray-500 capitalize" :class="food.category === 'special' ? 'text-green-600' : ''" x-text="food.category"></p>
+                                            <p class="text-sm font-bold mt-1" :class="food.price === 0 ? 'text-green-600' : 'text-[#8f5d54]'" x-text="food.price === 0 ? 'FREE' : '₱' + Number(food.price).toLocaleString()"></p>
                                         </div>
+                                        <button type="button" class="text-gray-400 hover:text-red-600 transition" @click="removeFood(food.id)">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+
+                                    {{-- Quantity controls only for paid items --}}
+                                    <template x-if="food.id !== 'cook-your-own' && food.category !== 'special'">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="flex items-center gap-2">
+                                                <button type="button" class="w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" @click="decreaseQty(food.id)">-</button>
+                                                <input type="number" min="1" max="20" class="w-16 text-center border border-gray-300 rounded-md py-1 text-sm" :value="food.quantity" @change="setField(food.id, 'quantity', $event.target.value)">
+                                                <button type="button" class="w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" @click="increaseQty(food.id)">+</button>
+                                            </div>
+                                            <div class="text-right text-[#8f5d54] font-bold text-sm" x-text="'₱' + (food.price * food.quantity).toLocaleString()"></div>
+                                        </div>
+
+                                        <div class="mt-3">
+                                            <textarea rows="2" class="w-full border border-gray-200 rounded-lg p-2 text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54] placeholder-gray-400" placeholder="Notes or dietary preferences..." :value="food.notes || ''" @input="setField(food.id, 'notes', $event.target.value)"></textarea>
+                                        </div>
+                                    </template>
+
+                                    {{-- Special message for special options --}}
+                                    <template x-if="food.category === 'special' || food.id === 'cook-your-own'">
+                                        <div class="mt-3 p-3 rounded-lg border" :class="food.name === 'Cook Your Own' ? 'bg-green-100 border-green-300' : 'bg-blue-100 border-blue-300'">
+                                            <p class="text-xs" :class="food.name === 'Cook Your Own' ? 'text-green-700' : 'text-blue-700'"><i class="bi bi-info-circle mr-1"></i><span x-text="food.name === 'Cook Your Own' ? 'You\'ll have access to a fully equipped kitchen. No additional charge.' : 'Special option selected. No additional charge.'"></span></p>
+                                        </div>
+                                    </template>
                                     </template>
 
                                     <div class="border-t pt-4 flex items-center justify-between">
@@ -580,6 +683,32 @@
                                 }
                             });
                         }
+                    }
+                }
+            });
+
+            // Initialize swipers for special food items
+            const specialSwipers = document.querySelectorAll('[class*="special-swiper-"]');
+            specialSwipers.forEach(swiperEl => {
+                const specialSwiperId = swiperEl.className.match(/special-swiper-(\d+)/)?.[1];
+                if (specialSwiperId) {
+                    const element = document.querySelector('.special-swiper-' + specialSwiperId);
+                    if (element && element.querySelector('.swiper-slide')) {
+                        new Swiper('.special-swiper-' + specialSwiperId, {
+                            loop: true,
+                            pagination: {
+                                el: '.swiper-pagination-special-' + specialSwiperId,
+                                clickable: true
+                            },
+                            navigation: {
+                                nextEl: '.swiper-button-next-special-' + specialSwiperId,
+                                prevEl: '.swiper-button-prev-special-' + specialSwiperId
+                            },
+                            autoplay: {
+                                delay: 4000,
+                                disableOnInteraction: false
+                            }
+                        });
                     }
                 }
             });

@@ -382,7 +382,7 @@
 
       {{-- VR Preview (Pannellum) --}}
       <div x-show="vrOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/80" @keydown.escape.window="closeVR()" @click.self="closeVR()" style="display:none;">
-        <div class="relative w-full max-w-[1200px] mx-4 bg-black rounded-2xl shadow-2xl overflow-hidden">
+        <div class="relative w-full max-w-300 mx-4 bg-black rounded-2xl shadow-2xl overflow-hidden">
           {{-- Header --}}
           <div class="flex items-center justify-between px-6 py-4" style="background:rgba(255,255,255,0.05)">
             <h3 class="text-white font-semibold"><i class="bi bi-eye me-2"></i>Virtual Reality Preview</h3>
