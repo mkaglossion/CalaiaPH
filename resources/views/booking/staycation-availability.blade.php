@@ -480,16 +480,12 @@
                                                 <div class="text-xs text-gray-600 mt-1">
                                                     <template x-if="item.name.toLowerCase().includes('byot') || item.name.toLowerCase().includes('bring your own tent')">
                                                         <span>
-                                                            BYOT Qty: <span class="font-semibold" x-text="item.extra_mattress || 1"></span>,
-                                                            Adults: <span class="font-semibold" x-text="item.adults"></span>,
-                                                            Children: <span class="font-semibold" x-text="item.children || 0"></span>
+                                                            BYOT Qty: <span class="font-semibold" x-text="item.extra_mattress || 1"></span>
                                                         </span>
                                                     </template>
                                                     <template x-if="item.name.toLowerCase().includes('car camping')">
                                                         <span>
-                                                            Vehicles: <span class="font-semibold" x-text="item.extra_mattress || 1"></span>,
-                                                            Adults: <span class="font-semibold" x-text="item.adults"></span>,
-                                                            Children: <span class="font-semibold" x-text="item.children || 0"></span>
+                                                            Vehicles: <span class="font-semibold" x-text="item.extra_mattress || 1"></span>
                                                         </span>
                                                     </template>
                                                     <template x-if="!item.name.toLowerCase().includes('byot') && !item.name.toLowerCase().includes('bring your own tent') && !item.name.toLowerCase().includes('car camping')">
@@ -1263,7 +1259,12 @@
                             proceed_to_activities: true
                         })
                     })
-                    .then(r => r.json())
+                    .then(r => {
+                        if (!r.ok) {
+                            throw new Error(`HTTP error! status: ${r.status}`);
+                        }
+                        return r.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             window.location.href = targetUrl;
@@ -1271,7 +1272,10 @@
                             Swal.fire('Error', data.message || 'Failed to save selection', 'error');
                         }
                     })
-                    .catch(() => Swal.fire('Error', 'Network error saving selection', 'error'));
+                    .catch((error) => {
+                        console.error('Error:', error);
+                        Swal.fire('Error', 'Network error saving selection: ' + error.message, 'error');
+                    });
                 }
             }
         }

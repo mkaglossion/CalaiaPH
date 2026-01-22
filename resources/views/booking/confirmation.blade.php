@@ -251,10 +251,17 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                   <span class="ml-2 text-gray-900">{{ $nights ?? 0 }}</span>
               </div>
               @php
-                $hasSpecialRoom = collect($bookingData['accommodations'] ?? [])->some(function($acc) {
-                  $name = $acc['accommodation_name'] ?? '';
-                  return stripos($name, 'byot') !== false || stripos($name, 'car camping') !== false || stripos($name, 'bring your own') !== false;
-                });
+                $hasSpecialRoom = false;
+                foreach ($bookingData['accommodations'] ?? [] as $roomId => $acc) {
+                  if (!empty($acc)) {
+                    $staycation = $staycations->get($acc['accommodation_id'] ?? $roomId);
+                    $name = strtolower($staycation->name ?? '');
+                    if (str_contains($name, 'byot') || str_contains($name, 'car camping') || str_contains($name, 'bring your own')) {
+                      $hasSpecialRoom = true;
+                      break;
+                    }
+                  }
+                }
               @endphp
               @if (!$hasSpecialRoom)
               <div>

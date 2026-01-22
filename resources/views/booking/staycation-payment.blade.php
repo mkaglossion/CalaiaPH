@@ -838,10 +838,20 @@ $grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
                       <span class="text-gray-600">Total Nights:</span>
                       <span class="font-semibold text-[#8f5d54]">{{ max(1, $nights) }}</span>
                     </div>
+                    @php
+                      $hasSpecialRoom = collect($booking['accommodations'] ?? [])->some(function($room) use ($staycations) {
+                        if (empty($room)) return false;
+                        $staycation = $staycations->get($room['accommodation_id'] ?? null);
+                        $name = strtolower($staycation->name ?? '');
+                        return str_contains($name, 'byot') || str_contains($name, 'car camping') || str_contains($name, 'bring your own');
+                      });
+                    @endphp
+                    @if (!$hasSpecialRoom)
                     <div class="flex justify-between">
                       <span class="text-gray-600">Total Guests:</span>
                       <span class="font-semibold text-[#8f5d54]">{{ $totalGuests }}</span>
                     </div>
+                    @endif
                   @else
                     <p class="text-gray-500 text-xs">No dates selected</p>
                   @endif

@@ -10,6 +10,21 @@ class PricingConfig extends Model
         'unit_type', 'peak_type_id', 'peak_period_id', 'holiday_id', 'day_type_id', 'duration_set_id', 'price'
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Broadcast pricing update when pricing config is saved or updated
+        static::saved(function ($pricingConfig) {
+            broadcast(new \App\Events\PricingUpdated($pricingConfig->unit_type))->toOthers();
+        });
+
+        // Broadcast pricing update when pricing config is deleted
+        static::deleted(function ($pricingConfig) {
+            broadcast(new \App\Events\PricingUpdated($pricingConfig->unit_type))->toOthers();
+        });
+    }
+
     /**
      * Get the peak type associated with this pricing config.
      */
@@ -50,3 +65,4 @@ class PricingConfig extends Model
         return $this->belongsTo(DurationSet::class);
     }
 }
+
