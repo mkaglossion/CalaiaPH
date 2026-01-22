@@ -35,64 +35,61 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($staycations as $index => $act)
-                @php
-                    $actName = strtolower($act->name ?? '');
-                    $isBYOT = strpos($actName, 'byot') !== false;
-                    $isCarCamping = strpos($actName, 'car camping') !== false;
-                    $isSpecial = $isBYOT || $isCarCamping;
-                @endphp
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="px-4 py-2">{{ $index + 1 }}</td>
-                    <td class="px-4 py-2">{{ $act->name ?? 'Untitled' }}</td>
-                    <td class="px-4 py-2">
-                        <span class="today-avail-{{ $act->id }}">{{ $act->today_available ?? 0 }}</span>
-                    </td>
-                    <td class="px-4 py-2">
-                        @if(!$isSpecial)
-                            {{ $act->adults ?? 'N/A' }}
-                        @else
-                            <span class="text-gray-400 italic">N/A</span>
-                        @endif
-                    </td>
-                    <td class="px-4 py-2">
-                        @if(!$isSpecial)
-                            {{ $act->children ?? 'N/A' }}
-                        @else
-                            <span class="text-gray-400 italic">N/A</span>
-                        @endif
-                    </td>
-                    <td class="px-4 py-2">
-                        @if($act->price_configs && count($act->price_configs) > 0)
-                            @php $config = $act->price_configs[0]; @endphp
-                            Non-Peak: ₱{{ $config['rates']['nonPeak'] ?? 0 }}, Peak: ₱{{ $config['rates']['peak'] ?? 0 }}, Super Peak: ₱{{ $config['rates']['superPeak'] ?? 0 }}
-                        @else
-                            N/A
-                        @endif
-                    </td>
-                    <td class="px-4 py-2">{{ $act->created_at->format('Y-m-d') }}</td>
-                    <td class="px-4 py-2 text-right space-x-2">
-                        <button type="button" class="text-blue-600 hover:underline" @click="editStaycation({{ $act->id }})">
-                            Edit
-                        </button>
-                        <form action="{{ route('staycation-list.destroy', $act->id) }}" method="POST" class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <button
-                                type="submit"
-                                class="text-red-600 hover:underline"
-                                onclick="return confirm('Delete this staycation?')"
-                            >
-                                Delete
+                <template x-for="(act, index) in staycations" :key="act.id">
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-4 py-2" x-text="index + 1"></td>
+                        <td class="px-4 py-2" x-text="act.name || 'Untitled'"></td>
+                        <td class="px-4 py-2">
+                            <span :class="'today-avail-' + act.id" x-text="act.today_available ?? 0"></span>
+                        </td>
+                        <td class="px-4 py-2">
+                            <template x-if="!isSpecialRoom(act.name)">
+                                <span x-text="act.adults ?? 'N/A'"></span>
+                            </template>
+                            <template x-if="isSpecialRoom(act.name)">
+                                <span class="text-gray-400 italic">N/A</span>
+                            </template>
+                        </td>
+                        <td class="px-4 py-2">
+                            <template x-if="!isSpecialRoom(act.name)">
+                                <span x-text="act.children ?? 'N/A'"></span>
+                            </template>
+                            <template x-if="isSpecialRoom(act.name)">
+                                <span class="text-gray-400 italic">N/A</span>
+                            </template>
+                        </td>
+                        <td class="px-4 py-2">
+                            <template x-if="act.price_configs && act.price_configs.length > 0">
+                                <span x-text="'Non-Peak: ₱' + (act.price_configs[0].rates?.nonPeak ?? 0) + ', Peak: ₱' + (act.price_configs[0].rates?.peak ?? 0) + ', Super Peak: ₱' + (act.price_configs[0].rates?.superPeak ?? 0)"></span>
+                            </template>
+                            <template x-if="!act.price_configs || act.price_configs.length === 0">
+                                <span>N/A</span>
+                            </template>
+                        </td>
+                        <td class="px-4 py-2" x-text="new Date(act.created_at).toISOString().split('T')[0]"></td>
+                        <td class="px-4 py-2 text-right space-x-2">
+                            <button type="button" class="text-blue-600 hover:underline" @click="editStaycation(act.id)">
+                                Edit
                             </button>
-                        </form>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="8" class="px-4 py-4 text-center text-gray-500">No staycations added yet.</td>
-                </tr>
-                @endforelse
+                            <form :action="'/admin/staycation-list/' + act.id" method="POST" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button
+                                    type="submit"
+                                    class="text-red-600 hover:underline"
+                                    onclick="return confirm('Delete this staycation?')"
+                                >
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                </template>
+                <template x-if="staycations.length === 0">
+                    <tr>
+                        <td colspan="8" class="px-4 py-4 text-center text-gray-500">No staycations added yet.</td>
+                    </tr>
+                </template>
             </tbody>
         </table>
     </div>
@@ -647,7 +644,11 @@ function staycationComponent() {
             images: [],
             staycation_id: '',
             label: '',
-            text: ''
+            text: '',
+            image: null,
+            imagePreview: null,
+            existingImage: null,
+            removeImage: false
         },
 
         computedThreshold: 0,
@@ -656,6 +657,11 @@ function staycationComponent() {
         updateSpecialRoomStatus() {
             const name = (this.form.name || '').toLowerCase();
             this.isSpecialStaycation = name.includes('byot') || name.includes('car camping') || name.includes('bring your own');
+        },
+
+        isSpecialRoom(name) {
+            const lowerName = (name || '').toLowerCase();
+            return lowerName.includes('byot') || lowerName.includes('car camping') || lowerName.includes('bring your own');
         },
 
         resetForm() {
@@ -793,10 +799,13 @@ function staycationComponent() {
                 alert('Please enter valid numbers for adults and children.');
                 return;
             }
-            if (this.form.adults + this.form.children === 0) {
+            
+            // For non-special rooms, require at least one guest
+            if (!this.isSpecialRoom(this.form.name) && this.form.adults + this.form.children === 0) {
                 alert('At least one adult or child is required.');
                 return;
             }
+            
             if (!this.form.priceConfigs || this.form.priceConfigs.length === 0) {
                 alert('Please add at least one price configuration.');
                 return;
@@ -841,9 +850,21 @@ function staycationComponent() {
                 const data = await res.json();
                 if (res.ok) {
                     alert(data.message || (this.editModeStaycation ? 'Staycation updated!' : 'Staycation added!'));
+                    
+                    // Update local staycations array if editing
+                    if (this.editModeStaycation && data.staycation) {
+                        const index = this.staycations.findIndex(s => s.id === data.staycation.id);
+                        if (index !== -1) {
+                            this.staycations[index] = data.staycation;
+                        }
+                    } else if (!this.editModeStaycation && data.staycation) {
+                        // Add new staycation to the list
+                        this.staycations.push(data.staycation);
+                    }
+                    
                     this.resetForm();
                     this.showStaycationModal = false;
-                    window.location.reload();
+                    // Don't reload - let Alpine update the UI reactively
                 } else if (data.errors) {
                     alert(Object.values(data.errors).flat().join('\n'));
                 } else {

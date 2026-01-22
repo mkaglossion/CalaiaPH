@@ -23,11 +23,32 @@ class InventoryController extends Controller
         $startDate = Carbon::parse($validated['start_date']);
         $endDate = Carbon::parse($validated['end_date']);
 
+        $staycation = Staycation::find($validated['room_id']);
+        $baseQuantity = $staycation ? $staycation->quantity : 0;
+
+        // If setting higher than base, update staycation quantity
+        $newBase = max($baseQuantity, $validated['quantity']);
+        if ($newBase > $baseQuantity) {
+            $staycation->update(['quantity' => $newBase]);
+            $baseQuantity = $newBase;
+        }
+
         $current = $startDate->clone();
         while ($current <= $endDate) {
             $qty = (isset($validated['is_available']) && $validated['is_available'] === false)
                 ? 0
-                : $validated['quantity'];
+                : $validated['quantity']; // Allow setting any quantity
+
+            // Get existing inventory to preserve booked_quantity if exists
+            $existing = StaycationInventory::where('staycation_id', $validated['room_id'])
+                ->where('date', $current->format('Y-m-d'))
+                ->first();
+
+            $totalQty = $baseQuantity; // Now base is updated
+            $bookedQty = $existing ? $existing->booked_quantity : 0;
+
+            // Ensure available doesn't go negative
+            $availableQty = max(0, $qty);
 
             StaycationInventory::updateOrCreate(
                 [
@@ -35,7 +56,9 @@ class InventoryController extends Controller
                     'date' => $current->format('Y-m-d')
                 ],
                 [
-                    'available_quantity' => $qty
+                    'total_quantity' => $totalQty,
+                    'booked_quantity' => $bookedQty,
+                    'available_quantity' => $availableQty
                 ]
             );
 
@@ -57,19 +80,42 @@ class InventoryController extends Controller
             'quantity' => 'required|integer|min:1'
         ]);
 
+        $staycation = Staycation::find($validated['room_id']);
+        $baseQuantity = $staycation ? $staycation->quantity : 0;
+
+        // Update base if higher
+        $newBase = max($baseQuantity, $validated['quantity']);
+        if ($newBase > $baseQuantity) {
+            $staycation->update(['quantity' => $newBase]);
+            $baseQuantity = $newBase;
+        }
+
         $startDate = Carbon::parse($validated['start_date']);
         $endDate = Carbon::parse($validated['end_date']);
 
         $current = $startDate->clone();
         $count = 0;
         while ($current <= $endDate) {
+            $qty = $validated['quantity'];
+
+            // Get existing
+            $existing = StaycationInventory::where('staycation_id', $validated['room_id'])
+                ->where('date', $current->format('Y-m-d'))
+                ->first();
+
+            $totalQty = $baseQuantity;
+            $bookedQty = $existing ? $existing->booked_quantity : 0;
+            $availableQty = max(0, $qty);
+
             StaycationInventory::updateOrCreate(
                 [
                     'staycation_id' => $validated['room_id'],
                     'date' => $current->format('Y-m-d')
                 ],
                 [
-                    'available_quantity' => $validated['quantity']
+                    'total_quantity' => $totalQty,
+                    'booked_quantity' => $bookedQty,
+                    'available_quantity' => $availableQty
                 ]
             );
 
@@ -90,19 +136,42 @@ class InventoryController extends Controller
             'quantity' => 'required|integer|min:1'
         ]);
 
+        $staycation = Staycation::find($validated['room_id']);
+        $baseQuantity = $staycation ? $staycation->quantity : 0;
+
+        // Update base if higher
+        $newBase = max($baseQuantity, $validated['quantity']);
+        if ($newBase > $baseQuantity) {
+            $staycation->update(['quantity' => $newBase]);
+            $baseQuantity = $newBase;
+        }
+
         $startDate = Carbon::now();
         $endDate = $startDate->clone()->addDays(30);
 
         $current = $startDate->clone();
         $count = 0;
         while ($current <= $endDate) {
+            $qty = $validated['quantity'];
+
+            // Get existing
+            $existing = StaycationInventory::where('staycation_id', $validated['room_id'])
+                ->where('date', $current->format('Y-m-d'))
+                ->first();
+
+            $totalQty = $baseQuantity;
+            $bookedQty = $existing ? $existing->booked_quantity : 0;
+            $availableQty = max(0, $qty);
+
             StaycationInventory::updateOrCreate(
                 [
                     'staycation_id' => $validated['room_id'],
                     'date' => $current->format('Y-m-d')
                 ],
                 [
-                    'available_quantity' => $validated['quantity']
+                    'total_quantity' => $totalQty,
+                    'booked_quantity' => $bookedQty,
+                    'available_quantity' => $availableQty
                 ]
             );
 

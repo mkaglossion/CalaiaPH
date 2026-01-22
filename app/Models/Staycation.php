@@ -3,14 +3,31 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Artisan;
 
 class Staycation extends Model
 {
-    protected $fillable = ['name', 'quantity', 'image', 'price_configs'];
+    protected $fillable = ['name', 'quantity', 'capacity', 'adults', 'children', 'image', 'price_configs'];
 
     protected $casts = [
         'price_configs' => 'array',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::updated(function ($staycation) {
+            // If quantity changed, sync inventory
+            if ($staycation->wasChanged('quantity')) {
+                // Run sync for this staycation
+                Artisan::call('staycation:sync-inventory', [
+                    '--days' => 90,
+                    '--staycation' => $staycation->id
+                ]);
+            }
+        });
+    }
 
     public function texts()
     {
@@ -31,6 +48,16 @@ class Staycation extends Model
             'staycation_id',
             'staycation_accommodation_id'
         );
+    }
+
+    // Accessor for today's available quantity
+    public function getTodayAvailableAttribute()
+    {
+        $today = now()->toDateString();
+        $inventory = StaycationInventory::where('staycation_id', $this->id)
+            ->where('date', $today)
+            ->first();
+        return $inventory ? $inventory->available_quantity : 0;
     }
 
 }

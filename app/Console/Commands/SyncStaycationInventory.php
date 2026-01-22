@@ -14,7 +14,7 @@ class SyncStaycationInventory extends Command
      *
      * @var string
      */
-    protected $signature = 'staycation:sync-inventory {--days=90 : Number of days to sync inventory for}';
+    protected $signature = 'staycation:sync-inventory {--days=90 : Number of days to sync inventory for} {--staycation= : Specific staycation ID to sync}';
 
     /**
      * The console command description.
@@ -29,10 +29,11 @@ class SyncStaycationInventory extends Command
     public function handle()
     {
         $days = (int) $this->option('days');
-        
+        $staycationId = $this->option('staycation');
+
         $this->info("Syncing staycation inventory for the next {$days} days...");
-        
-        $staycations = Staycation::all();
+
+        $staycations = $staycationId ? Staycation::where('id', $staycationId)->get() : Staycation::all();
         
         if ($staycations->isEmpty()) {
             $this->warn('No staycations found. Please create staycation records first.');

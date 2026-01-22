@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class StaycationInventory extends Model
 {
@@ -17,6 +18,19 @@ class StaycationInventory extends Model
         'booked_quantity',
         'available_quantity',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saved(function ($inventory) {
+            // Log inventory changes
+            Log::info("Inventory updated: Staycation {$inventory->staycation_id}, Date {$inventory->date}, Total: {$inventory->total_quantity}, Booked: {$inventory->booked_quantity}, Available: {$inventory->available_quantity}");
+
+            // Broadcast inventory update for real-time updates
+            broadcast(new \App\Events\InventoryUpdated($inventory->staycation_id, $inventory->date, $inventory->available_quantity));
+        });
+    }
 
     protected $casts = [
         'date' => 'date',
@@ -43,6 +57,12 @@ class StaycationInventory extends Model
 
             if (!$inventory) {
                 throw new \Exception("Inventory not found for staycation {$staycationId} on {$date}");
+            }
+
+            // Ensure total_quantity is set (fallback to staycation quantity)
+            if (!$inventory->total_quantity) {
+                $staycation = \App\Models\Staycation::find($staycationId);
+                $inventory->total_quantity = $staycation ? $staycation->quantity : 0;
             }
 
             if ($inventory->available_quantity < $quantity) {
@@ -73,6 +93,12 @@ class StaycationInventory extends Model
 
             if (!$inventory) {
                 throw new \Exception("Inventory not found for staycation {$staycationId} on {$date}");
+            }
+
+            // Ensure total_quantity is set
+            if (!$inventory->total_quantity) {
+                $staycation = \App\Models\Staycation::find($staycationId);
+                $inventory->total_quantity = $staycation ? $staycation->quantity : 0;
             }
 
             $inventory->booked_quantity = max(0, $inventory->booked_quantity - $quantity);

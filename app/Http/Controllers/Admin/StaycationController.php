@@ -48,7 +48,10 @@ class StaycationController extends Controller
             'image' => $imagePath,
         ]);
 
-        return response()->json(['message' => 'Staycation added successfully.']);
+        return response()->json([
+            'message' => 'Staycation added successfully.',
+            'staycation' => $staycation->toArray()
+        ]);
 
     }
 
@@ -94,7 +97,11 @@ class StaycationController extends Controller
 
         $staycation_list->update($updateData);
 
-        return response()->json(['message' => 'Staycation updated successfully.']);
+        // Return updated data for table refresh
+        return response()->json([
+            'message' => 'Staycation updated successfully.',
+            'staycation' => $staycation_list->fresh()->toArray()
+        ]);
     }
 
     public function destroy(Staycation $staycation_list)

@@ -64,11 +64,11 @@
     </div>
     @endif
 
-    <!-- Overall Daily Totals (all staycations) -->
+    <!-- Overall Total Available Slots per Day -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="bg-linear-to-r from-[#8f5d54] to-[#7a4d45] px-6 py-4">
-            <h2 class="text-xl font-semibold text-white">Overall Availability (All Staycations)</h2>
-            <p class="text-sm text-white/80 mt-1">Totals per day across every staycation in the selected range</p>
+            <h2 class="text-xl font-semibold text-white">Overall Total Available Slots per Day</h2>
+            <p class="text-sm text-white/80 mt-1">Sum of available slots across all staycations for each date</p>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -76,9 +76,7 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Quantity</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booked</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Available Slots</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilization</th>
                     </tr>
@@ -87,8 +85,8 @@
                     @forelse($dailyTotals as $daily)
                         @php
                             $date = \Carbon\Carbon::parse($daily['date']);
-                            $utilization = $daily['total_quantity'] > 0 
-                                ? ($daily['booked_quantity'] / $daily['total_quantity']) * 100 
+                            $utilization = $daily['total_quantity'] > 0
+                                ? ($daily['booked_quantity'] / $daily['total_quantity']) * 100
                                 : 0;
                             $isToday = $date->isToday();
                             $isPast = $date->isPast() && !$isToday;
@@ -103,14 +101,6 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {{ $date->format('l') }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
-                                {{ $daily['total_quantity'] }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm font-semibold {{ $daily['booked_quantity'] > 0 ? 'text-red-600' : 'text-gray-400' }}">
-                                    {{ $daily['booked_quantity'] }}
-                                </span>
-                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="text-sm font-semibold {{ $daily['available_quantity'] == 0 ? 'text-red-600' : ($daily['available_quantity'] <= 2 ? 'text-yellow-600' : 'text-green-600') }}">
                                     {{ $daily['available_quantity'] }}
@@ -118,17 +108,17 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if($daily['available_quantity'] == 0)
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Fully Booked</span>
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Fully Booked</span>
                                 @elseif($daily['available_quantity'] <= 2)
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Limited</span>
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Limited</span>
                                 @else
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Available</span>
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Available</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
-                                        <div class="h-2 rounded-full {{ $utilization >= 100 ? 'bg-red-600' : ($utilization >= 70 ? 'bg-yellow-500' : 'bg-green-500') }}" 
+                                        <div class="h-2 rounded-full {{ $utilization >= 100 ? 'bg-red-600' : ($utilization >= 70 ? 'bg-yellow-500' : 'bg-green-500') }}"
                                             style="width: {{ min($utilization, 100) }}%"></div>
                                     </div>
                                     <span class="text-sm text-gray-600">{{ number_format($utilization, 0) }}%</span>
@@ -137,7 +127,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
                                 <i class="fas fa-calendar-times text-3xl mb-2"></i>
                                 <p>No inventory data for this date range</p>
                             </td>
@@ -148,23 +138,20 @@
         </div>
     </div>
 
-    <!-- Inventory Tables by Staycation -->
+    <!-- Inventory per Staycation -->
     @foreach($inventoryData as $data)
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="bg-linear-to-r from-[#8f5d54] to-[#7a4d45] px-6 py-4">
             <h2 class="text-xl font-semibold text-white">{{ $data['staycation']->name }}</h2>
-            <p class="text-sm text-white/80 mt-1">Total Base Quantity: {{ $data['staycation']->quantity ?? 0 }}</p>
+            <p class="text-sm text-white/80 mt-1">Available slots for this staycation</p>
         </div>
-        
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Quantity</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booked</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available Slots</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilization</th>
                     </tr>
@@ -173,8 +160,8 @@
                     @forelse($data['inventories'] as $inventory)
                     @php
                         $date = \Carbon\Carbon::parse($inventory->date);
-                        $utilization = $inventory->total_quantity > 0 
-                            ? ($inventory->booked_quantity / $inventory->total_quantity) * 100 
+                        $utilization = $inventory->total_quantity > 0
+                            ? ($inventory->booked_quantity / $inventory->total_quantity) * 100
                             : 0;
                         $isToday = $date->isToday();
                         $isPast = $date->isPast() && !$isToday;
@@ -188,14 +175,6 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                             {{ $date->format('l') }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
-                            {{ $inventory->total_quantity }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm font-semibold {{ $inventory->booked_quantity > 0 ? 'text-red-600' : 'text-gray-400' }}">
-                                {{ $inventory->booked_quantity }}
-                            </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="text-sm font-semibold {{ $inventory->available_quantity == 0 ? 'text-red-600' : ($inventory->available_quantity <= 2 ? 'text-yellow-600' : 'text-green-600') }}">
@@ -214,22 +193,21 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
-                                    <div class="h-2 rounded-full {{ $utilization >= 100 ? 'bg-red-600' : ($utilization >= 70 ? 'bg-yellow-500' : 'bg-green-500') }}" 
+                                    <div class="h-2 rounded-full {{ $utilization >= 100 ? 'bg-red-600' : ($utilization >= 70 ? 'bg-yellow-500' : 'bg-green-500') }}"
                                         style="width: {{ min($utilization, 100) }}%"></div>
                                 </div>
                                 <span class="text-sm text-gray-600">{{ number_format($utilization, 0) }}%</span>
                             </div>
                         </td>
                     </tr>
-                    @empty
+                @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="4" class="px-6 py-8 text-center text-gray-500">
                             <i class="fas fa-calendar-times text-3xl mb-2"></i>
                             <p>No inventory data for this date range</p>
                         </td>
                     </tr>
-                    @endforelse
-                </tbody>
+                @endforelse
             </table>
         </div>
 
