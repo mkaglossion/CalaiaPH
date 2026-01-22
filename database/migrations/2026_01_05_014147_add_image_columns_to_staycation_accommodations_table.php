@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('staycation_accommodations', function (Blueprint $table) {
-            $table->string('image_path')->nullable()->after('price');
-            $table->text('public_id')->nullable()->after('image_path');
+            if (!Schema::hasColumn('staycation_accommodations', 'image_path')) {
+                $table->string('image_path')->nullable()->after('price');
+            }
+            if (!Schema::hasColumn('staycation_accommodations', 'public_id')) {
+                $table->text('public_id')->nullable()->after('image_path');
+            }
         });
     }
 

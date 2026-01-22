@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
             DurationSetSeeder::class,
             DayTypeDaySeeder::class,
             PricingConfigSeeder::class,
+            FoodSeeder::class,
+            CookYourOwnSeeder::class,
         ]);
 
         // --- Users Seeder ---

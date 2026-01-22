@@ -159,6 +159,144 @@
             </div>
         </fieldset>
 
+        {{-- Cancellation Policy Selection --}}
+        <div class="space-y-6">
+            {{-- Header --}}
+            <div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                    <i class="bi bi-calendar-check text-2xl text-[#8f5d54]"></i>
+                    Cancellation Policy
+                </h3>
+                <p class="text-sm text-gray-600">Select your preferred cancellation terms. Different policies offer different flexibility and refund amounts.</p>
+            </div>
+
+            {{-- Policy Cards Grid --}}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {{-- Standard Policy --}}
+                <div class="border-2 border-green-200 rounded-xl p-5 bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-lg transition-shadow">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="text-4xl">📅</span>
+                        <span class="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">STANDARD</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-gray-900 mb-3">Free Cancellation</h4>
+                    <div class="space-y-2 mb-4 pb-4 border-b border-green-200">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-700"><strong>≥ 7 days</strong></span>
+                            <span class="text-sm font-bold text-green-600">100% refund</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-700"><strong>3-6 days</strong></span>
+                            <span class="text-sm font-bold text-amber-600">50% refund</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-700"><strong>&lt; 3 days</strong></span>
+                            <span class="text-sm font-bold text-red-600">No refund</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-600 flex items-center gap-2">
+                        <span class="text-green-600 font-bold">✓</span>
+                        Refunds processed within 3-5 business days
+                    </p>
+                </div>
+
+                {{-- Flexible Policy --}}
+                <div class="border-2 border-amber-300 rounded-xl p-5 bg-gradient-to-br from-amber-50 to-yellow-50 hover:shadow-lg transition-shadow ring-2 ring-amber-200 ring-offset-2">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="text-4xl">🔄</span>
+                        <span class="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">BEST VALUE</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-gray-900 mb-3">Flexible Graduated</h4>
+                    <div class="space-y-2 mb-4 pb-4 border-b border-amber-200">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-700"><strong>30+ days</strong></span>
+                            <span class="text-sm font-bold text-green-600">100%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-700"><strong>15-29 days</strong></span>
+                            <span class="text-sm font-bold text-green-600">75%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-700"><strong>7-14 days</strong></span>
+                            <span class="text-sm font-bold text-amber-600">50%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-700"><strong>3-6 days</strong></span>
+                            <span class="text-sm font-bold text-orange-600">25%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-700"><strong>&lt; 3 days</strong></span>
+                            <span class="text-sm font-bold text-red-600">No refund</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-600 flex items-center gap-2">
+                        <span class="text-amber-600 font-bold">✓</span>
+                        Maximum flexibility for cancellations
+                    </p>
+                </div>
+
+                {{-- Economy Policy --}}
+                <div class="border-2 border-red-200 rounded-xl p-5 bg-gradient-to-br from-red-50 to-rose-50 hover:shadow-lg transition-shadow">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="text-4xl">💰</span>
+                        <span class="inline-block px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">LOWEST PRICE</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-gray-900 mb-3">Non-Refundable</h4>
+                    <div class="space-y-2 mb-4 pb-4 border-b border-red-200">
+                        <div class="text-sm text-gray-700">
+                            <p class="font-bold text-gray-900">Refund Policy:</p>
+                            <p class="text-red-600 font-bold mt-1">No refund after booking</p>
+                        </div>
+                        <div class="text-sm text-gray-700">
+                            <p class="font-bold text-gray-900 mt-2">Best for:</p>
+                            <p class="text-gray-600 mt-1">Confirmed travel dates</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-600 flex items-center gap-2">
+                        <span class="text-red-600 font-bold">✓</span>
+                        Rebook anytime at no extra cost
+                    </p>
+                </div>
+            </div>
+
+            {{-- Important Information --}}
+            <div class="bg-slate-50 border-2 border-slate-200 rounded-xl p-5">
+                <p class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <i class="bi bi-info-circle text-slate-700 text-lg"></i>
+                    Important Information
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex gap-3">
+                        <span class="text-xl flex-shrink-0">📅</span>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">Peak Season Rules</p>
+                            <p class="text-xs text-gray-600 mt-1">Dec 15 - Jan 5, Holy Week & Summer: Stricter policies may apply</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="text-xl flex-shrink-0">🔄</span>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">Rebook Anytime</p>
+                            <p class="text-xs text-gray-600 mt-1">Change your dates after cancellation without additional fees</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="text-xl flex-shrink-0">💳</span>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">Credit Validity</p>
+                            <p class="text-xs text-gray-600 mt-1">Refunds as credits valid for 6-12 months from issue date</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <span class="text-xl flex-shrink-0">⏱️</span>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">Processing Timeline</p>
+                            <p class="text-xs text-gray-600 mt-1">Refunds issued within 3-5 business days</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- Terms and Conditions --}}
         <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 sm:p-6">
             <div class="flex items-start">

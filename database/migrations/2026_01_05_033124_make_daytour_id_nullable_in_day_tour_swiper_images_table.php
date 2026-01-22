@@ -12,7 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('day_tour_swiper_images', function (Blueprint $table) {
-            $table->foreignId('daytour_id')->nullable()->change();
+            if (!Schema::hasColumn('day_tour_swiper_images', 'daytour_id')) {
+                $table->unsignedBigInteger('daytour_id')->nullable()->after('id');
+            } else {
+                $table->foreignId('daytour_id')->nullable()->change();
+            }
         });
     }
 

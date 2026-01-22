@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('food_texts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('food_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('food_id')->nullable();
             $table->string('label')->nullable();
             $table->text('text')->nullable();
             $table->timestamps();
