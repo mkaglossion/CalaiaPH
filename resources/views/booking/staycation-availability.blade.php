@@ -196,8 +196,12 @@
                                         ₱{{ number_format($roomDetail['price'], 0) }} / 
                                         @php
                                             $roomNameLower = strtolower($roomDetail['name']);
-                                            $isBYOT = str_contains($roomNameLower, 'byot') || str_contains($roomNameLower, 'bring your own tent');
-                                            $isCarCamping = str_contains($roomNameLower, 'car camping');
+                                            // Check for BYOT first (prioritize BYOT over car camping)
+                                            $isBYOT = str_contains($roomNameLower, 'byot') ||
+                                                     str_contains($roomNameLower, 'bring your own tent') ||
+                                                     str_contains($roomNameLower, 'bring your own');
+                                            // Check for car camping only if not BYOT
+                                            $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
                                         @endphp
                                         @if($isBYOT || $isCarCamping)
                                             slot
@@ -260,8 +264,12 @@
 
                                         @php
                                             $roomNameLower = strtolower($roomDetail['name']);
-                                            $isBYOT = str_contains($roomNameLower, 'byot') || str_contains($roomNameLower, 'bring your own tent');
-                                            $isCarCamping = str_contains($roomNameLower, 'car camping');
+                                            // Check for BYOT first (prioritize BYOT over car camping)
+                                            $isBYOT = str_contains($roomNameLower, 'byot') ||
+                                                     str_contains($roomNameLower, 'bring your own tent') ||
+                                                     str_contains($roomNameLower, 'bring your own');
+                                            // Check for car camping only if not BYOT
+                                            $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
                                         @endphp
 
                                         @if($isBYOT)
@@ -414,7 +422,7 @@
 
                 {{-- RIGHT --}}
                 <div class="lg:col-span-1">
-                    <div class="bg-white rounded-2xl shadow-lg p-6 lg:sticky lg:top-6">
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
                         <h3 class="text-xl font-bold mb-6" style="font-family:'Gotham Book', sans-serif;">Booking Summary</h3>
 
                         {{-- Dates --}}
@@ -669,6 +677,7 @@
                         </div>
                     </div>
                 </div>
+                </div>
 
             </div>
         </div>
@@ -685,6 +694,12 @@
 
                 // room details for thresholds and base capacity
                 roomDetailsMap: @json($roomDetails),
+
+                // Booking settings (pricing) from backend
+                bookingSettings: {
+                    mattress_price_per_night: 800,  // default
+                    pet_price: 2000,                // default
+                },
 
                 // modals
                 calendarModal: false,
@@ -724,6 +739,9 @@
                     const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
                     const isCarCamping = roomNameLower.includes('car camping');
                     
+                    // Calculate the accommodation price that's displayed to the user
+                    const accommodationPrice = this.calculateBasePrice(room);
+                    
                     this.selectedRooms[roomId] = {
                         id: roomId,
                         name: room.name || 'Room',
@@ -734,6 +752,7 @@
                         pets: 'no',
                         pet_agreement: false,
                         num_pets: 0,
+                        accommodation_price: accommodationPrice, // Store the exact displayed price
                     };
                 },
 
@@ -801,6 +820,13 @@
                     }
 
                     this.selectedRooms[roomId][field] = value;
+
+                    // Update accommodation_price whenever a field changes that affects pricing
+                    const staycations = @json($staycations);
+                    const room = staycations.find(s => s.id === roomId);
+                    if (room) {
+                        this.selectedRooms[roomId].accommodation_price = this.calculateBasePrice(room);
+                    }
 
                     // pet logic
                     if (field === 'pets' && value === 'no') {
@@ -1085,12 +1111,12 @@
                     let totalPrice = 0;
                     
                     if (isBYOT || isCarCamping) {
-                        // Per quantity pricing: base price × quantity (tents/vehicles) × nights
+                        // Per quantity pricing: base price (already for 1 unit × nights) × quantity
                         const quantity = parseInt(room.extra_mattress || 1);
-                        totalPrice = basePrice * quantity * nights;
+                        totalPrice = basePrice * quantity;
                     } else {
-                        // Regular rooms: base price × nights (fixed per room)
-                        totalPrice = basePrice * nights;
+                        // Regular rooms: base price is already the total for the stay
+                        totalPrice = basePrice;
                     }
                     
                     return totalPrice;
@@ -1117,7 +1143,7 @@
                     }
                     
                     // Regular rooms: mattress pricing
-                    const price = (room.extra_mattress || 0) * 500 * nights;
+                    const price = (room.extra_mattress || 0) * this.bookingSettings.mattress_price_per_night * nights;
                     return price;
                 },
 
@@ -1133,8 +1159,8 @@
                         return 0;
                     }
                     
-                    // Pet fee is ONE-TIME, not per night
-                    const price = room.num_pets * 2000;
+                    // Pet fee is ONE-TIME, not per night - uses dynamic setting
+                    const price = room.num_pets * this.bookingSettings.pet_price;
                     return price;
                 },
 
@@ -1202,7 +1228,26 @@
                     `;
                 },
 
+                fetchBookingSettings() {
+                    fetch('/api/booking/settings')
+                        .then(response => response.json())
+                        .then(data => {
+                            // Update booking settings from backend
+                            if (data.mattress_price_per_night !== undefined) {
+                                this.bookingSettings.mattress_price_per_night = data.mattress_price_per_night;
+                            }
+                            if (data.pet_price !== undefined) {
+                                this.bookingSettings.pet_price = data.pet_price;
+                            }
+                            console.log('Booking settings loaded:', this.bookingSettings);
+                        })
+                        .catch(error => console.error('Failed to fetch booking settings:', error));
+                },
+
                 init() {
+                    // Fetch booking settings from backend
+                    this.fetchBookingSettings();
+                    
                     this.$nextTick(() => {
                         @foreach($staycations as $staycation)
                             @if($staycation->swiperImages && $staycation->swiperImages->count() > 1)

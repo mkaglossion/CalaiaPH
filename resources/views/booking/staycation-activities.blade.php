@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+ o <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
   <meta charset="utf-8" />
@@ -68,6 +68,9 @@ foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
         $accommodationTotal += $acc['total_price'] ?? 0;
     }
 }
+
+// Get selected foods from booking data
+$selectedFoods = $booking['selected_foods'] ?? [];
 @endphp
 
 <body class="bg-[#f5efe7]">
@@ -144,199 +147,15 @@ foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
 
         {{-- Sidebar: booking summary --}}
         <div class="lg:col-span-1">
-            <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-6 space-y-6">
-                {{-- Selected Dates Section --}}
-                <div>
-                    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
-                        <i class="bi bi-calendar-check mr-2 text-[#8f5d54]"></i> Selected Dates
-                    </h4>
-                    <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
-                        @if($datesSelected)
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Check-in:</span>
-                                <span class="font-semibold">{{ \Carbon\Carbon::parse($checkinDate)->format('M j, Y') }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Check-out:</span>
-                                <span class="font-semibold">{{ \Carbon\Carbon::parse($checkoutDate)->format('M j, Y') }}</span>
-                            </div>
-                            <div class="flex justify-between border-t border-gray-200 pt-2">
-                                <span class="text-gray-600">Total Nights:</span>
-                                <span class="font-semibold text-[#8f5d54]">{{ $nights }}</span>
-                            </div>
-                        @else
-                            <p class="text-gray-500 text-xs">No dates selected</p>
-                        @endif
-                    </div>
-                </div>
-
-                <hr class="border-gray-200">
-
-                {{-- Selected Rooms Section --}}
-                <div>
-                    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
-                        <i class="bi bi-house mr-2 text-[#8f5d54]"></i> Selected Rooms
-                    </h4>
-                    <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
-                        @if(!empty($booking['accommodations']))
-                            @foreach($booking['accommodations'] as $roomId => $room)
-                                @if(!empty($room))
-                                    @php
-                                        $staycation = $staycations->get((int)$roomId);
-                                        $roomNameLower = strtolower($staycation->name ?? '');
-                                        $isBYOT = str_contains($roomNameLower, 'byot') || str_contains($roomNameLower, 'bring your own tent');
-                                        $isCarCamping = str_contains($roomNameLower, 'car camping');
-                                        $isSpecialRoom = $isBYOT || $isCarCamping;
-                                    @endphp
-                                    <div class="bg-white rounded border border-gray-200 p-3">
-                                        <div class="font-semibold text-gray-900 mb-2">{{ $staycation->name ?? 'Room #' . $roomId }}</div>
-                                        <div class="text-gray-600 space-y-1 mb-2">
-                                            @if($isSpecialRoom)
-                                                <div>Quantity: <span class="font-semibold">{{ $room['extra_mattress'] ?? 1 }}</span></div>
-                                                <div>Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
-                                            @else
-                                                <div>Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
-                                                <div>Mattress: <span class="font-semibold">{{ $room['extra_mattress'] ?? 0 }}</span></div>
-                                                <div>Pets: <span class="font-semibold">{{ $room['pets'] ?? 'no' }}</span>
-                                                    @if(($room['pets'] ?? 'no') === 'yes')
-                                                        <span>(#{{ $room['num_pets'] ?? 0 }})</span>
-                                                    @endif
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <div class="border-t border-gray-200 pt-2 space-y-1">
-                                            <div class="flex justify-between">
-                                                <span class="text-gray-600">Room:</span>
-                                                <span class="font-semibold">₱{{ number_format($room['base_price'] ?? 0, 0) }}</span>
-                                            </div>
-                                            @if(!$isSpecialRoom && ($room['mattress_price'] ?? 0) > 0)
-                                                <div class="flex justify-between">
-                                                    <span class="text-gray-600">Mattress:</span>
-                                                    <span class="font-semibold">₱{{ number_format($room['mattress_price'] ?? 0, 0) }}</span>
-                                                </div>
-                                            @endif
-                                            @if(!$isSpecialRoom && ($room['pet_price'] ?? 0) > 0)
-                                                <div class="flex justify-between">
-                                                    <span class="text-gray-600">Pets:</span>
-                                                    <span class="font-semibold">₱{{ number_format($room['pet_price'] ?? 0, 0) }}</span>
-                                                </div>
-                                            @endif
-                                            <div class="flex justify-between border-t border-gray-200 pt-1">
-                                                <span class="font-semibold text-gray-800">Total:</span>
-                                                <span class="font-bold text-[#8f5d54]">₱{{ number_format($room['total_price'] ?? 0, 0) }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                        @else
-                            <p class="text-gray-500 text-xs">No rooms selected</p>
-                        @endif
-                    </div>
-                </div>
-
-                <hr class="border-gray-200">
-
-                {{-- Selected Food Section --}}
-                @if(!empty($selectedFoods) && count($selectedFoods) > 0)
-                <div>
-                    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
-                        <i class="bi bi-cup-straw mr-2 text-[#8f5d54]"></i> Selected Food & Beverages
-                    </h4>
-                    <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
-                        @php $foodTotal = 0; @endphp
-                        @foreach($selectedFoods as $selectedFood)
-                            @php
-                                $food = $foods->get($selectedFood['id']);
-                                if ($food) {
-                                    $quantity = $selectedFood['quantity'] ?? 1;
-                                    $itemTotal = $food->price * $quantity;
-                                    $foodTotal += $itemTotal;
-                                }
-                            @endphp
-                            @if($food)
-                            <div class="bg-white rounded border border-gray-200 p-2">
-                                <div class="flex justify-between items-start mb-1">
-                                    <span class="font-semibold text-gray-900">{{ $food->name }}</span>
-                                    <span class="font-bold text-[#8f5d54]">₱{{ number_format($itemTotal, 0) }}</span>
-                                </div>
-                                <div class="text-gray-600">
-                                    <div>Qty: <span class="font-semibold">{{ $quantity }}</span> × ₱{{ number_format($food->price, 0) }}</div>
-                                    @if(!empty($selectedFood['notes']))
-                                        <div class="text-xs text-gray-500 italic mt-1">{{ $selectedFood['notes'] }}</div>
-                                    @endif
-                                </div>
-                            </div>
-                            @endif
-                        @endforeach
-                        <div class="border-t border-gray-200 pt-2 flex justify-between">
-                            <span class="font-semibold text-gray-800">Food Subtotal:</span>
-                            <span class="font-bold text-[#8f5d54]">₱{{ number_format($foodTotal, 0) }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <hr class="border-gray-200">
-                @endif
-
-                {{-- Selected Activities Section --}}
-                <div>
-                    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
-                        <i class="bi bi-ticket-detailed mr-2 text-[#8f5d54]"></i> Selected Activities
-                    </h4>
-                    <div id="selected-activities" class="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
-                        <p class="text-gray-500">No activities selected</p>
-                    </div>
-                </div>
-
-                <hr class="border-gray-200">
-
-                {{-- Pricing Summary --}}
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-600">Accommodation:</span>
-                        <span class="font-semibold">₱{{ number_format($accommodationTotal + $breakfastTotal, 0) }}</span>
-                    </div>
-                    @if(!empty($selectedFoods) && count($selectedFoods) > 0)
-                    <div class="flex justify-between items-center text-sm border-t border-gray-200 pt-2">
-                        <span class="text-gray-600">Food & Beverages:</span>
-                        <span class="font-semibold">₱{{ number_format($foodTotal ?? 0, 0) }}</span>
-                    </div>
-                    @endif
-                    <div class="flex justify-between items-center text-sm border-t border-gray-200 pt-2">
-                        <span class="text-gray-600">Activities:</span>
-                        <span class="font-semibold" id="activities-total">₱0</span>
-                    </div>
-                    <div class="flex justify-between items-center text-lg font-bold border-t border-gray-200 pt-2">
-                        <span>Grand Total:</span>
-                        <span class="text-[#8f5d54]" id="grand-total" data-food-total="{{ $foodTotal ?? 0 }}">₱{{ number_format($accommodationTotal + $breakfastTotal + ($foodTotal ?? 0), 0) }}</span>
-                    </div>
-                </div>
-
-                <hr class="border-gray-200">
-
-                {{-- Action Buttons --}}
-                <div class="flex flex-col gap-3">
-                    <button
-                        type="button"
-                        id="skip-btn"
-                        class="w-full py-3 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
-                    >
-                        <i class="bi bi-credit-card mr-2"></i>
-                        Proceed to Payment Without Activities
-                    </button>
-
-                    <button
-                        type="button"
-                        id="confirm-btn"
-                        class="w-full py-3 rounded-xl font-semibold text-white bg-green-600 hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled
-                    >
-                        <i class="bi bi-check-circle mr-2"></i>
-                        Confirm and Proceed
-                    </button>
-                </div>
-            </div>
+            <x-booking-summary
+                :booking="$booking"
+                :staycations="$staycations"
+                :selectedFoods="$selectedFoods"
+                :foods="$foods"
+                :showActivities="true"
+                :showActionButtons="true"
+                :actionButtonType="'activities'"
+            />
         </div>
     </div>
 </div>

@@ -62,7 +62,7 @@ class PaymentService
             $activitiesTotal = 0;
             if (!empty($staycationBooking['selected_activities'])) {
                 foreach ($staycationBooking['selected_activities'] as $activity) {
-                    $activitiesTotal += 500 * ($activity['guests'] ?? 1);
+                    $activitiesTotal += ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
                 }
             }
 

@@ -41,12 +41,15 @@
                     <p><strong>Check-out:</strong> {{ !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout'])->format('M d, Y') : 'N/A' }}</p>
                     <p><strong>Nights:</strong> {{ $bookingData['nights'] ?? 'N/A' }}</p>
                     @php
-                        $hasSpecialRoom = collect($bookingData['accommodations'] ?? [])->some(function($acc) {
-                            $name = $acc['accommodation_name'] ?? '';
+                        $allAreSpecialRooms = collect($bookingData['accommodations'] ?? [])->every(function($acc) {
+                            if (empty($acc)) return true;
+                            $accommodationId = $acc['room_id'] ?? $acc['accommodation_id'] ?? null;
+                            $staycation = $staycations->get($accommodationId);
+                            $name = $staycation->name ?? ($acc['accommodation_name'] ?? '');
                             return stripos($name, 'byot') !== false || stripos($name, 'car camping') !== false || stripos($name, 'bring your own') !== false;
                         });
                     @endphp
-                    @if (!$hasSpecialRoom)
+                    @if (!$allAreSpecialRooms)
                     <p><strong>Guests:</strong> {{ $bookingData['total_guests'] ?? 'N/A' }}</p>
                     @endif
                     
@@ -142,7 +145,18 @@
                     <p><strong>Selected Activities:</strong></p>
                     <ul>
                         @foreach($selectedActivities as $activity)
-                        <li>{{ $activity['name'] }} ({{ $activity['guests'] ?? 1 }} guest{{ ($activity['guests'] ?? 1) > 1 ? 's' : '' }}) - ₱{{ number_format(($activity['price'] ?? 0) * ($activity['guests'] ?? 1)) }}</li>
+                        @php
+                            $isByotOrCamping = stripos($activity['name'] ?? '', 'byot') !== false || 
+                                              stripos($activity['name'] ?? '', 'car camping') !== false || 
+                                              stripos($activity['name'] ?? '', 'bring your own') !== false;
+                        @endphp
+                        <li>
+                            {{ $activity['name'] }}
+                            @if(!$isByotOrCamping)
+                                ({{ $activity['guests'] ?? 1 }} guest{{ ($activity['guests'] ?? 1) > 1 ? 's' : '' }})
+                            @endif
+                            - ₱{{ number_format(($activity['price'] ?? 0) * ($activity['guests'] ?? 1)) }}
+                        </li>
                         @endforeach
                     </ul>
                     @php

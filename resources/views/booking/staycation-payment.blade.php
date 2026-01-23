@@ -1,4 +1,3 @@
-```php
 {{-- resources/views/staycation-payment.blade.php --}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -65,7 +64,7 @@ if (empty($selectedActivities)) {
     $selectedActivities = session('selected_activities') ?? $booking['selected_activities'] ?? [];
 }
 $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
-    return ($activity['price'] ?? 500) * ($activity['guests'] ?? 0);
+    return ($activity['price'] ?? 0) * ($activity['guests'] ?? 0);
 });
 
 // Calculate food total (always recalculate to ensure accuracy)
@@ -74,7 +73,7 @@ if (!empty($selectedFoods) && !empty($foods)) {
     foreach ($selectedFoods as $selectedFood) {
         $food = $foods->get($selectedFood['id']);
         if ($food) {
-            $foodTotal += $food->price * ($selectedFood['quantity'] ?? 1);
+            $foodTotal += $food->price * ($selectedFood['quantity'] ?? 1) * $nights;
         }
     }
 }
@@ -818,249 +817,30 @@ $grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
 
           {{-- Sidebar: booking summary --}}
           <div class="lg:col-span-1">
-            <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-6 space-y-6">
-              {{-- Selected Dates Section --}}
-              <div>
-                <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
-                  <i class="bi bi-calendar-check mr-2 text-[#8f5d54]"></i> Selected Dates
-                </h4>
-                <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
-                  @if($datesSelected)
-                    <div class="flex justify-between">
-                      <span class="text-gray-600">Check-in:</span>
-                      <span class="font-semibold">{{ \Carbon\Carbon::parse($checkinDate)->format('M j, Y') }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                      <span class="text-gray-600">Check-out:</span>
-                      <span class="font-semibold">{{ \Carbon\Carbon::parse($checkoutDate)->format('M j, Y') }}</span>
-                    </div>
-                    <div class="flex justify-between border-t border-gray-200 pt-2">
-                      <span class="text-gray-600">Total Nights:</span>
-                      <span class="font-semibold text-[#8f5d54]">{{ max(1, $nights) }}</span>
-                    </div>
-                    @php
-                      $hasSpecialRoom = collect($booking['accommodations'] ?? [])->some(function($room) use ($staycations) {
-                        if (empty($room)) return false;
-                        $staycation = $staycations->get($room['accommodation_id'] ?? null);
-                        $name = strtolower($staycation->name ?? '');
-                        return str_contains($name, 'byot') || str_contains($name, 'car camping') || str_contains($name, 'bring your own');
-                      });
-                    @endphp
-                    @if (!$hasSpecialRoom)
-                    <div class="flex justify-between">
-                      <span class="text-gray-600">Total Guests:</span>
-                      <span class="font-semibold text-[#8f5d54]">{{ $totalGuests }}</span>
-                    </div>
-                    @endif
-                  @else
-                    <p class="text-gray-500 text-xs">No dates selected</p>
-                  @endif
+            <x-booking-summary
+                :booking="$booking"
+                :staycations="$staycations"
+                :selectedFoods="$selectedFoods"
+                :foods="$foods"
+                :selectedActivities="$selectedActivities"
+                :showActivities="true"
+            />
+
+            {{-- Trust Elements --}}
+            <div class="mt-6 bg-gray-50 rounded-lg p-4">
+              <h4 class="text-sm font-semibold text-gray-900 mb-3 text-center">Secure Payment</h4>
+              <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="flex flex-col items-center">
+                  <i class="fas fa-lock text-green-600 text-xl mb-1"></i>
+                  <span class="text-xs text-gray-600">SSL Secured</span>
                 </div>
-              </div>
-
-              <hr class="border-gray-200">
-
-              {{-- Selected Rooms Section --}}
-              <div>
-                <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
-                  <i class="bi bi-house mr-2 text-[#8f5d54]"></i> Selected Rooms
-                </h4>
-                <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
-                  @if(!empty($booking['accommodations']))
-                    @foreach($booking['accommodations'] as $roomId => $room)
-                      @if(!empty($room))
-                        @php
-                          $staycation = $staycations->get($room['accommodation_id'] ?? $roomId);
-                          $roomNameLower = strtolower($staycation->name ?? '');
-                          $isBYOT = str_contains($roomNameLower, 'byot') || str_contains($roomNameLower, 'bring your own tent');
-                          $isCarCamping = str_contains($roomNameLower, 'car camping');
-                          $isSpecialRoom = $isBYOT || $isCarCamping;
-                        @endphp
-                        <div class="bg-white rounded border border-gray-200 p-3">
-                          <div class="font-semibold text-gray-900 mb-2">{{ $staycation->name ?? 'Room #' . $roomId }}</div>
-                          <div class="text-gray-600 space-y-1 mb-2">
-                            @if($isSpecialRoom)
-                              <div>Quantity: <span class="font-semibold">{{ $room['extra_mattress'] ?? 0 }}</span></div>
-                            @else
-                              <div>Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
-                              <div>Mattress: <span class="font-semibold">{{ $room['extra_mattress'] ?? 0 }}</span></div>
-                              <div>Pets: <span class="font-semibold">{{ $room['pets'] ?? 'no' }}</span>
-                                @if(($room['pets'] ?? 'no') === 'yes')
-                                  <span>(#{{ $room['num_pets'] ?? 0 }})</span>
-                                @endif
-                              </div>
-                            @endif
-                          </div>
-                          <div class="border-t border-gray-200 pt-2 space-y-1">
-                            @if($isSpecialRoom)
-                              {{-- For BYOT/Car Camping: show price per slot × quantity (NOT per night) --}}
-                              @php
-                                $quantity = $room['extra_mattress'] ?? 1;
-                                $totalPrice = $room['total_price'] ?? 0;
-                                $pricePerSlot = $quantity > 0 ? $totalPrice / $quantity : 0;
-                              @endphp
-                              <div class="flex justify-between">
-                                <span class="text-gray-600">Price per Slot:</span>
-                                <span class="font-semibold">₱{{ number_format($pricePerSlot, 0) }}</span>
-                              </div>
-                              <div class="flex justify-between">
-                                <span class="text-gray-600">Quantity:</span>
-                                <span class="font-semibold">{{ $quantity }} slot{{ $quantity > 1 ? 's' : '' }}</span>
-                              </div>
-                              <div class="flex justify-between">
-                                <span class="text-gray-600">Subtotal ({{ $quantity }} × ₱{{ number_format($pricePerSlot, 0) }}):</span>
-                                <span class="font-semibold">₱{{ number_format($totalPrice, 0) }}</span>
-                              </div>
-                            @else
-                              {{-- For regular rooms: show room price breakdown per night --}}
-                              <div class="flex justify-between">
-                                <span class="text-gray-600">Room (₱{{ number_format(($room['base_price'] ?? 0) / max(1, $nights), 0) }} × {{ max(1, $nights) }} night{{ max(1, $nights) > 1 ? 's' : '' }}):</span>
-                                <span class="font-semibold">₱{{ number_format($room['base_price'] ?? 0, 0) }}</span>
-                              </div>
-                            @endif
-
-                            @if(!$isSpecialRoom && ($room['mattress_price'] ?? 0) > 0)
-                              <div class="flex justify-between">
-                                <span class="text-gray-600">Mattress:</span>
-                                <span class="font-semibold">₱{{ number_format($room['mattress_price'] ?? 0, 0) }}</span>
-                              </div>
-                            @endif
-
-                            @if(!$isSpecialRoom && ($room['pet_price'] ?? 0) > 0)
-                              <div class="flex justify-between">
-                                <span class="text-gray-600">Pets:</span>
-                                <span class="font-semibold">₱{{ number_format($room['pet_price'] ?? 0, 0) }}</span>
-                              </div>
-                            @endif
-
-                            <div class="flex justify-between border-t border-gray-200 pt-1">
-                              <span class="font-semibold text-gray-800">Total:</span>
-                              <span class="font-bold text-[#8f5d54]">₱{{ number_format($room['total_price'] ?? 0, 0) }}</span>
-                            </div>
-                          </div>
-                        </div>
-                      @endif
-                    @endforeach
-                  @else
-                    <p class="text-gray-500 text-xs">No rooms selected</p>
-                  @endif
+                <div class="flex flex-col items-center">
+                  <i class="fas fa-shield-alt text-blue-600 text-xl mb-1"></i>
+                  <span class="text-xs text-gray-600">Protected</span>
                 </div>
-              </div>
-
-              <hr class="border-gray-200">
-
-              {{-- Selected Food Section --}}
-              @if(!empty($selectedFoods) && count($selectedFoods) > 0)
-                <div>
-                  <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
-                    <i class="bi bi-cup-straw mr-2 text-[#8f5d54]"></i> Selected Food & Beverages
-                  </h4>
-                  <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
-                    @php $foodTotal = 0; @endphp
-                    @foreach($selectedFoods as $selectedFood)
-                      @php
-                        $food = $foods->get($selectedFood['id']);
-                        if ($food) {
-                          $quantity = $selectedFood['quantity'] ?? 1;
-                          $itemTotal = $food->price * $quantity;
-                          $foodTotal += $itemTotal;
-                        }
-                      @endphp
-                      @if($food)
-                        <div class="bg-white rounded border border-gray-200 p-2">
-                          <div class="flex justify-between items-start mb-1">
-                            <span class="font-semibold text-gray-900">{{ $food->name }}</span>
-                            <span class="font-bold text-[#8f5d54]">₱{{ number_format($itemTotal, 0) }}</span>
-                          </div>
-                          <div class="text-gray-600">
-                            <div>Qty: <span class="font-semibold">{{ $quantity }}</span> × ₱{{ number_format($food->price, 0) }}</div>
-                            @if(!empty($selectedFood['notes']))
-                              <div class="text-xs text-gray-500 italic mt-1">{{ $selectedFood['notes'] }}</div>
-                            @endif
-                          </div>
-                        </div>
-                      @endif
-                    @endforeach
-                  </div>
-                </div>
-
-                <hr class="border-gray-200">
-              @endif
-
-              {{-- Selected Activities Section --}}
-              @if(!empty($selectedActivities) && count($selectedActivities) > 0)
-                <div>
-                  <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
-                    <i class="bi bi-ticket-detailed mr-2 text-[#8f5d54]"></i> Selected Activities
-                  </h4>
-                  <div class="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
-                    @foreach($selectedActivities as $activity)
-                      @php
-                        $activityPrice = $activity['price'] ?? 0;
-                        $activityGuests = $activity['guests'] ?? 0;
-                        $activityTotal = $activityPrice * $activityGuests;
-                      @endphp
-                      <div class="bg-white rounded border border-gray-200 p-2">
-                        <div class="flex justify-between items-start mb-1">
-                          <span class="font-semibold text-gray-900">{{ $activity['name'] }}</span>
-                          <span class="font-bold text-[#8f5d54]">₱{{ number_format($activityTotal, 0) }}</span>
-                        </div>
-                        <div class="text-gray-600">
-                          <div>Guests: <span class="font-semibold">{{ $activityGuests }}</span> × ₱{{ number_format($activityPrice, 0) }}/pax</div>
-                        </div>
-                      </div>
-                    @endforeach
-                  </div>
-                </div>
-
-                <hr class="border-gray-200">
-              @endif
-
-              {{-- Pricing Summary --}}
-              <div class="space-y-3">
-                <div class="flex justify-between items-center text-sm">
-                  <span class="text-gray-600">Accommodation:</span>
-                  <span class="font-semibold">₱{{ number_format($accommodationTotal, 0) }}</span>
-                </div>
-
-                @if(!empty($selectedFoods) && count($selectedFoods) > 0)
-                  <div class="flex justify-between items-center text-sm border-t border-gray-200 pt-2">
-                    <span class="text-gray-600">Food & Beverages:</span>
-                    <span class="font-semibold">₱{{ number_format($foodTotal ?? 0, 0) }}</span>
-                  </div>
-                @endif
-
-                @if(!empty($selectedActivities) && count($selectedActivities) > 0)
-                  <div class="flex justify-between items-center text-sm border-t border-gray-200 pt-2">
-                    <span class="text-gray-600">Activities:</span>
-                    <span class="font-semibold">₱{{ number_format($activitiesTotal, 0) }}</span>
-                  </div>
-                @endif
-
-                <div class="flex justify-between items-center text-lg font-bold border-t border-gray-200 pt-2">
-                  <span>Grand Total:</span>
-                  <span class="text-[#8f5d54]">₱{{ number_format($grandTotal, 0) }}</span>
-                </div>
-              </div>
-
-              <hr class="border-gray-200">
-
-              {{-- Trust Elements --}}
-              <div class="bg-gray-50 rounded-lg p-4">
-                <h4 class="text-sm font-semibold text-gray-900 mb-3 text-center">Secure Payment</h4>
-                <div class="grid grid-cols-3 gap-2 text-center">
-                  <div class="flex flex-col items-center">
-                    <i class="fas fa-lock text-green-600 text-xl mb-1"></i>
-                    <span class="text-xs text-gray-600">SSL Secured</span>
-                  </div>
-                  <div class="flex flex-col items-center">
-                    <i class="fas fa-shield-alt text-blue-600 text-xl mb-1"></i>
-                    <span class="text-xs text-gray-600">Protected</span>
-                  </div>
-                  <div class="flex flex-col items-center">
-                    <i class="fas fa-credit-card text-purple-600 text-xl mb-1"></i>
-                    <span class="text-xs text-gray-600">Encrypted</span>
-                  </div>
+                <div class="flex flex-col items-center">
+                  <i class="fas fa-credit-card text-purple-600 text-xl mb-1"></i>
+                  <span class="text-xs text-gray-600">Encrypted</span>
                 </div>
               </div>
             </div>

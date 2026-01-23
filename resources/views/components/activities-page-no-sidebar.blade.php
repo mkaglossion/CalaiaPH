@@ -151,13 +151,21 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 selectedActivities.forEach(activity => {
                     const item = document.createElement('div');
-                    item.className = 'flex justify-between items-start p-2 bg-white rounded border';
+                    item.className = 'flex justify-between items-start p-2 bg-white rounded border border-gray-400';
                     const minGuests = autoGuests ? 1 : 0;
+                    
+                    // Check if activity is BYOT or Car Camping
+                    const isByotOrCamping = activity.name && (
+                        activity.name.toLowerCase().includes('byot') || 
+                        activity.name.toLowerCase().includes('car camping') ||
+                        activity.name.toLowerCase().includes('bring your own')
+                    );
 
                     item.innerHTML = `
                       <div class="flex-1">
                         <p class="text-xs font-medium text-gray-900" style="font-family: 'Gotham Book', sans-serif;">${activity.name}</p>
                         <p class="text-xs text-gray-500 mt-1">₱${activity.price.toLocaleString()} / pax</p>
+                        ${!isByotOrCamping ? `
                         <div class="mt-2">
                           <label class="block text-xs text-gray-600 mb-1" style="font-family: 'Gotham Book', sans-serif;">Number of Guests</label>
                           <div class="flex items-center gap-2">
@@ -170,6 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button type="button" class="increase-guest-btn w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" data-activity-id="${activity.id}">+</button>
                           </div>
                         </div>
+                        ` : ''}
                       </div>
                       <div class="flex items-center gap-2">
                         <span class="text-sm font-semibold text-[#8f5d54]">₱${(activity.price * activity.guests).toLocaleString()}</span>

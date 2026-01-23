@@ -23,10 +23,15 @@ use App\Models\PeakPeriod;
 use App\Models\PeakType;
 use App\Models\StaycationInventory;
 use App\Services\PricingService;
+use App\Models\BookingSetting;
 
 
 class BookingController extends Controller
 {
+    // Pricing Constants
+    protected const MATTRESS_PRICE_PER_NIGHT = 800;  // ₱800 per extra mattress per night
+    protected const PET_PRICE = 2000;                 // ₱2,000 per pet (one-time)
+
     protected $bookingService;
     protected $paymentService;
     protected $inventoryService;
@@ -44,6 +49,22 @@ class BookingController extends Controller
     {
         // Dump the entire session
         dd(session()->all());
+    }
+
+    /**
+     * Get booking settings (pricing) as JSON
+     * Available publicly for frontend price calculations
+     */
+    public function getBookingSettings()
+    {
+        $settings = BookingSetting::where('category', 'pricing')->get();
+        $result = [];
+        
+        foreach ($settings as $setting) {
+            $result[$setting->key] = (float)$setting->value;
+        }
+
+        return response()->json($result);
     }
 
     private function getBookingActivities($type)
@@ -248,7 +269,7 @@ class BookingController extends Controller
     public function staycationActivities()
     {
             // Fetch staycations from the database
-            $staycations = Staycation::all(); // Adjust this query as needed to filter staycations
+            $staycations = Staycation::all()->keyBy('id'); // Key by ID for proper lookup
 
         $booking = session('booking', []);
 
@@ -316,7 +337,7 @@ class BookingController extends Controller
         }
 
         $activitiesTotal = collect($request->activities)->sum(function($activity) {
-            return 500 * ($activity['guests'] ?? 1);
+            return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
         });
 
         // Calculate food total if foods were selected
@@ -366,8 +387,8 @@ class BookingController extends Controller
             
                 if (!($isBYOT || $isCarCamping)) {
                     $extraMattresses = $acc['extra_mattress'] ?? 0;
-                    $mattressPrice = $extraMattresses * 400 * $nights;
-                    $petPrice = ($acc['pet_agreement'] ?? false) ? ($acc['num_pets'] ?? 0) * 2000 : 0;
+                    $mattressPrice = $this->calculateMattressFee($extraMattresses, $nights);
+                    $petPrice = ($acc['pet_agreement'] ?? false) ? $this->calculatePetFee($acc['num_pets'] ?? 0) : 0;
                     $basePrice = $roomTotal - $mattressPrice - $petPrice;
                 
                     $acc['base_price'] = $basePrice;
@@ -395,6 +416,7 @@ class BookingController extends Controller
     private function calculateStaycationRoomPrice(Staycation $staycation, string $checkinDate, string $checkoutDate, array &$acc): float
     {
         $total = 0;
+        $accommodationTotal = 0;
         $checkin = \Carbon\Carbon::parse($checkinDate);
         $checkout = \Carbon\Carbon::parse($checkoutDate);
         $nights = $checkin->diffInDays($checkout);
@@ -444,6 +466,7 @@ class BookingController extends Controller
             }
             
             // No mattress or pet fees for BYOT/Car Camping
+            $accommodationTotal = $total;
         } else {
             // Regular rooms: calculate nightly rates and add additional charges
             $current = $checkin->copy();
@@ -468,16 +491,22 @@ class BookingController extends Controller
 
                 $current->addDay();
             }
+            
+            // Store the base accommodation price (before extras)
+            $accommodationTotal = $total;
 
-            // Add extra mattress fee (assuming ₱400 per night per mattress)
+            // Add extra mattress fee
             $extraMattresses = $acc['extra_mattress'] ?? 0;
-            $total += $extraMattresses * 400 * $nights;
+            $total += $this->calculateMattressFee($extraMattresses, $nights);
 
             // Add pet fees
             if (!empty($acc['pet_agreement']) && !empty($acc['num_pets'])) {
-                $total += 2000 * $acc['num_pets'];
+                $total += $this->calculatePetFee($acc['num_pets']);
             }
         }
+        
+        // Store accommodation price in acc for later use
+        $acc['accommodation_price'] = $accommodationTotal;
 
         return $total;
     }
@@ -885,6 +914,7 @@ class BookingController extends Controller
                 $validator = \Illuminate\Support\Facades\Validator::make($data, [
                     'selected_rooms' => ['required', 'array', 'min:1'],
                     'selected_rooms.*.id' => ['nullable'],
+                    'selected_rooms.*.accommodation_price' => ['nullable', 'numeric', 'min:0'],
                     'selected_rooms.*.adults' => ['required', 'integer', 'min:1', 'max:20'],
                     'selected_rooms.*.children' => ['nullable', 'integer', 'min:0', 'max:20'],
                     'selected_rooms.*.extra_mattress' => ['nullable', 'integer', 'min:0', 'max:100'], // Increased to allow BYOT/Car Camping quantities
@@ -970,38 +1000,49 @@ class BookingController extends Controller
                         $nights = max(1, \Carbon\Carbon::parse($checkinDate)->diffInDays(\Carbon\Carbon::parse($checkoutDate)));
                     }
                     
-                    // Calculate base price using same method as availability page
-                    $basePrice = $this->calculatePrice($staycation, $checkinDate ?? now()->format('Y-m-d')) ?? ($staycation->price ?? 0);
-                    
                     // Check if BYOT or Car Camping
                     $roomNameLower = strtolower($staycation->name ?? '');
-                    $isBYOT = str_contains($roomNameLower, 'byot') || str_contains($roomNameLower, 'bring your own tent');
-                    $isCarCamping = str_contains($roomNameLower, 'car camping');
+                    // Check for BYOT first (prioritize BYOT over car camping)
+                    $isBYOT = str_contains($roomNameLower, 'byot') ||
+                             str_contains($roomNameLower, 'bring your own tent') ||
+                             str_contains($roomNameLower, 'bring your own');
+                    // Check for car camping only if not BYOT
+                    $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
+
+                    // Use the accommodation_price sent from the frontend if available
+                    // This ensures we display exactly what the customer selected
+                    $accommodationPrice = (float)($room['accommodation_price'] ?? 0);
                     
-                    // Calculate costs
+                    // If no price from frontend, calculate server-side
+                    if ($accommodationPrice <= 0) {
+                        $totalPrice = $this->calculateStaycationRoomPrice($staycation, $checkinDate, $checkoutDate, $room);
+                        $accommodationPrice = $totalPrice; // Use calculated total as accommodation price
+                    } else {
+                        // Frontend sent the accommodation price, calculate total including extras
+                        $totalPrice = $accommodationPrice;
+                    }
+
+                    // Calculate costs for display
                     $numPets = (int)($room['num_pets'] ?? 0);
                     $adults = (int)($room['adults'] ?? 1);
-                    
+
                     if ($isBYOT || $isCarCamping) {
                         // For BYOT/Car Camping: quantity is from extra_mattress field
                         $quantity = (int)($room['extra_mattress'] ?? 1);
-                        // For BYOT/Car Camping: price = base price × quantity × nights
-                        // Base price is already per night, so multiply by quantity and nights
-                        $roomPrice = $basePrice * $quantity * $nights;
+                        $roomPrice = $totalPrice; // Total price is already calculated
                         $mattressPrice = 0; // No separate mattress charge for BYOT/Car Camping
-                        $totalPrice = $roomPrice;
                     } else {
                         // For regular rooms: quantity is always 1
                         $quantity = 1;
-                        // For regular rooms: price = base price × nights + extras
-                        $roomPrice = $basePrice * $nights;
+                        // For regular rooms: calculate components for display
                         $extraMattress = (int)($room['extra_mattress'] ?? 0);
-                        $mattressPrice = $extraMattress * 400 * $nights; // ₱400 per extra mattress per night
-                        $totalPrice = $roomPrice + $mattressPrice;
+                        $mattressPrice = $this->calculateMattressFee($extraMattress, $nights);
+                        $roomPrice = $accommodationPrice; // Use the accommodation price we received/calculated
+                        $totalPrice = $roomPrice + $mattressPrice; // Add mattress to total
                     }
                     
                     // Pet charge applies to all room types (one-time, not per night)
-                    $petPrice = $numPets * 2000;
+                    $petPrice = $this->calculatePetFee($numPets);
                     if (!($isBYOT || $isCarCamping)) {
                         // Only add pet price for non-BYOT/Car Camping rooms
                         $totalPrice += $petPrice;
@@ -1010,6 +1051,7 @@ class BookingController extends Controller
                     $normalized[$roomId] = [
                         'room_id'        => $roomId,
                         'accommodation_id' => $roomId,
+                        'accommodation_price' => $accommodationPrice, // Store the base accommodation price
                         'adults'         => $adults,
                         'children'       => (int)($room['children'] ?? 0),
                         'extra_mattress' => (int)($room['extra_mattress'] ?? 0),
@@ -1265,6 +1307,10 @@ class BookingController extends Controller
                 $type = 'camping'; // default
             }
 
+            // Calculate the proper total price for the entire stay (same as booking processing)
+            $mockAcc = ['extra_mattress' => 1]; // Default quantity for display
+            $totalPrice = $this->calculateStaycationRoomPrice($staycation, $checkin, $checkout, $mockAcc);
+
             $roomDetails[$staycation->id] = [
                 'id' => $staycation->id,
                 'name' => $staycation->name,
@@ -1274,7 +1320,7 @@ class BookingController extends Controller
                 'status' => $status,
                 'available_quantity' => $minOverRange,
                 'total_quantity' => $baseQty,
-                'price' => $this->calculatePrice($staycation, $checkin),
+                'price' => $totalPrice, // Total price for the entire stay
                 'price_configs' => $staycation->price_configs ?? []
             ];
         }
@@ -1640,8 +1686,11 @@ class BookingController extends Controller
             return $staycation->price;
         }
 
-        // Final fallback to type-based pricing
-        return $staycation->name && strpos(strtolower($staycation->name), 'glamping') !== false ? 5500 : 3000;
+        // LAST RESORT: Only if admin hasn't configured anything
+        // Log a warning so you know pricing is incomplete
+        Log::warning("No price configuration found for staycation: {$staycation->name} (ID: {$staycation->id})");
+        
+        return 0; // Return 0 instead of guessing with hardcoded values
     }
 
     /**
@@ -1752,6 +1801,27 @@ class BookingController extends Controller
             'guests' => $guests
         ]);
     }
+
+    /**
+     * Calculate mattress fee for a given quantity and number of nights
+     * Centralized method to avoid repeating the calculation
+     */
+    protected function calculateMattressFee($mattressCount, $nights)
+    {
+        $pricePerNight = BookingSetting::getValue('mattress_price_per_night', self::MATTRESS_PRICE_PER_NIGHT);
+        return (int)$mattressCount * (int)$pricePerNight * max(1, $nights);
+    }
+
+    /**
+     * Calculate pet fee for a given pet count
+     * Centralized method to avoid repeating the calculation
+     */
+    protected function calculatePetFee($petCount)
+    {
+        $petPrice = BookingSetting::getValue('pet_price', self::PET_PRICE);
+        return (int)$petCount * (int)$petPrice;
+    }
+
 
 
 

@@ -201,7 +201,16 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                 <h3 class="text-2xl font-medium text-gray-900 mb-2" style="font-family: 'Gotham Book', sans-serif;">Selected Activities:</h3>
                 <ul class="text-sm text-gray-600 space-y-1">
                   @foreach ($selectedActivities as $activity)
-                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }} x {{ $activity['guests'] }}</li>
+                    @php
+                      $isByotOrCamping = stripos($activity['name'] ?? '', 'byot') !== false || 
+                                        stripos($activity['name'] ?? '', 'car camping') !== false || 
+                                        stripos($activity['name'] ?? '', 'bring your own') !== false;
+                    @endphp
+                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }}
+                      @if(!$isByotOrCamping)
+                        x {{ $activity['guests'] ?? 1 }}
+                      @endif
+                    </li>
                   @endforeach
                 </ul>
               </div>
@@ -293,8 +302,8 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                       @php
                       $staycation = $staycations->get($accommodation['accommodation_id'] ?? $roomId);
                       $name = strtolower($staycation->name ?? '');
-                      $isBYOT = strpos($name, 'bring your own tent') !== false;
-                      $isCarCamping = strpos($name, 'car camping') !== false;
+                      $isBYOT = stripos($name, 'byot') !== false || stripos($name, 'bring your own tent') !== false;
+                      $isCarCamping = stripos($name, 'car camping') !== false;
                       $quantity = $accommodation['quantity'] ?? 1;
                       $basePrice = $accommodation['base_price'] ?? 0;
                       $mattressPrice = $accommodation['mattress_price'] ?? 0;
@@ -352,7 +361,16 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                 <h3 class="text-2xl font-medium text-gray-900 mb-2" style="font-family: 'Gotham Book', sans-serif;">Selected Activities:</h3>
                 <ul class="text-sm text-gray-600 space-y-1">
                   @foreach ($selectedActivities as $activity)
-                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }} x {{ $activity['guests'] }}</li>
+                    @php
+                      $isByotOrCamping = stripos($activity['name'] ?? '', 'byot') !== false || 
+                                        stripos($activity['name'] ?? '', 'car camping') !== false || 
+                                        stripos($activity['name'] ?? '', 'bring your own') !== false;
+                    @endphp
+                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }}
+                      @if(!$isByotOrCamping)
+                        x {{ $activity['guests'] }}
+                      @endif
+                    </li>
                   @endforeach
                 </ul>
               </div>
@@ -430,7 +448,16 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                 <h3 class="text-2xl font-medium text-gray-900 mb-2" style="font-family: 'Gotham Book', sans-serif;">Selected Activities:</h3>
                 <ul class="text-sm text-gray-600 space-y-1">
                   @foreach ($selectedActivities as $activity)
-                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }} x {{ $activity['guests'] ?? 1 }}</li>
+                    @php
+                      $isByotOrCamping = stripos($activity['name'] ?? '', 'byot') !== false || 
+                                        stripos($activity['name'] ?? '', 'car camping') !== false || 
+                                        stripos($activity['name'] ?? '', 'bring your own') !== false;
+                    @endphp
+                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }}
+                      @if(!$isByotOrCamping)
+                        x {{ $activity['guests'] ?? 1 }}
+                      @endif
+                    </li>
                   @endforeach
                 </ul>
               </div>

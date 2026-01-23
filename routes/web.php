@@ -17,7 +17,7 @@ use App\Http\Controllers\Admin\AdminActivitiesController;
 use App\Http\Controllers\Admin\AdminReportsController;
 use App\Http\Controllers\Admin\AdminPagesController;
 use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\BookingSettingsController;
 
 use App\Http\Controllers\Admin\HomeSwiperImageController;
 use App\Http\Controllers\Admin\DayTourSwiperImageController;
@@ -89,6 +89,7 @@ Route::get('/booking/calendar', [BookingCalendarController::class, 'show'])->nam
 // Centralized API for activities
 Route::get('/api/activities', [BookingController::class, 'getActivitiesApi'])->name('api.activities');
 Route::get('/api/booking/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.activities');
+Route::get('/api/booking/settings', [BookingController::class, 'getBookingSettings'])->name('api.booking.settings');
 Route::get('/booking/activities', [BookingController::class, 'activities'])->name('booking.activities');
 Route::post('/booking/activities', [BookingController::class, 'storeActivities'])->name('booking.storeActivities');
 Route::get('/booking/staycation/activities', [BookingController::class, 'staycationActivities'])->name('booking.staycationActivities');
@@ -197,6 +198,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::get('/where-to-stay', [AdminPagesController::class, 'whereToStay'])->name('admin.stay.wheretostay');
         Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.stay.staycations');
         Route::get('/accommodations', [AdminController::class, 'staycationAccommodation'])->name('admin.stay.accommodations');
+        Route::get('/settings', [BookingSettingsController::class, 'index'])->name('admin.booking-settings.index');
+        Route::post('/settings', [BookingSettingsController::class, 'update'])->name('admin.booking-settings.update');
     });
     Route::prefix('/do')->group(function () {
             Route::get('/activities', [AdminController::class, 'activity'])->name('admin.do.activities');

@@ -11,13 +11,21 @@
 
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Staycations</h2>
-        <button
-            type="button"
-            @click="showStaycationModal = true; resetForm()"
-            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-            + Add Staycation
-        </button>
+        <div class="flex gap-2">
+            <a
+                href="{{ route('admin.booking-settings.index') }}"
+                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            >
+                ⚙️ Booking Settings
+            </a>
+            <button
+                type="button"
+                @click="showStaycationModal = true; resetForm()"
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+                + Add Staycation
+            </button>
+        </div>
     </div>
 
     <div class="overflow-x-auto border rounded-lg shadow">
