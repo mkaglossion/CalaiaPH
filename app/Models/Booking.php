@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\Staycation;
+use App\Events\FoodStockUpdated;
+use App\Models\Food;
 
 class Booking extends Model
 {
@@ -134,6 +136,38 @@ class Booking extends Model
             
             $currentDate->addDay();
         }
+
+        // Reduce food inventory
+        $this->reduceFoodInventory();
+    }
+
+    /**
+     * Reduce food inventory for selected foods in this booking
+     */
+    public function reduceFoodInventory()
+    {
+        $bookingData = $this->booking_data ?? [];
+        $selectedFoods = $bookingData['selected_foods'] ?? [];
+
+        foreach ($selectedFoods as $foodData) {
+            $foodId = $foodData['id'] ?? null;
+            $quantity = $foodData['quantity'] ?? 1;
+
+            if ($foodId && $quantity > 0) {
+                try {
+                    $food = Food::find($foodId);
+                    if ($food && $food->is_inventory_managed && $food->stock_quantity >= $quantity) {
+                        $food->decrement('stock_quantity', $quantity);
+                        broadcast(new FoodStockUpdated($food))->toOthers();
+                        Log::info("Reduced food inventory for food {$foodId} by {$quantity}");
+                    } else {
+                        Log::warning("Insufficient stock or food not found for food {$foodId}");
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Failed to reduce food inventory for booking {$this->id}: " . $e->getMessage());
+                }
+            }
+        }
     }
 
     /**
@@ -179,6 +213,36 @@ class Booking extends Model
             }
             
             $currentDate->addDay();
+        }
+
+        // Restore food inventory
+        $this->restoreFoodInventory();
+    }
+
+    /**
+     * Restore food inventory for selected foods in this booking
+     */
+    public function restoreFoodInventory()
+    {
+        $bookingData = $this->booking_data ?? [];
+        $selectedFoods = $bookingData['selected_foods'] ?? [];
+
+        foreach ($selectedFoods as $foodData) {
+            $foodId = $foodData['id'] ?? null;
+            $quantity = $foodData['quantity'] ?? 1;
+
+            if ($foodId && $quantity > 0) {
+                try {
+                    $food = Food::find($foodId);
+                    if ($food && $food->is_inventory_managed) {
+                        $food->increment('stock_quantity', $quantity);
+                        broadcast(new FoodStockUpdated($food))->toOthers();
+                        Log::info("Restored food inventory for food {$foodId} by {$quantity}");
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Failed to restore food inventory for booking {$this->id}: " . $e->getMessage());
+                }
+            }
         }
     }
 

@@ -9,6 +9,20 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
+    @if(config('broadcasting.default') !== 'null')
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0-rc2/dist/web/pusher.min.js"></script>
+    <script>
+        window.Pusher = Pusher;
+        window.Echo = new Echo({
+            broadcaster: 'pusher',
+            key: '{{ config('broadcasting.connections.pusher.key') }}',
+            cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
+            encrypted: true
+        });
+    </script>
+    @endif
+
     <style>
         [x-cloak]{display:none!important;}
 
@@ -94,6 +108,7 @@
                                     class="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8f5d54] focus:border-[#8f5d54]">
                                 <option value="all">All Items</option>
                                 <option value="special">Special Options</option>
+                                <option value="cook_your_own">Cook Your Own</option>
                                 <option value="breakfast">Breakfast</option>
                                 <option value="lunch">Lunch</option>
                                 <option value="dinner">Dinner</option>
@@ -212,6 +227,7 @@
                             <div
                                 class="relative bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl ring-2 ring-gray-200 hover:ring-[#8f5d54] cursor-pointer"
                                 data-category="{{ $category }}"
+                                data-food-id="{{ $food->id }}"
                                 x-show="selectedCategory === 'all' || selectedCategory === '{{ $category }}'"
                                 @click="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})"
                             >
@@ -262,6 +278,29 @@
                                             {{ ucfirst($category) }}
                                         </span>
                                     </div>
+
+                                    {{-- Stock badge --}}
+                                    @if($food->is_inventory_managed)
+                                        <div class="absolute bottom-4 right-4 z-10">
+                                            @if($food->stock_quantity <= 0)
+                                                <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full">
+                                                    Out of Stock
+                                                </span>
+                                            @elseif($food->stock_quantity <= 5)
+                                                <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full animate-pulse">
+                                                    Only {{ $food->stock_quantity }} left
+                                                </span>
+                                            @elseif($food->stock_quantity <= 10)
+                                                <span class="availability-badge px-2 py-1 bg-orange-600 text-white text-xs font-semibold rounded-full">
+                                                    {{ $food->stock_quantity }} left
+                                                </span>
+                                            @else
+                                                <span class="availability-badge px-2 py-1 bg-black/70 text-white text-xs font-semibold rounded-full">
+                                                    {{ $food->stock_quantity }} available
+                                                </span>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <div class="p-6">
@@ -281,10 +320,11 @@
 
                                     <button type="button"
                                             class="w-full py-2 rounded-lg font-semibold transition"
-                                            :class="isSelected({{ $food->id }}) ? 'bg-[#8f5d54] text-white hover:bg-[#7a4e48]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                                            :class="isSelected({{ $food->id }}) ? 'bg-[#8f5d54] text-white hover:bg-[#7a4e48]' : '{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}'"
+                                            :disabled="{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'true' : 'false' }}"
                                             @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
                                         <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
-                                        <span x-text="isSelected({{ $food->id }}) ? 'Added to Cart' : 'Add to Cart'"></span>
+                                        <span x-text="isSelected({{ $food->id }}) ? 'Added to Cart' : '{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'Out of Stock' : 'Add to Cart' }}'"></span>
                                     </button>
                                 </div>
                             </div>
@@ -712,6 +752,55 @@
                     }
                 }
             });
+
+            // Listen for real-time food stock updates
+            @if(config('broadcasting.default') !== 'null')
+            Echo.channel('food-stock')
+                .listen('.food.updated', (e) => {
+                    console.log('Food stock updated:', e);
+                    updateFoodStockDisplay(e.id, e.stock_quantity, e.is_inventory_managed);
+                });
+            @endif
         });
+
+        // Function to update food stock display in real-time
+        function updateFoodStockDisplay(foodId, stockQuantity, isInventoryManaged) {
+            const foodCard = document.querySelector(`[data-food-id="${foodId}"]`);
+            if (!foodCard) return;
+
+            const stockBadge = foodCard.querySelector('.availability-badge');
+            const selectButton = foodCard.querySelector('button[type="button"]');
+
+            if (!isInventoryManaged) {
+                if (stockBadge) stockBadge.style.display = 'none';
+                if (selectButton) selectButton.disabled = false;
+                return;
+            }
+
+            if (stockBadge) {
+                if (stockQuantity <= 0) {
+                    stockBadge.textContent = 'Out of Stock';
+                    stockBadge.className = 'availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full';
+                } else if (stockQuantity <= 5) {
+                    stockBadge.textContent = `Only ${stockQuantity} left`;
+                    stockBadge.className = 'availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full animate-pulse';
+                } else if (stockQuantity <= 10) {
+                    stockBadge.textContent = `${stockQuantity} left`;
+                    stockBadge.className = 'availability-badge px-2 py-1 bg-orange-600 text-white text-xs font-semibold rounded-full';
+                } else {
+                    stockBadge.textContent = `${stockQuantity} available`;
+                    stockBadge.className = 'availability-badge px-2 py-1 bg-black/70 text-white text-xs font-semibold rounded-full';
+                }
+                stockBadge.style.display = 'inline-block';
+            }
+
+            if (selectButton) {
+                selectButton.disabled = stockQuantity <= 0;
+                const buttonText = selectButton.querySelector('span:last-child');
+                if (buttonText) {
+                    buttonText.textContent = stockQuantity <= 0 ? 'Out of Stock' : 'Add to Cart';
+                }
+            }
+        }
     </script>
 </x-app-layout>

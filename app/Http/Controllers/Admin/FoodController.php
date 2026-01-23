@@ -32,12 +32,15 @@ class FoodController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255|unique:foods,name',
-                'category' => 'required|string|in:breakfast,lunch,dinner,package',
+                'category' => 'required|string|in:breakfast,lunch,dinner,package,special,cook_your_own',
+                'subcategory' => 'nullable|string|max:255',
                 'price' => 'required|numeric|min:0',
                 'description' => 'nullable|string',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'is_active' => 'nullable|boolean',
                 'is_special_option' => 'nullable|boolean',
+                'stock_quantity' => 'nullable|integer|min:0',
+                'is_inventory_managed' => 'nullable|boolean',
             ]);
 
             // Handle image upload
@@ -52,11 +55,14 @@ class FoodController extends Controller
             $food = Food::create([
                 'name' => $request->name,
                 'category' => $request->category,
+                'subcategory' => $request->subcategory,
                 'price' => $request->price,
                 'description' => $request->description,
                 'image' => $imagePath,
                 'is_active' => $request->boolean('is_active', true),
                 'is_special_option' => $request->boolean('is_special_option', false),
+                'stock_quantity' => $request->integer('stock_quantity', 0),
+                'is_inventory_managed' => $request->boolean('is_inventory_managed', false),
             ]);
 
             if ($request->expectsJson()) {
@@ -86,22 +92,28 @@ class FoodController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255|unique:foods,name,' . $food->id,
-                'category' => 'required|string|in:breakfast,lunch,dinner,package',
+                'category' => 'required|string|in:breakfast,lunch,dinner,package,special,cook_your_own',
+                'subcategory' => 'nullable|string|max:255',
                 'price' => 'required|numeric|min:0',
                 'description' => 'nullable|string',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
                 'remove_image' => 'nullable|in:1',
                 'is_active' => 'nullable|boolean',
                 'is_special_option' => 'nullable|boolean',
+                'stock_quantity' => 'nullable|integer|min:0',
+                'is_inventory_managed' => 'nullable|boolean',
             ]);
 
             $updateData = [
                 'name' => $request->name,
                 'category' => $request->category,
+                'subcategory' => $request->subcategory,
                 'price' => $request->price,
                 'description' => $request->description,
                 'is_active' => $request->boolean('is_active', true),
                 'is_special_option' => $request->boolean('is_special_option', false),
+                'stock_quantity' => $request->integer('stock_quantity', 0),
+                'is_inventory_managed' => $request->boolean('is_inventory_managed', false),
             ];
 
             if ($request->has('remove_image') && $request->remove_image == '1') {

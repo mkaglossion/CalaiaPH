@@ -33,6 +33,7 @@
                     <th class="px-6 py-3 font-semibold text-gray-700">Name</th>
                     <th class="px-6 py-3 font-semibold text-gray-700">Category</th>
                     <th class="px-6 py-3 font-semibold text-gray-700">Price</th>
+                    <th class="px-6 py-3 font-semibold text-gray-700">Stock</th>
                     <th class="px-6 py-3 font-semibold text-gray-700">Image</th>
                     <th class="px-6 py-3 font-semibold text-gray-700">Status</th>
                     <th class="px-6 py-3 font-semibold text-gray-700">Special Option</th>
@@ -48,8 +49,24 @@
                             <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">
                                 {{ ucfirst($food->category) }}
                             </span>
+                            @if($food->subcategory)
+                                <span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                                    {{ ucfirst($food->subcategory) }}
+                                </span>
+                            @endif
                         </td>
                         <td class="px-6 py-4 font-medium text-gray-900">₱{{ number_format($food->price, 2) }}</td>
+                        <td class="px-6 py-4">
+                            @if($food->is_inventory_managed)
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                                    {{ $food->stock_quantity }} left
+                                </span>
+                            @else
+                                <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">
+                                    Not tracked
+                                </span>
+                            @endif
+                        </td>
                         <td class="px-6 py-4">
                             @if ($food->image)
                                 <img src="{{ $food->image }}" alt="{{ $food->name }}" class="h-12 w-12 rounded object-cover border border-gray-200" loading="lazy">
@@ -84,6 +101,7 @@
                                         id: {{ $food->id }},
                                         name: @js($food->name),
                                         category: @js($food->category),
+                                        subcategory: @js($food->subcategory),
                                         price: {{ $food->price ?? 0 }},
                                         description: @js($food->description),
                                         image: @js($food->image),
@@ -103,7 +121,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-6 py-8 text-center">
+                        <td colspan="9" class="px-6 py-8 text-center">
                             <div class="flex flex-col items-center justify-center gap-3">
                                 <i data-lucide="inbox" class="w-8 h-8 text-gray-400"></i>
                                 <p class="text-gray-500">No food items found.</p>
@@ -168,14 +186,43 @@
                             <option value="lunch">Lunch</option>
                             <option value="dinner">Dinner</option>
                             <option value="package">Package</option>
+                            <option value="special">Special</option>
+                            <option value="cook_your_own">Cook Your Own</option>
                         </select>
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Subcategory</label>
+                        <input type="text" x-model="form.subcategory"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                               placeholder="e.g., beef, pork, vegetables">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Price (₱) *</label>
                         <input type="number" step="0.01" min="0" x-model="form.price" required
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                placeholder="1500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Stock Quantity</label>
+                        <input type="number" min="0" x-model="form.stock_quantity"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                               placeholder="50">
+                    </div>
+
+                    <div class="flex items-end">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" x-model="form.is_inventory_managed"
+                                   class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                            <div>
+                                <p class="font-semibold text-gray-900">Manage Inventory</p>
+                                <p class="text-xs text-gray-600">Track stock levels</p>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
@@ -255,10 +302,13 @@
                     id: null,
                     name: '',
                     category: '',
+                    subcategory: '',
                     price: '',
                     description: '',
                     is_active: true,
                     is_special_option: false,
+                    stock_quantity: '',
+                    is_inventory_managed: false,
                     image: null,
                     image_preview: null,
                     remove_image: false
@@ -275,10 +325,13 @@
                     this.form.id = food.id;
                     this.form.name = food.name || '';
                     this.form.category = food.category || '';
+                    this.form.subcategory = food.subcategory || '';
                     this.form.price = food.price ?? '';
                     this.form.description = food.description || '';
                     this.form.is_active = !!food.is_active;
                     this.form.is_special_option = !!food.is_special_option;
+                    this.form.stock_quantity = food.stock_quantity ?? '';
+                    this.form.is_inventory_managed = !!food.is_inventory_managed;
                     this.form.image_preview = food.image || null;
                     this.showModal = true;
                 },
@@ -290,10 +343,13 @@
                         id: null,
                         name: '',
                         category: '',
+                        subcategory: '',
                         price: '',
                         description: '',
                         is_active: true,
                         is_special_option: false,
+                        stock_quantity: '',
+                        is_inventory_managed: false,
                         image: null,
                         image_preview: null,
                         remove_image: false
@@ -318,10 +374,13 @@
                     const formData = new FormData();
                     formData.append('name', this.form.name);
                     formData.append('category', this.form.category);
+                    formData.append('subcategory', this.form.subcategory ?? '');
                     formData.append('price', this.form.price ?? '');
                     formData.append('description', this.form.description ?? '');
                     formData.append('is_active', this.form.is_active ? 1 : 0);
                     formData.append('is_special_option', this.form.is_special_option ? 1 : 0);
+                    formData.append('stock_quantity', this.form.stock_quantity ?? '');
+                    formData.append('is_inventory_managed', this.form.is_inventory_managed ? 1 : 0);
                     if (this.form.image) {
                         console.log('Image file being added:', this.form.image);
                         formData.append('image', this.form.image);
