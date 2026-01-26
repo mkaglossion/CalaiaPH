@@ -559,20 +559,28 @@ class BookingController extends Controller
             return redirect()->route('booking.staycation')->with('error', 'Please complete your staycation booking first.');
         }
 
-        // Recalculate accommodation total to ensure it's accurate
+        // Use the accommodation total already stored in session (don't recalculate to avoid price discrepancies)
         $checkinDate = $booking['checkin'];
         $checkoutDate = $booking['checkout'];
-        $total = $this->calculateStaycationTotal($booking['accommodations'], $checkinDate, $checkoutDate);
+        $total = 0;
+        foreach ($booking['accommodations'] ?? [] as $acc) {
+            if (!empty($acc)) {
+                $total += $acc['total_price'] ?? 0;
+            }
+        }
         
         // Update booking with fresh totals
         $activitiesTotal = collect($booking['selected_activities'] ?? [])->sum(function($activity) {
             return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
         });
         
+        // Calculate nights for food pricing
+        $nights = \Carbon\Carbon::parse($checkinDate)->diffInDays(\Carbon\Carbon::parse($checkoutDate));
+
         $foodTotal = 0;
         if (!empty($booking['selected_foods'])) {
             foreach ($booking['selected_foods'] as $foodData) {
-                $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
+                $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1) * $nights;
             }
         }
         
@@ -1094,6 +1102,11 @@ class BookingController extends Controller
 
                 $booking['accommodations'] = $normalized;
 
+                // Clear any previous food and activities selections for a fresh booking
+                $booking['selected_foods'] = [];
+                $booking['selected_activities'] = [];
+                unset($booking['final_totals']); // Clear old totals
+
                 // mark step1 complete
                 $completed = $booking['completed_steps'] ?? [];
                 if (!in_array(1, $completed)) $completed[] = 1;
@@ -1410,11 +1423,14 @@ class BookingController extends Controller
 
         $booking['booking_type'] = 'staycation';
         $booking['selected_foods'] = $validated['selected_foods'];
-        
+
+        // Calculate nights for food pricing
+        $nights = \Carbon\Carbon::parse($booking['checkin'])->diffInDays(\Carbon\Carbon::parse($booking['checkout']));
+
         // Calculate food total from selected foods
         $foodTotal = 0;
         foreach ($validated['selected_foods'] as $foodData) {
-            $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
+            $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1) * $nights;
         }
         
         // Update final_totals to include food cost

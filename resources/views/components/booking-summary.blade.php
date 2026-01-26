@@ -1,4 +1,4 @@
-{{-- Booking Summary Component --}}
+r{{-- Booking Summary Component --}}
 {{-- Usage: <x-booking-summary :booking="$booking" :staycations="$staycations" :selectedFoods="$selectedFoods" :foods="$foods" /> --}}
 
 @props([
@@ -20,17 +20,25 @@ $accommodationTotal = 0;
 $activitiesTotal = 0;
 $foodTotal = 0;
 
-// Accommodation total
-foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
-    if (!empty($acc)) {
-        $accommodationTotal += $acc['total_price'] ?? 0;
+// Accommodation total - use final_totals if available (for payment page), otherwise calculate from accommodations
+if (isset($booking['final_totals']['accommodation_total'])) {
+    $accommodationTotal = $booking['final_totals']['accommodation_total'];
+} else {
+    foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
+        if (!empty($acc)) {
+            $accommodationTotal += $acc['total_price'] ?? 0;
+        }
     }
 }
 
-// Activities total
-$selectedActivities = $selectedActivities ?? $booking['selected_activities'] ?? [];
-foreach ($selectedActivities as $activity) {
-    $activitiesTotal += ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+// Activities total - use final_totals if available (for payment page), otherwise calculate from selected activities
+if (isset($booking['final_totals']['activities_total'])) {
+    $activitiesTotal = $booking['final_totals']['activities_total'];
+} else {
+    $selectedActivities = $selectedActivities ?? $booking['selected_activities'] ?? [];
+    foreach ($selectedActivities as $activity) {
+        $activitiesTotal += ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+    }
 }
 
 // Date calculations
@@ -45,8 +53,10 @@ if ($datesSelected) {
     $nights = max(1, $diff->days);
 }
 
-// Food total
-if (!empty($selectedFoods)) {
+// Food total - use final_totals if available (for payment page), otherwise calculate from selected foods
+if (isset($booking['final_totals']['food_total'])) {
+    $foodTotal = $booking['final_totals']['food_total'];
+} elseif (!empty($selectedFoods)) {
     foreach ($selectedFoods as $foodData) {
         $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1) * $nights;
     }
@@ -205,7 +215,7 @@ if (!empty($selectedFoods)) {
     @endif
 
     {{-- Selected Activities Section --}}
-    @if($showActivities)
+    @if($showActivities && !empty($selectedActivities))
     <div>
         <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
             <i class="bi bi-ticket-detailed mr-2 text-[#8f5d54]"></i> Selected Activities
@@ -320,7 +330,7 @@ if (!empty($selectedFoods)) {
         @endif
         <div class="flex justify-between items-center text-lg font-bold border-t border-gray-100 pt-2">
             <span>Grand Total:</span>
-            <span class="text-[#8f5d54]">₱{{ number_format($showDynamicFood ? ($accommodationTotal + $activitiesTotal) : ($accommodationTotal + $activitiesTotal + ($calculatedFoodTotal ?? $foodTotal)), 0) }}</span>
+            <span class="text-[#8f5d54]">₱{{ number_format(isset($booking['final_totals']['grand_total']) ? $booking['final_totals']['grand_total'] : ($showDynamicFood ? ($accommodationTotal + (!empty($selectedActivities) ? $activitiesTotal : 0)) : ($accommodationTotal + (!empty($selectedActivities) ? $activitiesTotal : 0) + ($calculatedFoodTotal ?? $foodTotal))), 0) }}</span>
         </div>
     </div>
     @endif
