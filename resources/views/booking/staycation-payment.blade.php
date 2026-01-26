@@ -45,15 +45,11 @@ $totalGuests = collect($booking['accommodations'])->sum(function($acc) {
     return ($acc['adults'] ?? 0) + ($acc['children'] ?? 0);
 });
 
-// Calculate accommodation total from stored room prices
-$accommodationTotal = 0;
-$breakfastTotal = 0;
-foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
-    if (!empty($acc)) {
-        // Use the stored total_price which includes base price, mattress, pets, etc.
-        $accommodationTotal += $acc['total_price'] ?? 0;
-    }
-}
+// Use the recalculated totals from the controller
+$accommodationTotal = $booking['final_totals']['accommodation_total'] ?? 0;
+$activitiesTotal = $booking['final_totals']['activities_total'] ?? 0;
+$foodTotal = $booking['final_totals']['food_total'] ?? 0;
+$grandTotal = $booking['final_totals']['grand_total'] ?? 0;
 
 // Get selected activities - always calculate fresh, never use stored totals
 $selectedActivities = [];

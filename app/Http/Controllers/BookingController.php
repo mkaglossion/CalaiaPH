@@ -559,6 +559,32 @@ class BookingController extends Controller
             return redirect()->route('booking.staycation')->with('error', 'Please complete your staycation booking first.');
         }
 
+        // Recalculate accommodation total to ensure it's accurate
+        $checkinDate = $booking['checkin'];
+        $checkoutDate = $booking['checkout'];
+        $total = $this->calculateStaycationTotal($booking['accommodations'], $checkinDate, $checkoutDate);
+        
+        // Update booking with fresh totals
+        $activitiesTotal = collect($booking['selected_activities'] ?? [])->sum(function($activity) {
+            return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+        });
+        
+        $foodTotal = 0;
+        if (!empty($booking['selected_foods'])) {
+            foreach ($booking['selected_foods'] as $foodData) {
+                $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
+            }
+        }
+        
+        $booking['final_totals'] = [
+            'accommodation_total' => $total,
+            'activities_total' => $activitiesTotal,
+            'food_total' => $foodTotal,
+            'grand_total' => $total + $activitiesTotal + $foodTotal
+        ];
+        
+        session(['booking' => $booking]);
+
         // Get selected foods from current booking session only (not old session data)
         $selectedFoods = $booking['selected_foods'] ?? [];
 

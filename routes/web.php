@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\AdminReportsController;
 use App\Http\Controllers\Admin\AdminPagesController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\BookingSettingsController;
+use App\Http\Controllers\Admin\InventoryController;
 
 use App\Http\Controllers\Admin\HomeSwiperImageController;
 use App\Http\Controllers\Admin\DayTourSwiperImageController;
@@ -100,7 +101,7 @@ Route::get('/booking/staycation/availability', [BookingController::class, 'stayc
 Route::get('/booking/staycation/food', [BookingController::class, 'staycationFood'])->name('booking.staycationFood');
 Route::post('/booking/staycation/food/save', [BookingController::class, 'saveFoodSelection'])->name('booking.saveFoodSelection');
 Route::get('/api/booking/staycation/availability', [BookingController::class, 'getStaycationAvailabilityApi'])->name('api.booking.staycationAvailability');
-Route::get('/api/inventory/{roomId}', [InventoryController::class, 'getInventory'])->name('api.inventory.get');
+Route::get('/api/inventory/{roomId}', [\App\Http\Controllers\Admin\InventoryController::class, 'getInventory'])->name('api.inventory.get');
 Route::post('/booking/select-dates', [BookingController::class, 'selectDates'])->name('booking.selectDates');
 Route::post('/booking/check-availability', [BookingController::class, 'checkAvailability'])->name('booking.checkAvailability');
 Route::get('/booking/payment', [BookingController::class, 'payment'])->name('booking.payment');
