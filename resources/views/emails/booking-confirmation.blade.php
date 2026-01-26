@@ -1,9 +1,13 @@
 <!DOCTYPE html>
+<!-- Updated to fix undefined variable -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booking Receipt</title>
+    @php
+    $staycations = $staycations ?? collect();
+    @endphp
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -29,9 +33,13 @@
                 <p><strong>Name:</strong> {{ ($customerInfo['first_name'] ?? $bookingData['first_name'] ?? '') . ' ' . ($customerInfo['last_name'] ?? $bookingData['last_name'] ?? '') }}</p>
                 <p><strong>Email:</strong> {{ $customerInfo['email'] ?? $bookingData['email'] ?? '' }}</p>
                 @php
-                // Use the passed isStaycation flag if not already set, check accommodations as fallback
+                // Use the passed isStaycation flag, default to false if not set
                 if (!isset($isStaycation)) {
-                    $isStaycation = isset($bookingData['accommodations']) && !empty($bookingData['accommodations']);
+                    $isStaycation = false;
+                }
+                // Ensure staycations is defined
+                if (!isset($staycations)) {
+                    $staycations = collect();
                 }
                 @endphp
                 
@@ -44,7 +52,7 @@
                         $allAreSpecialRooms = collect($bookingData['accommodations'] ?? [])->every(function($acc) {
                             if (empty($acc)) return true;
                             $accommodationId = $acc['room_id'] ?? $acc['accommodation_id'] ?? null;
-                            $staycation = $staycations->get($accommodationId);
+                            $staycation = ($staycations ?? collect())->get($accommodationId);
                             $name = $staycation->name ?? ($acc['accommodation_name'] ?? '');
                             return stripos($name, 'byot') !== false || stripos($name, 'car camping') !== false || stripos($name, 'bring your own') !== false;
                         });
@@ -59,7 +67,7 @@
                             @foreach ($bookingData['accommodations'] as $roomId => $accommodation)
                                 @if (!empty($accommodation))
                                     @php
-                                    $staycation = $staycations->get($accommodation['room_id'] ?? $accommodation['accommodation_id'] ?? $roomId);
+                                    $staycation = ($staycations ?? collect())->get($accommodation['room_id'] ?? $accommodation['accommodation_id'] ?? $roomId);
                                     $adultsCount = $accommodation['adults'] ?? 0;
                                     $childrenCount = $accommodation['children'] ?? 0;
                                     $quantity = $accommodation['quantity'] ?? 1;

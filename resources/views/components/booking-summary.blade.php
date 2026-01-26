@@ -220,10 +220,6 @@ if (!empty($selectedFoods)) {
                 </div>
                 </template>
 
-                <div class="border-t border-gray-100 pt-4 flex items-center justify-between">
-                    <span class="text-sm font-semibold">Grand Total</span>
-                    <span class="text-lg font-bold text-[#8f5d54]" x-text="calculateTotal()"></span>
-                </div>
             </div>
         </template>
     </div>
@@ -242,7 +238,7 @@ if (!empty($selectedFoods)) {
                     $food = $foods->get($selectedFood['id']);
                     if ($food) {
                         $quantity = $selectedFood['quantity'] ?? 1;
-                        $itemTotal = $food->price * $quantity;
+                        $itemTotal = $food->price * $quantity * $nights;
                         $calculatedFoodTotal += $itemTotal;
                     }
                 @endphp
@@ -324,7 +320,11 @@ if (!empty($selectedFoods)) {
         @endif
         <div class="flex justify-between items-center text-lg font-bold border-t border-gray-100 pt-2">
             <span>Grand Total:</span>
-            <span id="grand-total" class="text-[#8f5d54]">₱{{ number_format(isset($booking['final_totals']['grand_total']) ? $booking['final_totals']['grand_total'] : ($accommodationTotal + (!empty($selectedActivities) ? $activitiesTotal : 0) + ($calculatedFoodTotal ?? $foodTotal)), 0) }}</span>
+            @if($showDynamicFood)
+                <span id="grand-total" class="text-[#8f5d54]" x-text="calculateTotal()" data-food-total="0"></span>
+            @else
+                <span id="grand-total" class="text-[#8f5d54]" data-food-total="{{ $calculatedFoodTotal ?? $foodTotal }}">₱{{ number_format(isset($booking['final_totals']['grand_total']) ? $booking['final_totals']['grand_total'] : ($accommodationTotal + (!empty($selectedActivities) ? $activitiesTotal : 0) + ($calculatedFoodTotal ?? $foodTotal)), 0) }}</span>
+            @endif
         </div>
     </div>
     @endif

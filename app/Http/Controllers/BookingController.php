@@ -28,10 +28,6 @@ use App\Models\BookingSetting;
 
 class BookingController extends Controller
 {
-    // Pricing Constants
-    protected const MATTRESS_PRICE_PER_NIGHT = 800;  // ₱800 per extra mattress per night
-    protected const PET_PRICE = 2000;                 // ₱2,000 per pet (one-time)
-
     protected $bookingService;
     protected $paymentService;
     protected $inventoryService;
@@ -1347,7 +1343,12 @@ class BookingController extends Controller
             }
 
             // Calculate the proper total price for the entire stay (same as booking processing)
-            $mockAcc = ['extra_mattress' => 1]; // Default quantity for display
+            $name = strtolower($staycation->name);
+            if (strpos($name, 'byot') !== false || strpos($name, 'car camping') !== false) {
+                $mockAcc = ['extra_mattress' => 1];
+            } else {
+                $mockAcc = ['extra_mattress' => 0];
+            }
             $totalPrice = $this->calculateStaycationRoomPrice($staycation, $checkin, $checkout, $mockAcc);
 
             $roomDetails[$staycation->id] = [
@@ -1439,14 +1440,13 @@ class BookingController extends Controller
                 'accommodation_total' => 0,
                 'activities_total' => 0,
                 'food_total' => $foodTotal,
-                'grand_total' => $foodTotal
+                'grand_total' => 0
             ];
         } else {
             $booking['final_totals']['food_total'] = $foodTotal;
-            $booking['final_totals']['grand_total'] = 
-                ($booking['final_totals']['accommodation_total'] ?? 0) + 
-                ($booking['final_totals']['activities_total'] ?? 0) + 
-                $foodTotal;
+            $booking['final_totals']['grand_total'] =
+                ($booking['final_totals']['accommodation_total'] ?? 0) +
+                ($booking['final_totals']['activities_total'] ?? 0);
         }
         
         $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [2]));
@@ -1850,7 +1850,7 @@ class BookingController extends Controller
      */
     protected function calculateMattressFee($mattressCount, $nights)
     {
-        $pricePerNight = BookingSetting::getValue('mattress_price_per_night', self::MATTRESS_PRICE_PER_NIGHT);
+        $pricePerNight = BookingSetting::getValue('mattress_price_per_night', 0);
         return (int)$mattressCount * (int)$pricePerNight * max(1, $nights);
     }
 
@@ -1860,7 +1860,7 @@ class BookingController extends Controller
      */
     protected function calculatePetFee($petCount)
     {
-        $petPrice = BookingSetting::getValue('pet_price', self::PET_PRICE);
+        $petPrice = BookingSetting::getValue('pet_price', 0);
         return (int)$petCount * (int)$petPrice;
     }
 

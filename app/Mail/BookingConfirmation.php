@@ -13,14 +13,32 @@ class BookingConfirmation extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $data;
+    public $bookingData;
+    public $selectedActivities;
+    public $selectedFoods;
+    public $staycations;
+    public $foods;
+    public $grandTotal;
+    public $customerInfo;
+    public $isStaycation;
+    public $isDayvisit;
+    public $isSpecialEvent;
 
     /**
      * Create a new message instance.
      */
     public function __construct($data)
     {
-        $this->data = $data;
+        $this->bookingData = $data['bookingData'] ?? [];
+        $this->selectedActivities = $data['selectedActivities'] ?? [];
+        $this->selectedFoods = $data['selectedFoods'] ?? [];
+        $this->staycations = $data['staycations'] ?? collect();
+        $this->foods = $data['foods'] ?? collect();
+        $this->grandTotal = $data['grandTotal'] ?? 0;
+        $this->customerInfo = $data['customerInfo'] ?? [];
+        $this->isStaycation = $data['isStaycation'] ?? false;
+        $this->isDayvisit = $data['isDayvisit'] ?? false;
+        $this->isSpecialEvent = $data['isSpecialEvent'] ?? false;
     }
 
     /**
@@ -41,16 +59,16 @@ class BookingConfirmation extends Mailable
         return new Content(
             view: 'emails.booking-confirmation',
             with: [
-                'bookingData' => $this->data['bookingData'] ?? [],
-                'selectedActivities' => $this->data['selectedActivities'] ?? [],
-                'selectedFoods' => $this->data['selectedFoods'] ?? [],
-                'staycations' => $this->data['staycations'] ?? collect(),
-                'foods' => $this->data['foods'] ?? collect(),
-                'grandTotal' => $this->data['grandTotal'] ?? 0,
-                'customerInfo' => $this->data['customerInfo'] ?? [],
-                'isStaycation' => $this->data['isStaycation'] ?? false,
-                'isDayvisit' => $this->data['isDayvisit'] ?? false,
-                'isSpecialEvent' => $this->data['isSpecialEvent'] ?? false,
+                'bookingData' => $this->bookingData,
+                'selectedActivities' => $this->selectedActivities,
+                'selectedFoods' => $this->selectedFoods,
+                'staycations' => $this->staycations,
+                'foods' => $this->foods,
+                'grandTotal' => $this->grandTotal,
+                'customerInfo' => $this->customerInfo,
+                'isStaycation' => $this->isStaycation,
+                'isDayvisit' => $this->isDayvisit,
+                'isSpecialEvent' => $this->isSpecialEvent,
             ],
         );
     }

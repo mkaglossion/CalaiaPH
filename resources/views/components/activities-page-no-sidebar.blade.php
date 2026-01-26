@@ -421,6 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // initial load
     loadActivities();
+    updateSummary();
 });
 </script>
 
