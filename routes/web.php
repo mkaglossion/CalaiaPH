@@ -281,7 +281,13 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('special-texts', SpecialTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('farm-texts', FarmTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('activity-text', ActivityTextController::class)->only(['store', 'update', 'destroy']);
-    Route::resource('staycation-text', StaycationTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('staycation-text', StaycationTextController::class, [
+        'names' => [
+            'store' => 'admin.staycation-text.store',
+            'update' => 'admin.staycation-text.update',
+            'destroy' => 'admin.staycation-text.destroy'
+        ]
+    ])->only(['store', 'update', 'destroy']);
     Route::resource('menu-text', MenuTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-text', EventTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
@@ -297,14 +303,26 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('special-swiper-images', SpecialSwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('farm-swiper-images', FarmSwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('activity-image', ActivitySwiperImageController::class)->only(['store', 'update', 'destroy']);
-    Route::resource('staycation-image', StaycationSwiperImageController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('staycation-image', StaycationSwiperImageController::class, [
+        'names' => [
+            'store' => 'admin.staycation-image.store',
+            'update' => 'admin.staycation-image.update',
+            'destroy' => 'admin.staycation-image.destroy'
+        ]
+    ])->only(['store', 'update', 'destroy']);
     Route::resource('menu-image', MenuSwiperImageController::class)->only(['store', 'destroy']);
     Route::resource('event-image', EventSwiperImageController::class)->only(['store', 'destroy']);
     Route::resource('farmInfo-image', FarmInfoSwiperImageController::class)->only(['store', 'destroy']);
 
     // List Controllers
     Route::resource('activity-list', ActivityController::class)->only(['store', 'update', 'destroy']);
-    Route::resource('staycation-list', StaycationController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('staycation-list', StaycationController::class, [
+        'names' => [
+            'store' => 'admin.staycation-list.store',
+            'update' => 'admin.staycation-list.update',
+            'destroy' => 'admin.staycation-list.destroy'
+        ]
+    ])->only(['store', 'update', 'destroy']);
     Route::resource('menu-list', MenuController::class)->only(['store', 'destroy']);
     Route::resource('event-list', EventController::class)->only(['store', 'destroy']);
     Route::resource('farmInfo-list', FarmInfoController::class)->only(['store', 'destroy']);

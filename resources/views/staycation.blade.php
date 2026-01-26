@@ -114,17 +114,12 @@
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Standard Glamping</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
-                  <li class="px-3 py-2 bg-gray-50 rounded">with Private Toilet & Bath</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Air-conditioned 25 sqm tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Assigned heated shower with soap, shampoo & toilet with bidet (approx. 10 meters from tent)</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Access to Wi-Fi</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Private picnic table and fire pit/grill</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Complimentary coffee/tea and drinking water in tent</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Bathroom towels, dental & vanity kit, sleeping eye masks</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Convenience outlet</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Pet-friendly*</li>
-                </ul>
+                @php
+                    $staycation = $staycations->firstWhere('name', 'Standard Glamping');
+                    $featuresText = $staycation->texts->firstWhere('section', 'features');
+                    $features = $featuresText ? explode("\n", $featuresText->content) : [];
+                @endphp
+                <x-staycation-features :features="$features" />
                 <div class="flex gap-2">
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#6b7280" @click="book('{{ url('/booking/staycation?type=staycation&package=Standard%20Glamping&price=4800') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('glamping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
@@ -162,17 +157,12 @@
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Premium Glamping</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
-                  <li class="px-3 py-2 bg-gray-50 rounded">with Private Toilet & Bath</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Air-conditioned 25 sqm tent good for 4 pax (max of 6; additional Php 400/pax/night for extra mattress)</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Assigned heated shower with soap, shampoo & toilet with bidet (approx. 10 meters from tent)</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Access to Wi-Fi</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Private picnic table and fire pit/grill</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Complimentary coffee/tea and drinking water in tent</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Exclusive heated shower with soap, shampoo & toilet with bidet, located right beside the tent</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Access to Wi-Fi</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Pet-friendly*</li>
-                </ul>
+                @php
+                    $staycation = $staycations->firstWhere('name', 'Premium Glamping');
+                    $featuresText = $staycation->texts->firstWhere('section', 'features');
+                    $features = $featuresText ? explode("\n", $featuresText->content) : [];
+                @endphp
+                <x-staycation-features :features="$features" />
                 <div class="flex gap-2">
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#00848d" @click="book('{{ url('/booking/staycation?type=staycation&package=Premium%20Glamping&price=5500') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('glamping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
@@ -226,14 +216,12 @@
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dbeafe;color:#1d4ed8">Comfort</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
-                  <li class="px-3 py-2 bg-gray-50 rounded">Fan-cooled, 25 sqm tent</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Spacious enough for up to 8 mattress sets (+Php 400 per set/night) or 12 sleeping bags</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Common toilet and shower</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Convenience outlets</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Access to Wi-Fi, camp amenities, and activities</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Pet-friendly*</li>
-                </ul>
+                @php
+                    $staycation = $staycations->firstWhere('name', 'Dome Tent');
+                    $featuresText = $staycation->texts->firstWhere('section', 'features');
+                    $features = $featuresText ? explode("\n", $featuresText->content) : [];
+                @endphp
+                <x-staycation-features :features="$features" />
                 <div class="flex gap-2">
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#00848d" @click="book('{{ url('/booking/staycation?type=camping&package=Dome%20Tent&price=1200') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('camping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
@@ -271,14 +259,12 @@
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#e5e7eb;color:#374151">Spacious</span>
                 </div>
                 <h6 class="text-base md:text-lg font-semibold">Features</h6>
-                <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
-                  <li class="px-3 py-2 bg-gray-50 rounded">Fan-cooled, 25 sqm tent</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Spacious enough for up to 8 mattress sets (+Php 400 per set/night) or 12 sleeping bags</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Common toilet and shower</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Convenience outlets</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Access to Wi-Fi, camp amenities, and activities</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Pet-friendly*</li>
-                </ul>
+                @php
+                    $staycation = $staycations->firstWhere('name', 'Bell Tent');
+                    $featuresText = $staycation->texts->firstWhere('section', 'features');
+                    $features = $featuresText ? explode("\n", $featuresText->content) : [];
+                @endphp
+                <x-staycation-features :features="$features" />
                 <div class="flex gap-2">
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#7a7d52" @click="book('{{ url('/booking/staycation?type=camping&package=Bell%20Tent&price=1800') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('camping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
@@ -316,11 +302,12 @@
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#dcfce7;color:#166534">Budget</span>
                 </div>
                 <h6 class="text-lg md:text-xl font-semibold" style="font-family: 'Gotham Book', sans-serif;">Features</h6>
-                <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
-                  <li class="px-3 py-2 bg-gray-50 rounded">Spacious area for your own tent or car camp setup</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Common toilet and shower</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Access to Wi-Fi, camp amenities, and activities</li>
-                </ul>
+                @php
+                    $staycation = $staycations->firstWhere('name', 'BYOT');
+                    $featuresText = $staycation->texts->firstWhere('section', 'features');
+                    $features = $featuresText ? explode("\n", $featuresText->content) : [];
+                @endphp
+                <x-staycation-features :features="$features" />
                 <div class="flex gap-2">
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#843c23" @click="book('{{ url('/booking/staycation?type=camping&package=BYOT&price=800') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('camping')"><i class="bi bi-eye me-1"></i>VR Preview</button>
@@ -358,11 +345,12 @@
                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#fef3c7;color:#7c2d12">Convenient</span>
                 </div>
                 <h6 class="text-xl md:text-2xl font-semibold" style="font-family: 'Gotham Book', sans-serif;">Features</h6>
-                <ul class="grid grid-cols-1 gap-2 text-xs" style="font-family: 'Gotham Book', sans-serif;">
-                  <li class="px-3 py-2 bg-gray-50 rounded">Spacious area for your own tent or car camp setup</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Common toilet and shower</li>
-                  <li class="px-3 py-2 bg-gray-50 rounded">Access to Wi-Fi, camp amenities, and activities</li>
-                </ul>
+                @php
+                    $staycation = $staycations->firstWhere('name', 'Car Camping');
+                    $featuresText = $staycation->texts->firstWhere('section', 'features');
+                    $features = $featuresText ? explode("\n", $featuresText->content) : [];
+                @endphp
+                <x-staycation-features :features="$features" />
                 <div class="flex gap-2">
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold text-white" style="background:#db8636" @click="book('{{ url('/booking/staycation?type=camping&package=Car%20Camping&price=1500') }}')">Book Now</button>
                   <button type="button" class="flex-1 rounded-lg px-4 py-2 font-semibold border" style="border-color:#0ea5e9;color:#0ea5e9" @click="openVR('camping')"><i class="bi bi-eye me-1"></i>VR Preview</button>

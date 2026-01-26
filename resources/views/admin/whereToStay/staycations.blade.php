@@ -353,7 +353,7 @@
                             <button class="text-blue-600 hover:underline" @click="editImage({{ $img->id }}, '{{ $img->staycation_id }}', '{{ $img->title }}')">
                                 Edit
                             </button>
-                            <form action="{{ route('staycation-image.destroy', $img->id) }}" method="POST" class="inline">
+                            <form action="{{ route('admin.staycation-image.destroy', $img->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
                                 <button
@@ -393,7 +393,7 @@
                 id="swiperUploadForm"
                 class="space-y-5"
                 enctype="multipart/form-data"
-                :action="editImageMode ? '/admin/staycation-image/' + currentImageId : '{{ route('staycation-image.store') }}'"
+                :action="editImageMode ? '/admin/staycation-image/' + currentImageId : '{{ route('admin.staycation-image.store') }}'"
                 method="POST"
                 @submit.prevent="
                     const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
@@ -421,7 +421,7 @@
                     btn.innerText = editImageMode ? 'Updating...' : 'Uploading...';
                     btn.disabled = true;
 
-                    const url = editImageMode ? '/admin/staycation-image/' + currentImageId : '{{ route('staycation-image.store') }}';
+                    const url = editImageMode ? '/admin/staycation-image/' + currentImageId : '{{ route('admin.staycation-image.store') }}';
 
                     fetch(url, {
                         method: 'POST',
@@ -494,24 +494,23 @@
     <hr class="my-6">
 
     <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Text Content Management</h2>
-        <button 
-            @click="showTextModal = true" 
+        <h2 class="text-xl font-semibold">Features Management</h2>
+        <button
+            @click="resetTextForm(); showTextModal = true"
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-            + Add Text Content
+            + Add Features
         </button>
     </div>
 
-    {{-- Text Table --}}
+    {{-- Features Table --}}
     <div class="overflow-x-auto border rounded-lg shadow">
         <table class="min-w-full text-sm text-left">
             <thead class="bg-gray-100 border-b">
                 <tr>
                     <th class="px-4 py-2">#</th>
                     <th class="px-4 py-2">Staycation Name</th>
-                    <th class="px-4 py-2">Label</th>
-                    <th class="px-4 py-2">Text</th>
+                    <th class="px-4 py-2">Features List</th>
                     <th class="px-4 py-2 text-right">Actions</th>
                 </tr>
             </thead>
@@ -520,16 +519,40 @@
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-2">{{ $index + 1 }}</td>
                         <td class="px-4 py-2">{{ $text->staycation->name ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $text->title ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $text->content ?? 'Untitled' }}</td>
+                        <td class="px-4 py-2">
+                            @php
+                                $features = explode("\n", $text->content ?? '');
+                            @endphp
+                            @if(!empty($features))
+                                <ul class="list-disc list-inside space-y-1">
+                                    @forelse($features as $feature)
+                                        @if(trim($feature))
+                                            <li class="text-sm">{{ trim($feature) }}</li>
+                                        @endif
+                                    @empty
+                                        <span class="text-gray-400 italic">No features</span>
+                                    @endforelse
+                                </ul>
+                            @else
+                                <span class="text-gray-400 italic">No features</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-2 text-right space-x-2">
-                            <form action="{{ route('staycation-text.destroy', $text->id) }}" method="POST" class="inline">
+                            <button
+                                type="button"
+                                x-on:click="editText($el, {{ $text->id }}, '{{ $text->staycation_id }}', '{{ $text->section }}', '{{ $text->title }}')"
+                                data-content="{!! htmlspecialchars($text->content ?? '', ENT_QUOTES) !!}"
+                                class="text-blue-600 hover:underline"
+                            >
+                                Edit
+                            </button>
+                            <form action="{{ route('admin.staycation-text.destroy', $text->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
-                                <button 
+                                <button
                                     type="submit"
                                     class="text-red-600 hover:underline"
-                                    onclick="return confirm('Delete this text content?')"
+                                    onclick="return confirm('Delete this features list?')"
                                 >
                                     Delete
                                 </button>
@@ -538,29 +561,28 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">No text content added yet.</td>
+                        <td colspan="4" class="px-4 py-4 text-center text-gray-500">No features added yet.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
-    <!-- Text Content Modal -->
-    <div 
-        x-show="showTextModal" 
+    <!-- Features Modal -->
+    <div
+        x-show="showTextModal"
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
         x-cloak
     >
-        <div 
-            @click.away="showTextModal = false" 
+        <div
+            @click.away="showTextModal = false"
             class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6"
         >
-            <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
+            <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Features' : 'Add Features'"></h3>
 
             <form
                 id="textUploadForm"
                 class="space-y-5"
-                enctype="multipart/form-data"
                 @submit.prevent="saveText()"
             >
                 @csrf
@@ -570,10 +592,10 @@
 
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Staycation</label>
-                    <select 
-                        name="staycation_id" 
-                        x-model="form.staycation_id" 
-                        class="border rounded p-2 w-full" 
+                    <select
+                        name="staycation_id"
+                        x-model="form.staycation_id"
+                        class="border rounded p-2 w-full"
                         required
                     >
                         <option value="">Select Staycation</option>
@@ -583,40 +605,29 @@
                     </select>
                 </div>
 
-            
                 <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Label</label>
-                    <input 
-                        type="text" 
-                        name="label" 
-                        x-model="form.label" 
+                    <label class="block text-sm font-medium mb-1">Features List</label>
+                    <textarea
+                        name="text"
+                        x-model="form.text"
+                        rows="8"
                         class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        placeholder="Optional"
-                    >
-                </div>
-
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Text</label>
-                    <textarea 
-                        name="text" 
-                        x-model="form.text" 
-                        rows="4" 
-                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        placeholder="Enter text text..."
+                        placeholder="Enter each feature on a new line:&#10;LUXURY TENT SETUP&#10;GOURMET LUNCH SERVICE&#10;PRIVATE ATV EXPERIENCE&#10;GUIDED NATURE TOUR&#10;CUSTOM TEAM BUILDING"
                         required
                     ></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Enter each feature on a separate line. These will be displayed as bullet points on the staycation pages.</p>
                 </div>
 
                 <div class="flex justify-end space-x-2">
-                    <button 
-                        type="button" 
-                        @click="showTextModal = false" 
+                    <button
+                        type="button"
+                        @click="showTextModal = false"
                         class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
                     >
                         Cancel
                     </button>
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                     >
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
@@ -648,15 +659,16 @@ function staycationComponent() {
             quantity: 1,
             adults: 0,
             children: 0,
-            priceConfigs: [],
-            images: [],
-            staycation_id: '',
+            section: '',
             label: '',
             text: '',
+            staycation_id: '',
             image: null,
             imagePreview: null,
             existingImage: null,
-            removeImage: false
+            removeImage: false,
+            priceConfigs: [],
+            images: []
         },
 
         computedThreshold: 0,
@@ -686,12 +698,32 @@ function staycationComponent() {
             this.currentImageTitle = '';
         },
 
+        resetTextForm() {
+            this.form.id = null;
+            this.form.staycation_id = '';
+            this.form.section = '';
+            this.form.label = '';
+            this.form.text = '';
+            this.editMode = false;
+        },
+
         editImage(id, staycationId, title) {
             this.currentImageId = id;
             this.currentStaycationId = staycationId;
             this.currentImageTitle = title || '';
             this.editImageMode = true;
             this.showModal = true;
+        },
+
+        editText(el, id, staycationId, section, title) {
+            this.resetTextForm();
+            this.form.id = id;
+            this.form.staycation_id = staycationId;
+            this.form.section = section || '';
+            this.form.label = title || '';
+            this.form.text = el.getAttribute('data-content') || '';
+            this.editMode = true;
+            this.showTextModal = true;
         },
 
 
@@ -835,7 +867,7 @@ function staycationComponent() {
                 formData.append('remove_image', '1');
             }
 
-            let url = '{{ route("staycation-list.store") }}';
+            let url = '{{ route("admin.staycation-list.store") }}';
             let method = 'POST';
             if (this.editModeStaycation && this.form.id) {
                 url = `{{ url('/admin/staycation-list') }}/${this.form.id}`;
@@ -891,14 +923,15 @@ function staycationComponent() {
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             const formData = new FormData();
             formData.append('staycation_id', this.form.staycation_id);
-            formData.append('title', this.form.label);
+            formData.append('section', 'features');
+            formData.append('title', 'Features');
             formData.append('content', this.form.text);
 
-            let url = '{{ route("staycation-text.store") }}';
+            let url = '{{ route("admin.staycation-text.store") }}';
             let method = 'POST';
             if (this.editMode && this.form.id) {
                 url = `{{ url('/admin/staycation-text') }}/${this.form.id}`;
-                method = 'PUT';
+                formData.append('_method', 'PUT');
             }
 
             const btn = document.querySelector('#textUploadForm button[type=submit]');
@@ -916,6 +949,7 @@ function staycationComponent() {
                 if (res.ok) {
                     alert(data.message || (this.editMode ? 'Text updated!' : 'Text added!'));
                     this.form.staycation_id = '';
+                    this.form.section = '';
                     this.form.label = '';
                     this.form.text = '';
                     this.editMode = false;

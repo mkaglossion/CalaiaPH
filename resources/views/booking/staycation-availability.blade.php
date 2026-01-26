@@ -214,6 +214,13 @@
                                         {{ $roomDetail['description'] }}
                                     </p>
 
+                                    {{-- Features --}}
+                                    @php
+                                        $featuresText = $staycation->texts->firstWhere('section', 'features');
+                                        $features = $featuresText ? explode("\n", $featuresText->content) : [];
+                                    @endphp
+                                    <x-staycation-features :features="$features" />
+
                                     {{-- Availability info --}}
                                     @if($status === 'limited')
                                         <div class="text-sm text-amber-700 mb-4 bg-amber-50 p-3 rounded-lg border border-amber-200">

@@ -102,7 +102,7 @@
                             {{ $section['title'] }}
                         </h2>
 
-                        <div class="max-w-[520px] mx-auto md:mx-0">
+                        <div class="max-w-130 mx-auto md:mx-0">
                             <p
                                 class="{{ $t['text'] }} text-[13px] leading-[1.7] mb-3 text-center md:text-left"
                                 style="font-family:'Gotham Book', sans-serif;"
