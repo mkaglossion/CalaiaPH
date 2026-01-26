@@ -65,12 +65,18 @@ $accommodationTotal = 0;
 $breakfastTotal = 0;
 foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
     if (!empty($acc)) {
-        $accommodationTotal += $acc['total_price'] ?? 0;
+        $accommodationTotal += ($acc['accommodation_price'] ?? 0) + ($acc['mattress_price'] ?? 0) + ($acc['pet_price'] ?? 0);
     }
 }
 
 // Get selected foods from booking data
 $selectedFoods = $booking['selected_foods'] ?? [];
+
+// Get selected activities from booking data
+$selectedActivities = $booking['selected_activities'] ?? [];
+
+// Key staycations by ID for the component
+$staycations = $staycations->keyBy('id');
 @endphp
 
 <body class="bg-[#f5efe7]">
@@ -150,9 +156,11 @@ $selectedFoods = $booking['selected_foods'] ?? [];
             <x-booking-summary
                 :booking="$booking"
                 :staycations="$staycations"
+                :selectedActivities="$selectedActivities"
                 :selectedFoods="$selectedFoods"
                 :foods="$foods"
                 :showActivities="true"
+                :showDynamicActivities="true"
                 :showActionButtons="true"
                 :actionButtonType="'activities'"
             />

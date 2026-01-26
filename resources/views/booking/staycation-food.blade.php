@@ -376,6 +376,7 @@
                         :foods="$foods"
                         :showDynamicFood="true"
                         :showActionButtons="true"
+                        :showActivities="false"
                     />
                 </div>
             </div>
@@ -458,10 +459,20 @@
                 },
 
                 calculateTotal() {
-                    // Show only accommodation + activities total on food selection page
-                    // Food total will be added at payment step
-                    const grandTotal = this.accommodationTotal + this.activitiesTotal;
+                    let foodTotal = 0;
+                    this.selectedFoods.forEach(food => {
+                        foodTotal += food.price * food.quantity * this.nights;
+                    });
+                    const grandTotal = this.accommodationTotal + this.activitiesTotal + foodTotal;
                     return '₱' + grandTotal.toLocaleString();
+                },
+
+                calculateFoodTotal() {
+                    let total = 0;
+                    this.selectedFoods.forEach(food => {
+                        total += food.price * food.quantity * this.nights;
+                    });
+                    return '₱' + total.toLocaleString();
                 },
 
                 submitAndProceed(nextUrl = '{{ route("booking.staycationActivities") }}') {
