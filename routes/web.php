@@ -351,6 +351,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
     // ========== Inventory Management Routes ==========
     Route::prefix('/inventory')->group(function () {
+        Route::get('food', [InventoryController::class, 'food'])->name('admin.inventory.food');
+        Route::get('shop', [InventoryController::class, 'shop'])->name('admin.inventory.shop');
         Route::post('store', [InventoryController::class, 'store'])->name('admin.inventory.store');
         Route::post('bulk', [InventoryController::class, 'bulk'])->name('admin.inventory.bulk');
         Route::post('quickset', [InventoryController::class, 'quickset'])->name('admin.inventory.quickset');

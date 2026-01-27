@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Staycation;
 use App\Models\StaycationInventory;
+use App\Models\Food;
+use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -242,5 +244,95 @@ class InventoryController extends Controller
         }
 
         return response()->json(['items' => $items]);
+    }
+
+    /**
+     * Display food inventory monitoring page
+     */
+    public function food(Request $request)
+    {
+        $query = Food::where('is_inventory_managed', true);
+
+        // Search by name
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // Filter by category
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        // Filter by stock status
+        if ($request->filled('stock_status')) {
+            switch ($request->stock_status) {
+                case 'out_of_stock':
+                    $query->where('stock_quantity', '<=', 0);
+                    break;
+                case 'low_stock':
+                    $query->where('stock_quantity', '>', 0)->where('stock_quantity', '<=', 5);
+                    break;
+                case 'in_stock':
+                    $query->where('stock_quantity', '>', 5);
+                    break;
+            }
+        }
+
+        $foods = $query->orderBy('name')->paginate(10);
+
+        // Get available categories for filter dropdown
+        $categories = Food::where('is_inventory_managed', true)
+            ->distinct()
+            ->pluck('category')
+            ->filter()
+            ->sort()
+            ->values();
+
+        return view('admin.inventory.food', compact('foods', 'categories'));
+    }
+
+    /**
+     * Display shop inventory monitoring page
+     */
+    public function shop(Request $request)
+    {
+        $query = Product::where('is_inventory_managed', true);
+
+        // Search by title
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        // Filter by category
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        // Filter by stock status
+        if ($request->filled('stock_status')) {
+            switch ($request->stock_status) {
+                case 'out_of_stock':
+                    $query->where('stock_quantity', '<=', 0);
+                    break;
+                case 'low_stock':
+                    $query->where('stock_quantity', '>', 0)->where('stock_quantity', '<=', 5);
+                    break;
+                case 'in_stock':
+                    $query->where('stock_quantity', '>', 5);
+                    break;
+            }
+        }
+
+        $products = $query->orderBy('title')->paginate(10);
+
+        // Get available categories for filter dropdown
+        $categories = Product::where('is_inventory_managed', true)
+            ->distinct()
+            ->pluck('category')
+            ->filter()
+            ->sort()
+            ->values();
+
+        return view('admin.inventory.shop', compact('products', 'categories'));
     }
 }

@@ -66,6 +66,7 @@
               ['label'=>'Pages Information','route'=>'admin.food.foodandbeverage'],
               ['label'=>'Items','route'=>'admin.food.menus'],
               ['label'=>'Food Management','route'=>'admin.foods.index'],
+              ['label'=>'Inventory Monitor','route'=>'admin.inventory.food'],
             ]],
             ['title'=>'Special Events','icon'=>'calendar','route'=>'admin.specialEvents.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.specialEvents.specialevents']
@@ -76,7 +77,8 @@
             ]],
             ['title'=>'Shop','icon'=>'shopping-bag','route'=>'admin.shop.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.shop.shopstore'],
-              ['label'=>'Items','route'=>'admin.shop.shopitems']
+              ['label'=>'Items','route'=>'admin.shop.shopitems'],
+              ['label'=>'Inventory Monitor','route'=>'admin.inventory.shop']
             ]],
             ['title'=>'Pricing','icon'=>'coins','route'=>'admin.pricing.*','sub'=>[
               ['label'=>'Rate Matrix','route'=>'admin.pricingConfig.index'],
@@ -157,5 +159,7 @@
   <script>
     lucide.createIcons();
   </script>
+
+  @stack('scripts')
 </body>
 </html>
