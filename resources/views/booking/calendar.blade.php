@@ -431,11 +431,11 @@
                     <i class="bi bi-info-circle mr-2 text-[#8f5d54]"></i> Legend
                 </h4>
 
-                <div x-show="legendLowThreshold === 0" class="text-center text-gray-500 py-4">
+                <div x-show="!availability || Object.keys(availability).length === 0" class="text-center text-gray-500 py-4">
                     Loading availability data...
                 </div>
 
-                <div x-show="legendLowThreshold > 0" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div x-show="availability && Object.keys(availability).length > 0" class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div class="flex items-center gap-2">
                       <span class="w-4 h-4 inline-block rounded fp-avail-high"></span>
                       <span class="text-sm">
@@ -506,36 +506,14 @@
         _resizeTimer: null,
 
         init() {
-          if (initialCheckin) this.checkin = initialCheckin;
-          if (initialCheckout) this.checkout = initialCheckout;
+           if (initialCheckin) this.checkin = initialCheckin;
+           if (initialCheckout) this.checkout = initialCheckout;
 
-          // ✅ Calculate max quantity from availability data first
-          this.legendMaxQty = 0;
-          for (const [dateString, details] of Object.entries(this.availability)) {
-            const qty = details.min_quantity || 0;
-            if (qty > this.legendMaxQty) this.legendMaxQty = qty;
-          }
+           // ✅ Smart threshold calculation based on current availability patterns
+           this.calculateSmartThresholds();
 
-          // ✅ If no data from availability, use passed maxQty or totalQuantity
-          if (this.legendMaxQty === 0) {
-            this.legendMaxQty = maxQty || totalQuantity || 0;
-          }
-
-          // ✅ Calculate dynamic threshold: 30% of max inventory per date (min 1)
-          if (this.legendMaxQty > 0) {
-            this.legendLowThreshold = Math.max(1, Math.floor(this.legendMaxQty * 0.3));
-          } else {
-            this.legendLowThreshold = 0; // Will show loading state
-          }
-
-          console.log('Initial threshold calculation:', {
-            legendMaxQty: this.legendMaxQty,
-            legendLowThreshold: this.legendLowThreshold,
-            availabilityCount: Object.keys(this.availability).length
-          });
-
-          this._months = this.getResponsiveMonths();
-          this.$nextTick(() => this.initCalendar());
+           this._months = this.getResponsiveMonths();
+           this.$nextTick(() => this.initCalendar());
 
           // ✅ re-init on resize (responsive switch 1<->2 months)
           window.addEventListener('resize', () => {
@@ -571,40 +549,108 @@
           return this.nights ? `${this.nights} night(s)` : '—';
         },
 
-        get availableThresholdText() {
-          return this.legendLowThreshold > 0 ? `${this.legendLowThreshold + 1}+ slots` : 'Loading...';
-        },
+        availableThresholdText: 'Loading...',
+        limitedThresholdText: 'Loading...',
 
-        get limitedThresholdText() {
-          return this.legendLowThreshold > 0 ? `1–${this.legendLowThreshold} slots` : 'Loading...';
+        calculateSmartThresholds() {
+           try {
+             // Get today's date and availability
+             const today = new Date().toISOString().split('T')[0];
+             const todayAvailability = Math.max(0, this.availability[today]?.min_quantity || 0);
+
+             // Get all available quantities (exclude zero availability)
+             const quantities = Object.values(this.availability || {})
+               .map(d => Math.max(0, d.min_quantity || 0))
+               .filter(q => q > 0);
+
+             // Calculate max quantity for reference
+             this.legendMaxQty = quantities.length > 0 ? Math.max(...quantities) : 0;
+
+             // Fallback for no data
+             if (quantities.length === 0) {
+               this.legendLowThreshold = 1;
+               this.availableThresholdText = '2+ slots';
+               this.limitedThresholdText = '1–1 slots';
+               return;
+             }
+
+             // Safe statistical analysis
+             const sum = quantities.reduce((a, b) => a + b, 0);
+             const avg = quantities.length > 0 ? sum / quantities.length : 0;
+
+             // Calculate variance safely
+             const variance = quantities.length > 1
+               ? quantities.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / (quantities.length - 1)
+               : 0;
+             const std = variance > 0 ? Math.sqrt(variance) : 0;
+
+             // Smart threshold calculation with safe fallbacks
+             const todayWeight = 0.4;
+             const statWeight = 0.6;
+
+             // Today's threshold: 50% of today's availability
+             const todayThreshold = Math.max(1, Math.floor(todayAvailability * 0.5));
+
+             // Statistical threshold: average minus half standard deviation
+             const statThreshold = isNaN(avg) || isNaN(std)
+               ? Math.max(1, Math.floor(avg || 1))
+               : Math.max(1, Math.floor(avg - std * 0.5));
+
+             // Dynamic percentage-based thresholds that scale with today's availability
+             // This provides contextual availability information
+
+             let dynamicThreshold;
+             if (todayAvailability <= 3) {
+               // Small operations: be more conservative
+               dynamicThreshold = Math.max(1, Math.floor(todayAvailability * 0.4));
+             } else if (todayAvailability <= 10) {
+               // Medium operations: moderate thresholds
+               dynamicThreshold = Math.max(1, Math.floor(todayAvailability * 0.3));
+             } else {
+               // Large operations: higher thresholds but capped for UX
+               dynamicThreshold = Math.min(Math.floor(todayAvailability * 0.2), 5);
+             }
+
+             // Ensure minimum useful threshold
+             this.legendLowThreshold = Math.max(1, dynamicThreshold);
+
+             // Update text properties with safe values
+             const safeThreshold = Math.max(1, this.legendLowThreshold);
+             this.availableThresholdText = `${safeThreshold + 1}+ slots`;
+             this.limitedThresholdText = `1–${safeThreshold} slots`;
+
+             console.log('Smart threshold calculation:', {
+               todayAvailability,
+               quantitiesCount: quantities.length,
+               avg: isNaN(avg) ? 'NaN' : avg.toFixed(1),
+               std: isNaN(std) ? 'NaN' : std.toFixed(1),
+               maxQty: this.legendMaxQty,
+               todayThreshold,
+               statThreshold,
+               finalThreshold: this.legendLowThreshold,
+               availableText: this.availableThresholdText,
+               limitedText: this.limitedThresholdText
+             });
+
+           } catch (error) {
+             console.error('Error in calculateSmartThresholds:', error);
+             // Fallback values
+             this.legendLowThreshold = 1;
+             this.availableThresholdText = '2+ slots';
+             this.limitedThresholdText = '1–1 slots';
+           }
         },
 
         initCalendar(keepSelected = false) {
-          const selected = keepSelected ? [this.checkin, this.checkout] : null;
+           const selected = keepSelected ? [this.checkin, this.checkout] : null;
 
-          if (this.calendarInstance) {
-            this.calendarInstance.destroy();
-            this.calendarInstance = null;
-          }
+           if (this.calendarInstance) {
+             this.calendarInstance.destroy();
+             this.calendarInstance = null;
+           }
 
-          // Recalculate max quantity from current availability data
-          this.legendMaxQty = 0;
-          for (const [dateString, details] of Object.entries(this.availability)) {
-            const qty = details.min_quantity || 0;
-            if (qty > this.legendMaxQty) this.legendMaxQty = qty;
-          }
-
-          // ✅ Recalculate dynamic threshold based on max quantity found
-          if (this.legendMaxQty > 0) {
-            this.legendLowThreshold = Math.max(1, Math.floor(this.legendMaxQty * 0.3));
-          } else {
-            this.legendLowThreshold = 0; // Will show loading state
-          }
-
-          console.log('Calendar threshold recalculation:', {
-            legendMaxQty: this.legendMaxQty,
-            legendLowThreshold: this.legendLowThreshold
-          });
+           // ✅ Recalculate smart thresholds
+           this.calculateSmartThresholds();
 
           // disabled dates (only is_available=false)
           const disabledDates = [];
