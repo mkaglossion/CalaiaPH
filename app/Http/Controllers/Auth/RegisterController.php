@@ -67,6 +67,7 @@ class RegisterController extends Controller
 
         // Move user to the main users table
         $user = User::create([
+            'user_type'  => 'client',
             'first_name' => $pending->first_name,
             'last_name'  => $pending->last_name,
             'email'      => $pending->email,
