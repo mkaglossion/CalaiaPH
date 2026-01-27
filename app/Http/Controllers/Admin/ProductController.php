@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Events\ProductStockUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -54,6 +55,8 @@ class ProductController extends Controller
             'image' => $imagePath,
             'category' => $request->category,
             'is_active' => $request->has('is_active'),
+            'stock_quantity' => $request->integer('stock_quantity', 0),
+            'is_inventory_managed' => $request->boolean('is_inventory_managed', false),
         ]);
 
         if ($request->expectsJson()) {
@@ -91,6 +94,8 @@ class ProductController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'category' => 'required|in:frozen,fresh',
             'is_active' => 'nullable|boolean',
+            'stock_quantity' => 'nullable|integer|min:0',
+            'is_inventory_managed' => 'nullable|boolean',
         ], [
             'image.max' => 'The image field must not be greater than 2048 kilobytes.',
         ]);
@@ -113,7 +118,14 @@ class ProductController extends Controller
             'image' => $imagePath,
             'category' => $request->category,
             'is_active' => $request->has('is_active'),
+            'stock_quantity' => $request->integer('stock_quantity', 0),
+            'is_inventory_managed' => $request->boolean('is_inventory_managed', false),
         ]);
+
+        // Broadcast stock update if inventory is managed
+        if ($product->is_inventory_managed) {
+            broadcast(new ProductStockUpdated($product))->toOthers();
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['message' => 'Product updated successfully.', 'product' => $product]);

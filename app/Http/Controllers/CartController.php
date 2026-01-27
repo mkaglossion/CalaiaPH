@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Receipt;
+use App\Models\Product;
+use App\Events\ProductStockUpdated;
 
 class CartController extends Controller
 {
@@ -96,6 +98,23 @@ class CartController extends Controller
             'isDining' => 'nullable',
         ]);
 
+        // Check inventory for products
+        $product = Product::find($data['id']);
+        if ($product && $product->is_inventory_managed) {
+            $currentCartQuantity = 0;
+            $cart = session()->get('cart', []);
+            if (is_array($cart)) {
+                $cartId = md5($data['id']);
+                if (isset($cart[$cartId])) {
+                    $currentCartQuantity = $cart[$cartId]['quantity'];
+                }
+            }
+
+            if ($currentCartQuantity + $data['quantity'] > $product->stock_quantity) {
+                return redirect()->back()->with('error', 'Insufficient stock. Only ' . $product->stock_quantity . ' items available.');
+            }
+        }
+
         $cart = session()->get('cart', []);
         if (!is_array($cart)) {
             $cart = [];
@@ -113,6 +132,7 @@ class CartController extends Controller
         } else {
             // new item
             $cart[$id] = [
+                'product_id' => $data['id'],
                 'title'    => $data['title'],
                 'price'    => $data['price'],
                 'image'    => $data['image'] ?? '',
@@ -257,6 +277,17 @@ class CartController extends Controller
         // Add payment details
         $data['transaction_id'] = 'TXN-' . strtoupper(uniqid());
         $data['payment_date'] = now()->toDateTimeString();
+
+        // Reduce inventory for products
+        foreach ($cart as $item) {
+            if (isset($item['product_id']) && !$item['isDining']) {
+                $product = Product::find($item['product_id']);
+                if ($product && $product->is_inventory_managed) {
+                    $product->decrement('stock_quantity', $item['quantity']);
+                    event(new ProductStockUpdated($product));
+                }
+            }
+        }
 
         // Send receipt email
         Mail::to($data['email'])->send(new Receipt($cart, $cartTotal, $data));

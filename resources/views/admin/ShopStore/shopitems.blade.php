@@ -1,16 +1,16 @@
 @extends('layouts.admin')
 
-@section('title', 'Shop Items Management')
+@section('title', 'Store Management')
 
 @section('content')
 <div
     x-data="{
         showModal: false,
         editMode: false,
-        form: { id: null, title: '', description: '', price: '', image: null, imagePreview: null, category: 'frozen', is_active: true },
+        form: { id: null, title: '', description: '', price: '', image: null, imagePreview: null, category: 'frozen', is_active: true, stock_quantity: '', is_inventory_managed: false },
 
         resetForm() {
-            this.form = { id: null, title: '', description: '', price: '', image: null, imagePreview: null, category: 'frozen', is_active: true };
+            this.form = { id: null, title: '', description: '', price: '', image: null, imagePreview: null, category: 'frozen', is_active: true, stock_quantity: '', is_inventory_managed: false };
             this.editMode = false;
         },
 
@@ -38,7 +38,9 @@
                 image: null,
                 imagePreview: product.image ? '/storage/' + product.image : null,
                 category: product.category,
-                is_active: product.is_active
+                is_active: product.is_active,
+                stock_quantity: product.stock_quantity || '',
+                is_inventory_managed: !!product.is_inventory_managed
             };
             this.editMode = true;
             this.showModal = true;
@@ -55,6 +57,8 @@
             }
             formData.append('category', this.form.category);
             if (this.form.is_active) formData.append('is_active', '1');
+            formData.append('stock_quantity', this.form.stock_quantity || '');
+            formData.append('is_inventory_managed', this.form.is_inventory_managed ? '1' : '0');
 
             let url = '{{ route("products.store") }}';
             let method = 'POST';
@@ -103,12 +107,12 @@
         }
     }"
 >
-    <h1 class="text-2xl font-bold mb-4">Shop Items Management</h1>
+    <h1 class="text-2xl font-bold mb-4">Store Management</h1>
 
     <hr class="my-6">
 
     <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Products Management</h2>
+        <h2 class="text-xl font-semibold">Store Products</h2>
         <button
             @click="showModal = true"
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
@@ -123,48 +127,73 @@
         </div>
     @endif
 
-    {{-- Table --}}
-    <div class="overflow-x-auto border rounded-lg shadow">
-        <table class="min-w-full text-sm text-left">
+    {{-- Products Table --}}
+    <div class="overflow-x-auto border rounded-lg shadow bg-white">
+        <table class="w-full text-sm text-left">
             <thead class="bg-gray-100 border-b">
                 <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Title</th>
-                    <th class="px-4 py-2">Category</th>
-                    <th class="px-4 py-2">Price</th>
-                    <th class="px-4 py-2">Active</th>
-                    <th class="px-4 py-2 text-right">Actions</th>
+                    <th class="px-6 py-3 font-semibold text-gray-700">#</th>
+                    <th class="px-6 py-3 font-semibold text-gray-700">Title</th>
+                    <th class="px-6 py-3 font-semibold text-gray-700">Category</th>
+                    <th class="px-6 py-3 font-semibold text-gray-700">Price</th>
+                    <th class="px-6 py-3 font-semibold text-gray-700">Stock</th>
+                    <th class="px-6 py-3 font-semibold text-gray-700">Image</th>
+                    <th class="px-6 py-3 font-semibold text-gray-700">Status</th>
+                    <th class="px-6 py-3 font-semibold text-gray-700 text-right">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($products as $index => $product)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ ($products->currentPage() - 1) * $products->perPage() + $index + 1 }}</td>
-                        <td class="px-4 py-2">{{ $product->title }}</td>
-                        <td class="px-4 py-2">{{ ucfirst($product->category) }}</td>
-                        <td class="px-4 py-2">₱{{ number_format($product->price, 2) }}</td>
-                        <td class="px-4 py-2">
-                            @if($product->is_active)
-                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Active</span>
+                @forelse ($products as $index => $product)
+                    <tr class="border-b hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 text-gray-600">{{ $products->firstItem() ? $products->firstItem() + $index : $index + 1 }}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ $product->title }}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">
+                                {{ ucfirst($product->category) }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 font-medium text-gray-900">₱{{ number_format($product->price, 2) }}</td>
+                        <td class="px-6 py-4">
+                            @if($product->is_inventory_managed)
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                                    {{ $product->stock_quantity }}
+                                </span>
                             @else
-                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Inactive</span>
+                                <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">
+                                    Not tracked
+                                </span>
                             @endif
                         </td>
-                        <td class="px-4 py-2 text-right space-x-2">
-                            <button
-                                class="text-blue-600 hover:underline"
-                                @click="editProduct({{ $product->toJson() }})"
-                            >
+                        <td class="px-6 py-4">
+                            @if ($product->image)
+                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}" class="h-12 w-12 rounded object-cover border border-gray-200" loading="lazy">
+                            @else
+                                <span class="text-gray-400 text-xs">No image</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4">
+                            @if ($product->is_active)
+                                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold flex items-center gap-1 w-fit">
+                                    <i data-lucide="check-circle" class="w-3 h-3"></i> Active
+                                </span>
+                            @else
+                                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold flex items-center gap-1 w-fit">
+                                    <i data-lucide="x-circle" class="w-3 h-3"></i> Inactive
+                                </span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 text-right space-x-3">
+                            <button type="button"
+                                    class="text-blue-600 hover:text-blue-900 font-medium text-sm transition"
+                                    @click="editProduct({{ $product->toJson() }})">
                                 Edit
                             </button>
                             <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
-                                <button
-                                    type="submit"
-                                    class="text-red-600 hover:underline"
-                                    onclick="return confirm('Delete this product?')"
-                                >
+                                <button type="submit"
+                                        class="text-red-600 hover:text-red-900 font-medium text-sm transition"
+                                        onclick="return confirm('Delete this product?')">
                                     Delete
                                 </button>
                             </form>
@@ -172,7 +201,10 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-4 text-center text-gray-500">No products added yet.</td>
+                        <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                            <i data-lucide="package" class="w-12 h-12 text-gray-300 mx-auto mb-4"></i>
+                            <p>No products added yet.</p>
+                        </td>
                     </tr>
                 @endforelse
             </tbody>
@@ -224,6 +256,22 @@
                 <div class="mb-3">
                     <label class="block font-semibold mb-1">Price</label>
                     <input type="number" step="0.01" x-model="form.price" name="price" class="border rounded p-2 w-full" required>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label class="block font-semibold mb-1">Stock Quantity</label>
+                        <input type="number" min="0" x-model="form.stock_quantity" name="stock_quantity" class="border rounded p-2 w-full" placeholder="50">
+                    </div>
+                    <div class="flex items-end">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" x-model="form.is_inventory_managed" name="is_inventory_managed" class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                            <div>
+                                <p class="font-semibold text-gray-900">Manage Inventory</p>
+                                <p class="text-xs text-gray-600">Track stock levels</p>
+                            </div>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="mb-3">
