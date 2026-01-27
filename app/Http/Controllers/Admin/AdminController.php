@@ -41,7 +41,7 @@ class AdminController extends Controller
     public function staycation()
     {
         $staycations = Staycation::all();
-        
+
         // Add today's available inventory to each staycation
         $today = now()->format('Y-m-d');
         foreach ($staycations as $staycation) {
@@ -49,14 +49,23 @@ class AdminController extends Controller
             $inventory = StaycationInventory::where('staycation_id', $staycation->id)
                 ->where('date', $today)
                 ->first();
-            
+
             // Use inventory available_quantity if exists, otherwise use base quantity
             $staycation->today_available = $inventory ? $inventory->available_quantity : ($staycation->quantity ?? 0);
         }
-        
+
+        // Get current season
+        $currentSeasonPeriod = \App\Models\PeakPeriod::where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->with('peakType')
+            ->orderBy(\App\Models\PeakType::select('priority')->whereColumn('peak_types.id', 'peak_periods.peak_type_id'), 'desc')
+            ->first();
+
+        $currentSeason = $currentSeasonPeriod ? $currentSeasonPeriod->peakType->name : 'Non-Peak';
+
         $images = StaycationSwiperImage::all();
         $texts = StaycationText::all();
-        return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts'));
+        return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts', 'currentSeason'));
     }
 
     public function activity()
@@ -164,6 +173,46 @@ class AdminController extends Controller
         $testimonials = $query->ordered()->paginate(10);
 
         return view('admin.testimonials.index', compact('testimonials'));
+    }
+
+    public function staySettings()
+    {
+        // Get all staycations with their pricing configurations
+        $staycations = Staycation::all();
+
+        // Get current season type by checking today's date
+        $today = now()->format('Y-m-d');
+        $currentSeasonPeriod = \App\Models\PeakPeriod::where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->with('peakType')
+            ->orderBy(\App\Models\PeakType::select('priority')->whereColumn('peak_types.id', 'peak_periods.peak_type_id'), 'desc')
+            ->first();
+
+        $currentSeason = $currentSeasonPeriod ? $currentSeasonPeriod->peakType->name : 'Non-Peak';
+
+        // Group staycations by their pricing configurations
+        $pricingByStaycation = [];
+        foreach ($staycations as $staycation) {
+            $name = $staycation->name;
+            $priceConfigs = $staycation->price_configs ?? [];
+
+            if (!empty($priceConfigs) && isset($priceConfigs[0]['rates'])) {
+                $rates = $priceConfigs[0]['rates'];
+                $pricingByStaycation[$name] = [
+                    'nonPeak' => $rates['nonPeak'] ?? 0,
+                    'peak' => $rates['peak'] ?? 0,
+                    'superPeak' => $rates['superPeak'] ?? 0,
+                ];
+            } else {
+                $pricingByStaycation[$name] = [
+                    'nonPeak' => 0,
+                    'peak' => 0,
+                    'superPeak' => 0,
+                ];
+            }
+        }
+
+        return view('admin.stay.settings', compact('currentSeason', 'pricingByStaycation', 'staycations'));
     }
 
 

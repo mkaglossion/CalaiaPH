@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Artisan;
 
 class Staycation extends Model
 {
-    protected $fillable = ['name', 'quantity', 'capacity', 'adults', 'children', 'image', 'price_configs'];
+    protected $fillable = ['name', 'days', 'type', 'quantity', 'capacity', 'adults', 'children', 'image', 'price_configs', 'price'];
 
     protected $casts = [
         'price_configs' => 'array',

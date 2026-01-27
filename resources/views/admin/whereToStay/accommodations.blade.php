@@ -6,7 +6,7 @@
 
 <div
     x-data="dayTourManager()"
-    class="p-8 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
+    class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
 >
 
     <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
@@ -130,8 +130,8 @@
                             Edit
                         </button>
 
-                        <form id="delete-text-{{ $text->id }}" 
-                              action="{{ route('staycation-text.destroy', $text->id) }}" 
+                        <form id="delete-text-{{ $text->id }}"
+                              action="{{ route('admin.staycation-text.destroy', $text->id) }}"
                               method="POST" class="inline">
                             @csrf
                             @method('DELETE')
@@ -322,7 +322,7 @@
     <div 
         x-show="isLoading"
         x-transition.opacity
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-9999"
     >
         <div class="flex flex-col items-center space-y-3">
             <svg class="animate-spin h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

@@ -184,6 +184,11 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::prefix('bookings')->group(function () {
         Route::get('/', [AdminBookingsController::class, 'index'])->name('admin.bookings.index');
         Route::get('/inventory', [AdminBookingsController::class, 'inventory'])->name('admin.bookings.inventory');
+
+        // Booking Extra Fees (mattress, pet fees) - must come before {id} route
+        Route::get('/extra-fees', [BookingSettingsController::class, 'index'])->name('admin.booking-settings.index');
+        Route::put('/extra-fees', [BookingSettingsController::class, 'update'])->name('admin.booking-settings.update');
+
         Route::get('/{id}', [AdminBookingsController::class, 'show'])->name('admin.bookings.show');
         Route::post('/{id}/cancel', [AdminBookingsController::class, 'cancel'])->name('admin.bookings.cancel');
     });
@@ -201,8 +206,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::get('/where-to-stay', [AdminPagesController::class, 'whereToStay'])->name('admin.stay.wheretostay');
         Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.stay.staycations');
         Route::get('/accommodations', [AdminController::class, 'staycationAccommodation'])->name('admin.stay.accommodations');
-        Route::get('/settings', [BookingSettingsController::class, 'index'])->name('admin.booking-settings.index');
-        Route::post('/settings', [BookingSettingsController::class, 'update'])->name('admin.booking-settings.update');
+        Route::get('/settings', [AdminController::class, 'staySettings'])->name('admin.stay.settings');
+        // Removed redundant booking settings - now using centralized PricingConfig system
     });
     Route::prefix('/do')->group(function () {
             Route::get('/activities', [AdminController::class, 'activity'])->name('admin.do.activities');
@@ -246,6 +251,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::prefix('/pricing')->group(function () {
         // Main config page
         Route::get('/config', [PricingConfigController::class, 'index'])->name('admin.pricingConfig.index');
+
+        // Booking Settings (mattress, pet fees) - moved to bookings section
         
         // Rate Matrix (Pricing Configs)
         Route::get('pricing-configs', [PricingConfigController::class, 'index'])->name('pricing-configs.index');

@@ -13,10 +13,16 @@
         <h2 class="text-xl font-semibold">Staycations</h2>
         <div class="flex gap-2">
             <a
+                href="{{ route('admin.stay.settings') }}"
+                class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700"
+            >
+                📊 Pricing Overview
+            </a>
+            <a
                 href="{{ route('admin.booking-settings.index') }}"
                 class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
             >
-                ⚙️ Booking Settings
+                💰 Additional Fees
             </a>
             <button
                 type="button"
@@ -34,6 +40,7 @@
                 <tr>
                     <th class="px-4 py-2">#</th>
                     <th class="px-4 py-2">Name</th>
+                    <th class="px-4 py-2">Days</th>
                     <th class="px-4 py-2">Today Avail</th>
                     <th class="px-4 py-2">Adults</th>
                     <th class="px-4 py-2">Children</th>
@@ -47,6 +54,7 @@
                     <tr class="border-b hover:bg-gray-50">
                         <td class="px-4 py-2" x-text="index + 1"></td>
                         <td class="px-4 py-2" x-text="act.name || 'Untitled'"></td>
+                        <td class="px-4 py-2" x-text="act.days || 1"></td>
                         <td class="px-4 py-2">
                             <span :class="'today-avail-' + act.id" x-text="act.today_available ?? 0"></span>
                         </td>
@@ -68,7 +76,11 @@
                         </td>
                         <td class="px-4 py-2">
                             <template x-if="act.price_configs && act.price_configs.length > 0">
-                                <span x-text="'Non-Peak: ₱' + (act.price_configs[0].rates?.nonPeak ?? 0) + ', Peak: ₱' + (act.price_configs[0].rates?.peak ?? 0) + ', Super Peak: ₱' + (act.price_configs[0].rates?.superPeak ?? 0)"></span>
+                                <div class="text-sm">
+                                    <span class="font-semibold text-green-600" x-text="'Current (Peak): ₱' + (act.price_configs[0]?.rates?.peak ?? 0)"></span>
+                                    <br>
+                                    <span class="text-gray-500 text-xs" x-text="'Non-Peak: ₱' + (act.price_configs[0].rates?.nonPeak ?? 0) + ' | Peak: ₱' + (act.price_configs[0].rates?.peak ?? 0) + ' | Super Peak: ₱' + (act.price_configs[0].rates?.superPeak ?? 0)"></span>
+                                </div>
                             </template>
                             <template x-if="!act.price_configs || act.price_configs.length === 0">
                                 <span>N/A</span>
@@ -95,7 +107,7 @@
                 </template>
                 <template x-if="staycations.length === 0">
                     <tr>
-                        <td colspan="8" class="px-4 py-4 text-center text-gray-500">No staycations added yet.</td>
+                        <td colspan="9" class="px-4 py-4 text-center text-gray-500">No staycations added yet.</td>
                     </tr>
                 </template>
             </tbody>
@@ -110,12 +122,17 @@
             <form id="staycationForm" @submit.prevent="saveStaycation()" class="space-y-5">
                 @csrf
 
-                <!-- Staycation Name, Max Capacity, Adults & Children -->
-                <div class="grid gap-4" :class="isSpecialStaycation ? 'grid-cols-2' : 'grid-cols-4'">
+                <!-- Staycation Name, Days, Max Capacity, Adults & Children -->
+                <div class="grid gap-4" :class="isSpecialStaycation ? 'grid-cols-3' : 'grid-cols-5'">
                     <div>
                         <label class="block text-sm font-medium mb-1">Staycation Name</label>
                         <input type="text" x-model="form.name" @input="updateSpecialRoomStatus()" class="w-full border rounded px-3 py-2 h-10" placeholder="Premium Glamping Tent" required>
                         <p x-show="isSpecialStaycation" class="text-xs text-blue-600 mt-1">BYOT/Car Camping - No adults/children required</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Days</label>
+                        <input type="number" x-model.number="form.days" min="1" class="w-full border rounded px-3 py-2 h-10" placeholder="1" required>
+                        <p class="text-xs text-gray-500 mt-1">Duration of staycation</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Max Capacity</label>
@@ -192,15 +209,15 @@
                             <div class="grid grid-cols-3 gap-2">
                                 <div class="flex flex-col">
                                     <label class="text-sm font-semibold mb-1">Non-Peak</label>
-                                    <input type="number" x-model.number="config.rates.nonPeak" class="border rounded px-2 py-1" min="0">
+                                    <input type="number" x-model.number="config.rates.nonPeak" x-bind:value="config.rates.nonPeak" class="border rounded px-2 py-1" min="0">
                                 </div>
                                 <div class="flex flex-col">
                                     <label class="text-sm font-semibold mb-1">Peak</label>
-                                    <input type="number" x-model.number="config.rates.peak" class="border rounded px-2 py-1" min="0">
+                                    <input type="number" x-model.number="config.rates.peak" x-bind:value="config.rates.peak" class="border rounded px-2 py-1" min="0">
                                 </div>
                                 <div class="flex flex-col">
                                     <label class="text-sm font-semibold mb-1">Super Peak</label>
-                                    <input type="number" x-model.number="config.rates.superPeak" class="border rounded px-2 py-1" min="0">
+                                    <input type="number" x-model.number="config.rates.superPeak" x-bind:value="config.rates.superPeak" class="border rounded px-2 py-1" min="0">
                                 </div>
                             </div>
 
@@ -656,6 +673,7 @@ function staycationComponent() {
         form: {
             id: null,
             name: '',
+            days: 1,
             quantity: 1,
             adults: 0,
             children: 0,
@@ -685,7 +703,7 @@ function staycationComponent() {
         },
 
         resetForm() {
-            this.form = { id: null, name: '', quantity: 1, adults: 0, children: 0, priceConfigs: [], image: null, imagePreview: null, existingImage: null, removeImage: false };
+            this.form = { id: null, name: '', days: 1, quantity: 1, adults: 0, children: 0, priceConfigs: [], image: null, imagePreview: null, existingImage: null, removeImage: false };
             this.editModeStaycation = false;
             this.isSpecialStaycation = false;
             this.removeImage(); // Explicitly clear image and input
@@ -733,6 +751,7 @@ function staycationComponent() {
             if (staycation) {
                 this.form.id = staycation.id;
                 this.form.name = staycation.name;
+                this.form.days = staycation.days || 1;
                 this.updateSpecialRoomStatus();
                 this.form.quantity = staycation.quantity;
                 this.form.adults = staycation.adults;
@@ -748,8 +767,12 @@ function staycationComponent() {
                     const isMultiple = datesStr.includes(',');
                     return {
                         ...pc,
+                        name: pc.name || '',
+                        type: pc.type || 'day',
+                        days: pc.days || [],
+                        dates: datesStr,
                         multipleDates: isMultiple,
-                        dates: datesStr
+                        rates: pc.rates || { nonPeak: 0, peak: 0, superPeak: 0 }
                     };
                 });
                 // Handle existing image
@@ -831,6 +854,10 @@ function staycationComponent() {
                 alert('Please enter a staycation name.');
                 return;
             }
+            if (!this.form.days || this.form.days < 1) {
+                alert('Please enter a valid number of days.');
+                return;
+            }
             if (!this.form.quantity || this.form.quantity < 1) {
                 alert('Please enter a valid quantity.');
                 return;
@@ -855,6 +882,7 @@ function staycationComponent() {
             const formData = new FormData();
             formData.append('_token', csrf);
             formData.append('name', this.form.name);
+            formData.append('days', this.form.days);
             formData.append('quantity', this.form.quantity);
             formData.append('adults', this.form.adults);
             formData.append('children', this.form.children);
@@ -895,16 +923,22 @@ function staycationComponent() {
                     if (this.editModeStaycation && data.staycation) {
                         const index = this.staycations.findIndex(s => s.id === data.staycation.id);
                         if (index !== -1) {
-                            this.staycations[index] = data.staycation;
+                            // Completely replace the object to ensure reactivity
+                            this.staycations.splice(index, 1, {
+                                ...data.staycation,
+                                _updated: Date.now() // Force reactivity
+                            });
                         }
                     } else if (!this.editModeStaycation && data.staycation) {
                         // Add new staycation to the list
                         this.staycations.push(data.staycation);
                     }
-                    
+
                     this.resetForm();
                     this.showStaycationModal = false;
-                    // Don't reload - let Alpine update the UI reactively
+
+                    // Force page reload to ensure all data is fresh
+                    window.location.reload();
                 } else if (data.errors) {
                     alert(Object.values(data.errors).flat().join('\n'));
                 } else {
@@ -1090,6 +1124,17 @@ function staycationComponent() {
                     previewDiv.innerHTML = '<span class="text-red-500">Error loading inventory</span>';
                 });
         },
+
+        getCurrentSeasonPrice(rates) {
+            const currentSeason = @js($currentSeason);
+            const seasonKeyMap = {
+                'Non-Peak': 'nonPeak',
+                'Peak': 'peak',
+                'Super-Peak': 'superPeak'
+            };
+            const key = seasonKeyMap[currentSeason] || 'nonPeak';
+            return rates[key] || 0;
+        }
 
     };
 }

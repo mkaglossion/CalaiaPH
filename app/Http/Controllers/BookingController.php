@@ -24,6 +24,7 @@ use App\Models\PeakType;
 use App\Models\StaycationInventory;
 use App\Services\PricingService;
 use App\Models\BookingSetting;
+use App\Http\Controllers\PricingConfigController;
 
 
 class BookingController extends Controller
@@ -436,22 +437,14 @@ class BookingController extends Controller
         // For BYOT/Car Camping, calculate base price per night per unit (quantity)
         if ($isBYOT || $isCarCamping) {
             $quantity = $acc['extra_mattress'] ?? 1;
-            
+
             $current = $checkin->copy();
             while ($current->lt($checkout)) {
-                $dateStr = $current->format('Y-m-d');
-                $dayOfWeek = (int)$current->dayOfWeek;
+                // Determine season type using centralized logic
+                $seasonType = $this->determineSeasonType($current);
 
-                // Determine day type: Holiday > Weekend > Weekday
-                $dayType = 'nonPeak'; // default
-                if (in_array($dateStr, $holidayDates)) {
-                    $dayType = 'superPeak';
-                } elseif (in_array($dayOfWeek, $weekendDayIds)) {
-                    $dayType = 'peak';
-                }
-
-                // Find applicable price config for this date
-                $rate = $this->getStaycationRateForDate($staycation->price_configs, $current, $dayType);
+                // Find applicable price config for this season
+                $rate = $this->getStaycationRateForSeason($staycation->price_configs, $seasonType);
 
                 if ($rate > 0) {
                     // For BYOT/Car Camping: multiply rate by quantity
@@ -464,22 +457,14 @@ class BookingController extends Controller
             // No mattress or pet fees for BYOT/Car Camping
             $accommodationTotal = $total;
         } else {
-            // Regular rooms: calculate nightly rates and add additional charges
+            // Regular rooms: calculate nightly rates using season types
             $current = $checkin->copy();
             while ($current->lt($checkout)) {
-                $dateStr = $current->format('Y-m-d');
-                $dayOfWeek = (int)$current->dayOfWeek;
+                // Determine season type using centralized logic
+                $seasonType = $this->determineSeasonType($current);
 
-                // Determine day type: Holiday > Weekend > Weekday
-                $dayType = 'nonPeak'; // default
-                if (in_array($dateStr, $holidayDates)) {
-                    $dayType = 'superPeak';
-                } elseif (in_array($dayOfWeek, $weekendDayIds)) {
-                    $dayType = 'peak';
-                }
-
-                // Find applicable price config for this date
-                $rate = $this->getStaycationRateForDate($staycation->price_configs, $current, $dayType);
+                // Find applicable price config for this season
+                $rate = $this->getStaycationRateForSeason($staycation->price_configs, $seasonType);
 
                 if ($rate > 0) {
                     $total += $rate;
@@ -1811,37 +1796,9 @@ class BookingController extends Controller
         $checkOut = $request->check_out;
         $guests = $request->guests;
 
-        // Extract staycation ID from unit_type (format: staycation-{id})
-        if (!preg_match('/^staycation-(\d+)$/', $unitType, $matches)) {
-            return response()->json(['success' => false, 'message' => 'Invalid unit type']);
-        }
-
-        $staycationId = $matches[1];
-        $staycation = Staycation::find($staycationId);
-
-        if (!$staycation) {
-            return response()->json(['success' => false, 'message' => 'Staycation not found']);
-        }
-
-        // Calculate total price for the stay
-        $totalPrice = 0;
-        $checkinDate = \Carbon\Carbon::parse($checkIn);
-        $checkoutDate = \Carbon\Carbon::parse($checkOut);
-
-        $current = $checkinDate->copy();
-        while ($current->lt($checkoutDate)) {
-            $dateStr = $current->format('Y-m-d');
-            $price = $this->calculatePrice($staycation, $dateStr, $guests);
-            $totalPrice += $price;
-            $current->addDay();
-        }
-
-        return response()->json([
-            'success' => true,
-            'total_price' => $totalPrice,
-            'nights' => $checkinDate->diffInDays($checkoutDate),
-            'guests' => $guests
-        ]);
+        // Use the centralized PricingConfigController for all pricing calculations
+        $pricingController = new PricingConfigController();
+        return $pricingController->calculatePrice($request);
     }
 
     /**
@@ -1862,6 +1819,52 @@ class BookingController extends Controller
     {
         $petPrice = BookingSetting::getValue('pet_price', 0);
         return (int)$petCount * (int)$petPrice;
+    }
+
+    /**
+     * Determine season type for a given date using centralized logic
+     */
+    private function determineSeasonType(\Carbon\Carbon $date): string
+    {
+        $dateStr = $date->format('Y-m-d');
+
+        // Check for peak periods in priority order (Super-Peak > Peak > Non-Peak)
+        $peakPeriods = \App\Models\PeakPeriod::with('peakType')
+            ->where('start_date', '<=', $dateStr)
+            ->where('end_date', '>=', $dateStr)
+            ->orderBy(\App\Models\PeakType::select('priority')->whereColumn('peak_types.id', 'peak_periods.peak_type_id'), 'desc')
+            ->first();
+
+        if ($peakPeriods) {
+            return $peakPeriods->peakType->name;
+        }
+
+        return 'Non-Peak'; // Default season
+    }
+
+    /**
+     * Get staycation rate for a specific season type
+     */
+    private function getStaycationRateForSeason(array $priceConfigs, string $seasonType): float
+    {
+        if (empty($priceConfigs)) {
+            return 0;
+        }
+
+        // Map season type to rate key
+        $seasonKeyMap = [
+            'Non-Peak' => 'nonPeak',
+            'Peak' => 'peak',
+            'Super-Peak' => 'superPeak'
+        ];
+
+        $rateKey = $seasonKeyMap[$seasonType] ?? 'nonPeak';
+
+        // Get the first price config (assuming single config per staycation)
+        $config = $priceConfigs[0] ?? [];
+        $rates = $config['rates'] ?? [];
+
+        return (float)($rates[$rateKey] ?? 0);
     }
 
 

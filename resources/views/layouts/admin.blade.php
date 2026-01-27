@@ -39,14 +39,15 @@
       <nav class="mt-4 space-y-1 overflow-y-auto" style="max-height: calc(100vh - 100px);">
         @php
           $menuItems = [
-            ['title'=>'Bookings','icon'=>'calendar-check','route'=>'admin.bookings.*','sub'=>[
-              ['label'=>'All Bookings','route'=>'admin.bookings.index'],
-              ['label'=>'Inventory Monitor','route'=>'admin.bookings.inventory']
-            ]],
+            ['title'=>'Dashboard','icon'=>'home','route'=>'admin.dashboard'],
             ['title'=>'Home','icon'=>'home','route'=>'admin.home.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.home.home'],
               ['label'=>'Event Experience','route'=>'admin.eventExperience.sections'],
               ['label'=>'Testimonials','route'=>'admin.testimonials.index']
+            ]],
+            ['title'=>'Bookings','icon'=>'calendar-check','route'=>'admin.bookings.*','sub'=>[
+              ['label'=>'All Bookings','route'=>'admin.bookings.index'],
+              ['label'=>'Inventory Monitor','route'=>'admin.bookings.inventory']
             ]],
             ['title'=>'Day Tour','icon'=>'sun','route'=>'admin.day.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.day.daytour'],
@@ -77,9 +78,9 @@
               ['label'=>'Pages Information','route'=>'admin.shop.shopstore'],
               ['label'=>'Items','route'=>'admin.shop.shopitems']
             ]],
-            ['title'=>'Pricing','icon'=>'coins','route'=>'admin.farm.*','sub'=>[
-              ['label'=>'Configurations','route'=>'admin.pricingConfig.index'],
-            ]],      
+            ['title'=>'Pricing','icon'=>'coins','route'=>'admin.pricing.*','sub'=>[
+              ['label'=>'Rate Matrix','route'=>'admin.pricingConfig.index'],
+            ]],
                 
           ];
         @endphp

@@ -20,14 +20,72 @@ class StaycationController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:staycations,name',
+            'days' => 'required|integer|min:1',
             'quantity' => 'required|integer|min:1',
             'adults' => 'required|integer|min:0',
             'children' => 'required|integer|min:0',
-            'priceConfigs' => 'required|json',
+            'priceConfigs' => 'nullable|string', // JSON string from frontend
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $capacity = $request->adults + $request->children;
+
+        // Determine type based on name
+        $name = strtolower($request->name);
+        $type = 'glamping'; // default
+        if (str_contains($name, 'byot') || str_contains($name, 'car camping') || str_contains($name, 'bring your own') || str_contains($name, 'dome') || str_contains($name, 'bell')) {
+            $type = 'camping';
+        }
+
+        // Handle price configs
+        $priceConfigs = [];
+        if ($request->has('priceConfigs')) {
+            $decodedConfigs = is_string($request->priceConfigs) ? json_decode($request->priceConfigs, true) : $request->priceConfigs;
+
+            if (is_array($decodedConfigs)) {
+                foreach ($decodedConfigs as $config) {
+                    $priceConfig = [];
+
+                    // Handle rates
+                    if (isset($config['rates'])) {
+                        // Config already has rates structure
+                        $priceConfig['rates'] = [
+                            'nonPeak' => (float)($config['rates']['nonPeak'] ?? 0),
+                            'peak' => (float)($config['rates']['peak'] ?? 0),
+                            'superPeak' => (float)($config['rates']['superPeak'] ?? 0),
+                        ];
+                    } elseif (isset($config['nonPeak']) || isset($config['peak']) || isset($config['superPeak'])) {
+                        // Legacy format
+                        $priceConfig['rates'] = [
+                            'nonPeak' => (float)($config['nonPeak'] ?? 0),
+                            'peak' => (float)($config['peak'] ?? 0),
+                            'superPeak' => (float)($config['superPeak'] ?? 0),
+                        ];
+                    }
+
+                    // Handle other config properties
+                    if (isset($config['name'])) {
+                        $priceConfig['name'] = $config['name'];
+                    }
+                    if (isset($config['type'])) {
+                        $priceConfig['type'] = $config['type'];
+                    }
+                    if (isset($config['days']) && is_array($config['days'])) {
+                        $priceConfig['days'] = $config['days'];
+                    }
+                    if (isset($config['dates'])) {
+                        $priceConfig['dates'] = $config['dates'];
+                    }
+                    if (isset($config['multipleDates'])) {
+                        $priceConfig['multipleDates'] = $config['multipleDates'];
+                    }
+
+                    if (!empty($priceConfig)) {
+                        $priceConfigs[] = $priceConfig;
+                    }
+                }
+            }
+        }
 
         // Handle image upload
         $imagePath = null;
@@ -38,15 +96,23 @@ class StaycationController extends Controller
             $imagePath = $uploadResult['secure_url'];
         }
 
-        $staycation = Staycation::create([
+        $staycationData = [
             'name' => $request->name,
+            'days' => $request->days,
+            'type' => $type,
             'quantity' => $request->quantity,
             'capacity' => $capacity,
             'adults' => $request->adults,
             'children' => $request->children,
-            'price_configs' => json_decode($request->priceConfigs, true),
             'image' => $imagePath,
-        ]);
+            'price' => 0,
+        ];
+
+        if (!empty($priceConfigs)) {
+            $staycationData['price_configs'] = $priceConfigs;
+        }
+
+        $staycation = Staycation::create($staycationData);
 
         return response()->json([
             'message' => 'Staycation added successfully.',
@@ -64,25 +130,89 @@ class StaycationController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:staycations,name,' . $staycation_list->id,
+            'days' => 'required|integer|min:1',
             'quantity' => 'required|integer|min:1',
             'adults' => 'required|integer|min:0',
             'children' => 'required|integer|min:0',
-            'priceConfigs' => 'required|json',
+            'priceConfigs' => 'nullable|string', // JSON string from frontend
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'remove_image' => 'nullable|in:1',
         ]);
 
         $capacity = $request->adults + $request->children;
 
+        // Determine type based on name
+        $name = strtolower($request->name);
+        $type = 'glamping'; // default
+        if (str_contains($name, 'byot') || str_contains($name, 'car camping') || str_contains($name, 'bring your own') || str_contains($name, 'dome') || str_contains($name, 'bell')) {
+            $type = 'camping';
+        }
+
+        // Handle price configs
+        $priceConfigs = [];
+        if ($request->has('priceConfigs')) {
+            $decodedConfigs = is_string($request->priceConfigs) ? json_decode($request->priceConfigs, true) : $request->priceConfigs;
+
+            if (is_array($decodedConfigs)) {
+                foreach ($decodedConfigs as $config) {
+                    $priceConfig = [];
+
+                    // Handle rates
+                    if (isset($config['rates'])) {
+                        // Config already has rates structure
+                        $priceConfig['rates'] = [
+                            'nonPeak' => (float)($config['rates']['nonPeak'] ?? 0),
+                            'peak' => (float)($config['rates']['peak'] ?? 0),
+                            'superPeak' => (float)($config['rates']['superPeak'] ?? 0),
+                        ];
+                    } elseif (isset($config['nonPeak']) || isset($config['peak']) || isset($config['superPeak'])) {
+                        // Legacy format
+                        $priceConfig['rates'] = [
+                            'nonPeak' => (float)($config['nonPeak'] ?? 0),
+                            'peak' => (float)($config['peak'] ?? 0),
+                            'superPeak' => (float)($config['superPeak'] ?? 0),
+                        ];
+                    }
+
+                    // Handle other config properties
+                    if (isset($config['name'])) {
+                        $priceConfig['name'] = $config['name'];
+                    }
+                    if (isset($config['type'])) {
+                        $priceConfig['type'] = $config['type'];
+                    }
+                    if (isset($config['days']) && is_array($config['days'])) {
+                        $priceConfig['days'] = $config['days'];
+                    }
+                    if (isset($config['dates'])) {
+                        $priceConfig['dates'] = $config['dates'];
+                    }
+                    if (isset($config['multipleDates'])) {
+                        $priceConfig['multipleDates'] = $config['multipleDates'];
+                    }
+
+                    if (!empty($priceConfig)) {
+                        $priceConfigs[] = $priceConfig;
+                    }
+                }
+            }
+        }
+
         // Handle image upload
         $updateData = [
             'name' => $request->name,
+            'days' => $request->days,
+            'type' => $type,
             'quantity' => $request->quantity,
             'capacity' => $capacity,
             'adults' => $request->adults,
             'children' => $request->children,
-            'price_configs' => json_decode($request->priceConfigs, true),
+            'price' => 0,
         ];
+
+        if (!empty($priceConfigs)) {
+            $updateData['price_configs'] = $priceConfigs;
+        }
 
         if ($request->has('remove_image') && $request->remove_image == '1') {
             // Clear image from database
@@ -98,9 +228,15 @@ class StaycationController extends Controller
         $staycation_list->update($updateData);
 
         // Return updated data for table refresh
+        $updatedStaycation = $staycation_list->fresh();
+        $staycationData = $updatedStaycation->toArray();
+
+        // Ensure price_configs is properly included
+        $staycationData['price_configs'] = $updatedStaycation->price_configs;
+
         return response()->json([
             'message' => 'Staycation updated successfully.',
-            'staycation' => $staycation_list->fresh()->toArray()
+            'staycation' => $staycationData
         ]);
     }
 
