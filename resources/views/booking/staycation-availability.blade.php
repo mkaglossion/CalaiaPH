@@ -746,10 +746,8 @@
                     const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
                     const isCarCamping = roomNameLower.includes('car camping');
                     
-                    // Calculate the accommodation price that's displayed to the user
-                    const accommodationPrice = this.calculateBasePrice(room);
-                    
-                    this.selectedRooms[roomId] = {
+                    // Create the selected room data first
+                    const selectedRoomData = {
                         id: roomId,
                         name: room.name || 'Room',
                         type: (type || '').toLowerCase(),
@@ -759,8 +757,14 @@
                         pets: 'no',
                         pet_agreement: false,
                         num_pets: 0,
-                        accommodation_price: accommodationPrice, // Store the exact displayed price
                     };
+
+                    // Calculate the accommodation price using the selected room data
+                    const accommodationPrice = this.calculateBasePrice(room, selectedRoomData);
+
+                    selectedRoomData.accommodation_price = accommodationPrice; // Store the exact displayed price
+
+                    this.selectedRooms[roomId] = selectedRoomData;
                 },
 
                 removeRoom(roomId) {
@@ -832,7 +836,7 @@
                     const staycations = @json($staycations);
                     const room = staycations.find(s => s.id === roomId);
                     if (room) {
-                        this.selectedRooms[roomId].accommodation_price = this.calculateBasePrice(room);
+                        this.selectedRooms[roomId].accommodation_price = this.calculateBasePrice(room, this.selectedRooms[roomId]);
                     }
 
                     // pet logic
@@ -1090,7 +1094,7 @@
                     });
                 },
 
-                calculateBasePrice(room) {
+                calculateBasePrice(room, selectedRoomData = null) {
                     // Calculate nights dynamically from stored checkin/checkout
                     let nights = 1;
                     if (this.checkin && this.checkout) {
@@ -1098,34 +1102,34 @@
                         const checkoutDate = new Date(this.checkout);
                         nights = Math.max(1, Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24)));
                     }
-                    
+
                     // Get room details from roomDetailsMap which includes dynamic pricing from admin panel
                     const roomDetail = this.roomDetailsMap && this.roomDetailsMap[room.id] ? this.roomDetailsMap[room.id] : null;
-                    
+
                     // Use the exact base price from admin panel without modifications
                     let basePrice = (roomDetail && roomDetail.price) ? roomDetail.price : 0;
-                    
+
                     // If no price from admin, use type-based default
                     if (basePrice === 0) {
                         basePrice = room.type === 'glamping' ? 5500 : 3000;
                     }
-                    
+
                     // Check if BYOT or Car Camping (per quantity pricing)
                     const roomNameLower = (room.name || '').toLowerCase();
                     const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
                     const isCarCamping = roomNameLower.includes('car camping');
-                    
+
                     let totalPrice = 0;
-                    
+
                     if (isBYOT || isCarCamping) {
-                        // Per quantity pricing: base price (already for 1 unit × nights) × quantity
-                        const quantity = parseInt(room.extra_mattress || 1);
+                        // Per quantity pricing: base price × quantity (price is per slot for entire stay)
+                        const quantity = selectedRoomData ? parseInt(selectedRoomData.extra_mattress || 1) : 1;
                         totalPrice = basePrice * quantity;
                     } else {
                         // Regular rooms: base price is already the total for the stay
                         totalPrice = basePrice;
                     }
-                    
+
                     return totalPrice;
                 },
 
@@ -1172,10 +1176,11 @@
                 },
 
                 calculateRoomPrice(room) {
-                    const base = this.calculateBasePrice(room);
-                    const mattress = this.calculateMattressPrice(room);
-                    const pet = this.calculatePetPrice(room);
-                    
+                    const selectedRoom = this.selectedRooms[room.id];
+                    const base = this.calculateBasePrice(room, selectedRoom);
+                    const mattress = this.calculateMattressPrice(selectedRoom || room);
+                    const pet = this.calculatePetPrice(selectedRoom || room);
+
                     const total = base + mattress + pet;
                     return '₱' + total.toLocaleString();
                 },
@@ -1183,8 +1188,11 @@
                 calculateTotalPrice() {
                     let total = 0;
                     for (const room of Object.values(this.selectedRooms)) {
-                        const price = this.calculateRoomPrice(room).replace(/[₱,]/g, '') * 1;
-                        total += price;
+                        // Use the stored accommodation_price for accuracy
+                        const base = room.accommodation_price || 0;
+                        const mattress = this.calculateMattressPrice(room);
+                        const pet = this.calculatePetPrice(room);
+                        total += base + mattress + pet;
                     }
                     return '₱' + total.toLocaleString();
                 },

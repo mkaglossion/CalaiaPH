@@ -820,26 +820,8 @@ $grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
                 :foods="$foods"
                 :selectedActivities="$selectedActivities"
                 :showActivities="true"
+                :showTrustElements="true"
             />
-
-            {{-- Trust Elements --}}
-            <div class="mt-6 bg-gray-50 rounded-lg p-4">
-              <h4 class="text-sm font-semibold text-gray-900 mb-3 text-center">Secure Payment</h4>
-              <div class="grid grid-cols-3 gap-2 text-center">
-                <div class="flex flex-col items-center">
-                  <i class="fas fa-lock text-green-600 text-xl mb-1"></i>
-                  <span class="text-xs text-gray-600">SSL Secured</span>
-                </div>
-                <div class="flex flex-col items-center">
-                  <i class="fas fa-shield-alt text-blue-600 text-xl mb-1"></i>
-                  <span class="text-xs text-gray-600">Protected</span>
-                </div>
-                <div class="flex flex-col items-center">
-                  <i class="fas fa-credit-card text-purple-600 text-xl mb-1"></i>
-                  <span class="text-xs text-gray-600">Encrypted</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

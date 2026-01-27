@@ -12,7 +12,8 @@
     'showDynamicFood' => false,
     'showDynamicActivities' => false,
     'showActionButtons' => false,
-    'actionButtonType' => 'food' // 'food', 'activities', 'payment'
+    'actionButtonType' => 'food', // 'food', 'activities', 'payment'
+    'showTrustElements' => false
 ])
 
 @php
@@ -145,8 +146,8 @@ if (!empty($selectedFoods)) {
                                             <span>Pets:</span>
                                             <span class="font-semibold">₱{{ number_format($room['pet_price'] ?? 0, 0) }}</span>
                                         </div>
-                                    @endif
-                                </div>
+                                        @endif
+                                    </div>
                             </div>
                             @endif
                             
@@ -326,6 +327,28 @@ if (!empty($selectedFoods)) {
                 <span id="grand-total" class="text-[#8f5d54]" data-food-total="{{ $calculatedFoodTotal ?? $foodTotal }}">₱{{ number_format(isset($booking['final_totals']['grand_total']) ? $booking['final_totals']['grand_total'] : ($accommodationTotal + (!empty($selectedActivities) ? $activitiesTotal : 0) + ($calculatedFoodTotal ?? $foodTotal)), 0) }}</span>
             @endif
         </div>
+    </div>
+    @endif
+
+    @if($showTrustElements)
+    {{-- Trust Elements --}}
+    <div class="mt-6">
+      <h4 class="text-sm font-semibold text-gray-900 mb-3 text-center">Secure Payment</h4>
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="flex flex-col items-center">
+          <i class="fas fa-lock text-green-600 text-xl mb-1"></i>
+          <span class="text-xs text-gray-600">SSL Secured</span>
+        </div>
+        <div class="flex flex-col items-center">
+          <i class="fas fa-shield-alt text-blue-600 text-xl mb-1"></i>
+          <span class="text-xs text-gray-600">Protected</span>
+        </div>
+        <div class="flex flex-col items-center">
+          <i class="fas fa-credit-card text-purple-600 text-xl mb-1"></i>
+          <span class="text-xs text-gray-600">Encrypted</span>
+        </div>
+      </div>
+      <p class="text-xs text-gray-500 text-center mt-3">Your payment information is encrypted and secure</p>
     </div>
     @endif
 
