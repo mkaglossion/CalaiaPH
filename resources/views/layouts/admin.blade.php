@@ -44,7 +44,8 @@
               ['label'=>'Inventory Monitor','route'=>'admin.bookings.inventory']
             ]],
             ['title'=>'Home','icon'=>'home','route'=>'admin.home.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.home.home']
+              ['label'=>'Pages Information','route'=>'admin.home.home'],
+              ['label'=>'Event Experience','route'=>'admin.eventExperience.sections']
             ]],
             ['title'=>'Day Tour','icon'=>'sun','route'=>'admin.day.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.day.daytour'],

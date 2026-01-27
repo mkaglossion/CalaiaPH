@@ -133,5 +133,11 @@ class AdminController extends Controller
         return view('admin.ShopStore.shopitems', compact('products'));
     }
 
+    public function eventExperience()
+    {
+        $sections = \App\Models\EventExperienceSection::ordered()->get();
+        return view('admin.eventExperience.sections', compact('sections'));
+    }
+
 
 }
