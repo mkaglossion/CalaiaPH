@@ -157,10 +157,10 @@ Route::middleware('auth')->group(function () {
         /** @var \App\Models\User $user */
         $user = Auth::user();
         
-        // Fetch user's bookings from database by email or customer email
+        // Fetch user's bookings from database by email or customer email with pagination
         $bookings = \App\Models\Booking::where('customer_email', $user->email)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10);
         
         return view('booking_history', compact('bookings'));
     })->name('booking.history');

@@ -33,118 +33,80 @@
                     </a>
                 </div>
             @else
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @foreach($bookings as $booking)
-                        @php
-                            $status = strtolower($booking->status ?? 'unknown');
-                            $paymentStatus = strtolower($booking->payment_status ?? 'pending');
+                {{-- Bookings Table --}}
+                <div class="bg-white rounded-2xl border border-[#cccbbd] shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full table-auto">
+                            <thead class="bg-[#f6f3ec] border-b border-[#cccbbd]">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-[#7a7d52] uppercase tracking-wider">Transaction ID</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-[#7a7d52] uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-[#7a7d52] uppercase tracking-wider">Check-in</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-[#7a7d52] uppercase tracking-wider">Check-out</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-[#7a7d52] uppercase tracking-wider">Amount</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-[#7a7d52] uppercase tracking-wider">Payment</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-[#7a7d52] uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-[#7a7d52] uppercase tracking-wider">Booked On</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-[#cccbbd]">
+                                @foreach($bookings as $booking)
+                                    @php
+                                        $status = strtolower($booking->status ?? 'unknown');
+                                        $paymentStatus = strtolower($booking->payment_status ?? 'pending');
 
-                            $statusClass = match ($status) {
-                                'confirmed'   => 'bg-[#00848d]/10 text-[#00848d]',
-                                'pending'     => 'bg-[#db8636]/10 text-[#db8636]',
-                                'completed'   => 'bg-[#7a7d52]/10 text-[#7a7d52]',
-                                'cancelled'   => 'bg-red-100 text-red-800',
-                                default       => 'bg-[#f6f3ec] text-[#4d3327]',
-                            };
+                                        $statusClass = match ($status) {
+                                            'confirmed'   => 'bg-[#00848d]/10 text-[#00848d]',
+                                            'pending'     => 'bg-[#db8636]/10 text-[#db8636]',
+                                            'completed'   => 'bg-[#7a7d52]/10 text-[#7a7d52]',
+                                            'cancelled'   => 'bg-red-100 text-red-800',
+                                            default       => 'bg-[#f6f3ec] text-[#4d3327]',
+                                        };
 
-                            $paymentClass = match ($paymentStatus) {
-                                'paid'        => 'bg-[#222c1e]/10 text-[#222c1e]',
-                                default       => 'bg-[#db8636]/10 text-[#db8636]',
-                            };
-
-                            $primaryBtnLabel = null;
-                            $primaryBtnClass = '';
-                            $primaryBtnIcon  = '';
-
-                            if ($status === 'confirmed') {
-                                $primaryBtnLabel = 'Confirmed';
-                                $primaryBtnIcon  = 'bi-check-circle';
-                                $primaryBtnClass = 'bg-[#00848d] hover:bg-[#00848d]/90';
-                            } elseif ($status === 'completed') {
-                                $primaryBtnLabel = 'Completed';
-                                $primaryBtnIcon  = 'bi-check-circle';
-                                $primaryBtnClass = 'bg-[#7a7d52]';
-                            } elseif ($status === 'cancelled') {
-                                $primaryBtnLabel = 'Cancelled';
-                                $primaryBtnIcon  = 'bi-x-circle';
-                                $primaryBtnClass = 'bg-red-600';
-                            }
-                        @endphp
-
-                        <article class="flex flex-col h-full rounded-2xl bg-[#f6f3ec] border border-[#cccbbd] shadow-sm overflow-hidden">
-                            {{-- Header / summary --}}
-                            <div class="p-6 border-b border-[#cccbbd]">
-                                <div class="flex items-start justify-between gap-3 mb-4">
-                                    <h2 class="text-lg font-semibold text-[#4d3327] truncate">
-                                        {{ $booking->transaction_id ?? 'N/A' }}
-                                    </h2>
-                                    <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide {{ $statusClass }}">
-                                        {{ ucfirst($status) }}
-                                    </span>
-                                </div>
-
-                                <dl class="space-y-3 text-sm">
-                                    <div class="flex items-center justify-between gap-4">
-                                        <dt class="text-[#7a7d52] font-medium">Booking Type</dt>
-                                        <dd class="text-[#4d3327] capitalize">
+                                        $paymentClass = match ($paymentStatus) {
+                                            'paid'        => 'bg-[#222c1e]/10 text-[#222c1e]',
+                                            default       => 'bg-[#db8636]/10 text-[#db8636]',
+                                        };
+                                    @endphp
+                                    <tr class="hover:bg-[#f6f3ec]/50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#4d3327]">
+                                            {{ $booking->transaction_id ?? 'N/A' }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-[#4d3327] capitalize">
                                             {{ ucfirst($booking->booking_type ?? 'Staycation') }}
-                                        </dd>
-                                    </div>
-
-                                    <div class="flex items-center justify-between gap-4">
-                                        <dt class="text-[#7a7d52] font-medium">Check-in</dt>
-                                        <dd class="text-[#4d3327]">
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-[#4d3327]">
                                             {{ $booking->checkin_date ? \Carbon\Carbon::parse($booking->checkin_date)->format('M d, Y') : 'N/A' }}
-                                        </dd>
-                                    </div>
-
-                                    @if($booking->checkout_date)
-                                    <div class="flex items-center justify-between gap-4">
-                                        <dt class="text-[#7a7d52] font-medium">Check-out</dt>
-                                        <dd class="text-[#4d3327]">
-                                            {{ \Carbon\Carbon::parse($booking->checkout_date)->format('M d, Y') }}
-                                        </dd>
-                                    </div>
-                                    @endif
-
-                                    <div class="flex items-center justify-between gap-4">
-                                        <dt class="text-[#7a7d52] font-medium">Total Amount</dt>
-                                        <dd class="text-[#98655b] text-lg font-bold">
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-[#4d3327]">
+                                            {{ $booking->checkout_date ? \Carbon\Carbon::parse($booking->checkout_date)->format('M d, Y') : 'N/A' }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-[#98655b]">
                                             ₱{{ number_format($booking->total_amount ?? 0, 2) }}
-                                        </dd>
-                                    </div>
-
-                                    <div class="flex items-center justify-between gap-4">
-                                        <dt class="text-[#7a7d52] font-medium">Payment Status</dt>
-                                        <dd class="px-2 py-1 rounded text-[0.7rem] font-semibold {{ $paymentClass }}">
-                                            {{ ucfirst($paymentStatus) }}
-                                        </dd>
-                                    </div>
-
-                                    <div class="flex items-center justify-between gap-4">
-                                        <dt class="text-[#7a7d52] font-medium">Booked On</dt>
-                                        <dd class="text-[#4d3327]">
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $paymentClass }}">
+                                                {{ ucfirst($paymentStatus) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $statusClass }}">
+                                                {{ ucfirst($status) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-[#4d3327]">
                                             {{ $booking->created_at ? \Carbon\Carbon::parse($booking->created_at)->format('M d, Y') : 'N/A' }}
-                                        </dd>
-                                    </div>
-                                </dl>
-                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
 
-                            {{-- Footer / actions --}}
-                            <div class="p-6 mt-auto">
-                                <div class="flex gap-2">
-                                    @if($primaryBtnLabel)
-                                        <div
-                                            class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg text-[#f6f3ec] {{ $primaryBtnClass }}"
-                                        >
-                                            <i class="bi {{ $primaryBtnIcon }}" aria-hidden="true"></i>
-                                            {{ $primaryBtnLabel }}
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        </article>
-                    @endforeach
+                    {{-- Pagination --}}
+                    <div class="px-6 py-4 bg-[#f6f3ec] border-t border-[#cccbbd]">
+                        {{ $bookings->links() }}
+                    </div>
                 </div>
             @endif
         </div>
