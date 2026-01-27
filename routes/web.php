@@ -66,6 +66,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\PricingConfigController;
 use App\Http\Controllers\BookingCalendarController;
+use App\Http\Controllers\CheckInOutController;
 // ========== Root Route ==========
 Route::get('/', function () {
     return redirect('/home');
@@ -157,19 +158,26 @@ Route::middleware('auth')->group(function () {
         /** @var \App\Models\User $user */
         $user = Auth::user();
         
-        // Fetch user's bookings from database by email or customer email with pagination
+        if (!$user) {
+            return redirect()->route('login');
+        }
+        
+        // Fetch user's completed/cancelled bookings or past bookings for history
         $bookings = \App\Models\Booking::where('customer_email', $user->email)
+            ->where(function($query) {
+                $query->whereIn('status', ['completed', 'cancelled'])
+                      ->orWhereRaw('DATE(checkout_date) < ?', [now()->toDateString()]);
+            })
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         
         return view('booking_history', compact('bookings'));
     })->name('booking.history');
 
-    Route::get('/checkinout', function () {
-        // TODO: Implement check-in/out logic
-        $activeBookings = []; // Fetch user's active bookings that can be checked in/out
-        return view('checkinout', compact('activeBookings'));
-    })->name('checkinout');
+    Route::get('/checkinout', [CheckInOutController::class, 'index'])->name('checkinout');
+    Route::post('/checkinout/checkin/{booking}', [CheckInOutController::class, 'checkin'])->name('checkinout.checkin');
+    Route::post('/checkinout/checkout/{booking}', [CheckInOutController::class, 'checkout'])->name('checkinout.checkout');
+    Route::get('/checkinout/next/{booking}', [CheckInOutController::class, 'nextAfterCheckin'])->name('checkinout.next');
 });
 
 

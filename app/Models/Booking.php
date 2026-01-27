@@ -27,14 +27,23 @@ class Booking extends Model
         'payment_method',
         'payment_status',
         'status', // 'confirmed', 'cancelled', 'completed'
+        'checkin_status',
+        'checkin_timestamp',
+        'checkout_timestamp',
     ];
 
     protected $casts = [
         'booking_data' => 'array',
         'checkin_date' => 'date',
         'checkout_date' => 'date',
+        'checkin_timestamp' => 'datetime',
+        'checkout_timestamp' => 'datetime',
         'total_amount' => 'decimal:2',
     ];
+
+    const CHECKIN_STATUS_PENDING = 'pending';
+    const CHECKIN_STATUS_CHECKED_IN = 'checked_in';
+    const CHECKIN_STATUS_CHECKED_OUT = 'checked_out';
 
     /**
      * Fallback display name if customer_name is missing.

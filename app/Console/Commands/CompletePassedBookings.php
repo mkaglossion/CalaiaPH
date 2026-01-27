@@ -30,15 +30,20 @@ class CompletePassedBookings extends Command
     {
         $today = Carbon::now()->startOfDay();
 
-        // Find all confirmed bookings where checkout date is in the past
+        // Find all confirmed bookings where checkout date is in the past and they have checked in
         $bookings = Booking::where('status', 'confirmed')
             ->whereNotNull('checkout_date')
             ->where('checkout_date', '<', $today)
+            ->where('checkin_status', Booking::CHECKIN_STATUS_CHECKED_IN)
             ->get();
 
         $count = 0;
         foreach ($bookings as $booking) {
-            $booking->update(['status' => 'completed']);
+            $booking->update([
+                'status' => 'completed',
+                'checkin_status' => Booking::CHECKIN_STATUS_CHECKED_OUT,
+                'checkout_timestamp' => now()
+            ]);
             // Broadcast the event for real-time updates
             broadcast(new BookingCompleted($booking));
             $count++;
