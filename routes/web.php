@@ -45,6 +45,7 @@ use App\Http\Controllers\Admin\StaycationTextController;
 use App\Http\Controllers\Admin\MenuTextController;
 use App\Http\Controllers\Admin\EventTextController;
 use App\Http\Controllers\Admin\EventExperienceSectionController;
+use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\FarmInfoTextController;
 use App\Http\Controllers\Admin\DayPackageTextController;
 use App\Http\Controllers\Admin\AccommodationTextController;
@@ -228,6 +229,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::prefix('/event-experience')->group(function () {
         Route::get('/', [AdminController::class, 'eventExperience'])->name('admin.eventExperience.sections');
     });
+    Route::prefix('/testimonials')->group(function () {
+        Route::get('/', [AdminController::class, 'testimonials'])->name('admin.testimonials.index');
+    });
     Route::prefix('/farm')->group(function () {
              Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farm.farmInfos');
              Route::get('/our-farm', [AdminPagesController::class, 'ourFarm'])->name('admin.farm.ourfarm');
@@ -295,6 +299,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('menu-text', MenuTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-text', EventTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-experience-sections', EventExperienceSectionController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('testimonials', TestimonialController::class)->only(['store', 'update', 'destroy']);
     Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('day-text', DayPackageTextController::class)->only(['store', 'update', 'destroy']);
     Route::post('/accommodations-text', [AccommodationTextController::class, 'store'])->name('accommodations-text.store');

@@ -139,5 +139,32 @@ class AdminController extends Controller
         return view('admin.eventExperience.sections', compact('sections'));
     }
 
+    public function testimonials(Request $request)
+    {
+        $query = \App\Models\Testimonial::query();
+
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('position', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+
+        // Rating filter
+        if ($request->filled('rating')) {
+            $query->where('rating', $request->rating);
+        }
+
+        // Default ordering
+        $query->ordered();
+
+        $testimonials = $query->ordered()->paginate(10);
+
+        return view('admin.testimonials.index', compact('testimonials'));
+    }
+
 
 }

@@ -45,7 +45,8 @@
             ]],
             ['title'=>'Home','icon'=>'home','route'=>'admin.home.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.home.home'],
-              ['label'=>'Event Experience','route'=>'admin.eventExperience.sections']
+              ['label'=>'Event Experience','route'=>'admin.eventExperience.sections'],
+              ['label'=>'Testimonials','route'=>'admin.testimonials.index']
             ]],
             ['title'=>'Day Tour','icon'=>'sun','route'=>'admin.day.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.day.daytour'],
