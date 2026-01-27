@@ -82,10 +82,10 @@
     <!-- Section Modal -->
     <div
         x-show="showModal"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
         x-transition.opacity
     >
-        <div class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-2xl p-6 relative border border-gray-200">
+        <div class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 relative border border-gray-200">
             <button
                 @click="showModal = false"
                 class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
@@ -96,7 +96,7 @@
             <form id="sectionForm" class="space-y-5" @submit.prevent="saveSection">
                 @csrf
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
                         <label class="block font-medium mb-1 text-gray-700">Section ID</label>
                         <input type="text" x-model="form.section_id" class="border rounded-xl p-3 w-full" required>
@@ -110,10 +110,10 @@
 
                 <div>
                     <label class="block font-medium mb-1 text-gray-700">Image</label>
-                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
+                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 md:p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
                          @click="$refs.imageInput.click()">
                         <div x-show="form.image_preview" class="mb-4 flex flex-col items-center gap-2">
-                            <img :src="getImagePreviewUrl()" :key="form.image_preview" alt="Image Preview" class="max-h-40 rounded-lg shadow">
+                            <img :src="getImagePreviewUrl()" :key="form.image_preview" alt="Image Preview" class="max-h-32 md:max-h-40 lg:max-h-48 rounded-lg shadow">
                             <template x-if="editMode && form.image_path && !form.remove_image">
                                 <label class="inline-flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
                                     <input type="checkbox" x-model="form.remove_image" class="rounded">
@@ -144,7 +144,7 @@
                     <textarea x-model="form.description2" rows="3" class="w-full border rounded-xl px-3 py-2" required></textarea>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                         <label class="block font-medium mb-1 text-gray-700">Link Path</label>
                         <input type="text" x-model="form.link_path" class="border rounded-xl p-3 w-full" required>
