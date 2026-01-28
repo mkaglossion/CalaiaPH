@@ -140,12 +140,9 @@
                 <i class="bi bi-person-check me-2"></i>Check-in / Check-out
               </a>
 
-              <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
-                  <i class="bi bi-box-arrow-right me-2"></i>Log Out
-                </button>
-              </form>
+              <a href="{{ route('logout') }}" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                <i class="bi bi-box-arrow-right me-2"></i>Log Out
+              </a>
             </div>
           </div>
 
@@ -272,12 +269,9 @@
               <i class="bi bi-person-check me-2"></i>Check-in / Check-out
             </a>
 
-            <form method="POST" action="{{ route('logout') }}" @submit="mobileOpen = false" class="px-3 pt-1">
-              @csrf
-              <button type="submit" class="w-full text-left py-2 rounded-lg hover:bg-white/50 transition text-white">
-                <i class="bi bi-box-arrow-right me-2"></i>Log Out
-              </button>
-            </form>
+            <a href="{{ route('logout') }}" @click="mobileOpen = false" class="block px-3 py-3 rounded-lg hover:bg-white/50 transition text-white">
+              <i class="bi bi-box-arrow-right me-2"></i>Log Out
+            </a>
           @else
             <button
               @click="$store.modals.showLogin = true; mobileOpen = false"

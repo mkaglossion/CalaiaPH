@@ -122,13 +122,10 @@
 
     {{-- Bottom Section --}}
     <div class="px-6 py-4 border-t border-[#8f5d54]/50">
-      <form method="POST" action="{{ route('logout') }}">
-        @csrf
-        <button type="submit" class="flex items-center gap-3 hover:text-gray-300 transition">
-          <i data-lucide="log-out" class="w-5 h-5"></i>
-          <span>Log Out</span>
-        </button>
-      </form>
+      <a href="{{ route('logout') }}" class="flex items-center gap-3 hover:text-gray-300 transition">
+        <i data-lucide="log-out" class="w-5 h-5"></i>
+        <span>Log Out</span>
+      </a>
     </div>
   </aside>
 

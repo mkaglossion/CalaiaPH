@@ -29,9 +29,7 @@ class LoginController extends Controller
             ->first();
 
         if ($pending) {
-            return response()->json([
-                'message' => 'Please verify your email before logging in.',
-            ], 403);
+            return redirect('/home')->with('error', 'Please verify your email before logging in.');
         }
 
         // Find verified user
@@ -40,22 +38,20 @@ class LoginController extends Controller
             ->first();
 
         if (!$user) {
-            return response()->json([
-                'message' => 'No account found with that email or username.',
-            ], 404);
+            return redirect('/home')->with('error', 'No account found with that email or username.');
         }
 
         // Check password
         if (!Hash::check($credentials['password'], $user->password)) {
-            return response()->json([
-                'message' => 'Incorrect password.',
-            ], 401);
+            return redirect('/home')->with('error', 'Incorrect password.');
         }
 
         // Log user in
         Auth::login($user);
 
-        return redirect('/')->with('success', 'You have been logged in successfully.');
+        session()->save();
+
+        return redirect('/home')->with('success', 'Welcome back! You have been logged in successfully.');
 
     }
 
@@ -78,6 +74,6 @@ class LoginController extends Controller
         }
 
         // ✅ Handle normal browser logout
-        return redirect('/')->with('success', 'You have been logged out successfully.');
+        return redirect('/home')->with('info', 'You have been logged out successfully. See you next time!');
     }
 }

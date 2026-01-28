@@ -149,7 +149,7 @@ Route::get('/verify-email/{token}', [RegisterController::class, 'verifyEmail'])-
 
 Route::get('/login', function () { return redirect('/'); })->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::match(['GET', 'POST'], '/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
