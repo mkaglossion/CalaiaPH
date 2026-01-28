@@ -1,6 +1,6 @@
 {{-- Reusable Floating Buttons Component --}}
 <div
-    class="fixed bottom-0 right-0 p-3 hidden lg:flex flex-col gap-2 z-[1030]"
+    class="fixed bottom-0 right-0 p-3 hidden lg:flex flex-col gap-2 z-1030"
 >
     {{-- Messenger button --}}
     <a

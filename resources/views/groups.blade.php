@@ -22,7 +22,7 @@
       </div>
     <x-header active="groups" />
     {{-- Hero Slider --}}
-    <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]" data-slides-count="{{ count($swiperImages) }}">
+   <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-125 xl:h-150" data-slides-count="{{ count($swiperImages) }}">
       <div class="swiper-wrapper">
         @if(count($swiperImages) > 0)
           @php $texts_array = array_values($texts); $labels_array = array_keys($texts); @endphp
@@ -146,8 +146,8 @@
                   <div class="absolute inset-0 pointer-events-none"
                        style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,.35) 85%);"></div>
                   <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
-                    <span class="bg-[#a97464] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-[9px] px-3 leading-none cursor-pointer"></span>
-                    <a class="text-white text-[14px] tracking-[.08em] uppercase py-[9px] px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
+                    <span class="bg-[#a97464] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-2.25 px-3 leading-none cursor-pointer"></span>
+                    <a class="text-white text-[14px] tracking-[.08em] uppercase py-2.25 px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
                   </div>
                 </article>
 
@@ -159,8 +159,8 @@
                   <div class="absolute inset-0 pointer-events-none"
                        style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,.35) 85%);"></div>
                   <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
-                    <span class="bg-[#a97464] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-[9px] px-3 leading-none cursor-pointer"></span>
-                    <a class="text-white text-[14px] tracking-[.08em] uppercase py-[9px] px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
+                    <span class="bg-[#a97464] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-2.25 px-3 leading-none cursor-pointer"></span>
+                    <a class="text-white text-[14px] tracking-[.08em] uppercase py-2.25 px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
                   </div>
                 </article>
               </div>
@@ -301,10 +301,10 @@
           <div class="p-5 space-y-4">
             {{-- Simple image carousel --}}
             <div x-data="{i:0}" class="relative">
-              <template x-if="modal.images && modal.images.length">
+              <template x-if="modal.images && modal.images.length">+
                 <div>
                   <img :src="modal.images[i]" :alt="modal.title + ' image ' + (i+1)"
-                       class="w-full h-[300px] object-cover rounded-lg">
+                       class="w-full h-75 object-cover rounded-lg">
                   <button class="absolute top-1/2 -translate-y-1/2 left-2 grid place-items-center w-9 h-9 rounded-full bg-black/60 text-white"
                           @click="i = (i-1+modal.images.length)%modal.images.length">
                     <i class="fa-solid fa-chevron-left text-sm"></i>

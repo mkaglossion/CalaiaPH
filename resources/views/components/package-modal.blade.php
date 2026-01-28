@@ -1,19 +1,20 @@
 {{-- Reusable Package Modal Component --}}
 @props([
     'id' => 'detailsModal',
-    'title' => '',
-    'details' => [],
     'images' => [],
     'price' => null,
     'buttonText' => 'Add to Cart',
     'buttonAction' => 'addToCart',
     'csrfToken' => csrf_token(),
     'cartRoute' => route('cart.add'),
-    'bookingRoute' => route('booking.create')
+    'bookingRoute' => route('booking.create'),
+    'appendParams' => true
 ])
 
+{{-- Modal Container --}}
 <div id="{{ $id }}" class="fixed inset-0 bg-transparent flex items-center justify-center p-2 md:p-4 pt-16 md:pt-4 opacity-0 pointer-events-none z-50 transition-opacity duration-300">
   <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[95vh] md:max-h-[90vh] flex flex-col border border-gray-300 mx-2 sm:mx-4">
+
     {{-- Modal Header --}}
     <div class="p-4 md:p-6 border-b border-gray-300 shrink-0">
       <div class="flex justify-between items-center">
@@ -26,44 +27,37 @@
 
     {{-- Modal Body --}}
     <div class="p-4 md:p-6 flex-1 overflow-y-auto" id="{{ $id }}Body">
-      {{-- Swiper Carousel --}}
-      <div class="swiper relative packageSwiper mb-4 md:mb-6 rounded-2xl overflow-hidden" data-swiper="modal">
-        <div class="swiper-wrapper" id="{{ $id }}Wrapper"></div>
-        <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-prev>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+      {{-- Image Carousel --}}
+      <div class="swiper relative packageSwiper mb-4 md:mb-6 rounded-2xl min-h-75" data-swiper="modal">
+        <div class="swiper-wrapper rounded-2xl overflow-hidden" id="{{ $id }}Wrapper"></div>
+
+        {{-- Navigation Buttons --}}
+        <button type="button" id="{{ $id }}-prev" aria-label="Previous slide"
+                class="swiper-button-prev-custom absolute top-1/2 -translate-y-1/2 left-4 z-20 grid place-items-center w-10 h-10 rounded-full bg-[rgba(176,119,92,0.1)] text-[#b0775c] border-2 border-[#b0775c] hover:bg-[#b0775c] hover:text-white transition-all duration-300"
+                data-custom-prev>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
-        <button type="button" aria-label="Next slide" class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-next>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <button type="button" id="{{ $id }}-next" aria-label="Next slide"
+                class="swiper-button-next-custom absolute top-1/2 -translate-y-1/2 right-4 z-20 grid place-items-center w-10 h-10 rounded-full bg-[rgba(176,119,92,0.1)] text-[#b0775c] border-2 border-[#b0775c] hover:bg-[#b0775c] hover:text-white transition-all duration-300"
+                data-custom-next>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
+
+        {{-- Custom Dots --}}
         <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
       </div>
-      {{-- Person Selection for Dining --}}
-      <div id="{{ $id }}PersonSelection" class="mb-4 hidden">
-        <h4 class="text-lg font-semibold mb-3" style="color:#97655A;">Select Number of Persons</h4>
-        <div class="grid grid-cols-1 gap-2">
-          <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-            <input type="radio" name="personRange" value="3-4" class="mr-3" onchange="updatePriceForPersons(this.value)">
-            <span class="font-medium">3–4 Person – ₱5,980.00</span>
-          </label>
-          <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-            <input type="radio" name="personRange" value="5-6" class="mr-3" onchange="updatePriceForPersons(this.value)">
-            <span class="font-medium">5–6 Person – ₱8,790.00</span>
-          </label>
-          <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-            <input type="radio" name="personRange" value="7-9" class="mr-3" onchange="updatePriceForPersons(this.value)">
-            <span class="font-medium">7–9 Person – ₱12,900.00</span>
-          </label>
-        </div>
+
+      {{-- Additional Content --}}
+      <div data-slot>
+        {{ $slot }}
       </div>
 
-      {{-- Package Details --}}
-      <div id="{{ $id }}Details" class="space-y-3"></div>
-
-      {{-- Package Price (if provided) --}}
+      {{-- Price Display --}}
       @if($price)
         <div id="{{ $id }}Price" class="mt-4 p-4 bg-linear-to-r from-[#8f5d54] to-[#a0675a] text-white rounded-xl text-center shadow-lg">
           <div class="flex items-center justify-center mb-1">
@@ -88,126 +82,165 @@
 </div>
 
 <script>
+// Package Modal Management
 let packageSwipers = {};
-let selectedPrice = 5980.00; // default
 
-window.openModal = function(button) {
+// Modal Functions
+function openModal(button) {
   const title = button.dataset.title;
-  const details = JSON.parse(button.dataset.details);
-  const images = JSON.parse(button.dataset.images);
+  const details = JSON.parse(button.dataset.details || '[]');
+  const images = JSON.parse(button.dataset.images || '[]');
+  const description = button.dataset.description || '';
   const price = button.dataset.price;
-  openModaldetailsModal(title, details, images, price);
+  showPackageDetails(title, details, images, description, price);
 }
 
-function updatePriceForPersons(range) {
-  const prices = {
-    '3-4': 5980.00,
-    '5-6': 8790.00,
-    '7-9': 12900.00
-  };
-  selectedPrice = prices[range] || 5980.00;
-  const priceDisplay = document.getElementById('detailsModalPriceDisplay');
-  if (priceDisplay) {
-    priceDisplay.textContent = 'PHP ' + selectedPrice.toLocaleString('en-US', { minimumFractionDigits: 2 });
+function showPackageDetails(title, details, imageUrls, description, price = null) {
+  const modalId = '{{ $id }}';
+
+  // Clean up previous swiper instance
+  cleanupSwiper(modalId);
+
+  // Build carousel slides
+  buildCarouselSlides(modalId, imageUrls);
+
+  // Update modal content
+  updateModalContent(modalId, title, price);
+
+  // Build dynamic content
+  buildDynamicContent(modalId, title, details, description);
+
+  // Initialize swiper
+  initializeSwiper(modalId);
+
+  // Setup custom dots
+  setupCustomDots(modalId, imageUrls);
+
+  // Setup button action
+  setupButtonAction(modalId);
+
+  // Show modal
+  showModal(modalId);
+}
+
+function cleanupSwiper(modalId) {
+  if (packageSwipers[modalId]) {
+    packageSwipers[modalId].destroy();
+    packageSwipers[modalId] = null;
   }
 }
 
-function openModal{{ $id }}(title, details, images, price = null) {
-  viewDetails{{ $id }}(title, details, images, price);
+function buildCarouselSlides(modalId, imageUrls) {
+  const swiperWrapper = document.getElementById(modalId + 'Wrapper');
+  swiperWrapper.innerHTML = imageUrls.map((url, index) => `
+    <div class="swiper-slide">
+      <img src="${url}" class="w-full h-64 md:h-96 object-cover" alt="Image ${index + 1}" loading="lazy">
+    </div>
+  `).join('');
 }
 
-function viewDetails{{ $id }}(title, descriptionParagraphs, imageUrls, price = null) {
-   const modalId = '{{ $id }}';
-   // Destroy previous swiper instance if exists
-   if (packageSwipers[modalId]) {
-     packageSwipers[modalId].destroy();
-     packageSwipers[modalId] = null;
-   }
+function updateModalContent(modalId, title, price) {
+  // Update title
+  document.getElementById(modalId + 'Label').textContent = `${title} Details`;
 
-   // Check if it's SET MENUS
-   const isDining = title.toLowerCase().includes('menu');
+  // Update price if provided
+  if (price && document.getElementById(modalId + 'PriceDisplay')) {
+    document.getElementById(modalId + 'PriceDisplay').textContent = price;
+  }
+}
 
-   // Show/hide person selection
-   const personSelection = document.getElementById(modalId + 'PersonSelection');
-   if (isDining) {
-     personSelection.classList.remove('hidden');
-     // Set default selection to 3-4
-     const defaultRadio = document.querySelector('input[name="personRange"][value="3-4"]');
-     if (defaultRadio) {
-       defaultRadio.checked = true;
-       updatePriceForPersons('3-4');
-     }
-   } else {
-     personSelection.classList.add('hidden');
-   }
+function buildDynamicContent(modalId, title, details, description) {
+  const slotContainer = document.querySelector(`#${modalId} [data-slot]`) ||
+                       document.querySelector(`#${modalId}Body > :not(.swiper):not([id$="Price"])`);
 
-   // Build carousel slides
-   const swiperWrapper = document.getElementById(modalId + 'Wrapper');
-   swiperWrapper.innerHTML = imageUrls.map((url, index) => `
-     <div class="swiper-slide">
-       <img src="${url}" class="w-full h-64 md:h-96 object-cover" alt="${title} - Image ${index + 1}" loading="lazy">
-     </div>
-   `).join('');
+  if (!slotContainer) return;
 
-   // Build package details
-   const packageDetails = document.getElementById(modalId + 'Details');
-   packageDetails.innerHTML = descriptionParagraphs.map(p => `
-     <p class="flex items-start text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
-       <i class="bi bi-check-circle-fill text-[#97655A] mr-3 mt-1 flex-shrink-0"></i>
-       <span class="flex-1">${p}</span>
-     </p>
-   `).join('');
+  // Create dynamic content
+  let contentHTML = '';
 
-   // Update modal title
-   document.getElementById(modalId + 'Label').textContent = `${title} Details`;
+  if (details && details.length > 0) {
+    contentHTML += `
+      <div class="space-y-4">
+        <h4 class="text-lg font-semibold mb-3" style="color:#97655A;">${title} Experience</h4>
+        <div class="space-y-3">
+    `;
 
-   // Update price if provided and not dining
-   if (price && document.getElementById(modalId + 'PriceDisplay') && !isDining) {
-     document.getElementById(modalId + 'PriceDisplay').textContent = price;
-   }
+    details.forEach(detail => {
+      contentHTML += `
+        <p class="flex items-start text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+          <i class="bi bi-check-circle-fill text-[#97655A] mr-3 mt-1 shrink-0"></i>
+          <span class="flex-1">${detail}</span>
+        </p>
+      `;
+    });
 
-   // Initialize package swiper
-   packageSwipers[modalId] = new Swiper('.packageSwiper', {
-     slidesPerView: 1,
-     loop: true,
-     navigation: { nextEl: '[data-custom-next]', prevEl: '[data-custom-prev]' },
-   });
+    contentHTML += `
+        </div>
+      </div>
+    `;
+  } else if (description) {
+    contentHTML = `
+      <div class="space-y-4">
+        <h4 class="text-lg font-semibold mb-3" style="color:#97655A;">${title} Details</h4>
+        <p class="text-gray-700" style="font-family: 'Gotham Book', sans-serif;">${description}</p>
+      </div>
+    `;
+  }
 
-   // Custom dots
-   const dotsEl = document.querySelector('[data-custom-dots]');
-   const numSlides = imageUrls.length;
-   function updateDots() {
-     dotsEl.innerHTML = '';
-     for(let i=0; i<numSlides; i++){
-       const b = document.createElement('button');
-       b.type = 'button';
-       b.className = 'h-2.5 rounded-full ' + (i === packageSwipers[modalId].realIndex ? 'bg-[#a97464] w-4' : 'bg-[#c8a89f] w-2.5');
-       b.setAttribute('role','tab');
-       b.setAttribute('aria-label', `Go to slide ${i+1}`);
-       b.addEventListener('click', ()=> packageSwipers[modalId].slideToLoop(i));
-       dotsEl.appendChild(b);
-     }
-   }
-   updateDots();
-   packageSwipers[modalId].on('slideChange', updateDots);
+  slotContainer.innerHTML = contentHTML;
+}
 
-   // Set up button action
-   document.getElementById(modalId + 'Btn').onclick = function() {
-     if ('{{ $buttonAction }}' === 'addToCart') {
-       addToCart(title, imageUrls[0] || '');
-     } else if ('{{ $buttonAction }}' === 'bookNow') {
-       bookTour(title, price || 'PHP 0');
-     }
-   };
+function initializeSwiper(modalId) {
+  packageSwipers[modalId] = new Swiper('.packageSwiper', {
+    slidesPerView: 1,
+    loop: true,
+    watchOverflow: false,
+    navigation: {
+      nextEl: '#' + modalId + '-next',
+      prevEl: '#' + modalId + '-prev'
+    },
+  });
+}
 
-   // Show modal
-   const modal = document.getElementById(modalId);
-   modal.classList.remove('opacity-0', 'pointer-events-none');
-   modal.classList.add('opacity-100', 'pointer-events-auto');
-   document.body.style.overflow = 'hidden';
+function setupCustomDots(modalId, imageUrls) {
+  const dotsEl = document.querySelector('.packageSwiper [data-custom-dots]');
+  const numSlides = imageUrls.length;
 
-   // Focus management for accessibility
-   modal.focus();
+  function updateDots() {
+    dotsEl.innerHTML = '';
+    for (let i = 0; i < numSlides; i++) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'h-2.5 rounded-full ' +
+        (i === packageSwipers[modalId].realIndex ? 'bg-[#a97464] w-4' : 'bg-[#c8a89f] w-2.5');
+      button.setAttribute('role', 'tab');
+      button.setAttribute('aria-label', `Go to slide ${i + 1}`);
+      button.addEventListener('click', () => packageSwipers[modalId].slideToLoop(i));
+      dotsEl.appendChild(button);
+    }
+  }
+
+  updateDots();
+  packageSwipers[modalId].on('slideChange', updateDots);
+}
+
+function setupButtonAction(modalId) {
+  document.getElementById(modalId + 'Btn').onclick = function() {
+    const buttonAction = '{{ $buttonAction }}';
+    if (buttonAction === 'addToCart') {
+      handleAddToCart();
+    } else if (buttonAction === 'bookNow') {
+      handleBookNow();
+    }
+  };
+}
+
+function showModal(modalId) {
+  const modal = document.getElementById(modalId);
+  modal.classList.remove('opacity-0', 'pointer-events-none');
+  modal.classList.add('opacity-100', 'pointer-events-auto');
+  document.body.style.overflow = 'hidden';
+  modal.focus();
 }
 
 function closeModal(modalId) {
@@ -216,13 +249,14 @@ function closeModal(modalId) {
   modal.classList.add('opacity-0', 'pointer-events-none');
   document.body.style.overflow = '';
 
-  if (packageSwipers[modalId]) {
-    packageSwipers[modalId].destroy();
-    packageSwipers[modalId] = null;
-  }
+  cleanupSwiper(modalId);
 }
 
-function addToCart(title, image) {
+// Cart and Booking Functions
+function handleAddToCart() {
+  const title = document.getElementById('{{ $id }}Label').textContent.replace(' Details', '');
+  const image = document.querySelector('.packageSwiper img')?.src || '';
+
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = '{{ $cartRoute }}';
@@ -238,7 +272,7 @@ function addToCart(title, image) {
   const fields = {
     'id': title.toLowerCase().replace(/\s+/g, '-'),
     'title': title,
-    'price': selectedPrice.toFixed(2),
+    'price': isDining ? '3500.00' : '0.00',
     'image': image,
     'quantity': '1',
     'isDining': isDining ? '1' : '0'
@@ -256,21 +290,36 @@ function addToCart(title, image) {
   form.submit();
 }
 
-function bookTour(packageName, price) {
-  const url = '{{ $bookingRoute }}?type=daytour&package=' + encodeURIComponent(packageName) + '&price=' + encodeURIComponent(price);
+function handleBookNow() {
+  const title = document.getElementById('{{ $id }}Label').textContent.replace(' Details', '');
+  const price = document.getElementById('{{ $id }}PriceDisplay')?.textContent || 'PHP 0';
+
+  const isDining = title.toLowerCase().includes('menu') || title.toLowerCase().includes('cook');
+  const type = isDining ? 'dining' : 'daytour';
+
+  let url = '{{ $bookingRoute }}';
+  if ({{ $appendParams ? 'true' : 'false' }}) {
+    url += '?type=' + type + '&package=' + encodeURIComponent(title) + '&price=' + encodeURIComponent(price);
+  }
   window.location.href = url;
 }
 
-// Close modal on outside click and Escape key
-document.getElementById('{{ $id }}').addEventListener('click', function(e) {
-  if (e.target === this) {
-    closeModal('{{ $id }}');
-  }
-});
+// Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('{{ $id }}');
 
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape' && document.getElementById('{{ $id }}').classList.contains('opacity-100')) {
-    closeModal('{{ $id }}');
-  }
+  // Close on outside click
+  modal.addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeModal('{{ $id }}');
+    }
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.classList.contains('opacity-100')) {
+      closeModal('{{ $id }}');
+    }
+  });
 });
 </script>

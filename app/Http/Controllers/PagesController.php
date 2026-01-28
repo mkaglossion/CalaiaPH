@@ -17,6 +17,7 @@ use App\Models\FoodText;
 use App\Models\SpecialText;
 use App\Models\FarmText;
 
+use App\Models\Food;
 use App\Models\Menu;
 use App\Models\MenuText;
 use App\Models\Event;
@@ -488,8 +489,17 @@ class PagesController extends Controller
 
     public function dining()
     {
-        $menus = Menu::with('swiperImages')->get();
-        return $this->renderPage(FoodSwiperImage::class, FoodText::class, 'dining', 'dining', 'label', 'text', compact('menus'));
+        $messHallFoods = Food::with('swiperImages')
+            ->whereIn('category', ['breakfast', 'lunch', 'dinner', 'package', 'special'])
+            ->get();
+        $cookYourOwnFoods = Food::with('swiperImages')->where('category', 'cook_your_own')->get();
+        $diningDetails = [
+            'Harvest Your Own – Pick and cook farm-fresh ingredients',
+            'Cochinillo – Whole roast pig (pre-order required)',
+            'Fresh farm-to-table ingredients available',
+            'Guided cooking sessions with our chefs'
+        ];
+        return $this->renderPage(FoodSwiperImage::class, FoodText::class, 'dining', 'dining', 'label', 'text', compact('messHallFoods', 'cookYourOwnFoods', 'diningDetails'));
     }
 
     public function groups()
