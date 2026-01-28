@@ -9,6 +9,18 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
+    @if(config('broadcasting.default') !== 'null')
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
+    <script>
+        window.Echo = new Echo({
+            broadcaster: 'pusher',
+            key: '{{ config('broadcasting.connections.pusher.key') }}',
+            cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
+            encrypted: true
+        });
+    </script>
+    @endif
+
     <style>
         [x-cloak]{display:none!important;}
 
@@ -1122,12 +1134,13 @@
                     let totalPrice = 0;
 
                     if (isBYOT || isCarCamping) {
-                        // Per quantity pricing: base price × quantity (price is per slot for entire stay)
+                        // Per quantity pricing: base price is per night per unit
                         const quantity = selectedRoomData ? parseInt(selectedRoomData.extra_mattress || 1) : 1;
-                        totalPrice = basePrice * quantity;
+                        const correctedBasePrice = basePrice;
+                        totalPrice = correctedBasePrice * quantity * nights;
                     } else {
-                        // Regular rooms: base price is already the total for the stay
-                        totalPrice = basePrice;
+                        // Regular rooms: base price is per night
+                        totalPrice = basePrice * nights;
                     }
 
                     return totalPrice;
@@ -1341,6 +1354,7 @@
         }
 
         // Real-time inventory updates
+        @if(config('broadcasting.default') !== 'null')
         window.Echo.channel('inventory')
             .listen('.inventory.updated', (e) => {
                 console.log('Inventory updated:', e);
@@ -1353,14 +1367,52 @@
                 // Update room card availability (optional but recommended)
                 updateRoomAvailability(e.staycationId);
             });
+        @endif
 
         // Real-time pricing updates
+        @if(config('broadcasting.default') !== 'null')
         window.Echo.channel('pricing')
             .listen('.pricing.updated', (e) => {
                 console.log('Pricing updated:', e);
-                // Reload the page to get updated prices
-                window.location.reload();
+                // Fetch updated prices dynamically
+                fetch('/api/booking/staycation/prices?checkin={{ $checkin }}&checkout={{ $checkout }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update roomDetailsMap with new prices
+                            Object.keys(data.prices).forEach(staycationId => {
+                                if (this.roomDetailsMap && this.roomDetailsMap[staycationId]) {
+                                    this.roomDetailsMap[staycationId].price = data.prices[staycationId].price;
+                                }
+                            });
+
+                            // Update selected rooms prices
+                            Object.keys(this.selectedRooms).forEach(roomId => {
+                                if (this.selectedRooms[roomId] && this.roomDetailsMap[roomId]) {
+                                    this.selectedRooms[roomId].accommodation_price = this.calculateBasePrice(
+                                        { id: roomId, name: this.selectedRooms[roomId].name, type: this.selectedRooms[roomId].type },
+                                        this.selectedRooms[roomId]
+                                    );
+                                }
+                            });
+
+                            // Show notification
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Prices Updated',
+                                text: 'Room prices have been updated in real-time.',
+                                timer: 3000,
+                                showConfirmButton: false
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Failed to fetch updated prices:', error);
+                        // Fallback to reload
+                        window.location.reload();
+                    });
             });
+        @endif
 
         function updateRoomAvailability(staycationId) {
             fetch(`/api/inventory/${staycationId}`)

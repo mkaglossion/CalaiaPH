@@ -104,6 +104,7 @@ Route::get('/booking/staycation/availability', [BookingController::class, 'stayc
 Route::get('/booking/staycation/food', [BookingController::class, 'staycationFood'])->name('booking.staycationFood');
 Route::post('/booking/staycation/food/save', [BookingController::class, 'saveFoodSelection'])->name('booking.saveFoodSelection');
 Route::get('/api/booking/staycation/availability', [BookingController::class, 'getStaycationAvailabilityApi'])->name('api.booking.staycationAvailability');
+Route::get('/api/booking/staycation/prices', [BookingController::class, 'getStaycationPricesApi'])->name('api.booking.staycationPrices');
 Route::get('/api/inventory/{roomId}', [\App\Http\Controllers\Admin\InventoryController::class, 'getInventory'])->name('api.inventory.get');
 Route::post('/booking/select-dates', [BookingController::class, 'selectDates'])->name('booking.selectDates');
 Route::post('/booking/check-availability', [BookingController::class, 'checkAvailability'])->name('booking.checkAvailability');
@@ -195,7 +196,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
         // Booking Extra Fees (mattress, pet fees) - must come before {id} route
         Route::get('/extra-fees', [BookingSettingsController::class, 'index'])->name('admin.booking-settings.index');
-        Route::put('/extra-fees', [BookingSettingsController::class, 'update'])->name('admin.booking-settings.update');
+        Route::post('/extra-fees', [BookingSettingsController::class, 'update'])->name('admin.booking-settings.update');
 
         Route::get('/{id}', [AdminBookingsController::class, 'show'])->name('admin.bookings.show');
         Route::post('/{id}/cancel', [AdminBookingsController::class, 'cancel'])->name('admin.bookings.cancel');

@@ -77,7 +77,7 @@
                         <td class="px-4 py-2">
                             <template x-if="act.price_configs && act.price_configs.length > 0">
                                 <div class="text-sm">
-                                    <span class="font-semibold text-green-600" x-text="'Current (Peak): ₱' + (act.price_configs[0]?.rates?.peak ?? 0)"></span>
+                                    <span class="font-semibold text-green-600" x-text="'Current (' + @js($currentSeason) + '): ₱' + getCurrentSeasonPrice(act.price_configs[0]?.rates || {})"></span>
                                     <br>
                                     <span class="text-gray-500 text-xs" x-text="'Non-Peak: ₱' + (act.price_configs[0].rates?.nonPeak ?? 0) + ' | Peak: ₱' + (act.price_configs[0].rates?.peak ?? 0) + ' | Super Peak: ₱' + (act.price_configs[0].rates?.superPeak ?? 0)"></span>
                                 </div>

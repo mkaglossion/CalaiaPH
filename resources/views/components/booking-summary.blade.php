@@ -129,12 +129,10 @@ if (!empty($selectedFoods)) {
                             @if(!$isSpecialRoom)
                             <div class="bg-gray-50 rounded p-2 mb-2 border border-gray-100">
                                 <div class="text-xs text-gray-600 space-y-1">
-                                    @if(($room['accommodation_price'] ?? 0) > 0)
-                                        <div class="flex justify-between">
-                                            <span>Accommodation:</span>
-                                            <span class="font-semibold">₱{{ number_format($room['accommodation_price'] ?? 0, 0) }}</span>
-                                        </div>
-                                    @endif
+                                    <div class="flex justify-between">
+                                        <span>Accommodation:</span>
+                                        <span class="font-semibold">₱{{ number_format($room['accommodation_price'] ?? 0, 0) }}</span>
+                                    </div>
                                     @if($room['mattress_price'] ?? 0 > 0)
                                         <div class="flex justify-between">
                                             <span>Extra Mattress:</span>

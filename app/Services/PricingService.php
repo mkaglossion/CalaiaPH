@@ -424,7 +424,7 @@ class PricingService
 
     /**
      * Get rate from price matrix
-     * 
+     *
      * @param array $matrix
      * @param string $seasonType
      * @param string $dayType
@@ -437,5 +437,61 @@ class PricingService
         }
 
         return $matrix[$seasonType][$dayType] ?? null;
+    }
+
+    /**
+     * Get staycation rate based on date and season
+     *
+     * Priority: Specific Date > Day-of-Week > Season > Fallback
+     *
+     * @param \App\Models\Staycation $staycation
+     * @param \Carbon\Carbon $checkinDate
+     * @param string $season
+     * @return float
+     */
+    public function getStaycationRate(\App\Models\Staycation $staycation, \Carbon\Carbon $checkinDate, string $season): float
+    {
+        $priceConfigs = $staycation->price_configs;
+
+        if (empty($priceConfigs)) {
+            return $staycation->price ?? 0;
+        }
+
+        $checkinDayOfWeek = $checkinDate->format('D'); // Mon, Tue, etc.
+        $checkinDateStr = $checkinDate->format('Y-m-d');
+
+        // 1. Find config with specific date match
+        foreach ($priceConfigs as $config) {
+            // Check single date
+            if (isset($config['dates']) && !empty($config['dates'])) {
+                $dates = is_array($config['dates']) ? $config['dates'] : [$config['dates']];
+                if (in_array($checkinDateStr, $dates)) {
+                    return $config['rates'][$season] ?? 0;
+                }
+            }
+
+            // Check multiple dates
+            if (isset($config['multipleDates']) && is_array($config['multipleDates'])) {
+                if (in_array($checkinDateStr, $config['multipleDates'])) {
+                    return $config['rates'][$season] ?? 0;
+                }
+            }
+        }
+
+        // 2. Find config with day-of-week match
+        foreach ($priceConfigs as $config) {
+            if (isset($config['days']) && is_array($config['days']) && in_array($checkinDayOfWeek, $config['days'])) {
+                return $config['rates'][$season] ?? 0;
+            }
+        }
+
+        // 3. Fallback to first config
+        $firstConfig = $priceConfigs[0];
+        if (isset($firstConfig['rates'])) {
+            return $firstConfig['rates'][$season] ?? 0;
+        }
+
+        // 4. Final fallback
+        return $staycation->price ?? 0;
     }
 }

@@ -28,22 +28,21 @@ use App\Models\BookingSetting;
 
 class BookingController extends Controller
 {
-    // Pricing Constants
-    protected const MATTRESS_PRICE_PER_NIGHT = 800;  // ₱800 per extra mattress per night
-    protected const PET_PRICE = 2000;                 // ₱2,000 per pet (one-time)
-
     protected $bookingService;
     protected $paymentService;
     protected $inventoryService;
+    protected $pricingService;
 
     public function __construct(
         BookingService $bookingService,
         PaymentService $paymentService,
-        InventoryService $inventoryService
+        InventoryService $inventoryService,
+        PricingService $pricingService
     ) {
         $this->bookingService = $bookingService;
         $this->paymentService = $paymentService;
         $this->inventoryService = $inventoryService;
+        $this->pricingService = $pricingService;
     }
     public function debugSession()
     {
@@ -426,17 +425,6 @@ class BookingController extends Controller
         $isBYOT = strpos($roomName, 'byot') !== false || strpos($roomName, 'bring your own tent') !== false;
         $isCarCamping = strpos($roomName, 'car camping') !== false;
 
-        // Get holiday dates
-        $holidayDates = Holiday::whereBetween('date', [$checkinDate, $checkout->copy()->subDay()->format('Y-m-d')])
-            ->pluck('date')
-            ->map(fn($d) => \Carbon\Carbon::parse($d)->format('Y-m-d'))
-            ->toArray();
-
-        // Get weekend day IDs
-        $weekendDayIds = DayTypeDay::whereHas('dayType', fn($q) => $q->where('name', 'Weekend'))
-            ->pluck('weekday')
-            ->toArray();
-
         // For BYOT/Car Camping, calculate base price per night per unit (quantity)
         if ($isBYOT || $isCarCamping) {
             $quantity = $acc['extra_mattress'] ?? 1;
@@ -444,22 +432,18 @@ class BookingController extends Controller
             $current = $checkin->copy();
             while ($current->lt($checkout)) {
                 $dateStr = $current->format('Y-m-d');
-                $dayOfWeek = (int)$current->dayOfWeek;
 
-                // Determine day type: Holiday > Weekend > Weekday
-                $dayType = 'nonPeak'; // default
-                if (in_array($dateStr, $holidayDates)) {
-                    $dayType = 'superPeak';
-                } elseif (in_array($dayOfWeek, $weekendDayIds)) {
-                    $dayType = 'peak';
-                }
+                // Determine season type using peak periods
+                $seasonType = $this->determineSeasonTypeForDate($current);
+                $dayType = str_replace('-', '', ucwords($seasonType, '-')); // Convert 'non-peak' to 'nonPeak', etc.
 
                 // Find applicable price config for this date
                 $rate = $this->getStaycationRateForDate($staycation->price_configs, $current, $dayType);
 
                 if ($rate > 0) {
-                    // For BYOT/Car Camping: multiply rate by quantity
-                    $total += $rate * $quantity;
+                    // For BYOT/Car Camping: no correction needed, multiply by quantity
+                    $correctedRate = $rate;
+                    $total += $correctedRate * $quantity;
                 }
 
                 $current->addDay();
@@ -472,15 +456,10 @@ class BookingController extends Controller
             $current = $checkin->copy();
             while ($current->lt($checkout)) {
                 $dateStr = $current->format('Y-m-d');
-                $dayOfWeek = (int)$current->dayOfWeek;
 
-                // Determine day type: Holiday > Weekend > Weekday
-                $dayType = 'nonPeak'; // default
-                if (in_array($dateStr, $holidayDates)) {
-                    $dayType = 'superPeak';
-                } elseif (in_array($dayOfWeek, $weekendDayIds)) {
-                    $dayType = 'peak';
-                }
+                // Determine season type using peak periods
+                $seasonType = $this->determineSeasonTypeForDate($current);
+                $dayType = str_replace('-', '', ucwords($seasonType, '-')); // Convert 'non-peak' to 'nonPeak', etc.
 
                 // Find applicable price config for this date
                 $rate = $this->getStaycationRateForDate($staycation->price_configs, $current, $dayType);
@@ -562,10 +541,132 @@ class BookingController extends Controller
         // Use the accommodation total already stored in session (don't recalculate to avoid price discrepancies)
         $checkinDate = $booking['checkin'];
         $checkoutDate = $booking['checkout'];
+        
+        // Recalculate accommodation prices using the same logic as availability page
+        foreach ($booking['accommodations'] as $roomId => &$room) {
+            $actualRoomId = $room['accommodation_id'] ?? $roomId;
+            $staycation = \App\Models\Staycation::find($actualRoomId);
+            if ($staycation) {
+                // Check if BYOT or Car Camping first
+                $roomNameLower = strtolower($staycation->name ?? '');
+                $isBYOT = str_contains($roomNameLower, 'byot') ||
+                         str_contains($roomNameLower, 'bring your own tent') ||
+                         str_contains($roomNameLower, 'bring your own');
+                $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
+                
+                if ($isBYOT || $isCarCamping) {
+                    // For BYOT/Car Camping: calculate total price by summing nightly rates * quantity
+                    $quantity = $room['quantity'] ?? $room['extra_mattress'] ?? 1;
+                    $totalPrice = 0;
+                    
+                    $checkin = \Carbon\Carbon::parse($checkinDate);
+                    $checkout = \Carbon\Carbon::parse($checkoutDate);
+                    $current = $checkin->copy();
+                    
+                    while ($current->lt($checkout)) {
+                        // Determine season for this date
+                        $dateOverlappingPeriods = \App\Models\PeakPeriod::where(function($query) use ($current) {
+                            $query->where('start_date', '<=', $current->toDateString())
+                                  ->where('end_date', '>=', $current->toDateString());
+                        })
+                        ->with('peakType')
+                        ->get();
+                        
+                        $dateSeason = 'Non-Peak';
+                        $highestPriority = -1;
+                        
+                        foreach ($dateOverlappingPeriods as $period) {
+                            $priority = $period->peakType->priority ?? 0;
+                            if ($priority > $highestPriority) {
+                                $highestPriority = $priority;
+                                $dateSeason = $period->peakType->name;
+                            }
+                        }
+                        
+                        $seasonKey = [
+                            'Non-Peak' => 'nonPeak',
+                            'Peak' => 'peak',
+                            'Super-Peak' => 'superPeak'
+                        ][$dateSeason] ?? 'nonPeak';
+                        
+                        $nightlyRate = 0;
+                        if (!empty($staycation->price_configs) && isset($staycation->price_configs[0]['rates'])) {
+                            $rates = $staycation->price_configs[0]['rates'];
+                            $nightlyRate = $rates[$seasonKey] ?? 0;
+                        }
+                        
+                        if ($nightlyRate <= 0) {
+                            $nightlyRate = $staycation->price ?? 0;
+                        }
+                        
+                        // For BYOT/Car Camping, no correction needed
+                        if ($isBYOT || $isCarCamping) {
+                            $nightlyRate = $nightlyRate;
+                        }
+                        
+                        $totalPrice += $nightlyRate * $quantity;
+                        $current->addDay();
+                    }
+                    
+                    $room['accommodation_price'] = $totalPrice;
+                    $room['total_price'] = $totalPrice + ($room['mattress_price'] ?? 0) + ($room['pet_price'] ?? 0);
+                } else {
+                    // For regular rooms: use the existing logic
+                    // Determine season for the booking dates
+                    $overlappingPeriods = \App\Models\PeakPeriod::where(function($query) use ($checkinDate, $checkoutDate) {
+                        $query->whereBetween('start_date', [$checkinDate, $checkoutDate])
+                              ->orWhereBetween('end_date', [$checkinDate, $checkoutDate])
+                              ->orWhere(function($q) use ($checkinDate, $checkoutDate) {
+                                  $q->where('start_date', '<=', $checkinDate)
+                                    ->where('end_date', '>=', $checkoutDate);
+                              });
+                    })
+                    ->with('peakType')
+                    ->get();
+                    
+                    $currentSeason = 'Non-Peak';
+                    $highestPriority = -1;
+                    
+                    foreach ($overlappingPeriods as $period) {
+                        $priority = $period->peakType->priority ?? 0;
+                        if ($priority > $highestPriority) {
+                            $highestPriority = $priority;
+                            $currentSeason = $period->peakType->name;
+                        }
+                    }
+                    
+                    // Map season to rate key
+                    $seasonKeyMap = [
+                        'Non-Peak' => 'nonPeak',
+                        'Peak' => 'peak',
+                        'Super-Peak' => 'superPeak'
+                    ];
+                    $seasonKey = $seasonKeyMap[$currentSeason] ?? 'nonPeak';
+                    
+                    // Get the rate
+                    $currentRate = 0;
+                    if (!empty($staycation->price_configs) && isset($staycation->price_configs[0]['rates'])) {
+                        $rates = $staycation->price_configs[0]['rates'];
+                        $currentRate = $rates[$seasonKey] ?? 0;
+                    }
+                    
+                    // If no rate configured, use staycation's price field
+                    if ($currentRate <= 0) {
+                        $currentRate = $staycation->price ?? 0;
+                    }
+                    
+                    // Update the accommodation_price
+                    $room['accommodation_price'] = $currentRate;
+                    // Recalculate total_price
+                    $room['total_price'] = $currentRate + ($room['mattress_price'] ?? 0) + ($room['pet_price'] ?? 0);
+                }
+            }
+        }
+        
         $total = 0;
         foreach ($booking['accommodations'] ?? [] as $acc) {
             if (!empty($acc)) {
-                $total += $acc['accommodation_price'] ?? 0;
+                $total += $acc['total_price'] ?? 0;
             }
         }
         
@@ -1043,18 +1144,20 @@ class BookingController extends Controller
                     // Check for car camping only if not BYOT
                     $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
 
-                    // Use the accommodation_price sent from the frontend if available
-                    // This ensures we display exactly what the customer selected
+                    // Use the accommodation_price sent from frontend (already calculated with correct season)
                     $accommodationPrice = (float)($room['accommodation_price'] ?? 0);
                     
-                    // If no price from frontend, calculate server-side
+                    // Use the accommodation_price sent from frontend (already calculated with correct season)
+                    $accommodationPrice = (float)($room['accommodation_price'] ?? 0);
+                    
+                    // If no price from frontend, fall back to recalculation (but log for debugging)
                     if ($accommodationPrice <= 0) {
-                        $totalPrice = $this->calculateStaycationRoomPrice($staycation, $checkinDate, $checkoutDate, $room);
-                        $accommodationPrice = $totalPrice; // Use calculated total as accommodation price
-                    } else {
-                        // Frontend sent the accommodation price, calculate total including extras
-                        $totalPrice = $accommodationPrice;
+                        Log::warning("No accommodation_price from frontend for room {$roomId}, recalculating");
+                        $accommodationPrice = $this->calculateStaycationRoomPrice($staycation, $checkinDate, $checkoutDate, $room);
                     }
+                    
+                    // Store the price in session
+                    $totalPrice = $accommodationPrice; // Ensure total_price matches
 
                     // Calculate costs for display
                     $numPets = (int)($room['num_pets'] ?? 0);
@@ -1063,23 +1166,24 @@ class BookingController extends Controller
                     if ($isBYOT || $isCarCamping) {
                         // For BYOT/Car Camping: quantity is from extra_mattress field
                         $quantity = (int)($room['extra_mattress'] ?? 1);
-                        $roomPrice = $totalPrice; // Total price is already calculated
+                        $roomPrice = $accommodationPrice; // Already includes quantity from frontend
+                        $totalPrice = $roomPrice; // Update total price
                         $mattressPrice = 0; // No separate mattress charge for BYOT/Car Camping
                     } else {
                         // For regular rooms: quantity is always 1
                         $quantity = 1;
                         // For regular rooms: calculate components for display
                         $extraMattress = (int)($room['extra_mattress'] ?? 0);
-                        $mattressPrice = 0; // $this->calculateMattressFee($extraMattress, $nights);
+                        $mattressPrice = $this->calculateMattressFee($extraMattress, $nights);
                         $roomPrice = $accommodationPrice; // Use the accommodation price we received/calculated
-                        $totalPrice = $roomPrice; // + $mattressPrice; // Add mattress to total
+                        $totalPrice = $roomPrice + $mattressPrice; // Add mattress to total
                     }
                     
                     // Pet charge applies to all room types (one-time, not per night)
-                    $petPrice = 0; // $this->calculatePetFee($numPets);
+                    $petPrice = $this->calculatePetFee($numPets);
                     if (!($isBYOT || $isCarCamping)) {
                         // Only add pet price for non-BYOT/Car Camping rooms
-                        // $totalPrice += $petPrice;
+                        $totalPrice += $petPrice;
                     }
 
                     $normalized[$roomId] = [
@@ -1239,6 +1343,55 @@ class BookingController extends Controller
             $checkout = $booking['checkout'];
         }
 
+        // Determine season for the booking date range
+        $checkinCarbon = \Carbon\Carbon::parse($checkin);
+        $checkoutCarbon = \Carbon\Carbon::parse($checkout);
+        
+        // Find the highest priority peak period that overlaps with the booking dates
+        $overlappingPeriods = \App\Models\PeakPeriod::where(function($query) use ($checkin, $checkout) {
+            $query->whereBetween('start_date', [$checkin, $checkout])
+                  ->orWhereBetween('end_date', [$checkin, $checkout])
+                  ->orWhere(function($q) use ($checkin, $checkout) {
+                      $q->where('start_date', '<=', $checkin)
+                        ->where('end_date', '>=', $checkout);
+                  });
+        })
+        ->with('peakType')
+        ->get();
+        
+        $currentSeason = 'Non-Peak';
+        $highestPriority = -1;
+        
+        foreach ($overlappingPeriods as $period) {
+            $priority = $period->peakType->priority ?? 0;
+            if ($priority > $highestPriority) {
+                $highestPriority = $priority;
+                $currentSeason = $period->peakType->name;
+            }
+        }
+        
+        Log::info('Season for booking dates in staycationAvailability: ' . $currentSeason);
+
+        // Map season to rate key
+        $seasonKeyMap = [
+            'Non-Peak' => 'nonPeak',
+            'Peak' => 'peak',
+            'Super-Peak' => 'superPeak'
+        ];
+        $seasonKey = $seasonKeyMap[$currentSeason] ?? 'nonPeak';
+
+        // Map season to rate key
+        $seasonKeyMap = [
+            'Non-Peak' => 'nonPeak',
+            'Peak' => 'peak',
+            'Super-Peak' => 'superPeak'
+        ];
+        $seasonKey = $seasonKeyMap[$currentSeason] ?? 'nonPeak';
+        // Get weekend day IDs
+        $weekendDayIds = DayTypeDay::whereHas('dayType', fn($q) => $q->where('name', 'Weekend'))
+            ->pluck('weekday')
+            ->toArray();
+
         // Get all staycations from admin panel
         $staycations = Staycation::with([
             'texts',
@@ -1346,9 +1499,18 @@ class BookingController extends Controller
                 $type = 'camping'; // default
             }
 
-            // Calculate the proper total price for the entire stay (same as booking processing)
-            $mockAcc = ['extra_mattress' => 1]; // Default quantity for display
-            $totalPrice = $this->calculateStaycationRoomPrice($staycation, $checkin, $checkout, $mockAcc);
+            // Calculate the rate per night using the pricing service
+            $currentRate = $this->pricingService->getStaycationRate($staycation, $checkinCarbon, $seasonKey);
+
+            // If no rate configured for the season, use staycation's price field
+            if ($currentRate <= 0) {
+                $currentRate = $staycation->price ?? 0;
+            }
+
+            // If no rate configured, use type-based default
+            if ($currentRate <= 0) {
+                $currentRate = $type === 'glamping' ? 5500 : 3000;
+            }
 
             $roomDetails[$staycation->id] = [
                 'id' => $staycation->id,
@@ -1359,12 +1521,12 @@ class BookingController extends Controller
                 'status' => $status,
                 'available_quantity' => $minOverRange,
                 'total_quantity' => $baseQty,
-                'price' => $totalPrice, // Total price for the entire stay
+                'price' => $currentRate, // Per night rate for current season
                 'price_configs' => $staycation->price_configs ?? []
             ];
         }
 
-        return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout'));
+        return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'currentSeason'));
     }
 
     public function staycationFood()
@@ -1519,6 +1681,42 @@ class BookingController extends Controller
         ]);
     }
 
+    public function getStaycationPricesApi(Request $request)
+    {
+        $request->validate([
+            'checkin' => 'required|date',
+            'checkout' => 'required|date|after:checkin'
+        ]);
+
+        $checkin = $request->checkin;
+        $checkout = $request->checkout;
+
+        // Get all staycations with pricing
+        $staycations = Staycation::all();
+
+        $prices = [];
+        foreach ($staycations as $staycation) {
+            $checkinCarbon = \Carbon\Carbon::parse($checkin);
+            $season = $this->determineSeasonTypeForDate($checkinCarbon);
+            $seasonKey = str_replace('-', '', ucwords($season, '-')); // non-peak -> nonPeak
+
+            $rate = $this->pricingService->getStaycationRate($staycation, $checkinCarbon, $seasonKey);
+
+            $prices[$staycation->id] = [
+                'id' => $staycation->id,
+                'name' => $staycation->name,
+                'price' => $rate,
+                'season' => $season
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'prices' => $prices,
+            'checkin' => $checkin,
+            'checkout' => $checkout
+        ]);
+    }
 
     private function checkAvailabilityInternal($checkin, $checkout, $staycationIds)
     {
@@ -1850,7 +2048,7 @@ class BookingController extends Controller
      */
     protected function calculateMattressFee($mattressCount, $nights)
     {
-        $pricePerNight = BookingSetting::getValue('mattress_price_per_night', self::MATTRESS_PRICE_PER_NIGHT);
+        $pricePerNight = BookingSetting::getValue('mattress_price_per_night', 0);
         return (int)$mattressCount * (int)$pricePerNight * max(1, $nights);
     }
 
@@ -1860,7 +2058,7 @@ class BookingController extends Controller
      */
     protected function calculatePetFee($petCount)
     {
-        $petPrice = BookingSetting::getValue('pet_price', self::PET_PRICE);
+        $petPrice = BookingSetting::getValue('pet_price', 0);
         return (int)$petCount * (int)$petPrice;
     }
 
