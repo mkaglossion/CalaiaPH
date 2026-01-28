@@ -25,7 +25,7 @@
         <div class="flex bg-gray-100 rounded-lg p-1 mb-4">
             <button
                 @click="setTab('room')"
-                :class="activeTab === 'room' ? 'bg-[#b0775c] text-white shadow-sm' : 'text-gray-600 hover:text-[#b0775c]'"
+                :class="activeTab === 'room' ? 'bg-brand text-white shadow-sm' : 'text-gray-600 hover:text-brand'"
                 class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
             >
                 <i class="bi bi-house-door"></i>
@@ -33,7 +33,7 @@
             </button>
             <button
                 @click="setTab('day-visit')"
-                :class="activeTab === 'day-visit' ? 'bg-[#b0775c] text-white shadow-sm' : 'text-gray-600 hover:text-[#b0775c]'"
+                :class="activeTab === 'day-visit' ? 'bg-brand text-white shadow-sm' : 'text-gray-600 hover:text-brand'"
                 class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
             >
                 <i class="bi bi-sun"></i>
@@ -41,7 +41,7 @@
             </button>
             <button
                 @click="setTab('special-event')"
-                :class="activeTab === 'special-event' ? 'bg-[#b0775c] text-white shadow-sm' : 'text-gray-600 hover:text-[#b0775c]'"
+                :class="activeTab === 'special-event' ? 'bg-brand text-white shadow-sm' : 'text-gray-600 hover:text-brand'"
                 class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
             >
                 <i class="bi bi-moon"></i>
@@ -67,7 +67,7 @@
                     name="check_in"
                     id="check_in"
                     x-ref="checkIn"
-                    class="w-full h-12 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#b0775c] focus:border-[#b0775c] outline-none transition-colors text-sm hover:border-[#b0775c]/70 hover:bg-gray-50"
+                    class="w-full h-12 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-colors text-sm hover:border-brand/70 hover:bg-gray-50"
                     placeholder="Select dates"
                     required
                     readonly
@@ -101,7 +101,7 @@
                     name="check_out"
                     id="check_out"
                     x-ref="checkOut"
-                    class="w-full h-12 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#b0775c] focus:border-[#b0775c] outline-none transition-colors text-sm hover:border-[#b0775c]/70 hover:bg-gray-50"
+                    class="w-full h-12 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-colors text-sm hover:border-brand/70 hover:bg-gray-50"
                     placeholder="Select dates"
                     required
                     readonly
@@ -126,7 +126,7 @@
                 <button
                   type="submit"
                   name="start_booking"
-                  class="w-full h-12 bg-[#b0775c] text-white hover:bg-[#b0775c]/90 transition-colors font-medium rounded-lg text-sm flex items-center justify-center"
+                  class="w-full h-12 bg-brand text-white hover:bg-brand/90 transition-colors font-medium rounded-lg text-sm flex items-center justify-center"
                   id="check-availability-btn"
                   style="font-family: 'Gotham Book', sans-serif;"
                 >
@@ -196,7 +196,7 @@
                     </a>
                     <a
                         href="mailto:calaia.ph@gmail.com?subject=Special Event Inquiry"
-                        class="inline-flex items-center gap-2 bg-[#b0775c] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#b0775c]/90 transition-colors"
+                        class="inline-flex items-center gap-2 bg-brand text-white px-6 py-3 rounded-lg font-medium hover:bg-brand/90 transition-colors"
                     >
                         <i class="bi bi-envelope"></i>
                         Send Email
@@ -221,24 +221,24 @@
     }
 
     .flatpickr-day.today {
-        border-color: #b0775c;
+        border-color: #a75e3e;
     }
 
     .flatpickr-day.selected,
     .flatpickr-day.startRange,
     .flatpickr-day.endRange {
-        background: #b0775c;
-        border-color: #b0775c;
+        background: #a75e3e;
+        border-color: #a75e3e;
         color: #ffffff;
     }
 
     .flatpickr-day.inRange {
-        background: rgba(177, 119, 92, 0.12);
+        background: rgba(167, 94, 62, 0.12);
     }
 
     .flatpickr-day.weekend {
-        background-color: #b0775c;
-        border-color: #b0775c;
+        background-color: #a75e3e;
+        border-color: #a75e3e;
         color: #ffffff;
         border-radius: 9999px;
     }

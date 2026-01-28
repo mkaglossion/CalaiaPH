@@ -7,13 +7,13 @@
             "bg" => "bg-[#EADAC3]",   // ✅ exact swatch
             "title" => "text-[#8b5a52]",
             "text" => "text-[#393a35]",
-            "btn" => "bg-[#b0775c] text-white hover:bg-[#9d6a50]",
+            "btn" => "bg-[#a75e3e] text-white hover:bg-[#8a4f2f]",
         ],
         "white" => [
             "bg" => "bg-white",
             "title" => "text-[#8b5a52]",
             "text" => "text-[#393a35]",
-            "btn" => "bg-[#b0775c] text-white hover:bg-[#9d6a50]",
+            "btn" => "bg-[#a75e3e] text-white hover:bg-[#8a4f2f]",
         ],
         "tan" => [
             "bg" => "bg-[#b57c63]",

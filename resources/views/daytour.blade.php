@@ -92,14 +92,11 @@
                   <button
                     type="button"
                     class="px-6 py-2.5 rounded-full text-white text-xs md:text-sm font-semibold tracking-wider shadow
-                           transition-all duration-300 hover:-translate-y-0.5"
-                    style="background-color:#b0775c;"
-                    onmouseover="this.style.backgroundColor='#b0775c'"
-                    onmouseout="this.style.backgroundColor='#b0775c'"
+                           transition-all duration-300 hover:-translate-y-0.5 bg-brand hover:bg-brand/90"
                     data-title="{{ $title }}"
                     data-price="{{ is_array($package) ? 'PHP 1,500 per person' : $package->price }}"
                     data-details='@json(is_array($package) ? $package["details"] : explode("\n", $package->description ?? ""))'
-                    data-gallery='@json(is_array($package) ? array_map(fn($img) => asset($img), $package["gallery"]) : $package->swiperImages->pluck("image_path")->map(fn($path) => asset($path))->toArray())'
+                    data-images='@json(is_array($package) ? array_map(fn($img) => asset($img), $package["gallery"]) : $package->swiperImages->pluck("image_path")->map(fn($path) => asset($path))->toArray())'
                   >
                     LEARN MORE
                   </button>
@@ -162,11 +159,7 @@
     document.querySelectorAll('button[data-title]').forEach(button => {
       button.addEventListener('click', function() {
         lastFocusedElement = this;
-        const title = this.getAttribute('data-title');
-        const details = JSON.parse(this.getAttribute('data-details'));
-        const gallery = JSON.parse(this.getAttribute('data-gallery'));
-        const price = this.getAttribute('data-price');
-        openModaldetailsModal(title, details, gallery, price);
+        openModal(this);
       });
     });
   }

@@ -46,7 +46,7 @@
     document.body.style.overflow = lock ? 'hidden' : '';
   "
   @keydown.escape.window="closeAll()"
-  class="bg-[#b0775c] text-white shadow-lg top-0 z-50"
+  class="bg-brand text-white shadow-lg top-0 z-50"
 >
 
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -100,7 +100,7 @@
             <button
               type="button"
               @click="userOpen = !userOpen"
-              class="inline-flex items-center justify-center rounded-lg p-2 hover:bg-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#b0775c]/40"
+              class="inline-flex items-center justify-center rounded-lg p-2 hover:bg-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
               :aria-expanded="userOpen.toString()"
             >
               <span class="sr-only">Open user menu</span>
@@ -157,7 +157,7 @@
             </button>
             <button
               @click="$store.modals.showSignup = true"
-              class="bg-white text-[#b0775c] px-5 py-2 rounded-lg font-semibold hover:bg-gray-100 transition shadow-md"
+              class="bg-white text-brand px-5 py-2 rounded-lg font-semibold hover:bg-gray-100 transition shadow-md"
             >
               Sign Up
             </button>
@@ -185,7 +185,7 @@
 
         <button
           type="button"
-          class="inline-flex items-center justify-center rounded-lg p-2 hover:bg-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#b0775c]/40"
+          class="inline-flex items-center justify-center rounded-lg p-2 hover:bg-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
           @click="mobileOpen = !mobileOpen"
           aria-controls="mobile-menu"
           :aria-expanded="mobileOpen.toString()"
@@ -206,7 +206,7 @@
 
     <div
       id="mobile-menu"
-      class="fixed top-0 left-0 h-full w-[85%] max-w-sm bg-[#b0775c] shadow-2xl z-50"
+      class="fixed top-0 left-0 h-full w-[85%] max-w-sm bg-brand shadow-2xl z-50"
       x-transition:enter="transition ease-out duration-200"
       x-transition:enter-start="-translate-x-4 opacity-0"
       x-transition:enter-end="translate-x-0 opacity-100"
@@ -214,7 +214,7 @@
       x-transition:leave-start="translate-x-0 opacity-100"
       x-transition:leave-end="-translate-x-4 opacity-0"
     >
-      <div class="flex items-center justify-between px-4 py-4 border-b border-[#b0775c]/15">
+        <div class="flex items-center justify-between px-4 py-4 border-b border-brand/15">
         <span class="font-semibold tracking-wide text-white" style="font-family: 'Gotham Book', sans-serif;">Menu</span>
         <button class="rounded-lg p-2 hover:bg-white/50" @click="mobileOpen = false">✕</button>
       </div>
@@ -241,13 +241,13 @@
         >
           <span>Cart</span>
           @if($cartCount > 0)
-            <span data-js-cart-count class="inline-flex items-center justify-center min-w-6 h-6 rounded-full bg-[#b0775c] text-white text-xs px-2">
+            <span data-js-cart-count class="inline-flex items-center justify-center min-w-6 h-6 rounded-full bg-brand text-white text-xs px-2">
               {{ $cartCount }}
             </span>
           @endif
         </a>
 
-        <div class="pt-3 mt-3 border-t border-[#b0775c]/15">
+          <div class="pt-3 mt-3 border-t border-brand/15">
           @auth
             <a href="{{ route('profile.show') }}" @click="mobileOpen = false" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
               <i class="bi bi-person me-2"></i>Profile
@@ -282,7 +282,7 @@
             </button>
             <button
               @click="$store.modals.showSignup = true; mobileOpen = false"
-              class="w-full mt-2 bg-white text-[#b0775c] px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-100 transition shadow"
+              class="w-full mt-2 bg-white text-brand px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-100 transition shadow"
               style="font-family: 'Gotham Book', sans-serif;"
             >
               Sign Up

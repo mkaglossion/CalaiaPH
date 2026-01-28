@@ -66,7 +66,7 @@
 
                         // Update button
                         button.disabled = true;
-                        button.className = button.className.replace('bg-[#b0775c] text-white hover:bg-[#8f5d54]/90 transition-colors duration-300', 'bg-gray-400 text-gray-600 cursor-not-allowed');
+                        button.className = button.className.replace('bg-[#a75e3e] text-white hover:bg-[#8f5d54]/90 transition-colors duration-300', 'bg-gray-400 text-gray-600 cursor-not-allowed');
                         button.textContent = 'Out of Stock';
                     } else if (stockQuantity <= 5) {
                         // Update badge
@@ -75,7 +75,7 @@
 
                         // Update button
                         button.disabled = false;
-                        button.className = button.className.replace('bg-gray-400 text-gray-600 cursor-not-allowed', 'bg-[#b0775c] text-white hover:bg-[#8f5d54]/90 transition-colors duration-300');
+                        button.className = button.className.replace('bg-gray-400 text-gray-600 cursor-not-allowed', 'bg-[#a75e3e] text-white hover:bg-[#8f5d54]/90 transition-colors duration-300');
                         button.textContent = 'Add to Cart';
                     } else {
                         // Update badge
@@ -84,7 +84,7 @@
 
                         // Update button
                         button.disabled = false;
-                        button.className = button.className.replace('bg-gray-400 text-gray-600 cursor-not-allowed', 'bg-[#b0775c] text-white hover:bg-[#8f5d54]/90 transition-colors duration-300');
+                        button.className = button.className.replace('bg-gray-400 text-gray-600 cursor-not-allowed', 'bg-[#a75e3e] text-white hover:bg-[#8f5d54]/90 transition-colors duration-300');
                         button.textContent = 'Add to Cart';
                     }
                 } else {
@@ -93,7 +93,7 @@
                         stockBadge.remove();
                     }
                     button.disabled = false;
-                    button.className = button.className.replace('bg-gray-400 text-gray-600 cursor-not-allowed', 'bg-[#b0775c] text-white hover:bg-[#8f5d54]/90 transition-colors duration-300');
+                    button.className = button.className.replace('bg-gray-400 text-gray-600 cursor-not-allowed', 'bg-[#a75e3e] text-white hover:bg-[#8f5d54]/90 transition-colors duration-300');
                     button.textContent = 'Add to Cart';
                 }
             });

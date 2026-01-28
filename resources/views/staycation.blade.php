@@ -49,7 +49,7 @@
                 <li>CUSTOM TEAM BUILDING</li>
               </ul>
               <div class="mt-7">
-                <button type="button" @click="openModal('glamping')" class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md" style="background:#b0775c;color:#ffffff;" onmouseover="this.style.backgroundColor='#b0775c'" onmouseout="this.style.backgroundColor='#b0775c'">LEARN MORE</button>
+                <button type="button" @click="openModal('glamping')" class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md" style="background:#a75e3e;color:#ffffff;" onmouseover="this.style.backgroundColor='#a75e3e'" onmouseout="this.style.backgroundColor='#a75e3e'">LEARN MORE</button>
               </div>
             </div>
           </article>
@@ -70,7 +70,7 @@
                 <li>FARM EXPLORATION</li>
               </ul>
               <div class="mt-7">
-                <button type="button" @click="openModal('camping')" class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md" style="background:#b0775c;color:#ffffff;" onmouseover="this.style.backgroundColor='#b0775c'" onmouseout="this.style.backgroundColor='#b0775c'">LEARN MORE</button>
+                <button type="button" @click="openModal('camping')" class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md" style="background:#a75e3e;color:#ffffff;" onmouseover="this.style.backgroundColor='#a75e3e'" onmouseout="this.style.backgroundColor='#a75e3e'">LEARN MORE</button>
               </div>
             </div>
           </article>

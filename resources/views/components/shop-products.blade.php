@@ -39,7 +39,7 @@
           <input type="hidden" name="price" value="{{ $product->price }}">
           <input type="hidden" name="image" value="{{ $product->image ? asset('storage/' . $product->image) : '' }}">
           <input type="hidden" name="quantity" value="1">
-          <button type="submit" class="bg-[#b0775c] text-white px-6 py-3 rounded-2xl hover:bg-[#b0775c] transition-colors duration-300 w-full font-semibold">Add to Cart</button>
+          <button type="submit" class="bg-[#a75e3e] text-white px-6 py-3 rounded-2xl hover:bg-[#a75e3e] transition-colors duration-300 w-full font-semibold">Add to Cart</button>
         </form>
       </div>
     </article>
@@ -88,7 +88,7 @@
           <input type="hidden" name="price" value="{{ $product->price }}">
           <input type="hidden" name="image" value="{{ $product->image ? asset('storage/' . $product->image) : '' }}">
           <input type="hidden" name="quantity" value="1">
-          <button type="submit" class="bg-[#b0775c] text-white px-6 py-3 rounded-2xl hover:bg-[#8f5d54]/90 transition-colors duration-300 w-full font-semibold">Add to Cart</button>
+          <button type="submit" class="bg-[#a75e3e] text-white px-6 py-3 rounded-2xl hover:bg-[#8f5d54]/90 transition-colors duration-300 w-full font-semibold">Add to Cart</button>
         </form>
       </div>
     </article>
