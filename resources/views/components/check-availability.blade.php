@@ -68,7 +68,7 @@
                     id="check_in"
                     x-ref="checkIn"
                     class="w-full h-12 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#b0775c] focus:border-[#b0775c] outline-none transition-colors text-sm hover:border-[#b0775c]/70 hover:bg-gray-50"
-                    placeholder="Select check-in date"
+                    placeholder="Select dates"
                     required
                     readonly
                   >
@@ -102,7 +102,7 @@
                     id="check_out"
                     x-ref="checkOut"
                     class="w-full h-12 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#b0775c] focus:border-[#b0775c] outline-none transition-colors text-sm hover:border-[#b0775c]/70 hover:bg-gray-50"
-                    placeholder="Select check-out date"
+                    placeholder="Select dates"
                     required
                     readonly
                   >

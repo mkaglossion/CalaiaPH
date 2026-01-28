@@ -416,8 +416,8 @@
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-6 py-4 text-white"
                      style="background:#91b474;">
                   <div class="text-sm font-semibold">
-                    Check-in: <span class="font-normal">02:00 PM</span> &nbsp;|&nbsp;
-                    Check-out: <span class="font-normal">12:00 PM</span>
+                    Check-in: <span class="font-normal">01:00 PM</span> &nbsp;|&nbsp;
+                    Check-out: <span class="font-normal">11:00 PM</span>
                   </div>
                   <div class="text-sm italic">
                     * Rates are subject to change without prior notice and indicative only.
