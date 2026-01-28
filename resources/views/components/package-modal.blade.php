@@ -34,14 +34,14 @@
 
         {{-- Navigation Buttons --}}
         <button type="button" id="{{ $id }}-prev" aria-label="Previous slide"
-                class="swiper-button-prev-custom absolute top-1/2 -translate-y-1/2 left-4 z-20 grid place-items-center w-10 h-10 rounded-full bg-[rgba(167,94,62,0.1)] text-[#a75e3e] border-2 border-[#a75e3e] hover:bg-[#a75e3e] hover:text-white transition-all duration-300"
+                class="swiper-button-prev-custom absolute top-1/2 -translate-y-1/2 left-4 z-20 grid place-items-center w-10 h-10 rounded-full bg-[rgba(167,94,62,0.1)] text-brand border-2 border-brand hover:bg-brand hover:text-white transition-all duration-300"
                 data-custom-prev>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
         <button type="button" id="{{ $id }}-next" aria-label="Next slide"
-                class="swiper-button-next-custom absolute top-1/2 -translate-y-1/2 right-4 z-20 grid place-items-center w-10 h-10 rounded-full bg-[rgba(167,94,62,0.1)] text-[#a75e3e] border-2 border-[#a75e3e] hover:bg-[#a75e3e] hover:text-white transition-all duration-300"
+                class="swiper-button-next-custom absolute top-1/2 -translate-y-1/2 right-4 z-20 grid place-items-center w-10 h-10 rounded-full bg-[rgba(167,94,62,0.1)] text-brand border-2 border-brand hover:bg-brand hover:text-white transition-all duration-300"
                 data-custom-next>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -71,7 +71,7 @@
 
     {{-- Modal Footer --}}
     <div class="p-4 md:p-6 border-t border-gray-300 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4 justify-end shrink-0">
-      <button type="button" id="{{ $id }}Btn" class="bg-[#a75e3e] text-white px-6 py-3 rounded-2xl hover:bg-[#a0675a] transition-colors duration-300 w-full md:w-auto font-semibold">
+      <button type="button" id="{{ $id }}Btn" class="bg-brand text-white px-6 py-3 rounded-2xl hover:bg-[#a0675a] transition-colors duration-300 w-full md:w-auto font-semibold">
         {{ $buttonText }}
       </button>
       <button type="button" onclick="closeModal('{{ $id }}')" class="bg-gray-500 text-white px-6 py-3 rounded-2xl hover:bg-gray-600 transition-colors duration-300 w-full md:w-auto font-semibold">
@@ -181,7 +181,7 @@ function buildDynamicContent(modalId, title, details, description) {
   } else if (description) {
     contentHTML = `
       <div class="space-y-4">
-        <h4 class="text-lg font-semibold mb-3" style="color:#a75e3e;">${title} Details</h4>
+        <h4 class="text-lg font-semibold mb-3" style="color:#97655A;">${title} Details</h4>
         <p class="text-gray-700" style="font-family: 'Gotham Book', sans-serif;">${description}</p>
       </div>
     `;

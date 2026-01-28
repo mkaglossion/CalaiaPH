@@ -49,7 +49,7 @@
                       placeholder="Tell us about your inquiry..."></textarea>
         </div>
         <button type="submit"
-                class="w-full bg-[#a75e3e] hover:bg-[#b57c63] text-white font-medium py-3 px-6 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:ring-offset-2">
+                class="w-full bg-brand hover:bg-[#b57c63] text-white font-medium py-3 px-6 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:ring-offset-2">
             {{ $submitText }}
         </button>
     </form>
