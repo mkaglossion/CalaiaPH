@@ -8,6 +8,7 @@
   @vite(['resources/css/app.css', 'resources/js/app.js'])
   <!-- Flatpickr CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  @include('layouts.partials.favicon')
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
   <!-- Flatpickr JS -->

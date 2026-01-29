@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
+    @include('layouts.partials.favicon')
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -47,14 +48,14 @@
                 <div class="relative bg-[#f0e8df] rounded-2xl p-2 overflow-hidden">
                   <button type="button" aria-label="Previous slide"
                           data-role="prev"
-                          class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-[#a75e3e] text-white shadow">
+                          class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-brand text-white shadow">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
                   <button type="button" aria-label="Next slide"
                           data-role="next"
-                          class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-[#a75e3e] text-white shadow">
+                          class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-brand text-white shadow">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -76,14 +77,14 @@
                 <div class="relative bg-[#f0e8df] rounded-2xl p-2 overflow-hidden">
                   <button type="button" aria-label="Previous slide"
                           data-role="prev"
-                          class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-[#a75e3e] text-white shadow">
+                          class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-brand text-white shadow">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
                   <button type="button" aria-label="Next slide"
                           data-role="next"
-                          class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-[#a75e3e] text-white shadow">
+                          class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-brand text-white shadow">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -105,14 +106,14 @@
                 <div class="relative bg-[#f0e8df] rounded-2xl p-2 overflow-hidden">
                   <button type="button" aria-label="Previous slide"
                           data-role="prev"
-                          class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-[#a75e3e] text-white shadow">
+                          class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-brand text-white shadow">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
                   <button type="button" aria-label="Next slide"
                           data-role="next"
-                          class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-[#a75e3e] text-white shadow">
+                          class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-brand text-white shadow">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -134,14 +135,14 @@
                 <div class="relative bg-[#f0e8df] rounded-2xl p-2 overflow-hidden">
                   <button type="button" aria-label="Previous slide"
                           data-role="prev"
-                          class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-[#a75e3e] text-white shadow">
+                          class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-brand text-white shadow">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
                   <button type="button" aria-label="Next slide"
                           data-role="next"
-                          class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-[#a75e3e] text-white shadow">
+                          class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-brand text-white shadow">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -167,7 +168,7 @@
                 <div class="absolute inset-0 pointer-events-none"
                      style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,.35) 85%);"></div>
                 <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
-                  <span class="bg-[#a75e3e] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-2.25 px-3 leading-none cursor-pointer"></span>
+                  <span class="bg-brand text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-2.25 px-3 leading-none cursor-pointer"></span>
                   <a class="text-white text-[14px] tracking-[.08em] uppercase py-2.25 px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
                   <form action="{{ route('cart.add') }}" method="POST" class="inline">
                     @csrf
@@ -188,7 +189,7 @@
                 <div class="absolute inset-0 pointer-events-none"
                      style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,.35) 85%);"></div>
                 <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
-                  <span class="bg-[#a75e3e] text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-2.25 px-3 leading-none cursor-pointer"></span>
+                  <span class="bg-brand text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-2.25 px-3 leading-none cursor-pointer"></span>
                   <a class="text-white text-[14px] tracking-[.08em] uppercase py-2.25 px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
                   <form action="{{ route('cart.add') }}" method="POST" class="inline">
                     @csrf
@@ -257,7 +258,7 @@
                   <div class="flex gap-2 justify-center mt-2">
                     <template x-for="(img, idx) in modal.images" :key="idx">
                       <button class="w-2.5 h-2.5 rounded-full"
-                              :class="idx===i ? 'bg-[#a75e3e] w-4' : 'bg-[#c8a89f]'"
+                              :class="idx===i ? 'bg-brand w-4' : 'bg-[#c8a89f]'"
                               @click="i=idx"></button>
                     </template>
                   </div>
@@ -266,7 +267,7 @@
             </div>
 
             <template x-if="modal.price > 0">
-              <div class="text-lg font-bold text-[#a75e3e]">
+              <div class="text-lg font-bold text-brand">
                 Price: ₱<span x-text="modal.price"></span>
               </div>
             </template>
@@ -274,7 +275,7 @@
             <div class="space-y-2">
               <template x-for="(p, idx) in modal.details" :key="idx">
                 <p style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
-                  <i class="fa-solid fa-circle-check text-[#a75e3e] mr-2"></i>
+                  <i class="fa-solid fa-circle-check text-brand mr-2"></i>
                   <span x-text="p"></span>
                 </p>
               </template>
@@ -283,7 +284,7 @@
 
           <div class="px-5 py-4 border-t flex flex-col md:flex-row items-center justify-end gap-3">
             <template x-if="modal.price > 0">
-              <a href="{{ route('booking.calendar') }}" class="bg-[#a75e3e] text-white px-6 py-3 rounded-2xl hover:bg-[#a0675a] transition-colors duration-300 w-full md:w-auto font-semibold text-center inline-flex items-center justify-center">
+              <a href="{{ route('booking.calendar') }}" class="bg-brand text-white px-6 py-3 rounded-2xl hover:bg-[#a0675a] transition-colors duration-300 w-full md:w-auto font-semibold text-center inline-flex items-center justify-center">
                 <i class="bi bi-calendar-event mr-2"></i>
                 Book Now
               </a>
