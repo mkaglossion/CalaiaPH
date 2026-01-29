@@ -62,7 +62,7 @@
 @if ($messages->isNotEmpty())
     <div
         id="flash-messages"
-        class="fixed top-4 right-4 z-50 w-[min(92vw,36rem)] space-y-3"
+        class="fixed top-4 right-4 z-50 space-y-3 flex flex-col items-end w-auto max-w-4xl"
         data-controller="flash"
     >
         @foreach ($messages as $i => $msg)
@@ -76,16 +76,14 @@
 
             <div
                 id="{{ $id }}"
-                class="flash-item relative rounded-lg border px-4 py-3 shadow-sm {{ $cfg['wrap'] }}"
+                class="flash-item relative rounded-lg border px-4 py-3 shadow-sm {{ $cfg['wrap'] }} inline-block w-auto max-w-4xl"
                 role="{{ $cfg['role'] }}"
                 aria-live="{{ $cfg['role'] === 'alert' ? 'assertive' : 'polite' }}"
                 data-timeout="{{ (int) $timeout }}"
             >
-                <div class="flex items-start">
-                    <div class="shrink-0">
-                        <i class="{{ $icon }} text-lg"></i>
-                    </div>
-                    <div class="ml-3 pr-12 text-sm leading-5 whitespace-normal wrap-break-word">
+                <div class="flex items-center">
+                    <i class="{{ $icon }} text-lg"></i>
+                    <div class="ml-3 pr-12 text-sm leading-5 whitespace-nowrap overflow-auto">
                         {{ $msg['text'] }}
                     </div>
                 </div>
