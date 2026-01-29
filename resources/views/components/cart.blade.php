@@ -34,8 +34,8 @@
         style="display: none;"
     >
         <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-            <h3 class="text-base sm:text-lg font-semibold">Shopping Cart</h3>
-            <button @click="open = false" class="text-gray-400 hover:text-gray-600 text-lg sm:text-xl">✕</button>
+            <h3 class="text-base sm:text-lg font-semibold text-[#8f5d54]">Shopping Cart</h3>
+            <button @click="open = false" class="text-[#8f5d54] hover:text-[#6d3c2a] text-lg sm:text-xl">✕</button>
         </div>
 
         <div class="p-4">
@@ -59,49 +59,142 @@
 
             {{-- WITH ITEMS --}}
             <div x-show="!loading && cart.count > 0" class="space-y-4">
-                <template x-for="item in cart.items" :key="item.id">
-                    <div class="relative border-b pb-3 last:border-0 last:pb-0">
-                        {{-- REMOVE BUTTON --}}
-                        <button
-                            @click.prevent="removeItem(item.id)"
-                            class="absolute top-1.5 right-0 text-xs text-gray-400 hover:text-red-500 px-1"
-                            aria-label="Remove item"
-                        >
-                            ✕
-                        </button>
+                <!-- ICONS FOR BOOKING, FOOD, ACTIVITIES -->
+                <div class="flex gap-3 items-center mb-2">
+                    <template x-if="cart.items.some(item => item.type === 'booking')">
+                        <span title="Booking"><i class="bi bi-calendar-event text-[#8f5d54] text-xl"></i></span>
+                    </template>
+                    <template x-if="cart.items.some(item => item.type === 'food')">
+                        <span title="Food"><i class="bi bi-egg-fried text-[#8f5d54] text-xl"></i></span>
+                    </template>
+                    <template x-if="cart.items.some(item => item.type === 'activity')">
+                        <span title="Activity"><i class="bi bi-bicycle text-[#8f5d54] text-xl"></i></span>
+                    </template>
+                </div>
 
-                        <div class="flex items-center gap-3 pr-4">
-                            <div class="w-10 h-10 shrink-0 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
-                                <template x-if="item.image">
-                                    <img :src="item.image" :alt="item.title" class="w-full h-full object-cover">
-                                </template>
-                                <template x-if="!item.image">
-                                    <i class="bi bi-image text-gray-300 text-xl"></i>
-                                </template>
-                            </div>
-
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-semibold text-sm leading-tight line-clamp-2" x-text="item.title"></h3>
-                                <div class="flex items-center justify-between mt-1 text-xs">
-                                    <span class="text-gray-600"
-                                          x-text="formatCurrency(item.price) + ' × ' + item.quantity"></span>
-                                    <span class="font-semibold text-[#8f5d54]"
-                                          x-text="formatCurrency(item.price * item.quantity)"></span>
+                <!-- Grouped Cart Items by Type -->
+                <template x-if="cart.items.filter(item => item.type === 'booking').length">
+                    <div>
+                        <div class="font-bold text-[#8f5d54] flex items-center gap-2 mb-1"><i class="bi bi-calendar-event"></i> Accommodation</div>
+                        <template x-for="item in cart.items.filter(item => item.type === 'booking')" :key="item.id">
+                            <div class="relative border-b pb-3 last:border-0 last:pb-0">
+                                <button @click.prevent="removeItem(item.id)" class="absolute top-1.5 right-0 text-xs text-gray-400 hover:text-red-500 px-1" aria-label="Remove item">✕</button>
+                                <div class="flex items-center gap-3 pr-4">
+                                    <div class="w-10 h-10 shrink-0 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                                        <template x-if="item.image">
+                                            <img :src="item.image" :alt="item.title" class="w-full h-full object-cover">
+                                        </template>
+                                        <template x-if="!item.image">
+                                            <i class="bi bi-image text-gray-300 text-xl"></i>
+                                        </template>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="font-semibold text-sm leading-tight line-clamp-2" x-text="item.title"></h3>
+                                        <div class="flex items-center justify-between mt-1 text-xs">
+                                            <span class="text-gray-600" x-text="formatCurrency(item.price) + ' × ' + item.quantity"></span>
+                                            <span class="font-semibold text-[#8f5d54]" x-text="formatCurrency(item.price * item.quantity)"></span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </template>
+                    </div>
+                </template>
+
+                <template x-if="cart.items.filter(item => item.type === 'food').length">
+                    <div>
+                        <div class="font-bold text-[#8f5d54] flex items-center gap-2 mb-1 mt-2"><i class="bi bi-egg-fried"></i> Food</div>
+                        <template x-for="item in cart.items.filter(item => item.type === 'food')" :key="item.id">
+                            <div class="relative border-b pb-3 last:border-0 last:pb-0">
+                                <button @click.prevent="removeItem(item.id)" class="absolute top-1.5 right-0 text-xs text-gray-400 hover:text-red-500 px-1" aria-label="Remove item">✕</button>
+                                <div class="flex items-center gap-3 pr-4">
+                                    <div class="w-10 h-10 shrink-0 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                                        <template x-if="item.image">
+                                            <img :src="item.image" :alt="item.title" class="w-full h-full object-cover">
+                                        </template>
+                                        <template x-if="!item.image">
+                                            <i class="bi bi-image text-gray-300 text-xl"></i>
+                                        </template>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="font-semibold text-sm leading-tight line-clamp-2" x-text="item.title"></h3>
+                                        <div class="flex items-center justify-between mt-1 text-xs">
+                                            <span class="text-gray-600" x-text="formatCurrency(item.price) + ' × ' + item.quantity"></span>
+                                            <span class="font-semibold text-[#8f5d54]" x-text="formatCurrency(item.price * item.quantity)"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <template x-if="cart.items.filter(item => item.type === 'activity').length">
+                    <div>
+                        <div class="font-bold text-[#8f5d54] flex items-center gap-2 mb-1 mt-2"><i class="bi bi-bicycle"></i> Activities</div>
+                        <template x-for="item in cart.items.filter(item => item.type === 'activity')" :key="item.id">
+                            <div class="relative border-b pb-3 last:border-0 last:pb-0">
+                                <button @click.prevent="removeItem(item.id)" class="absolute top-1.5 right-0 text-xs text-gray-400 hover:text-red-500 px-1" aria-label="Remove item">✕</button>
+                                <div class="flex items-center gap-3 pr-4">
+                                    <div class="w-10 h-10 shrink-0 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                                        <template x-if="item.image">
+                                            <img :src="item.image" :alt="item.title" class="w-full h-full object-cover">
+                                        </template>
+                                        <template x-if="!item.image">
+                                            <i class="bi bi-image text-gray-300 text-xl"></i>
+                                        </template>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="font-semibold text-sm leading-tight line-clamp-2" x-text="item.title"></h3>
+                                        <div class="flex items-center justify-between mt-1 text-xs">
+                                            <span class="text-gray-600" x-text="formatCurrency(item.price) + ' × ' + item.quantity"></span>
+                                            <span class="font-semibold text-[#8f5d54]" x-text="formatCurrency(item.price * item.quantity)"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Fallback: Show all items if no known types are present -->
+                <template x-if="!cart.items.some(item => ['booking','food','activity'].includes(item.type)) && cart.items.length">
+                    <div>
+                        <div class="font-bold text-[#8f5d54] flex items-center gap-2 mb-1 mt-2"><i class="bi bi-bag"></i> Your Selections</div>
+                        <template x-for="item in cart.items" :key="item.id">
+                            <div class="relative border-b pb-3 last:border-0 last:pb-0">
+                                <button @click.prevent="removeItem(item.id)" class="absolute top-1.5 right-0 text-xs text-gray-400 hover:text-red-500 px-1" aria-label="Remove item">✕</button>
+                                <div class="flex items-center gap-3 pr-4">
+                                    <div class="w-10 h-10 shrink-0 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                                        <template x-if="item.image">
+                                            <img :src="item.image" :alt="item.title" class="w-full h-full object-cover">
+                                        </template>
+                                        <template x-if="!item.image">
+                                            <i class="bi bi-image text-gray-300 text-xl"></i>
+                                        </template>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="font-semibold text-sm leading-tight line-clamp-2" x-text="item.title"></h3>
+                                        <div class="flex items-center justify-between mt-1 text-xs">
+                                            <span class="text-gray-600" x-text="formatCurrency(item.price) + ' × ' + item.quantity"></span>
+                                            <span class="font-semibold text-[#8f5d54]" x-text="formatCurrency(item.price * item.quantity)"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </template>
 
                 <div class="border-t pt-4 mt-2">
-                    <div class="flex justify-between items-center text-lg font-bold">
+                    <div class="flex justify-between items-center text-lg font-bold text-[#8f5d54]">
                         <span>Total:</span>
                         <span x-text="formatCurrency(cart.total)"></span>
                     </div>
                 </div>
 
                 <div class="mt-4 flex justify-center gap-2">
-                    <a href="/activities"
+                    <a href="/shop"
                        class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition text-sm text-center">
                         Continue Shopping
                     </a>
@@ -177,6 +270,14 @@
                 if (this.open) {
                     this.fetchCart();
                 }
+            },
+
+            init() {
+                this.fetchCart();
+                // Listen for cart-updated event from other pages
+                document.addEventListener('cart-updated', () => {
+                    this.fetchCart();
+                });
             }
         }
     }
