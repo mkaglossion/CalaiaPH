@@ -1,4 +1,4 @@
-@props(['features' => [], 'showHeader' => true, 'ulClass' => 'grid grid-cols-1 gap-1 text-xs', 'liClass' => 'px-2 py-1 bg-gray-50 rounded text-xs', 'headerClass' => 'text-sm font-semibold mb-2'])
+@props(['features' => [], 'showHeader' => true, 'ulClass' => 'grid grid-cols-1 gap-1 text-xs', 'liClass' => 'px-2 py-1 bg-gray-50 rounded text-xs', 'headerClass' => 'text-lg font-bold mb-2'])
 
 @if(!empty($features))
   <div class="mb-4">

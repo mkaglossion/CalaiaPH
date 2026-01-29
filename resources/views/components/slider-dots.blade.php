@@ -1,0 +1,1 @@
+<div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>

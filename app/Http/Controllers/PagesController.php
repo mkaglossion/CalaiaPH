@@ -105,7 +105,9 @@ class PagesController extends Controller
 
     public function staycation()
     {
-        $swiperImages = StaySwiperImage::all();
+
+        // Use StaySwiperImage for admin-managed carousel (to match /admin/stay/where-to-stay)
+        $swiperImages = \App\Models\StaySwiperImage::all();
         $texts = StayText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
@@ -126,6 +128,14 @@ class PagesController extends Controller
 
         $checkinCarbon = \Carbon\Carbon::parse($checkin);
         $checkoutCarbon = \Carbon\Carbon::parse($checkout);
+
+        $today = now();
+        // Map season type to rate key
+        $seasonKeyMap = [
+            'Non-Peak' => 'nonPeak',
+            'Peak' => 'peak',
+            'Super-Peak' => 'superPeak'
+        ];
 
         foreach ($staycations as $staycation) {
             $totalNights = $checkinCarbon->diffInDays($checkoutCarbon);
@@ -197,6 +207,13 @@ class PagesController extends Controller
             $mockAcc = ['extra_mattress' => 1]; // Default quantity for display
             $totalPrice = $this->calculateStaycationRoomPrice($staycation, $checkin, $checkout, $mockAcc);
 
+            // Determine current season type and price for today
+            $seasonType = $this->determineSeasonType($today);
+            $rateKey = $seasonKeyMap[$seasonType] ?? 'nonPeak';
+            $config = $staycation->price_configs[0] ?? [];
+            $rates = $config['rates'] ?? [];
+            $currentPrice = $rates[$rateKey] ?? null;
+
             $roomDetails[$staycation->id] = [
                 'id' => $staycation->id,
                 'name' => $staycation->name,
@@ -207,7 +224,9 @@ class PagesController extends Controller
                 'available_quantity' => $minOverRange,
                 'total_quantity' => $baseQty,
                 'price' => $totalPrice, // Total price for the entire stay
-                'price_configs' => $staycation->price_configs ?? []
+                'price_configs' => $staycation->price_configs ?? [],
+                'seasonType' => $seasonType,
+                'currentPrice' => $currentPrice
             ];
         }
 
