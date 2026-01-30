@@ -17,24 +17,30 @@ class DayTourTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'nullable|string|max:255|unique:day_tour_texts,title',
+            'title' => 'nullable|string|max:255',
             'content' => 'nullable|string',
             'daytour_id' => 'nullable|exists:day_tours,id',
         ]);
 
         try {
-            DayTourText::create($request->only(['title', 'content', 'daytour_id']));
-
-            return response()->json(['message' => 'Text content added successfully.']);
+            // For Important Information section, find or create based on title
+            $text = DayTourText::where('title', $request->title)->first();
+            if ($text) {
+                $text->update($request->only(['content', 'daytour_id']));
+                return response()->json(['message' => 'Text content updated successfully.']);
+            } else {
+                DayTourText::create($request->only(['title', 'content', 'daytour_id']));
+                return response()->json(['message' => 'Text content added successfully.']);
+            }
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to add text: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to save text: ' . $e->getMessage()], 500);
         }
     }
 
     public function update(Request $request, DayTourText $dayTourText)
     {
         $request->validate([
-            'title' => 'nullable|string|max:255|unique:day_tour_texts,title,' . $dayTourText->id,
+            'title' => 'nullable|string|max:255',
             'content' => 'nullable|string',
             'daytour_id' => 'nullable|exists:day_tours,id',
         ]);

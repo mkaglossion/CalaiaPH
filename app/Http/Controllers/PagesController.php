@@ -100,7 +100,15 @@ class PagesController extends Controller
     public function daytour()
     {
         $packages = DayTour::with(['swiperImages', 'texts', 'activities'])->get();
-        return $this->renderPage(DayTourSwiperImage::class, DayTourText::class, 'daytour', 'daytour', 'label', 'text', compact('packages'));
+        $swiperImages = DayTourSwiperImage::whereNull('daytour_id')->get();
+        $texts = DayTourText::whereNotNull('title')->pluck('content', 'title')->mapWithKeys(function ($content, $title) {
+            return [strtolower($title) => $content];
+        })->toArray();
+        
+        $data = compact('swiperImages', 'texts', 'packages');
+        $data['active'] = 'daytour';
+        
+        return view('daytour', $data);
     }
 
     public function staycation()
@@ -230,7 +238,10 @@ class PagesController extends Controller
             ];
         }
 
-        return view('staycation', compact('swiperImages', 'texts', 'staycations', 'availability', 'roomDetails', 'checkin', 'checkout') + ['active' => 'staycation']);
+        $data = compact('swiperImages', 'texts', 'staycations', 'availability', 'roomDetails', 'checkin', 'checkout');
+        $data['active'] = 'staycation';
+        
+        return view('staycation', $data);
     }
 
     private function calculateStaycationRoomPrice(Staycation $staycation, string $checkinDate, string $checkoutDate, array &$acc): float
@@ -422,7 +433,10 @@ class PagesController extends Controller
         $activities = Activity::with('swiperImages')->get();
         $slidesByCategory = $this->formatActivitiesForSlides($activities, $activities);
 
-        return view('activities', compact('swiperImages', 'texts', 'slidesByCategory') + ['active' => 'activities']);
+        $data = compact('swiperImages', 'texts', 'slidesByCategory');
+        $data['active'] = 'activities';
+        
+        return view('activities', $data);
     }
 
     /**
@@ -472,7 +486,7 @@ class PagesController extends Controller
                     $carouselImg = $activity && $activity->image ? asset('storage/' . $activity->image) : ($left['images'][0] ?? '');
 
                     $slide['left'] = [
-                        'id'      => $left['title'],
+                        'id'      => $activity->id,
                         'title'   => $left['title'],
                         'img'     => $carouselImg, // Use activity image for carousel
                         'alt'     => $left['title'],
@@ -487,7 +501,7 @@ class PagesController extends Controller
                     $carouselImg = $activity && $activity->image ? asset('storage/' . $activity->image) : ($right['images'][0] ?? '');
 
                     $slide['right'] = [
-                        'id'      => $right['title'],
+                        'id'      => $activity->id,
                         'title'   => $right['title'],
                         'img'     => $carouselImg, // Use activity image for carousel
                         'alt'     => $right['title'],

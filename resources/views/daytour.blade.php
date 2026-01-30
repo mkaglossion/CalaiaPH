@@ -15,6 +15,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
 </head>
 
 <body class="bg-white">
@@ -53,9 +55,9 @@
               <div class="px-5 pt-5">
                 <div class="relative overflow-hidden ring-1 ring-black/5 shadow-sm bg-white">
                   <img
-                    src="{{ asset(is_array($package) ? $package['image'] : ($package->swiperImages->first()->image_path ?? 'images/default.jpg')) }}"
+                    src="{{ $package->image ?: asset('images/default.jpg') }}"
                     class="h-64 md:h-72 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                    alt="{{ is_array($package) ? $package['title'] : $package->name }} package"
+                    alt="{{ $package->name }} package"
                     loading="lazy"
                   >
                 </div>
@@ -75,18 +77,13 @@
                    @endif
                  </h3>
 
+                {{-- Description --}}
+                <p class="text-center mb-4" style="color:#97655A; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+                  {!! nl2br($package->description ?? '') !!}
+                </p>
 
                 {{-- Divider (subtle sage like the mock) --}}
                 <div class="h-px w-full bg-[#dfe6d5] mb-5"></div>
-
-                {{-- Features (compact, centered list) --}}
-                <ul class="space-y-2 text-base md:text-lg uppercase tracking-widest text-center" style="color:#8f6a60; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
-                  @foreach(is_array($package) ? $package['features'] : $package->activities->pluck('name') as $feature)
-                    <li>
-                      {{ strtoupper($feature) }}
-                    </li>
-                  @endforeach
-                </ul>
 
                 {{-- CTA --}}
                 <div class="mt-7 flex justify-center">
@@ -94,10 +91,11 @@
                     type="button"
                     class="px-6 py-2.5 rounded-full text-white text-xs md:text-sm font-semibold tracking-wider shadow
                            transition-all duration-300 hover:-translate-y-0.5 bg-brand hover:bg-brand/90"
-                    data-title="{{ $title }}"
-                    data-price="{{ is_array($package) ? 'PHP 1,500 per person' : $package->price }}"
-                    data-details='@json(is_array($package) ? $package["details"] : explode("\n", $package->description ?? ""))'
-                    data-images='@json(is_array($package) ? array_map(fn($img) => asset($img), $package["gallery"]) : $package->swiperImages->pluck("image_path")->map(fn($path) => asset($path))->toArray())'
+                    data-title="{{ $package->name }}"
+                    data-price="{{ $package->price ? 'PHP ' . number_format($package->price, 2) . ' per person' : 'Price not set' }}"
+                    data-details='@json($package->activities->pluck("name")->toArray())'
+                    data-daytour-id="{{ $package->id }}"
+                    data-image-api-url="/day-tour-swiper-images/daytour"
                   >
                     LEARN MORE
                   </button>
@@ -112,23 +110,16 @@
           <div class="text-center mb-8">
             <h4 class="text-2xl md:text-3xl font-bold mb-4 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
               <i class="bi bi-info-circle-fill mr-3 text-3xl"></i>
-              Important Information
+              {{ $infoTitle ?? 'Important Information' }}
             </h4>
-            <p class="text-lg/7 opacity-90" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">Everything you need to know before your visit</p>
+            <p class="text-lg/7 opacity-90" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">{{ $infoSubtitle ?? 'Everything you need to know before your visit' }}</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            @foreach([
-              ['icon' => 'bi-clock',           'text' => 'Operating hours: 8:00 AM - 5:00 PM daily'],
-              ['icon' => 'bi-calendar-check',  'text' => 'Advance booking recommended for guaranteed slots'],
-              ['icon' => 'bi-person',          'text' => 'Children under 3 years old enter for free'],
-              ['icon' => 'bi-people',          'text' => 'Group discounts available for 10+ persons'],
-              ['icon' => 'bi-person',        'text' => 'Wear comfy clothing and footwear for outdoor activities'],
-              ['icon' => 'bi-cup-straw',       'text' => 'Food and beverages available for purchase on site'],
-            ] as $info)
+            @foreach($infoItems ?? [] as $info)
               <div class="flex items-start bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all duration-300">
-                <i class="bi {{ $info['icon'] }} text-xl mr-4 mt-1 shrink-0"></i>
-                <span class="text-sm md:text-base leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">{{ $info['text'] }}</span>
+                <i class="bi {{ $info['icon'] ?? 'bi-info-circle' }} text-xl mr-4 mt-1 shrink-0"></i>
+                <span class="text-sm md:text-base leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">{{ $info['text'] ?? '' }}</span>
               </div>
             @endforeach
           </div>
@@ -138,7 +129,7 @@
   </main>
 
   {{-- Dynamic Details Modal --}}
-  <x-package-modal id="detailsModal" :price="true" buttonText="Book Now" buttonAction="bookNow" />
+  <x-package-modal id="detailsModal" :price="true" buttonText="Book Now" buttonAction="bookNow" imageApiUrl="/day-tour-swiper-images/daytour" />
 
   {{-- Floating Buttons --}}
   <x-floating-buttons />
@@ -149,18 +140,100 @@
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
   <script>
+  // Image cache for instant modal loading
+  const imageCache = new Map();
+
+  // Make cache globally available
+  window.imageCache = imageCache;
+
+  // Preload images for a specific daytour
+  async function preloadDaytourImages(daytourId) {
+    if (imageCache.has(daytourId)) {
+      return imageCache.get(daytourId);
+    }
+
+    // Prevent multiple simultaneous requests
+    imageCache.set(daytourId, 'loading');
+
+    try {
+      // Use the same API URL as the modal
+      const apiUrl = '/day-tour-swiper-images/daytour/' + daytourId;
+      const response = await fetch(apiUrl);
+      const images = await response.json();
+      imageCache.set(daytourId, images);
+      return images;
+    } catch (error) {
+      console.error('Error preloading images:', error);
+      imageCache.set(daytourId, []);
+      return [];
+    }
+  }
+
+  // Preload all images on page load (aggressive preloading for instant display)
+  async function preloadAllImages() {
+    const buttons = document.querySelectorAll('button[data-daytour-id]');
+    const uniqueDaytourIds = [...new Set(Array.from(buttons).map(button => button.dataset.daytourId))];
+
+    // Preload all images immediately for instant modal display
+    const allPromises = uniqueDaytourIds.map(daytourId => preloadDaytourImages(daytourId));
+
+    try {
+      await Promise.all(allPromises);
+      console.log('All daytour images preloaded successfully');
+    } catch (error) {
+      console.error('Error preloading images:', error);
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
+    // Start preloading images immediately
+    preloadAllImages();
+
     // Initialize modal functionality
     initializeModal();
+
+    // Initialize modal swipers (same as staycation)
+    initModalSwipers();
   });
+
+  function initModalSwipers(){
+    if(!window.Swiper) return;
+    document.querySelectorAll(".swiper[data-swiper='modal']").forEach((el)=>{
+      try{
+        if(!el.swiper){
+          const swiper = new Swiper(el, {
+            slidesPerView: 1,
+            loop: true,
+            navigation: { nextEl: el.querySelector('[data-custom-next]'), prevEl: el.querySelector('[data-custom-prev]') },
+            pagination: { el: el.querySelector('.swiper-pagination'), clickable: true },
+          });
+        }
+      }catch(e){ console.warn('Modal swiper init failed', e); }
+    });
+  }
 
   let lastFocusedElement = null;
 
   function initializeModal() {
-    document.querySelectorAll('button[data-title]').forEach(button => {
+    const buttons = document.querySelectorAll('button[data-title]');
+
+    buttons.forEach(button => {
+      // Preload images on hover for instant loading (with improved caching check)
+      button.addEventListener('mouseenter', function() {
+        const daytourId = this.dataset.daytourId;
+        if (daytourId && (!imageCache.has(daytourId) || imageCache.get(daytourId) === 'loading')) {
+          preloadDaytourImages(daytourId);
+        }
+      });
+
       button.addEventListener('click', function() {
         lastFocusedElement = this;
-        openModal(this);
+        // Check if openPackageModal function is available
+        if (typeof openPackageModal === 'function') {
+          openPackageModal(this);
+        } else {
+          console.error('openPackageModal function not found. Modal component may not be loaded.');
+        }
       });
     });
   }

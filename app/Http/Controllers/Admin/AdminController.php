@@ -33,6 +33,7 @@ use App\Models\PricingConfig;
 use App\Models\FarmSwiperImage;
 use App\Models\FarmText;
 use App\Models\Product;
+use App\Models\DayTourSwiperImage;
 
 
 
@@ -102,10 +103,18 @@ class AdminController extends Controller
 
     public function dayTour()
     {
-        $tours  = DayTour::with('activities')->get(); // get all packages with activities
+        $tours  = DayTour::with('activities', 'swiperImages')->get(); // get all packages with activities
         $texts = DayPackageText::all();
         $activities = Activity::all(); // list of all activities for selection
-        return view('admin.dayTour.days', compact('tours', 'texts', 'activities'));
+        $images = DayTourSwiperImage::latest()->get();
+
+        // Fetch info section data
+        $infoTitle = \App\Models\DayTourText::where('title', 'info_title')->first();
+        $infoSubtitle = \App\Models\DayTourText::where('title', 'info_subtitle')->first();
+        $infoItemsJson = \App\Models\DayTourText::where('title', 'info_items')->first();
+        $infoItems = $infoItemsJson ? json_decode($infoItemsJson->content, true) : [];
+
+        return view('admin.dayTour.days', compact('tours', 'texts', 'activities', 'images', 'infoTitle', 'infoSubtitle', 'infoItems', 'infoItemsJson'));
     }
 
     public function staycationAccommodation()
@@ -215,5 +224,22 @@ class AdminController extends Controller
         return view('admin.stay.settings', compact('currentSeason', 'pricingByStaycation', 'staycations'));
     }
 
+    public function dayTourDays()
+    {
+        $packages = DayTour::all();
+        $tours = $packages; // for backward compatibility
+        $texts = DayPackageText::all();
+        $activities = Activity::all();
+        $images = DayTourSwiperImage::all();
 
+        // Get Important Information data
+        $infoTitle = \App\Models\DayTourText::where('title', 'info_title')->first();
+        $infoSubtitle = \App\Models\DayTourText::where('title', 'info_subtitle')->first();
+        $infoItemsJson = \App\Models\DayTourText::where('title', 'info_items')->first();
+        $infoItems = $infoItemsJson ? json_decode($infoItemsJson->content, true) : [];
+
+        return view('admin.dayTour.days', compact('packages', 'tours', 'texts', 'activities', 'images', 'infoTitle', 'infoSubtitle', 'infoItems', 'infoItemsJson'));
+    }
 }
+
+

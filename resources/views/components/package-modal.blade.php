@@ -8,18 +8,23 @@
     'csrfToken' => csrf_token(),
     'cartRoute' => route('cart.add'),
     'bookingRoute' => route('booking.create'),
-    'appendParams' => true
+    'appendParams' => true,
+    'imageApiUrl' => null,
+    'customButtonAction' => null
 ])
 
+{{-- Swiper CSS --}}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
 {{-- Modal Container --}}
-<div id="{{ $id }}" class="fixed inset-0 bg-transparent flex items-center justify-center p-2 md:p-4 pt-16 md:pt-4 opacity-0 pointer-events-none z-50 transition-opacity duration-300">
+<div id="{{ $id }}" x-data="packageModal()" :class="{ 'flex': modalOpen, 'hidden': !modalOpen }" class="hidden fixed inset-0 bg-black/50 items-center justify-center p-2 md:p-4 pt-16 md:pt-4 z-50" @keydown.escape.window="closeModal()" @click.self="closeModal()">
   <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[95vh] md:max-h-[90vh] flex flex-col border border-gray-300 mx-2 sm:mx-4">
 
     {{-- Modal Header --}}
     <div class="p-4 md:p-6 border-b border-gray-300 shrink-0">
       <div class="flex justify-between items-center">
         <h3 id="{{ $id }}Label" class="text-xl md:text-2xl font-bold text-gray-800" style="font-size: 25px; font-family: 'Gotham Book', sans-serif; color: #8f5d54;"></h3>
-        <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" onclick="closeModal('{{ $id }}')" aria-label="Close modal">
+        <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" @click="closeModal()" aria-label="Close modal">
           <i class="bi bi-x-lg text-xl md:text-2xl"></i>
         </button>
       </div>
@@ -29,27 +34,16 @@
     <div class="p-4 md:p-6 flex-1 overflow-y-auto" id="{{ $id }}Body">
 
       {{-- Image Carousel --}}
-      <div class="swiper relative packageSwiper mb-4 md:mb-6 rounded-2xl min-h-75" data-swiper="modal">
-        <div class="swiper-wrapper rounded-2xl overflow-hidden" id="{{ $id }}Wrapper"></div>
+      <div class="swiper relative packageSwiper mb-4 md:mb-6 rounded-2xl min-h-75" data-slides-count="0" data-swiper="modal">
+        <div class="swiper-wrapper rounded-2xl overflow-hidden" id="{{ $id }}Wrapper">
+          {{-- Images will be loaded here dynamically --}}
+        </div>
 
         {{-- Navigation Buttons --}}
-        <button type="button" id="{{ $id }}-prev" aria-label="Previous slide"
-                class="swiper-button-prev-custom absolute top-1/2 -translate-y-1/2 left-4 z-20 grid place-items-center w-10 h-10 rounded-full bg-[rgba(167,94,62,0.1)] text-brand border-2 border-brand hover:bg-brand hover:text-white transition-all duration-300"
-                data-custom-prev>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <button type="button" id="{{ $id }}-next" aria-label="Next slide"
-                class="swiper-button-next-custom absolute top-1/2 -translate-y-1/2 right-4 z-20 grid place-items-center w-10 h-10 rounded-full bg-[rgba(167,94,62,0.1)] text-brand border-2 border-brand hover:bg-brand hover:text-white transition-all duration-300"
-                data-custom-next>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
+        <x-slider-arrows-brand />
 
-        {{-- Custom Dots --}}
-        <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
+        {{-- Pagination Dots --}}
+        <div class="swiper-pagination"></div>
       </div>
 
       {{-- Additional Content --}}
@@ -74,25 +68,158 @@
       <button type="button" id="{{ $id }}Btn" class="bg-brand text-white px-6 py-3 rounded-2xl hover:bg-[#a0675a] transition-colors duration-300 w-full md:w-auto font-semibold">
         {{ $buttonText }}
       </button>
-      <button type="button" onclick="closeModal('{{ $id }}')" class="bg-gray-500 text-white px-6 py-3 rounded-2xl hover:bg-gray-600 transition-colors duration-300 w-full md:w-auto font-semibold">
+      <button type="button" @click="closeModal()" class="bg-gray-500 text-white px-6 py-3 rounded-2xl hover:bg-gray-600 transition-colors duration-300 w-full md:w-auto font-semibold">
         Close
       </button>
     </div>
   </div>
 </div>
 
+{{-- Swiper JS --}}
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
 <script>
 // Package Modal Management
 let packageSwipers = {};
+let currentDaytourId = null;
+let currentImageApiUrl = null;
 
-// Modal Functions
-function openModal(button) {
+// Alpine.js data for modal
+function packageModal() {
+  return {
+    modalOpen: false,
+    openModal() {
+      this.modalOpen = true;
+      document.body.style.overflow = 'hidden';
+      // Also update classes as fallback
+      const modalEl = document.getElementById('{{ $id }}');
+      if (modalEl) {
+        modalEl.classList.remove('hidden');
+        modalEl.classList.add('flex');
+      }
+    },
+    closeModal() {
+      this.modalOpen = false;
+      document.body.style.overflow = '';
+      cleanupSwiper('{{ $id }}');
+      currentDaytourId = null;
+      currentImageApiUrl = null;
+      // Also update classes as fallback
+      const modalEl = document.getElementById('{{ $id }}');
+      if (modalEl) {
+        modalEl.classList.remove('flex');
+        modalEl.classList.add('hidden');
+      }
+    }
+  }
+}
+
+// Make openModal globally available
+window.openPackageModal = function(button) {
   const title = button.dataset.title;
   const details = JSON.parse(button.dataset.details || '[]');
-  const images = JSON.parse(button.dataset.images || '[]');
+  const daytourId = button.dataset.daytourId;
   const description = button.dataset.description || '';
   const price = button.dataset.price;
-  showPackageDetails(title, details, images, description, price);
+  const imageApiUrl = button.dataset.imageApiUrl || '{{ $imageApiUrl }}';
+
+  // Store current daytour ID for modal functionality
+  currentDaytourId = daytourId;
+  currentImageApiUrl = imageApiUrl;
+
+  // Get the modal instance and open it
+  const modalElement = document.getElementById('{{ $id }}');
+
+  if (modalElement) {
+    // Try Alpine.js first
+    if (modalElement._x_dataStack && modalElement._x_dataStack[0]) {
+      const modalData = modalElement._x_dataStack[0];
+      modalData.openModal();
+    } else {
+      // Fallback: directly manipulate the element
+      modalElement.classList.remove('hidden');
+      modalElement.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  // Check if images are already cached for instant display
+  let cachedImages = [];
+  if (window.imageCache && window.imageCache.has(daytourId)) {
+    const cacheEntry = window.imageCache.get(daytourId);
+    if (Array.isArray(cacheEntry) && cacheEntry.length > 0) {
+      cachedImages = cacheEntry;
+    }
+  }
+
+  // Always show modal with cached images immediately (no loading state)
+  showPackageDetails(title, details, cachedImages, description, price);
+};
+
+window.closeModal = function() {
+  const modalElement = document.getElementById('{{ $id }}');
+  if (modalElement) {
+    // Try Alpine.js first
+    if (modalElement._x_dataStack && modalElement._x_dataStack[0]) {
+      const modalData = modalElement._x_dataStack[0];
+      modalData.closeModal();
+    } else {
+      // Fallback: directly manipulate the element
+      modalElement.classList.remove('flex');
+      modalElement.classList.add('hidden');
+      document.body.style.overflow = '';
+      cleanupSwiper('{{ $id }}');
+      currentDaytourId = null;
+      currentImageApiUrl = null;
+    }
+  }
+};
+
+window.closeModal = closeModal;
+
+function updateModalImages(imageUrls) {
+  const modalId = '{{ $id }}';
+  const swiperInstance = packageSwipers[modalId];
+  const swiperEl = document.querySelector('#' + modalId + ' .packageSwiper');
+
+  if (swiperInstance && imageUrls.length > 0) {
+    // If swiper exists and we have images, update slides smoothly
+    const swiperWrapper = document.getElementById(modalId + 'Wrapper');
+
+    // Build new slides with hero-slider structure
+    const newSlides = imageUrls.map((url, index) => `
+      <div class="swiper-slide relative flex items-center justify-center overflow-hidden">
+        ${url.includes('/video/') ?
+          `<video src="${url}" class="w-full h-64 md:h-96 object-cover" autoplay muted loop loading="lazy"></video>` :
+          `<img src="${url}"
+               alt="Slide Image ${index + 1}"
+               class="w-full h-64 md:h-96 object-cover"
+               loading="lazy">`
+        }
+      </div>
+    `).join('');
+
+    swiperWrapper.innerHTML = newSlides;
+
+    // Update slides count
+    if (swiperEl) swiperEl.dataset.slidesCount = imageUrls.length.toString();
+
+    // Update swiper
+    swiperInstance.update();
+    swiperInstance.updateSlides();
+    swiperInstance.updateSlidesClasses();
+
+    // Reset to first slide smoothly
+    swiperInstance.slideTo(0, 300);
+  } else {
+    // Fallback: recreate swiper if it doesn't exist
+    cleanupSwiper(modalId);
+    buildCarouselSlides(modalId, imageUrls);
+    requestAnimationFrame(() => {
+      initializeSwiper(modalId, imageUrls);
+      setupCustomDots(modalId, imageUrls);
+    });
+  }
 }
 
 function showPackageDetails(title, details, imageUrls, description, price = null) {
@@ -104,23 +231,17 @@ function showPackageDetails(title, details, imageUrls, description, price = null
   // Build carousel slides
   buildCarouselSlides(modalId, imageUrls);
 
+  // Initialize swiper with correct images
+  initializeSwiper(modalId, imageUrls);
+
   // Update modal content
   updateModalContent(modalId, title, price);
 
   // Build dynamic content
   buildDynamicContent(modalId, title, details, description);
 
-  // Initialize swiper
-  initializeSwiper(modalId);
-
-  // Setup custom dots
-  setupCustomDots(modalId, imageUrls);
-
   // Setup button action
   setupButtonAction(modalId);
-
-  // Show modal
-  showModal(modalId);
 }
 
 function cleanupSwiper(modalId) {
@@ -132,11 +253,42 @@ function cleanupSwiper(modalId) {
 
 function buildCarouselSlides(modalId, imageUrls) {
   const swiperWrapper = document.getElementById(modalId + 'Wrapper');
+  const swiperEl = document.querySelector('#' + modalId + ' .packageSwiper');
+
+  if (!imageUrls || imageUrls.length === 0) {
+    swiperWrapper.innerHTML = `
+      <div class="swiper-slide relative flex items-center justify-center bg-gray-200 overflow-hidden">
+        <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
+          <div class="text-center px-4">
+            <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
+                style="font-family: 'Gotham Book', sans-serif;">
+              No Image Available
+            </h2>
+            <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
+              style="font-family: 'Gotham Book', sans-serif; font-style: italic;">
+              Images will be added soon
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+    if (swiperEl) swiperEl.dataset.slidesCount = '0';
+    return;
+  }
+
   swiperWrapper.innerHTML = imageUrls.map((url, index) => `
-    <div class="swiper-slide">
-      <img src="${url}" class="w-full h-64 md:h-96 object-cover" alt="Image ${index + 1}" loading="lazy">
+    <div class="swiper-slide relative flex items-center justify-center overflow-hidden">
+      ${url.includes('/video/') ?
+        `<video src="${url}" class="w-full h-64 md:h-96 object-cover" autoplay muted loop loading="lazy"></video>` :
+        `<img src="${url}"
+             alt="Slide Image ${index + 1}"
+             class="w-full h-64 md:h-96 object-cover"
+             loading="lazy">`
+      }
     </div>
   `).join('');
+
+  if (swiperEl) swiperEl.dataset.slidesCount = imageUrls.length.toString();
 }
 
 function updateModalContent(modalId, title, price) {
@@ -190,66 +342,73 @@ function buildDynamicContent(modalId, title, details, description) {
   slotContainer.innerHTML = contentHTML;
 }
 
-function initializeSwiper(modalId) {
-  packageSwipers[modalId] = new Swiper('.packageSwiper', {
-    slidesPerView: 1,
-    loop: true,
-    watchOverflow: false,
-    navigation: {
-      nextEl: '#' + modalId + '-next',
-      prevEl: '#' + modalId + '-prev'
-    },
-  });
+function initializeSwiper(modalId, imageUrls = []) {
+  // Self-contained swiper initialization for modal
+  const swiperEl = document.querySelector('#' + modalId + ' .packageSwiper');
+  if (swiperEl && window.Swiper) {
+    // Destroy existing swiper if it exists
+    if (swiperEl.swiper) {
+      swiperEl.swiper.destroy();
+    }
+
+    const slidesCount = parseInt(swiperEl.dataset.slidesCount) || imageUrls.length;
+
+    // Create new swiper instance with hero-slider configuration
+    packageSwipers[modalId] = new Swiper(swiperEl, {
+      autoplay: {
+        delay: 10000,
+        disableOnInteraction: false,
+      },
+      loop: slidesCount > 1,
+      effect: 'fade',
+      fadeEffect: {
+        crossFade: true
+      },
+      keyboard: {
+        enabled: true,
+        onlyInViewport: false,
+      },
+      navigation: {
+        nextEl: swiperEl.querySelector('[data-custom-next]'),
+        prevEl: swiperEl.querySelector('[data-custom-prev]')
+      },
+      pagination: {
+        el: swiperEl.querySelector('.swiper-pagination'),
+        clickable: true
+      },
+      a11y: {
+        prevSlideMessage: 'Previous slide',
+        nextSlideMessage: 'Next slide',
+        firstSlideMessage: 'This is the first slide',
+        lastSlideMessage: 'This is the last slide',
+      },
+    });
+  }
 }
 
 function setupCustomDots(modalId, imageUrls) {
-  const dotsEl = document.querySelector('.packageSwiper [data-custom-dots]');
-  const numSlides = imageUrls.length;
-
-  function updateDots() {
-    dotsEl.innerHTML = '';
-    for (let i = 0; i < numSlides; i++) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'h-2.5 rounded-full ' +
-        (i === packageSwipers[modalId].realIndex ? 'bg-[#a97464] w-4' : 'bg-[#c8a89f] w-2.5');
-      button.setAttribute('role', 'tab');
-      button.setAttribute('aria-label', `Go to slide ${i + 1}`);
-      button.addEventListener('click', () => packageSwipers[modalId].slideToLoop(i));
-      dotsEl.appendChild(button);
-    }
-  }
-
-  updateDots();
-  packageSwipers[modalId].on('slideChange', updateDots);
+  // Custom dots are now handled by swiper-pagination
+  // This function is kept for backward compatibility but does nothing
 }
 
 function setupButtonAction(modalId) {
   document.getElementById(modalId + 'Btn').onclick = function() {
     const buttonAction = '{{ $buttonAction }}';
-    if (buttonAction === 'addToCart') {
+    const customButtonAction = '{{ $customButtonAction }}';
+
+    if (customButtonAction) {
+      // Use custom button action if provided
+      if (typeof window[customButtonAction] === 'function') {
+        window[customButtonAction]();
+      } else {
+        console.error('Custom button action function not found:', customButtonAction);
+      }
+    } else if (buttonAction === 'addToCart') {
       handleAddToCart();
     } else if (buttonAction === 'bookNow') {
       handleBookNow();
     }
   };
-}
-
-function showModal(modalId) {
-  const modal = document.getElementById(modalId);
-  modal.classList.remove('opacity-0', 'pointer-events-none');
-  modal.classList.add('opacity-100', 'pointer-events-auto');
-  document.body.style.overflow = 'hidden';
-  modal.focus();
-}
-
-function closeModal(modalId) {
-  const modal = document.getElementById(modalId);
-  modal.classList.remove('opacity-100', 'pointer-events-auto');
-  modal.classList.add('opacity-0', 'pointer-events-none');
-  document.body.style.overflow = '';
-
-  cleanupSwiper(modalId);
 }
 
 // Cart and Booking Functions
@@ -306,20 +465,6 @@ function handleBookNow() {
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
-  const modal = document.getElementById('{{ $id }}');
-
-  // Close on outside click
-  modal.addEventListener('click', function(e) {
-    if (e.target === this) {
-      closeModal('{{ $id }}');
-    }
-  });
-
-  // Close on Escape key
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && modal.classList.contains('opacity-100')) {
-      closeModal('{{ $id }}');
-    }
-  });
+  // Modal initialization if needed
 });
 </script>

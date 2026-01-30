@@ -9,5 +9,10 @@ class DayTourSwiperImage extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'image_path', 'public_id', 'daytour_id'];
+    protected $fillable = ['title', 'image_path', 'public_id', 'day_tour_id', 'package_id', 'daytour_id'];
+
+    public function dayTour()
+    {
+        return $this->belongsTo(DayTour::class, 'daytour_id');
+    }
 }

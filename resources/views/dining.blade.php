@@ -107,8 +107,9 @@
                   {{ $food->name }}
                 </h3>
                 <p class="mb-2 text-[#97655A] text-xs" style="font-family: 'Gotham Book', sans-serif;">
-                  {{ $food->name }} ARE AVAILABLE FOR GROUPS AND FAMILIES.
+                  {!! nl2br($food->description ?? '') !!}
                 </p>
+                <p class="text-sm font-bold text-[#97655A] mb-3">PHP {{ $food->price ?? 'Contact for pricing' }}</p>
 
                 <button
                   data-title="{{ $food->name }}"
@@ -116,7 +117,7 @@
                   data-details='@json($food->texts->where("section", "details")->pluck("content")->toArray())'
                   data-images='@json($foodImages)'
                   data-description="{{ $food->description ?? 'Delicious food option' }}"
-                  onclick="openModal(this)"
+                  onclick="openPackageModal(this)"
                   aria-label="Learn more about {{ $food->name }}"
                   class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4 bg-brand text-white hover:bg-brand transition-colors focus:ring-2 focus:ring-brand focus:outline-none {{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
                   {{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'disabled' : '' }}>
@@ -200,7 +201,7 @@
                           {{ $food->name }}
                         </h3>
                         <p class="mb-2 text-[#97655A] text-xs" style="font-family: 'Gotham Book', sans-serif;">
-                          {{ $food->description ?? 'Delicious option' }}
+                          {!! nl2br($food->description ?? 'Delicious option') !!}
                         </p>
                         <p class="text-sm font-bold text-[#97655A] mb-3">PHP {{ $food->price ?? 'Contact for pricing' }}</p>
 
@@ -210,7 +211,7 @@
                           data-details='@json($food->texts->where("section", "details")->pluck("content")->toArray())'
                           data-images='@json($foodImages)'
                           data-description="{{ $food->description ?? 'Delicious food option' }}"
-                          onclick="openModal(this)"
+                          onclick="openPackageModal(this)"
                           aria-label="Learn more about {{ $food->name }}"
                           class="inline-flex items-center justify-center rounded-full px-8 py-2 text-sm font-semibold uppercase tracking-wide shadow-md mt-2 bg-brand text-white hover:bg-brand transition-colors focus:ring-2 focus:ring-brand focus:outline-none {{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
                           {{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'disabled' : '' }}>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\DayTourSwiperImage;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class DayTourSwiperImageController extends Controller
@@ -16,12 +17,18 @@ class DayTourSwiperImageController extends Controller
         return view('admin.pages.daytour', compact('images'));
     }
 
+    // Upload additional swiper images for modal (separate from package image)
     public function store(Request $request)
     {
+        Log::info('DayTourSwiperImageController::store called', $request->all());
+        
         $validated = $request->validate([
             'image' => 'required|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
             'title' => 'nullable|string|max:255',
+            'daytour_id' => 'nullable|exists:day_tours,id',
         ]);
+
+        Log::info('Validation passed', $validated);
 
         $file = $request->file('image');
         $mimeType = $file->getMimeType();
@@ -41,6 +48,7 @@ class DayTourSwiperImageController extends Controller
                 'title' => $validated['title'] ?? null,
                 'image_path' => $uploadedFileUrl, // store Cloudinary URL
                 'public_id' => $publicId,
+                'daytour_id' => $validated['daytour_id'] ?? null,
             ]);
 
             $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
@@ -57,9 +65,13 @@ class DayTourSwiperImageController extends Controller
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
             'image' => 'nullable|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
+            'daytour_id' => 'nullable|exists:day_tours,id',
         ]);
 
-        $data = ['title' => $validated['title'] ?? null];
+        $data = [
+            'title' => $validated['title'] ?? null,
+            'daytour_id' => $validated['daytour_id'] ?? null,
+        ];
 
         if ($request->hasFile('image')) {
             // Delete old image from Cloudinary
@@ -91,5 +103,12 @@ class DayTourSwiperImageController extends Controller
         $DayTourSwiperImage->delete();
 
         return redirect()->back()->with('success', 'Image deleted successfully!');
+    }
+
+    // Get swiper images for modal (additional images, not package image)
+    public function getImages($daytourId)
+    {
+        $images = DayTourSwiperImage::where('daytour_id', $daytourId)->pluck('image_path')->toArray();
+        return response()->json($images);
     }
 }

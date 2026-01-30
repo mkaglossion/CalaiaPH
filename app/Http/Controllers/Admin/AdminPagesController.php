@@ -42,7 +42,11 @@ class AdminPagesController extends Controller
     private function showPage($page)
     {
         [$imageModel, $textModel, $view] = $this->pageConfigs[$page];
-        $images = $imageModel::all();
+        if ($page === 'dayTour') {
+            $images = $imageModel::whereNull('daytour_id')->get();
+        } else {
+            $images = $imageModel::all();
+        }
         $texts = $textModel::all();
 
         return view($view, compact('images', 'texts'));

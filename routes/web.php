@@ -75,6 +75,7 @@ Route::get('/', function () {
 // ========== Public Routes ==========
 Route::get('/home', [PagesController::class, 'home'])->name('home');
 Route::get('/daytour', [DayTourController::class, 'index'])->name('daytour');
+Route::get('/day-tour-swiper-images/daytour/{id}', [App\Http\Controllers\Admin\DayTourSwiperImageController::class, 'getImages'])->name('public.day-tour-swiper-images.get');
 Route::get('/staycation', [PagesController::class, 'staycation'])->name('staycation');
 Route::get('/activities', [PagesController::class, 'activities'])->name('activities');
 Route::get('/dining', [PagesController::class, 'dining'])->name('dining');
@@ -92,6 +93,10 @@ Route::post('/booking', [BookingController::class, 'store'])->name('booking.stor
 Route::get('/booking/calendar', [BookingCalendarController::class, 'show'])->name('booking.calendar');
 // Centralized API for activities
 Route::get('/api/activities', [BookingController::class, 'getActivitiesApi'])->name('api.activities');
+Route::get('/api/activity-images/{id}', function($id) {
+    $activity = \App\Models\Activity::find($id);
+    return $activity ? $activity->swiperImages->pluck('image_path') : [];
+})->name('api.activity-images');
 Route::get('/api/booking/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.activities');
 Route::get('/api/booking/settings', [BookingController::class, 'getBookingSettings'])->name('api.booking.settings');
 Route::get('/booking/activities', [BookingController::class, 'activities'])->name('booking.activities');
@@ -184,7 +189,7 @@ Route::middleware('auth')->group(function () {
 
 
 // ========== Admin Routes ==========
-Route::middleware(['auth'])->prefix('admin')->group(function () {
+Route::prefix('admin')->group(function () {
     // Main Sections
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/users', [AdminUsersController::class, 'index'])->name('admin.users');
@@ -210,6 +215,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::prefix('/day')->group(function () {
         Route::get('/day', [AdminController::class, 'dayTour'])->name('admin.day.day');
         Route::get('/day-tour', [AdminPagesController::class, 'dayTour'])->name('admin.day.daytour');
+        Route::get('/day-tour/days', [AdminController::class, 'dayTourDays'])->name('admin.day-tour.days');
     });
     Route::prefix('/stay')->group(function () {
         Route::get('/where-to-stay', [AdminPagesController::class, 'whereToStay'])->name('admin.stay.wheretostay');
@@ -323,6 +329,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     // Swiper Image Controllers
     Route::resource('home-swiper-images', HomeSwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('day-tour-swiper-images', DayTourSwiperImageController::class)->only(['store', 'update', 'destroy']);
+    Route::get('day-tour-swiper-images/daytour/{id}', [DayTourSwiperImageController::class, 'getImages'])->name('day-tour-swiper-images.get');
     Route::resource('stay-swiper-images', StaySwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('do-swiper-images', DoSwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('food-swiper-images', FoodSwiperImageController::class)->only(['store', 'update', 'destroy']);
@@ -355,7 +362,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::resource('products', ProductController::class);
 
     // Other CRUD
-    Route::resource('day-tours', DayTourController::class)->only(['store', 'destroy']);
+    Route::resource('day-tours', DayTourController::class)->only(['store', 'update', 'destroy']);
     Route::resource('staycation-accommodations', StaycationAccommodationController::class)->only(['store', 'destroy']);
 
     // ========== Inventory Management Routes ==========
