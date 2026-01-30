@@ -114,7 +114,46 @@ Route::get('/api/inventory/{roomId}', [\App\Http\Controllers\Admin\InventoryCont
 Route::post('/booking/select-dates', [BookingController::class, 'selectDates'])->name('booking.selectDates');
 Route::post('/booking/check-availability', [BookingController::class, 'checkAvailability'])->name('booking.checkAvailability');
 Route::get('/booking/payment', [BookingController::class, 'payment'])->name('booking.payment');
+Route::post('/booking/create-payment-intent', [BookingController::class, 'createPaymentIntent'])->name('booking.createPaymentIntent');
+Route::post('/booking/initiate-payment', [BookingController::class, 'initiatePayment'])->name('booking.initiatePayment');
 Route::post('/booking/payment', [BookingController::class, 'processPayment'])->name('booking.processPayment');
+Route::get('/test-paymongo', function() {
+    try {
+        $client = new \GuzzleHttp\Client();
+        $response = $client->post("https://api.paymongo.com/v1/checkout_sessions", [
+            'headers' => [
+                'Authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'data' => [
+                    'attributes' => [
+                        'amount' => 10000, // ₱100.00 in centavos
+                        'currency' => 'PHP',
+                        'description' => 'Test Payment',
+                        'success_url' => url('/test-success'),
+                        'cancel_url' => url('/test-failed'),
+                    ]
+                ]
+            ]
+        ]);
+
+        $data = json_decode($response->getBody(), true);
+        $checkoutUrl = $data['data']['attributes']['checkout_url'];
+
+        return redirect($checkoutUrl);
+    } catch (\Exception $e) {
+        return "PayMongo Error: " . $e->getMessage();
+    }
+});
+
+Route::get('/test-success', function() {
+    return "Payment Success! Check your PayMongo dashboard.";
+});
+
+Route::get('/test-failed', function() {
+    return "Payment Failed or Cancelled.";
+});
 Route::get('/booking/confirmation', [BookingController::class, 'confirmation'])->name('booking.confirmation');
 Route::get('/booking/widget', [BookingController::class, 'widget'])->name('booking.widget');
 Route::post('/booking/calculate-price', [BookingController::class, 'getDynamicPrice'])->name('booking.calculatePrice');

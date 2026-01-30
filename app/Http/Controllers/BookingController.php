@@ -32,6 +32,7 @@ class BookingController extends Controller
     protected $paymentService;
     protected $inventoryService;
     protected $pricingService;
+    protected $paymongo;
 
     public function __construct(
         BookingService $bookingService,
@@ -43,6 +44,7 @@ class BookingController extends Controller
         $this->paymentService = $paymentService;
         $this->inventoryService = $inventoryService;
         $this->pricingService = $pricingService;
+        $this->paymongo = new \Paymongo\PaymongoClient(config('services.paymongo.secret_key'));
     }
     public function debugSession()
     {
@@ -830,6 +832,188 @@ class BookingController extends Controller
         }
     }
 
+    public function initiatePayment(Request $request)
+    {
+        // Debug: Log all request data
+        Log::info('Initiate Payment Request Data:', $request->all());
+
+        $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+            'payment_method' => 'required|string|in:paymongo,qr,gcash,paymaya,bank,qrph,grab_pay,billease',
+            'special_requests' => 'nullable|string|max:1000',
+            'cancellation_policy' => 'required|string|in:standard,flexible,nonrefundable',
+            'terms_accepted' => 'accepted',
+        ]);
+
+        // Get booking data from session
+        $booking = session('booking', []);
+        Log::info('Session booking data:', $booking);
+
+        if (empty($booking)) {
+            return redirect()->back()->with('error', 'Booking session expired. Please start over.');
+        }
+
+        // Calculate grand total
+        $grandTotal = 0;
+        if (!empty($booking['final_totals']['grand_total'])) {
+            $grandTotal = $booking['final_totals']['grand_total'];
+        } else {
+            // Fallback calculation
+            if (!empty($booking['accommodations'])) {
+                foreach ($booking['accommodations'] as $acc) {
+                    $grandTotal += $acc['total_price'] ?? 0;
+                }
+            }
+            if (!empty($booking['selected_foods'])) {
+                foreach ($booking['selected_foods'] as $food) {
+                    $nights = max(1, \Carbon\Carbon::parse($booking['checkin'])->diffInDays(\Carbon\Carbon::parse($booking['checkout'])));
+                    $grandTotal += ($food['price'] ?? 0) * ($food['quantity'] ?? 1) * $nights;
+                }
+            }
+            if (!empty($booking['selected_activities'])) {
+                foreach ($booking['selected_activities'] as $activity) {
+                    $grandTotal += ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+                }
+            }
+        }
+
+        Log::info('Calculated grand total:', ['total' => $grandTotal]);
+
+        // Store booking and payment data in session
+        session([
+            'staycation_booking_data' => $booking,
+            'staycation_payment_data' => [
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'special_requests' => $request->special_requests,
+                'cancellation_policy' => $request->cancellation_policy,
+                'payment_method' => $request->payment_method,
+            ]
+        ]);
+
+        $successUrl = url('/booking/payment/success?checkout_id={CHECKOUT_ID}');
+        $failedUrl = url('/booking/payment/failed');
+
+        Log::info('Creating PayMongo checkout', [
+            'amount' => (int)($grandTotal * 100),
+            'success_url' => $successUrl,
+            'failed_url' => $failedUrl
+        ]);
+
+        try {
+            $checkout = $this->paymentService->createCheckout((int)($grandTotal * 100), 'staycation', $successUrl, $failedUrl);
+            Log::info('PayMongo checkout created successfully', ['checkout_url' => $checkout->checkout_url]);
+            return redirect($checkout->checkout_url);
+        } catch (\Exception $e) {
+            Log::error('PayMongo checkout creation failed: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to initiate payment: ' . $e->getMessage());
+        }
+    }
+
+    public function createPaymentIntent(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|numeric',
+            'type' => 'required|string'
+        ]);
+
+        $amount = (int) ($request->amount * 100); // Convert to centavos
+
+        try {
+            $paymentIntent = $this->paymentService->createPaymentIntent($amount, $request->type);
+            return response()->json([
+                'client_secret' => $paymentIntent->client_secret,
+                'payment_intent_id' => $paymentIntent->id
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function paymentSuccess(Request $request)
+    {
+        $checkoutId = $request->query('checkout_id');
+
+        if (!$checkoutId) {
+            return redirect()->route('booking.payment')->with('error', 'Invalid payment session.');
+        }
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutId}", [
+                'headers' => [
+                    'Authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
+                    'Content-Type' => 'application/json',
+                ]
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+            $checkout = (object) $data['data']['attributes'];
+
+            if ($checkout->payment_intent && $checkout->payment_intent->status === 'succeeded') {
+                // Payment successful, process the booking
+                $bookingData = session('staycation_booking_data');
+                $paymentData = session('staycation_payment_data');
+
+                if (!$bookingData || !$paymentData) {
+                    return redirect()->route('booking.payment')->with('error', 'Booking data not found.');
+                }
+
+                // Process the payment
+                $paymentData['checkout_id'] = $checkoutId;
+                $result = $this->paymentService->processStaycationPayment($bookingData, $paymentData);
+
+                // Clear session
+                session()->forget(['staycation_booking_data', 'staycation_payment_data']);
+
+                return $result; // This should be the redirect to confirmation
+            } else {
+                return redirect()->route('booking.payment')->with('error', 'Payment was not successful.');
+            }
+        } catch (\Exception $e) {
+            Log::error('PayMongo checkout verification failed: ' . $e->getMessage());
+            return redirect()->route('booking.payment')->with('error', 'Payment verification failed.');
+        }
+    }
+
+    public function paymentFailed(Request $request)
+    {
+        $checkoutId = $request->query('checkout_id');
+
+        if (!$checkoutId) {
+            return redirect()->route('booking.payment')->with('error', 'Invalid payment session.');
+        }
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutId}", [
+                'headers' => [
+                    'Authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
+                    'Content-Type' => 'application/json',
+                ]
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+            $checkout = (object) $data['data']['attributes'];
+
+            // Log the failure reason
+            Log::warning('PayMongo payment failed', [
+                'checkout_id' => $checkoutId,
+                'status' => $checkout->payment_intent ? $checkout->payment_intent->status : 'unknown',
+                'error' => $checkout->payment_intent ? $checkout->payment_intent->last_payment_error : null
+            ]);
+
+            return redirect()->route('booking.payment')->with('error', 'Payment failed. Please try again.');
+        } catch (\Exception $e) {
+            Log::error('PayMongo checkout verification failed on failure: ' . $e->getMessage());
+            return redirect()->route('booking.payment')->with('error', 'Payment verification failed.');
+        }
+    }
 
     public function widget()
     {

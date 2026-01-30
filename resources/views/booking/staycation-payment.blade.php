@@ -63,16 +63,8 @@ $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
     return ($activity['price'] ?? 0) * ($activity['guests'] ?? 0);
 });
 
-// Calculate food total (always recalculate to ensure accuracy)
-$foodTotal = 0;
-if (!empty($selectedFoods) && !empty($foods)) {
-    foreach ($selectedFoods as $selectedFood) {
-        $food = $foods->get($selectedFood['id']);
-        if ($food) {
-            $foodTotal += $food->price * ($selectedFood['quantity'] ?? 1) * $nights;
-        }
-    }
-}
+// Calculate food total (use the value from controller/session)
+$foodTotal = $booking['final_totals']['food_total'] ?? 0;
 
 // Calculate grand total including food
 $grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
@@ -141,7 +133,7 @@ $grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
               {{-- Payment Form --}}
               <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8">
                 <section aria-labelledby="payment-method-heading">
-                  <form action="{{ route('booking.processPayment') }}" method="POST" class="space-y-8">
+                  <form action="{{ route('booking.initiatePayment') }}" method="POST" class="space-y-8">
                     @csrf
 
                     {{-- Hidden Booking Data --}}
@@ -264,92 +256,55 @@ $grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
                     </div>
 
                     {{-- Payment Method --}}
-                    <fieldset class="space-y-3">
-                      <legend id="payment-method-heading" class="block text-sm sm:text-base font-medium text-gray-800 mb-1">
+                    <div class="space-y-3">
+                      <h3 class="block text-sm sm:text-base font-medium text-gray-800 mb-1">
                         Payment Method
-                      </legend>
+                      </h3>
                       <p class="text-xs text-gray-500 mb-2" style="font-family: 'Gotham Book', sans-serif;">
-                        Secure and encrypted payment via your chosen provider.
+                        Secure payment via PayMongo. Choose your preferred payment method including card, GCash, PayMaya, or QR PH.
                       </p>
 
+                      {{-- Credit/Debit Card --}}
                       <div class="space-y-3">
-                        {{-- GCash --}}
-                        <label
-                          for="payment_gcash"
-                          class="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 cursor-pointer hover:border-[#8f5d54]/60 hover:bg-gray-50 transition-colors"
-                        >
-                          <span class="flex items-center gap-3">
-                            <input
-                              id="payment_gcash"
-                              type="radio"
-                              name="payment_method"
-                              value="gcash"
-                              class="h-4 w-4 text-[#8f5d54] border-gray-300 focus:ring-[#8f5d54]"
-                              {{ old('payment_method', 'gcash') === 'gcash' ? 'checked' : '' }}
-                              required
-                            >
-                            <span class="flex flex-col">
-                              <span class="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                                <i class="bi bi-wallet2 text-base"></i>
-                                GCash
-                              </span>
-                              <span class="text-xs text-gray-500">Pay instantly using your GCash wallet.</span>
-                            </span>
-                          </span>
-                          <i class="fa-solid fa-shield-halved text-gray-300 text-sm" aria-hidden="true"></i>
+                        <label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition-colors cursor-pointer">
+                          <input
+                            id="payment_paymongo"
+                            type="radio"
+                            name="payment_method"
+                            value="paymongo"
+                            class="h-4 w-4 text-[#8f5d54] border-gray-300 focus:ring-[#8f5d54]"
+                            checked
+                          >
+                          <div class="flex items-center gap-3">
+                            <i class="bi bi-credit-card text-base text-gray-600"></i>
+                            <div>
+                              <span class="text-sm font-semibold text-gray-900">Credit/Debit Card</span>
+                              <span class="text-xs text-gray-500 block">Secure payment via PayMongo</span>
+                            </div>
+                          </div>
+                          <i class="fa-solid fa-shield-halved text-gray-300 text-sm ml-auto"></i>
                         </label>
 
-                        {{-- PayMaya --}}
-                        <label
-                          for="payment_paymaya"
-                          class="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 cursor-pointer hover:border-[#8f5d54]/60 hover:bg-gray-50 transition-colors"
-                        >
-                          <span class="flex items-center gap-3">
-                            <input
-                              id="payment_paymaya"
-                              type="radio"
-                              name="payment_method"
-                              value="paymaya"
-                              class="h-4 w-4 text-[#8f5d54] border-gray-300 focus:ring-[#8f5d54]"
-                              {{ old('payment_method') === 'paymaya' ? 'checked' : '' }}
-                            >
-                            <span class="flex flex-col">
-                              <span class="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                                <i class="bi bi-credit-card text-base"></i>
-                                PayMaya
-                              </span>
-                              <span class="text-xs text-gray-500">Use your Maya account or linked cards.</span>
-                            </span>
-                          </span>
-                          <i class="fa-solid fa-shield-halved text-gray-300 text-sm" aria-hidden="true"></i>
-                        </label>
-
-                        {{-- Bank Transfer --}}
-                        <label
-                          for="payment_bank"
-                          class="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 cursor-pointer hover:border-[#8f5d54]/60 hover:bg-gray-50 transition-colors"
-                        >
-                          <span class="flex items-center gap-3">
-                            <input
-                              id="payment_bank"
-                              type="radio"
-                              name="payment_method"
-                              value="bank"
-                              class="h-4 w-4 text-[#8f5d54] border-gray-300 focus:ring-[#8f5d54]"
-                              {{ old('payment_method') === 'bank' ? 'checked' : '' }}
-                            >
-                            <span class="flex flex-col">
-                              <span class="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                                <i class="bi bi-bank2 text-base"></i>
-                                Bank Transfer
-                              </span>
-                              <span class="text-xs text-gray-500">Transfer via your preferred local bank.</span>
-                            </span>
-                          </span>
-                          <i class="fa-solid fa-shield-halved text-gray-300 text-sm" aria-hidden="true"></i>
+                        {{-- Scan QR Code --}}
+                        <label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition-colors cursor-pointer">
+                          <input
+                            id="payment_qr"
+                            type="radio"
+                            name="payment_method"
+                            value="qr"
+                            class="h-4 w-4 text-[#8f5d54] border-gray-300 focus:ring-[#8f5d54]"
+                          >
+                          <div class="flex items-center gap-3">
+                            <i class="bi bi-qr-code text-base text-gray-600"></i>
+                            <div>
+                              <span class="text-sm font-semibold text-gray-900">Scan QR Code</span>
+                              <span class="text-xs text-gray-500 block">Pay using GCash, PayMaya, QR PH, or other QR-enabled wallets</span>
+                            </div>
+                          </div>
+                          <i class="fa-solid fa-mobile-screen-button text-gray-300 text-sm ml-auto"></i>
                         </label>
                       </div>
-                    </fieldset>
+                    </div>
 
                     {{-- Cancellation Policy (Best Practice UI) --}}
                     @php
@@ -776,9 +731,9 @@ $grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
                         <input
                           type="checkbox"
                           id="terms"
-                          name="terms"
+                          name="terms_accepted"
                           class="mt-1 mr-3 h-4 w-4 text-[#8f5d54] border-gray-300 focus:ring-[#8f5d54]"
-                          {{ old('terms') ? 'checked' : '' }}
+                          {{ old('terms_accepted') ? 'checked' : '' }}
                           required
                         >
                         <label for="terms" class="text-xs sm:text-sm text-gray-700 leading-relaxed">
@@ -905,7 +860,7 @@ $grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
             return phoneRegex.test(phone.replace(/\s/g, ''));
           }
 
-          // Form submission with loading state + additional checks
+          // Form submission with loading state
           form.addEventListener('submit', function(e) {
             let isValid = true;
 
@@ -919,13 +874,6 @@ $grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
             const policySelected = document.querySelector('input[name="cancellation_policy"]:checked');
             if (!policySelected) {
               alert('Please select a Cancellation Policy to proceed.');
-              isValid = false;
-            }
-
-            // Check cancellation acknowledgment
-            const cancelAck = document.getElementById('cancellation_acknowledge');
-            if (cancelAck && !cancelAck.checked) {
-              alert('Please acknowledge the selected Cancellation Policy to proceed.');
               isValid = false;
             }
 
@@ -944,7 +892,7 @@ $grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
             // Show loading state
             if (submitBtn) {
               submitBtn.disabled = true;
-              submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing Payment...';
+              submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Redirecting to Payment...';
             }
           });
         });

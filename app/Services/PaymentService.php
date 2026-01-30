@@ -10,6 +10,83 @@ use App\Models\Booking;
 
 class PaymentService
 {
+    public function __construct()
+    {
+        // PayMongo client not needed for direct API calls
+    }
+
+    public function createPaymentIntent($amount, $type)
+    {
+        // This method is deprecated - using hosted checkout instead
+        throw new \Exception('Payment intents are no longer used. Use createCheckout instead.');
+    }
+
+    public function createCheckout($amount, $type, $successUrl, $failedUrl)
+    {
+        Log::info('Creating PayMongo checkout session', [
+            'amount' => $amount,
+            'type' => $type,
+            'success_url' => $successUrl,
+            'failed_url' => $failedUrl
+        ]);
+
+        $client = new \GuzzleHttp\Client();
+
+        try {
+            $payload = [
+                'data' => [
+                    'attributes' => [
+                        'amount' => $amount,
+                        'currency' => 'PHP',
+                        'description' => ucfirst($type) . ' Booking Payment',
+                        'line_items' => [
+                            [
+                                'amount' => $amount,
+                                'currency' => 'PHP',
+                                'description' => ucfirst($type) . ' Booking Payment',
+                                'name' => ucfirst($type) . ' Booking',
+                                'quantity' => 1,
+                            ]
+                        ],
+                        'payment_method_types' => ['card', 'gcash', 'paymaya', 'qrph', 'grab_pay', 'billease'],
+                        'success_url' => $successUrl,
+                        'cancel_url' => $failedUrl,
+                    ]
+                ]
+            ];
+
+            Log::info('PayMongo API payload:', $payload);
+
+            $response = $client->post('https://api.paymongo.com/v1/checkout_sessions', [
+                'headers' => [
+                    'Authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ],
+                'json' => $payload
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+            Log::info('PayMongo API response:', $data);
+            Log::info('Available payment methods:', $data['data']['attributes']['payment_method_types'] ?? 'not set');
+
+            return (object) [
+                'checkout_url' => $data['data']['attributes']['checkout_url'],
+                'id' => $data['data']['id']
+            ];
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
+            Log::error('PayMongo API Request Error: ' . $e->getMessage());
+            if ($e->hasResponse()) {
+                $responseBody = $e->getResponse()->getBody()->getContents();
+                Log::error('PayMongo API Response: ' . $responseBody);
+            }
+            throw new \Exception('PayMongo API request failed: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            Log::error('PayMongo checkout creation failed: ' . $e->getMessage());
+            throw new \Exception('PayMongo checkout creation failed: ' . $e->getMessage());
+        }
+    }
+
     public function processStaycationPayment($staycationBooking, $paymentData)
     {
         // Process staycation payment logic here
@@ -74,6 +151,19 @@ class PaymentService
             ];
         }
 
+        // Process payment with PayMongo
+        $amount = (int) (($staycationBooking['final_totals']['grand_total'] ?? 0) * 100); // Convert to centavos
+
+        if ($paymentData['payment_method'] === 'paymongo') {
+            // For hosted checkout, payment success is already verified in the controller
+            // We just need to mark it as paid
+            $staycationBooking['paymongo_checkout_id'] = $paymentData['checkout_id'] ?? null;
+            $paymentStatus = 'paid';
+        } else {
+            // For other payment methods, assume paid
+            $paymentStatus = 'paid';
+        }
+
         // Create booking record in database
         $customerName = trim(
             ($paymentData['first_name'] ?? '') . ' ' . ($paymentData['last_name'] ?? '')
@@ -110,8 +200,8 @@ class PaymentService
             'checkout_date' => $staycationBooking['checkout'],
             'booking_data' => $staycationBooking,
             'total_amount' => $staycationBooking['final_totals']['grand_total'] ?? 0,
-            'payment_method' => $paymentData['payment_method'] ?? 'N/A',
-            'payment_status' => 'paid',
+            'payment_method' => 'paymongo', // Update to PayMongo
+            'payment_status' => $paymentStatus,
             'status' => 'confirmed',
         ]);
 
@@ -160,6 +250,18 @@ class PaymentService
         $dayvisitBooking['payment_method'] = $paymentData['payment_method'] ?? 'N/A';
         $dayvisitBooking['payment_date'] = now()->toDateTimeString();
 
+        // Process payment with PayMongo
+        $amount = (int) ($grandTotal * 100); // Convert to centavos
+
+        if ($paymentData['payment_method'] === 'paymongo') {
+            // For hosted checkout, payment success is already verified
+            // We just need to mark it as paid
+            $dayvisitBooking['paymongo_checkout_id'] = $paymentData['checkout_id'] ?? null;
+            $paymentStatus = 'paid';
+        } else {
+            $paymentStatus = 'paid';
+        }
+
         // Process dayvisit payment
         Mail::to($paymentData['email'])->send(new BookingConfirmation([
             'bookingData' => $dayvisitBooking,
@@ -200,8 +302,8 @@ class PaymentService
             'checkout_date' => null,
             'booking_data' => $dayvisitBooking,
             'total_amount' => $grandTotal,
-            'payment_method' => $paymentData['payment_method'] ?? 'N/A',
-            'payment_status' => 'paid',
+            'payment_method' => 'paymongo', // Update to PayMongo
+            'payment_status' => $paymentStatus,
             'status' => 'confirmed',
         ]);
 
@@ -226,6 +328,18 @@ class PaymentService
         $bookingData['transaction_id'] = 'TXN-' . strtoupper(uniqid());
         $bookingData['payment_method'] = $paymentData['payment_method'] ?? 'N/A';
         $bookingData['payment_date'] = now()->toDateTimeString();
+
+        // Process payment with PayMongo
+        $amount = (int) ($grandTotal * 100); // Convert to centavos
+
+        if ($paymentData['payment_method'] === 'paymongo') {
+            // For hosted checkout, payment success is already verified
+            // We just need to mark it as paid
+            $bookingData['paymongo_checkout_id'] = $paymentData['checkout_id'] ?? null;
+            $paymentStatus = 'paid';
+        } else {
+            $paymentStatus = 'paid';
+        }
 
         // Process regular booking payment
         Mail::to($paymentData['email'])->send(new BookingConfirmation([
@@ -266,8 +380,8 @@ class PaymentService
             'checkout_date' => null,
             'booking_data' => $bookingData,
             'total_amount' => $grandTotal,
-            'payment_method' => $paymentData['payment_method'] ?? 'N/A',
-            'payment_status' => 'paid',
+            'payment_method' => 'paymongo', // Update to PayMongo
+            'payment_status' => $paymentStatus,
             'status' => 'confirmed',
         ]);
 
