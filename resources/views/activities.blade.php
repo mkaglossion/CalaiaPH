@@ -526,6 +526,16 @@
 
         carousels.forEach(initActivityCarousel);
       });
+
+      // Override handleBookNow for activities page to redirect to calendar
+      window.handleBookNow = function() {
+        const title = document.getElementById('detailsModalLabel').textContent.replace(' Details', '');
+        const price = document.getElementById('detailsModalPriceDisplay')?.textContent || 'PHP 0';
+
+        // Redirect to booking calendar with activity parameters
+        const url = '{{ route("booking.calendar") }}?type=activity&package=' + encodeURIComponent(title) + '&price=' + encodeURIComponent(price);
+        window.location.href = url;
+      };
     </script>
 
     {{-- Footer --}}
