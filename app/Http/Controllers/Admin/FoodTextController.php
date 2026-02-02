@@ -17,11 +17,14 @@ class FoodTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255',
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255',
+            'content' => 'nullable|string',
         ]);
 
-        FoodText::create($request->only(['label', 'text']));
+        FoodText::create([
+            'label' => $request->title,
+            'text' => $request->content,
+        ]);
 
         return response()->json();
     }
@@ -29,11 +32,14 @@ class FoodTextController extends Controller
     public function update(Request $request, FoodText $FoodText)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255|unique:food_texts,label,' . $FoodText->id,
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255|unique:food_texts,label,' . $FoodText->id,
+            'content' => 'nullable|string',
         ]);
 
-        $FoodText->update($request->only(['label', 'text']));
+        $FoodText->update([
+            'label' => $request->title,
+            'text' => $request->content,
+        ]);
 
         return response()->json();
     }

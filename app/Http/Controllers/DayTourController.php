@@ -7,7 +7,6 @@ use App\Models\DayTour;
 use App\Models\DayTourSwiperImage;
 use App\Models\DayTourText;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
-use Cloudinary\Cloudinary as CloudinarySdk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -83,20 +82,17 @@ class DayTourController extends Controller
             if ($request->hasFile('image')) {
                 try {
                     $file = $request->file('image');
-                    $cloudinary = new CloudinarySdk(config('cloudinary'));
+                    $filePath = $file->getRealPath();
                     
-                    // Upload file content directly
-                    $uploadedFile = $cloudinary->uploadApi()->upload(
-                        'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getPathname())),
-                        [
-                            'folder' => 'calaia/daytour-images',
-                            'public_id' => 'daytour-' . $tour->id . '-' . time(),
-                            'transformation' => [
-                                ['width' => 800, 'height' => 600, 'crop' => 'fill'],
-                                ['quality' => 'auto']
-                            ]
-                        ]
-                    );
+                    // Upload to Cloudinary with transformations
+                    $uploadedFile = Cloudinary::uploadApi()->upload($filePath, [
+                        'folder' => 'calaia/daytour-images',
+                        'public_id' => 'daytour-' . $tour->id . '-' . time(),
+                        'width' => 800,
+                        'height' => 600,
+                        'crop' => 'fill',
+                        'quality' => 'auto'
+                    ]);
 
                     // Store the image URL in the day_tours table
                     $tour->image = $uploadedFile['secure_url'];
@@ -144,18 +140,16 @@ class DayTourController extends Controller
                 // Upload new image to Cloudinary
                 try {
                     $file = $request->file('image');
-                    $cloudinary = new CloudinarySdk(config('cloudinary'));
-                    $uploadedFile = $cloudinary->uploadApi()->upload(
-                        'data:' . $file->getMimeType() . ';base64,' . base64_encode(file_get_contents($file->getPathname())),
-                        [
-                            'folder' => 'calaia/daytour-images',
-                            'public_id' => 'daytour-' . $dayTour->id . '-' . time(),
-                            'transformation' => [
-                                ['width' => 800, 'height' => 600, 'crop' => 'fill'],
-                                ['quality' => 'auto']
-                            ]
-                        ]
-                    );
+                    $filePath = $file->getRealPath();
+                    
+                    $uploadedFile = Cloudinary::uploadApi()->upload($filePath, [
+                        'folder' => 'calaia/daytour-images',
+                        'public_id' => 'daytour-' . $dayTour->id . '-' . time(),
+                        'width' => 800,
+                        'height' => 600,
+                        'crop' => 'fill',
+                        'quality' => 'auto'
+                    ]);
 
                     // Store the image URL in the day_tours table
                     $dayTour->image = $uploadedFile['secure_url'];
@@ -188,8 +182,7 @@ class DayTourController extends Controller
         foreach ($dayTour->swiperImages as $img) {
             try {
                 if ($img->public_id) {
-                    $cloudinary = new CloudinarySdk(config('cloudinary'));
-                    $cloudinary->uploadApi()->destroy($img->public_id);
+                    Cloudinary::uploadApi()->destroy($img->public_id);
                 }
             } catch (\Exception $e) {
                 Log::error('Failed to delete image from Cloudinary: ' . $e->getMessage());

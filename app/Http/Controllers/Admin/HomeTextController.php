@@ -17,11 +17,14 @@ class HomeTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255|unique:home_texts,label',
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255|unique:home_texts,label',
+            'content' => 'nullable|string',
         ]);
 
-        HomeText::create($request->only(['label', 'text']));
+        HomeText::create([
+            'label' => $request->title,
+            'text' => $request->content,
+        ]);
 
         return response()->json(['message' => 'Text content added successfully.']);
     }
@@ -29,11 +32,14 @@ class HomeTextController extends Controller
     public function update(Request $request, HomeText $HomeText)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255|unique:home_texts,label,' . $HomeText->id,
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255|unique:home_texts,label,' . $HomeText->id,
+            'content' => 'nullable|string',
         ]);
 
-        $HomeText->update($request->only(['label', 'text']));
+        $HomeText->update([
+            'label' => $request->title,
+            'text' => $request->content,
+        ]);
 
         return response()->json(['message' => 'Text content updated successfully.']);
     }

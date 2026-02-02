@@ -15,4 +15,24 @@ class FoodText extends Model
     {
         return $this->belongsTo(Food::class);
     }
+
+    public function getTitleAttribute()
+    {
+        return $this->label;
+    }
+
+    public function getContentAttribute()
+    {
+        return $this->text;
+    }
+
+    public function setTitleAttribute($value)
+    {
+        $this->attributes['label'] = $value;
+    }
+
+    public function setContentAttribute($value)
+    {
+        $this->attributes['text'] = $value;
+    }
 }

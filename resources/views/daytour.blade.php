@@ -10,6 +10,16 @@
   <meta name="author" content="CalaiaPH">
   <title>CalaiaPH - Day Tour</title>
 
+  <style>
+    /* Custom Swiper pagination bullets */
+    .swiper-pagination-bullet {
+      background-color: #a75e3e !important;
+    }
+    .swiper-pagination-bullet-active {
+      background-color: #a75e3e !important;
+    }
+  </style>
+
   {{-- Stylesheets --}}
   @vite(['resources/css/app.css'])
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">

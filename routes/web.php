@@ -84,16 +84,8 @@ Route::get('/special-events', [PagesController::class, 'specialEvents'])->name('
 Route::get('/farm', [PagesController::class, 'farm'])->name('farm');
 Route::get('/shop', [PagesController::class, 'shop'])->name('shop');
 Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
-Route::get('/privacy-notice', [PagesController::class, 'privacyNotice'])->name('privacy-notice');
-Route::get('/calaia-policy', [PagesController::class, 'calaiaPolicy'])->name('calaia-policy');
-Route::get('/cookies-policy', [PagesController::class, 'cookiesPolicy'])->name('cookies-policy');
-Route::get('/terms-service', [PagesController::class, 'termsService'])->name('terms-service');
 
 Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show');
-
-// Testimonial Routes
-Route::get('/testimonials/create', [TestimonialController::class, 'create'])->name('testimonials.create');
-Route::post('/testimonials', [TestimonialController::class, 'store'])->name('testimonials.store');
 
 // Booking Routes
 Route::get('/booking', [BookingController::class, 'create'])->name('booking.create');
@@ -258,7 +250,6 @@ Route::prefix('admin')->group(function () {
     // adminRoute('/activities', AdminController::class, 'admin.activities', 'activity');
     Route::prefix('/home')->group(function () {
         Route::get('/home', [AdminPagesController::class, 'home'])->name('admin.home.home');
-        Route::get('/items', [AdminPagesController::class, 'items'])->name('admin.home.items');
     });
     Route::prefix('/day')->group(function () {
         Route::get('/day', [AdminController::class, 'dayTour'])->name('admin.day.day');
@@ -369,7 +360,7 @@ Route::prefix('admin')->group(function () {
     Route::resource('menu-text', MenuTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-text', EventTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-experience-sections', EventExperienceSectionController::class)->only(['store', 'update', 'destroy']);
-    Route::resource('testimonials', TestimonialController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('testimonials', TestimonialController::class)->only(['create', 'store', 'update', 'destroy']);
     Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('day-text', DayPackageTextController::class)->only(['store', 'update', 'destroy']);
     Route::post('/accommodations-text', [AccommodationTextController::class, 'store'])->name('accommodations-text.store');
@@ -423,14 +414,4 @@ Route::prefix('admin')->group(function () {
         Route::post('delete', [InventoryController::class, 'delete'])->name('admin.inventory.delete');
     });
 
-    // Event sections CRUD
-    Route::resource('event-sections', \App\Http\Controllers\Admin\EventSectionController::class)
-        ->only(['index', 'store', 'update', 'destroy']);
-
-    // Testimonials CRUD
-    Route::get('/testimonials', [AdminTestimonialController::class, 'index'])->name('admin.testimonials.index');
-    Route::patch('/testimonials/{testimonial}/approve', [AdminTestimonialController::class, 'approve'])->name('admin.testimonials.approve');
-    Route::post('/testimonials/update-order', [AdminTestimonialController::class, 'updateOrder'])->name('admin.testimonials.updateOrder');
-    Route::delete('/testimonials/{testimonial}', [AdminTestimonialController::class, 'destroy'])->name('admin.testimonials.destroy');
 });
-

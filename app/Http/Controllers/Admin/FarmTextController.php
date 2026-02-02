@@ -17,11 +17,14 @@ class FarmTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255|unique:farm_texts,label',
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255|unique:farm_texts,label',
+            'content' => 'nullable|string',
         ]);
 
-        FarmText::create($request->only(['label', 'text']));
+        FarmText::create([
+            'label' => $request->title,
+            'text' => $request->content,
+        ]);
 
         return response()->json();
     }
@@ -29,11 +32,14 @@ class FarmTextController extends Controller
     public function update(Request $request, FarmText $FarmText)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255|unique:farm_texts,label,' . $FarmText->id,
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255|unique:farm_texts,label,' . $FarmText->id,
+            'content' => 'nullable|string',
         ]);
 
-        $FarmText->update($request->only(['label', 'text']));
+        $FarmText->update([
+            'label' => $request->title,
+            'text' => $request->content,
+        ]);
 
         return response()->json();
     }

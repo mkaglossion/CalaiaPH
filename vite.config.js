@@ -25,4 +25,36 @@ export default defineConfig({
             },
         }),
     ],
+    build: {
+        rollupOptions: {
+            onwarn(warning, warn) {
+                if (warning.code === 'UNRESOLVED_ENTRY' || 
+                    (warning.message && warning.message.includes('didn\'t resolve at build time'))) {
+                    return;
+                }
+                warn(warning);
+            },
+        },
+    },
+    customLogger: {
+        hasWarned: false,
+        info(msg) {
+            if (!msg.includes('didn\'t resolve at build time')) {
+                console.log(msg);
+            }
+        },
+        warn(msg) {
+            if (!msg.includes('didn\'t resolve at build time')) {
+                console.warn(msg);
+            }
+        },
+        warnOnce(msg) {
+            if (!msg.includes('didn\'t resolve at build time')) {
+                console.warn(msg);
+            }
+        },
+        error(msg) {
+            console.error(msg);
+        },
+    },
 });

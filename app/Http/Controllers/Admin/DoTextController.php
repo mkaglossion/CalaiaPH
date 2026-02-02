@@ -17,11 +17,14 @@ class DoTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255|unique:do_texts,label',
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255|unique:do_texts,label',
+            'content' => 'nullable|string',
         ]);
 
-        DoText::create($request->only(['label', 'text']));
+        DoText::create([
+            'label' => $request->title,
+            'text' => $request->content,
+        ]);
 
         return response()->json();
     }
@@ -29,11 +32,14 @@ class DoTextController extends Controller
     public function update(Request $request, DoText $DoText)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255|unique:do_texts,label,' . $DoText->id,
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255|unique:do_texts,label,' . $DoText->id,
+            'content' => 'nullable|string',
         ]);
 
-        $DoText->update($request->only(['label', 'text']));
+        $DoText->update([
+            'label' => $request->title,
+            'text' => $request->content,
+        ]);
 
         return response()->json();
     }

@@ -17,11 +17,14 @@ class SpecialTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255|unique:special_texts,label',
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255|unique:special_texts,label',
+            'content' => 'nullable|string',
         ]);
 
-        SpecialText::create($request->only(['label', 'text']));
+        SpecialText::create([
+            'label' => $request->title,
+            'text' => $request->content,
+        ]);
 
         return response()->json();
     }
@@ -29,11 +32,14 @@ class SpecialTextController extends Controller
     public function update(Request $request, SpecialText $SpecialText)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255|unique:special_texts,label,' . $SpecialText->id,
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255|unique:special_texts,label,' . $SpecialText->id,
+            'content' => 'nullable|string',
         ]);
 
-        $SpecialText->update($request->only(['label', 'text']));
+        $SpecialText->update([
+            'label' => $request->title,
+            'text' => $request->content,
+        ]);
 
         return response()->json();
     }

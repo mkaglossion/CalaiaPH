@@ -33,7 +33,11 @@
     {{-- Cards Grid --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
         @forelse($images as $img)
-            <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition">
+            <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative">
+                <div class="flex items-center mb-2">
+                    <input type="checkbox" x-model="selectedImages" value="{{ $img->id }}" class="mr-2">
+                    <span class="text-xs text-gray-500">Select</span>
+                </div>
                 <div class="overflow-hidden rounded-xl">
                     @if(str_contains($img->image_path, '/video/'))
                         <video src="{{ $img->image_path }}" class="w-full h-48 object-cover transition hover:scale-105" muted></video>
@@ -51,21 +55,30 @@
 
                 <div class="mt-5 flex justify-end space-x-3">
                     <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
-                        @click="editImage({{ $img->id }}, '{{ $img->title }}')">
-                        Edit
+                        @click="editImage({{ $img->id }}, '{{ $img->title }}')">Edit</button>
+                    <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                        @click="deleteImage({{ $img->id }}, '{{ route('day-tour-swiper-images.destroy', $img->id) }}')">
+                        Delete
                     </button>
-                    <form action="{{ route('day-tour-swiper-images.destroy', $img->id) }}" method="POST">
-                        @csrf @method('DELETE')
-                        <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
-                            onclick="return confirm('Delete this image?')">
-                            Delete
-                        </button>
-                    </form>
                 </div>
             </div>
         @empty
             <p class="text-gray-500">No images uploaded yet.</p>
         @endforelse
+    </div>
+
+    {{-- Bulk Actions --}}
+    <div x-show="selectedImages.length > 0" class="mt-6 flex items-center space-x-4">
+        <span class="text-sm text-gray-600">Selected: <span x-text="selectedImages.length"></span></span>
+        <button @click="selectAll" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600">
+            Select All
+        </button>
+        <button @click="deselectAll" class="px-3 py-1 bg-gray-400 text-white rounded text-sm hover:bg-gray-500">
+            Deselect All
+        </button>
+        <button @click="bulkDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+            Delete Selected
+        </button>
     </div>
 
     <hr class="my-14 border-gray-300">
@@ -111,19 +124,10 @@
                         <td class="px-6 py-4 text-right space-x-4">
                             <button 
                                 class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
-                                @click="editText({{ $text->id }})">
-                                Edit
-                            </button>
-
-                            <form action="{{ route('day-tour-texts.destroy', $text->id) }}" 
-                                method="POST" class="inline">
-                                @csrf @method('DELETE')
-                                <button 
-                                    onclick="return confirm('Delete this text?')"
-                                    class="text-red-600 font-semibold hover:text-red-700 hover:underline transition">
-                                    Delete
-                                </button>
-                            </form>
+                                @click="editText({{ $text->id }})">Edit</button>
+                            <button 
+                                class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                                @click="deleteText({{ $text->id }}, '{{ route('day-tour-texts.destroy', $text->id) }}')">Delete</button>
                         </td>
                     </tr>
                 @empty
@@ -162,12 +166,12 @@
 
                 <div>
                     <label class="block font-medium mb-1 text-gray-700">Title (optional)</label>
-                    <input type="text" x-ref="title" name="title" class="border rounded-xl p-3 w-full" x-bind:value="editImageMode ? currentImageTitle : ''">
+                    <input type="text" x-ref="title" name="title" class="border rounded-xl p-3 w-full">
                 </div>
 
                 <div>
                     <label class="block font-medium mb-1 text-gray-700">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded-xl p-3 w-full" x-bind:required="!editImageMode">
+                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded-xl p-3 w-full">
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">
@@ -247,8 +251,17 @@ function dayTourManager() {
         editImageMode: false,
         currentImageId: null,
         currentImageTitle: '',
+        selectedImages: [],
         texts: @js($texts),
         form: { id: null, title: '', content: '' },
+
+        selectAll() {
+            this.selectedImages = @js($images->pluck('id')->toArray());
+        },
+
+        deselectAll() {
+            this.selectedImages = [];
+        },
 
         resetForm() {
             this.form = { id: null, title: '', content: '' };
@@ -259,6 +272,8 @@ function dayTourManager() {
             this.editImageMode = false;
             this.currentImageId = null;
             this.currentImageTitle = '';
+            if (this.$refs.title) this.$refs.title.value = '';
+            if (this.$refs.image) this.$refs.image.value = '';
         },
 
         editImage(id, title) {
@@ -268,6 +283,84 @@ function dayTourManager() {
             this.showModal = true;
         },
 
+        deleteImage(id, route) {
+            Swal.fire({
+                title: 'Delete Image?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const csrf = document.querySelector('meta[name=csrf-token]').content;
+                    const formData = new FormData();
+                    formData.append('_method', 'DELETE');
+                    fetch(route, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': csrf },
+                        body: formData
+                    }).then(() => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: 'Image deleted successfully.',
+                            confirmButtonColor: '#2563eb'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }).catch(() => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Failed to delete image.'
+                        });
+                    });
+                }
+            });
+        },
+
+        deleteText(id, route) {
+            Swal.fire({
+                title: 'Delete Text?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const csrf = document.querySelector('meta[name=csrf-token]').content;
+                    const formData = new FormData();
+                    formData.append('_method', 'DELETE');
+                    fetch(route, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': csrf },
+                        body: formData
+                    }).then(() => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: 'Text deleted successfully.',
+                            confirmButtonColor: '#2563eb'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }).catch(() => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Failed to delete text.'
+                        });
+                    });
+                }
+            });
+        },
+
         editText(id) {
             const text = this.texts.find(t => t.id === id);
             if (text) {
@@ -275,6 +368,56 @@ function dayTourManager() {
                 this.editMode = true;
                 this.showTextModal = true;
             }
+        },
+
+        async bulkDelete() {
+            Swal.fire({
+                title: `Delete ${this.selectedImages.length} selected image${this.selectedImages.length !== 1 ? 's' : ''}?`,
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then(async (result) => {
+                if (!result.isConfirmed) return;
+
+                this.isLoading = true;
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+
+            try {
+                const promises = this.selectedImages.map(id =>
+                    fetch(`/admin/day-tour-swiper-images/${id}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: '_method=DELETE'
+                    })
+                );
+
+                await Promise.all(promises);
+                this.selectedImages = [];
+                Swal.fire({
+                    icon: "success",
+                    title: "Delete Complete",
+                    text: "Images deleted successfully!",
+                    confirmButtonColor: "#2563eb"
+                }).then(() => {
+                    window.location.reload();
+                });
+            } catch (err) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Error deleting images"
+                });
+            } finally {
+                this.isLoading = false;
+            }
+            });
         },
 
         async saveText() {
@@ -339,17 +482,24 @@ function dayTourManager() {
 
             const csrf = document.querySelector('meta[name=csrf-token]').content;
             const formData = new FormData();
-            const fileInput = this.$refs.image.files[0];
+            const titleInput = this.$refs.title;
+            const imageInput = this.$refs.image;
 
-            if (!fileInput && !this.editImageMode) {
-                alert('Please select an image before uploading.');
-                this.isLoading = false;
-                return;
+            if (!imageInput || !imageInput.files || imageInput.files.length === 0) {
+                if (!this.editImageMode) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'No Image Selected',
+                        text: 'Please select an image before uploading.'
+                    });
+                    this.isLoading = false;
+                    return;
+                }
             }
 
-            formData.append('title', this.$refs.title.value);
-            if (fileInput) {
-                formData.append('image', fileInput);
+            formData.append('title', titleInput?.value || '');
+            if (imageInput && imageInput.files.length > 0) {
+                formData.append('image', imageInput.files[0]);
             }
             if (this.editImageMode) {
                 formData.append('_method', 'PUT');
@@ -385,6 +535,12 @@ function dayTourManager() {
                         icon: "error",
                         title: "Failed",
                         html: Object.values(data.errors).flat().join("<br>")
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Failed",
+                        text: data.message || "Failed to upload image. Please try again."
                     });
                 }
             } catch (err) {

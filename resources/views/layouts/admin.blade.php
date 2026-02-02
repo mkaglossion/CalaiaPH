@@ -21,10 +21,22 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   <!-- Swiper JS -->
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <!-- SortableJS for drag-and-drop -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <!-- TinyMCE for rich text -->
+  <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 
 </head>
 
 <body x-data="{ sidebarOpen: false }" class="bg-gray-100 flex">
+
+  {{-- Sidebar Overlay for Mobile --}}
+  <div 
+    x-show="sidebarOpen" 
+    @click="sidebarOpen = false" 
+    class="md:hidden fixed inset-0 bg-black/50 z-40 transition-opacity"
+    x-transition.opacity
+  ></div>
 
   {{-- Sidebar --}}
   <aside 
@@ -135,7 +147,12 @@
   </aside>
 
   {{-- Main Content --}}
-  <main class="flex-1 ml-64 overflow-y-auto h-screen p-8">
+  <main class="flex-1 ml-0 md:ml-64 overflow-y-auto min-h-screen pt-16 md:pt-8 p-4 md:p-8">
+    {{-- Mobile Menu Button --}}
+    <button @click="sidebarOpen = true" class="md:hidden fixed top-4 left-4 z-40 bg-[#8f5d54] text-white p-2 rounded-lg shadow-lg">
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </button>
+
     {{-- Flash Messages --}}
     @if (session('success'))
       <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">

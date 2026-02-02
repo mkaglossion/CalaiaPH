@@ -17,11 +17,14 @@ class StayTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255|unique:stay_texts,label',
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255|unique:stay_texts,label',
+            'content' => 'nullable|string',
         ]);
 
-        StayText::create($request->only(['label', 'text']));
+        StayText::create([
+            'label' => $request->title,
+            'text' => $request->content,
+        ]);
 
         return response()->json();
     }
@@ -29,11 +32,14 @@ class StayTextController extends Controller
     public function update(Request $request, StayText $StayText)
     {
         $request->validate([
-            'label' => 'nullable|string|max:255|unique:stay_texts,label,' . $StayText->id,
-            'text' => 'nullable|string',
+            'title' => 'nullable|string|max:255|unique:stay_texts,label,' . $StayText->id,
+            'content' => 'nullable|string',
         ]);
 
-        $StayText->update($request->only(['label', 'text']));
+        $StayText->update([
+            'label' => $request->title,
+            'text' => $request->content,
+        ]);
 
         return response()->json();
     }

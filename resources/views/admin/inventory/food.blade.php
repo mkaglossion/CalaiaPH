@@ -84,7 +84,7 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 @if($food->image)
-                                <img class="h-10 w-10 rounded-lg object-cover mr-3" src="{{ asset('storage/' . $food->image) }}" alt="{{ $food->name }}">
+                                <img class="h-10 w-10 rounded-lg object-cover mr-3" src="{{ strpos($food->image, 'http') === 0 ? $food->image : asset('storage/' . $food->image) }}" alt="{{ $food->name }}">
                                 @else
                                 <div class="h-10 w-10 rounded-lg bg-gray-200 mr-3 flex items-center justify-center">
                                     <i class="fas fa-utensils text-gray-400"></i>

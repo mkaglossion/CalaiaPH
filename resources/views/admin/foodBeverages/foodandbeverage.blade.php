@@ -1,398 +1,570 @@
 @extends('layouts.admin')
 
-@section('title', 'Food and Beverages Page CMS')
+@section('title', 'Food & Beverage Page CMS')
 
 @section('content')
-<div x-data="{
-            showModal: false,
-            showTextModal: false,
-            editMode: false,
-            editImageMode: false,
-            currentImageId: null,
-            currentImageTitle: '',
-            texts: @js($texts),
-            form: { id: null, label: '', text: '' },
 
-            resetForm() {
-                this.form = { id: null, label: '', text: '' };
-                this.editMode = false;
-            },
+<div
+    x-data="foodBeverageManager()"
+    class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
+>
 
-            resetImageForm() {
-                this.editImageMode = false;
-                this.currentImageId = null;
-                this.currentImageTitle = '';
-            },
+    <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
+        Page Information
+    </h1>
+    <p class="text-gray-600 mb-10">Manage the image slider and content displayed on your Food & Beverage page.</p>
 
-            editImage(id, title) {
-                this.currentImageId = id;
-                this.currentImageTitle = title || '';
-                this.editImageMode = true;
-                this.showModal = true;
-            },
+    {{-- ============================================================= --}}
+    {{-- SWIPER IMAGES SECTION --}}
+    {{-- ============================================================= --}}
+    <div class="flex justify-between items-end mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Swiper Images</h2>
+            <p class="text-gray-500 text-sm">Photos that appear inside the homepage carousel.</p>
+        </div>
 
-            editText(id) {
-                const text = this.texts.find(t => t.id === id);
-                if (text) {
-                    this.form = { id: text.id, label: text.label, text: text.text };
-                    this.editMode = true;
-                    this.showTextModal = true;
-                }
-            },
-
-            async saveText() {
-                const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
-                const formData = new FormData();
-                formData.append('label', this.form.label);
-                formData.append('text', this.form.text);
-
-                let url = '{{ route('food-texts.store') }}';
-                let method = 'POST';
-
-                // If editing → use PUT route
-                if (this.editMode && this.form.id) {
-                    url = `/admin/food-texts/${this.form.id}`;
-                    formData.append('_method', 'PUT');
-                    method = 'POST'; // Laravel requires POST with _method=PUT
-                }
-
-                const btn = document.querySelector('#textUploadForm button[type=submit]');
-                btn.innerText = this.editMode ? 'Updating...' : 'Uploading...';
-                btn.disabled = true;
-
-                try {
-                    const res = await fetch(url, {
-                        method,
-                        headers: {
-                            'X-CSRF-TOKEN': csrf,
-                            'Accept': 'application/json',
-                        },
-                        body: formData,
-                        credentials: 'same-origin'
-                    });
-
-                    const data = await res.json();
-
-                    if (res.ok) {
-                        alert(data.message || (this.editMode ? 'Text updated successfully!' : 'Text added successfully!'));
-                        this.resetForm();
-                        this.showTextModal = false;
-                        window.location.reload();
-                    } else if (data.errors) {
-                        const errorMessages = Object.values(data.errors).flat().join('\n');
-                        alert(errorMessages);
-                    } else {
-                        alert(data.message || 'Operation failed.');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert('Error submitting text.');
-                } finally {
-                    btn.innerText = this.editMode ? 'Update' : 'Add';
-                    btn.disabled = false;
-                }
-            }
-        }"
-    >
-    <h1 class="text-2xl font-bold mb-4">Food and Beverages Page</h1>
-
-    <hr class="my-6">
-
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Swiper Images Management</h2>
-        <button
-            @click="showModal = true"
-            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
+        <button 
+            @click="showModal = true" 
+            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
             + Add Image
         </button>
     </div>
 
-    @if(session('success'))
-        <div class="bg-green-100 text-green-700 p-2 rounded mb-4">
-            {{ session('success') }}
-        </div>
-    @endif
+    {{-- Cards Grid --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+        @forelse($images as $img)
+            <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative">
+                <div class="flex items-center mb-2">
+                    <input type="checkbox" x-model="selectedImages" value="{{ $img->id }}" class="mr-2">
+                    <span class="text-xs text-gray-500">Select</span>
+                </div>
+                <div class="overflow-hidden rounded-xl">
+                    @if(str_contains($img->image_path, '/video/'))
+                        <video src="{{ $img->image_path }}" class="w-full h-48 object-cover transition hover:scale-105" muted></video>
+                    @else
+                        <img src="{{ $img->image_path }}" class="w-full h-48 object-cover transition hover:scale-105">
+                    @endif
+                </div>
 
-    {{-- Table --}}
-    <div class="overflow-x-auto border rounded-lg shadow">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 border-b">
+                <div class="mt-4">
+                    <h3 class="font-semibold text-lg text-gray-900">{{ $img->title ?: 'Untitled' }}</h3>
+                    <p class="text-gray-500 text-sm">
+                        Uploaded: {{ $img->created_at->format('Y-m-d') }}
+                    </p>
+                </div>
+
+                <div class="mt-5 flex justify-end space-x-3">
+                    <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                        @click="editImage({{ $img->id }}, '{{ $img->title }}')">Edit</button>
+                    <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                        @click="deleteImage({{ $img->id }}, '{{ route('food-swiper-images.destroy', $img->id) }}')">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        @empty
+            <p class="text-gray-500">No images uploaded yet.</p>
+        @endforelse
+    </div>
+
+    {{-- Bulk Actions --}}
+    <div x-show="selectedImages.length > 0" class="mt-6 flex items-center space-x-4">
+        <span class="text-sm text-gray-600">Selected: <span x-text="selectedImages.length"></span></span>
+        <button @click="selectAll" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600">
+            Select All
+        </button>
+        <button @click="deselectAll" class="px-3 py-1 bg-gray-400 text-white rounded text-sm hover:bg-gray-500">
+            Deselect All
+        </button>
+        <button @click="bulkDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+            Delete Selected
+        </button>
+    </div>
+
+    <hr class="my-14 border-gray-300">
+
+
+    {{-- ============================================================= --}}
+    {{-- TEXT CONTENT SECTION --}}
+    {{-- ============================================================= --}}
+    <div class="flex justify-between items-end mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
+            <p class="text-gray-500 text-sm">Paragraphs and captions displayed on the Food & Beverage page.</p>
+        </div>
+
+        <button 
+            @click="showTextModal = true" 
+            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+            + Add Text
+        </button>
+    </div>
+
+    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+        <table class="w-full text-left">
+            <thead class="bg-gray-100/70 backdrop-blur">
                 <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Preview</th>
-                    <th class="px-4 py-2">Title</th>
-                    <th class="px-4 py-2">Uploaded</th>
-                    <th class="px-4 py-2 text-right">Actions</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Label</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Text</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody>
-                @forelse($images as $index => $img)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ $index + 1 }}</td>
-                        <td class="px-4 py-2">
-                            @if(str_contains($img->image_path, '/video/'))
-                                <video src="{{ $img->image_path }}" class="w-20 h-12 object-cover rounded" muted></video>
-                            @else
-                                <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
-                            @endif
+
+            <tbody class="divide-y divide-gray-200">
+                @forelse($texts as $text)
+                    <tr class="hover:bg-gray-50/70 transition">
+                        <td class="px-6 py-4 font-medium text-gray-900">
+                            {{ $text->title ?: 'No Label' }}
                         </td>
-                        <td class="px-4 py-2">{{ $img->title ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $img->created_at->format('Y-m-d') }}</td>
-                        <td class="px-4 py-2 text-right space-x-2">
-                            <button class="text-blue-600 hover:underline" @click="editImage({{ $img->id }}, '{{ $img->title }}')">
-                                Edit
-                            </button>
-                            <form action="{{ route('food-swiper-images.destroy', $img->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button
-                                    type="submit"
-                                    class="text-red-600 hover:underline"
-                                    onclick="return confirm('Delete this image?')"
-                                >
-                                    Delete
-                                </button>
-                            </form>
+
+                        <td class="px-6 py-4 text-gray-600 text-sm">
+                            {{ Str::limit($text->content, 150) }}
+                        </td>
+
+                        <td class="px-6 py-4 text-right space-x-4">
+                            <button 
+                                class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                                @click="editText({{ $text->id }})">Edit</button>
+                            <button 
+                                class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                                @click="deleteText({{ $text->id }}, '{{ route('food-texts.destroy', $text->id) }}')">Delete</button>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">No images uploaded yet.</td>
+                        <td colspan="3" class="px-6 py-6 text-center text-gray-500">
+                            No text content yet.
+                        </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
-    {{-- Modal --}}
-    <div
+
+    {{-- ============================================================= --}}
+    {{-- MODALS --}}
+    {{-- ============================================================= --}}
+
+    {{-- Swiper Modal --}}
+    <div 
         x-show="showModal"
-        class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
-        x-transition
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        x-transition.opacity
     >
-        <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-            <button
-                @click="showModal = false; resetImageForm()"
-                class="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
+        <div class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-md p-6 relative border border-gray-200">
+            <button 
+                @click="showModal = false"
+                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
+            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload Swiper Image'"></h3>
 
-            <form
-                id="swiperUploadForm"
-                class="space-y-5"
-                enctype="multipart/form-data"
-                @submit.prevent="
-                    const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
-                    const fileInput = $refs.image.files[0];
-                    const title = $refs.title.value;
-
-                    if (!editImageMode && !fileInput) {
-                        alert('Please select an image before uploading.');
-                        return;
-                    }
-
-                    const formData = new FormData();
-                    if (fileInput) {
-                        formData.append('image', fileInput);
-                    }
-                    formData.append('title', title);
-
-                    let url = '{{ route('food-swiper-images.store') }}';
-                    let method = 'POST';
-
-                    if (editImageMode && currentImageId) {
-                        url = `/admin/food-swiper-images/${currentImageId}`;
-                        formData.append('_method', 'PUT');
-                    }
-
-                    const btn = $el.querySelector('button[type=submit]');
-                    btn.innerText = editImageMode ? 'Updating...' : 'Uploading...';
-                    btn.disabled = true;
-
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrf,
-                            'Accept': 'application/json',
-                        },
-                        body: formData,
-                        credentials: 'same-origin'
-                    })
-                    .then(async res => {
-                        let data;
-                        try {
-                            data = await res.json();
-                        } catch {
-                            throw new Error('Invalid JSON');
-                        }
-
-                        if (res.ok) {
-                            alert(data.message || (editImageMode ? 'Image updated successfully!' : 'Image uploaded successfully!'));
-                            $refs.image.value = '';
-                            $refs.title.value = '';
-                            resetImageForm();
-                            showModal = false;
-                            window.location.reload(); // Refresh to show updated image
-                        } else if (data.errors) {
-                            const errorMessages = Object.values(data.errors).flat().join('\\n');
-                            alert(errorMessages);
-                        } else {
-                            alert(data.message || 'Operation failed.');
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        alert('Error ' + (editImageMode ? 'updating' : 'uploading') + ' image.');
-                    })
-                    .finally(() => {
-                        btn.innerText = editImageMode ? 'Update' : 'Upload';
-                        btn.disabled = false;
-                    });
-                "
-            >
+            <form id="swiperUploadForm" class="space-y-5" enctype="multipart/form-data" @submit.prevent="uploadImage">
                 @csrf
-                <div class="mb-3">
-                    <label class="block font-semibold mb-1">Title (optional)</label>
-                    <input type="text" x-ref="title" x-model="currentImageTitle" name="title" class="border rounded p-2 w-full">
+                <input type="hidden" name="_method" value="POST" x-bind:value="editImageMode ? 'PUT' : 'POST'">
+
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Title (optional)</label>
+                    <input type="text" x-ref="title" name="title" class="border rounded-xl p-3 w-full">
                 </div>
 
-                <div class="mb-3">
-                    <label class="block font-semibold mb-1">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" :required="!editImageMode">
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Upload Image/Video</label>
+                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded-xl p-3 w-full">
                 </div>
 
-                <div class="flex justify-end space-x-2">
-                    <button type="button" @click="showModal = false; resetImageForm()" class="px-4 py-2 border rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded" x-text="editImageMode ? 'Update' : 'Upload'"></button>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button
+                        type="button"
+                        @click="showModal = false; resetImageForm()"
+                        class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition"
+                        x-text="editImageMode ? 'Update' : 'Upload'">
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <hr class="my-6">
+    {{-- TEXT Modal --}}
+    <div x-show="showTextModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" x-transition.opacity>
+        <div @click.away="showTextModal = false" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-7 border border-gray-200">
+            
+            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
 
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Text Content Management</h2>
-        <button
-            @click="showTextModal = true"
-            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-            + Add Text Content
-        </button>
-    </div>
-
-    {{-- Text Table --}}
-    <div class="overflow-x-auto border rounded-lg shadow">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 border-b">
-                <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Label</th>
-                    <th class="px-4 py-2">Text</th>
-                    <th class="px-4 py-2 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($texts as $index => $text)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ $index + 1 }}</td>
-                        <td class="px-4 py-2">{{ $text->label ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ Str::limit($text->text, 60) }}</td>
-                        <td class="px-4 py-2 text-right space-x-2">
-                            <button
-                                class="text-blue-600 hover:underline"
-                                @click="editText({{ $text->id }})"
-                            >
-                                Edit
-                            </button>
-                            <form action="{{ route('food-texts.destroy', $text->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button
-                                    type="submit"
-                                    class="text-red-600 hover:underline"
-                                    onclick="return confirm('Delete this text content?')"
-                                >
-                                    Delete
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">No text content added yet.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Text Content Modal -->
-    <div
-        x-show="showTextModal"
-        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-        x-cloak
-    >
-        <div
-            @click.away="showTextModal = false"
-            class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6"
-        >
-            <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
-
-            <form
-                id="textUploadForm"
-                class="space-y-5"
-                enctype="multipart/form-data"
-                @submit.prevent="saveText()"
-            >
+            <form id="textUploadForm" class="space-y-5" enctype="multipart/form-data" @submit.prevent="saveText()">
                 @csrf
-                <template x-if="editMode">
-                    <input type="hidden" name="_method" value="PUT">
-                </template>
 
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Label</label>
-                    <input
-                        type="text"
-                        name="label"
-                        x-model="form.label"
-                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        placeholder="Optional"
-                    >
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Label</label>
+                    <input type="text" x-model="form.title" class="w-full border rounded-xl px-3 py-2" placeholder="Optional">
                 </div>
 
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Text</label>
-                    <textarea
-                        name="text"
-                        x-model="form.text"
-                        rows="4"
-                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        placeholder="Enter text text..."
-                        required
-                    ></textarea>
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Text</label>
+                    <textarea x-model="form.content" rows="4" class="w-full border rounded-xl px-3 py-2" placeholder="Enter text..." required></textarea>
                 </div>
 
-                <div class="flex justify-end space-x-2">
-                    <button
-                        type="button"
-                        @click="showTextModal = false"
-                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
-                    >
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" @click="showTextModal = false" class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">
                         Cancel
                     </button>
-                    <button
-                        type="submit"
-                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                    >
+
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition">
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
                     </button>
                 </div>
             </form>
-
         </div>
     </div>
+
+    <!-- GLOBAL LOADING OVERLAY -->
+    <div 
+        x-show="isLoading"
+        x-transition.opacity
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-9999"
+    >
+        <div class="flex flex-col items-center space-y-3">
+            <svg class="animate-spin h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-30" cx="12" cy="12" r="10" stroke="white" stroke-width="4"></circle>
+                <path class="opacity-90" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span class="text-white text-lg font-medium">Processing...</span>
+        </div>
+    </div>
+
 </div>
+
+<script>
+function foodBeverageManager() {
+    return {
+        isLoading: false,
+        showModal: false,
+        showTextModal: false,
+        editMode: false,
+        editImageMode: false,
+        currentImageId: null,
+        currentImageTitle: '',
+        selectedImages: [],
+        texts: @js($texts),
+        form: { id: null, title: '', content: '' },
+
+        selectAll() {
+            this.selectedImages = @js($images->pluck('id')->toArray());
+        },
+
+        deselectAll() {
+            this.selectedImages = [];
+        },
+
+        resetForm() {
+            this.form = { id: null, title: '', content: '' };
+            this.editMode = false;
+        },
+
+        resetImageForm() {
+            this.editImageMode = false;
+            this.currentImageId = null;
+            this.currentImageTitle = '';
+            if (this.$refs.title) this.$refs.title.value = '';
+            if (this.$refs.image) this.$refs.image.value = '';
+        },
+
+        editImage(id, title) {
+            this.currentImageId = id;
+            this.currentImageTitle = title || '';
+            this.editImageMode = true;
+            this.showModal = true;
+        },
+
+        deleteImage(id, route) {
+            Swal.fire({
+                title: 'Delete Image?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const csrf = document.querySelector('meta[name=csrf-token]').content;
+                    const formData = new FormData();
+                    formData.append('_method', 'DELETE');
+                    fetch(route, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': csrf },
+                        body: formData
+                    }).then(() => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: 'Image deleted successfully.',
+                            confirmButtonColor: '#2563eb'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }).catch(() => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Failed to delete image.'
+                        });
+                    });
+                }
+            });
+        },
+
+        deleteText(id, route) {
+            Swal.fire({
+                title: 'Delete Text?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const csrf = document.querySelector('meta[name=csrf-token]').content;
+                    const formData = new FormData();
+                    formData.append('_method', 'DELETE');
+                    fetch(route, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': csrf },
+                        body: formData
+                    }).then(() => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: 'Text deleted successfully.',
+                            confirmButtonColor: '#2563eb'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }).catch(() => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Failed to delete text.'
+                        });
+                    });
+                }
+            });
+        },
+
+        editText(id) {
+            const text = this.texts.find(t => t.id === id);
+            if (text) {
+                this.form = { id: text.id, title: text.title, content: text.content };
+                this.editMode = true;
+                this.showTextModal = true;
+            }
+        },
+
+        async bulkDelete() {
+            Swal.fire({
+                title: `Delete ${this.selectedImages.length} selected image${this.selectedImages.length !== 1 ? 's' : ''}?`,
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then(async (result) => {
+                if (!result.isConfirmed) return;
+
+                this.isLoading = true;
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+
+            try {
+                const promises = this.selectedImages.map(id =>
+                    fetch(`/admin/food-swiper-images/${id}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: '_method=DELETE'
+                    })
+                );
+
+                await Promise.all(promises);
+                this.selectedImages = [];
+                Swal.fire({
+                    icon: "success",
+                    title: "Delete Complete",
+                    text: "Images deleted successfully!",
+                    confirmButtonColor: "#2563eb"
+                }).then(() => {
+                    window.location.reload();
+                });
+            } catch (err) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Error deleting images"
+                });
+            } finally {
+                this.isLoading = false;
+            }
+            });
+        },
+
+        async saveText() {
+            this.isLoading = true;
+
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+            const formData = new FormData();
+
+            formData.append('title', this.form.title);
+            formData.append('content', this.form.content);
+
+            let url = '{{ route('food-texts.store') }}';
+
+            if (this.editMode && this.form.id) {
+                url = `/admin/food-texts/${this.form.id}`;
+                formData.append('_method', 'PUT');
+            }
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    Swal.fire({
+                        icon: "success",
+                        title: this.editMode ? "Updated!" : "Added!",
+                        text: data.message || "Saved successfully!",
+                        confirmButtonColor: "#2563eb"
+                    }).then(() => {
+                        this.resetForm();
+                        this.showTextModal = false;
+                        window.location.reload();
+                    });
+                } else if (data.errors) {
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Validation Error",
+                        html: Object.values(data.errors).flat().join("<br>")
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Unexpected Error",
+                    text: "Something went wrong."
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async uploadImage() {
+            this.isLoading = true;
+
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+            const formData = new FormData();
+            const titleInput = this.$refs.title;
+            const imageInput = this.$refs.image;
+
+            if (!imageInput || !imageInput.files || imageInput.files.length === 0) {
+                if (!this.editImageMode) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'No Image Selected',
+                        text: 'Please select an image before uploading.'
+                    });
+                    this.isLoading = false;
+                    return;
+                }
+            }
+
+            formData.append('title', titleInput?.value || '');
+            if (imageInput && imageInput.files.length > 0) {
+                formData.append('image', imageInput.files[0]);
+            }
+            if (this.editImageMode) {
+                formData.append('_method', 'PUT');
+            }
+
+            const url = this.editImageMode ? '/admin/food-swiper-images/' + this.currentImageId : '{{ route('food-swiper-images.store') }}';
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    Swal.fire({
+                        icon: "success",
+                        title: this.editImageMode ? "Update Complete" : "Upload Complete",
+                        text: data.message || (this.editImageMode ? "Image updated successfully!" : "Image uploaded successfully!"),
+                        confirmButtonColor: "#2563eb"
+                    }).then(() => {
+                        this.showModal = false;
+                        this.resetImageForm();
+                        window.location.reload();
+                    });
+                } else if (data.errors) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Failed",
+                        html: Object.values(data.errors).flat().join("<br>")
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Failed",
+                        text: data.message || "Failed to upload image. Please try again."
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Unexpected Error",
+                    text: "Something went wrong. Please try again."
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        }
+    };
+}
+</script>
+<style>
+.tilt-card {
+    transform-style: preserve-3d;
+    perspective: 1200px;
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+.tilt-card:hover {
+    transform: rotateX(6deg) rotateY(-6deg) translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 35px rgba(0,0,0,0.18);
+}
+</style>
 @endsection
