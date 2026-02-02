@@ -3,6 +3,7 @@
 @section('title', 'Day Tour Page CMS')
 
 @section('content')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
     .swiper-button-next, .swiper-button-prev {
@@ -31,8 +32,8 @@
             <h2 class="text-2xl font-bold text-gray-800">Day Tour Packages</h2>
             <p class="text-gray-500 text-sm">Manage packages and included activities.</p>
         </div>
-        <button 
-            @click="showDayTourModal = true; resetForm()" 
+        <button
+            @click="showDayTourModal = true; resetForm()"
             class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
             + Add Package
         </button>
@@ -68,16 +69,17 @@
                 <p class="text-gray-400 text-xs mt-2">Created: {{ $tour->created_at->format('Y-m-d') }}</p>
 
                 <div class="mt-4 flex justify-end gap-3">
-                    <button 
+                    <button
                         class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
                         @click="editDayTour({{ $tour->id }})">
                         Edit
                     </button>
 
-                    <form action="{{ route('day-tours.destroy', $tour->id) }}" method="POST">
+                    <form id="delete-daytour-{{ $tour->id }}" action="{{ route('day-tours.destroy', $tour->id) }}" method="POST">
                         @csrf @method('DELETE')
-                        <button 
-                            onclick="return confirm('Delete this package?')"
+                        <button
+                            type="button"
+                            @click="deleteDayTour({{ $tour->id }})"
                             class="text-red-600 font-semibold hover:text-red-700 hover:underline transition">
                             Delete
                         </button>
@@ -247,8 +249,8 @@
             <p class="text-gray-500 text-sm">Paragraphs and captions displayed on the Day Tour page.</p>
         </div>
 
-        <button 
-            @click="showTextModal = true" 
+        <button
+            @click="showTextModal = true"
             class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
             + Add Text
         </button>
@@ -274,18 +276,18 @@
                     <td class="px-6 py-4 text-gray-700">{{ $text->title ?? 'Untitled' }}</td>
                     <td class="px-6 py-4 text-gray-600 text-sm">{{ $text->content ?? 'Untitled' }}</td>
                     <td class="px-6 py-4 text-right space-x-3">
-                        <button 
+                        <button
                             class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
                             @click="editText({{ $text->id }})">
                             Edit
                         </button>
 
-                        <form id="delete-text-{{ $text->id }}" 
-                              action="{{ route('day-text.destroy', $text->id) }}" 
+                        <form id="delete-text-{{ $text->id }}"
+                              action="{{ route('day-text.destroy', $text->id) }}"
                               method="POST" class="inline">
                             @csrf
                             @method('DELETE')
-                            <button 
+                            <button
                                 type="button"
                                 @click="deleteText({{ $text->id }})"
                                 class="text-red-600 font-semibold hover:text-red-700 hover:underline transition">
@@ -305,13 +307,12 @@
     </table>
 </div>
 
-
     {{-- ============================================================= --}}
     {{-- MODALS --}}
     {{-- ============================================================= --}}
 
     {{-- Add/Edit Day Tour Modal --}}
-    <div 
+    <div
         x-show="showDayTourModal"
         class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
         x-transition.opacity
@@ -451,10 +452,10 @@
         <div @click.away="showTextModal = false" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-7 border border-gray-200">
             <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
 
-            <form 
-                id="textUploadForm" 
-                class="space-y-5" 
-                enctype="multipart/form-data" 
+            <form
+                id="textUploadForm"
+                class="space-y-5"
+                enctype="multipart/form-data"
                 @submit.prevent="saveText()"
             >
                 @csrf
@@ -465,9 +466,9 @@
                 <!-- Package Selection -->
                 <div>
                     <label class="block font-medium mb-1 text-gray-700">Package</label>
-                    <select 
-                        name="package_id" 
-                        x-model="form.package_id" 
+                    <select
+                        name="package_id"
+                        x-model="form.package_id"
                         class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         required
                     >
@@ -481,10 +482,10 @@
                 <!-- Label -->
                 <div>
                     <label class="block font-medium mb-1 text-gray-700">Label</label>
-                    <input 
-                        type="text" 
-                        name="label" 
-                        x-model="form.label" 
+                    <input
+                        type="text"
+                        name="label"
+                        x-model="form.label"
                         class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         placeholder="Optional"
                     >
@@ -493,10 +494,10 @@
                 <!-- Text -->
                 <div>
                     <label class="block font-medium mb-1 text-gray-700">Text</label>
-                    <textarea 
-                        name="text" 
-                        x-model="form.text" 
-                        rows="4" 
+                    <textarea
+                        name="text"
+                        x-model="form.text"
+                        rows="4"
                         class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                         placeholder="Enter text..."
                         required
@@ -505,16 +506,16 @@
 
                 <!-- Buttons -->
                 <div class="flex justify-end space-x-3 pt-2">
-                    <button 
-                        type="button" 
-                        @click="showTextModal = false" 
+                    <button
+                        type="button"
+                        @click="showTextModal = false"
                         class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition"
                     >
                         Cancel
                     </button>
 
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition"
                     >
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
@@ -692,7 +693,7 @@
     </div>
 
     <!-- GLOBAL LOADING OVERLAY -->
-    <div 
+    <div
         x-show="isLoading"
         x-transition.opacity
         class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-9999"
@@ -784,16 +785,17 @@ function dayTourManager() {
         editText(id) {
             const text = this.texts.find(t => t.id === id);
             if (text) {
-                this.form = { 
-                    id: text.id, 
-                    package_id: text.package_id, 
-                    label: text.label, 
-                    text: text.text 
+                this.form = {
+                    id: text.id,
+                    package_id: text.daytour_id,
+                    label: text.title,
+                    text: text.content
                 };
                 this.editMode = true;
                 this.showTextModal = true;
             }
         },
+
 
         // Save Day Tour Package
         async saveDayTour() {
@@ -1150,7 +1152,6 @@ function dayTourManager() {
 }
 </script>
 
-
 <style>
 .tilt-card {
     transform-style: preserve-3d;
@@ -1162,5 +1163,4 @@ function dayTourManager() {
     box-shadow: 0 16px 35px rgba(0,0,0,0.18);
 }
 </style>
-
 @endsection

@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 
-@section('title', 'Staycations')
+@section('title', 'Staycations Page CMS')
 
 @section('content')
-<div
-    x-data="staycationComponent()"
 
+<div
+    x-data="staycationManager()"
+    class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
 >
-    <hr class="my-6">
 
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Staycations</h2>
@@ -34,9 +34,9 @@
         </div>
     </div>
 
-    <div class="overflow-x-auto border rounded-lg shadow">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 border-b">
+    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+        <table class="w-full text-left">
+            <thead class="bg-gray-100/70 backdrop-blur">
                 <tr>
                     <th class="px-4 py-2">#</th>
                     <th class="px-4 py-2">Name</th>
@@ -658,8 +658,9 @@
 </div>
 
 <script>
-function staycationComponent() {
+function staycationManager() {
     return {
+        isLoading: false,
         showModal: false,
         showStaycationModal: false,
         editModeStaycation: false,
@@ -953,8 +954,10 @@ function staycationComponent() {
             }
         },
 
-        saveText: async function() {
-            const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+        async saveText() {
+            this.isLoading = true;
+
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
             const formData = new FormData();
             formData.append('staycation_id', this.form.staycation_id);
             formData.append('section', 'features');
@@ -998,8 +1001,7 @@ function staycationComponent() {
                 console.error(err);
                 alert('Error submitting text.');
             } finally {
-                btn.innerText = this.editMode ? 'Update' : 'Add';
-                btn.disabled = false;
+                this.isLoading = false;
             }
         },
 

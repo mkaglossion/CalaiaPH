@@ -37,6 +37,8 @@ use App\Models\DayTourSwiperImage;
 
 
 
+use Illuminate\Support\Facades\Log;
+
 class AdminController extends Controller
 {
     public function staycation()
@@ -79,26 +81,41 @@ class AdminController extends Controller
 
     public function menu()
     {
-        $menus = Menu::all();
-        $images = MenuSwiperImage::all();
-        $texts = MenuText::all();
-        return view('admin.foodBeverages.menus', compact('menus', 'images', 'texts'));
+        try {
+            $menus = Menu::with(['swiperImages', 'texts'])->get();
+            $images = MenuSwiperImage::all();
+            $texts = MenuText::all();
+            return view('admin.foodBeverages.menus', compact('menus', 'images', 'texts'));
+        } catch (\Exception $e) {
+            Log::error('Error fetching menus: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load menus. Please try again.');
+        }
     }
 
     public function event()
     {
-        $events = Event::all();
-        $images = EventSwiperImage::all();
-        $texts = EventText::all();
-        return view('admin.specialEvents.events', compact('events', 'images', 'texts'));
+        try {
+            $events = Event::with(['swiperImages', 'texts'])->get();
+            $images = EventSwiperImage::all();
+            $texts = EventText::all();
+            return view('admin.specialEvents.events', compact('events', 'images', 'texts'));
+        } catch (\Exception $e) {
+            Log::error('Error fetching events: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load events. Please try again.');
+        }
     }
 
     public function farmInfo()
     {
-        $farmInfos = FarmInfo::all();
-        $images = FarmInfoSwiperImage::all();
-        $texts = FarmInfoText::all();
-        return view('admin.ourFarm.farmInfos', compact('farmInfos', 'images', 'texts'));
+        try {
+            $farmInfos = FarmInfo::with(['swiperImages', 'texts'])->get();
+            $images = FarmInfoSwiperImage::all();
+            $texts = FarmInfoText::all();
+            return view('admin.ourFarm.farmInfos', compact('farmInfos', 'images', 'texts'));
+        } catch (\Exception $e) {
+            Log::error('Error fetching farm infos: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load farm infos. Please try again.');
+        }
     }
 
     public function dayTour()

@@ -1,11 +1,11 @@
 {{-- SECTION: Visit or Contact Us --}}
 <section id="contact" class="py-16 bg-linear-to-br from-primary/5 to-primary/10" aria-labelledby="contact-heading">
-  <div class="container mx-auto px-4 max-w-7xl">
+  <div class="policy-container px-4">
     <header class="text-center mb-12">
-      <h2 id="contact-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
+      <h2 id="contact-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px;">
         Visit or Contact Us
       </h2>
-      <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+      <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed" style="font-size: 13px;">
         We'd love to hear from you about visiting, volunteering, or partnership opportunities.
       </p>
     </header>
@@ -17,7 +17,7 @@
       {{-- Contact Information --}}
       <div class="space-y-8">
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-          <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Visit Our Farm</h3>
+          <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px;">Visit Our Farm</h3>
           <ul class="space-y-4" role="list">
             <li class="flex items-start">
               <i class="fa fa-location-dot text-[#8f5d54] mt-1 mr-4 shrink-0" aria-hidden="true"></i>
@@ -65,7 +65,7 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-          <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">Location & Directions</h3>
+          <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px;">Location & Directions</h3>
           <div class="rounded-xl overflow-hidden mb-6 shadow-md">
             <iframe
               src="https://www.google.com/maps?q=Calaca%20Nature%20Park&output=embed"
@@ -75,13 +75,28 @@
             ></iframe>
           </div>
           <h4 class="text-lg font-semibold text-[#8f5d54] mb-3">Getting Here</h4>
-          <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+          <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px;">
             Calaia Nature Park is located in Calaca, Batangas along the main road near Sitio Calas from the town proper of Calaca.
           </p>
           <a href="https://maps.google.com" target="_blank" rel="noopener"
              class="inline-flex items-center text-[#8f5d54] hover:text-[#8f5d54]-dark font-medium transition-colors">
             Get Directions with Google Maps <i class="fas fa-chevron-right text-xs ml-2" aria-hidden="true"></i>
           </a>
+        </div>
+      </div>
+    </div>
+
+    {{-- Share Your Experience Section --}}
+    <div class="mt-12 text-center">
+      <h3 class="font-semibold text-[#8f5d54] mb-4" style="font-size: 20px;">Share Your Experience</h3>
+      <p class="text-gray-600 mb-6 max-w-2xl mx-auto" style="font-size: 13px;">
+        Have you visited Calaia Farm? We'd love to hear about your experience!
+      </p>
+      <a href="{{ route('testimonials.create') }}"
+         class="inline-block px-6 py-3 bg-[#7a7d52] text-white font-medium rounded-lg hover:bg-[#6b6e45] transition-colors duration-300">
+        Leave a Testimonial
+      </a>
+    </div>
         </div>
       </div>
     </div>

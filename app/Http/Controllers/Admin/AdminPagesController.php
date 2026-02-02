@@ -17,6 +17,7 @@ use App\Models\FarmSwiperImage;
 use App\Models\FarmText;
 use App\Models\HomeSwiperImage;
 use App\Models\HomeText;
+use App\Models\EventSection;
 
 class AdminPagesController extends Controller
 {
@@ -36,6 +37,10 @@ class AdminPagesController extends Controller
             return $this->showPage($method);
         }
 
+        if ($method === 'items') {
+            return $this->items();
+        }
+
         throw new \BadMethodCallException("Method {$method} does not exist.");
     }
 
@@ -50,5 +55,11 @@ class AdminPagesController extends Controller
         $texts = $textModel::all();
 
         return view($view, compact('images', 'texts'));
+    }
+
+    public function items()
+    {
+        $sections = EventSection::orderBy('order')->get();
+        return view('admin.home.items', compact('sections'));
     }
 }

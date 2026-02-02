@@ -182,7 +182,7 @@
         <!-- Special Event Contact Section -->
         <div x-show="activeTab === 'special-event'" class="space-y-4">
             <div class="text-center">
-                <p class="text-sm text-gray-600 mb-4" style="font-family: 'Gotham Book', sans-serif;">
+                <p class="text-sm text-gray-600 mb-4" style="">
                     Message us here for special event arrangements
                 </p>
                 <div class="flex flex-col sm:flex-row gap-3 justify-center">

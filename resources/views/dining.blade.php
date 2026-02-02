@@ -18,7 +18,7 @@
     {{-- Custom Fonts --}}
     <style>
       body {
-        font-family: 'Gotham Book', sans-serif;
+       
       }
 
       /* Custom Swiper pagination bullets */

@@ -58,7 +58,7 @@
             <i class="bi bi-tag-fill text-lg mr-2"></i>
             <span class="text-xs font-medium uppercase tracking-wide">Starting from</span>
           </div>
-          <p class="text-lg md:text-xl font-bold font-gotham" id="{{ $id }}PriceDisplay">{{ $price }}</p>
+          <p class="text-lg md:text-xl font-bold" id="{{ $id }}PriceDisplay">{{ $price }}</p>
         </div>
       @endif
     </div>

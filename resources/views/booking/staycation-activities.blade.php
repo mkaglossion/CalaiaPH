@@ -93,9 +93,9 @@ $staycations = $staycations->keyBy('id');
 <div class="pt-6 md:pt-12">
     {{-- Header --}}
     <div class="text-center mb-10">
-        <h1 class="text-2xl font-bold tracking-tight" style="font-family: 'Gotham Book', sans-serif;">Select Staycation Activities</h1>
+        <h1 class="text-2xl font-bold tracking-tight" style="">Select Staycation Activities</h1>
         <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-        <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Enhance your staycation experience with optional activities</p>
+        <p class="text-xs text-gray-500" style="">Enhance your staycation experience with optional activities</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10 py-6">
@@ -170,13 +170,6 @@ $staycations = $staycations->keyBy('id');
 
   {{-- Footer --}}
   <x-footer />
-
-  {{-- Temporary inline font helpers --}}
-  <style>
-    .font-gotham {
-      font-family: 'Gotham Book', sans-serif;
-    }
-  </style>
 
   {{-- Alpine.js --}}
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>

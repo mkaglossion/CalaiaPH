@@ -40,7 +40,7 @@
 
             {{-- ADVENTURE --}}
             <div id="adventure">
-              <h3 class="font-bold uppercase tracking-wide mb-4" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
+              <h3 class="font-bold uppercase tracking-wide mb-4" style=" color:#a97464; font-size: 25px;">
                 Adventure
               </h3>
 
@@ -69,7 +69,7 @@
 
             {{-- SPORTS AND GAMES --}}
             <div id="sports-games">
-              <h3 class="font-bold uppercase tracking-wide mb-4" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
+              <h3 class="font-bold uppercase tracking-wide mb-4" style=" color:#a97464; font-size: 25px;">
                 Sports &amp; Games
               </h3>
 
@@ -98,7 +98,7 @@
 
             {{-- R & R + CAMP --}}
             <div id="rr-camp">
-              <h3 class="font-bold uppercase tracking-wide mb-4" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
+              <h3 class="font-bold uppercase tracking-wide mb-4" style=" color:#a97464; font-size: 25px;">
                 R &amp; R &amp; Camp
               </h3>
 
@@ -127,7 +127,7 @@
 
             {{-- FARM --}}
             <div id="farm">
-              <h3 class="font-bold uppercase tracking-wide mb-4" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
+              <h3 class="font-bold uppercase tracking-wide mb-4" style=" color:#a97464; font-size: 25px;">
                 Farm
               </h3>
 

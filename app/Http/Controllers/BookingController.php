@@ -46,6 +46,80 @@ class BookingController extends Controller
         $this->pricingService = $pricingService;
         $this->paymongo = new \Paymongo\PaymongoClient(config('services.paymongo.secret_key'));
     }
+
+    /**
+     * Calculate accommodation pricing for staycations
+     */
+    private function calculateAccommodationPrice($accommodation, $checkinDate, $checkoutDate)
+    {
+        $quantity = $accommodation['guests'] ?? 1;
+        $name = strtolower($accommodation['staycation']['name']);
+        $isBYOT = str_contains($name, 'byot');
+        $isCarCamping = str_contains($name, 'car camping');
+
+        $checkin = new DateTime($checkinDate);
+        $checkout = new DateTime($checkoutDate);
+        $nights = max(1, $checkin->diff($checkout)->days);
+
+        $price = 0;
+
+        if (str_contains($name, 'standard') || str_contains($name, 'premium')) {
+            $current = clone $checkin;
+            while ($current < $checkout) {
+                $day = (int)$current->format('w');
+                $isWeekend = $day === 5 || $day === 6;
+                $basePrice = 0;
+                if (str_contains($name, 'standard')) {
+                    $basePrice = $isWeekend ? 6000 : 4800;
+                } elseif (str_contains($name, 'premium')) {
+                    $basePrice = $isWeekend ? 7200 : 5760;
+                }
+                $extraGuests = max(0, $quantity - 4);
+                $price += $basePrice + ($extraGuests * 400);
+                $current->modify('+1 day');
+            }
+        } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
+            $price = 3000 * $nights;
+        } elseif ($isBYOT || $isCarCamping) {
+              $price = (300 * $quantity * $nights) + (500 * $quantity * $nights);
+        } else {
+            $price = $accommodation['staycation']['price'] * $quantity * $nights;
+        }
+
+        // Add pet fees
+        if (!empty($accommodation['pet_agreement']) && !empty($accommodation['num_pets'])) {
+            $price += 2000 * $accommodation['num_pets'];
+        }
+
+        // Add breakfast fees
+        if (!empty($accommodation['has_breakfast'])) {
+            $price += 500 * $accommodation['guests'];
+        }
+
+        return $price;
+    }
+
+    /**
+     * Get base rate for accommodation display
+     */
+    private function getAccommodationBaseRate($accommodation)
+    {
+        $name = strtolower($accommodation['staycation']['name']);
+        $isBYOT = str_contains($name, 'byot');
+        $isCarCamping = str_contains($name, 'car camping');
+
+        if (str_contains($name, 'standard')) {
+            return 4800; // weekday rate
+        } elseif (str_contains($name, 'premium')) {
+            return 5760; // weekday rate
+        } elseif (str_contains($name, 'bell') || str_contains($name, 'dome')) {
+            return 3000;
+        } elseif ($isBYOT || $isCarCamping) {
+            return 300;
+        }
+
+        return $accommodation['staycation']['price'] ?? 0;
+    }
     public function debugSession()
     {
         // Dump the entire session

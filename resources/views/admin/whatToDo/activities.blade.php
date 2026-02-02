@@ -89,7 +89,7 @@
             @click.away="showActivityModal = false"
             class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6"
         >
-            <h3 class="text-lg font-semibold mb-4" x-text="editModeActivity ? 'Edit Activity' : 'Add Activity'"></h3>
+            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editModeActivity ? 'Edit Activity' : 'Add Activity'"></h3>
 
             <form id="activityForm" class="space-y-5" @submit.prevent="saveActivity()">
                 @csrf
@@ -275,13 +275,13 @@
     {{-- Swiper Modal (unchanged logic, just kept as-is) --}}
     <div
         x-show="showModal"
-        class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
         x-transition
     >
         <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
             <button
                 @click="showModal = false"
-                class="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
             >&times;</button>
 
             <h3 class="text-lg font-semibold mb-4" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
@@ -305,9 +305,9 @@
                     </select>
                 </div>
 
-                <div class="mb-3">
-                    <label class="block font-semibold mb-1">Title (optional)</label>
-                    <input type="text" x-ref="title" name="title" class="border rounded p-2 w-full">
+                <div>
+                    <label class="block font-medium mb-1 text-gray-700">Title (optional)</label>
+                    <input type="text" x-ref="title" name="title" class="border rounded-xl p-3 w-full">
                 </div>
 
                 <div class="mb-3">
@@ -342,11 +342,10 @@
         <table class="min-w-full text-sm text-left">
             <thead class="bg-gray-100 border-b">
                 <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Activity Name</th>
-                    <th class="px-4 py-2">Label</th>
-                    <th class="px-4 py-2">Text</th>
-                    <th class="px-4 py-2 text-right">Actions</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Activity Name</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Label</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Text</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
                 </tr>
             </thead>
 
@@ -376,7 +375,9 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">No text content added yet.</td>
+                        <td colspan="4" class="px-6 py-6 text-center text-gray-500">
+                            No text content yet.
+                        </td>
                     </tr>
                 @endforelse
             </tbody>

@@ -40,9 +40,9 @@
               <img src="{{ asset('assets/images/carousel/Glamping-1.jpg') }}" alt="Glamping Tent" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
             </div>
             <div class="px-4 py-7 text-center">
-              <h3 class="mb-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">Glamping Tent</h3>
+              <h3 class="mb-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px;">Glamping Tent</h3>
               <div class="mx-auto my-4 h-px w-full" style="background:#dce8d6;"></div>
-              <ul class="space-y-2 text-xs uppercase tracking-widest" style="color:#8f6a60; font-family: 'Gotham Book', sans-serif;">
+              <ul class="space-y-2 text-xs uppercase tracking-widest" style="color:#8f6a60;">
                 <li>LUXURY TENT SETUP</li>
                 <li>GOURMET LUNCH SERVICE</li>
                 <li>PRIVATE ATV EXPERIENCE</li>
@@ -61,9 +61,9 @@
               <img src="{{ asset('assets/images/carousel/BYOT-2.jpg') }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
             </div>
             <div class="px-4 py-7 text-center">
-              <h3 class="mb-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">Camping</h3>
+              <h3 class="mb-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px;">Camping</h3>
               <div class="mx-auto my-4 h-px w-full" style="background:#dce8d6;"></div>
-              <ul class="space-y-2 text-xs uppercase tracking-widest" style="color:#8f6a60; font-family: 'Gotham Book', sans-serif;">
+              <ul class="space-y-2 text-xs uppercase tracking-widest" style="color:#8f6a60;">
                 <li>TENT SETUP ASSISTANCE</li>
                 <li>CAMPFIRE BUILDING</li>
                 <li>STARGAZING SESSION</li>
@@ -83,7 +83,7 @@
       <div x-show="glampingOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="closeGlampingModal()" @click.self="closeGlampingModal()" style="display:none;">
         <div class="w-full max-w-7xl rounded-2xl bg-white shadow-xl overflow-auto max-h-[90vh]">
           <div class="flex items-center justify-between px-6 py-4 border-b" style="border-color: rgba(128,128,128,0.3);">
-            <h3 class="text-2xl font-bold" style="color:#97655A; font-family: 'Gotham Book', sans-serif;"><i class="bi bi-stars me-2"></i>Glamping Options</h3>
+            <h3 class="text-2xl font-bold" style="color:#97655A;"><i class="bi bi-stars me-2"></i>Glamping Options</h3>
             <button class="p-2 rounded hover:bg-gray-100" @click="closeGlampingModal()"><i class="bi bi-x-lg"></i></button>
           </div>
 
@@ -179,14 +179,14 @@
       <div x-show="campingOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="closeCampingModal()" @click.self="closeCampingModal()" style="display:none;">
         <div class="w-full max-w-7xl rounded-2xl bg-white shadow-xl overflow-auto max-h-[90vh]">
           <div class="flex items-center justify-between px-4 md:px-6 py-4 border-b" style="border-color: rgba(128,128,128,0.3);">
-            <h3 class="text-2xl font-bold" style="color:#97655A; font-family: 'Gotham Book', sans-serif;"><i class="bi bi-house me-2"></i>Camping Options</h3>
+            <h3 class="text-2xl font-bold" style="color:#97655A;"><i class="bi bi-house me-2"></i>Camping Options</h3>
             <button class="p-2 rounded hover:bg-gray-100" @click="closeCampingModal()"><i class="bi bi-x-lg"></i></button>
           </div>
 
           <div class="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {{-- Dome Tent --}}
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif;"><i class="bi bi-tent"></i>Dome Tent</h4></div>
+              <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style=""><i class="bi bi-tent"></i>Dome Tent</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">

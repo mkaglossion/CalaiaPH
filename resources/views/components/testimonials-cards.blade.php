@@ -18,6 +18,8 @@
       </p>
       <div class="mt-6 mx-auto h-px w-80 bg-white"></div>
     </div>
+@else
+    <section class="relative py-12 min-h-125" style="background: linear-gradient(rgba(143, 93, 84, 0.5), rgba(143, 93, 84, 0.5)), url('/assets/images/carousel/our-farm.jpg'); background-size: cover; background-position: center; background-attachment: fixed;">
 
     {{-- Swiper Slider --}}
     <div class="relative">

@@ -34,7 +34,7 @@
             <h2 class="text-3xl md:text-4xl font-bold text-brand mb-4" style="font-family: 'Gotham Book', sans-serif;">
               Our Special Events
             </h2>
-            <p class="text-lg text-gray-600 max-w-3xl mx-auto" style="font-family: 'Gotham Book', sans-serif;">
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto" style="">
               From intimate weddings to grand corporate celebrations, our beautiful farm setting provides the perfect backdrop for your special occasion.
             </p>
           </div>
@@ -67,14 +67,14 @@
 
                 {{-- Event Content --}}
                 <div class="p-6">
-                  <h3 class="text-xl font-bold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">
+                  <h3 class="text-xl font-bold text-gray-900 mb-3" style="">
                     {{ $event->name }}
                   </h3>
 
                   @if($event->texts->count() > 0)
                     @foreach($event->texts as $text)
                       @if($text->section === 'description' || $text->title === 'Description')
-                        <p class="text-gray-600 mb-4 leading-relaxed" style="font-family: 'Gotham Book', sans-serif;">
+                        <p class="text-gray-600 mb-4 leading-relaxed" style="">
                           {{ Str::limit($text->content, 120) }}
                         </p>
                       @endif
@@ -83,7 +83,7 @@
 
                   {{-- Event Features --}}
                   <div class="mb-6">
-                    <h4 class="font-semibold text-gray-900 mb-2" style="font-family: 'Gotham Book', sans-serif;">What's Included:</h4>
+                    <h4 class="font-semibold text-gray-900 mb-2" style="">What's Included:</h4>
                     <ul class="text-sm text-gray-600 space-y-1">
                       @if($event->texts->count() > 0)
                         @foreach($event->texts as $text)
@@ -121,7 +121,7 @@
                     href="mailto:calaia.ph@gmail.com?subject=Inquiry about {{ $event->name }}"
                     class="w-full inline-flex items-center justify-center gap-2 bg-brand text-white px-6 py-3 rounded-xl font-semibold hover:bg-brand transition-colors duration-300"
                   >
-                    <i class="bi bi-envelope"></i>
+                    <i class="bi bi-messenger"></i>
                     Inquire About This Event
                   </a>
                 </div>
@@ -133,10 +133,10 @@
             <div class="text-center py-16">
               <div class="max-w-md mx-auto">
                 <i class="bi bi-calendar-x text-6xl text-gray-300 mb-6"></i>
-                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">
+                <h3 class="text-2xl font-bold text-gray-900 mb-4" style="">
                   Events Coming Soon
                 </h3>
-                <p class="text-gray-600 mb-8" style="font-family: 'Gotham Book', sans-serif;">
+                <p class="text-gray-600 mb-8" style="">
                   We're currently preparing some amazing special events for you. Check back soon or contact us for custom event planning.
                 </p>
                 <a
@@ -152,10 +152,10 @@
 
           {{-- Call to Action Section --}}
           <div class="mt-16 bg-white rounded-2xl shadow-lg p-8 md:p-12 text-center">
-            <h3 class="text-2xl md:text-3xl font-bold text-[#8f5d54] mb-4" style="font-family: 'Gotham Book', sans-serif;">
+            <h3 class="text-2xl md:text-3xl font-bold text-[#8f5d54] mb-4" style="">
               Have a Custom Event in Mind?
             </h3>
-            <p class="text-lg text-gray-600 mb-8 max-w-2xl mx-auto" style="font-family: 'Gotham Book', sans-serif;">
+            <p class="text-lg text-gray-600 mb-8 max-w-2xl mx-auto" style="">
               We specialize in creating bespoke experiences tailored to your unique vision. From intimate gatherings to grand celebrations, let us bring your dream event to life.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -163,15 +163,15 @@
                 href="mailto:calaia.ph@gmail.com?subject=Custom Event Planning Inquiry"
                 class="inline-flex items-center justify-center gap-2 bg-brand text-white px-8 py-4 rounded-xl font-semibold hover:bg-brand transition-colors duration-300"
               >
-                <i class="bi bi-envelope"></i>
+                <i class="bi bi-messenger"></i>
                 Plan Custom Event
               </a>
               <a
                 href="tel:+639051294741"
                 class="inline-flex items-center justify-center gap-2 border-2 border-brand text-brand px-8 py-4 rounded-xl font-semibold hover:bg-brand hover:text-white transition-colors duration-300"
               >
-                <i class="bi bi-telephone"></i>
-                Call Us Now
+                <i class="bi bi-envelope"></i>
+                Email Us Now
               </a>
             </div>
           </div>

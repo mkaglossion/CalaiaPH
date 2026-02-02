@@ -74,6 +74,7 @@ class EventExperience extends Component
      */
     public function render()
     {
-        return view('components.event-experience');
+        $sections = EventExperienceSection::orderBy('order')->get();
+        return view('components.event-experience', compact('sections'));
     }
 }

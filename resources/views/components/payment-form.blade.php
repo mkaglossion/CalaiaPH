@@ -24,7 +24,7 @@
 
         {{-- Customer Information --}}
         <div class="bg-gray-50 rounded-xl p-4 sm:p-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center" style="font-family: 'Gotham Book', sans-serif;">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center" style="">
                 <i class="bi bi-person-circle mr-2 text-[#8f5d54]"></i>
                 Personal Information
             </h3>
@@ -70,7 +70,7 @@
             >
                 Payment Method
             </legend>
-            <p class="text-xs sm:text-sm text-gray-500 mb-2" style="font-family: 'Gotham Book', sans-serif;">
+            <p class="text-xs sm:text-sm text-gray-500 mb-2" style="">
                 Secure and encrypted payment via your chosen provider.
             </p>
 
@@ -326,7 +326,7 @@
                 <i class="bi bi-lock-fill mr-2"></i>
                 <span>Complete Payment</span>
             </button>
-            <p class="mt-3 text-xs sm:text-sm text-center text-gray-500" style="font-family: 'Gotham Book', sans-serif;">
+            <p class="mt-3 text-xs sm:text-sm text-center text-gray-500" style="">
                 Your payment is secured with 256-bit SSL encryption. By proceeding, you agree to our terms of service.
             </p>
         </div>

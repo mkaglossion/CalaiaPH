@@ -2,6 +2,20 @@
 <div
     class="fixed bottom-0 right-0 p-3 hidden lg:flex flex-col gap-2 z-1030"
 >
+    {{-- Special Events button --}}
+    <button
+        type="button"
+        onclick="navigateToSpecialEvents()"
+        aria-label="View Special Events"
+        class="flex items-center justify-center w-12 h-12 rounded-full text-white shadow-md
+               hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
+        style="background-color: #8f5d54;"
+        onmouseover="this.style.backgroundColor='#a0675a'"
+        onmouseout="this.style.backgroundColor='#8f5d54'"
+    >
+        <i class="bi bi-calendar-event text-lg"></i>
+    </button>
+
     {{-- Messenger button --}}
     <a
         href="https://m.me/410774518796277"
@@ -47,6 +61,10 @@
     </button>
 </div>
 <script>
+function navigateToSpecialEvents() {
+    window.location.href = '{{ route("special-events") }}';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const scrollBtn = document.getElementById('scrollToTopBtn');
 
