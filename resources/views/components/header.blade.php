@@ -140,9 +140,7 @@
                 <i class="bi bi-person-check me-2"></i>Check-in / Check-out
               </a>
 
-              <div class="border-t border-gray-200 my-2"></div>
-
-              <a href="{{ route('logout') }}" class="block w-full text-left px-4 py-3 text-gray-700 hover:bg-red-50 transition text-red-600 font-medium">
+              <a href="{{ route('logout') }}" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
                 <i class="bi bi-box-arrow-right me-2"></i>Log Out
               </a>
             </div>
@@ -271,7 +269,7 @@
               <i class="bi bi-person-check me-2"></i>Check-in / Check-out
             </a>
 
-            <a href="{{ route('logout') }}" @click="mobileOpen = false" class="block px-3 py-3 rounded-lg hover:bg-white/50 transition text-white pb-12">
+            <a href="{{ route('logout') }}" @click="mobileOpen = false" class="block px-3 py-3 rounded-lg hover:bg-white/50 transition text-white">
               <i class="bi bi-box-arrow-right me-2"></i>Log Out
             </a>
           @else
