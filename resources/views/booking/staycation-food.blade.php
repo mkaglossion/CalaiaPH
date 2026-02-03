@@ -132,12 +132,9 @@
                             <select id="foodCategory" x-model="selectedCategory"
                                     class="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8f5d54] focus:border-[#8f5d54]">
                                 <option value="all">All Items</option>
-                                <option value="special">Special Options</option>
                                 <option value="cook_your_own">Cook Your Own</option>
-                                <option value="breakfast">Breakfast</option>
-                                <option value="lunch">Lunch</option>
-                                <option value="dinner">Dinner</option>
-                                <option value="package">Packages</option>
+                                <option value="messhall">Messhall</option>
+                                <option value="special">Special Options</option>
                             </select>
                         </div>
 
@@ -244,7 +241,7 @@
                         @empty
                         @endforelse
 
-                        @forelse($foodMenus->where('is_special_option', false) as $food)
+                        @forelse($foodMenus->where('is_special_option', false)->whereIn('category', ['messhall', 'cook_your_own']) as $food)
                             @php
                                 $category = $food->category ?? 'package';
                             @endphp

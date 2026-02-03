@@ -1801,9 +1801,14 @@ class BookingController extends Controller
         session()->forget('selected_foods');
         $booking['selected_foods'] = [];
 
-        // Pull food items from database with images and texts, sorted by category then name
+        // Pull food items from database with images and texts
+        // Filter for staycation: only messhall, cook_your_own, and special options
         $foodMenus = Food::with(['swiperImages', 'texts'])
             ->where('is_active', true)
+            ->where(function ($query) {
+                $query->whereIn('category', ['messhall', 'cook_your_own'])
+                      ->orWhere('is_special_option', true);
+            })
             ->orderBy('category')
             ->orderBy('name')
             ->get();
