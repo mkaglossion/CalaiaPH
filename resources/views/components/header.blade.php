@@ -142,7 +142,7 @@
 
               <div class="border-t border-gray-200 my-2"></div>
 
-              <a href="{{ route('logout') }}" class="block w-full text-left px-4 py-3 hover:bg-red-50 transition text-red-600 font-medium">
+              <a href="{{ route('logout') }}" class="block w-full text-left px-4 py-2 hover:bg-red-50 transition text-red-600 font-medium">
                 <i class="bi bi-box-arrow-right me-2"></i>Log Out
               </a>
             </div>
