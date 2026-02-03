@@ -49,6 +49,7 @@ use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\FarmInfoTextController;
 use App\Http\Controllers\Admin\DayPackageTextController;
 use App\Http\Controllers\Admin\AccommodationTextController;
+use App\Http\Controllers\Admin\DiningCategoryImageController;
 
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\DayTourController;
@@ -278,6 +279,11 @@ Route::prefix('admin')->group(function () {
                 'update' => 'admin.foods.update',
                 'destroy' => 'admin.foods.destroy'
             ]]);
+            Route::resource('category-images', DiningCategoryImageController::class, ['names' => [
+                'index' => 'admin.dining.category-images.index',
+                'store' => 'admin.dining.category-images.store',
+                'destroy' => 'admin.dining.category-images.destroy'
+            ]]);
     });
     Route::prefix('/events')->group(function () {
         Route::get('/events', [AdminController::class, 'event'])->name('admin.events.events');
@@ -413,5 +419,4 @@ Route::prefix('admin')->group(function () {
         Route::post('quickset', [InventoryController::class, 'quickset'])->name('admin.inventory.quickset');
         Route::post('delete', [InventoryController::class, 'delete'])->name('admin.inventory.delete');
     });
-
 });

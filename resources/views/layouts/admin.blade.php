@@ -83,6 +83,7 @@
               ['label'=>'Pages Information','route'=>'admin.food.foodandbeverage'],
               ['label'=>'Items','route'=>'admin.food.menus'],
               ['label'=>'Food Management','route'=>'admin.foods.index'],
+              ['label'=>'Category Images','route'=>'admin.dining.category-images.index'],
               ['label'=>'Inventory Monitor','route'=>'admin.inventory.food'],
             ]],
             ['title'=>'Special Events','icon'=>'calendar','route'=>'admin.specialEvents.*','sub'=>[

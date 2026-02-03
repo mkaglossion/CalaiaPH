@@ -32,7 +32,7 @@ class FoodController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255|unique:foods,name',
-                'category' => 'required|string|in:breakfast,lunch,dinner,package,special,cook_your_own',
+                'category' => 'required|string|in:messhall,cook_your_own',
                 'subcategory' => 'nullable|string|max:255',
                 'price' => 'required|numeric|min:0',
                 'description' => 'nullable|string',
@@ -92,7 +92,7 @@ class FoodController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255|unique:foods,name,' . $food->id,
-                'category' => 'required|string|in:breakfast,lunch,dinner,package,special,cook_your_own',
+                'category' => 'required|string|in:messhall,cook_your_own',
                 'subcategory' => 'nullable|string|max:255',
                 'price' => 'required|numeric|min:0',
                 'description' => 'nullable|string',

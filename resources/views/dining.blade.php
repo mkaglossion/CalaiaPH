@@ -52,7 +52,11 @@
       <section class="container mx-auto px-4 py-8">
         <div class="max-w-6xl mx-auto">
           <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <img src="{{ asset('images/mess-hall.jpg') }}" alt="Mess Hall" class="w-full h-96 object-cover">
+            @if(isset($diningCategoryImages['messhall']))
+              <img src="{{ $diningCategoryImages['messhall']->image_path }}" alt="Mess Hall" class="w-full h-96 object-cover">
+            @else
+              <img src="{{ asset('images/mess-hall.jpg') }}" alt="Mess Hall" class="w-full h-96 object-cover">
+            @endif
             <div class="p-6 text-center">
               <h2 class="text-3xl font-bold text-[#97655A] mb-4" style="font-family: 'Gotham Book', sans-serif;">Mess Hall</h2>
               <p class="text-gray-700" style="font-family: 'Gotham Book', sans-serif;">Experience our spacious and elegant mess hall, perfect for group dining and special occasions.</p>
@@ -150,7 +154,11 @@
       <section class="container mx-auto px-4 py-16">
         <div class="max-w-6xl mx-auto">
           <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <img src="{{ asset('images/cook-your-own.jpg') }}" alt="Cook Your Own" class="w-full h-96 object-cover">
+            @if(isset($diningCategoryImages['cook_your_own']))
+              <img src="{{ $diningCategoryImages['cook_your_own']->image_path }}" alt="Cook Your Own" class="w-full h-96 object-cover">
+            @else
+              <img src="{{ asset('images/cook-your-own.jpg') }}" alt="Cook Your Own" class="w-full h-96 object-cover">
+            @endif
             <div class="p-6">
               <h2 class="text-3xl font-bold text-[#97655A] mb-6 text-center" style="font-family: 'Gotham Book', sans-serif;">Cook Your Own</h2>
               <p class="text-gray-700 mb-6 text-center" style="font-family: 'Gotham Book', sans-serif;">Experience the joy of cooking your own fresh ingredients from our farm. Choose from our available options:</p>

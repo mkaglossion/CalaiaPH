@@ -29,6 +29,7 @@ use App\Models\StaycationInventory;
 use App\Models\Holiday;
 use App\Models\DayTypeDay;
 use App\Models\BookingSetting;
+use App\Models\DiningCategoryImage;
 
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -523,16 +524,17 @@ class PagesController extends Controller
     public function dining()
     {
         $messHallFoods = Food::with('swiperImages')
-            ->whereIn('category', ['breakfast', 'lunch', 'dinner', 'package', 'special'])
+            ->where('category', 'messhall')
             ->get();
         $cookYourOwnFoods = Food::with('swiperImages')->where('category', 'cook_your_own')->get();
+        $diningCategoryImages = DiningCategoryImage::all()->keyBy('category');
         $diningDetails = [
             'Harvest Your Own – Pick and cook farm-fresh ingredients',
             'Cochinillo – Whole roast pig (pre-order required)',
             'Fresh farm-to-table ingredients available',
             'Guided cooking sessions with our chefs'
         ];
-        return $this->renderPage(FoodSwiperImage::class, FoodText::class, 'dining', 'dining', 'label', 'text', compact('messHallFoods', 'cookYourOwnFoods', 'diningDetails'));
+        return $this->renderPage(FoodSwiperImage::class, FoodText::class, 'dining', 'dining', 'label', 'text', compact('messHallFoods', 'cookYourOwnFoods', 'diningCategoryImages', 'diningDetails'));
     }
 
     public function groups()

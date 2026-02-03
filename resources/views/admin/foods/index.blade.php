@@ -182,11 +182,7 @@
                         <select x-model="form.category" required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
                             <option value="">Select Category</option>
-                            <option value="breakfast">Breakfast</option>
-                            <option value="lunch">Lunch</option>
-                            <option value="dinner">Dinner</option>
-                            <option value="package">Package</option>
-                            <option value="special">Special</option>
+                            <option value="messhall">Messhall</option>
                             <option value="cook_your_own">Cook Your Own</option>
                         </select>
                     </div>
