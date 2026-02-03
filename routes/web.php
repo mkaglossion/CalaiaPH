@@ -63,6 +63,7 @@ use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\FoodController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\FarmInfoController;
+use App\Http\Controllers\Admin\FarmExperiencesController;
 use App\Http\Controllers\Admin\StaycationAccommodationController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\CartController;
@@ -302,6 +303,9 @@ Route::prefix('admin')->group(function () {
     Route::prefix('/farm')->group(function () {
              Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farm.farmInfos');
              Route::get('/our-farm', [AdminPagesController::class, 'ourFarm'])->name('admin.farm.ourfarm');
+             Route::get('/experiences', [FarmExperiencesController::class, 'index'])->name('admin.farm.experiences');
+             Route::post('/experiences/save', [FarmExperiencesController::class, 'save'])->name('admin.farm.experiences.save');
+             Route::post('/experiences/upload-image', [FarmExperiencesController::class, 'uploadImage'])->name('admin.farm.experiences.uploadImage');
      });
 
      Route::prefix('/shop')->group(function () {
@@ -428,3 +432,7 @@ Route::post('/api/special-events', [EventApiController::class, 'store']);
 Route::post('/api/special-events/{event}', [EventApiController::class, 'update']);
 Route::put('/api/special-events/{event}', [EventApiController::class, 'update']);
 Route::delete('/api/special-events/{event}', [EventApiController::class, 'destroy']);
+Route::post('/api/special-events/upload-image', [EventApiController::class, 'uploadImage']);
+
+// ========== API Routes for Farm Experiences ==========
+Route::post('/api/farm-experiences/upload-image', [\App\Http\Controllers\Api\FarmExperiencesApiController::class, 'uploadImage']);

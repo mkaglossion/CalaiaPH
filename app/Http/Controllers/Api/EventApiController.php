@@ -10,6 +10,46 @@ use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 class EventApiController extends Controller
 {
     /**
+     * Upload image to Cloudinary
+     */
+    public function uploadImage(Request $request)
+    {
+        try {
+            $request->validate([
+                'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:102400', // max 100MB
+            ]);
+
+            if (!$request->hasFile('image')) {
+                return response()->json(['success' => false, 'message' => 'No image provided'], 400);
+            }
+
+            $file = $request->file('image');
+            $filePath = $file->getRealPath();
+
+            try {
+                $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
+                return response()->json([
+                    'success' => true,
+                    'imageUrl' => $uploadResult['secure_url'],
+                    'public_id' => $uploadResult['public_id'],
+                    'message' => 'Image uploaded successfully'
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error uploading image: ' . $e->getMessage()
+                ], 500);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        }
+    }
+
+    /**
      * Store a newly created event
      */
     public function store(Request $request)
@@ -19,25 +59,8 @@ class EventApiController extends Controller
                 'name' => 'required|string|max:255',
                 'description' => 'required|string',
                 'features' => 'required|string',
-                'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:102400' // max 100MB
+                'image' => 'nullable|string|url' // URL from Cloudinary, not a file
             ]);
-
-            // Handle image upload to Cloudinary
-            if ($request->hasFile('image')) {
-                $file = $request->file('image');
-                $filePath = $file->getRealPath();
-
-                try {
-                    $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
-                    $validated['image'] = $uploadResult['secure_url'];
-                    $validated['public_id'] = $uploadResult['public_id'];
-                } catch (\Exception $e) {
-                    return response()->json([
-                        'message' => 'Image upload failed',
-                        'errors' => ['image' => ['Failed to upload image to Cloudinary: ' . $e->getMessage()]]
-                    ], 422);
-                }
-            }
 
             $event = Event::create($validated);
 
@@ -63,35 +86,8 @@ class EventApiController extends Controller
                 'name' => 'required|string|max:255',
                 'description' => 'required|string',
                 'features' => 'required|string',
-                'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:102400' // max 100MB
+                'image' => 'nullable|string|url' // URL from Cloudinary, not a file
             ]);
-
-            // Handle image upload/replacement
-            if ($request->hasFile('image')) {
-                // Delete old image from Cloudinary if exists
-                if ($event->public_id) {
-                    try {
-                        Cloudinary::uploadApi()->destroy($event->public_id);
-                    } catch (\Exception $e) {
-                        // Continue even if deletion fails
-                    }
-                }
-
-                // Upload new image to Cloudinary
-                $file = $request->file('image');
-                $filePath = $file->getRealPath();
-
-                try {
-                    $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
-                    $validated['image'] = $uploadResult['secure_url'];
-                    $validated['public_id'] = $uploadResult['public_id'];
-                } catch (\Exception $e) {
-                    return response()->json([
-                        'message' => 'Image upload failed',
-                        'errors' => ['image' => ['Failed to upload image to Cloudinary: ' . $e->getMessage()]]
-                    ], 422);
-                }
-            }
 
             $event->update($validated);
 

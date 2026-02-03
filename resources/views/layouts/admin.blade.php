@@ -92,7 +92,8 @@
             ]],
             ['title'=>'Our Farm','icon'=>'leaf','route'=>'admin.farm.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.farm.ourfarm'],
-              ['label'=>'Items','route'=>'admin.farm.farmInfos']
+              ['label'=>'Items','route'=>'admin.farm.farmInfos'],
+              ['label'=>'Farm Experiences','route'=>'admin.farm.experiences']
             ]],
             ['title'=>'Shop','icon'=>'shopping-bag','route'=>'admin.shop.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.shop.shopstore'],

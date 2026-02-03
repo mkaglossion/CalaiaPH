@@ -160,42 +160,13 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {{-- Experience Cards --}}
-            @foreach ([
-              [
-                'img' => 'animal and wellness.jpg',
-                'title' => 'Animal Feeding Experience',
-                'desc' => 'Hands-on feeding with guidance from our farmers. Perfect for families and school groups.',
-                'time' => 'Weekends 9AM–2PM',
-                'capacity' => 'Groups up to 20 people',
-                'icon' => 'people',
-                'cta' => 'Reserve Your Spot'
-              ],
-              [
-                'img' => 'organic1.jpg',
-                'title' => 'Harvest Days',
-                'desc' => 'Join seasonal harvests and take home fresh-picked produce. Learn traditional techniques.',
-                'time' => 'Morning hours, seasonal',
-                'capacity' => 'Take home your harvest',
-                'icon' => 'flower1',
-                'cta' => 'Learn More'
-              ],
-              [
-                'img' => 'games-grounds4.jpg',
-                'title' => 'Farm Tours',
-                'desc' => 'See regenerative agriculture first-hand—learn about soil health & biodiversity.',
-                'time' => 'By appointment',
-                'capacity' => 'Educational content included',
-                'icon' => 'mortarboard',
-                'cta' => 'Schedule Tour',
-                'badge' => 'Guided Tour'
-              ]
-            ] as $experience)
+            @forelse ($farmExperiences as $experience)
             <article class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group">
               <div class="relative">
-                <img src="{{ asset('assets/images/carousel/'.$experience['img']) }}"
+                <img src="{{ $experience['img'] }}"
                      alt="{{ $experience['title'] }} at Calaia farm"
                      class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
-                @if(isset($experience['badge']))
+                @if(!empty($experience['badge']))
                 <span class="absolute top-4 right-4 bg-black/70 text-white text-xs px-3 py-1 rounded-full font-medium">
                   <i class="fas fa-route mr-1" aria-hidden="true"></i> {{ $experience['badge'] }}
                 </span>
@@ -218,7 +189,11 @@
                 </a>
               </div>
             </article>
-            @endforeach
+            @empty
+            <div class="col-span-3 text-center py-12">
+              <p class="text-gray-500">No experiences available at the moment.</p>
+            </div>
+            @endforelse
           </div>
         </div>
       </section>

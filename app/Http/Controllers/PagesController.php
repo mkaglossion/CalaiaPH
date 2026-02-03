@@ -550,7 +550,44 @@ class PagesController extends Controller
 
     public function farm()
     {
-        return $this->renderPage(FarmSwiperImage::class, FarmText::class, 'farm', 'farm');
+        // Get farm experiences from cache with default fallback
+        $farmExperiences = \Illuminate\Support\Facades\Cache::get('farm_experiences', [
+            [
+                'id' => 1,
+                'img' => 'https://res.cloudinary.com/dz4rr8dch/image/upload/v1732704128/experiences_animal-feed_rywwlp.jpg',
+                'title' => 'Animal Feeding Experience',
+                'desc' => 'Get up close with our farm animals. Learn about their care and dietary needs while you feed them.',
+                'time' => 'Weekends 9AM–2PM',
+                'capacity' => 'Groups up to 20 people',
+                'icon' => 'people',
+                'cta' => 'Reserve Your Spot',
+                'badge' => null
+            ],
+            [
+                'id' => 2,
+                'img' => 'https://res.cloudinary.com/dz4rr8dch/image/upload/v1732704128/experiences_harvest_jxwvfp.jpg',
+                'title' => 'Harvest Days',
+                'desc' => 'Participate in seasonal harvesting. Learn sustainable farming practices and take home fresh produce.',
+                'time' => 'Morning hours seasonal',
+                'capacity' => 'Take home harvest',
+                'icon' => 'flower1',
+                'cta' => 'Learn More',
+                'badge' => null
+            ],
+            [
+                'id' => 3,
+                'img' => 'https://res.cloudinary.com/dz4rr8dch/image/upload/v1732704128/experiences_farm-tour_dwt6bk.jpg',
+                'title' => 'Farm Tours',
+                'desc' => 'Explore our farm and learn about sustainable agriculture, animal welfare, and eco-friendly practices.',
+                'time' => 'By appointment',
+                'capacity' => 'Educational experience',
+                'icon' => 'mortarboard',
+                'cta' => 'Schedule Tour',
+                'badge' => 'Guided Tour'
+            ]
+        ]);
+        
+        return $this->renderPage(FarmSwiperImage::class, FarmText::class, 'farm', 'farm', 'label', 'text', compact('farmExperiences'));
     }
 
     public function shop()
