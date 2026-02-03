@@ -554,7 +554,7 @@ class PagesController extends Controller
         $farmExperiences = \Illuminate\Support\Facades\Cache::get('farm_experiences', [
             [
                 'id' => 1,
-                'img' => 'https://res.cloudinary.com/dz4rr8dch/image/upload/v1732704128/experiences_animal-feed_rywwlp.jpg',
+                'img' => null,
                 'title' => 'Animal Feeding Experience',
                 'desc' => 'Get up close with our farm animals. Learn about their care and dietary needs while you feed them.',
                 'time' => 'Weekends 9AM–2PM',
@@ -565,7 +565,7 @@ class PagesController extends Controller
             ],
             [
                 'id' => 2,
-                'img' => 'https://res.cloudinary.com/dz4rr8dch/image/upload/v1732704128/experiences_harvest_jxwvfp.jpg',
+                'img' => null,
                 'title' => 'Harvest Days',
                 'desc' => 'Participate in seasonal harvesting. Learn sustainable farming practices and take home fresh produce.',
                 'time' => 'Morning hours seasonal',
@@ -576,7 +576,7 @@ class PagesController extends Controller
             ],
             [
                 'id' => 3,
-                'img' => 'https://res.cloudinary.com/dz4rr8dch/image/upload/v1732704128/experiences_farm-tour_dwt6bk.jpg',
+                'img' => null,
                 'title' => 'Farm Tours',
                 'desc' => 'Explore our farm and learn about sustainable agriculture, animal welfare, and eco-friendly practices.',
                 'time' => 'By appointment',

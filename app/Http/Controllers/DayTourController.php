@@ -86,7 +86,7 @@ class DayTourController extends Controller
                     
                     // Upload to Cloudinary with transformations
                     $uploadedFile = Cloudinary::uploadApi()->upload($filePath, [
-                        'folder' => 'calaia/daytour-images',
+                        'folder' => env('CLOUDINARY_UPLOAD_FOLDER', 'daytour-images'),
                         'public_id' => 'daytour-' . $tour->id . '-' . time(),
                         'width' => 800,
                         'height' => 600,
@@ -143,7 +143,7 @@ class DayTourController extends Controller
                     $filePath = $file->getRealPath();
                     
                     $uploadedFile = Cloudinary::uploadApi()->upload($filePath, [
-                        'folder' => 'calaia/daytour-images',
+                        'folder' => env('CLOUDINARY_UPLOAD_FOLDER', 'daytour-images'),
                         'public_id' => 'daytour-' . $dayTour->id . '-' . time(),
                         'width' => 800,
                         'height' => 600,
