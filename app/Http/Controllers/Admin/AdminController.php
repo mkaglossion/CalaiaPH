@@ -257,6 +257,12 @@ class AdminController extends Controller
 
         return view('admin.dayTour.days', compact('packages', 'tours', 'texts', 'activities', 'images', 'infoTitle', 'infoSubtitle', 'infoItems', 'infoItemsJson'));
     }
+
+    public function specialEventsManager()
+    {
+        $events = Event::all();
+        return view('admin.specialEvents.manager', compact('events'));
+    }
 }
 
 

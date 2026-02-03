@@ -58,6 +58,7 @@ use App\Http\Controllers\ContactController;
 
 use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\StaycationController;
+use App\Http\Controllers\Api\EventApiController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\FoodController;
 use App\Http\Controllers\Admin\EventController;
@@ -290,6 +291,7 @@ Route::prefix('admin')->group(function () {
     });
     Route::prefix('/special-events')->group(function () {
         Route::get('/', [AdminPagesController::class, 'specialEvents'])->name('admin.specialEvents.specialevents');
+        Route::get('/manager', [AdminController::class, 'specialEventsManager'])->name('admin.specialEvents.manager');
     });
     Route::prefix('/event-experience')->group(function () {
         Route::get('/', [AdminController::class, 'eventExperience'])->name('admin.eventExperience.sections');
@@ -420,3 +422,9 @@ Route::prefix('admin')->group(function () {
         Route::post('delete', [InventoryController::class, 'delete'])->name('admin.inventory.delete');
     });
 });
+
+// ========== API Routes for Special Events ==========
+Route::post('/api/special-events', [EventApiController::class, 'store']);
+Route::post('/api/special-events/{event}', [EventApiController::class, 'update']);
+Route::put('/api/special-events/{event}', [EventApiController::class, 'update']);
+Route::delete('/api/special-events/{event}', [EventApiController::class, 'destroy']);

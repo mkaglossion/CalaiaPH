@@ -87,7 +87,8 @@
               ['label'=>'Inventory Monitor','route'=>'admin.inventory.food'],
             ]],
             ['title'=>'Special Events','icon'=>'calendar','route'=>'admin.specialEvents.*','sub'=>[
-              ['label'=>'Pages Information','route'=>'admin.specialEvents.specialevents']
+              ['label'=>'Pages Information','route'=>'admin.specialEvents.specialevents'],
+              ['label'=>'Events Manager','route'=>'admin.specialEvents.manager']
             ]],
             ['title'=>'Our Farm','icon'=>'leaf','route'=>'admin.farm.*','sub'=>[
               ['label'=>'Pages Information','route'=>'admin.farm.ourfarm'],
