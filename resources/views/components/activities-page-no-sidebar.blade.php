@@ -257,13 +257,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadActivities() {
-        fetch(activitiesEndpoint)
-            .then(response => response.json())
+        // Ensure the endpoint URL is complete
+        let endpoint = activitiesEndpoint;
+        if (!endpoint.startsWith('http')) {
+            endpoint = window.location.origin + endpoint;
+        }
+        
+        console.log('Loading activities from:', endpoint);
+        console.log('Total Guests:', totalGuests);
+        
+        fetch(endpoint)
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(activities => {
+                console.log('Loaded activities count:', activities.length);
+                console.log('Activities data:', activities);
                 const container = root.querySelector('#activities-container');
+                if (!container) {
+                    console.error('Activities container not found!');
+                    return;
+                }
                 container.innerHTML = '';
 
+                if (!activities || activities.length === 0) {
+                    console.warn('No activities found');
+                    container.innerHTML = '<p class="text-gray-500 p-4">No activities available</p>';
+                    return;
+                }
+
                 activities.forEach(activity => {
+                    console.log('Creating activity card for:', activity.name);
                     const activityDiv = document.createElement('div');
                     activityDiv.className = 'bg-gray-50 rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow';
                     activityDiv.innerHTML = `
@@ -304,6 +332,10 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error loading activities:', error);
+                const container = root.querySelector('#activities-container');
+                if (container) {
+                    container.innerHTML = `<p class="text-red-500 p-4">Error loading activities: ${error.message}</p>`;
+                }
                 showToast('Error loading activities. Please refresh the page.');
             });
     }

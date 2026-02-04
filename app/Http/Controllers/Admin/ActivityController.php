@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Activity;
-use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class ActivityController extends Controller
 {
@@ -24,9 +24,20 @@ class ActivityController extends Controller
             'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:10240',
         ]);
 
-        $imagePath = null;
+        $imageUrl = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('activities', 'public');
+            try {
+                $uploadResult = Cloudinary::uploadApi()->upload(
+                    $request->file('image')->getRealPath(),
+                    [
+                        'folder' => 'activities',
+                        'resource_type' => 'auto'
+                    ]
+                );
+                $imageUrl = $uploadResult['secure_url'];
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Image upload failed: ' . $e->getMessage()], 422);
+            }
         }
 
         Activity::create([
@@ -35,7 +46,7 @@ class ActivityController extends Controller
             'duration' => $request->duration ?? '',
             'price' => $request->price ?? 0,
             'availability' => $request->availability ?? 'Available',
-            'image' => $imagePath,
+            'image' => $imageUrl,
             'category' => $request->category ?? '',
             'is_active' => $request->is_active ?? 1,
             'sort_order' => $request->sort_order ?? 0,
@@ -45,12 +56,6 @@ class ActivityController extends Controller
         return response()->json(['message' => 'Activity added successfully.']);
 
     }
-
-    // public function show(Activity $activity)
-    // {
-    //     $activity->load(['swiperImages', 'texts']);
-    //     return view('admin.activities', compact('activity'));
-    // }
 
     public function update(Request $request, Activity $activity_list)
     {
@@ -74,13 +79,19 @@ class ActivityController extends Controller
         ];
 
         if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($activity_list->image && Storage::disk('public')->exists($activity_list->image)) {
-                Storage::disk('public')->delete($activity_list->image);
+            try {
+                // Upload new image to Cloudinary
+                $uploadResult = Cloudinary::uploadApi()->upload(
+                    $request->file('image')->getRealPath(),
+                    [
+                        'folder' => 'activities',
+                        'resource_type' => 'auto'
+                    ]
+                );
+                $data['image'] = $uploadResult['secure_url'];
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Image upload failed: ' . $e->getMessage()], 422);
             }
-
-            // Store new image
-            $data['image'] = $request->file('image')->store('activities', 'public');
         }
 
         $activity_list->update($data);
@@ -90,11 +101,8 @@ class ActivityController extends Controller
 
     public function destroy(Activity $activity_list)
     {
-        // Delete associated image if exists
-        if ($activity_list->image && Storage::disk('public')->exists($activity_list->image)) {
-            Storage::disk('public')->delete($activity_list->image);
-        }
-
+        // Cloudinary images are automatically deleted when referenced
+        // No need to manually delete from storage
         $activity_list->delete();
         return redirect()->back()->with('success', 'Activity deleted successfully!');
     }

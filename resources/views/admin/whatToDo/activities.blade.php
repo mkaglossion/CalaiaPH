@@ -172,10 +172,12 @@
                         :required="!editModeActivity"
                     >
                     <small class="text-gray-500">Supported formats: JPG, PNG, GIF. Max size: 5MB</small>
-                    <div x-show="form.imagePreview" class="mt-2">
-                        <img :src="form.imagePreview" class="w-32 h-20 object-cover rounded border">
-                        <button type="button" @click="removeImage()" class="ml-2 text-red-500 hover:underline">Remove</button>
-                    </div>
+                    <template x-if="form.imagePreview">
+                        <div class="mt-2">
+                            <img :src="form.imagePreview" alt="Image preview" class="w-32 h-20 object-cover rounded border">
+                            <button type="button" @click="removeImage()" class="ml-2 text-red-500 hover:underline">Remove</button>
+                        </div>
+                    </template>
                 </div>
 
                 <div class="flex justify-end space-x-2">
@@ -322,141 +324,6 @@
             </form>
         </div>
     </div>
-
-    {{-- =======================
-        TEXT CONTENT MANAGEMENT
-    ======================== --}}
-    <hr class="my-6">
-
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Text Content Management</h2>
-        <button
-            @click="showTextModal = true; resetForm()"
-            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-            + Add Text Content
-        </button>
-    </div>
-
-    <div class="overflow-x-auto border rounded-lg shadow">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 border-b">
-                <tr>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Activity Name</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Label</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Text</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                @forelse($texts as $index => $text)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ $index + 1 }}</td>
-                        <td class="px-4 py-2">{{ $text->activity->name ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $text->title ?? '—' }}</td>
-                        <td class="px-4 py-2">{{ \Illuminate\Support\Str::limit($text->content ?? '', 80) }}</td>
-                        <td class="px-4 py-2 text-right space-x-2">
-                            {{-- Optional: add Edit button if you want --}}
-                            {{-- <button class="text-blue-600 hover:underline" @click="editText({{ $text->id }})">Edit</button> --}}
-
-                            <form action="{{ route('activity-text.destroy', $text->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button
-                                    type="submit"
-                                    class="text-red-600 hover:underline"
-                                    onclick="return confirm('Delete this text content?')"
-                                >
-                                    Delete
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="4" class="px-6 py-6 text-center text-gray-500">
-                            No text content yet.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    {{-- Text Modal --}}
-    <div
-        x-show="showTextModal"
-        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-        x-cloak
-    >
-        <div
-            @click.away="showTextModal = false"
-            class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6"
-        >
-            <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
-
-            <form id="textUploadForm" class="space-y-5" @submit.prevent="saveText()">
-                @csrf
-
-                <template x-if="editMode">
-                    <input type="hidden" name="_method" value="PUT">
-                </template>
-
-                <div>
-                    <label class="block font-semibold mb-1">Activity</label>
-                    <select
-                        name="activity_id"
-                        x-model="form.activity_id"
-                        class="border rounded p-2 w-full"
-                        required
-                    >
-                        <option value="">Select Activity</option>
-                        @foreach($activities as $activity)
-                            <option value="{{ $activity->id }}">{{ $activity->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1">Label</label>
-                    <input
-                        type="text"
-                        name="label"
-                        x-model="form.label"
-                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        placeholder="Optional"
-                    >
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1">Text</label>
-                    <textarea
-                        name="text"
-                        x-model="form.text"
-                        rows="4"
-                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        placeholder="Enter text..."
-                        required
-                    ></textarea>
-                </div>
-
-                <div class="flex justify-end space-x-2">
-                    <button
-                        type="button"
-                        @click="showTextModal = false; resetForm()"
-                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
-                    >
-                        Cancel
-                    </button>
-
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                        <span x-text="editMode ? 'Update' : 'Add'"></span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -506,6 +373,8 @@ function activityComponent(texts, activities) {
                 label: '',
                 text: '',
                 title: '',
+                image: null,
+                imagePreview: null,
             };
             this.editMode = false;
             this.editModeActivity = false;
@@ -521,6 +390,51 @@ function activityComponent(texts, activities) {
             if (this.$refs.activity) this.$refs.activity.value = '';
         },
 
+        removeImage() {
+            this.form.image = null;
+            this.form.imagePreview = null;
+            if (this.$refs.activityImage) this.$refs.activityImage.value = '';
+        },
+
+        handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select a valid image file');
+                event.target.value = '';
+                return;
+            }
+
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must not exceed 5MB');
+                event.target.value = '';
+                return;
+            }
+
+            // Store the file object
+            this.form.image = file;
+
+            // Create preview using FileReader
+            const self = this;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Set preview with a small delay to ensure Alpine detects the change
+                setTimeout(() => {
+                    self.form.imagePreview = e.target.result;
+                }, 10);
+            };
+            reader.onerror = function() {
+                alert('Error reading file');
+                event.target.value = '';
+                self.form.image = null;
+                self.form.imagePreview = null;
+            };
+            reader.readAsDataURL(file);
+        },
+
         editActivity(id) {
             const activity = this.activities.find(a => a.id === id);
             if (!activity) return;
@@ -531,10 +445,18 @@ function activityComponent(texts, activities) {
             this.form.duration = activity.duration || '';
             this.form.price = activity.price || '';
             this.form.category = activity.category || '';
+            this.form.image = null; // Reset file input for new uploads
 
             // Handle existing image
             if (activity.image) {
-                this.form.imagePreview = '/storage/' + activity.image;
+                // Check if image is already a full URL (Cloudinary) or a local path
+                if (activity.image.startsWith('http://') || activity.image.startsWith('https://')) {
+                    this.form.imagePreview = activity.image; // Already a full URL
+                } else {
+                    this.form.imagePreview = '/storage/' + activity.image; // Local storage path
+                }
+            } else {
+                this.form.imagePreview = null;
             }
 
             this.editModeActivity = true;

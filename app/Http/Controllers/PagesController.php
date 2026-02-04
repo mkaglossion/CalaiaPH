@@ -460,7 +460,17 @@ class PagesController extends Controller
             }
 
             // Use main activity image for carousel display, fallback to first swiper image
-            $carouselImage = $activity->image ? asset('storage/' . $activity->image) : ($modalImages[0] ?? '');
+            // Check if image is already a full URL (from Cloudinary) or a local path
+            $carouselImage = '';
+            if ($activity->image) {
+                if (filter_var($activity->image, FILTER_VALIDATE_URL)) {
+                    $carouselImage = $activity->image; // Already a full URL
+                } else {
+                    $carouselImage = asset('storage/' . $activity->image); // Local storage path
+                }
+            } else {
+                $carouselImage = $modalImages[0] ?? ''; // Fallback to first swiper image
+            }
 
             $activitiesByCategory[$category][] = [
                 'title' => $activity->name,
@@ -484,7 +494,16 @@ class PagesController extends Controller
                 if ($left) {
                     // Find the activity to get its main image for carousel
                     $activity = $originalActivities->firstWhere('name', $left['title']);
-                    $carouselImg = $activity && $activity->image ? asset('storage/' . $activity->image) : ($left['images'][0] ?? '');
+                    $carouselImg = '';
+                    if ($activity && $activity->image) {
+                        if (filter_var($activity->image, FILTER_VALIDATE_URL)) {
+                            $carouselImg = $activity->image; // Already a full URL
+                        } else {
+                            $carouselImg = asset('storage/' . $activity->image); // Local storage path
+                        }
+                    } else {
+                        $carouselImg = $left['images'][0] ?? ''; // Fallback to first swiper image
+                    }
 
                     $slide['left'] = [
                         'id'      => $activity->id,
@@ -499,7 +518,16 @@ class PagesController extends Controller
                 if ($right) {
                     // Find the activity to get its main image for carousel
                     $activity = $originalActivities->firstWhere('name', $right['title']);
-                    $carouselImg = $activity && $activity->image ? asset('storage/' . $activity->image) : ($right['images'][0] ?? '');
+                    $carouselImg = '';
+                    if ($activity && $activity->image) {
+                        if (filter_var($activity->image, FILTER_VALIDATE_URL)) {
+                            $carouselImg = $activity->image; // Already a full URL
+                        } else {
+                            $carouselImg = asset('storage/' . $activity->image); // Local storage path
+                        }
+                    } else {
+                        $carouselImg = $right['images'][0] ?? ''; // Fallback to first swiper image
+                    }
 
                     $slide['right'] = [
                         'id'      => $activity->id,
