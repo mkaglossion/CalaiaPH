@@ -956,6 +956,61 @@ class BookingController extends Controller
 
         Log::info('Calculated grand total:', ['total' => $grandTotal]);
 
+        // Build line items for PayMongo from the exact same breakdown shown on the payment page
+        $lineItems = [];
+        
+        // Get the final totals that were calculated and stored in the booking
+        $accommodationTotal = $booking['final_totals']['accommodation_total'] ?? 0;
+        $activitiesTotal = $booking['final_totals']['activities_total'] ?? 0;
+        $foodTotal = $booking['final_totals']['food_total'] ?? 0;
+        
+        // 1. Add accommodation line items first
+        if (!empty($booking['accommodations'])) {
+            foreach ($booking['accommodations'] as $acc) {
+                if (!empty($acc) && !empty($acc['total_price'])) {
+                    $lineItems[] = [
+                        'amount' => (int)($acc['total_price'] * 100), // Total price as per-unit price
+                        'currency' => 'PHP',
+                        'name' => $acc['room_name'] ?? 'Accommodation',
+                        'quantity' => 1,
+                    ];
+                }
+            }
+        }
+        
+        // 2. Add food line items second
+        if (!empty($booking['selected_foods'])) {
+            $nights = \Carbon\Carbon::parse($booking['checkin'])->diffInDays(\Carbon\Carbon::parse($booking['checkout']));
+            foreach ($booking['selected_foods'] as $food) {
+                if (!empty($food) && !empty($food['name']) && !empty($food['price'])) {
+                    // Pass unit price, quantity = (quantity × nights)
+                    $lineItems[] = [
+                        'amount' => (int)($food['price'] * 100), // Unit price in centavos
+                        'currency' => 'PHP',
+                        'name' => $food['name'],
+                        'quantity' => ($food['quantity'] ?? 1) * $nights,
+                    ];
+                }
+            }
+        }
+        
+        // 3. Add activities line items last
+        if (!empty($booking['selected_activities'])) {
+            foreach ($booking['selected_activities'] as $activity) {
+                if (!empty($activity) && !empty($activity['name']) && !empty($activity['price'])) {
+                    // Pass unit price, not subtotal. Quantity is the number of guests
+                    $lineItems[] = [
+                        'amount' => (int)($activity['price'] * 100), // Unit price in centavos
+                        'currency' => 'PHP',
+                        'name' => $activity['name'],
+                        'quantity' => $activity['guests'] ?? 1,
+                    ];
+                }
+            }
+        }
+
+        Log::info('Line items being sent to PayMongo (in order):', $lineItems);
+
         // Store booking and payment data in session
         session([
             'staycation_booking_data' => $booking,
@@ -976,11 +1031,15 @@ class BookingController extends Controller
         Log::info('Creating PayMongo checkout', [
             'amount' => (int)($grandTotal * 100),
             'success_url' => $successUrl,
-            'failed_url' => $failedUrl
+            'failed_url' => $failedUrl,
+            'line_items_count' => count($lineItems),
+            'accommodation_total' => $accommodationTotal,
+            'activities_total' => $activitiesTotal,
+            'food_total' => $foodTotal
         ]);
 
         try {
-            $checkout = $this->paymentService->createCheckout((int)($grandTotal * 100), 'staycation', $successUrl, $failedUrl);
+            $checkout = $this->paymentService->createCheckout((int)($grandTotal * 100), 'staycation', $successUrl, $failedUrl, $lineItems);
             Log::info('PayMongo checkout created successfully', ['checkout_url' => $checkout->checkout_url]);
             return redirect($checkout->checkout_url);
         } catch (\Exception $e) {

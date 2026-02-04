@@ -21,7 +21,7 @@ class PaymentService
         throw new \Exception('Payment intents are no longer used. Use createCheckout instead.');
     }
 
-    public function createCheckout($amount, $type, $successUrl, $failedUrl)
+    public function createCheckout($amount, $type, $successUrl, $failedUrl, $lineItems = null)
     {
         Log::info('Creating PayMongo checkout session', [
             'amount' => $amount,
@@ -33,21 +33,23 @@ class PaymentService
         $client = new \GuzzleHttp\Client();
 
         try {
+            // Use provided line items or create a generic one
+            $items = $lineItems ?? [
+                [
+                    'amount' => $amount,
+                    'currency' => 'PHP',
+                    'name' => ucfirst($type) . ' Booking',
+                    'quantity' => 1,
+                ]
+            ];
+
             $payload = [
                 'data' => [
                     'attributes' => [
                         'amount' => $amount,
                         'currency' => 'PHP',
                         'description' => ucfirst($type) . ' Booking Payment',
-                        'line_items' => [
-                            [
-                                'amount' => $amount,
-                                'currency' => 'PHP',
-                                'description' => ucfirst($type) . ' Booking Payment',
-                                'name' => ucfirst($type) . ' Booking',
-                                'quantity' => 1,
-                            ]
-                        ],
+                        'line_items' => $items,
                         'payment_method_types' => ['card', 'gcash', 'paymaya', 'qrph', 'grab_pay', 'billease'],
                         'success_url' => $successUrl,
                         'cancel_url' => $failedUrl,
