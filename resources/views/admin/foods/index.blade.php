@@ -137,17 +137,8 @@
     <hr class="my-6">
 
     @if ($foods->hasPages())
-        <div class="mt-6 flex items-center justify-between flex-wrap gap-3">
-            <p class="text-sm text-gray-600">
-                Showing
-                <span class="font-semibold">{{ $foods->firstItem() }}</span>
-                to
-                <span class="font-semibold">{{ $foods->lastItem() }}</span>
-                of
-                <span class="font-semibold">{{ $foods->total() }}</span>
-                items
-            </p>
-            <div class="">{{ $foods->links('pagination::tailwind') }}</div>
+        <div class="mt-6">
+            {{ $foods->links('pagination::tailwind') }}
         </div>
     @endif
 

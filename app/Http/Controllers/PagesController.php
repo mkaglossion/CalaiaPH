@@ -550,42 +550,20 @@ class PagesController extends Controller
 
     public function farm()
     {
-        // Get farm experiences from cache with default fallback
-        $farmExperiences = \Illuminate\Support\Facades\Cache::get('farm_experiences', [
-            [
-                'id' => 1,
-                'img' => null,
-                'title' => 'Animal Feeding Experience',
-                'desc' => 'Get up close with our farm animals. Learn about their care and dietary needs while you feed them.',
-                'time' => 'Weekends 9AM–2PM',
-                'capacity' => 'Groups up to 20 people',
-                'icon' => 'people',
-                'cta' => 'Reserve Your Spot',
-                'badge' => null
-            ],
-            [
-                'id' => 2,
-                'img' => null,
-                'title' => 'Harvest Days',
-                'desc' => 'Participate in seasonal harvesting. Learn sustainable farming practices and take home fresh produce.',
-                'time' => 'Morning hours seasonal',
-                'capacity' => 'Take home harvest',
-                'icon' => 'flower1',
-                'cta' => 'Learn More',
-                'badge' => null
-            ],
-            [
-                'id' => 3,
-                'img' => null,
-                'title' => 'Farm Tours',
-                'desc' => 'Explore our farm and learn about sustainable agriculture, animal welfare, and eco-friendly practices.',
-                'time' => 'By appointment',
-                'capacity' => 'Educational experience',
-                'icon' => 'mortarboard',
-                'cta' => 'Schedule Tour',
-                'badge' => 'Guided Tour'
-            ]
-        ]);
+        // Get farm experiences from database
+        $farmExperiences = \App\Models\FarmExperience::orderBy('sort_order')->get()->map(function($exp) {
+            return [
+                'id' => $exp->id,
+                'img' => $exp->img,
+                'title' => $exp->title,
+                'desc' => $exp->desc,
+                'time' => $exp->time,
+                'capacity' => $exp->capacity,
+                'icon' => $exp->icon,
+                'cta' => $exp->cta,
+                'badge' => $exp->badge,
+            ];
+        })->toArray();
         
         return $this->renderPage(FarmSwiperImage::class, FarmText::class, 'farm', 'farm', 'label', 'text', compact('farmExperiences'));
     }

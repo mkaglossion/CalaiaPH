@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\FarmExperience;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Log;
 
@@ -15,71 +15,24 @@ class FarmExperiencesController extends Controller
      */
     public function index()
     {
-        $experiences = $this->getFarmExperiences();
+        $experiences = FarmExperience::orderBy('sort_order')->get()->map(function($exp) {
+            return [
+                'id' => $exp->id,
+                'img' => $exp->img,
+                'title' => $exp->title,
+                'desc' => $exp->desc,
+                'time' => $exp->time,
+                'capacity' => $exp->capacity,
+                'icon' => $exp->icon,
+                'cta' => $exp->cta,
+                'badge' => $exp->badge,
+                'created_at' => $exp->created_at->toDateTimeString(),
+            ];
+        })->toArray();
+        
         return view('admin.ourFarm.experiences', compact('experiences'));
     }
 
-    /**
-     * Get farm experiences from cache
-     */
-    protected function getFarmExperiences()
-    {
-        $defaultExperiences = [
-            [
-                'id' => 1,
-                'img' => null,
-                'title' => 'Animal Feeding Experience',
-                'desc' => 'Get up close with our farm animals. Learn about their care and dietary needs while you feed them.',
-                'time' => 'Weekends 9AM–2PM',
-                'capacity' => 'Groups up to 20 people',
-                'icon' => 'people',
-                'cta' => 'Reserve Your Spot',
-                'badge' => null,
-                'created_at' => '2024-11-27 10:30:00'
-            ],
-            [
-                'id' => 2,
-                'img' => null,
-                'title' => 'Harvest Days',
-                'desc' => 'Participate in seasonal harvesting. Learn sustainable farming practices and take home fresh produce.',
-                'time' => 'Morning hours seasonal',
-                'capacity' => 'Take home harvest',
-                'icon' => 'flower1',
-                'cta' => 'Learn More',
-                'badge' => null,
-                'created_at' => '2024-11-28 14:15:00'
-            ],
-            [
-                'id' => 3,
-                'img' => null,
-                'title' => 'Farm Tours',
-                'desc' => 'Explore our farm and learn about sustainable agriculture, animal welfare, and eco-friendly practices.',
-                'time' => 'By appointment',
-                'capacity' => 'Educational experience',
-                'icon' => 'mortarboard',
-                'cta' => 'Schedule Tour',
-                'badge' => 'Guided Tour',
-                'created_at' => '2024-11-29 09:45:00'
-            ]
-        ];
-
-        $cached = Cache::get('farm_experiences', null);
-        
-        if (!$cached) {
-            Cache::forever('farm_experiences', $defaultExperiences);
-            return $defaultExperiences;
-        }
-
-        // Ensure all cached items have created_at
-        $cached = array_map(function($item) {
-            if (!isset($item['created_at']) || empty($item['created_at'])) {
-                $item['created_at'] = now()->toDateTimeString();
-            }
-            return $item;
-        }, $cached);
-
-        return $cached;
-    }
 
     /**
      * Save farm experiences via AJAX
@@ -93,14 +46,29 @@ class FarmExperiencesController extends Controller
                 return response()->json(['message' => 'Invalid request', 'success' => false], 400);
             }
 
-            // Save to cache (persistent across requests)
-            Cache::forever('farm_experiences', $experiences);
+            // Clear existing experiences and save new ones
+            FarmExperience::truncate();
+            
+            foreach ($experiences as $index => $exp) {
+                FarmExperience::create([
+                    'title' => $exp['title'] ?? '',
+                    'desc' => $exp['desc'] ?? '',
+                    'time' => $exp['time'] ?? '',
+                    'capacity' => $exp['capacity'] ?? '',
+                    'icon' => $exp['icon'] ?? 'people',
+                    'cta' => $exp['cta'] ?? '',
+                    'badge' => $exp['badge'] ?? null,
+                    'img' => $exp['img'] ?? null,
+                    'sort_order' => $index,
+                ]);
+            }
 
             return response()->json([
                 'message' => 'Experiences saved successfully',
                 'success' => true,
             ]);
         } catch (\Exception $e) {
+            Log::error('Error saving farm experiences: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Error saving experiences: ' . $e->getMessage(),
                 'success' => false
