@@ -831,6 +831,8 @@
       }
     }
   </script>
+    {{-- Floating Buttons --}}
+    <x-floating-buttons />
     <x-footer />
   </body>
 </html>

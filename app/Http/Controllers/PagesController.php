@@ -596,6 +596,11 @@ class PagesController extends Controller
         return $this->renderPage(FarmSwiperImage::class, FarmText::class, 'farm', 'farm', 'label', 'text', compact('farmExperiences'));
     }
 
+    public function ourStory()
+    {
+        return view('pages.our-story');
+    }
+
     public function shop()
     {
         return $this->renderPage(FarmSwiperImage::class, FarmText::class, 'shop', 'shop');
@@ -611,17 +616,14 @@ class PagesController extends Controller
         return $this->renderPage(FoodSwiperImage::class, FoodText::class, 'food', 'food');
     }
 
-    public function ourStory()
-    {
-        return view('our-story', ['active' => 'our-story']);
-    }
     public function sustainability()
     {
-        return view('sustainability', ['active' => 'sustainability']);
+        return view('pages.sustainability');
     }
+
     public function ourServices()
     {
-        return view('our-services', ['active' => 'our-services']);
+        return view('pages.our-services');
     }
     public function contact()
     {
@@ -629,18 +631,18 @@ class PagesController extends Controller
     }
     public function privacyNotice()
     {
-        return view('privacy-notice', ['active' => 'privacy-notice']);
+        return view('pages.privacy-notice', ['active' => 'privacy-notice']);
     }
     public function calaiaPolicy()
     {
-            return view('calaia-policy', ['active' => 'calaia-policy']);
+        return view('pages.calaia-policy', ['active' => 'calaia-policy']);
     }
     public function cookiesPolicy()
     {
-        return view('cookies-policy', ['active' => 'cookies-policy']);
+        return view('pages.cookies-policy', ['active' => 'cookies-policy']);
     }
     public function termsService()
     {
-        return view('terms-service', ['active' => 'terms-service']);
+        return view('pages.terms-service', ['active' => 'terms-service']);
     }
 }

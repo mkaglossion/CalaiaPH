@@ -4,18 +4,33 @@
     keywords="Calaia Farm, contact, Calaca Batangas, farm inquiries, booking contact, Philippines farm"
     active-header="contact"
 >
-    <!-- Hero Section -->
-    <section class="relative h-[70vh] bg-cover bg-center flex items-center justify-center text-white overflow-hidden"
-             style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('{{ asset('images/facilities/IMG_29422.svg') }}')">
-        <div class="absolute inset-0 bg-linear-to-br from-amber-900/30 to-amber-700/30 animate-pulse"></div>
-        <div class="relative z-10 text-center px-4 animate-fade-in">
-            <h1 class="text-5xl md:text-6xl font-bold mb-4 drop-shadow-lg">Contact Us</h1>
-            <p class="text-xl md:text-2xl max-w-2xl mx-auto drop-shadow-md">
-                 We'd love to hear from you. Reach out to plan your visit or ask any questions about Calaia Farm.
-            </p>
-        </div>
-    </section>
+    {{-- Centralized Hero Banner --}}
+    <div class="min-h-screen bg-white">
+        <section class="relative h-screen w-full overflow-hidden bg-linear-to-br from-amber-900 via-amber-800 to-amber-950">
+            {{-- Content --}}
+            <div class="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
+                <div class="max-w-4xl space-y-8">
+                    <h1 class="text-5xl font-black text-white drop-shadow-lg sm:text-6xl md:text-7xl">
+                        <span class="text-amber-300">Get In Touch</span>
+                    </h1>
 
-    {{-- SECTION: Visit or Contact Us --}}
-    <x-contact-section />
+                    <p class="text-xl font-bold leading-relaxed text-white drop-shadow-md md:text-2xl">
+                        We'd love to hear from you.
+                        <span class="block font-black text-amber-300">Reach out to plan your visit or ask any questions.</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        {{-- CONTENT --}}
+        <section class="bg-white py-12 sm:py-16 pb-0">
+            <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+                {{-- SECTION: Visit or Contact Us --}}
+                <x-contact-section />
+            </div>
+        </section>
+
+        {{-- Floating Buttons --}}
+        <x-floating-buttons />
+    </div>
 </x-page-layout>
