@@ -176,15 +176,36 @@
                                        class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none">
                             </div>
 
-                            <div>
-                                <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-                                <select id="payment_method" name="payment_method" required
-                                        class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none">
-                                    <option value="">Select Payment Method</option>
-                                    <option value="credit_card">Credit Card</option>
-                                    <option value="paypal">PayPal</option>
-                                    <option value="bank_transfer">Bank Transfer</option>
-                                </select>
+                            <!-- Payment Method Section -->
+                            <div class="mt-8 pt-6 border-t">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">Payment Method</h3>
+                                <p class="text-sm text-gray-600 mb-4">Secure payment via PayMongo. Choose your preferred payment method including card, GCash, PayMaya, or QR PH.</p>
+                                
+                                <div class="space-y-3">
+                                    <!-- Credit/Debit Card Option -->
+                                    <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-[#8f5d54] transition-colors" onclick="document.getElementById('payment_method_card').checked = true;">
+                                        <input type="radio" id="payment_method_card" name="payment_method" value="card" required class="w-5 h-5 text-[#8f5d54] shrink-0" checked>
+                                        <div class="ml-3 flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <i class="bi bi-credit-card text-[#8f5d54] text-lg"></i>
+                                                <span class="font-semibold text-gray-900">Credit/Debit Card</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mt-1 ml-6">Secure payment via PayMongo</p>
+                                        </div>
+                                    </label>
+
+                                    <!-- Scan QR Code Option -->
+                                    <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-[#8f5d54] transition-colors" onclick="document.getElementById('payment_method_qr').checked = true;">
+                                        <input type="radio" id="payment_method_qr" name="payment_method" value="qr_code" required class="w-5 h-5 text-[#8f5d54] shrink-0">
+                                        <div class="ml-3 flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <i class="bi bi-qr-code text-[#8f5d54] text-lg"></i>
+                                                <span class="font-semibold text-gray-900">Scan QR Code</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 mt-1 ml-6">Pay using GCash, PayMaya, QR PH, or other QR-enabled wallets</p>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
@@ -215,9 +236,15 @@
                             <span>Total:</span>
                             <span>₱{{ number_format($cartTotal, 2) }}</span>
                         </div>
+                        <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p class="text-xs text-blue-700 flex items-center">
+                                <i class="bi bi-info-circle mr-2"></i>
+                                You'll be redirected to PayMongo to complete your payment securely
+                            </p>
+                        </div>
                         <button type="submit" form="checkout-form" class="w-full bg-[#8f5d54] text-white py-4 px-6 rounded-xl font-semibold hover:bg-[#7a4a42] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center mt-6">
-                            <i class="bi bi-check-circle mr-2"></i>
-                            Place Order
+                            <i class="bi bi-credit-card mr-2"></i>
+                            Proceed to PayMongo Payment
                         </button>
                     </div>
                 </div>
