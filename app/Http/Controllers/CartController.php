@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use App\Mail\Receipt;
 use App\Models\Product;
 use App\Events\ProductStockUpdated;
@@ -266,7 +267,7 @@ class CartController extends Controller
             'email'          => 'required|email',
             'phone'          => 'required|string',
             'booking_date'   => 'required|date|after:today',
-            'payment_method' => 'required|in:credit_card,paypal,bank_transfer',
+            'payment_method' => 'required|in:card,qr_code',
         ]);
 
         $rawCart = session('cart', []);
@@ -294,10 +295,130 @@ class CartController extends Controller
 
         // TODO: save order + process payment here
 
-        session()->forget('cart');
+        // Redirect to PayMongo for payment
+        try {
+            // Create PayMongo checkout session
+            $checkoutResponse = $this->createPayMongoCheckout(
+                (int)($cartTotal * 100), // Convert to centavos
+                $data['email'],
+                $data['name'],
+                $data['transaction_id']
+            );
 
-        return redirect()
-            ->route('checkout.confirmation')
-            ->with('success', 'Order placed successfully!');
+            if ($checkoutResponse && isset($checkoutResponse['checkout_url'])) {
+                // Store order data in session for later confirmation
+                session([
+                    'pending_order' => [
+                        'transaction_id' => $data['transaction_id'],
+                        'name' => $data['name'],
+                        'email' => $data['email'],
+                        'phone' => $data['phone'],
+                        'booking_date' => $data['booking_date'],
+                        'payment_method' => $data['payment_method'],
+                        'cart' => $cart,
+                        'total' => $cartTotal,
+                        'checkout_id' => $checkoutResponse['id'] ?? null
+                    ]
+                ]);
+
+                // Redirect to PayMongo checkout
+                return redirect($checkoutResponse['checkout_url']);
+            } else {
+                Log::error('Invalid PayMongo checkout response', ['response' => $checkoutResponse]);
+                return redirect()->back()->with('error', 'Failed to create payment. Please try again.');
+            }
+        } catch (\Exception $e) {
+            Log::error('Checkout Payment Error: ' . $e->getMessage(), ['exception' => $e]);
+            return redirect()->back()->with('error', 'Payment error: ' . $e->getMessage());
+        }
+    }
+
+    private function createPayMongoCheckout($amount, $email, $name, $referenceId)
+    {
+        try {
+            $client = new \GuzzleHttp\Client();
+            $apiKey = config('services.paymongo.secret_key');
+
+            if (!$apiKey) {
+                throw new \Exception('PayMongo API key is not configured');
+            }
+
+            $successUrl = url('/checkout/success?checkout_id={CHECKOUT_ID}');
+            $failedUrl = url('/checkout/failed');
+
+            Log::info('Creating PayMongo checkout session', [
+                'amount' => $amount,
+                'email' => $email,
+                'name' => $name,
+                'reference_id' => $referenceId
+            ]);
+
+            $payload = [
+                'data' => [
+                    'attributes' => [
+                        'amount' => $amount,
+                        'currency' => 'PHP',
+                        'description' => 'CalaiaPH Shop Order - ' . $referenceId,
+                        'line_items' => [
+                            [
+                                'amount' => $amount,
+                                'currency' => 'PHP',
+                                'description' => 'CalaiaPH Shop Order',
+                                'name' => 'Order ' . $referenceId,
+                                'quantity' => 1,
+                            ]
+                        ],
+                        'payment_method_types' => ['card', 'gcash', 'paymaya', 'qrph', 'grab_pay', 'billease'],
+                        'success_url' => $successUrl,
+                        'cancel_url' => $failedUrl,
+                        'customer_email' => $email,
+                        'metadata' => [
+                            'reference_id' => $referenceId,
+                            'customer_name' => $name,
+                            'customer_email' => $email,
+                        ],
+                    ]
+                ]
+            ];
+
+            Log::info('PayMongo checkout payload:', $payload);
+
+            $response = $client->post('https://api.paymongo.com/v1/checkout_sessions', [
+                'headers' => [
+                    'Authorization' => 'Basic ' . base64_encode($apiKey . ':'),
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ],
+                'json' => $payload,
+                'timeout' => 30
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $data = json_decode($response->getBody()->getContents(), true);
+            
+            Log::info('PayMongo checkout response', [
+                'status' => $statusCode,
+                'data' => $data
+            ]);
+
+            if ($statusCode === 200 && isset($data['data']['attributes']['checkout_url'])) {
+                return [
+                    'checkout_url' => $data['data']['attributes']['checkout_url'],
+                    'id' => $data['data']['id'] ?? null
+                ];
+            } else {
+                throw new \Exception('Invalid response from PayMongo: ' . json_encode($data));
+            }
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
+            $errorBody = $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : $e->getMessage();
+            Log::error('PayMongo API Request Error', [
+                'message' => $e->getMessage(),
+                'response' => $errorBody
+            ]);
+            throw new \Exception('PayMongo request failed: ' . $errorBody);
+        } catch (\Exception $e) {
+            Log::error('PayMongo checkout creation failed: ' . $e->getMessage(), ['exception' => $e]);
+            throw $e;
+        }
     }
 }
