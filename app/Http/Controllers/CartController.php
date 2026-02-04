@@ -353,21 +353,28 @@ class CartController extends Controller
                 'reference_id' => $referenceId
             ]);
 
+            // Build line items from cart
+            $rawCart = session('cart', []);
+            $cart = is_array($rawCart) ? $rawCart : [];
+            $summary = $this->buildCartSummary($cart);
+            
+            $lineItems = [];
+            foreach ($summary['items'] as $item) {
+                $lineItems[] = [
+                    'amount' => (int)($item['subtotal'] * 100), // Convert to centavos
+                    'currency' => 'PHP',
+                    'name' => $item['title'],
+                    'quantity' => $item['quantity'],
+                ];
+            }
+
             $payload = [
                 'data' => [
                     'attributes' => [
                         'amount' => $amount,
                         'currency' => 'PHP',
                         'description' => 'CalaiaPH Shop Order - ' . $referenceId,
-                        'line_items' => [
-                            [
-                                'amount' => $amount,
-                                'currency' => 'PHP',
-                                'description' => 'CalaiaPH Shop Order',
-                                'name' => 'Order ' . $referenceId,
-                                'quantity' => 1,
-                            ]
-                        ],
+                        'line_items' => $lineItems,
                         'payment_method_types' => ['card', 'gcash', 'paymaya', 'qrph', 'grab_pay', 'billease'],
                         'success_url' => $successUrl,
                         'cancel_url' => $failedUrl,
