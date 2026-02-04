@@ -43,6 +43,47 @@ class PaymentService
                 ]
             ];
 
+            // Sort line items to ensure correct order: Accommodation -> Food -> Activities
+            if ($lineItems) {
+                usort($items, function($a, $b) {
+                    $nameA = strtolower($a['name'] ?? '');
+                    $nameB = strtolower($b['name'] ?? '');
+                    
+                    // Get priority for each item
+                    $priorityA = 3; // default to activities
+                    $priorityB = 3;
+                    
+                    // Check if it's accommodation
+                    if (strpos($nameA, 'accommodation') !== false) {
+                        $priorityA = 1;
+                    } 
+                    // Check if it's food (messhall, cook your own, special options)
+                    elseif (strpos($nameA, 'messhall') !== false || 
+                            strpos($nameA, 'cook') !== false || 
+                            strpos($nameA, 'special') !== false) {
+                        $priorityA = 2;
+                    }
+                    
+                    // Check if it's accommodation
+                    if (strpos($nameB, 'accommodation') !== false) {
+                        $priorityB = 1;
+                    } 
+                    // Check if it's food (messhall, cook your own, special options)
+                    elseif (strpos($nameB, 'messhall') !== false || 
+                            strpos($nameB, 'cook') !== false || 
+                            strpos($nameB, 'special') !== false) {
+                        $priorityB = 2;
+                    }
+                    
+                    return $priorityA - $priorityB;
+                });
+
+                // Add position field to each item to ensure PayMongo displays them in correct order
+                foreach ($items as $position => $item) {
+                    $items[$position]['position'] = $position;
+                }
+            }
+
             $payload = [
                 'data' => [
                     'attributes' => [
