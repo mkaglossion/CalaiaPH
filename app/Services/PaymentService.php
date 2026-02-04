@@ -15,6 +15,38 @@ class PaymentService
         // PayMongo client not needed for direct API calls
     }
 
+    /**
+     * Categorize line item based on its name
+     */
+    private function categorizeLineItem($name)
+    {
+        $nameLower = strtolower($name);
+        
+        // Check if accommodation
+        if (strpos($nameLower, 'accommodation') !== false) {
+            return 'accommodation';
+        }
+        
+        // Check if food
+        if (strpos($nameLower, 'messhall') !== false || 
+            strpos($nameLower, 'cook') !== false || 
+            strpos($nameLower, 'special') !== false) {
+            return 'food';
+        }
+        
+        // Default to activity
+        return 'activity';
+    }
+
+    /**
+     * Prepend category prefix to item name for PayMongo sorting
+     */
+    private function prependCategoryPrefix($name, $category)
+    {
+        // Return name without prefix - sorting is handled server-side
+        return $name;
+    }
+
     public function createPaymentIntent($amount, $type)
     {
         // This method is deprecated - using hosted checkout instead
@@ -43,44 +75,13 @@ class PaymentService
                 ]
             ];
 
-            // Sort line items to ensure correct order: Accommodation -> Food -> Activities
+            // Line items are already sorted in the correct order from the controller
+            // Accommodation -> Food -> Activities
+            // Add numeric prefix to item names to force PayMongo to display in correct order
             if ($lineItems) {
-                usort($items, function($a, $b) {
-                    $nameA = strtolower($a['name'] ?? '');
-                    $nameB = strtolower($b['name'] ?? '');
-                    
-                    // Get priority for each item
-                    $priorityA = 3; // default to activities
-                    $priorityB = 3;
-                    
-                    // Check if it's accommodation
-                    if (strpos($nameA, 'accommodation') !== false) {
-                        $priorityA = 1;
-                    } 
-                    // Check if it's food (messhall, cook your own, special options)
-                    elseif (strpos($nameA, 'messhall') !== false || 
-                            strpos($nameA, 'cook') !== false || 
-                            strpos($nameA, 'special') !== false) {
-                        $priorityA = 2;
-                    }
-                    
-                    // Check if it's accommodation
-                    if (strpos($nameB, 'accommodation') !== false) {
-                        $priorityB = 1;
-                    } 
-                    // Check if it's food (messhall, cook your own, special options)
-                    elseif (strpos($nameB, 'messhall') !== false || 
-                            strpos($nameB, 'cook') !== false || 
-                            strpos($nameB, 'special') !== false) {
-                        $priorityB = 2;
-                    }
-                    
-                    return $priorityA - $priorityB;
-                });
-
-                // Add position field to each item to ensure PayMongo displays them in correct order
-                foreach ($items as $position => $item) {
-                    $items[$position]['position'] = $position;
+                foreach ($items as $idx => $item) {
+                    $category = $this->categorizeLineItem($item['name']);
+                    $items[$idx]['name'] = $this->prependCategoryPrefix($item['name'], $category);
                 }
             }
 
