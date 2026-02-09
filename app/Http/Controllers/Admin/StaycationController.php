@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Staycation;
 use App\Models\StaycationSwiperImage;
+use App\Models\PeakPeriod;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class StaycationController extends Controller
@@ -13,7 +14,26 @@ class StaycationController extends Controller
     public function index()
     {
         $staycations = Staycation::latest()->get();
-        return view('admin.staycations', compact('staycations'));
+        
+        // Get current season - same logic as AdminController::staySettings()
+        $today = now()->format('Y-m-d');
+        $currentSeasonPeriod = PeakPeriod::where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->with('peakType')
+            ->orderBy(\App\Models\PeakType::select('priority')->whereColumn('peak_types.id', 'peak_periods.peak_type_id'), 'desc')
+            ->first();
+
+        $currentSeason = $currentSeasonPeriod ? $currentSeasonPeriod->peakType->name : 'Non-Peak';
+        
+        // Map season to key for use in frontend
+        $seasonKeyMap = [
+            'Non-Peak' => 'nonPeak',
+            'Peak' => 'peak',
+            'Super-Peak' => 'superPeak'
+        ];
+        $currentSeasonKey = $seasonKeyMap[$currentSeason] ?? 'nonPeak';
+        
+        return view('admin.staycations', compact('staycations', 'currentSeason', 'currentSeasonKey'));
     }
 
     public function store(Request $request)

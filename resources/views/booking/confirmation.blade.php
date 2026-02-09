@@ -59,7 +59,7 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
   // Always calculate food total from selectedFoods array data (most accurate)
   if (!empty($selectedFoods)) {
       foreach ($selectedFoods as $foodData) {
-          $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1) * max(1, $nights);
+          $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
       }
   }
 }
@@ -346,9 +346,9 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                     $foodName = $foodData['name'] ?? 'Unknown Food';
                     $foodPrice = $foodData['price'] ?? 0;
                     $foodQuantity = $foodData['quantity'] ?? 1;
-                    $foodItemTotal = $foodPrice * $foodQuantity * max(1, $nights);
+                    $foodItemTotal = $foodPrice * $foodQuantity;
                     @endphp
-                    <li>• {{ $foodName }} - ₱{{ number_format($foodPrice, 2) }}/night × {{ $foodQuantity }} × {{ max(1, $nights) }} night{{ max(1, $nights) !== 1 ? 's' : '' }} = ₱{{ number_format($foodItemTotal, 2) }}</li>
+                    <li>• {{ $foodName }} - ₱{{ number_format($foodPrice, 2) }} × {{ $foodQuantity }} = ₱{{ number_format($foodItemTotal, 2) }}</li>
                   @empty
                     <li>No foods selected</li>
                   @endforelse

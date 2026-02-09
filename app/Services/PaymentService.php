@@ -75,15 +75,26 @@ class PaymentService
                 ]
             ];
 
-            // Line items are already sorted in the correct order from the controller
-            // Accommodation -> Food -> Activities
-            // Add numeric prefix to item names to force PayMongo to display in correct order
+            // Format line items for PayMongo checkout display
+            // PayMongo expects: amount (total in centavos), currency, name, quantity
             if ($lineItems) {
                 foreach ($items as $idx => $item) {
-                    $category = $this->categorizeLineItem($item['name']);
-                    $items[$idx]['name'] = $this->prependCategoryPrefix($item['name'], $category);
+                    // Ensure amount is properly set (should be total amount in centavos)
+                    // If item has both amount and quantity, amount should be unit_price * quantity
+                    $items[$idx]['currency'] = 'PHP';
+                    
+                    // Log for debugging
+                    Log::info('Processing line item for PayMongo', [
+                        'name' => $item['name'],
+                        'amount_cents' => $item['amount'],
+                        'amount_pesos' => $item['amount'] / 100,
+                        'quantity' => $item['quantity'] ?? 1
+                    ]);
                 }
             }
+
+            // Generate reference number (format: CALAIA-XXXXXXXXXXXXX)
+            $referenceNumber = 'CALAIA-' . strtoupper(bin2hex(random_bytes(6)));
 
             $payload = [
                 'data' => [
@@ -95,6 +106,7 @@ class PaymentService
                         'payment_method_types' => ['card', 'gcash', 'paymaya', 'qrph', 'grab_pay', 'billease'],
                         'success_url' => $successUrl,
                         'cancel_url' => $failedUrl,
+                        'reference_number' => $referenceNumber,
                     ]
                 ]
             ];
@@ -176,7 +188,7 @@ class PaymentService
             $foodTotal = 0;
             if (!empty($staycationBooking['selected_foods'])) {
                 foreach ($staycationBooking['selected_foods'] as $foodData) {
-                    $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1) * $nights;
+                    $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
                 }
             }
 

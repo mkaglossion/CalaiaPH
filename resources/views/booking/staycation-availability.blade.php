@@ -204,17 +204,29 @@
                                         {{ $roomDetail['name'] }}
                                     </h3>
 
+                                    {{-- Price Range Display --}}
+                                    @php
+                                        $priceRange = $roomDetail['price_range'] ?? ['min_price' => 0, 'max_price' => 0, 'min_label' => '—', 'max_label' => '—'];
+                                        $roomNameLower = strtolower($roomDetail['name']);
+                                        $isBYOT = str_contains($roomNameLower, 'byot') ||
+                                                 str_contains($roomNameLower, 'bring your own tent') ||
+                                                 str_contains($roomNameLower, 'bring your own');
+                                        $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
+                                    @endphp
+
                                     <div class="text-lg font-bold text-[#8f5d54] mb-2">
-                                        ₱{{ number_format($roomDetail['price'], 0) }} / 
-                                        @php
-                                            $roomNameLower = strtolower($roomDetail['name']);
-                                            // Check for BYOT first (prioritize BYOT over car camping)
-                                            $isBYOT = str_contains($roomNameLower, 'byot') ||
-                                                     str_contains($roomNameLower, 'bring your own tent') ||
-                                                     str_contains($roomNameLower, 'bring your own');
-                                            // Check for car camping only if not BYOT
-                                            $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
-                                        @endphp
+                                        @if($priceRange['min_price'] > 0 && $priceRange['max_price'] > 0)
+                                            @if($priceRange['min_price'] == $priceRange['max_price'])
+                                                {{-- All prices are the same --}}
+                                                {{ $priceRange['min_label'] }} / 
+                                            @else
+                                                {{-- Price range with different min/max --}}
+                                                {{ $priceRange['min_label'] }} - {{ $priceRange['max_label'] }} / 
+                                            @endif
+                                        @else
+                                            ₱{{ number_format($roomDetail['price'], 0) }} / 
+                                        @endif
+
                                         @if($isBYOT || $isCarCamping)
                                             slot
                                         @else

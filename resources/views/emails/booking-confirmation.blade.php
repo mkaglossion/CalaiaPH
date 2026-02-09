@@ -109,10 +109,9 @@
                                 $foodName = $foodData['name'] ?? 'Unknown Food';
                                 $foodPrice = $foodData['price'] ?? 0;
                                 $foodQuantity = $foodData['quantity'] ?? 1;
-                                $nights = $bookingData['nights'] ?? 1;
-                                $foodItemTotal = $foodPrice * $foodQuantity * $nights;
+                                $foodItemTotal = $foodPrice * $foodQuantity;
                                 @endphp
-                                <li>{{ $foodName }} - ₱{{ number_format($foodPrice, 2) }}/night × {{ $foodQuantity }} × {{ $nights }} night{{ $nights !== 1 ? 's' : '' }} = ₱{{ number_format($foodItemTotal, 2) }}</li>
+                                <li>{{ $foodName }} - ₱{{ number_format($foodPrice, 2) }} × {{ $foodQuantity }} = ₱{{ number_format($foodItemTotal, 2) }}</li>
                             @endforeach
                         </ul>
                     @endif

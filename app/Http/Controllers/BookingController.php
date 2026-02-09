@@ -178,6 +178,54 @@ class BookingController extends Controller
     }
 
     /**
+     * Calculate min and max nightly rates for a staycation within a date range
+     * Returns array with keys: min_price, max_price, min_label, max_label
+     */
+    private function calculatePriceRangeForDateRange(Staycation $staycation, string $checkinDate, string $checkoutDate, string $seasonKey): array
+    {
+        $checkin = \Carbon\Carbon::parse($checkinDate);
+        $checkout = \Carbon\Carbon::parse($checkoutDate);
+        
+        $prices = [];
+        $current = $checkin->copy();
+        
+        while ($current->lt($checkout)) {
+            $rate = $this->getStaycationNightlyRate($staycation, $current, $seasonKey);
+            if ($rate > 0) {
+                $prices[] = [
+                    'rate' => $rate,
+                    'day' => $current->format('D'),
+                    'date' => $current->format('Y-m-d')
+                ];
+            }
+            $current->addDay();
+        }
+        
+        if (empty($prices)) {
+            // No prices found, return defaults
+            return [
+                'min_price' => 0,
+                'max_price' => 0,
+                'min_label' => '—',
+                'max_label' => '—',
+                'prices' => []
+            ];
+        }
+        
+        // Get min and max prices
+        $minPrice = min(array_column($prices, 'rate'));
+        $maxPrice = max(array_column($prices, 'rate'));
+        
+        return [
+            'min_price' => (int) $minPrice,
+            'max_price' => (int) $maxPrice,
+            'min_label' => '₱' . number_format((int) $minPrice, 0),
+            'max_label' => '₱' . number_format((int) $maxPrice, 0),
+            'prices' => $prices
+        ];
+    }
+
+    /**
      * Get the nightly rate for a staycation on a specific date
      */
     private function getStaycationNightlyRate(Staycation $staycation, \Carbon\Carbon $date, string $seasonKey): float
@@ -642,11 +690,10 @@ class BookingController extends Controller
         });
         
         // Calculate food total
-        $nights = \Carbon\Carbon::parse($checkinDate)->diffInDays(\Carbon\Carbon::parse($checkoutDate));
         $foodTotal = 0;
         if (!empty($booking['selected_foods'])) {
             foreach ($booking['selected_foods'] as $foodData) {
-                $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1) * $nights;
+                $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
             }
         }
         
@@ -859,7 +906,7 @@ class BookingController extends Controller
             foreach ($booking['accommodations'] as $acc) {
                 if (!empty($acc) && !empty($acc['total_price'])) {
                     $lineItems[] = [
-                        'amount' => (int)($acc['total_price'] * 100), // Total price as per-unit price
+                        'amount' => (int)($acc['total_price'] * 100), // Total price in centavos
                         'currency' => 'PHP',
                         'name' => $acc['room_name'] ?? 'Accommodation',
                         'quantity' => 1,
@@ -870,15 +917,17 @@ class BookingController extends Controller
         
         // 2. Add food line items second
         if (!empty($booking['selected_foods'])) {
-            $nights = \Carbon\Carbon::parse($booking['checkin'])->diffInDays(\Carbon\Carbon::parse($booking['checkout']));
             foreach ($booking['selected_foods'] as $food) {
                 if (!empty($food) && !empty($food['name']) && !empty($food['price'])) {
-                    // Pass unit price, quantity = (quantity × nights)
+                    // Calculate total amount for this food item: unit_price × quantity (per order, not per night)
+                    $foodQty = $food['quantity'] ?? 1;
+                    $totalAmount = (int)($food['price'] * $foodQty * 100); // Total in centavos
+                    
                     $lineItems[] = [
-                        'amount' => (int)($food['price'] * 100), // Unit price in centavos
+                        'amount' => $totalAmount, // Total amount in centavos
                         'currency' => 'PHP',
                         'name' => $food['name'],
-                        'quantity' => ($food['quantity'] ?? 1) * $nights,
+                        'quantity' => $foodQty, // Quantity as ordered
                     ];
                 }
             }
@@ -888,12 +937,15 @@ class BookingController extends Controller
         if (!empty($booking['selected_activities'])) {
             foreach ($booking['selected_activities'] as $activity) {
                 if (!empty($activity) && !empty($activity['name']) && !empty($activity['price'])) {
-                    // Pass unit price, not subtotal. Quantity is the number of guests
+                    // Calculate total amount for activities: unit_price × number of guests
+                    $guestCount = $activity['guests'] ?? 1;
+                    $totalAmount = (int)($activity['price'] * $guestCount * 100); // Total in centavos
+                    
                     $lineItems[] = [
-                        'amount' => (int)($activity['price'] * 100), // Unit price in centavos
+                        'amount' => $totalAmount, // Total amount in centavos
                         'currency' => 'PHP',
                         'name' => $activity['name'],
-                        'quantity' => $activity['guests'] ?? 1,
+                        'quantity' => $guestCount,
                     ];
                 }
             }
@@ -916,7 +968,7 @@ class BookingController extends Controller
         ]);
 
         $successUrl = url('/booking/payment/success?checkout_id={CHECKOUT_ID}');
-        $failedUrl = url('/booking/payment/failed');
+        $failedUrl = url('/booking/staycation/payment');
 
         Log::info('Creating PayMongo checkout', [
             'amount' => (int)($grandTotal * 100),
@@ -1702,6 +1754,9 @@ class BookingController extends Controller
                 $currentRate = $type === 'glamping' ? 5500 : 3000;
             }
 
+            // Calculate price range for the selected date range
+            $priceRange = $this->calculatePriceRangeForDateRange($staycation, $checkin, $checkout, $seasonKey);
+
             $roomDetails[$staycation->id] = [
                 'id' => $staycation->id,
                 'name' => $staycation->name,
@@ -1712,6 +1767,7 @@ class BookingController extends Controller
                 'available_quantity' => $minOverRange,
                 'total_quantity' => $baseQty,
                 'price' => $currentRate, // Per night rate for current season
+                'price_range' => $priceRange, // NEW: Price range for displayed dates
                 'price_configs' => $staycation->price_configs ?? []
             ];
         }
@@ -1781,13 +1837,10 @@ class BookingController extends Controller
         $booking['booking_type'] = 'staycation';
         $booking['selected_foods'] = $validated['selected_foods'];
 
-        // Calculate nights for food pricing
-        $nights = \Carbon\Carbon::parse($booking['checkin'])->diffInDays(\Carbon\Carbon::parse($booking['checkout']));
-
         // Calculate food total from selected foods
         $foodTotal = 0;
         foreach ($validated['selected_foods'] as $foodData) {
-            $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1) * $nights;
+            $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
         }
         
         // Update final_totals to include food cost

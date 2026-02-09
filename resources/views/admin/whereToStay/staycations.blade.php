@@ -6,124 +6,194 @@
 
 <div
     x-data="staycationManager()"
-    class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
+    x-init="initPrices()"
+    class="p-4 sm:p-6 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
 >
 
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Staycations</h2>
-        <div class="flex gap-2">
+    <h1 class="text-3xl sm:text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
+        Staycations Management
+    </h1>
+    <p class="text-gray-600 mb-8 sm:mb-10 text-sm sm:text-base">Manage all your accommodation options, capacity, pricing, and inventory.</p>
+
+    {{-- Toolbar --}}
+    <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Accommodations</h2>
+            <p class="text-gray-500 text-sm">View and edit all staycation options.</p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
             <a
                 href="{{ route('admin.stay.settings') }}"
-                class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700"
+                class="px-3 py-2 sm:px-4 rounded-xl bg-orange-600 text-white font-medium shadow hover:bg-orange-700 hover:shadow-lg transition text-center text-sm sm:text-base"
             >
                 📊 Pricing Overview
             </a>
             <a
                 href="{{ route('admin.booking-settings.index') }}"
-                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                class="px-3 py-2 sm:px-4 rounded-xl bg-green-600 text-white font-medium shadow hover:bg-green-700 hover:shadow-lg transition text-center text-sm sm:text-base"
             >
                 💰 Additional Fees
             </a>
             <button
                 type="button"
                 @click="showStaycationModal = true; resetForm()"
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                class="px-3 py-2 sm:px-4 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition text-center text-sm sm:text-base"
             >
                 + Add Staycation
             </button>
         </div>
     </div>
 
+    {{-- Card Grid Layout --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+        @forelse($staycations as $staycation)
+            <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative">
+                <div class="h-48 overflow-hidden rounded-xl mb-4">
+                    @if($staycation->image)
+                        <img src="{{ $staycation->image }}" class="w-full h-full object-cover transition hover:scale-105">
+                    @else
+                        <div class="w-full h-full bg-linear-to-br from-blue-200 to-purple-200 flex items-center justify-center text-white">
+                            <i class="bi bi-image text-4xl opacity-50"></i>
+                        </div>
+                    @endif
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-lg text-gray-900">{{ $staycation->name ?: 'Untitled' }}</h3>
+                    <p class="text-gray-500 text-sm">Capacity: {{ $staycation->quantity }} | Days: {{ $staycation->days }}</p>
+                </div>
+
+                <div class="mt-3 text-sm text-gray-600 space-y-1">
+                    @php
+                        $isSpecial = strpos(strtolower($staycation->name), 'byot') !== false || 
+                                   strpos(strtolower($staycation->name), 'car camping') !== false ||
+                                   strpos(strtolower($staycation->name), 'bring your own') !== false;
+                    @endphp
+                    
+                    @if(!$isSpecial)
+                        <p>Adults: <span class="font-semibold">{{ $staycation->adults ?? 'N/A' }}</span> | Children: <span class="font-semibold">{{ $staycation->children ?? 'N/A' }}</span></p>
+                    @else
+                        <p class="text-blue-600 font-medium">Special Room: BYOT/Car Camping</p>
+                    @endif
+
+                    @if($staycation->price_configs && count($staycation->price_configs) > 0)
+                        <div class="text-xs bg-green-50 border border-green-200 rounded p-2 mt-2 price-box-{{ $staycation->id }}">
+                            <p class="font-semibold text-green-700">Current Season: 
+                                <span>{{ $currentSeason }}</span>
+                            </p>
+                            <p class="text-gray-600 text-xs mt-1">
+                                Non-Peak: <span class="price-nonpeak" x-text="(getUpdatedPrice({{ $staycation->id }})?.nonPeak !== undefined ? '₱' + new Intl.NumberFormat('en-US').format(getUpdatedPrice({{ $staycation->id }})?.nonPeak) : '₱{{ number_format($staycation->price_configs[0]['rates']['nonPeak'] ?? 0, 0) }}')"></span> | 
+                                Peak: <span class="price-peak" x-text="(getUpdatedPrice({{ $staycation->id }})?.peak !== undefined ? '₱' + new Intl.NumberFormat('en-US').format(getUpdatedPrice({{ $staycation->id }})?.peak) : '₱{{ number_format($staycation->price_configs[0]['rates']['peak'] ?? 0, 0) }}')"></span> | 
+                                Super Peak: <span class="price-superpeak" x-text="(getUpdatedPrice({{ $staycation->id }})?.superPeak !== undefined ? '₱' + new Intl.NumberFormat('en-US').format(getUpdatedPrice({{ $staycation->id }})?.superPeak) : '₱{{ number_format($staycation->price_configs[0]['rates']['superPeak'] ?? 0, 0) }}')"></span>
+                            </p>
+                        </div>
+                    @endif
+                </div>
+
+                <p class="text-xs text-gray-400 mt-3">
+                    Uploaded: {{ $staycation->created_at->format('Y-m-d') }}
+                </p>
+
+                <div class="mt-5 flex justify-end space-x-3">
+                    <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                        @click="editStaycation({{ $staycation->id }})">Edit</button>
+                    <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                        @click="deleteStaycation({{ $staycation->id }}, '{{ route('admin.staycation-list.destroy', $staycation->id) }}')">Delete</button>
+                </div>
+            </div>
+        @empty
+            <div class="col-span-full text-center py-12 bg-white/70 backdrop-blur-lg rounded-2xl border border-gray-200">
+                <i class="bi bi-inbox text-5xl text-gray-300 mb-4 block"></i>
+                <p class="text-lg text-gray-600 font-semibold">No Staycations Yet</p>
+                <p class="text-gray-500 text-sm mt-1">Start by adding your first accommodation option.</p>
+            </div>
+        @endforelse
+    </div>
+
+    {{-- SWIPER IMAGES MANAGEMENT --}}
+    <div class="flex justify-between items-end mb-6 mt-12">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Swiper Images</h2>
+            <p class="text-gray-500 text-sm">Photos that appear in the staycation carousel.</p>
+        </div>
+
+        <button 
+            @click="showModal = true" 
+            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition"
+        >
+            + Add Image
+        </button>
+    </div>
+
+    @if(session('success'))
+        <div class="bg-green-100 text-green-700 p-4 rounded-xl mb-6 border border-green-200">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    {{-- Images Table --}}
     <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
         <table class="w-full text-left">
             <thead class="bg-gray-100/70 backdrop-blur">
                 <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Name</th>
-                    <th class="px-4 py-2">Days</th>
-                    <th class="px-4 py-2">Today Avail</th>
-                    <th class="px-4 py-2">Adults</th>
-                    <th class="px-4 py-2">Children</th>
-                    <th class="px-4 py-2">Pricing</th>
-                    <th class="px-4 py-2">Uploaded</th>
-                    <th class="px-4 py-2 text-right">Actions</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">#</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Preview</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Staycation Name</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Title</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Uploaded</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody>
-                <template x-for="(act, index) in staycations" :key="act.id">
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2" x-text="index + 1"></td>
-                        <td class="px-4 py-2" x-text="act.name || 'Untitled'"></td>
-                        <td class="px-4 py-2" x-text="act.days || 1"></td>
-                        <td class="px-4 py-2">
-                            <span :class="'today-avail-' + act.id" x-text="act.today_available ?? 0"></span>
+            <tbody class="divide-y divide-gray-200">
+                @forelse($images as $index => $img)
+                    <tr class="hover:bg-gray-50/70 transition">
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ $index + 1 }}</td>
+                        <td class="px-6 py-4">
+                            <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
                         </td>
-                        <td class="px-4 py-2">
-                            <template x-if="!isSpecialRoom(act.name)">
-                                <span x-text="act.adults ?? 'N/A'"></span>
-                            </template>
-                            <template x-if="isSpecialRoom(act.name)">
-                                <span class="text-gray-400 italic">N/A</span>
-                            </template>
-                        </td>
-                        <td class="px-4 py-2">
-                            <template x-if="!isSpecialRoom(act.name)">
-                                <span x-text="act.children ?? 'N/A'"></span>
-                            </template>
-                            <template x-if="isSpecialRoom(act.name)">
-                                <span class="text-gray-400 italic">N/A</span>
-                            </template>
-                        </td>
-                        <td class="px-4 py-2">
-                            <template x-if="act.price_configs && act.price_configs.length > 0">
-                                <div class="text-sm">
-                                    <span class="font-semibold text-green-600" x-text="'Current (' + @js($currentSeason) + '): ₱' + getCurrentSeasonPrice(act.price_configs[0]?.rates || {})"></span>
-                                    <br>
-                                    <span class="text-gray-500 text-xs" x-text="'Non-Peak: ₱' + (act.price_configs[0].rates?.nonPeak ?? 0) + ' | Peak: ₱' + (act.price_configs[0].rates?.peak ?? 0) + ' | Super Peak: ₱' + (act.price_configs[0].rates?.superPeak ?? 0)"></span>
-                                </div>
-                            </template>
-                            <template x-if="!act.price_configs || act.price_configs.length === 0">
-                                <span>N/A</span>
-                            </template>
-                        </td>
-                        <td class="px-4 py-2" x-text="new Date(act.created_at).toISOString().split('T')[0]"></td>
-                        <td class="px-4 py-2 text-right space-x-2">
-                            <button type="button" class="text-blue-600 hover:underline" @click="editStaycation(act.id)">
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ $img->staycation->name ?? 'Untitled' }}</td>
+                        <td class="px-6 py-4 text-gray-600">{{ $img->title ?? 'Untitled' }}</td>
+                        <td class="px-6 py-4 text-gray-600">{{ $img->created_at->format('Y-m-d') }}</td>
+                        <td class="px-6 py-4 text-right space-x-4">
+                            <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition" @click="editImage({{ $img->id }}, '{{ $img->staycation_id }}', '{{ $img->title }}')">
                                 Edit
                             </button>
-                            <form :action="'/admin/staycation-list/' + act.id" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button
-                                    type="submit"
-                                    class="text-red-600 hover:underline"
-                                    onclick="return confirm('Delete this staycation?')"
-                                >
-                                    Delete
-                                </button>
-                            </form>
+                            <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition" @click="deleteImage({{ $img->id }}, '{{ route('admin.staycation-image.destroy', $img->id) }}')">
+                                Delete
+                            </button>
                         </td>
                     </tr>
-                </template>
-                <template x-if="staycations.length === 0">
+                @empty
                     <tr>
-                        <td colspan="9" class="px-4 py-4 text-center text-gray-500">No staycations added yet.</td>
+                        <td colspan="6" class="px-6 py-6 text-center text-gray-500">No images uploaded yet.</td>
                     </tr>
-                </template>
+                @endforelse
             </tbody>
         </table>
     </div>
 
-    <div x-show="showStaycationModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" x-cloak>
-        <div @click.away="showStaycationModal = false" class="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto">
+    <hr class="my-14 border-gray-300">
 
-            <h3 class="text-lg font-semibold mb-4" x-text="editModeStaycation ? 'Edit Staycation' : 'Add Staycation'"></h3>
+    {{-- STAYCATION MODAL --}}
+    <div 
+        x-show="showStaycationModal"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        x-transition.opacity
+    >
+        <div class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-4xl p-5 sm:p-7 relative border border-gray-200 max-h-[95vh] overflow-y-auto">
+            <button 
+                @click="showStaycationModal = false"
+                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+            >&times;</button>
+
+            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editModeStaycation ? 'Edit Staycation' : 'Add Staycation'"></h3>
 
             <form id="staycationForm" @submit.prevent="saveStaycation()" class="space-y-5">
                 @csrf
 
                 <!-- Staycation Name, Days, Max Capacity, Adults & Children -->
-                <div class="grid gap-4" :class="isSpecialStaycation ? 'grid-cols-3' : 'grid-cols-5'">
+                <div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5" :class="isSpecialStaycation ? 'lg:grid-cols-3' : ''">
                     <div>
                         <label class="block text-sm font-medium mb-1">Staycation Name</label>
                         <input type="text" x-model="form.name" @input="updateSpecialRoomStatus()" class="w-full border rounded px-3 py-2 h-10" placeholder="Premium Glamping Tent" required>
@@ -175,11 +245,11 @@
                             </div>
 
                             <!-- Days checkboxes -->
-                            <div x-show="config.type === 'day'" class="flex space-x-2">
+                            <div x-show="config.type === 'day'" class="flex flex-wrap gap-1 sm:gap-2">
                                 <template x-for="day in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="day">
                                     <label class="flex items-center space-x-1">
                                         <input type="checkbox" :value="day" x-model="config.days">
-                                        <span x-text="day"></span>
+                                        <span class="text-sm" x-text="day"></span>
                                     </label>
                                 </template>
                             </div>
@@ -206,18 +276,18 @@
                             </div>
 
                             <!-- Rates per season -->
-                            <div class="grid grid-cols-3 gap-2">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 <div class="flex flex-col">
-                                    <label class="text-sm font-semibold mb-1">Non-Peak</label>
-                                    <input type="number" x-model.number="config.rates.nonPeak" x-bind:value="config.rates.nonPeak" class="border rounded px-2 py-1" min="0">
+                                    <label class="text-xs sm:text-sm font-semibold mb-1">Non-Peak</label>
+                                    <input type="number" x-model.number="config.rates.nonPeak" x-bind:value="config.rates.nonPeak" class="border rounded px-2 py-1 text-sm" min="0">
                                 </div>
                                 <div class="flex flex-col">
-                                    <label class="text-sm font-semibold mb-1">Peak</label>
-                                    <input type="number" x-model.number="config.rates.peak" x-bind:value="config.rates.peak" class="border rounded px-2 py-1" min="0">
+                                    <label class="text-xs sm:text-sm font-semibold mb-1">Peak</label>
+                                    <input type="number" x-model.number="config.rates.peak" x-bind:value="config.rates.peak" class="border rounded px-2 py-1 text-sm" min="0">
                                 </div>
                                 <div class="flex flex-col">
-                                    <label class="text-sm font-semibold mb-1">Super Peak</label>
-                                    <input type="number" x-model.number="config.rates.superPeak" x-bind:value="config.rates.superPeak" class="border rounded px-2 py-1" min="0">
+                                    <label class="text-xs sm:text-sm font-semibold mb-1">Super Peak</label>
+                                    <input type="number" x-model.number="config.rates.superPeak" x-bind:value="config.rates.superPeak" class="border rounded px-2 py-1 text-sm" min="0">
                                 </div>
                             </div>
 
@@ -247,43 +317,43 @@
                         </div>
 
                         <!-- Quick Set Tab -->
-                        <div x-show="inventoryTab === 'quick'" class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                            <p class="text-sm text-green-900 mb-3">Set the same quantity for the next 30 days</p>
-                            <div class="flex gap-2 items-end">
+                        <div x-show="inventoryTab === 'quick'" class="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 mb-4">
+                            <p class="text-xs sm:text-sm text-green-900 mb-3">Set the same quantity for the next 30 days</p>
+                            <div class="flex flex-col sm:flex-row gap-2 items-end">
                                 <div class="flex-1">
-                                    <label class="block text-sm font-medium mb-1">Quantity per day</label>
-                                    <input type="number" x-model.number="inventoryQty" min="1" value="10" class="w-full border rounded px-3 py-2">
+                                    <label class="block text-xs sm:text-sm font-medium mb-1">Quantity per day</label>
+                                    <input type="number" x-model.number="inventoryQty" min="1" value="10" class="w-full border rounded px-3 py-2 text-sm">
                                 </div>
-                                <button type="button" @click="quickSetInventory()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-semibold whitespace-nowrap">
+                                <button type="button" @click="quickSetInventory()" class="w-full sm:w-auto px-3 sm:px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-semibold text-sm">
                                     Apply Quick Set
                                 </button>
                             </div>
                         </div>
 
                         <!-- Custom Date Range Tab -->
-                        <div x-show="inventoryTab === 'custom'" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                            <p class="text-sm text-blue-900 mb-3">Set inventory for a specific date range</p>
+                        <div x-show="inventoryTab === 'custom'" class="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4">
+                            <p class="text-xs sm:text-sm text-blue-900 mb-3">Set inventory for a specific date range</p>
                             <div class="space-y-3">
-                                <div class="grid grid-cols-3 gap-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                                     <div>
-                                        <label class="block text-sm font-medium mb-1">Start Date</label>
-                                        <input type="date" x-model="inventoryStartDate" class="w-full border rounded px-3 py-2">
+                                        <label class="block text-xs sm:text-sm font-medium mb-1">Start Date</label>
+                                        <input type="date" x-model="inventoryStartDate" class="w-full border rounded px-3 py-2 text-sm">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium mb-1">End Date</label>
-                                        <input type="date" x-model="inventoryEndDate" class="w-full border rounded px-3 py-2">
+                                        <label class="block text-xs sm:text-sm font-medium mb-1">End Date</label>
+                                        <input type="date" x-model="inventoryEndDate" class="w-full border rounded px-3 py-2 text-sm">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium mb-1">Quantity</label>
-                                        <input type="number" x-model.number="inventoryQtyRange" min="0" value="10" class="w-full border rounded px-3 py-2">
+                                        <label class="block text-xs sm:text-sm font-medium mb-1">Quantity</label>
+                                        <input type="number" x-model.number="inventoryQtyRange" min="0" value="10" class="w-full border rounded px-3 py-2 text-sm">
                                     </div>
                                 </div>
-                                <div class="flex items-center justify-between">
+                                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                                     <label class="flex items-center gap-2">
                                         <input type="checkbox" x-model="inventoryAvailable" checked>
-                                        <span class="text-sm font-medium">Available for booking</span>
+                                        <span class="text-xs sm:text-sm font-medium">Available for booking</span>
                                     </label>
-                                    <button type="button" @click="addDateRangeInventory()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold">
+                                    <button type="button" @click="addDateRangeInventory()" class="w-full sm:w-auto px-3 sm:px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold text-sm">
                                         Add Range
                                     </button>
                                 </div>
@@ -305,106 +375,50 @@
                 <!-- Image Upload Section -->
                 <div class="space-y-3">
                     <label class="block text-sm font-medium">Upload Image (optional)</label>
-                    <input type="file" accept="image/*" x-ref="imageInput" @change="handleImageUpload($event)" class="w-full border rounded px-3 py-2">
+                    <input type="file" accept="image/*" x-ref="imageInput" @change="handleImageUpload($event)" class="w-full border rounded px-3 py-2 text-sm">
                     <div x-show="form.imagePreview" class="mt-2">
-                        <img :src="form.imagePreview" class="w-32 h-20 object-cover rounded border">
-                        <button type="button" @click="removeImage()" class="ml-2 text-red-500 hover:underline">Remove</button>
+                        <img :src="form.imagePreview" class="w-24 sm:w-32 h-16 sm:h-20 object-cover rounded border">
+                        <button type="button" @click="removeImage()" class="ml-2 text-red-500 hover:underline text-sm mt-1">Remove</button>
                     </div>
                 </div>
 
                 <!-- Actions -->
-                <div class="flex justify-end space-x-2 mt-4">
-                    <button type="button" @click="showStaycationModal = false; resetForm()" class="px-4 py-2 border rounded hover:bg-gray-100">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" x-text="editModeStaycation ? 'Update' : 'Add'"></button>
+                <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-2">
+                    <button type="button" @click="showStaycationModal = false; resetForm()" class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition text-sm w-full sm:w-auto">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition text-sm w-full sm:w-auto" x-text="editModeStaycation ? 'Update' : 'Add'"></button>
                 </div>
             </form>
         </div>
     </div>
 
-
-
-
-
-    <hr class="my-6">
-
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Swiper Images Management</h2>
-        <button 
-            @click="showModal = true" 
-            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-            + Add Image
-        </button>
-    </div>
-
-    @if(session('success'))
-        <div class="bg-green-100 text-green-700 p-2 rounded mb-4">
-            {{ session('success') }}
+    {{-- LOADING OVERLAY --}}
+    <div 
+        x-show="isLoading"
+        x-transition.opacity
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-9999"
+    >
+        <div class="flex flex-col items-center space-y-3">
+            <svg class="animate-spin h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-30" cx="12" cy="12" r="10" stroke="white" stroke-width="4"></circle>
+                <path class="opacity-90" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span class="text-white text-lg font-medium">Processing...</span>
         </div>
-    @endif
-
-    {{-- Table --}}
-    <div class="overflow-x-auto border rounded-lg shadow">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 border-b">
-                <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Preview</th>
-                    <th class="px-4 py-2">Staycation Name</th>
-                    <th class="px-4 py-2">Title</th>
-                    <th class="px-4 py-2">Uploaded</th>
-                    <th class="px-4 py-2 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($images as $index => $img)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ $index + 1 }}</td>
-                        <td class="px-4 py-2">
-                            <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
-                        </td>
-                        <td class="px-4 py-2">{{ $img->staycation->name ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $img->title ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">{{ $img->created_at->format('Y-m-d') }}</td>
-                        <td class="px-4 py-2 text-right space-x-2">
-                            <button class="text-blue-600 hover:underline" @click="editImage({{ $img->id }}, '{{ $img->staycation_id }}', '{{ $img->title }}')">
-                                Edit
-                            </button>
-                            <form action="{{ route('admin.staycation-image.destroy', $img->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button
-                                    type="submit"
-                                    class="text-red-600 hover:underline"
-                                    onclick="return confirm('Delete this image?')"
-                                >
-                                    Delete
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">No images uploaded yet.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
     </div>
 
-    {{-- Modal --}}
+    {{-- Image Upload Modal --}}
     <div 
         x-show="showModal"
-        class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
-        x-transition
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        x-transition.opacity
     >
-        <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+        <div class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-md p-5 sm:p-6 relative border border-gray-200">
             <button 
                 @click="showModal = false"
-                class="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
+            <h3 class="text-lg font-semibold mb-4 text-gray-900" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
 
             <form
                 id="swiperUploadForm"
@@ -500,85 +514,77 @@
                     <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" x-bind:required="!editImageMode">
                 </div>
 
-                <div class="flex justify-end space-x-2">
-                    <button type="button" @click="showModal = false; resetImageForm()" class="px-4 py-2 border rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded" x-text="editImageMode ? 'Update' : 'Upload'"></button>
+                <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2">
+                    <button type="button" @click="showModal = false; resetImageForm()" class="px-4 py-2 border rounded text-sm w-full sm:w-auto">Cancel</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full sm:w-auto" x-text="editImageMode ? 'Update' : 'Upload'"></button>
                 </div>
             </form>
         </div>
     </div>
 
-    <hr class="my-6">
+    {{-- FEATURES MANAGEMENT --}}
+    <div class="flex justify-between items-end mb-6 mt-12">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Features Management</h2>
+            <p class="text-gray-500 text-sm">Amenities and features for each staycation.</p>
+        </div>
 
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Features Management</h2>
         <button
             @click="resetTextForm(); showTextModal = true"
-            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition"
         >
             + Add Features
         </button>
     </div>
 
     {{-- Features Table --}}
-    <div class="overflow-x-auto border rounded-lg shadow">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 border-b">
+    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+        <table class="w-full text-left">
+            <thead class="bg-gray-100/70 backdrop-blur">
                 <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Staycation Name</th>
-                    <th class="px-4 py-2">Features List</th>
-                    <th class="px-4 py-2 text-right">Actions</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">#</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Staycation Name</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Features List</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-gray-200">
                 @forelse($texts as $index => $text)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ $index + 1 }}</td>
-                        <td class="px-4 py-2">{{ $text->staycation->name ?? 'Untitled' }}</td>
-                        <td class="px-4 py-2">
+                    <tr class="hover:bg-gray-50/70 transition">
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ $index + 1 }}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ $text->staycation->name ?? 'Untitled' }}</td>
+                        <td class="px-6 py-4 text-gray-600 text-sm">
                             @php
                                 $features = explode("\n", $text->content ?? '');
+                                $featureCount = collect($features)->filter(fn($f) => trim($f))->count();
                             @endphp
-                            @if(!empty($features))
-                                <ul class="list-disc list-inside space-y-1">
-                                    @forelse($features as $feature)
-                                        @if(trim($feature))
-                                            <li class="text-sm">{{ trim($feature) }}</li>
-                                        @endif
-                                    @empty
-                                        <span class="text-gray-400 italic">No features</span>
-                                    @endforelse
-                                </ul>
+                            @if($featureCount > 0)
+                                <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">{{ $featureCount }} features</span>
                             @else
                                 <span class="text-gray-400 italic">No features</span>
                             @endif
                         </td>
-                        <td class="px-4 py-2 text-right space-x-2">
+                        <td class="px-6 py-4 text-right space-x-4">
                             <button
                                 type="button"
                                 x-on:click="editText($el, {{ $text->id }}, '{{ $text->staycation_id }}', '{{ $text->section }}', '{{ $text->title }}')"
                                 data-content="{!! htmlspecialchars($text->content ?? '', ENT_QUOTES) !!}"
-                                class="text-blue-600 hover:underline"
+                                class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
                             >
                                 Edit
                             </button>
-                            <form action="{{ route('admin.staycation-text.destroy', $text->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button
-                                    type="submit"
-                                    class="text-red-600 hover:underline"
-                                    onclick="return confirm('Delete this features list?')"
-                                >
-                                    Delete
-                                </button>
-                            </form>
+                            <button
+                                type="button"
+                                class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                                @click="deleteText({{ $text->id }}, '{{ route('admin.staycation-text.destroy', $text->id) }}')"
+                            >
+                                Delete
+                            </button>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="px-4 py-4 text-center text-gray-500">No features added yet.</td>
+                        <td colspan="4" class="px-6 py-6 text-center text-gray-500">No features added yet.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -588,14 +594,19 @@
     <!-- Features Modal -->
     <div
         x-show="showTextModal"
-        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-        x-cloak
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        x-transition.opacity
     >
         <div
             @click.away="showTextModal = false"
-            class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6"
+            class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-5 sm:p-6 relative border border-gray-200"
         >
-            <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Features' : 'Add Features'"></h3>
+            <button 
+                @click="showTextModal = false"
+                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+            >&times;</button>
+
+            <h3 class="text-lg font-semibold mb-4 text-gray-900" x-text="editMode ? 'Edit Features' : 'Add Features'"></h3>
 
             <form
                 id="textUploadForm"
@@ -635,17 +646,17 @@
                     <p class="text-xs text-gray-500 mt-1">Enter each feature on a separate line. These will be displayed as bullet points on the staycation pages.</p>
                 </div>
 
-                <div class="flex justify-end space-x-2">
+                <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2">
                     <button
                         type="button"
                         @click="showTextModal = false"
-                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
+                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 text-sm w-full sm:w-auto"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
-                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm w-full sm:w-auto"
                     >
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
                     </button>
@@ -692,6 +703,24 @@ function staycationManager() {
 
         computedThreshold: 0,
         isSpecialStaycation: false,
+        updatedPrices: {}, // Track updated prices by staycation ID
+
+        getUpdatedPrice(staycationId) {
+            return this.updatedPrices[staycationId];
+        },
+
+        initPrices() {
+            // Initialize updatedPrices from staycations data
+            this.staycations.forEach(stay => {
+                if (stay.price_configs && stay.price_configs.length > 0) {
+                    this.updatedPrices[stay.id] = {
+                        nonPeak: stay.price_configs[0].rates.nonPeak,
+                        peak: stay.price_configs[0].rates.peak,
+                        superPeak: stay.price_configs[0].rates.superPeak
+                    };
+                }
+            });
+        },
 
         updateSpecialRoomStatus() {
             const name = (this.form.name || '').toLowerCase();
@@ -852,30 +881,60 @@ function staycationManager() {
         saveStaycation: async function() {
             // Validate form data
             if (!this.form.name.trim()) {
-                alert('Please enter a staycation name.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Field',
+                    text: 'Please enter a staycation name.',
+                    confirmButtonColor: '#3b82f6'
+                });
                 return;
             }
             if (!this.form.days || this.form.days < 1) {
-                alert('Please enter a valid number of days.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Input',
+                    text: 'Please enter a valid number of days.',
+                    confirmButtonColor: '#3b82f6'
+                });
                 return;
             }
             if (!this.form.quantity || this.form.quantity < 1) {
-                alert('Please enter a valid quantity.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Input',
+                    text: 'Please enter a valid quantity.',
+                    confirmButtonColor: '#3b82f6'
+                });
                 return;
             }
             if (this.form.adults < 0 || this.form.children < 0) {
-                alert('Please enter valid numbers for adults and children.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Input',
+                    text: 'Please enter valid numbers for adults and children.',
+                    confirmButtonColor: '#3b82f6'
+                });
                 return;
             }
             
             // For non-special rooms, require at least one guest
             if (!this.isSpecialRoom(this.form.name) && this.form.adults + this.form.children === 0) {
-                alert('At least one adult or child is required.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Field',
+                    text: 'At least one adult or child is required.',
+                    confirmButtonColor: '#3b82f6'
+                });
                 return;
             }
             
             if (!this.form.priceConfigs || this.form.priceConfigs.length === 0) {
-                alert('Please add at least one price configuration.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Configuration',
+                    text: 'Please add at least one price configuration.',
+                    confirmButtonColor: '#3b82f6'
+                });
                 return;
             }
 
@@ -918,36 +977,80 @@ function staycationManager() {
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    alert(data.message || (this.editModeStaycation ? 'Staycation updated!' : 'Staycation added!'));
-                    
-                    // Update local staycations array if editing
-                    if (this.editModeStaycation && data.staycation) {
-                        const index = this.staycations.findIndex(s => s.id === data.staycation.id);
+                    // Update the local staycations array with new data
+                    if (this.editModeStaycation && this.form.id) {
+                        const index = this.staycations.findIndex(s => s.id === this.form.id);
                         if (index !== -1) {
-                            // Completely replace the object to ensure reactivity
-                            this.staycations.splice(index, 1, {
-                                ...data.staycation,
-                                _updated: Date.now() // Force reactivity
-                            });
+                            this.staycations[index] = {
+                                ...this.staycations[index],
+                                name: this.form.name,
+                                days: this.form.days,
+                                quantity: this.form.quantity,
+                                adults: this.form.adults,
+                                children: this.form.children,
+                                price_configs: this.form.priceConfigs
+                            };
                         }
-                    } else if (!this.editModeStaycation && data.staycation) {
-                        // Add new staycation to the list
-                        this.staycations.push(data.staycation);
+                    } else {
+                        // For new staycations, reload to get the new item
+                        this.staycations.push({
+                            id: data.id,
+                            name: this.form.name,
+                            days: this.form.days,
+                            quantity: this.form.quantity,
+                            adults: this.form.adults,
+                            children: this.form.children,
+                            price_configs: this.form.priceConfigs
+                        });
                     }
 
-                    this.resetForm();
-                    this.showStaycationModal = false;
+                    // Show success alert - same style as day tour page
+                    // Update the local updatedPrices track for dynamic display
+                    const stayId = this.editModeStaycation ? this.form.id : data.id;
+                    if (this.form.priceConfigs && this.form.priceConfigs.length > 0) {
+                        this.updatedPrices[stayId] = {
+                            nonPeak: this.form.priceConfigs[0].rates.nonPeak,
+                            peak: this.form.priceConfigs[0].rates.peak,
+                            superPeak: this.form.priceConfigs[0].rates.superPeak
+                        };
+                    }
 
-                    // Force page reload to ensure all data is fresh
-                    window.location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: this.editModeStaycation ? 'Updated!' : 'Added!',
+                        text: data.message || (this.editModeStaycation ? 'Staycation updated successfully!' : 'Staycation added successfully!'),
+                        confirmButtonColor: '#2563eb'
+                    }).then(() => {
+                        this.resetForm();
+                        this.showStaycationModal = false;
+                        // For new staycations, reload to display them. For edits, data already updates above
+                        if (!this.editModeStaycation) {
+                            setTimeout(() => window.location.reload(), 500);
+                        }
+                    });
                 } else if (data.errors) {
-                    alert(Object.values(data.errors).flat().join('\n'));
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        html: Object.values(data.errors).flat().join('<br>'),
+                        confirmButtonColor: '#ef4444'
+                    });
                 } else {
-                    alert(data.message || 'Operation failed.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Operation failed.',
+                        confirmButtonColor: '#ef4444'
+                    });
                 }
             } catch(err) {
                 console.error('Error submitting staycation:', err);
-                alert('Error submitting staycation: ' + (err.message || 'Unknown error'));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    text: 'Error submitting staycation: ' + (err.message || 'Unknown error'),
+                    confirmButtonColor: '#ef4444'
+                });
             } finally {
                 btn.innerText = this.editModeStaycation ? 'Update' : 'Add';
                 btn.disabled = false;
@@ -984,18 +1087,32 @@ function staycationManager() {
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    alert(data.message || (this.editMode ? 'Text updated!' : 'Text added!'));
-                    this.form.staycation_id = '';
-                    this.form.section = '';
-                    this.form.label = '';
-                    this.form.text = '';
-                    this.editMode = false;
-                    this.showTextModal = false;
-                    window.location.reload();
+                    Swal.fire({
+                        icon: "success",
+                        title: this.editMode ? "Updated!" : "Added!",
+                        text: data.message || (this.editMode ? "Text updated successfully!" : "Text added successfully!"),
+                        confirmButtonColor: "#2563eb"
+                    }).then(() => {
+                        this.form.staycation_id = '';
+                        this.form.section = '';
+                        this.form.label = '';
+                        this.form.text = '';
+                        this.editMode = false;
+                        this.showTextModal = false;
+                        window.location.reload();
+                    });
                 } else if (data.errors) {
-                    alert(Object.values(data.errors).flat().join('\n'));
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Validation Error",
+                        html: Object.values(data.errors).flat().join("<br>")
+                    });
                 } else {
-                    alert(data.message || 'Operation failed.');
+                    Swal.fire({
+                        icon: "error",
+                        title: "Failed",
+                        text: data.message || "Operation failed."
+                    });
                 }
             } catch(err) {
                 console.error(err);
@@ -1105,15 +1222,24 @@ function staycationManager() {
 
             previewDiv.innerHTML = '<span class="text-gray-600">Loading...</span>';
 
-            fetch(`/api/inventory/${this.form.id}`)
-                .then(r => r.json())
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+            fetch(`/api/inventory/${this.form.id}`, { signal: controller.signal })
+                .then(response => {
+                    clearTimeout(timeoutId);
+                    if (!response.ok) {
+                        throw new Error(`API returned ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (!data.items || data.items.length === 0) {
-                        previewDiv.innerHTML = '<span class="text-gray-500">No inventory set yet</span>';
+                        previewDiv.innerHTML = '<span class="text-gray-500">No inventory set yet. Use Quick Set or Custom Date Range above.</span>';
                         return;
                     }
                     let html = '<table class="w-full text-sm"><tr class="border-b"><th class="text-left py-1">Date</th><th class="text-center py-1">Qty</th><th class="text-center py-1">Status</th></tr>';
-                    data.items.forEach(inv => {
+                    data.items.slice(0, 30).forEach(inv => {
                         const dateObj = new Date(inv.date);
                         const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                         const status = inv.is_available ? '✅ Available' : '🚫 Blocked';
@@ -1123,7 +1249,18 @@ function staycationManager() {
                     previewDiv.innerHTML = html;
                 })
                 .catch(err => {
-                    previewDiv.innerHTML = '<span class="text-red-500">Error loading inventory</span>';
+                    clearTimeout(timeoutId);
+                    console.error('Inventory preview error:', err);
+                    
+                    // Show helpful message
+                    let errorMsg = 'No inventory data available yet.';
+                    if (err.name === 'AbortError') {
+                        errorMsg = 'Request timed out. The API endpoint may not be responding.';
+                    } else if (err.message.includes('404')) {
+                        errorMsg = 'Inventory API endpoint not found. Use Quick Set or Custom Date Range to add inventory.';
+                    }
+                    
+                    previewDiv.innerHTML = `<span class="text-amber-600 text-sm">${errorMsg}</span>`;
                 });
         },
 
@@ -1136,6 +1273,161 @@ function staycationManager() {
             };
             const key = seasonKeyMap[currentSeason] || 'nonPeak';
             return rates[key] || 0;
+        },
+
+
+
+        deleteStaycation(id, route) {
+            Swal.fire({
+                title: 'Delete Staycation?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const csrf = document.querySelector('meta[name=csrf-token]').content;
+                    const formData = new FormData();
+                    formData.append('_method', 'DELETE');
+                    fetch(route, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': csrf },
+                        body: formData
+                    }).then(() => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: 'Staycation deleted successfully.',
+                            confirmButtonColor: '#2563eb'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }).catch(() => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Failed to delete staycation.'
+                        });
+                    });
+                }
+            });
+        },
+
+        deleteImage(id, route) {
+            Swal.fire({
+                title: 'Delete Image?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const csrf = document.querySelector('meta[name=csrf-token]').content;
+                    const formData = new FormData();
+                    formData.append('_method', 'DELETE');
+                    fetch(route, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': csrf },
+                        body: formData
+                    }).then(() => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: 'Image deleted successfully.',
+                            confirmButtonColor: '#2563eb'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }).catch(() => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Failed to delete image.'
+                        });
+                    });
+                }
+            });
+        },
+
+        deleteText(id, route) {
+            Swal.fire({
+                title: 'Delete Features?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const csrf = document.querySelector('meta[name=csrf-token]').content;
+                    const formData = new FormData();
+                    formData.append('_method', 'DELETE');
+                    fetch(route, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': csrf },
+                        body: formData
+                    }).then(() => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: 'Features deleted successfully.',
+                            confirmButtonColor: '#2563eb'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }).catch(() => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Failed to delete features.'
+                        });
+                    });
+                }
+            });
+        },
+
+        editImage(id, staycationId, title) {
+            this.currentImageId = id;
+            this.currentStaycationId = staycationId;
+            this.currentImageTitle = title || '';
+            this.editImageMode = true;
+            this.showModal = true;
+        },
+
+        resetImageForm() {
+            this.editImageMode = false;
+            this.currentImageId = null;
+            this.currentStaycationId = '';
+            this.currentImageTitle = '';
+            if (this.$refs.title) this.$refs.title.value = '';
+            if (this.$refs.image) this.$refs.image.value = '';
+        },
+
+        editText(el, id, staycationId, section, title) {
+            this.form.id = id;
+            this.form.staycation_id = staycationId;
+            this.form.section = section || '';
+            this.form.label = title || '';
+            this.form.text = el.getAttribute('data-content') || '';
+            this.editMode = true;
+            this.showTextModal = true;
+        },
+
+        resetTextForm() {
+            this.form.id = null;
+            this.form.staycation_id = '';
+            this.form.section = '';
+            this.form.label = '';
+            this.form.text = '';
+            this.editMode = false;
         }
 
     };
@@ -1176,5 +1468,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </script>
 
+<style>
+.tilt-card {
+    transform-style: preserve-3d;
+    perspective: 1200px;
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+.tilt-card:hover {
+    transform: rotateX(6deg) rotateY(-6deg) translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 35px rgba(0,0,0,0.18);
+}
+</style>
 
 @endsection

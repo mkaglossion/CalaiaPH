@@ -50,7 +50,7 @@ if ($datesSelected) {
 // Food total
 if (!empty($selectedFoods)) {
     foreach ($selectedFoods as $foodData) {
-        $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1) * $nights;
+        $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
     }
 }
 @endphp
@@ -202,7 +202,7 @@ if (!empty($selectedFoods)) {
                                 <input type="number" min="1" max="20" class="w-16 text-center border border-gray-300 rounded-md py-1 text-sm" :value="food.quantity" @change="setField(food.id, 'quantity', $event.target.value)">
                                 <button type="button" class="w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" @click="increaseQty(food.id)">+</button>
                             </div>
-                            <div class="text-right text-[#8f5d54] font-bold text-sm" x-text="'₱' + (food.price * food.quantity * nights).toLocaleString()"></div>
+                            <div class="text-right text-[#8f5d54] font-bold text-sm" x-text="'₱' + (food.price * food.quantity).toLocaleString()"></div>
                         </div>
 
                         <div class="mt-3">
@@ -237,7 +237,7 @@ if (!empty($selectedFoods)) {
                     $food = $foods->get($selectedFood['id']);
                     if ($food) {
                         $quantity = $selectedFood['quantity'] ?? 1;
-                        $itemTotal = $food->price * $quantity * $nights;
+                        $itemTotal = $food->price * $quantity;
                         $calculatedFoodTotal += $itemTotal;
                     }
                 @endphp
