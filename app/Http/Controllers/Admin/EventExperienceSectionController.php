@@ -55,8 +55,10 @@ class EventExperienceSectionController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, EventExperienceSection $eventExperienceSection)
+    public function update(Request $request, $id)
     {
+        $eventExperienceSection = EventExperienceSection::findOrFail($id);
+        
         $request->validate([
             'section_id' => 'required|string|max:255|unique:event_experience_sections,section_id,' . $eventExperienceSection->id,
             'title' => 'required|string|max:255',
@@ -102,10 +104,11 @@ class EventExperienceSectionController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(EventExperienceSection $eventExperienceSection)
+    public function destroy($id)
     {
+        $eventExperienceSection = EventExperienceSection::findOrFail($id);
         $eventExperienceSection->delete();
 
-        return redirect()->back()->with('success', 'Section deleted successfully.');
+        return response()->json(['message' => 'Section deleted successfully.']);
     }
 }

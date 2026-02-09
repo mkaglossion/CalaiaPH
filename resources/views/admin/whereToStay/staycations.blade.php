@@ -47,68 +47,75 @@
 
     {{-- Card Grid Layout --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-        @forelse($staycations as $staycation)
+        <template x-for="staycation in staycations" :key="staycation.id">
             <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative">
-                <div class="h-48 overflow-hidden rounded-xl mb-4">
-                    @if($staycation->image)
-                        <img src="{{ $staycation->image }}" class="w-full h-full object-cover transition hover:scale-105">
-                    @else
-                        <div class="w-full h-full bg-linear-to-br from-blue-200 to-purple-200 flex items-center justify-center text-white">
-                            <i class="bi bi-image text-4xl opacity-50"></i>
+                <div class="h-48 overflow-hidden rounded-xl mb-4 relative bg-gray-100">
+                    <template x-if="staycation.image && staycation.image.trim() !== ''">
+                        <img :src="staycation.image" 
+                             class="w-full h-full object-cover transition hover:scale-105" 
+                             alt="staycation"
+                             onerror="console.error('Image load failed:', this.src)">
+                    </template>
+                    <template x-if="!staycation.image || staycation.image.trim() === ''">
+                        <div class="w-full h-full bg-linear-to-br from-blue-200 to-purple-200 flex items-center justify-center cursor-pointer hover:from-blue-300 hover:to-purple-300">
+                            <div class="text-center">
+                                <i class="bi bi-image text-4xl opacity-50 text-white block mb-2"></i>
+                                <p class="text-xs text-white opacity-70">No image</p>
+                            </div>
                         </div>
-                    @endif
+                    </template>
                 </div>
 
                 <div>
-                    <h3 class="font-semibold text-lg text-gray-900">{{ $staycation->name ?: 'Untitled' }}</h3>
-                    <p class="text-gray-500 text-sm">Capacity: {{ $staycation->quantity }} | Days: {{ $staycation->days }}</p>
+                    <h3 class="font-semibold text-lg text-gray-900" x-text="staycation.name || 'Untitled'"></h3>
+                    <p class="text-gray-500 text-sm" x-text="`Capacity: ${staycation.quantity} | Days: ${staycation.days}`"></p>
                 </div>
 
                 <div class="mt-3 text-sm text-gray-600 space-y-1">
                     @php
-                        $isSpecial = strpos(strtolower($staycation->name), 'byot') !== false || 
-                                   strpos(strtolower($staycation->name), 'car camping') !== false ||
-                                   strpos(strtolower($staycation->name), 'bring your own') !== false;
+                        // This will be evaluated at server-time for initial display, but Alpine will handle dynamic updates
                     @endphp
                     
-                    @if(!$isSpecial)
-                        <p>Adults: <span class="font-semibold">{{ $staycation->adults ?? 'N/A' }}</span> | Children: <span class="font-semibold">{{ $staycation->children ?? 'N/A' }}</span></p>
-                    @else
+                    <template x-if="!staycation.name || (!staycation.name.toLowerCase().includes('byot') && !staycation.name.toLowerCase().includes('car camping') && !staycation.name.toLowerCase().includes('bring your own'))">
+                        <p><span x-text="`Adults: ${staycation.adults || 'N/A'} | Children: ${staycation.children || 'N/A'}`"></span></p>
+                    </template>
+                    
+                    <template x-if="staycation.name && (staycation.name.toLowerCase().includes('byot') || staycation.name.toLowerCase().includes('car camping') || staycation.name.toLowerCase().includes('bring your own'))">
                         <p class="text-blue-600 font-medium">Special Room: BYOT/Car Camping</p>
-                    @endif
+                    </template>
 
-                    @if($staycation->price_configs && count($staycation->price_configs) > 0)
-                        <div class="text-xs bg-green-50 border border-green-200 rounded p-2 mt-2 price-box-{{ $staycation->id }}">
+                    <template x-if="staycation.price_configs && staycation.price_configs.length > 0">
+                        <div class="text-xs bg-green-50 border border-green-200 rounded p-2 mt-2">
                             <p class="font-semibold text-green-700">Current Season: 
                                 <span>{{ $currentSeason }}</span>
                             </p>
                             <p class="text-gray-600 text-xs mt-1">
-                                Non-Peak: <span class="price-nonpeak" x-text="(getUpdatedPrice({{ $staycation->id }})?.nonPeak !== undefined ? '₱' + new Intl.NumberFormat('en-US').format(getUpdatedPrice({{ $staycation->id }})?.nonPeak) : '₱{{ number_format($staycation->price_configs[0]['rates']['nonPeak'] ?? 0, 0) }}')"></span> | 
-                                Peak: <span class="price-peak" x-text="(getUpdatedPrice({{ $staycation->id }})?.peak !== undefined ? '₱' + new Intl.NumberFormat('en-US').format(getUpdatedPrice({{ $staycation->id }})?.peak) : '₱{{ number_format($staycation->price_configs[0]['rates']['peak'] ?? 0, 0) }}')"></span> | 
-                                Super Peak: <span class="price-superpeak" x-text="(getUpdatedPrice({{ $staycation->id }})?.superPeak !== undefined ? '₱' + new Intl.NumberFormat('en-US').format(getUpdatedPrice({{ $staycation->id }})?.superPeak) : '₱{{ number_format($staycation->price_configs[0]['rates']['superPeak'] ?? 0, 0) }}')"></span>
+                                Non-Peak: <span class="price-nonpeak" x-text="(getUpdatedPrice(staycation.id)?.nonPeak !== undefined ? '₱' + new Intl.NumberFormat('en-US').format(getUpdatedPrice(staycation.id)?.nonPeak) : '₱' + new Intl.NumberFormat('en-US').format(staycation.price_configs[0]?.rates?.nonPeak || 0))"></span> | 
+                                Peak: <span class="price-peak" x-text="(getUpdatedPrice(staycation.id)?.peak !== undefined ? '₱' + new Intl.NumberFormat('en-US').format(getUpdatedPrice(staycation.id)?.peak) : '₱' + new Intl.NumberFormat('en-US').format(staycation.price_configs[0]?.rates?.peak || 0))"></span> | 
+                                Super Peak: <span class="price-superpeak" x-text="(getUpdatedPrice(staycation.id)?.superPeak !== undefined ? '₱' + new Intl.NumberFormat('en-US').format(getUpdatedPrice(staycation.id)?.superPeak) : '₱' + new Intl.NumberFormat('en-US').format(staycation.price_configs[0]?.rates?.superPeak || 0))"></span>
                             </p>
                         </div>
-                    @endif
+                    </template>
                 </div>
 
-                <p class="text-xs text-gray-400 mt-3">
-                    Uploaded: {{ $staycation->created_at->format('Y-m-d') }}
-                </p>
+                <p class="text-xs text-gray-400 mt-3" x-text="`Uploaded: ${new Date(staycation.created_at || new Date()).toLocaleDateString('en-US', {year: 'numeric', month: '2-digit', day: '2-digit'})}`"></p>
 
                 <div class="mt-5 flex justify-end space-x-3">
                     <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
-                        @click="editStaycation({{ $staycation->id }})">Edit</button>
+                        @click="editStaycation(staycation.id)">Edit</button>
                     <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
-                        @click="deleteStaycation({{ $staycation->id }}, '{{ route('admin.staycation-list.destroy', $staycation->id) }}')">Delete</button>
+                        @click="deleteStaycation(staycation.id, `{{ url('/admin/staycation-list') }}/${staycation.id}`)">Delete</button>
                 </div>
             </div>
-        @empty
+        </template>
+        
+        <template x-if="staycations.length === 0">
             <div class="col-span-full text-center py-12 bg-white/70 backdrop-blur-lg rounded-2xl border border-gray-200">
                 <i class="bi bi-inbox text-5xl text-gray-300 mb-4 block"></i>
                 <p class="text-lg text-gray-600 font-semibold">No Staycations Yet</p>
                 <p class="text-gray-500 text-sm mt-1">Start by adding your first accommodation option.</p>
             </div>
-        @endforelse
+        </template>
     </div>
 
     {{-- SWIPER IMAGES MANAGEMENT --}}
@@ -376,10 +383,12 @@
                 <div class="space-y-3">
                     <label class="block text-sm font-medium">Upload Image (optional)</label>
                     <input type="file" accept="image/*" x-ref="imageInput" @change="handleImageUpload($event)" class="w-full border rounded px-3 py-2 text-sm">
-                    <div x-show="form.imagePreview" class="mt-2">
-                        <img :src="form.imagePreview" class="w-24 sm:w-32 h-16 sm:h-20 object-cover rounded border">
-                        <button type="button" @click="removeImage()" class="ml-2 text-red-500 hover:underline text-sm mt-1">Remove</button>
-                    </div>
+                    <template x-if="form.imagePreview">
+                        <div class="mt-2 flex items-center gap-2">
+                            <img :src="form.imagePreview" class="w-24 sm:w-32 h-16 sm:h-20 object-cover rounded border">
+                            <button type="button" @click="removeImage()" class="text-red-500 hover:underline text-sm">Remove</button>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- Actions -->
@@ -947,10 +956,11 @@ function staycationManager() {
             formData.append('adults', this.form.adults);
             formData.append('children', this.form.children);
             formData.append('priceConfigs', JSON.stringify(this.form.priceConfigs));
+            
             if (this.form.image) {
                 formData.append('image', this.form.image);
             }
-            // Explicitly mark image for deletion if user removed it
+            
             if (this.form.removeImage) {
                 formData.append('remove_image', '1');
             }
@@ -976,63 +986,32 @@ function staycationManager() {
                     credentials: 'same-origin'
                 });
                 const data = await res.json();
+                
                 if (res.ok) {
-                    // Update the local staycations array with new data
-                    if (this.editModeStaycation && this.form.id) {
-                        const index = this.staycations.findIndex(s => s.id === this.form.id);
-                        if (index !== -1) {
-                            this.staycations[index] = {
-                                ...this.staycations[index],
-                                name: this.form.name,
-                                days: this.form.days,
-                                quantity: this.form.quantity,
-                                adults: this.form.adults,
-                                children: this.form.children,
-                                price_configs: this.form.priceConfigs
-                            };
-                        }
-                    } else {
-                        // For new staycations, reload to get the new item
-                        this.staycations.push({
-                            id: data.id,
-                            name: this.form.name,
-                            days: this.form.days,
-                            quantity: this.form.quantity,
-                            adults: this.form.adults,
-                            children: this.form.children,
-                            price_configs: this.form.priceConfigs
-                        });
-                    }
-
-                    // Show success alert - same style as day tour page
-                    // Update the local updatedPrices track for dynamic display
-                    const stayId = this.editModeStaycation ? this.form.id : data.id;
-                    if (this.form.priceConfigs && this.form.priceConfigs.length > 0) {
-                        this.updatedPrices[stayId] = {
-                            nonPeak: this.form.priceConfigs[0].rates.nonPeak,
-                            peak: this.form.priceConfigs[0].rates.peak,
-                            superPeak: this.form.priceConfigs[0].rates.superPeak
-                        };
-                    }
-
+                    // Success - reload the page to show updated data
                     Swal.fire({
                         icon: 'success',
                         title: this.editModeStaycation ? 'Updated!' : 'Added!',
                         text: data.message || (this.editModeStaycation ? 'Staycation updated successfully!' : 'Staycation added successfully!'),
                         confirmButtonColor: '#2563eb'
                     }).then(() => {
-                        this.resetForm();
-                        this.showStaycationModal = false;
-                        // For new staycations, reload to display them. For edits, data already updates above
-                        if (!this.editModeStaycation) {
-                            setTimeout(() => window.location.reload(), 500);
-                        }
+                        // Simply reload the page to show the updated data
+                        window.location.reload();
                     });
                 } else if (data.errors) {
+                    let errorHtml = '<div style="text-align: left;">';
+                    Object.entries(data.errors).forEach(([field, messages]) => {
+                        errorHtml += `<strong>${field}:</strong><br>`;
+                        messages.forEach(msg => {
+                            errorHtml += `• ${msg}<br>`;
+                        });
+                    });
+                    errorHtml += '</div>';
+                    
                     Swal.fire({
                         icon: 'error',
                         title: 'Validation Error',
-                        html: Object.values(data.errors).flat().join('<br>'),
+                        html: errorHtml,
                         confirmButtonColor: '#ef4444'
                     });
                 } else {
@@ -1044,10 +1023,9 @@ function staycationManager() {
                     });
                 }
             } catch(err) {
-                console.error('Error submitting staycation:', err);
                 Swal.fire({
                     icon: 'error',
-                    title: 'Network Error',
+                    title: 'Error',
                     text: 'Error submitting staycation: ' + (err.message || 'Unknown error'),
                     confirmButtonColor: '#ef4444'
                 });
@@ -1467,6 +1445,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
+
 
 <style>
 .tilt-card {

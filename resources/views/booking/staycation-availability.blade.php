@@ -165,8 +165,17 @@
                                             <div class="swiper-button-next swiper-button-next-{{ $staycation->id }}" @click.stop></div>
                                             <div class="swiper-button-prev swiper-button-prev-{{ $staycation->id }}" @click.stop></div>
                                         </div>
+                                    @elseif($staycation->swiperImages && $staycation->swiperImages->count() > 0)
+                                        <img src="{{ $staycation->swiperImages->first()->image_path }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
+                                    @elseif($staycation->image)
+                                        <img src="{{ $staycation->image }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
                                     @else
-                                        <img src="{{ $staycation->swiperImages && $staycation->swiperImages->count() > 0 ? $staycation->swiperImages->first()->image_path : $roomDetail['image'] }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
+                                        <div class="w-full h-96 bg-gradient-to-br from-blue-200 to-purple-200 flex items-center justify-center cursor-pointer hover:from-blue-300 hover:to-purple-300">
+                                            <div class="text-center">
+                                                <i class="bi bi-image text-4xl opacity-50 text-white block mb-2"></i>
+                                                <p class="text-xs text-white opacity-70">No images</p>
+                                            </div>
+                                        </div>
                                     @endif
 
                                     {{-- Status badge --}}

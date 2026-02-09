@@ -411,10 +411,11 @@ Route::prefix('admin')->group(function () {
     Route::resource('staycation-list', StaycationController::class, [
         'names' => [
             'store' => 'admin.staycation-list.store',
+            'show' => 'admin.staycation-list.show',
             'update' => 'admin.staycation-list.update',
             'destroy' => 'admin.staycation-list.destroy'
         ]
-    ])->only(['store', 'update', 'destroy']);
+    ])->only(['store', 'show', 'update', 'destroy']);
     Route::resource('menu-list', MenuController::class)->only(['store', 'destroy']);
     Route::resource('event-list', EventController::class)->only(['store', 'destroy']);
     Route::resource('farmInfo-list', FarmInfoController::class)->only(['store', 'destroy']);

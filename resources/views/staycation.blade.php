@@ -36,8 +36,19 @@
           {{-- Card: Glamping Tent --}}
           <article class="relative mx-auto w-full max-w-md rounded-[22px] bg-white p-5 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2" style="box-shadow:0 10px 16px rgba(0,0,0,0.08);">
             <div class="rounded-xl bg-white overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              {{-- image frame placeholder --}}
-              <img src="{{ asset('assets/images/carousel/Glamping-1.jpg') }}" alt="Glamping Tent" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
+              @php
+                $glampingStaycation = $staycations->firstWhere('name', 'Standard Glamping');
+                $glampingImage = null;
+                if ($glampingStaycation) {
+                  if ($glampingStaycation->swiperImages && $glampingStaycation->swiperImages->count() > 0) {
+                    $glampingImage = $glampingStaycation->swiperImages->first()->image_path;
+                  } elseif ($glampingStaycation->image) {
+                    $glampingImage = $glampingStaycation->image;
+                  }
+                }
+                $glampingImage = $glampingImage ?? asset('assets/images/carousel/Glamping-1.jpg');
+              @endphp
+              <img src="{{ $glampingImage }}" alt="Glamping Tent" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
             </div>
             <div class="px-4 py-7 text-center">
               <h3 class="mb-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px;">Glamping Tent</h3>
@@ -58,7 +69,21 @@
           {{-- Card: Camping --}}
           <article class="relative mx-auto w-full max-w-md rounded-[22px] bg-white p-5 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2" style="box-shadow:0 10px 16px rgba(0,0,0,0.08);">
             <div class="rounded-xl ring-1 ring-black/5 shadow-sm bg-white overflow-hidden">
-              <img src="{{ asset('assets/images/carousel/BYOT-2.jpg') }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
+              @php
+                $campingStaycation = $staycations->firstWhere(function($s) {
+                  return str_contains(strtolower($s->name), 'byot') || str_contains(strtolower($s->name), 'camping');
+                });
+                $campingImage = null;
+                if ($campingStaycation) {
+                  if ($campingStaycation->swiperImages && $campingStaycation->swiperImages->count() > 0) {
+                    $campingImage = $campingStaycation->swiperImages->first()->image_path;
+                  } elseif ($campingStaycation->image) {
+                    $campingImage = $campingStaycation->image;
+                  }
+                }
+                $campingImage = $campingImage ?? asset('assets/images/carousel/BYOT-2.jpg');
+              @endphp
+              <img src="{{ $campingImage }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
             </div>
             <div class="px-4 py-7 text-center">
               <h3 class="mb-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px;">Camping</h3>
@@ -107,7 +132,7 @@
                 </div>
                 <div class="flex items-center justify-between">
                    <div class="text-left">
-                     @if(isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
+                     @if($staycation && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
                        <div class="font-bold leading-tight" style="color:#7a7d52">₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
                      @else
                        <div class="font-bold leading-tight text-red-700">No pricing set for current season</div>
@@ -117,7 +142,7 @@
                 </div>
                 @php
                     $staycation = $staycations->firstWhere('name', 'Standard Glamping');
-                    $featuresText = $staycation->texts->firstWhere('section', 'features');
+                    $featuresText = $staycation ? $staycation->texts->firstWhere('section', 'features') : null;
                     $features = $featuresText ? explode("\n", $featuresText->content) : [];
                 @endphp
                 <x-staycation-features :features="$features" />
@@ -147,7 +172,7 @@
                 </div>
                  <div class="flex items-center justify-between">
                    <div class="text-left">
-                     @if(isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
+                     @if($staycation && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
                        <div class="font-bold leading-tight" style="color:#7a7d52">₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
                      @else
                        <div class="font-bold leading-tight text-red-700">No pricing set for current season</div>
@@ -157,7 +182,7 @@
                  </div>
                 @php
                     $staycation = $staycations->firstWhere('name', 'Premium Glamping');
-                    $featuresText = $staycation->texts->firstWhere('section', 'features');
+                    $featuresText = $staycation ? $staycation->texts->firstWhere('section', 'features') : null;
                     $features = $featuresText ? explode("\n", $featuresText->content) : [];
                 @endphp
                 <x-staycation-features :features="$features" />
@@ -211,7 +236,7 @@
                 </div>
                 <div class="flex items-center justify-between">
                    <div class="text-left">
-                     @if(isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
+                     @if($staycation && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
                        <div class="font-bold leading-tight" style="color:#7a7d52">₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
                      @else
                        <div class="font-bold leading-tight text-red-700">No pricing set for current season</div>
@@ -221,7 +246,7 @@
                 </div>
                 @php
                     $staycation = $staycations->firstWhere('name', 'Dome Tent');
-                    $featuresText = $staycation->texts->firstWhere('section', 'features');
+                    $featuresText = $staycation ? $staycation->texts->firstWhere('section', 'features') : null;
                     $features = $featuresText ? explode("\n", $featuresText->content) : [];
                 @endphp
                 <x-staycation-features :features="$features" />
@@ -259,7 +284,7 @@
                 </div>
                 <div class="flex items-center justify-between">
                    <div class="text-left">
-                     @if(isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
+                     @if($staycation && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
                        <div class="font-bold leading-tight" style="color:#7a7d52">₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
                      @else
                        <div class="font-bold leading-tight text-red-700">No pricing set for current season</div>
@@ -269,7 +294,7 @@
                 </div>
                 @php
                     $staycation = $staycations->firstWhere('name', 'Bell Tent');
-                    $featuresText = $staycation->texts->firstWhere('section', 'features');
+                    $featuresText = $staycation ? $staycation->texts->firstWhere('section', 'features') : null;
                     $features = $featuresText ? explode("\n", $featuresText->content) : [];
                 @endphp
                 <x-staycation-features :features="$features" />
@@ -307,7 +332,7 @@
                 </div>
                 <div class="flex items-center justify-between">
                    <div class="text-left">
-                     @if(isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
+                     @if($staycation && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
                        <div class="font-bold leading-tight" style="color:#7a7d52">₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
                      @else
                        <div class="font-bold leading-tight text-red-700">No pricing set for current season</div>
@@ -317,7 +342,7 @@
                 </div>
                 @php
                     $staycation = $staycations->firstWhere('name', 'BYOT');
-                    $featuresText = $staycation->texts->firstWhere('section', 'features');
+                    $featuresText = $staycation ? $staycation->texts->firstWhere('section', 'features') : null;
                     $features = $featuresText ? explode("\n", $featuresText->content) : [];
                 @endphp
                 <x-staycation-features :features="$features" />
@@ -356,10 +381,10 @@
                 <div class="flex items-center justify-between">
                    @php
                      $staycation = $staycations->firstWhere('name', 'Car Camping');
-                     $roomDetail = $roomDetails[$staycation->id] ?? null;
+                     $roomDetail = $staycation ? ($roomDetails[$staycation->id] ?? null) : null;
                    @endphp
                    <div class="text-left">
-                     @if(isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
+                     @if($staycation && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
                        <div class="font-bold leading-tight" style="color:#7a7d52">₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
                      @else
                        <div class="font-bold leading-tight text-red-700">No pricing set for current season</div>
@@ -369,7 +394,7 @@
                 </div>
                 @php
                     $staycation = $staycations->firstWhere('name', 'Car Camping');
-                    $featuresText = $staycation->texts->firstWhere('section', 'features');
+                     $featuresText = $staycation ? $staycation->texts->firstWhere('section', 'features') : null;
                     $features = $featuresText ? explode("\n", $featuresText->content) : [];
                 @endphp
                 <x-staycation-features :features="$features" />
@@ -423,7 +448,7 @@
                 </div>
                 <div class="flex items-center justify-between">
                    <div class="text-left">
-                     @if(isset($roomDetails[$staycation->id]['seasonType']) && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
+                     @if($staycation && isset($roomDetails[$staycation->id]['seasonType']) && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
                        <div class="font-bold leading-tight text-blue-700">{{ $roomDetails[$staycation->id]['seasonType'] }}: ₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
                      @else
                        <div class="font-bold leading-tight text-red-700">No pricing set for current season</div>
