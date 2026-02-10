@@ -53,70 +53,85 @@
         </p>
       </div>-->
 
-      {{-- Packages Section --}}
-      {{-- Day Tour Cards Component (matches mock) --}}
+      {{-- Packages Grid --}}
+        {{-- Packages Slider (Large Card like mock) --}}
+        <div class="w-full">
+          <div class="relative group">
+            <div class="swiper" id="daytourPackagesSwiper">
+              <div class="swiper-wrapper">
+                @foreach($packages as $package)
+                  @php
+                    $title = is_array($package) ? $package['title'] : $package->name;
+                    $displayTitle = (strtolower($title) === 'nature experience')
+                      ? "NATURE\nEXPERIENCE"
+                      : strtoupper($title);
+                  @endphp
 
-      <div class="space-y-16">
-        {{-- Packages Grid --}}
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
-          @foreach($packages as $package)
-            <div class="bg-white rounded-[28px] shadow-lg border border-gray-200 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group">
-              {{-- Inset framed image --}}
-              <div class="px-5 pt-5">
-                <div class="relative overflow-hidden ring-1 ring-black/5 shadow-sm bg-white">
-                  <img
-                    src="{{ $package->image ?: asset('images/default.jpg') }}"
-                    class="h-64 md:h-72 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                    alt="{{ $package->name }} package"
-                    loading="lazy"
-                  >
-                </div>
+                  <div class="swiper-slide">
+                    {{-- CENTERED LARGE CARD --}}
+                    <div class="group overflow-hidden rounded-[10px] bg-white shadow-md">
+                      <div class="relative w-full overflow-hidden
+                                  h-87.5 sm:h-120 md:h-150 lg:h-175">
+
+                        <img
+                          src="{{ $package->image ?: asset('images/default.jpg') }}"
+                          alt="{{ $package->name }} package"
+                          loading="lazy"
+                          class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                        >
+
+                        {{-- bottom overlay like mock --}}
+                        <div class="absolute inset-0 bg-linear-to-t from-black/35 via-black/5 to-transparent"></div>
+
+                        {{-- Title + Learn more button (bottom) --}}
+                        <div class="absolute inset-x-0 bottom-0 p-6 sm:p-8">
+                          <div class="flex items-end justify-between">
+                            <h3 class="whitespace-pre-line uppercase font-extrabold tracking-wide leading-[0.95]
+                                       text-white drop-shadow-sm text-[26px] sm:text-[32px] md:text-[40px] max-w-[70%]">
+                              {{ $displayTitle }}
+                            </h3>
+                            <button
+                              type="button"
+                              class="text-white text-[12px] tracking-[.12em] uppercase cursor-pointer transition no-underline hover:underline"
+                              data-title="{{ $package->name }}"
+                              data-price="{{ $package->price ? 'PHP ' . number_format($package->price, 2) . ' per person' : 'Price not set' }}"
+                              data-details='@json($package->activities->pluck("name")->toArray())'
+                              data-daytour-id="{{ $package->id }}"
+                              data-image-api-url="/day-tour-swiper-images/daytour"
+                              style="background: none; border: none; padding: 0; font: inherit;"
+                            >
+                              Learn more >>
+                            </button>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+                @endforeach
               </div>
 
-              {{-- Body --}}
-              <div class="px-8 pt-6 pb-8">
-                {{-- Title --}}
-                 <h3 class="mb-4 text-3xl font-extrabold uppercase tracking-wide text-center" style="color:#97655A; font-size: 25px; font-family: 'Gotham Book', sans-serif;">
-                   @php
-                     $title = is_array($package) ? $package['title'] : $package->name;
-                   @endphp
-                   @if(strtolower($title) === 'nature experience')
-                     NATURE<br>EXPERIENCE
-                   @else
-                     {{ strtoupper($title) }}
-                   @endif
-                 </h3>
-
-                {{-- Description --}}
-                <p class="text-center mb-4" style="color:#97655A; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
-                  {!! nl2br($package->description ?? '') !!}
-                </p>
-
-                {{-- Divider (subtle sage like the mock) --}}
-                <div class="h-px w-full bg-[#dfe6d5] mb-5"></div>
-
-                {{-- CTA --}}
-                <div class="mt-7 flex justify-center">
-                  <button
-                    type="button"
-                    class="px-6 py-2.5 rounded-full text-white text-xs md:text-sm font-semibold tracking-wider shadow
-                           transition-all duration-300 hover:-translate-y-0.5 bg-brand hover:bg-brand/90"
-                    data-title="{{ $package->name }}"
-                    data-price="{{ $package->price ? 'PHP ' . number_format($package->price, 2) . ' per person' : 'Price not set' }}"
-                    data-details='@json($package->activities->pluck("name")->toArray())'
-                    data-daytour-id="{{ $package->id }}"
-                    data-image-api-url="/day-tour-swiper-images/daytour"
-                  >
-                    LEARN MORE
-                  </button>
-                </div>
-              </div>
+              {{-- pagination bullets --}}
+              <div class="swiper-pagination mt-6"></div>
             </div>
-          @endforeach
+
+            {{-- Left Arrow Inside Slider --}}
+            <button type="button" class="daytour-swiper-prev absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" aria-label="Previous">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            {{-- Right Arrow Inside Slider --}}
+            <button type="button" class="daytour-swiper-next absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" aria-label="Next">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         {{-- Information Section (kept; slight polish to match palette) --}}
-        <div class="bg-linear-to-r from-[#6b9691] to-[#7ba08a] text-white rounded-3xl p-8 md:p-10 shadow-xl">
+        <div class="bg-linear-to-r from-[#6b9691] to-[#7ba08a] text-white rounded-3xl p-8 md:p-10 shadow-xl mt-16 md:mt-20 lg:mt-24">
           <div class="text-center mb-8">
             <h4 class="text-2xl md:text-3xl font-bold mb-4 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
               <i class="bi bi-info-circle-fill mr-3 text-3xl"></i>
@@ -204,6 +219,9 @@
 
     // Initialize modal swipers (same as staycation)
     initModalSwipers();
+
+    // ✅ Packages swiper
+    initPackagesSwiper();
   });
 
   function initModalSwipers(){
@@ -219,6 +237,29 @@
           });
         }
       }catch(e){ console.warn('Modal swiper init failed', e); }
+    });
+  }
+
+  function initPackagesSwiper(){
+    if(!window.Swiper) return;
+
+    const el = document.querySelector('#daytourPackagesSwiper');
+    if(!el) return;
+
+    const parentRelative = el.closest('.relative');
+
+    new Swiper(el, {
+      slidesPerView: 1,
+      spaceBetween: 24,
+      loop: true,
+      navigation: {
+        nextEl: parentRelative ? parentRelative.querySelector('.daytour-swiper-next') : null,
+        prevEl: parentRelative ? parentRelative.querySelector('.daytour-swiper-prev') : null,
+      },
+      pagination: {
+        el: el.querySelector('.swiper-pagination'),
+        clickable: true
+      }
     });
   }
 
