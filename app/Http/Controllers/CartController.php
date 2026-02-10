@@ -81,10 +81,22 @@ class CartController extends Controller
             return response()->json($summary);
         }
 
+        // Ensure a persistent cart reference exists for display and reconciliation
+        $reference = session('cart_reference');
+        if (empty($reference)) {
+            try {
+                $reference = 'CALAIA-' . strtoupper(bin2hex(random_bytes(6)));
+            } catch (\Exception $e) {
+                $reference = 'CALAIA-' . strtoupper(substr(uniqid(), 0, 12));
+            }
+            session(['cart_reference' => $reference]);
+        }
+
         return view('cart', [
             'cart'      => $cart,
             'cartCount' => $summary['count'],
             'cartTotal' => $summary['total'],
+            'cartReference' => $reference,
         ]);
     }
 
@@ -359,19 +371,31 @@ class CartController extends Controller
             $summary = $this->buildCartSummary($cart);
             
             $lineItems = [];
+            $computedTotalCentavos = 0;
             foreach ($summary['items'] as $item) {
+                $unitPrice = isset($item['price']) ? (float)$item['price'] : (($item['subtotal'] ?? 0) / max(1, ($item['quantity'] ?? 1)));
+                $qty = (int)($item['quantity'] ?? 1);
+
+                $unitCentavos = (int)round($unitPrice * 100);
+
                 $lineItems[] = [
-                    'amount' => (int)($item['subtotal'] * 100), // Convert to centavos
+                    // PayMongo expects amount = unit price in centavos
+                    'amount' => $unitCentavos,
                     'currency' => 'PHP',
                     'name' => $item['title'],
-                    'quantity' => $item['quantity'],
+                    'quantity' => $qty,
                 ];
+
+                $computedTotalCentavos += $unitCentavos * $qty;
             }
+
+            // Ensure top-level amount matches sum of line items (in centavos)
+            $topLevelAmount = $computedTotalCentavos > 0 ? $computedTotalCentavos : $amount;
 
             $payload = [
                 'data' => [
                     'attributes' => [
-                        'amount' => $amount,
+                        'amount' => (int)$topLevelAmount,
                         'currency' => 'PHP',
                         'description' => 'CalaiaPH Shop Order - ' . $referenceId,
                         'line_items' => $lineItems,
@@ -381,6 +405,7 @@ class CartController extends Controller
                         'customer_email' => $email,
                         'metadata' => [
                             'reference_id' => $referenceId,
+                            'reference_number' => $referenceId,
                             'customer_name' => $name,
                             'customer_email' => $email,
                         ],

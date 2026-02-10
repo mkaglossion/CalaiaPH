@@ -170,7 +170,7 @@
                                     @elseif($staycation->image)
                                         <img src="{{ $staycation->image }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
                                     @else
-                                        <div class="w-full h-96 bg-gradient-to-br from-blue-200 to-purple-200 flex items-center justify-center cursor-pointer hover:from-blue-300 hover:to-purple-300">
+                                        <div class="w-full h-96 bg-linear-to-br from-blue-200 to-purple-200 flex items-center justify-center cursor-pointer hover:from-blue-300 hover:to-purple-300">
                                             <div class="text-center">
                                                 <i class="bi bi-image text-4xl opacity-50 text-white block mb-2"></i>
                                                 <p class="text-xs text-white opacity-70">No images</p>
@@ -1155,10 +1155,10 @@
                     let totalPrice = 0;
 
                     if (isBYOT || isCarCamping) {
-                        // Per quantity pricing: base price is per night per unit
+                        // Per quantity pricing: base price is per slot only (no night multiplier)
                         const quantity = selectedRoomData ? parseInt(selectedRoomData.extra_mattress || 1) : 1;
                         const correctedBasePrice = basePrice;
-                        totalPrice = correctedBasePrice * quantity * nights;
+                        totalPrice = correctedBasePrice * quantity;
                     } else {
                         // Regular rooms: base price is per night
                         totalPrice = basePrice * nights;

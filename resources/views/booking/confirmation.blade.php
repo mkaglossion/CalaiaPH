@@ -59,7 +59,7 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
   // Always calculate food total from selectedFoods array data (most accurate)
   if (!empty($selectedFoods)) {
       foreach ($selectedFoods as $foodData) {
-          $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
+          $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1); // No nights multiplication
       }
   }
 }

@@ -84,33 +84,42 @@ class BookingController extends Controller
         $accommodationPrice = 0;
         $breakdown = [];
 
-        // Iterate through each night to get the correct rate
-        $current = $checkin->copy();
-        while ($current->lt($checkout)) {
-            // Get the season for this specific date
-            $seasonType = $this->getSeasonTypeForDate($current);
+        if ($isSpecialRoom) {
+            // Always 1 night, just quantity × base price (no night multiplier)
+            $seasonType = $this->getSeasonTypeForDate($checkin);
             $seasonKey = $this->mapSeasonToKey($seasonType);
-
-            // Get the rate from price configs
-            $nightlyRate = $this->getStaycationNightlyRate($staycation, $current, $seasonKey);
-
-            // For BYOT/Car Camping, multiply by quantity
-            if ($isSpecialRoom) {
-                $accommodationPrice += $nightlyRate * $quantity;
-            } else {
-                // For regular rooms, just add the nightly rate (no quantity multiplier)
-                $accommodationPrice += $nightlyRate;
-            }
-
+            $baseRate = $this->getStaycationNightlyRate($staycation, $checkin, $seasonKey);
+            $accommodationPrice = $baseRate * $quantity;
             $breakdown[] = [
-                'date' => $current->format('Y-m-d'),
-                'day_of_week' => $current->format('l'),
+                'date' => $checkin->format('Y-m-d'),
+                'day_of_week' => $checkin->format('l'),
                 'season' => $seasonType,
-                'rate' => $nightlyRate,
-                'total_for_night' => $isSpecialRoom ? $nightlyRate * $quantity : $nightlyRate
+                'rate' => $baseRate,
+                'total_for_night' => $baseRate * $quantity
             ];
+            $nights = 1; // force 1 night for display
+        } else {
+            // Iterate through each night to get the correct rate
+            $current = $checkin->copy();
+            while ($current->lt($checkout)) {
+                // Get the season for this specific date
+                $seasonType = $this->getSeasonTypeForDate($current);
+                $seasonKey = $this->mapSeasonToKey($seasonType);
 
-            $current->addDay();
+                // Get the rate from price configs
+                $nightlyRate = $this->getStaycationNightlyRate($staycation, $current, $seasonKey);
+                $accommodationPrice += $nightlyRate;
+
+                $breakdown[] = [
+                    'date' => $current->format('Y-m-d'),
+                    'day_of_week' => $current->format('l'),
+                    'season' => $seasonType,
+                    'rate' => $nightlyRate,
+                    'total_for_night' => $nightlyRate
+                ];
+
+                $current->addDay();
+            }
         }
 
         $mattressPrice = 0;
@@ -689,11 +698,17 @@ class BookingController extends Controller
             return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
         });
         
+        // Calculate nights
+        $nights = 1; // default
+        if (!empty($checkinDate) && !empty($checkoutDate)) {
+            $nights = max(1, \Carbon\Carbon::parse($checkinDate)->diffInDays(\Carbon\Carbon::parse($checkoutDate)));
+        }
+        
         // Calculate food total
         $foodTotal = 0;
         if (!empty($booking['selected_foods'])) {
             foreach ($booking['selected_foods'] as $foodData) {
-                $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
+                $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1); // No nights multiplication
             }
         }
         
@@ -845,6 +860,20 @@ class BookingController extends Controller
 
     public function initiatePayment(Request $request)
     {
+        // Initialize booking data variables
+        $staycationBooking = session('booking', []);
+        $bookingData = session('booking_data');
+        $dayvisitBooking = session('dayvisit_booking_data');
+
+        // Determine which booking data to use
+        if (!empty($staycationBooking) && isset($staycationBooking['booking_type']) && $staycationBooking['booking_type'] === 'staycation') {
+            $booking = $staycationBooking;
+        } elseif (!empty($dayvisitBooking)) {
+            $booking = $dayvisitBooking;
+        } else {
+            $booking = $bookingData;
+        }
+
         // Debug: Log all request data
         Log::info('Initiate Payment Request Data:', $request->all());
 
@@ -854,97 +883,53 @@ class BookingController extends Controller
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
             'payment_method' => 'required|string|in:paymongo,qr,gcash,paymaya,bank,qrph,grab_pay,billease',
-            'special_requests' => 'nullable|string|max:1000',
-            'cancellation_policy' => 'required|string|in:standard,flexible,nonrefundable',
-            'terms_accepted' => 'accepted',
         ]);
 
-        // Get booking data from session
-        $booking = session('booking', []);
-        Log::info('Session booking data:', $booking);
-
-        if (empty($booking)) {
-            return redirect()->back()->with('error', 'Booking session expired. Please start over.');
-        }
-
-        // Calculate grand total
-        $grandTotal = 0;
-        if (!empty($booking['final_totals']['grand_total'])) {
-            $grandTotal = $booking['final_totals']['grand_total'];
-        } else {
-            // Fallback calculation
-            if (!empty($booking['accommodations'])) {
-                foreach ($booking['accommodations'] as $acc) {
-                    $grandTotal += $acc['total_price'] ?? 0;
-                }
-            }
-            if (!empty($booking['selected_foods'])) {
-                foreach ($booking['selected_foods'] as $food) {
-                    $nights = max(1, \Carbon\Carbon::parse($booking['checkin'])->diffInDays(\Carbon\Carbon::parse($booking['checkout'])));
-                    $grandTotal += ($food['price'] ?? 0) * ($food['quantity'] ?? 1) * $nights;
-                }
-            }
-            if (!empty($booking['selected_activities'])) {
-                foreach ($booking['selected_activities'] as $activity) {
-                    $grandTotal += ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
-                }
-            }
-        }
-
-        Log::info('Calculated grand total:', ['total' => $grandTotal]);
-
-        // Build line items for PayMongo from the exact same breakdown shown on the payment page
         $lineItems = [];
-        
-        // Get the final totals that were calculated and stored in the booking
-        $accommodationTotal = $booking['final_totals']['accommodation_total'] ?? 0;
-        $activitiesTotal = $booking['final_totals']['activities_total'] ?? 0;
-        $foodTotal = $booking['final_totals']['food_total'] ?? 0;
-        
+        $grandTotal = 0.0; // in PHP (not centavos)
+
         // 1. Add accommodation line items first
         if (!empty($booking['accommodations'])) {
             foreach ($booking['accommodations'] as $acc) {
                 if (!empty($acc) && !empty($acc['total_price'])) {
+                    $unit = (float)($acc['total_price']);
+                    $qty = 1;
+                    $grandTotal += $unit * $qty;
                     $lineItems[] = [
-                        'amount' => (int)($acc['total_price'] * 100), // Total price in centavos
-                        'currency' => 'PHP',
                         'name' => $acc['room_name'] ?? 'Accommodation',
-                        'quantity' => 1,
+                        'unit_price' => $unit,
+                        'quantity' => $qty,
                     ];
                 }
             }
         }
-        
+
         // 2. Add food line items second
         if (!empty($booking['selected_foods'])) {
             foreach ($booking['selected_foods'] as $food) {
-                if (!empty($food) && !empty($food['name']) && !empty($food['price'])) {
-                    // Calculate total amount for this food item: unit_price × quantity (per order, not per night)
+                if (!empty($food) && !empty($food['name']) && isset($food['price'])) {
                     $foodQty = $food['quantity'] ?? 1;
-                    $totalAmount = (int)($food['price'] * $foodQty * 100); // Total in centavos
-                    
+                    $unit = (float)$food['price'];
+                    $grandTotal += $unit * $foodQty;
                     $lineItems[] = [
-                        'amount' => $totalAmount, // Total amount in centavos
-                        'currency' => 'PHP',
                         'name' => $food['name'],
-                        'quantity' => $foodQty, // Quantity as ordered
+                        'unit_price' => $unit,
+                        'quantity' => $foodQty,
                     ];
                 }
             }
         }
-        
+
         // 3. Add activities line items last
         if (!empty($booking['selected_activities'])) {
             foreach ($booking['selected_activities'] as $activity) {
-                if (!empty($activity) && !empty($activity['name']) && !empty($activity['price'])) {
-                    // Calculate total amount for activities: unit_price × number of guests
+                if (!empty($activity) && !empty($activity['name']) && isset($activity['price'])) {
                     $guestCount = $activity['guests'] ?? 1;
-                    $totalAmount = (int)($activity['price'] * $guestCount * 100); // Total in centavos
-                    
+                    $unit = (float)$activity['price'];
+                    $grandTotal += $unit * $guestCount;
                     $lineItems[] = [
-                        'amount' => $totalAmount, // Total amount in centavos
-                        'currency' => 'PHP',
                         'name' => $activity['name'],
+                        'unit_price' => $unit,
                         'quantity' => $guestCount,
                     ];
                 }
@@ -952,6 +937,7 @@ class BookingController extends Controller
         }
 
         Log::info('Line items being sent to PayMongo (in order):', $lineItems);
+        Log::info('Calculated grand total (from line items):', ['total' => $grandTotal]);
 
         // Store booking and payment data in session
         session([
@@ -970,18 +956,22 @@ class BookingController extends Controller
         $successUrl = url('/booking/payment/success?checkout_id={CHECKOUT_ID}');
         $failedUrl = url('/booking/staycation/payment');
 
+        // Generate a reference id for this checkout so it appears on PayMongo checkout
+        $referenceId = 'TXN-' . strtoupper(uniqid());
+        // Persist reference in session payment data
+        session()->put('staycation_payment_data.reference_id', $referenceId);
+
         Log::info('Creating PayMongo checkout', [
-            'amount' => (int)($grandTotal * 100),
+            'amount' => $grandTotal * 100,
             'success_url' => $successUrl,
             'failed_url' => $failedUrl,
             'line_items_count' => count($lineItems),
-            'accommodation_total' => $accommodationTotal,
-            'activities_total' => $activitiesTotal,
-            'food_total' => $foodTotal
+            'reference_id' => $referenceId,
+            'customer_email' => $request->email,
         ]);
 
         try {
-            $checkout = $this->paymentService->createCheckout((int)($grandTotal * 100), 'staycation', $successUrl, $failedUrl, $lineItems);
+            $checkout = $this->paymentService->createCheckout((int)round($grandTotal * 100), 'staycation', $successUrl, $failedUrl, $lineItems, $referenceId, $request->email);
             Log::info('PayMongo checkout created successfully', ['checkout_url' => $checkout->checkout_url]);
             return redirect($checkout->checkout_url);
         } catch (\Exception $e) {
@@ -2309,11 +2299,4 @@ class BookingController extends Controller
         $petPrice = BookingSetting::getValue('pet_price', 0);
         return (int)$petCount * (int)$petPrice;
     }
-
-
-
-
-
-
-
 }

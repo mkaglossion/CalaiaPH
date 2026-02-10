@@ -50,7 +50,7 @@ if ($datesSelected) {
 // Food total
 if (!empty($selectedFoods)) {
     foreach ($selectedFoods as $foodData) {
-        $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
+        $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1); // No nights multiplication
     }
 }
 @endphp
@@ -248,7 +248,7 @@ if (!empty($selectedFoods)) {
                         <span class="font-bold text-[#8f5d54]">₱{{ number_format($itemTotal, 0) }}</span>
                     </div>
                     <div class="text-gray-600">
-                        <div>Qty: <span class="font-semibold">{{ $quantity }}</span> × ₱{{ number_format($food->price, 0) }} × {{ $nights }} night{{ $nights > 1 ? 's' : '' }}</div>
+                        <div>Qty: <span class="font-semibold">{{ $quantity }}</span> × ₱{{ number_format($food->price, 0) }}</div>
                         @if(!empty($selectedFood['notes']))
                             <div class="text-xs text-gray-500 italic mt-1">{{ $selectedFood['notes'] }}</div>
                         @endif

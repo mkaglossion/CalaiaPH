@@ -45,29 +45,14 @@ $totalGuests = collect($booking['accommodations'])->sum(function($acc) {
     return ($acc['adults'] ?? 0) + ($acc['children'] ?? 0);
 });
 
-// Use the recalculated totals from the controller
+// Use the stored totals from the controller
 $accommodationTotal = $booking['final_totals']['accommodation_total'] ?? 0;
 $activitiesTotal = $booking['final_totals']['activities_total'] ?? 0;
 $foodTotal = $booking['final_totals']['food_total'] ?? 0;
 $grandTotal = $booking['final_totals']['grand_total'] ?? 0;
 
-// Get selected activities - always calculate fresh, never use stored totals
-$selectedActivities = [];
-if (isset($_GET['activities'])) {
-    $selectedActivities = json_decode(base64_decode($_GET['activities']), true) ?? [];
-}
-if (empty($selectedActivities)) {
-    $selectedActivities = session('selected_activities') ?? $booking['selected_activities'] ?? [];
-}
-$activitiesTotal = collect($selectedActivities)->sum(function($activity) {
-    return ($activity['price'] ?? 0) * ($activity['guests'] ?? 0);
-});
-
-// Calculate food total (use the value from controller/session)
-$foodTotal = $booking['final_totals']['food_total'] ?? 0;
-
-// Calculate grand total including food
-$grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
+// Get selected activities from session
+$selectedActivities = $booking['selected_activities'] ?? [];
 @endphp
 
 <body class="bg-[#f5efe7]">
@@ -744,6 +729,8 @@ $grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
                         </label>
                       </div>
                     </div>
+
+                    {{-- PayMongo platform fee notice removed: PayMongo does not add a 19.4% platform fee by default. --}}
 
                     {{-- Action Buttons --}}
                     <div class="pt-4 space-y-3">
