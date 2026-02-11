@@ -21,7 +21,9 @@ use App\Models\DayType;
 use App\Models\DayTypeDay;
 use App\Models\PeakPeriod;
 use App\Models\PeakType;
+use App\Models\PricingConfig;
 use App\Models\StaycationInventory;
+use Carbon\Carbon;
 use App\Services\PricingService;
 use App\Models\BookingSetting;
 
@@ -110,10 +112,18 @@ class BookingController extends Controller
                 $nightlyRate = $this->getStaycationNightlyRate($staycation, $current, $seasonKey);
                 $accommodationPrice += $nightlyRate;
 
+                // Determine day type (Weekday/Weekend)
+                $dayType = 'Weekday';
+                $dayOfWeek = $current->format('D');
+                if ($dayOfWeek === 'Sat' || $dayOfWeek === 'Sun') {
+                    $dayType = 'Weekend';
+                }
+
                 $breakdown[] = [
                     'date' => $current->format('Y-m-d'),
                     'day_of_week' => $current->format('l'),
                     'season' => $seasonType,
+                    'day_type' => $dayType,
                     'rate' => $nightlyRate,
                     'total_for_night' => $nightlyRate
                 ];
@@ -236,6 +246,7 @@ class BookingController extends Controller
 
     /**
      * Get the nightly rate for a staycation on a specific date
+     * Now considers both season type AND day type (weekday/weekend)
      */
     private function getStaycationNightlyRate(Staycation $staycation, \Carbon\Carbon $date, string $seasonKey): float
     {
@@ -245,6 +256,7 @@ class BookingController extends Controller
 
         $dateStr = $date->format('Y-m-d');
         $dayOfWeek = $date->format('D');
+        $dayType = ($dayOfWeek === 'Sat' || $dayOfWeek === 'Sun') ? 'weekend' : 'weekday';
 
         // 1. Check for specific date match
         foreach ($staycation->price_configs as $config) {
@@ -256,19 +268,26 @@ class BookingController extends Controller
             }
         }
 
-        // 2. Check for day-of-week match
+        // 2. Check for day-of-week match (prioritize weekday/weekend matching)
         foreach ($staycation->price_configs as $config) {
             if (isset($config['days']) && in_array($dayOfWeek, $config['days'])) {
                 return (float)($config['rates'][$seasonKey] ?? 0);
             }
         }
 
-        // 3. Fallback to first config
+        // 3. Check for weekday/weekend matching (new feature)
+        foreach ($staycation->price_configs as $config) {
+            if (isset($config['day_type']) && $config['day_type'] === $dayType) {
+                return (float)($config['rates'][$seasonKey] ?? 0);
+            }
+        }
+
+        // 4. Fallback to first config
         if (!empty($staycation->price_configs) && isset($staycation->price_configs[0]['rates'])) {
             return (float)($staycation->price_configs[0]['rates'][$seasonKey] ?? 0);
         }
 
-        // 4. Final fallback to staycation's base price
+        // 5. Final fallback to staycation's base price
         return (float)($staycation->price ?? 0);
     }
 
@@ -313,6 +332,42 @@ class BookingController extends Controller
         }
 
         return response()->json($result);
+    }
+
+    /**
+     * Calculate staycation price using centralized method via API
+     */
+    public function calculateStaycationPrice(Request $request)
+    {
+        $request->validate([
+            'staycation_id' => 'required|integer',
+            'checkin_date' => 'required|date',
+            'checkout_date' => 'required|date|after:checkin_date',
+            'quantity' => 'required|integer|min:1',
+            'extra_mattresses' => 'required|integer|min:0',
+            'num_pets' => 'required|integer|min:0',
+            'has_pets' => 'required|boolean',
+        ]);
+
+        $staycation = Staycation::find($request->staycation_id);
+        if (!$staycation) {
+            return response()->json(['success' => false, 'message' => 'Staycation not found'], 404);
+        }
+
+        $pricingResult = $this->calculateCentralizedStaycationPrice(
+            $staycation,
+            $request->checkin_date,
+            $request->checkout_date,
+            $request->quantity,
+            $request->extra_mattresses,
+            $request->num_pets,
+            $request->has_pets
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $pricingResult,
+        ]);
     }
 
     private function getBookingActivities($type)
@@ -1758,11 +1813,132 @@ class BookingController extends Controller
                 'total_quantity' => $baseQty,
                 'price' => $currentRate, // Per night rate for current season
                 'price_range' => $priceRange, // NEW: Price range for displayed dates
-                'price_configs' => $staycation->price_configs ?? []
+                'price_configs' => $staycation->price_configs ?? [],
+                'peak_periods' => $this->getPeakPeriodsForStaycation($staycation, $checkin, $checkout),
+                'day_type_pricing' => $this->getDayTypePricingForStaycation($staycation)
             ];
         }
 
         return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'currentSeason'));
+    }
+
+    /**
+     * Get peak periods that apply to a staycation for the given date range
+     */
+    private function getPeakPeriodsForStaycation(Staycation $staycation, string $checkin, string $checkout)
+    {
+        $checkinCarbon = Carbon::parse($checkin);
+        $checkoutCarbon = Carbon::parse($checkout);
+
+        return PeakPeriod::where(function($query) use ($checkinCarbon, $checkoutCarbon) {
+            $query->whereBetween('start_date', [$checkinCarbon->format('Y-m-d'), $checkoutCarbon->subDay()->format('Y-m-d')])
+                  ->orWhereBetween('end_date', [$checkinCarbon->format('Y-m-d'), $checkoutCarbon->subDay()->format('Y-m-d')])
+                  ->orWhere(function($q) use ($checkinCarbon, $checkoutCarbon) {
+                      $q->where('start_date', '<=', $checkinCarbon->format('Y-m-d'))
+                        ->where('end_date', '>=', $checkoutCarbon->subDay()->format('Y-m-d'));
+                  });
+        })
+        ->with('peakType')
+        ->get()
+        ->map(function($period) {
+            return [
+                'id' => $period->id,
+                'start_date' => $period->start_date,
+                'end_date' => $period->end_date,
+                'peak_type_name' => $period->peakType->name,
+                'name' => $period->name
+            ];
+        })
+        ->toArray();
+    }
+
+    /**
+     * Get day type pricing for a staycation
+     * Calculates proper weekday/weekend pricing from the staycation's price_configs
+     */
+    private function getDayTypePricingForStaycation(Staycation $staycation)
+    {
+        $priceConfigs = $staycation->price_configs ?? [];
+        $dayTypePricing = [];
+        
+        if (!empty($priceConfigs)) {
+            $weekendDays = ['Sat', 'Sun'];
+            $weekdayDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+            
+            $weekendRates = [];
+            $weekdayRates = [];
+            
+            foreach ($priceConfigs as $config) {
+                $rates = $config['rates'] ?? [];
+                
+                if (isset($config['days']) && is_array($config['days'])) {
+                    $isWeekendConfig = false;
+                    $isWeekdayConfig = false;
+                    
+                    foreach ($config['days'] as $day) {
+                        if (in_array($day, $weekendDays)) {
+                            $isWeekendConfig = true;
+                        }
+                        if (in_array($day, $weekdayDays)) {
+                            $isWeekdayConfig = true;
+                        }
+                    }
+                    
+                    if ($isWeekendConfig) {
+                        foreach (['nonPeak', 'peak', 'superPeak'] as $season) {
+                            if (isset($rates[$season]) && $rates[$season] > 0) {
+                                $key = $season . '_weekend';
+                                $weekendRates[$key] = (float)$rates[$season];
+                            }
+                        }
+                    }
+                    
+                    if ($isWeekdayConfig) {
+                        foreach (['nonPeak', 'peak', 'superPeak'] as $season) {
+                            if (isset($rates[$season]) && $rates[$season] > 0) {
+                                $key = $season . '_weekday';
+                                $weekdayRates[$key] = (float)$rates[$season];
+                            }
+                        }
+                    }
+                }
+            }
+            
+            foreach (['nonPeak', 'peak', 'superPeak'] as $season) {
+                $weekendKey = $season . '_weekend';
+                $weekdayKey = $season . '_weekday';
+                
+                if (isset($weekendRates[$weekendKey])) {
+                    $dayTypePricing[$weekendKey] = $weekendRates[$weekendKey];
+                }
+                if (isset($weekdayRates[$weekdayKey])) {
+                    $dayTypePricing[$weekdayKey] = $weekdayRates[$weekdayKey];
+                }
+            }
+            
+            if (!empty($dayTypePricing)) {
+                Log::info('Day type pricing from price_configs for ' . $staycation->name . '.', $dayTypePricing);
+                return $dayTypePricing;
+            }
+        }
+        
+        // Fallback to PricingConfig table
+        $unitType = strpos(strtolower($staycation->name), 'glamping') !== false ? 'glamping' : 'camping';
+        
+        $pricingConfigs = PricingConfig::where('unit_type', $unitType)
+            ->with(['peakType', 'dayType'])
+            ->get();
+        
+        foreach ($pricingConfigs as $config) {
+            $seasonName = $config->peakType->name;
+            $dayTypeName = $config->dayType->name;
+            $key = strtolower($seasonName) . '_' . strtolower($dayTypeName);
+            $dayTypePricing[$key] = $config->price;
+        }
+        
+        Log::info('Day type pricing from PricingConfig for ' . $staycation->name . '.', $dayTypePricing);
+        
+        return $dayTypePricing;
     }
 
     public function staycationFood()

@@ -110,6 +110,7 @@ Route::get('/api/activity-images/{id}', function($id) {
 })->name('api.activity-images');
 Route::get('/api/booking/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.activities');
 Route::get('/api/booking/settings', [BookingController::class, 'getBookingSettings'])->name('api.booking.settings');
+Route::post('/api/booking/calculate-staycation-price', [BookingController::class, 'calculateStaycationPrice'])->name('api.booking.calculateStaycationPrice');
 Route::get('/booking/activities', [BookingController::class, 'activities'])->name('booking.activities');
 Route::post('/booking/activities', [BookingController::class, 'storeActivities'])->name('booking.storeActivities');
 Route::get('/booking/staycation/activities', [BookingController::class, 'staycationActivities'])->name('booking.staycationActivities');
@@ -168,6 +169,25 @@ Route::get('/test-failed', function() {
 Route::get('/booking/confirmation', [BookingController::class, 'confirmation'])->name('booking.confirmation');
 Route::get('/booking/widget', [BookingController::class, 'widget'])->name('booking.widget');
 Route::post('/booking/calculate-price', [BookingController::class, 'getDynamicPrice'])->name('booking.calculatePrice');
+Route::get('/debug-pricing', function () {
+    $configs = \App\Models\PricingConfig::where('unit_type', 'glamping')
+        ->with(['peakType', 'dayType'])
+        ->get();
+    
+    $data = [];
+    foreach ($configs as $config) {
+        $data[] = [
+            'id' => $config->id,
+            'unit_type' => $config->unit_type,
+            'peak_type' => $config->peakType->name,
+            'day_type' => $config->dayType->name,
+            'price' => $config->price
+        ];
+    }
+    
+    return response()->json($data);
+});
+
 Route::get('/debug-session', [BookingController::class, 'debugSession']);
 
 Route::get('/booking/reset-inventory', function () {
