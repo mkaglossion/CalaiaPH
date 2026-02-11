@@ -1358,9 +1358,20 @@
                         // Determine day type
                         let isWeekend = dayShort.toLowerCase() === 'sat' || dayShort.toLowerCase() === 'sun';
 
+                        // Get date string for specific date pricing
+                        const dateOnly = currentDate.toISOString().split('T')[0];
+
                         // Get price based on day type - ensure fallback to roomBasePrice
                         let rate = 0;
-                        if (dayTypePricing && Object.keys(dayTypePricing).length > 0) {
+                        
+                        // Check for specific date pricing first
+                        const datePricing = (roomDetail && roomDetail.date_pricing) ? roomDetail.date_pricing : {};
+                        const dateOnlyStr = dateOnly;
+                        
+                        if (datePricing[dateOnlyStr]) {
+                            // Use specific date price override
+                            rate = parseFloat(datePricing[dateOnlyStr]) || roomBasePrice;
+                        } else if (dayTypePricing && Object.keys(dayTypePricing).length > 0) {
                             if (isWeekend) {
                                 rate = season === 'Peak'
                                     ? (dayTypePricing.peak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.regular || roomBasePrice)
@@ -1480,7 +1491,18 @@
 
                         // Get price based on day type - ensure fallback to basePrice
                         let rate = 0;
-                        if (dayTypePricing && Object.keys(dayTypePricing).length > 0) {
+                        
+                        // Get date string for specific date pricing
+                        const dateOnly = currentDate.toISOString().split('T')[0];
+
+                        // Check for specific date pricing first
+                        const datePricing = (roomDetail && roomDetail.date_pricing) ? roomDetail.date_pricing : {};
+                        const dateOnlyStr = currentDate.toISOString().split('T')[0];
+                        
+                        if (datePricing[dateOnlyStr]) {
+                            // Use specific date price override
+                            rate = parseFloat(datePricing[dateOnlyStr]) || basePrice;
+                        } else if (dayTypePricing && Object.keys(dayTypePricing).length > 0) {
                             if (isWeekend) {
                                 rate = season === 'Peak'
                                     ? (dayTypePricing.peak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.regular || basePrice)
@@ -1615,7 +1637,14 @@
                         // Get base price for fallback
                         const basePrice = (roomDetail && roomDetail.price) ? roomDetail.price : (room.type === 'glamping' ? 5500 : 3000);
                         
-                        if (dayTypePricing && Object.keys(dayTypePricing).length > 0) {
+                        // Check for specific date pricing first
+                        const datePricing = (roomDetail && roomDetail.date_pricing) ? roomDetail.date_pricing : {};
+                        const dateOnlyStr = dateOnly;
+                        
+                        if (datePricing[dateOnlyStr]) {
+                            // Use specific date price override
+                            rate = parseFloat(datePricing[dateOnlyStr]) || basePrice;
+                        } else if (dayTypePricing && Object.keys(dayTypePricing).length > 0) {
                             // Use dynamic pricing from roomDetail
                             if (isWeekend) {
                                 dayType = 'Weekend';

@@ -473,16 +473,16 @@ class PricingService
                 return $getRate($config);
             }
 
-            $multipleDates = $config['multipleDates'] ?? [];
-            if (!empty($multipleDates) && in_array($checkinDateStr, $multipleDates)) {
+            $multipleDates = $config['multipleDates'] ?? null;
+            if (is_array($multipleDates) && !empty($multipleDates) && in_array($checkinDateStr, $multipleDates)) {
                 return $getRate($config);
             }
         }
 
         // 2. Find config with day-of-week match
         foreach ($priceConfigs as $config) {
-            $days = $config['days'] ?? [];
-            if (!empty($days) && in_array($checkinDayOfWeek, $days)) {
+            $days = $config['days'] ?? null;
+            if (is_array($days) && !empty($days) && in_array($checkinDayOfWeek, $days)) {
                 return $getRate($config);
             }
         }

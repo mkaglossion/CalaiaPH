@@ -1801,6 +1801,12 @@ class BookingController extends Controller
 
             // Calculate price range for the selected date range
             $priceRange = $this->calculatePriceRangeForDateRange($staycation, $checkin, $checkout, $seasonKey);
+            
+            // Build date_pricing array for JavaScript
+            $datePricing = [];
+            foreach ($priceRange['prices'] ?? [] as $priceInfo) {
+                $datePricing[$priceInfo['date']] = $priceInfo['rate'];
+            }
 
             $roomDetails[$staycation->id] = [
                 'id' => $staycation->id,
@@ -1815,7 +1821,8 @@ class BookingController extends Controller
                 'price_range' => $priceRange, // NEW: Price range for displayed dates
                 'price_configs' => $staycation->price_configs ?? [],
                 'peak_periods' => $this->getPeakPeriodsForStaycation($staycation, $checkin, $checkout),
-                'day_type_pricing' => $this->getDayTypePricingForStaycation($staycation)
+                'day_type_pricing' => $this->getDayTypePricingForStaycation($staycation),
+                'date_pricing' => $datePricing // Date-specific pricing for JavaScript
             ];
         }
 
