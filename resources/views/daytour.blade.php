@@ -18,6 +18,16 @@
     .swiper-pagination-bullet-active {
       background-color: #a75e3e !important;
     }
+    
+    /* Improve image rendering clarity */
+    .image-rendering-optimizeContrast {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+      image-rendering: pixelated;
+      transform: translateZ(0);
+      will-change: transform;
+    }
   </style>
 
   {{-- Stylesheets --}}
@@ -63,7 +73,7 @@
                   @php
                     $title = is_array($package) ? $package['title'] : $package->name;
                     $displayTitle = (strtolower($title) === 'nature experience')
-                      ? "NATURE\nEXPERIENCE"
+                      ? "NATURE EXPERIENCE"
                       : strtoupper($title);
                   @endphp
 
@@ -73,11 +83,24 @@
                       <div class="relative w-full overflow-hidden
                                   h-87.5 sm:h-120 md:h-150 lg:h-175">
 
+                        @php
+                          $imgSrc = $package->image ?: asset('images/default.jpg');
+                          $imgSrc2x = null;
+                          // Serve larger, higher quality images with sharpening for better clarity
+                          if (is_string($imgSrc) && str_contains($imgSrc, 'res.cloudinary.com')) {
+                              $imgSrc = preg_replace('/\/upload\//', '/upload/w_2500,q_auto:best,f_auto,e_sharpen:100/', $imgSrc, 1);
+                              $imgSrc2x = preg_replace('/\/upload\//', '/upload/w_3000,q_auto:best,f_auto,e_sharpen:100/', $package->image, 1);
+                          }
+                        @endphp
+
                         <img
-                          src="{{ $package->image ?: asset('images/default.jpg') }}"
+                          src="{{ $imgSrc }}"
+                          @if($imgSrc2x)
+                            srcset="{{ $imgSrc }} 1x, {{ $imgSrc2x }} 2x"
+                          @endif
                           alt="{{ $package->name }} package"
-                          loading="lazy"
-                          class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                          decoding="async"
+                          class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02] image-rendering-optimizeContrast"
                         >
 
                         {{-- bottom overlay like mock --}}
@@ -229,9 +252,14 @@
     document.querySelectorAll(".swiper[data-swiper='modal']").forEach((el)=>{
       try{
         if(!el.swiper){
+          // Count actual slides and determine if loop should be enabled
+          const slides = el.querySelectorAll('.swiper-slide');
+          const totalSlides = slides.length;
+          const enableLoop = totalSlides >= 2; // Need at least 2 slides for loop
+          
           const swiper = new Swiper(el, {
             slidesPerView: 1,
-            loop: true,
+            loop: enableLoop,
             navigation: { nextEl: el.querySelector('[data-custom-next]'), prevEl: el.querySelector('[data-custom-prev]') },
             pagination: { el: el.querySelector('.swiper-pagination'), clickable: true },
           });
@@ -247,11 +275,20 @@
     if(!el) return;
 
     const parentRelative = el.closest('.relative');
+    
+    // Count actual slides and determine if loop should be enabled
+    const slides = el.querySelectorAll('.swiper-slide');
+    const totalSlides = slides.length;
+    const slidesPerView = 1;
+    const slidesPerGroup = 1;
+    
+    // Enable loop only if there are enough slides (slidesPerView + slidesPerGroup)
+    const enableLoop = totalSlides >= (slidesPerView + slidesPerGroup);
 
     new Swiper(el, {
-      slidesPerView: 1,
+      slidesPerView: slidesPerView,
       spaceBetween: 24,
-      loop: true,
+      loop: enableLoop,
       navigation: {
         nextEl: parentRelative ? parentRelative.querySelector('.daytour-swiper-next') : null,
         prevEl: parentRelative ? parentRelative.querySelector('.daytour-swiper-prev') : null,
