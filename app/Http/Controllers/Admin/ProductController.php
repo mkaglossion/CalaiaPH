@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Events\ProductStockUpdated;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Cloudinary\Cloudinary;
 
 class ProductController extends Controller
 {
@@ -36,16 +36,28 @@ class ProductController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'category' => 'required|in:frozen,fresh',
             'is_active' => 'nullable|boolean',
-        ], [
-            'image.max' => 'The image field must not be greater than 2048 kilobytes.',
         ]);
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('products', 'public');
+            $uploadedFile = $request->file('image');
+            $cloudinary = new Cloudinary([
+                'cloud' => [
+                    'cloud_name' => config('cloudinary.cloud.cloud_name'),
+                    'api_key' => config('cloudinary.cloud.api_key'),
+                    'api_secret' => config('cloudinary.cloud.api_secret'),
+                ]
+            ]);
+            $result = $cloudinary->uploadApi()->upload($uploadedFile->getRealPath(), [
+                'folder' => 'calaia/products',
+                'transformation' => [
+                    ['width' => 800, 'height' => 800, 'crop' => 'fill', 'quality' => 'auto'],
+                ]
+            ]);
+            $imagePath = $result['secure_url'];
         }
 
         $product = Product::create([
@@ -91,24 +103,33 @@ class ProductController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'category' => 'required|in:frozen,fresh',
             'is_active' => 'nullable|boolean',
             'stock_quantity' => 'nullable|integer|min:0',
             'is_inventory_managed' => 'nullable|boolean',
-        ], [
-            'image.max' => 'The image field must not be greater than 2048 kilobytes.',
         ]);
 
         $product = Product::findOrFail($id);
 
         $imagePath = $product->image;
         if ($request->hasFile('image')) {
-            // Optionally delete old image
-            if ($product->image && Storage::disk('public')->exists($product->image)) {
-                Storage::disk('public')->delete($product->image);
-            }
-            $imagePath = $request->file('image')->store('products', 'public');
+            // Upload new image to Cloudinary
+            $uploadedFile = $request->file('image');
+            $cloudinary = new Cloudinary([
+                'cloud' => [
+                    'cloud_name' => config('cloudinary.cloud.cloud_name'),
+                    'api_key' => config('cloudinary.cloud.api_key'),
+                    'api_secret' => config('cloudinary.cloud.api_secret'),
+                ]
+            ]);
+            $result = $cloudinary->uploadApi()->upload($uploadedFile->getRealPath(), [
+                'folder' => 'calaia/products',
+                'transformation' => [
+                    ['width' => 800, 'height' => 800, 'crop' => 'fill', 'quality' => 'auto'],
+                ]
+            ]);
+            $imagePath = $result['secure_url'];
         }
 
         $product->update([

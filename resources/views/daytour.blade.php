@@ -1,3 +1,4 @@
+@php use App\Helpers\CloudinaryHelper; @endphp
 <!doctype html>
 <html lang="en">
 <head>
@@ -86,10 +87,11 @@
                         @php
                           $imgSrc = $package->image ?: asset('images/default.jpg');
                           $imgSrc2x = null;
-                          // Serve larger, higher quality images with sharpening for better clarity
+                          
+                          // Use Cloudinary helper for optimized images with sharpening
                           if (is_string($imgSrc) && str_contains($imgSrc, 'res.cloudinary.com')) {
-                              $imgSrc = preg_replace('/\/upload\//', '/upload/w_2500,q_auto:best,f_auto,e_sharpen:100/', $imgSrc, 1);
-                              $imgSrc2x = preg_replace('/\/upload\//', '/upload/w_3000,q_auto:best,f_auto,e_sharpen:100/', $package->image, 1);
+                              $imgSrc = CloudinaryHelper::optimize($imgSrc, 1920, true);
+                              $imgSrc2x = CloudinaryHelper::optimize($package->image, 2500, true);
                           }
                         @endphp
 

@@ -30,13 +30,22 @@
         },
 
         editProduct(product) {
+            // Determine image preview URL based on whether it's a Cloudinary URL or local path
+            let imagePreview = null;
+            if (product.image) {
+                if (product.image.includes('res.cloudinary.com')) {
+                    imagePreview = product.image;
+                } else {
+                    imagePreview = '/storage/' + product.image;
+                }
+            }
             this.form = {
                 id: product.id,
                 title: product.title,
                 description: product.description,
                 price: product.price,
                 image: null,
-                imagePreview: product.image ? '/storage/' + product.image : null,
+                imagePreview: imagePreview,
                 category: product.category,
                 is_active: product.is_active,
                 stock_quantity: product.stock_quantity || '',
@@ -165,8 +174,14 @@
                             @endif
                         </td>
                         <td class="px-6 py-4">
-                            @if ($product->image)
-                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}" class="h-12 w-12 rounded object-cover border border-gray-200" loading="lazy">
+                            @php
+                                $imageSrc = $product->image;
+                                if ($imageSrc && !str_contains($imageSrc, 'res.cloudinary.com')) {
+                                    $imageSrc = asset('storage/' . $imageSrc);
+                                }
+                            @endphp
+                            @if ($imageSrc)
+                                <img src="{{ $imageSrc }}" alt="{{ $product->title }}" class="h-12 w-12 rounded object-cover border border-gray-200" loading="lazy">
                             @else
                                 <span class="text-gray-400 text-xs">No image</span>
                             @endif

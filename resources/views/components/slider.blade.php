@@ -1,7 +1,7 @@
 {{-- Swiper CSS --}}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
-<div class="swiper mySwiper w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
+<div class="swiper mySwiper w-full h-64 sm:h-80 md:h-96 lg:h-125 xl:h-150">
   <div class="swiper-wrapper">
     @forelse($images ?? [] as $image)
       <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">

@@ -166,8 +166,12 @@ window.openVariantsModal = function (button) {
             width: '70%',
             scrollbarPadding: false,
             didOpen: () => {
+                // Count slides and determine if loop should be enabled
+                const slidesCount = images.length;
+                const enableLoop = slidesCount > 1;
+                
                 new Swiper(`.${swiperId}`, {
-                    loop: true,
+                    loop: enableLoop,
                     autoplay: { delay: 3000, disableOnInteraction: false },
                     pagination: { el: `.${swiperId} .swiper-pagination`, clickable: true },
                     navigation: {
@@ -282,7 +286,7 @@ window.openVariantsModal = function (button) {
             if (s.images.length <= 1) return;
 
             new Swiper(`.${s.id}`, {
-                loop: true,
+                loop: s.images.length > 1,
                 autoplay: { delay: 3000, disableOnInteraction: false },
                 pagination: {
                     el: `.${s.id} .swiper-pagination`,

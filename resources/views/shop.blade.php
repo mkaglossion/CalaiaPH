@@ -31,12 +31,17 @@
     {{-- Real-time inventory updates --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Listen for product stock updates
-            window.Echo.channel('product-stock')
-                .listen('.product.updated', (e) => {
-                    console.log('Product stock updated:', e);
-                    updateProductStockDisplay(e.id, e.stock_quantity, e.is_inventory_managed);
-                });
+            // Only listen for updates if Echo is available
+            if (typeof window.Echo !== 'undefined') {
+                // Listen for product stock updates
+                window.Echo.channel('product-stock')
+                    .listen('.product.updated', (e) => {
+                        console.log('Product stock updated:', e);
+                        updateProductStockDisplay(e.id, e.stock_quantity, e.is_inventory_managed);
+                    });
+            } else {
+                console.log('Laravel Echo not available - real-time updates disabled');
+            }
         });
 
         function updateProductStockDisplay(productId, stockQuantity, isInventoryManaged) {

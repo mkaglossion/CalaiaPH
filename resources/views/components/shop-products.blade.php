@@ -4,8 +4,14 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
     @foreach ($frozenProducts as $product)
     <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-125 relative">
-      @if($product->image)
-        <img src="{{ asset('storage/' . $product->image) }}" class="w-full h-56 object-cover bg-gray-100 rounded-t-lg" alt="{{ $product->title }}">
+      @php
+        $imageUrl = $product->image;
+        if ($imageUrl && !str_contains($imageUrl, 'res.cloudinary.com')) {
+            $imageUrl = asset('storage/' . $imageUrl);
+        }
+      @endphp
+      @if($imageUrl)
+        <img src="{{ $imageUrl }}" class="w-full h-56 object-cover bg-gray-100 rounded-t-lg" alt="{{ $product->title }}">
       @else
         <div class="w-full h-56 bg-gray-100 rounded-t-lg flex items-center justify-center">
           <span class="text-gray-500">No Image</span>
@@ -37,7 +43,13 @@
           <input type="hidden" name="id" value="{{ $product->id }}">
           <input type="hidden" name="title" value="{{ $product->title }}">
           <input type="hidden" name="price" value="{{ $product->price }}">
-          <input type="hidden" name="image" value="{{ $product->image ? asset('storage/' . $product->image) : '' }}">
+          @php
+            $productImage = $product->image;
+            if ($productImage && !str_contains($productImage, 'res.cloudinary.com')) {
+                $productImage = asset('storage/' . $productImage);
+            }
+          @endphp
+          <input type="hidden" name="image" value="{{ $product->image ? $productImage : '' }}">
           <input type="hidden" name="quantity" value="1">
           <button type="submit" class="bg-brand text-white px-6 py-3 rounded-2xl hover:bg-brand transition-colors duration-300 w-full font-semibold">Add to Cart</button>
         </form>
@@ -53,8 +65,14 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
     @foreach ($freshProducts as $product)
     <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-112.5 relative">
-      @if($product->image)
-        <img src="{{ asset('storage/' . $product->image) }}" class="w-full h-56 object-cover bg-gray-100 rounded-t-lg" alt="{{ $product->title }}">
+      @php
+        $imageUrl = $product->image;
+        if ($imageUrl && !str_contains($imageUrl, 'res.cloudinary.com')) {
+            $imageUrl = asset('storage/' . $imageUrl);
+        }
+      @endphp
+      @if($imageUrl)
+        <img src="{{ $imageUrl }}" class="w-full h-56 object-cover bg-gray-100 rounded-t-lg" alt="{{ $product->title }}">
       @else
         <div class="w-full h-56 bg-gray-100 rounded-t-lg flex items-center justify-center">
           <span class="text-gray-500">No Image</span>
@@ -86,7 +104,13 @@
           <input type="hidden" name="id" value="{{ $product->id }}">
           <input type="hidden" name="title" value="{{ $product->title }}">
           <input type="hidden" name="price" value="{{ $product->price }}">
-          <input type="hidden" name="image" value="{{ $product->image ? asset('storage/' . $product->image) : '' }}">
+          @php
+            $productImage = $product->image;
+            if ($productImage && !str_contains($productImage, 'res.cloudinary.com')) {
+                $productImage = asset('storage/' . $productImage);
+            }
+          @endphp
+          <input type="hidden" name="image" value="{{ $product->image ? $productImage : '' }}">
           <input type="hidden" name="quantity" value="1">
           <button type="submit" class="bg-brand text-white px-6 py-3 rounded-2xl hover:bg-[#8f5d54]/90 transition-colors duration-300 w-full font-semibold">Add to Cart</button>
         </form>

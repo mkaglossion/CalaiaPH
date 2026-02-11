@@ -629,9 +629,14 @@
         document.querySelectorAll(".swiper[data-swiper='modal']").forEach((el)=>{
           try{
             if(!el.swiper){
+              // Count actual slides and determine if loop should be enabled
+              const slides = el.querySelectorAll('.swiper-slide');
+              const totalSlides = slides.length;
+              const enableLoop = totalSlides >= 2; // Need at least 2 slides for loop
+              
               const swiper = new Swiper(el, {
                 slidesPerView: 1,
-                loop: true,
+                loop: enableLoop,
                 navigation: { nextEl: el.querySelector('[data-custom-next]'), prevEl: el.querySelector('[data-custom-prev]') },
                 pagination: { el: el.querySelector('.swiper-pagination'), clickable: true },
               });
