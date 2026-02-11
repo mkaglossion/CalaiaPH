@@ -165,8 +165,17 @@
                                             <div class="swiper-button-next swiper-button-next-{{ $staycation->id }}" @click.stop></div>
                                             <div class="swiper-button-prev swiper-button-prev-{{ $staycation->id }}" @click.stop></div>
                                         </div>
+                                    @elseif($staycation->swiperImages && $staycation->swiperImages->count() > 0)
+                                        <img src="{{ $staycation->swiperImages->first()->image_path }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
+                                    @elseif($staycation->image)
+                                        <img src="{{ $staycation->image }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
                                     @else
-                                        <img src="{{ $staycation->swiperImages && $staycation->swiperImages->count() > 0 ? $staycation->swiperImages->first()->image_path : $roomDetail['image'] }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
+                                        <div class="w-full h-96 bg-linear-to-br from-blue-200 to-purple-200 flex items-center justify-center cursor-pointer hover:from-blue-300 hover:to-purple-300">
+                                            <div class="text-center">
+                                                <i class="bi bi-image text-4xl opacity-50 text-white block mb-2"></i>
+                                                <p class="text-xs text-white opacity-70">No images</p>
+                                            </div>
+                                        </div>
                                     @endif
 
                                     {{-- Status badge --}}
@@ -204,17 +213,29 @@
                                         {{ $roomDetail['name'] }}
                                     </h3>
 
+                                    {{-- Price Range Display --}}
+                                    @php
+                                        $priceRange = $roomDetail['price_range'] ?? ['min_price' => 0, 'max_price' => 0, 'min_label' => '—', 'max_label' => '—'];
+                                        $roomNameLower = strtolower($roomDetail['name']);
+                                        $isBYOT = str_contains($roomNameLower, 'byot') ||
+                                                 str_contains($roomNameLower, 'bring your own tent') ||
+                                                 str_contains($roomNameLower, 'bring your own');
+                                        $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
+                                    @endphp
+
                                     <div class="text-lg font-bold text-[#8f5d54] mb-2">
-                                        ₱{{ number_format($roomDetail['price'], 0) }} / 
-                                        @php
-                                            $roomNameLower = strtolower($roomDetail['name']);
-                                            // Check for BYOT first (prioritize BYOT over car camping)
-                                            $isBYOT = str_contains($roomNameLower, 'byot') ||
-                                                     str_contains($roomNameLower, 'bring your own tent') ||
-                                                     str_contains($roomNameLower, 'bring your own');
-                                            // Check for car camping only if not BYOT
-                                            $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
-                                        @endphp
+                                        @if($priceRange['min_price'] > 0 && $priceRange['max_price'] > 0)
+                                            @if($priceRange['min_price'] == $priceRange['max_price'])
+                                                {{-- All prices are the same --}}
+                                                {{ $priceRange['min_label'] }} / 
+                                            @else
+                                                {{-- Price range with different min/max --}}
+                                                {{ $priceRange['min_label'] }} - {{ $priceRange['max_label'] }} / 
+                                            @endif
+                                        @else
+                                            ₱{{ number_format($roomDetail['price'], 0) }} / 
+                                        @endif
+
                                         @if($isBYOT || $isCarCamping)
                                             slot
                                         @else
@@ -1134,10 +1155,10 @@
                     let totalPrice = 0;
 
                     if (isBYOT || isCarCamping) {
-                        // Per quantity pricing: base price is per night per unit
+                        // Per quantity pricing: base price is per slot only (no night multiplier)
                         const quantity = selectedRoomData ? parseInt(selectedRoomData.extra_mattress || 1) : 1;
                         const correctedBasePrice = basePrice;
-                        totalPrice = correctedBasePrice * quantity * nights;
+                        totalPrice = correctedBasePrice * quantity;
                     } else {
                         // Regular rooms: base price is per night
                         totalPrice = basePrice * nights;

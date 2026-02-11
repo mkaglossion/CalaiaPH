@@ -6,26 +6,48 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Staycation;
 use App\Models\StaycationSwiperImage;
+use App\Models\PeakPeriod;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Support\Facades\Log;
 
 class StaycationController extends Controller
 {
     public function index()
     {
         $staycations = Staycation::latest()->get();
-        return view('admin.staycations', compact('staycations'));
+        
+        // Get current season
+        $today = now()->format('Y-m-d');
+        $currentSeasonPeriod = PeakPeriod::where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->with('peakType')
+            ->orderBy(\App\Models\PeakType::select('priority')->whereColumn('peak_types.id', 'peak_periods.peak_type_id'), 'desc')
+            ->first();
+
+        $currentSeason = $currentSeasonPeriod ? $currentSeasonPeriod->peakType->name : 'Non-Peak';
+        
+        $seasonKeyMap = [
+            'Non-Peak' => 'nonPeak',
+            'Peak' => 'peak',
+            'Super-Peak' => 'superPeak'
+        ];
+        $currentSeasonKey = $seasonKeyMap[$currentSeason] ?? 'nonPeak';
+        
+        return view('admin.staycations', compact('staycations', 'currentSeason', 'currentSeasonKey'));
     }
 
     public function store(Request $request)
     {
+        Log::info('Store request started');
+        
         $request->validate([
             'name' => 'required|string|max:255|unique:staycations,name',
             'days' => 'required|integer|min:1',
             'quantity' => 'required|integer|min:1',
             'adults' => 'required|integer|min:0',
             'children' => 'required|integer|min:0',
-            'priceConfigs' => 'nullable|string', // JSON string from frontend
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'priceConfigs' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
         $capacity = $request->adults + $request->children;
@@ -90,10 +112,38 @@ class StaycationController extends Controller
         // Handle image upload
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filePath = $file->getRealPath();
-            $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
-            $imagePath = $uploadResult['secure_url'];
+            try {
+                $file = $request->file('image');
+                $filePath = $file->getRealPath();
+                
+                if (!file_exists($filePath)) {
+                    $filePath = $file->getPathname();
+                }
+                
+                $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
+                    'resource_type' => 'auto'
+                ]);
+                
+                // Extract secure_url from ApiResponse object
+                if (isset($uploadResult['secure_url'])) {
+                    $imagePath = $uploadResult['secure_url'];
+                } elseif (property_exists($uploadResult, 'secure_url')) {
+                    $imagePath = $uploadResult->secure_url;
+                } else {
+                    $asArray = (array)$uploadResult;
+                    $imagePath = $asArray['secure_url'] ?? null;
+                }
+                
+                if (empty($imagePath)) {
+                    throw new \Exception('Could not extract secure_url from Cloudinary response');
+                }
+            } catch (\Exception $e) {
+                Log::error('Image upload failed:', ['message' => $e->getMessage()]);
+                return response()->json([
+                    'message' => 'Image upload failed: ' . $e->getMessage(),
+                    'errors' => ['image' => ['Failed to upload image to Cloudinary: ' . $e->getMessage()]]
+                ], 422);
+            }
         }
 
         $staycationData = [
@@ -116,14 +166,26 @@ class StaycationController extends Controller
 
         return response()->json([
             'message' => 'Staycation added successfully.',
-            'staycation' => $staycation->toArray()
+            'id' => $staycation->id,
+            'staycation' => [
+                'id' => $staycation->id,
+                'name' => $staycation->name,
+                'days' => $staycation->days,
+                'quantity' => $staycation->quantity,
+                'adults' => $staycation->adults,
+                'children' => $staycation->children,
+                'image' => $staycation->image,
+                'price_configs' => $staycation->price_configs,
+                'price' => $staycation->price,
+                'type' => $staycation->type,
+                'created_at' => $staycation->created_at
+            ]
         ]);
-
     }
 
-    public function show(Staycation $staycation)
+    public function show(Staycation $staycation_list)
     {
-        return response()->json($staycation);
+        return response()->json($staycation_list);
     }
 
     public function update(Request $request, Staycation $staycation_list)
@@ -219,24 +281,67 @@ class StaycationController extends Controller
             // Note: Cloudinary asset will remain but won't be referenced
             $updateData['image'] = null;
         } elseif ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filePath = $file->getRealPath();
-            $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
-            $updateData['image'] = $uploadResult['secure_url'];
+            try {
+                $file = $request->file('image');
+                $filePath = $file->getRealPath();
+                
+                if (!file_exists($filePath)) {
+                    $filePath = $file->getPathname();
+                }
+                
+                $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
+                    'resource_type' => 'auto'
+                ]);
+                
+                // Extract secure_url from ApiResponse object
+                $imageUrl = null;
+                if (isset($uploadResult['secure_url'])) {
+                    $imageUrl = $uploadResult['secure_url'];
+                } elseif (property_exists($uploadResult, 'secure_url')) {
+                    $imageUrl = $uploadResult->secure_url;
+                } else {
+                    $asArray = (array)$uploadResult;
+                    $imageUrl = $asArray['secure_url'] ?? null;
+                }
+                
+                if (empty($imageUrl)) {
+                    throw new \Exception('Could not extract secure_url from Cloudinary');
+                }
+                
+                $updateData['image'] = $imageUrl;
+            } catch (\Exception $e) {
+                Log::error('Image update failed:', ['message' => $e->getMessage()]);
+                return response()->json([
+                    'message' => 'Image upload failed: ' . $e->getMessage(),
+                    'errors' => ['image' => ['Failed to upload image to Cloudinary: ' . $e->getMessage()]]
+                ], 422);
+            }
+        } else {
+            // If no new image uploaded, keep existing image
+            $updateData['image'] = $staycation_list->image;
         }
 
         $staycation_list->update($updateData);
 
         // Return updated data for table refresh
         $updatedStaycation = $staycation_list->fresh();
-        $staycationData = $updatedStaycation->toArray();
-
-        // Ensure price_configs is properly included
-        $staycationData['price_configs'] = $updatedStaycation->price_configs;
 
         return response()->json([
             'message' => 'Staycation updated successfully.',
-            'staycation' => $staycationData
+            'staycation' => [
+                'id' => $updatedStaycation->id,
+                'name' => $updatedStaycation->name,
+                'days' => $updatedStaycation->days,
+                'quantity' => $updatedStaycation->quantity,
+                'adults' => $updatedStaycation->adults,
+                'children' => $updatedStaycation->children,
+                'image' => $updatedStaycation->image,
+                'price_configs' => $updatedStaycation->price_configs,
+                'price' => $updatedStaycation->price,
+                'type' => $updatedStaycation->type,
+                'created_at' => $updatedStaycation->created_at,
+                'updated_at' => $updatedStaycation->updated_at
+            ]
         ]);
     }
 

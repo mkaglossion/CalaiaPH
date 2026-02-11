@@ -176,6 +176,12 @@
                   <span>Items ({{ $cartCount }})</span>
                   <span>₱{{ number_format($cartTotal, 2) }}</span>
                 </div>
+                @if(!empty($cartReference))
+                <div class="flex justify-between text-gray-500 text-sm mt-2">
+                  <span>Reference</span>
+                  <span class="font-medium">#{{ $cartReference }}</span>
+                </div>
+                @endif
                 <div class="flex justify-between text-gray-600">
                   <span>Service Fee</span>
                   <span>₱0.00</span>

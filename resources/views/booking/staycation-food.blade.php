@@ -458,7 +458,7 @@
                 calculateTotal() {
                     let foodTotal = 0;
                     this.selectedFoods.forEach(food => {
-                        foodTotal += food.price * food.quantity * this.nights;
+                        foodTotal += food.price * food.quantity; // No nights multiplication
                     });
                     const grandTotal = this.accommodationTotal + this.activitiesTotal + foodTotal;
                     return '₱' + grandTotal.toLocaleString();
@@ -467,7 +467,7 @@
                 calculateFoodTotal() {
                     let total = 0;
                     this.selectedFoods.forEach(food => {
-                        total += food.price * food.quantity * this.nights;
+                        total += food.price * food.quantity; // No nights multiplication
                     });
                     return '₱' + total.toLocaleString();
                 },
