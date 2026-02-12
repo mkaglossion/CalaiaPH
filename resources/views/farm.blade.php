@@ -15,43 +15,103 @@
       {{-- SECTION: Our Sustainable Farming --}}
       <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="sustainable-farming-heading">
         <div class="container mx-auto px-4 max-w-7xl">
-          <x-section-header
-              id="sustainable-farming-heading"
-              title="Our Sustainable Farming"
-              subtitle="Discover how we raise livestock and grow produce with respect for nature and animal welfare"
-          />
+          <div class="max-w-4xl mx-auto">
+            <h2 class="font-extrabold leading-tight tracking-wide mb-10 text-center text-xl md:text-2xl" style="font-family: 'Gotham Book', sans-serif; color:#a75e3e;">
+              Our Sustainable Farming
+            </h2>
+            <p class="block text-center w-full font-extrabold leading-tight tracking-wide mb-10 text-sm md:text-base" style="font-family: 'Gotham Book', sans-serif; color:#a75e3e;">
+              Discover how we raise livestock and grow produce with respect for nature and animal welfare
+            </p>
+            <hr class="border-t-2 border-brand w-3/4 md:w-180 mx-auto rounded-full mb-10">
+          </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
-            <figure class="order-2 lg:order-1">
+          {{-- ============================================================
+    Featured: Ethically raised livestock (overlay + checklist card)
+  ============================================================ --}}
+  <div class="space-y-8">
+
+    {{-- TOP: Image banner with text overlay --}}
+    <section class="relative overflow-hidden rounded-3xl shadow-lg">
+      <img
+        src="{{ asset('assets/images/carousel/animal and wellness.jpg') }}"
+        alt="Free-range livestock grazing in open pastures at Calaia farm"
+        class="w-full h-80 md:h-105 object-cover"
+        loading="lazy"
+      >
+
+      {{-- dark overlay (for readability like screenshot) --}}
+      <div class="absolute inset-0 bg-black/45"></div>
+
+      {{-- content --}}
+      <div class="absolute inset-0 flex items-end">
+        <div class="p-8 md:p-12 max-w-3xl">
+          <h3 class="text-white font-extrabold text-3xl md:text-5xl leading-tight">
+            Ethically raised livestock.
+          </h3>
+          <p class="mt-3 text-white/90 text-base md:text-lg leading-relaxed">
+            Our animals live as nature intended: with plenty of space to roam, fresh air,
+            and a natural diet free from antibiotics and growth hormones.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {{-- BOTTOM: Brown checklist + circular image --}}
+    @php
+      $ethicalFeatures = [
+        'Pasture-raised with daily access to open fields.',
+        'No antibiotics or hormones - ever.',
+        'Non-GMO, locally-sourced feed.',
+        'Humane treatment with low-stress handling.',
+      ];
+    @endphp
+
+    <section class="relative overflow-hidden rounded-3xl bg-[#6b4a2f] shadow-lg">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+        {{-- checklist --}}
+        <div class="p-10 md:p-12 pt-14">
+          <ul class="space-y-6 md:space-y-10 pt-4">
+            @foreach ($ethicalFeatures as $index => $text)
+              <li class="flex items-start gap-6{{ $index === 0 ? ' mt-4' : '' }}">
+                {{-- check icon --}}
+                <span class="shrink-0 w-12 h-12 rounded-full border-4 border-white/80 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                </span>
+
+                <p class="text-white font-semibold text-lg md:text-xl leading-relaxed">
+                  {{ $text }}
+                </p>
+              </li>
+            @endforeach
+          </ul>
+        </div>
+
+        {{-- circular image side --}}
+        <div class="relative min-h-80 lg:min-h-105">
+          {{-- This makes the big circle crop on the right --}}
+          <div class="absolute inset-0">
+            <div class="absolute right-0 top-1/2 -translate-y-1/2 w-80 h-80 md:w-110 md:h-110 rounded-full overflow-hidden">
               <img
-                src="{{ asset('assets/images/carousel/animal and wellness.jpg') }}"
-                alt="Free-range livestock grazing in open pastures at Calaia farm"
-                class="w-full h-80 md:h-96 object-cover rounded-2xl shadow-lg"
+                src="{{ asset('assets/images/carousel/animals.jpg') }}"
+                alt="Livestock grazing at Calaia farm"
+                class="w-full h-full object-contain"
                 loading="lazy"
               >
-              <figcaption class="sr-only">Free-range livestock in natural environment</figcaption>
-            </figure>
-
-            <div class="order-1 lg:order-2">
-              <h3 class="font-bold text-[#8f5d54] mb-6" style="font-size: 25px;">
-                Ethically Raised Livestock
-              </h3>
-              <p class="text-gray-700 mb-8 leading-relaxed" style="font-size: 13px;">
-                Our animals live as nature intended: with plenty of space to roam, fresh air, and a natural diet free from antibiotics and growth hormones.
-              </p>
-              <x-feature-list
-                  :features="[
-                      'Pasture-raised with daily access to open fields',
-                      'No antibiotics or hormones — ever',
-                      'Non-GMO, locally-sourced feed',
-                      'Humane treatment with low-stress handling',
-                  ]"
-              />
             </div>
           </div>
 
+          {{-- subtle fade on right edge for smoother blend --}}
+          <div class="absolute inset-y-0 right-0 w-1/3 bg-linear-to-l from-black/30 to-transparent pointer-events-none"></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
           {{-- Meat Products Grid --}}
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 mb-8">
             @foreach ([
               ['img'=>'our-farm.jpg','title'=>'Grass-Fed Beef','desc'=>'100% grass-fed and grass-finished diet; higher in healthy Omega-3s.'],
               ['img'=>'our-farm2.jpg','title'=>'Heritage Pork','desc'=>'Small groups with room to root and explore for superior flavor and texture.'],
@@ -59,9 +119,9 @@
             ] as $product)
             <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300">
               <img src="{{ asset('assets/images/carousel/'.$product['img']) }}" alt="{{ $product['title'] }} product"
-                   class="w-full h-48 object-cover rounded-xl mb-4" loading="lazy">
-              <h4 class="font-semibold text-[#8f5d54] mb-2" style="font-size: 25px;">{{ $product['title'] }}</h4>
-              <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px;">{{ $product['desc'] }}</p>
+                   class="w-full h-48 object-cover mb-4" loading="lazy">
+              <h4 class="font-semibold text-[#8f5d54] mb-2 text-lg md:text-xl">{{ $product['title'] }}</h4>
+              <p class="text-gray-600 mb-4 leading-relaxed text-sm md:text-base">{{ $product['desc'] }}</p>
               <div class="flex items-center justify-between">
                 <span class="text-sm font-medium text-[#8f5d54]">Available seasonally</span>
                 <i class="fas fa-leaf text-green-500" aria-hidden="true"></i>
@@ -69,94 +129,145 @@
             </article>
             @endforeach
           </div>
-        </div>
+
+          {{-- ============================================================
+    Fresh From Our Fields (Overlay Banner Cards)
+  ============================================================ --}}
+  </div>
       </section>
 
-      {{-- SECTION: Fresh From Our Fields --}}
-      <section class="py-16 bg-linear-to-br from-green-50 to-emerald-50" aria-labelledby="fresh-fields-heading">
-        <div class="container mx-auto px-4 max-w-7xl">
-          <header class="text-center mb-12">
-            <h2 id="fresh-fields-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px;">
-              Fresh From Our Fields
-            </h2>
-            <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed" style="font-size: 13px;">
-              Seasonal, pesticide-free produce grown with care for flavor and nutrition.
-            </p>
-          </header>
+      {{-- Fresh From Our Fields - Full Width --}}
+      <section class="space-y-0">
 
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            {{-- Vegetable Garden --}}
-            <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <img src="{{ asset('assets/images/carousel/organic1.jpg') }}" alt="Lush vegetable garden with various organic produce"
-                     class="w-full h-64 object-cover rounded-xl md:col-span-1" loading="lazy">
-                <div class="md:col-span-2">
-                  <h3 class="font-semibold text-[#8f5d54] mb-3" style="font-size: 25px;">Vegetable Garden</h3>
-                  <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px;">
-                    We grow over 50 varieties of vegetables using organic methods and natural amendments like compost and cover crops.
-                  </p>
-                  <h4 class="font-semibold text-[#8f5d54] mb-2">In Season Now:</h4>
-                  <p class="text-gray-700 mb-4" style="font-size: 13px;">Heirloom tomatoes, rainbow chard, zucchini, garlic, kale, peppers, eggplant</p>
-                  <a href="#contact" class="inline-flex items-center text-[#8f5d54] hover:text-[#8f5d54]-dark font-medium transition-colors">
-                    Get our harvest schedule <i class="fas fa-chevron-right text-xs ml-2" aria-hidden="true"></i>
-                  </a>
-                </div>
-              </div>
-            </article>
-
-            {{-- Orchard Fruits --}}
-            <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <img src="{{ asset('assets/images/carousel/Calaia-26.jpg') }}" alt="Fruit orchard with trees in bloom"
-                     class="w-full h-64 object-cover rounded-xl md:col-span-1" loading="lazy">
-                <div class="md:col-span-2">
-                  <h3 class="font-semibold text-[#8f5d54] mb-3" style="font-size: 25px;">Orchard Fruits</h3>
-                  <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px;">
-                    Our heritage fruit trees are grown without chemical sprays, allowing natural ecosystems to maintain balance.
-                  </p>
-                  <h4 class="font-semibold text-[#8f5d54] mb-2">Coming Soon:</h4>
-                  <p class="text-gray-700 mb-4" style="font-size: 13px;">Apples, pears, peaches, plums, cherries, persimmons</p>
-                  <a href="#contact" class="inline-flex items-center text-[#8f5d54] hover:text-[#8f5d54]-dark font-medium transition-colors">
-                    Join our fruit CSA <i class="fas fa-chevron-right text-xs ml-2" aria-hidden="true"></i>
-                  </a>
-                </div>
-              </div>
-            </article>
+        {{-- Vegetable Garden --}}
+        <article class="relative overflow-hidden shadow-lg group">
+          <div class="absolute inset-0">
+            <img src="{{ asset('assets/images/carousel/organic1.jpg') }}" alt="Vegetable Garden" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
+            <div class="absolute inset-0 bg-black/45"></div>
           </div>
 
-          {{-- Growing with Nature --}}
-          <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-8 md:p-12">
-            <h3 class="font-bold text-center text-[#8f5d54] mb-8" style="font-size: 25px;">Growing with Nature</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-              @foreach ([
-                ['icon'=>'bi-flower1','title'=>'Soil First','text'=>'We build our soil health through composting, cover crops, and minimal tillage.'],
-                ['icon'=>'bi-tree-fill','title'=>'Biodiversity','text'=>'Companion planting and diverse ecosystems keep plants healthy naturally.'],
-                ['icon'=>'bi-brightness-high-fill','title'=>'Seasonal Focus','text'=>'We grow what thrives in our climate without forcing seasons.'],
-              ] as $feature)
-              <div class="text-center">
-                <div class="w-16 h-16 bg-[#8f5d54]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <i class="bi {{ $feature['icon'] }} text-2xl text-[#8f5d54]" aria-hidden="true"></i>
+          <div class="relative z-10 px-6 md:px-10 py-10 md:py-14 max-w-xl">
+            <h3 class="text-white font-extrabold text-2xl md:text-4xl mb-5">Vegetable Garden.</h3>
+            <p class="text-white/90 text-base md:text-lg leading-relaxed mb-8">We grow over 50 varieties of vegetables using organic methods and natural amendments like compost and cover crops.</p>
+            <a href="#contact" class="inline-flex items-center bg-brand text-white font-semibold px-6 py-3 rounded-full hover:bg-brand/90 transition">GET OUR HARVEST SCHEDULE <span class="ml-2">&gt;</span></a>
+          </div>
+          <div class="h-80 md:h-100"></div>
+        </article>
+
+        {{-- Orchard Fruits --}}
+        <article class="relative overflow-hidden shadow-lg group">
+          <div class="absolute inset-0">
+            <img src="{{ asset('assets/images/carousel/tree planting.jpg') }}" alt="Orchard Fruits" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
+            <div class="absolute inset-0 bg-black/50"></div>
+          </div>
+
+          <div class="relative z-10 px-6 md:px-10 py-10 md:py-14 max-w-xl ml-auto text-right">
+            <h3 class="text-white font-extrabold text-2xl md:text-4xl mb-5">Orchard Fruits.</h3>
+            <p class="text-white/90 text-base md:text-lg leading-relaxed mb-8">Our heritage fruit trees are grown without chemical sprays, allowing natural ecosystems to maintain balance.</p>
+            <a href="#contact" class="inline-flex items-center bg-brand text-white font-semibold px-6 py-3 rounded-full hover:bg-brand/90 transition">JOIN OUR FRUIT CSA <span class="ml-2">&gt;</span></a>
+          </div>
+          <div class="h-80 md:h-100"></div>
+        </article>
+
+      </section>
+
+      {{-- ============================================================
+        Growing With Nature (Icon Feature Block)
+      ============================================================ --}}
+      <section class="py-20" aria-labelledby="growing-nature-heading">
+        <div class="max-w-6xl mx-auto px-6">
+          {{-- Card Container --}}
+          <div class="bg-[#3f6668] rounded-3xl py-10 md:py-14 px-6 md:px-14 text-white text-center shadow-lg" role="region" aria-labelledby="growing-nature-heading">
+            {{-- Title --}}
+            <h2 id="growing-nature-heading" class="text-2xl md:text-4xl font-extrabold mb-6">
+              Growing with nature.
+            </h2>
+
+            {{-- Divider Line --}}
+            <div class="w-3/4 mx-auto border-t border-white/30 mb-12" aria-hidden="true"></div>
+
+            {{-- Icon Grid --}}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 place-items-center" role="list">
+              {{-- Soil First --}}
+              <div class="flex flex-col items-center text-center" role="listitem">
+                {{-- Icon Circle --}}
+                <div class="w-24 h-24 mx-auto rounded-full bg-white flex items-center justify-center mb-6 shadow-md">
+                  <img
+                    src="{{ asset('assets/icons/noun-soil-7519091.png') }}"
+                    alt=""
+                    class="w-20 h-20 object-contain"
+                    loading="lazy"
+                    aria-hidden="true"
+                  >
                 </div>
-                <h4 class="text-lg font-semibold text-[#8f5d54] mb-2">{{ $feature['title'] }}</h4>
-                <p class="text-gray-600 leading-relaxed" style="font-size: 13px;">{{ $feature['text'] }}</p>
+
+                <h3 class="text-xl font-bold mb-3 text-white">
+                  Soil First
+                </h3>
+
+                <p class="text-white/80 leading-relaxed text-sm md:text-base max-w-xs">
+                  We build our soil health through composting, cover crops, and minimal tillage.
+                </p>
               </div>
-              @endforeach
+
+              {{-- Biodiversity --}}
+              <div class="flex flex-col items-center text-center" role="listitem">
+                <div class="w-24 h-24 mx-auto rounded-full bg-white flex items-center justify-center mb-6 shadow-md">
+                  <img
+                    src="{{ asset('assets/icons/noun-biodiversity-8058278.png') }}"
+                    alt=""
+                    class="w-25 h-25 object-contain"
+                    loading="lazy"
+                    aria-hidden="true"
+                  >
+                </div>
+
+                <h3 class="text-xl font-bold mb-3 text-white">
+                  Biodiversity
+                </h3>
+
+                <p class="text-white/80 leading-relaxed text-sm md:text-base max-w-xs">
+                  Companion planting and diverse ecosystems keep plants healthy naturally.
+                </p>
+              </div>
+
+              {{-- Seasonal Focus --}}
+              <div class="flex flex-col items-center text-center" role="listitem">
+                <div class="w-24 h-24 mx-auto rounded-full bg-white flex items-center justify-center mb-6 shadow-md">
+                  <img
+                    src="{{ asset('assets/icons/noun-plant-7968466.png') }}"
+                    alt=""
+                    class="w-25 h-25 object-contain"
+                    loading="lazy"
+                    aria-hidden="true"
+                  >
+                </div>
+
+                <h3 class="text-xl font-bold mb-3 text-white">
+                  Seasonal Focus
+                </h3>
+
+                <p class="text-white/80 leading-relaxed text-sm md:text-base max-w-xs">
+                  We grow what thrives in our climate without forcing seasons.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {{-- SECTION: Farm Experiences --}}
-      <section class="py-16 bg-white" aria-labelledby="farm-experiences-heading">
+      <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="farm-experiences-heading">
         <div class="container mx-auto px-4 max-w-7xl">
-          <header class="text-center mb-12">
-            <h2 id="farm-experiences-heading" class="font-bold text-[#8f5d54] mb-4" style="font-size: 25px;">
+          <div class="max-w-4xl mx-auto">
+            <h2 id="farm-experiences-heading" class="font-extrabold leading-tight tracking-wide mb-10 text-center text-xl md:text-2xl" style="font-family: 'Gotham Book', sans-serif; color:#a75e3e;">
               Farm Experiences
             </h2>
-            <p class="text-gray-600 max-w-2xl mx-auto leading-relaxed" style="font-size: 13px;">
+            <p class="block text-center w-full font-extrabold leading-tight tracking-wide mb-10 text-sm md:text-base" style="font-family: 'Gotham Book', sans-serif; color:#a75e3e;">
               Connect with your food and learn about sustainable agriculture through hands-on activities
             </p>
-          </header>
+            <hr class="border-t-2 border-brand w-3/4 md:w-180 mx-auto rounded-full mb-10">
+          </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {{-- Experience Cards --}}
@@ -173,8 +284,8 @@
                 @endif
               </div>
               <div class="p-6">
-                <h4 class="font-semibold text-[#8f5d54] mb-3" style="font-size: 25px;">{{ $experience['title'] }}</h4>
-                <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px;">{{ $experience['desc'] }}</p>
+                <h4 class="font-semibold text-[#8f5d54] mb-3 text-lg md:text-xl">{{ $experience['title'] }}</h4>
+                <p class="text-gray-600 mb-4 leading-relaxed text-sm md:text-base">{{ $experience['desc'] }}</p>
                 <div class="space-y-2 mb-6">
                   <div class="flex items-center text-sm text-[#8f5d54]">
                     <i class="far fa-clock mr-2" aria-hidden="true"></i> {{ $experience['time'] }}
@@ -183,7 +294,7 @@
                     <i class="bi bi-{{ $experience['icon'] }} mr-2 text-[#8f5d54]" aria-hidden="true"></i> {{ $experience['capacity'] }}
                   </div>
                 </div>
-                <a href="#contact"
+                <a href="/contact"
                    class="w-full inline-flex items-center justify-center border-2 border-brand text-brand hover:bg-brand hover:text-white rounded-xl px-6 py-3 font-medium transition-all duration-300">
                   {{ $experience['cta'] }}
                 </a>
@@ -197,9 +308,6 @@
           </div>
         </div>
       </section>
-
-      {{-- SECTION: Visit or Contact Us --}}
-      <x-contact-section />
     </main>
 
     {{-- Floating Buttons --}}
