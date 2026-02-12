@@ -209,7 +209,7 @@ class BookingController extends Controller
         $current = $checkin->copy();
         
         while ($current->lt($checkout)) {
-            $rate = $this->getStaycationNightlyRate($staycation, $current, $seasonKey);
+            $rate = $this->pricingService->getStaycationRate($staycation, $current, $seasonKey);
             if ($rate > 0) {
                 $prices[] = [
                     'rate' => $rate,
@@ -250,45 +250,8 @@ class BookingController extends Controller
      */
     private function getStaycationNightlyRate(Staycation $staycation, \Carbon\Carbon $date, string $seasonKey): float
     {
-        if (empty($staycation->price_configs)) {
-            return (float)($staycation->price ?? 0);
-        }
-
-        $dateStr = $date->format('Y-m-d');
-        $dayOfWeek = $date->format('D');
-        $dayType = ($dayOfWeek === 'Sat' || $dayOfWeek === 'Sun') ? 'weekend' : 'weekday';
-
-        // 1. Check for specific date match
-        foreach ($staycation->price_configs as $config) {
-            if (isset($config['dates'])) {
-                $dates = is_array($config['dates']) ? $config['dates'] : [$config['dates']];
-                if (in_array($dateStr, $dates)) {
-                    return (float)($config['rates'][$seasonKey] ?? 0);
-                }
-            }
-        }
-
-        // 2. Check for day-of-week match (prioritize weekday/weekend matching)
-        foreach ($staycation->price_configs as $config) {
-            if (isset($config['days']) && in_array($dayOfWeek, $config['days'])) {
-                return (float)($config['rates'][$seasonKey] ?? 0);
-            }
-        }
-
-        // 3. Check for weekday/weekend matching (new feature)
-        foreach ($staycation->price_configs as $config) {
-            if (isset($config['day_type']) && $config['day_type'] === $dayType) {
-                return (float)($config['rates'][$seasonKey] ?? 0);
-            }
-        }
-
-        // 4. Fallback to first config
-        if (!empty($staycation->price_configs) && isset($staycation->price_configs[0]['rates'])) {
-            return (float)($staycation->price_configs[0]['rates'][$seasonKey] ?? 0);
-        }
-
-        // 5. Final fallback to staycation's base price
-        return (float)($staycation->price ?? 0);
+        // Use the PricingService for consistency
+        return $this->pricingService->getStaycationRate($staycation, $date, $seasonKey);
     }
 
     /**
@@ -1614,21 +1577,26 @@ class BookingController extends Controller
         }
 
         // For GET requests, delegate to the availability page builder
-        return $this->staycationAvailability();
+        return $this->staycationAvailability($request);
     }
 
-    public function staycationAvailability()
+    public function staycationAvailability(Request $request)
     {
-        $booking = session('booking', []);
+        // Check for dates in query parameters first (from calendar), then session
+        $checkin = $request->query('checkin');
+        $checkout = $request->query('checkout');
 
-        // If no dates selected, use default dates for demo purposes
-        if (empty($booking['checkin']) || empty($booking['checkout'])) {
-            $checkin = now()->format('Y-m-d');
-            $checkout = now()->addDays(2)->format('Y-m-d');
-        } else {
-            $checkin = $booking['checkin'];
-            $checkout = $booking['checkout'];
+        if (!$checkin || !$checkout) {
+            $booking = session('booking', []);
+            $checkin = $booking['checkin'] ?? now()->format('Y-m-d');
+            $checkout = $booking['checkout'] ?? now()->addDays(2)->format('Y-m-d');
         }
+
+        // Store dates in session for subsequent requests
+        session(['booking' => [
+            'checkin' => $checkin,
+            'checkout' => $checkout
+        ]]);
 
         // Determine season for the booking date range
         $checkinCarbon = \Carbon\Carbon::parse($checkin);

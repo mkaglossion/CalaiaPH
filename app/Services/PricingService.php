@@ -479,17 +479,17 @@ class PricingService
             }
         }
 
-        // 2. Find config with day-of-week match
+        // 2. Find config with day type (weekday/weekend) match - check before days
         foreach ($priceConfigs as $config) {
-            $days = $config['days'] ?? null;
-            if (is_array($days) && !empty($days) && in_array($checkinDayOfWeek, $days)) {
+            if (($config['day_type'] ?? null) === $dayType) {
                 return $getRate($config);
             }
         }
 
-        // 3. Find config with day type (weekday/weekend) match
+        // 3. Find config with day-of-week match
         foreach ($priceConfigs as $config) {
-            if (($config['day_type'] ?? null) === $dayType) {
+            $days = $config['days'] ?? null;
+            if (is_array($days) && !empty($days) && in_array($checkinDayOfWeek, $days)) {
                 return $getRate($config);
             }
         }
