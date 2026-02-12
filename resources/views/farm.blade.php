@@ -19,10 +19,10 @@
             <h2 class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center" style="font-family: 'Gotham Book', sans-serif;">
               Our Sustainable Farming
             </h2>
-            <p class="block text-center w-full font-extrabold leading-tight tracking-wide mb-10 text-sm md:text-base" style="font-family: 'Gotham Book', sans-serif; color:#a75e3e;">
+            <p class="mt-6 text-lg text-brand max-w-3xl mx-auto">
               Discover how we raise livestock and grow produce with respect for nature and animal welfare
             </p>
-            <hr class="border-t-2 border-brand w-3/4 md:w-180 mx-auto rounded-full mb-10">
+            <hr class="border-t-2 border-[#a97464] mt-6 mb-10 w-180 mx-auto rounded-full">
           </div>
 
           {{-- ============================================================
@@ -263,10 +263,10 @@
             <h2 id="farm-experiences-heading" class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center" style="font-family: 'Gotham Book', sans-serif;">
               Farm Experiences
             </h2>
-            <p class="block text-center w-full font-extrabold leading-tight tracking-wide mb-10 text-sm md:text-base" style="font-family: 'Gotham Book', sans-serif; color:#a75e3e;">
+            <p class="mt-6 text-lg text-brand max-w-3xl mx-auto">
               Connect with your food and learn about sustainable agriculture through hands-on activities
             </p>
-            <hr class="border-t-2 border-brand w-3/4 md:w-180 mx-auto rounded-full mb-10">
+            <hr class="border-t-2 border-[#a97464] mt-6 mb-10 w-180 mx-auto rounded-full">
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

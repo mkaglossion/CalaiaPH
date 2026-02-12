@@ -34,9 +34,10 @@
             <h2 class="text-3xl md:text-4xl font-bold text-brand mb-4" style="font-family: 'Gotham Book', sans-serif;">
               Our Special Events
             </h2>
-            <p class="text-lg text-gray-600 max-w-3xl mx-auto" style="">
+            <p class="mt-6 text-lg text-brand max-w-3xl mx-auto" style="">
               From intimate weddings to grand corporate celebrations, our beautiful farm setting provides the perfect backdrop for your special occasion.
             </p>
+            <hr class="border-t-2 border-[#a97464] mt-6 mb-10 w-180 mx-auto rounded-full">
           </div>
 
           @if($events->count() > 0)

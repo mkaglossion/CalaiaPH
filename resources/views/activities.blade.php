@@ -33,10 +33,10 @@
       <section class="container mx-auto px-4 py-12">
         <div class="max-w-300 mx-auto">
 
-          <h2 class="font-extrabold uppercase leading-tight tracking-wide mb-10 text-center" style="font-family: 'Gotham Book', sans-serif; color:#a97464; font-size: 25px;">
+          <h2 class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center" style="font-family: 'Gotham Book', sans-serif;">
             Enhance your stay with our fun-filled activities.
           </h2>
-          <hr class="border-t-2 border-[#a97464] mb-10 w-180 mx-auto rounded-full">
+          <hr class="border-t-2 border-[#a97464] mt-6 mb-10 w-180 mx-auto rounded-full">
 
           <div class="space-y-12">
 
