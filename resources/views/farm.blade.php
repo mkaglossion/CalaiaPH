@@ -16,7 +16,7 @@
       <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="sustainable-farming-heading">
         <div class="container mx-auto px-4 max-w-7xl">
           <div class="max-w-4xl mx-auto">
-            <h2 class="font-extrabold leading-tight tracking-wide mb-10 text-center text-xl md:text-2xl" style="font-family: 'Gotham Book', sans-serif; color:#a75e3e;">
+            <h2 class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center" style="font-family: 'Gotham Book', sans-serif;">
               Our Sustainable Farming
             </h2>
             <p class="block text-center w-full font-extrabold leading-tight tracking-wide mb-10 text-sm md:text-base" style="font-family: 'Gotham Book', sans-serif; color:#a75e3e;">
@@ -260,7 +260,7 @@
       <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="farm-experiences-heading">
         <div class="container mx-auto px-4 max-w-7xl">
           <div class="max-w-4xl mx-auto">
-            <h2 id="farm-experiences-heading" class="font-extrabold leading-tight tracking-wide mb-10 text-center text-xl md:text-2xl" style="font-family: 'Gotham Book', sans-serif; color:#a75e3e;">
+            <h2 id="farm-experiences-heading" class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center" style="font-family: 'Gotham Book', sans-serif;">
               Farm Experiences
             </h2>
             <p class="block text-center w-full font-extrabold leading-tight tracking-wide mb-10 text-sm md:text-base" style="font-family: 'Gotham Book', sans-serif; color:#a75e3e;">
