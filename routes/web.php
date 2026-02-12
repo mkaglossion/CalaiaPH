@@ -259,10 +259,17 @@ Route::middleware('auth')->group(function () {
 
 
 // ========== Admin Routes ==========
-Route::prefix('admin')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Main Sections
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-    Route::get('/users', [AdminUsersController::class, 'index'])->name('admin.users');
+    Route::get('/reports', [AdminReportsController::class, 'index'])->name('admin.reports.index');
+    Route::resource('users', AdminUsersController::class, ['names' => [
+        'index' => 'admin.users.index',
+        'show' => 'admin.users.show',
+        'edit' => 'admin.users.edit',
+        'update' => 'admin.users.update',
+        'destroy' => 'admin.users.destroy'
+    ]]);
     
     // Bookings Management
     Route::prefix('bookings')->group(function () {

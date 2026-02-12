@@ -11,6 +11,8 @@
   @include('layouts.partials.favicon')
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+  <style>[x-cloak]{display:none !important;}</style>
+
   <!-- Flatpickr JS -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <!-- Icons and SweetAlert -->
