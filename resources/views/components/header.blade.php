@@ -26,12 +26,31 @@
   x-data="{
     mobileOpen: false,
     init() {
-      Alpine.store('modals') || Alpine.store('modals', {
-        showLogin: false,
-        showSignup: false,
-        signupSuccess: false,
-        showCart: false
-      });
+      // Initialize modal store with default closed state
+      try {
+        if (!Alpine.store('modals')) {
+          Alpine.store('modals', {
+            showLogin: false,
+            showSignup: false,
+            signupSuccess: false,
+            showCart: false
+          });
+        } else {
+          // Ensure modals are closed on page load
+          Alpine.store('modals').showLogin = false;
+          Alpine.store('modals').showSignup = false;
+          Alpine.store('modals').showCart = false;
+        }
+      } catch (e) {
+        console.error('Alpine store initialization error:', e);
+        // Fallback: create store manually
+        Alpine.store('modals', {
+          showLogin: false,
+          showSignup: false,
+          signupSuccess: false,
+          showCart: false
+        });
+      }
     },
     closeAll() {
       this.mobileOpen = false;
@@ -43,7 +62,11 @@
   x-effect="
     const m = Alpine.store('modals');
     const lock = mobileOpen || (m && (m.showLogin || m.showSignup));
-    document.body.style.overflow = lock ? 'hidden' : '';
+    if (lock) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
   "
   @keydown.escape.window="closeAll()"
   class="bg-brand text-white shadow-lg top-0 z-50"
