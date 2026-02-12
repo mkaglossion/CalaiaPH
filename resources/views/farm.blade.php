@@ -45,7 +45,7 @@
       {{-- content --}}
       <div class="absolute inset-0 flex items-end">
         <div class="p-8 md:p-12 max-w-3xl">
-          <h3 class="text-white font-extrabold text-3xl md:text-5xl leading-tight">
+          <h3 class="text-white font-extrabold text-xl md:text-2xl leading-tight">
             Ethically raised livestock.
           </h3>
           <p class="mt-3 text-white/90 text-base md:text-lg leading-relaxed">
