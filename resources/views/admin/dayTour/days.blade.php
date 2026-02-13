@@ -283,7 +283,7 @@
                         </button>
 
                         <form id="delete-text-{{ $text->id }}"
-                              action="{{ route('day-text.destroy', $text->id) }}"
+                              action="{{ route('day-tour-texts.destroy', $text->id) }}"
                               method="POST" class="inline">
                             @csrf
                             @method('DELETE')
@@ -868,9 +868,9 @@ function dayTourManager() {
             formData.append('title', this.form.label);
             formData.append('content', this.form.text);
 
-            let url = '{{ route('day-text.store') }}';
+            let url = '{{ route('day-tour-texts.store') }}';
             if (this.editMode && this.form.id) {
-                url = `/admin/day-text/${this.form.id}`;
+                url = `/admin/day-tour-texts/${this.form.id}`;
                 formData.append('_method', 'PUT');
             }
 
@@ -973,12 +973,10 @@ function dayTourManager() {
 
         // Info Management
         addInfoItem() {
-            this.$set(this, 'infoForm', {
-                ...this.infoForm,
-                items: [...this.infoForm.items, { ...this.infoForm.newItem }]
-            });
+            this.infoForm.items.push({ ...this.infoForm.newItem });
             this.infoForm.newItem = { icon: 'bi-info-circle', text: '' };
             this.showAddItemModal = false;
+            this.saveInfoItems();  // Save immediately after adding
         },
 
         confirmRemoveInfoItem(index) {

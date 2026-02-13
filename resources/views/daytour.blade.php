@@ -5,6 +5,11 @@
    * Helper (optional): if CloudinaryHelper::optimize doesn't support these params yet,
    * you can update it later. For now, we still call it the same way you do.
    */
+
+  // Dynamic info section data
+  $infoTitle = $texts['info_title'] ?? 'Important Information';
+  $infoSubtitle = $texts['info_subtitle'] ?? 'Everything you need to know before your visit';
+  $infoItems = isset($texts['info_items']) ? json_decode($texts['info_items'], true) : [];
 @endphp
 
 <!doctype html>
@@ -59,7 +64,7 @@
   </div>
 
   <x-header active="daytour" />
-  <x-hero-slider :images="$swiperImages" :texts="$texts" />
+  <x-hero-slider :images="$swiperImages" :texts="array_diff_key($texts, ['info_items' => ''])" />
 
   <main class="py-12 md:py-16 lg:py-20" style="background-color: #f5efe7;">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
