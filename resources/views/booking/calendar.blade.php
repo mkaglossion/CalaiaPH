@@ -329,9 +329,9 @@
     <div class="pt-6 px-4 sm:px-6 lg:px-12">
         {{-- Header --}}
         <div class="text-center mb-10">
-            <h1 class="text-2xl font-bold tracking-tight" style="font-family:'Gotham Book', sans-serif;">Select Your Staycation to Check-in & Check-out Date</h1>
+            <h1 class="text-2xl font-bold tracking-tight">Select Your Staycation to Check-in & Check-out Date</h1>
             <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-            <p class="text-xs text-gray-500" style="font-family:'Gotham Book', sans-serif;">
+            <p class="text-xs text-gray-500">
                 Choose your check-in and check-out dates
             </p>
         </div>
@@ -553,92 +553,10 @@
         limitedThresholdText: 'Loading...',
 
         calculateSmartThresholds() {
-           try {
-             // Get today's date and availability
-             const today = new Date().toISOString().split('T')[0];
-             const todayAvailability = Math.max(0, this.availability[today]?.min_quantity || 0);
-
-             // Get all available quantities (exclude zero availability)
-             const quantities = Object.values(this.availability || {})
-               .map(d => Math.max(0, d.min_quantity || 0))
-               .filter(q => q > 0);
-
-             // Calculate max quantity for reference
-             this.legendMaxQty = quantities.length > 0 ? Math.max(...quantities) : 0;
-
-             // Fallback for no data
-             if (quantities.length === 0) {
-               this.legendLowThreshold = 1;
-               this.availableThresholdText = '2+ slots';
-               this.limitedThresholdText = '1–1 slots';
-               return;
-             }
-
-             // Safe statistical analysis
-             const sum = quantities.reduce((a, b) => a + b, 0);
-             const avg = quantities.length > 0 ? sum / quantities.length : 0;
-
-             // Calculate variance safely
-             const variance = quantities.length > 1
-               ? quantities.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / (quantities.length - 1)
-               : 0;
-             const std = variance > 0 ? Math.sqrt(variance) : 0;
-
-             // Smart threshold calculation with safe fallbacks
-             const todayWeight = 0.4;
-             const statWeight = 0.6;
-
-             // Today's threshold: 50% of today's availability
-             const todayThreshold = Math.max(1, Math.floor(todayAvailability * 0.5));
-
-             // Statistical threshold: average minus half standard deviation
-             const statThreshold = isNaN(avg) || isNaN(std)
-               ? Math.max(1, Math.floor(avg || 1))
-               : Math.max(1, Math.floor(avg - std * 0.5));
-
-             // Dynamic percentage-based thresholds that scale with today's availability
-             // This provides contextual availability information
-
-             let dynamicThreshold;
-             if (todayAvailability <= 3) {
-               // Small operations: be more conservative
-               dynamicThreshold = Math.max(1, Math.floor(todayAvailability * 0.4));
-             } else if (todayAvailability <= 10) {
-               // Medium operations: moderate thresholds
-               dynamicThreshold = Math.max(1, Math.floor(todayAvailability * 0.3));
-             } else {
-               // Large operations: higher thresholds but capped for UX
-               dynamicThreshold = Math.min(Math.floor(todayAvailability * 0.2), 5);
-             }
-
-             // Ensure minimum useful threshold
-             this.legendLowThreshold = Math.max(1, dynamicThreshold);
-
-             // Update text properties with safe values
-             const safeThreshold = Math.max(1, this.legendLowThreshold);
-             this.availableThresholdText = `${safeThreshold + 1}+ slots`;
-             this.limitedThresholdText = `1–${safeThreshold} slots`;
-
-             console.log('Smart threshold calculation:', {
-               todayAvailability,
-               quantitiesCount: quantities.length,
-               avg: isNaN(avg) ? 'NaN' : avg.toFixed(1),
-               std: isNaN(std) ? 'NaN' : std.toFixed(1),
-               maxQty: this.legendMaxQty,
-               todayThreshold,
-               statThreshold,
-               finalThreshold: this.legendLowThreshold,
-               availableText: this.availableThresholdText,
-               limitedText: this.limitedThresholdText
-             });
-
-           } catch (error) {
-             console.error('Error in calculateSmartThresholds:', error);
-             // Fallback values
-             this.legendLowThreshold = 1;
-             this.availableThresholdText = '2+ slots';
-             this.limitedThresholdText = '1–1 slots';
-           }
+           // Use same threshold as check-availability component: 30% of total quantity
+           this.legendLowThreshold = Math.max(1, Math.floor(this.totalQuantity * 0.3));
+           this.availableThresholdText = (this.legendLowThreshold + 1) + '+ slots';
+           this.limitedThresholdText = '1-' + this.legendLowThreshold + ' slots';
         },
 
         initCalendar(keepSelected = false) {
@@ -799,6 +717,13 @@
 
               // redraw to apply range outlines consistently
               this.initCalendar(true);
+            },
+            onReady(selectedDates, dateStr, instance) {
+              // Add id to month dropdown and year input for accessibility
+              const monthSelect = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
+              if (monthSelect) monthSelect.id = 'flatpickr-month';
+              const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
+              if (yearInput) yearInput.id = 'flatpickr-year';
             }
           });
         },

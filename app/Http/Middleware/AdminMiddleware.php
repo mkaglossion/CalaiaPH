@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminMiddleware
 {
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
         if (Auth::check() && Auth::user()->user_type === 'admin') {
             return $next($request);

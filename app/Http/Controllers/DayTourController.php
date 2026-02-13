@@ -32,6 +32,18 @@ class DayTourController extends Controller
                 return [strtolower($title) => $content];
             })->toArray();
 
+            // Ensure info_items is always set with default if not exists
+            if (!isset($texts['info_items'])) {
+                $texts['info_items'] = json_encode([
+                    ['icon' => 'bi-clock', 'text' => 'Operating hours: 8:00 AM - 5:00 PM daily'],
+                    ['icon' => 'bi-calendar-check', 'text' => 'Advance booking recommended for guaranteed slots'],
+                    ['icon' => 'bi-person', 'text' => 'Children under 3 years old enter for free'],
+                    ['icon' => 'bi-people', 'text' => 'Group discounts available for 10+ persons'],
+                    ['icon' => 'bi-person', 'text' => 'Wear comfy clothing and footwear for outdoor activities'],
+                    ['icon' => 'bi-cup-straw', 'text' => 'Food and beverages available for purchase on site'],
+                ]);
+            }
+
             $packages = DayTour::with('activities', 'swiperImages')->get();
 
             // Fetch info section data from DayTourText

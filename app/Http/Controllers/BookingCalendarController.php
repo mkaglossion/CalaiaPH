@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\Staycation;
 use App\Models\StaycationInventory;
+use App\Models\PeakPeriod;
+use App\Models\PeakType;
 
 class BookingCalendarController extends Controller
 {
@@ -59,10 +61,38 @@ class BookingCalendarController extends Controller
             $maxQty = $totalQuantity;
         }
 
+        // Determine season for pricing
+        $season = $this->determineSeasonForCalendar();
+
         // You can pass initial selected dates if you want:
         $checkin = $request->query('checkin');
         $checkout = $request->query('checkout');
 
-        return view('booking.calendar', compact('availability', 'checkin', 'checkout', 'totalQuantity', 'maxQty'));
+        return view('booking.calendar', compact('availability', 'checkin', 'checkout', 'totalQuantity', 'maxQty', 'season'));
+    }
+
+    private function determineSeasonForCalendar()
+    {
+        // Use today's date to determine season
+        $today = Carbon::today();
+
+        // Check for peak periods
+        $peakPeriod = PeakPeriod::where('start_date', '<=', $today->format('Y-m-d'))
+            ->where('end_date', '>=', $today->format('Y-m-d'))
+            ->with('peakType')
+            ->orderByRaw('(SELECT priority FROM peak_types WHERE peak_types.id = peak_periods.peak_type_id) DESC')
+            ->first();
+
+        if ($peakPeriod) {
+            $seasonName = $peakPeriod->peakType->name;
+            $seasonKeyMap = [
+                'Non-Peak' => 'nonPeak',
+                'Peak' => 'peak',
+                'Super-Peak' => 'superPeak'
+            ];
+            return $seasonKeyMap[$seasonName] ?? 'nonPeak';
+        }
+
+        return 'nonPeak';
     }
 }

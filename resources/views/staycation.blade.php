@@ -51,7 +51,7 @@
               <img src="{{ $glampingImage }}" alt="Glamping Tent" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
             </div>
             <div class="px-4 py-7 text-center">
-              <h3 class="mb-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px;">Glamping Tent</h3>
+              <h3 class="mb-4 font-extrabold uppercase tracking-wide staycation-heading">Glamping Tent</h3>
               <div class="mx-auto my-4 h-px w-full" style="background:#dce8d6;"></div>
               <ul class="space-y-2 text-xs uppercase tracking-widest" style="color:#8f6a60;">
                 <li>LUXURY TENT SETUP</li>
@@ -86,7 +86,7 @@
               <img src="{{ $campingImage }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
             </div>
             <div class="px-4 py-7 text-center">
-              <h3 class="mb-4 font-extrabold uppercase tracking-wide" style="color:#97655A; font-size: 25px;">Camping</h3>
+              <h3 class="mb-4 font-extrabold uppercase tracking-wide staycation-heading">Camping</h3>
               <div class="mx-auto my-4 h-px w-full" style="background:#dce8d6;"></div>
               <ul class="space-y-2 text-xs uppercase tracking-widest" style="color:#8f6a60;">
                 <li>TENT SETUP ASSISTANCE</li>
@@ -114,7 +114,7 @@
 
           <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif;"><i class="bi bi-house-fill"></i> Standard Glamping</h4></div>
+              <div class="px-4 py-2" style="background:#6b7280;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2"><i class="bi bi-house-fill"></i> Standard Glamping</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">
@@ -155,7 +155,7 @@
 
             {{-- Premium Glamping --}}
             <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(128,128,128,0.5);">
-              <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2" style="font-family: 'Gotham Book', sans-serif;"><i class="bi bi-star-fill"></i> Premium Glamping</h4></div>
+              <div class="px-4 py-2" style="background:#00848d;color:white"><h4 class="text-lg md:text-xl font-semibold flex items-center gap-2"><i class="bi bi-star-fill"></i> Premium Glamping</h4></div>
               <div class="p-4 space-y-4">
                 <div class="swiper relative" data-swiper="modal">
                   <div class="swiper-wrapper">

@@ -13,11 +13,23 @@ return new class extends Migration
     public function up(): void
     {
         // Get all columns in bookings table
-        $columns = DB::select("DESCRIBE bookings");
+        if (DB::getDriverName() === 'sqlite') {
+            $columns = DB::select("PRAGMA table_info(bookings)");
+        } else {
+            $columns = Schema::getConnection()->getDoctrineSchemaManager()->listTableColumns('bookings');
+        }
         
         Schema::table('bookings', function (Blueprint $table) use ($columns) {
             foreach ($columns as $column) {
-                $columnName = $column->Field;
+                if (DB::getDriverName() === 'sqlite') {
+                    $columnName = $column->name;
+                    $isNullable = $column->notnull == 0;
+                    $type = strtolower($column->type);
+                } else {
+                    $columnName = $column->getName();
+                    $isNullable = !$column->getNotnull();
+                    $type = $column->getType()->getName();
+                }
                 
                 // Skip primary key, timestamps, and columns we specifically need
                 $skipColumns = ['id', 'created_at', 'updated_at', 'transaction_id', 'customer_name', 
@@ -29,19 +41,21 @@ return new class extends Migration
                 }
                 
                 // Check if column is not nullable
-                if ($column->Null === 'NO') {
-                    // Make it nullable based on type
-                    if (strpos($column->Type, 'varchar') !== false || strpos($column->Type, 'text') !== false) {
-                        $table->string($columnName)->nullable()->change();
-                    } elseif (strpos($column->Type, 'int') !== false || strpos($column->Type, 'bigint') !== false) {
-                        $table->integer($columnName)->nullable()->change();
-                    } elseif (strpos($column->Type, 'decimal') !== false) {
-                        $table->decimal($columnName, 10, 2)->nullable()->change();
-                    } elseif (strpos($column->Type, 'date') !== false) {
-                        $table->date($columnName)->nullable()->change();
-                    } elseif (strpos($column->Type, 'timestamp') !== false) {
-                        $table->timestamp($columnName)->nullable()->change();
-                    }
+                if ($isNullable) {
+                    continue;
+                }
+                
+                // Make it nullable based on type
+                if (strpos($type, 'varchar') !== false || strpos($type, 'text') !== false || $type === 'string') {
+                    $table->string($columnName)->nullable()->change();
+                } elseif (strpos($type, 'int') !== false || strpos($type, 'bigint') !== false || $type === 'integer') {
+                    $table->integer($columnName)->nullable()->change();
+                } elseif (strpos($type, 'decimal') !== false || $type === 'decimal') {
+                    $table->decimal($columnName, 10, 2)->nullable()->change();
+                } elseif (strpos($type, 'date') !== false || $type === 'date') {
+                    $table->date($columnName)->nullable()->change();
+                } elseif (strpos($type, 'timestamp') !== false || $type === 'datetime') {
+                    $table->timestamp($columnName)->nullable()->change();
                 }
             }
         });

@@ -20,6 +20,7 @@
               title="Shop Our Products"
               subtitle="Farm-fresh produce and quality frozen goods delivered straight from our fields to your table"
           />
+          <hr class="border-t-2 border-[#a97464] mt-6 mb-10 w-180 mx-auto rounded-full">
 
           <x-shop-products />
         </div>

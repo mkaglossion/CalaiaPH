@@ -10,7 +10,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('breakfast', 'lunch', 'dinner', 'package', 'special') DEFAULT 'package'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('breakfast', 'lunch', 'dinner', 'package', 'special') DEFAULT 'package'");
+        }
     }
 
     /**
@@ -18,6 +20,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('breakfast', 'lunch', 'dinner', 'package') DEFAULT 'package'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('breakfast', 'lunch', 'dinner', 'package') DEFAULT 'package'");
+        }
     }
 };

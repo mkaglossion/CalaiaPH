@@ -3,6 +3,14 @@
         Options -MultiViews -Indexes
     </IfModule>
 
+    # Add font MIME types
+    <IfModule mod_mime.c>
+        AddType font/woff2 .woff2
+        AddType font/woff .woff
+        AddType application/font-woff2 .woff2
+        AddType application/font-woff .woff
+    </IfModule>
+
     RewriteEngine On
 
     # Handle Authorization Header

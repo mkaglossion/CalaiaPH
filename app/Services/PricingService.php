@@ -440,9 +440,9 @@ class PricingService
     }
 
     /**
-     * Get staycation rate based on date and season
+     * Get staycation rate based on date, season, and day type
      *
-     * Priority: Specific Date > Day-of-Week > Season > Fallback
+     * Priority: Specific Date > Day-of-Week > Day Type (weekday/weekend) > Season > Fallback
      *
      * @param \App\Models\Staycation $staycation
      * @param \Carbon\Carbon $checkinDate
@@ -452,46 +452,50 @@ class PricingService
     public function getStaycationRate(\App\Models\Staycation $staycation, \Carbon\Carbon $checkinDate, string $season): float
     {
         $priceConfigs = $staycation->price_configs;
-
         if (empty($priceConfigs)) {
             return $staycation->price ?? 0;
         }
 
         $checkinDayOfWeek = $checkinDate->format('D'); // Mon, Tue, etc.
         $checkinDateStr = $checkinDate->format('Y-m-d');
+        $dayType = in_array($checkinDayOfWeek, ['Sat', 'Sun']) ? 'weekend' : 'weekday';
+
+        // Helper to safely get rate from config
+        $getRate = function (array $config) use ($season): float {
+            return $config['rates'][$season] ?? 0;
+        };
 
         // 1. Find config with specific date match
         foreach ($priceConfigs as $config) {
-            // Check single date
-            if (isset($config['dates']) && !empty($config['dates'])) {
-                $dates = is_array($config['dates']) ? $config['dates'] : [$config['dates']];
-                if (in_array($checkinDateStr, $dates)) {
-                    return $config['rates'][$season] ?? 0;
-                }
+            $dates = $config['dates'] ?? [];
+            $dates = is_array($dates) ? $dates : [$dates];
+            if (!empty($dates) && in_array($checkinDateStr, $dates)) {
+                return $getRate($config);
             }
 
-            // Check multiple dates
-            if (isset($config['multipleDates']) && is_array($config['multipleDates'])) {
-                if (in_array($checkinDateStr, $config['multipleDates'])) {
-                    return $config['rates'][$season] ?? 0;
-                }
+            $multipleDates = $config['multipleDates'] ?? null;
+            if (is_array($multipleDates) && !empty($multipleDates) && in_array($checkinDateStr, $multipleDates)) {
+                return $getRate($config);
             }
         }
 
-        // 2. Find config with day-of-week match
+        // 2. Find config with day type (weekday/weekend) match - check before days
         foreach ($priceConfigs as $config) {
-            if (isset($config['days']) && is_array($config['days']) && in_array($checkinDayOfWeek, $config['days'])) {
-                return $config['rates'][$season] ?? 0;
+            if (($config['day_type'] ?? null) === $dayType) {
+                return $getRate($config);
             }
         }
 
-        // 3. Fallback to first config
-        $firstConfig = $priceConfigs[0];
-        if (isset($firstConfig['rates'])) {
-            return $firstConfig['rates'][$season] ?? 0;
+        // 3. Find config with day-of-week match
+        foreach ($priceConfigs as $config) {
+            $days = $config['days'] ?? null;
+            if (is_array($days) && !empty($days) && in_array($checkinDayOfWeek, $days)) {
+                return $getRate($config);
+            }
         }
 
-        // 4. Final fallback
-        return $staycation->price ?? 0;
+        // 4. Fallback to first config
+        $firstConfig = $priceConfigs[0];
+        return $getRate($firstConfig);
     }
 }

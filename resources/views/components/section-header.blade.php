@@ -10,13 +10,13 @@
 
 <header class="{{ $centered ? 'text-center' : '' }} mb-12" {{ $id ? 'id="' . $id . '"' : '' }}>
     @if($title)
-        <h2 class="{{ $titleSize }} font-bold text-[#8f5d54] mb-4" style="">
+        <h2 class="{{ $titleSize }} font-bold text-brand mb-4 {{ $centered ? 'text-center' : '' }}">
             {{ $title }}
         </h2>
     @endif
 
     @if($subtitle)
-        <p class="{{ $subtitleSize }} text-gray-600 max-w-2xl {{ $centered ? 'mx-auto' : '' }} leading-relaxed" style="">
+        <p class="mt-6 {{ $subtitleSize }} text-brand max-w-3xl {{ $centered ? 'mx-auto text-center' : '' }}" style="">
             {{ $subtitle }}
         </p>
     @endif

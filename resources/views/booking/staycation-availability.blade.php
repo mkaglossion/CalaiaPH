@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     @if(config('broadcasting.default') !== 'null')
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
     <script>
         window.Echo = new Echo({
@@ -65,9 +66,9 @@
         <div class="pt-6 px-4 sm:px-6 lg:px-12">
             {{-- Header --}}
             <div class="text-center mb-10">
-                <h1 class="text-2xl font-bold tracking-tight" style="font-family:'Gotham Book', sans-serif;">Select Room(s)</h1>
+                <h1 class="text-2xl font-bold tracking-tight">Select Room(s)</h1>
                 <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-                <p class="text-xs text-gray-500" style="font-family:'Gotham Book', sans-serif;">
+                <p class="text-xs text-gray-500">
                     Select your preferred accommodation + guests + pet options
                 </p>
             </div>
@@ -102,7 +103,7 @@
                     {{-- Filter --}}
                     <div class="mb-6 flex items-end gap-3 flex-wrap">
                         <div>
-                            <label for="roomType" class="block text-sm font-medium text-gray-700 mb-2" style="font-family:'Gotham Book', sans-serif;">Filter by Type:</label>
+                            <label for="roomType" class="block text-sm font-medium text-gray-700 mb-2">Filter by Type:</label>
                             <select id="roomType" x-model="roomType"
                                     class="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8f5d54] focus:border-[#8f5d54]">
                                 <option value="all">All Types</option>
@@ -209,7 +210,7 @@
                                 </div>
 
                                 <div class="p-6">
-                                    <h3 class="text-xl font-bold mb-2" style="font-family:'Gotham Book', sans-serif;">
+                                    <h3 class="text-xl font-bold mb-2">
                                         {{ $roomDetail['name'] }}
                                     </h3>
 
@@ -227,19 +228,19 @@
                                         @if($priceRange['min_price'] > 0 && $priceRange['max_price'] > 0)
                                             @if($priceRange['min_price'] == $priceRange['max_price'])
                                                 {{-- All prices are the same --}}
-                                                {{ $priceRange['min_label'] }} / 
+                                                {{ $priceRange['min_label'] }}
                                             @else
                                                 {{-- Price range with different min/max --}}
-                                                {{ $priceRange['min_label'] }} - {{ $priceRange['max_label'] }} / 
+                                                {{ $priceRange['min_label'] }} - {{ $priceRange['max_label'] }}
                                             @endif
                                         @else
-                                            ₱{{ number_format($roomDetail['price'], 0) }} / 
+                                            ₱{{ number_format($roomDetail['price'], 0) }}
                                         @endif
 
                                         @if($isBYOT || $isCarCamping)
-                                            slot
+                                            {{-- BYOT/Car Camping: show just price, no suffix --}}
                                         @else
-                                            night
+                                            / night
                                         @endif
                                     </div>
 
@@ -316,8 +317,8 @@
                                             {{-- BYOT: Show "How many BYOT" only --}}
                                             <div class="grid grid-cols-1 gap-2">
                                                 <div>
-                                                    <label class="text-xs text-gray-600 font-semibold">How many BYOT?</label>
-                                                    <input type="number" min="1" max="{{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }}"
+                                                    <label for="byot-qty-{{ $staycation->id }}" class="md:hidden text-xs text-gray-600 font-semibold">How many BYOT?</label>
+                                                    <input type="number" id="byot-qty-{{ $staycation->id }}" min="1" max="{{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }}"
                                                            class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
                                                            :value="getRoom({{ $staycation->id }}).extra_mattress || 1"
                                                            @input="validateQuantity({{ $staycation->id }}, 'extra_mattress', $event.target.value, {{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }})"
@@ -329,8 +330,8 @@
                                             {{-- Car Camping: Show "Number of Vehicles" only --}}
                                             <div class="grid grid-cols-1 gap-2">
                                                 <div>
-                                                    <label class="text-xs text-gray-600 font-semibold">Number of Vehicles</label>
-                                                    <input type="number" min="1" max="{{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }}"
+                                                    <label for="vehicles-{{ $staycation->id }}" class="md:hidden text-xs text-gray-600 font-semibold">Number of Vehicles</label>
+                                                    <input type="number" id="vehicles-{{ $staycation->id }}" min="1" max="{{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }}"
                                                            class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
                                                            :value="getRoom({{ $staycation->id }}).extra_mattress || 1"
                                                            @input="validateQuantity({{ $staycation->id }}, 'extra_mattress', $event.target.value, {{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }})"
@@ -342,24 +343,24 @@
                                             {{-- Regular rooms: Adults, Children, Extra Mattress --}}
                                             <div class="grid grid-cols-3 gap-2">
                                                 <div>
-                                                    <label class="text-xs text-gray-600">Adults</label>
-                                                    <input type="number" min="1" max="20"
+                                                    <label for="adults-{{ $staycation->id }}" class="md:hidden text-xs text-gray-600">Adults</label>
+                                                    <input type="number" id="adults-{{ $staycation->id }}" min="1" max="20"
                                                            class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
                                                            :value="getRoom({{ $staycation->id }}).adults"
                                                            @input="validateAndSetGuests({{ $staycation->id }}, 'adults', $event.target.value, '{{ strtolower($roomDetail['name']) }}')"
                                                     >
                                                 </div>
                                                 <div>
-                                                    <label class="text-xs text-gray-600">Children</label>
-                                                    <input type="number" min="0" max="20"
+                                                    <label for="children-{{ $staycation->id }}" class="md:hidden text-xs text-gray-600">Children</label>
+                                                    <input type="number" id="children-{{ $staycation->id }}" min="0" max="20"
                                                            class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
                                                            :value="getRoom({{ $staycation->id }}).children"
                                                            @input="validateAndSetGuests({{ $staycation->id }}, 'children', $event.target.value, '{{ strtolower($roomDetail['name']) }}')"
                                                     >
                                                 </div>
                                                 <div>
-                                                    <label class="text-xs text-gray-600">Extra Mattress</label>
-                                                    <input type="number" min="0" max="8"
+                                                    <label for="mattress-{{ $staycation->id }}" class="md:hidden text-xs text-gray-600">Extra Mattress</label>
+                                                    <input type="number" id="mattress-{{ $staycation->id }}" min="0" max="8"
                                                            class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
                                                            :value="getRoom({{ $staycation->id }}).extra_mattress"
                                                            @input="setField({{ $staycation->id }}, 'extra_mattress', $event.target.value)"
@@ -421,8 +422,8 @@
                                                     </label>
 
                                                     <div class="mt-3">
-                                                        <label class="text-xs text-gray-700">Number of pets</label>
-                                                        <input type="number" min="0" max="2"
+                                                        <label for="pets-{{ $staycation->id }}" class="md:hidden text-xs text-gray-700">Number of pets</label>
+                                                        <input type="number" id="pets-{{ $staycation->id }}" min="0" max="2"
                                                                class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
                                                                :disabled="!getRoom({{ $staycation->id }}).pet_agreement"
                                                                :value="getRoom({{ $staycation->id }}).num_pets"
@@ -463,7 +464,7 @@
                 {{-- RIGHT --}}
                 <div class="lg:col-span-1">
                     <div class="bg-white rounded-2xl shadow-lg p-6">
-                        <h3 class="text-xl font-bold mb-6" style="font-family:'Gotham Book', sans-serif;">Booking Summary</h3>
+                        <h3 class="text-xl font-bold mb-6">Booking Summary</h3>
 
                         {{-- Dates --}}
                         <div class="mb-6">
@@ -552,10 +553,10 @@
                                                         </template>
                                                     </div>
                                                 </template>
-                                                <div class="text-xs text-gray-600 mt-2 space-y-1">
+                                                 <div class="text-xs text-gray-600 mt-2 space-y-1">
                                                     <div class="text-xs text-gray-500">Price Breakdown:</div>
                                                     <div class="pl-2 space-y-0.5">
-                                                        <div>Accommodation: <span class="font-semibold text-green-600" x-text="'₱' + calculateBasePrice(item).toLocaleString()"></span></div>
+                                                        <div>Accommodation: <span class="font-semibold text-green-600" x-text="getPriceRange(item)"></span></div>
                                                         <div x-show="item.extra_mattress > 0 && !item.name.toLowerCase().includes('byot') && !item.name.toLowerCase().includes('car camping') && !item.name.toLowerCase().includes('bring your own tent')">Extra Mattress: <span class="font-semibold text-green-600" x-text="'₱' + calculateMattressPrice(item).toLocaleString()"></span></div>
                                                         <div x-show="item.pets === 'yes' && item.num_pets > 0 && !item.name.toLowerCase().includes('byot') && !item.name.toLowerCase().includes('car camping') && !item.name.toLowerCase().includes('bring your own tent')">Pets: <span class="font-semibold text-green-600" x-text="'₱' + calculatePetPrice(item).toLocaleString()"></span></div>
                                                         <div class="border-t pt-1 font-semibold">Total: <span class="text-green-600" x-text="calculateRoomPrice(item)"></span></div>
@@ -584,6 +585,19 @@
                             <div class="bg-green-50 rounded-lg p-4 border border-green-200">
                                 <div class="text-2xl font-bold text-green-600" x-text="calculateTotalPrice()"></div>
                                 <div class="text-sm text-green-700 mt-1">Includes accommodation + extras (final price calculated at checkout)</div>
+                                <button type="button"
+                                        x-show="hasRegularRooms()"
+                                        @click="showPriceBreakdownModal = true"
+                                        class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition">
+
+                                    <i class="bi bi-eye text-base"></i>
+                                    <span>View Price Breakdown</span>
+
+                                </button>
+                                 <div x-show="!hasRegularRooms()" class="mt-3 text-sm text-gray-500">
+                                     <i class="bi bi-info-circle mr-1"></i>
+                                     <span>Per slot pricing - no nightly breakdown</span>
+                                 </div>
                             </div>
                         </div>
 
@@ -633,7 +647,7 @@
                         </div>
 
                         <div class="mx-auto" style="max-width:400px;">
-                            <input x-ref="calendar" type="text" class="w-full border rounded-lg px-3 py-2" readonly />
+                            <input x-ref="calendar" id="availability-calendar" type="text" class="w-full border rounded-lg px-3 py-2" readonly />
                         </div>
 
                         <div class="mt-4 text-sm text-gray-600">
@@ -717,7 +731,115 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Price Breakdown Modal (Exact Screenshot Design) --}}
+<div x-show="showPriceBreakdownModal"
+     x-cloak
+     class="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto"
+     @click.self="showPriceBreakdownModal = false">
+
+    <div class="w-full max-w-3xl bg-white rounded-xl shadow-2xl overflow-hidden mt-6">
+
+        {{-- Header --}}
+        <div class="px-6 py-4 border-b flex items-start justify-between">
+            <div>
+                <div class="text-xl font-bold text-gray-900">Calculation Result</div>
+                <div class="text-sm text-gray-500 mt-1">
+                    <span x-text="currentBreakdownTitle()"></span>
                 </div>
+            </div>
+
+            <button type="button"
+                    class="text-gray-400 hover:text-gray-700 transition"
+                    @click="showPriceBreakdownModal = false">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+
+            {{-- TOTAL GREEN BOX --}}
+            <div class="rounded-lg border border-green-200 bg-green-50 p-6">
+                <div class="text-4xl font-extrabold text-green-600" x-text="calculateTotalPrice()"></div>
+                <div class="text-sm text-gray-700 mt-2">Total Amount</div>
+            </div>
+
+            {{-- DAILY BREAKDOWN TITLE --}}
+            <div class="text-lg font-bold text-gray-900">Daily Breakdown</div>
+
+            {{-- TABLE --}}
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                <table class="w-full text-sm min-w-150">
+                    <thead class="bg-gray-50 text-gray-700">
+                        <tr>
+                            <th class="text-left px-4 py-3 font-semibold">Room</th>
+                            <th class="text-left px-4 py-3 font-semibold">Date</th>
+                            <th class="text-left px-4 py-3 font-semibold">Day</th>
+                            <th class="text-left px-4 py-3 font-semibold">Season</th>
+                            <th class="text-left px-4 py-3 font-semibold">Day Type</th>
+                            <th class="text-right px-4 py-3 font-semibold">Rate</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-gray-100">
+
+                        {{-- Show breakdown for all selected rooms --}}
+                        <template x-for="(row, idx) in getAllRoomsBreakdown()" :key="idx">
+                            <tr class="bg-white">
+                                <td class="px-4 py-3 text-gray-800 font-medium" x-text="row.roomName || 'Room'"></td>
+                                <td class="px-4 py-3 text-gray-800" x-text="row.dateRaw"></td>
+                                <td class="px-4 py-3 text-gray-600" x-text="row.dayLong"></td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold"
+                                          :class="row.seasonType === 'Super-Peak'
+                                            ? 'bg-red-200 text-red-800'
+                                            : (row.seasonType === 'Peak'
+                                                ? 'bg-yellow-200 text-yellow-800'
+                                                : 'bg-green-200 text-green-800')"
+                                          x-text="row.season">
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold"
+                                          :class="row.dayType === 'Weekend'
+                                            ? 'bg-purple-200 text-purple-800'
+                                            : (row.dayType === 'Holiday'
+                                                ? 'bg-blue-200 text-blue-800'
+                                                : 'bg-gray-200 text-gray-800')"
+                                          x-text="row.dayType">
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-right font-semibold text-green-600"
+                                    x-text="'₱' + row.rate.toLocaleString()"></td>
+                            </tr>
+                        </template>
+
+                        {{-- TOTAL ROW --}}
+                        <tr class="bg-green-50 border-t border-green-200">
+                            <td colspan="5" class="px-4 py-4 text-right font-semibold text-gray-800">Total:</td>
+                            <td class="px-4 py-4 text-right font-bold text-green-600"
+                                x-text="calculateTotalPrice()">
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            {{-- FOOTER CLOSE BUTTON --}}
+            <div class="flex justify-end pt-2">
+                <button type="button"
+                        class="px-6 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-semibold transition"
+                        @click="showPriceBreakdownModal = false">
+                    Close
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
 
             </div>
         </div>
@@ -744,6 +866,7 @@
                 // modals
                 calendarModal: false,
                 petPolicyModal: false,
+                showPriceBreakdownModal: false,
                 currentRoomId: null,
                 currentRoomName: '',
                 calendarInstance: null,
@@ -754,6 +877,8 @@
 
                 // selected rooms map: { [id]: {id,name,type,adults,children,extra_mattress,pets,pet_agreement,num_pets} }
                 selectedRooms: {},
+                // price breakdowns for selected rooms (from API)
+                priceBreakdowns: {},
 
                 toggleRoom(roomId, type) {
                     const staycations = @json($staycations);
@@ -810,6 +935,46 @@
 
                 selectedCount() {
                     return Object.keys(this.selectedRooms).length;
+                },
+
+                hasBYOTorCarCamping() {
+                    // Check if any selected room is BYOT or Car Camping
+                    for (const roomId in this.selectedRooms) {
+                        const room = this.selectedRooms[roomId];
+                        const roomNameLower = (room.name || '').toLowerCase();
+                        const roomType = (room.type || '').toLowerCase();
+                        
+                        // Check by name or by type field
+                        if (roomNameLower.includes('byot') || 
+                            roomNameLower.includes('bring your own tent') || 
+                            roomNameLower.includes('car camping') ||
+                            roomType === 'byot' ||
+                            roomType === 'car camping') {
+                            return true;
+                        }
+                    }
+                    return false;
+                },
+
+                hasRegularRooms() {
+                    // Check if any selected room is NOT BYOT or Car Camping
+                    for (const roomId in this.selectedRooms) {
+                        const room = this.selectedRooms[roomId];
+                        const roomNameLower = (room.name || '').toLowerCase();
+                        const roomType = (room.type || '').toLowerCase();
+                        
+                        // Check if it's NOT BYOT and NOT Car Camping
+                        const isSpecialRoom = roomNameLower.includes('byot') || 
+                            roomNameLower.includes('bring your own tent') || 
+                            roomNameLower.includes('car camping') ||
+                            roomType === 'byot' ||
+                            roomType === 'car camping';
+                        
+                        if (!isSpecialRoom) {
+                            return true;
+                        }
+                    }
+                    return false;
                 },
 
                 getRoom(roomId) {
@@ -1110,6 +1275,13 @@
                                     dayElem.style.outline = '2px solid #3b82f6';
                                     dayElem.style.outlineOffset = '-2px';
                                 }
+                            },
+                            onReady(selectedDates, dateStr, instance) {
+                                // Add id to month dropdown and year input for accessibility
+                                const monthSelect = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
+                                if (monthSelect) monthSelect.id = 'flatpickr-month';
+                                const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
+                                if (yearInput) yearInput.id = 'flatpickr-year';
                             }
                         });
                     })
@@ -1122,13 +1294,42 @@
                             mode: 'range',
                             dateFormat: 'Y-m-d',
                             defaultDate: [checkin, checkout],
-                            inline: true
+                            inline: true,
+                            onReady(selectedDates, dateStr, instance) {
+                                // Add id to month dropdown and year input for accessibility
+                                const monthSelect = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
+                                if (monthSelect) monthSelect.id = 'flatpickr-month';
+                                const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
+                                if (yearInput) yearInput.id = 'flatpickr-year';
+                            }
                         });
                     });
                 },
 
                 calculateBasePrice(room, selectedRoomData = null) {
-                    // Calculate nights dynamically from stored checkin/checkout
+                    // For now, use the fallback method directly to avoid async issues
+                    return this.fallbackCalculateBasePrice(room, selectedRoomData);
+                },
+
+                fallbackCalculateBasePrice(room, selectedRoomData = null) {
+                    // Check if BYOT or Car Camping FIRST (per quantity pricing, NOT per night)
+                    const roomNameLower = (room.name || '').toLowerCase();
+                    const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
+                    const isCarCamping = roomNameLower.includes('car camping');
+                    const isSpecialRoom = isBYOT || isCarCamping;
+
+                    // Get quantity
+                    const quantity = selectedRoomData ? parseInt(selectedRoomData.extra_mattress || 1) : 1;
+
+                    // For BYOT/Car Camping: just base price × quantity (NOT per night)
+                    if (isSpecialRoom) {
+                        // Get the base price from roomDetail or room object
+                        const roomDetail = this.roomDetailsMap && this.roomDetailsMap[room.id] ? this.roomDetailsMap[room.id] : null;
+                        const basePrice = (roomDetail && roomDetail.price) ? roomDetail.price : (room.price || 1500);
+                        return basePrice * quantity;
+                    }
+
+                    // For regular rooms: calculate per night × nights
                     let nights = 1;
                     if (this.checkin && this.checkout) {
                         const checkinDate = new Date(this.checkin);
@@ -1139,29 +1340,67 @@
                     // Get room details from roomDetailsMap which includes dynamic pricing from admin panel
                     const roomDetail = this.roomDetailsMap && this.roomDetailsMap[room.id] ? this.roomDetailsMap[room.id] : null;
 
-                    // Use the exact base price from admin panel without modifications
-                    let basePrice = (roomDetail && roomDetail.price) ? roomDetail.price : 0;
+                    // Use dynamic pricing from roomDetails
+                    const dayTypePricing = (roomDetail && roomDetail.day_type_pricing) ? roomDetail.day_type_pricing : {};
+                    const peakPeriods = (roomDetail && roomDetail.peak_periods) ? roomDetail.peak_periods : [];
 
-                    // If no price from admin, use type-based default
-                    if (basePrice === 0) {
-                        basePrice = room.type === 'glamping' ? 5500 : 3000;
-                    }
-
-                    // Check if BYOT or Car Camping (per quantity pricing)
-                    const roomNameLower = (room.name || '').toLowerCase();
-                    const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
-                    const isCarCamping = roomNameLower.includes('car camping');
+                    // Get base price - ensure we have a fallback
+                    const roomBasePrice = (roomDetail && roomDetail.price) ? roomDetail.price : (room.price || (room.type === 'glamping' ? 5500 : 3000));
 
                     let totalPrice = 0;
+                    const checkinDate = new Date(this.checkin);
+                    const checkoutDate = new Date(this.checkout);
+                    
+                    // Iterate through each night to calculate correct price
+                    for (let i = 0; i < nights; i++) {
+                        const currentDate = new Date(checkinDate);
+                        currentDate.setDate(checkinDate.getDate() + i);
 
-                    if (isBYOT || isCarCamping) {
-                        // Per quantity pricing: base price is per slot only (no night multiplier)
-                        const quantity = selectedRoomData ? parseInt(selectedRoomData.extra_mattress || 1) : 1;
-                        const correctedBasePrice = basePrice;
-                        totalPrice = correctedBasePrice * quantity;
-                    } else {
-                        // Regular rooms: base price is per night
-                        totalPrice = basePrice * nights;
+                        const dayShort = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
+
+                        // Determine season based on peak periods
+                        let season = 'Non-Peak';
+                        for (const peak of peakPeriods) {
+                            const peakStart = new Date(peak.start_date);
+                            const peakEnd = new Date(peak.end_date);
+                            if (currentDate >= peakStart && currentDate <= peakEnd) {
+                                season = peak.peak_type_name || 'Peak';
+                                break;
+                            }
+                        }
+
+                        // Determine day type
+                        let isWeekend = dayShort.toLowerCase() === 'sat' || dayShort.toLowerCase() === 'sun';
+
+                        // Get date string for specific date pricing
+                        const dateOnly = currentDate.toISOString().split('T')[0];
+
+                        // Get price based on day type - ensure fallback to roomBasePrice
+                        let rate = 0;
+                        
+                        // Check for specific date pricing first
+                        const datePricing = (roomDetail && roomDetail.date_pricing) ? roomDetail.date_pricing : {};
+                        const dateOnlyStr = dateOnly;
+                        
+                        if (datePricing[dateOnlyStr]) {
+                            // Use specific date price override
+                            rate = parseFloat(datePricing[dateOnlyStr]) || roomBasePrice;
+                        } else if (dayTypePricing && Object.keys(dayTypePricing).length > 0) {
+                            if (isWeekend) {
+                                rate = season === 'Peak'
+                                    ? (dayTypePricing.peak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.regular || roomBasePrice)
+                                    : (dayTypePricing.regular_weekend || dayTypePricing.regular || roomBasePrice);
+                            } else {
+                                rate = season === 'Peak'
+                                    ? (dayTypePricing.peak_weekday || dayTypePricing.peak || dayTypePricing.weekday || dayTypePricing.regular || roomBasePrice)
+                                    : (dayTypePricing.regular_weekday || dayTypePricing.regular || roomBasePrice);
+                            }
+                        } else {
+                            // Fallback to default pricing based on weekday/weekend
+                            rate = isWeekend ? roomBasePrice + 1360 : roomBasePrice;
+                        }
+
+                        totalPrice += rate;
                     }
 
                     return totalPrice;
@@ -1209,6 +1448,103 @@
                     return price;
                 },
 
+                getPriceRange(room) {
+                    // Check if BYOT or Car Camping FIRST (per quantity pricing, NOT per night)
+                    const roomNameLower = (room.name || '').toLowerCase();
+                    const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
+                    const isCarCamping = roomNameLower.includes('car camping');
+                    const isSpecialRoom = isBYOT || isCarCamping;
+
+                    // For BYOT/Car Camping: just show base price (NOT per night)
+                    if (isSpecialRoom) {
+                        const roomDetail = this.roomDetailsMap && this.roomDetailsMap[room.id] ? this.roomDetailsMap[room.id] : null;
+                        const basePrice = (roomDetail && roomDetail.price) ? roomDetail.price : 1500; // Default fallback
+                        return '₱' + basePrice.toLocaleString();
+                    }
+
+                    // For regular rooms: calculate price range based on selected dates
+                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[room.id] ? this.roomDetailsMap[room.id] : null;
+                    const dayTypePricing = (roomDetail && roomDetail.day_type_pricing) ? roomDetail.day_type_pricing : {};
+                    const peakPeriods = (roomDetail && roomDetail.peak_periods) ? roomDetail.peak_periods : [];
+
+                    // Calculate nights
+                    let nights = 1;
+                    if (this.checkin && this.checkout) {
+                        const checkinDate = new Date(this.checkin);
+                        const checkoutDate = new Date(this.checkout);
+                        nights = Math.max(1, Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24)));
+                    }
+
+                    // Calculate rates for each night
+                    const rates = [];
+                    const checkinDate = new Date(this.checkin);
+                    const checkoutDate = new Date(this.checkout);
+                    
+                    // Get base price for fallback
+                    const basePrice = (roomDetail && roomDetail.price) ? roomDetail.price : (room.type === 'glamping' ? 5500 : 3000);
+                    
+                    for (let i = 0; i < nights; i++) {
+                        const currentDate = new Date(checkinDate);
+                        currentDate.setDate(checkinDate.getDate() + i);
+
+                        const dayShort = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
+
+                        // Determine season based on peak periods
+                        let season = 'Non-Peak';
+                        for (const peak of peakPeriods) {
+                            const peakStart = new Date(peak.start_date);
+                            const peakEnd = new Date(peak.end_date);
+                            if (currentDate >= peakStart && currentDate <= peakEnd) {
+                                season = peak.peak_type_name || 'Peak';
+                                break;
+                            }
+                        }
+
+                        // Determine day type
+                        let isWeekend = dayShort.toLowerCase() === 'sat' || dayShort.toLowerCase() === 'sun';
+
+                        // Get price based on day type - ensure fallback to basePrice
+                        let rate = 0;
+                        
+                        // Get date string for specific date pricing
+                        const dateOnly = currentDate.toISOString().split('T')[0];
+
+                        // Check for specific date pricing first
+                        const datePricing = (roomDetail && roomDetail.date_pricing) ? roomDetail.date_pricing : {};
+                        const dateOnlyStr = currentDate.toISOString().split('T')[0];
+                        
+                        if (datePricing[dateOnlyStr]) {
+                            // Use specific date price override
+                            rate = parseFloat(datePricing[dateOnlyStr]) || basePrice;
+                        } else if (dayTypePricing && Object.keys(dayTypePricing).length > 0) {
+                            if (isWeekend) {
+                                rate = season === 'Peak'
+                                    ? (dayTypePricing.peak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.regular || basePrice)
+                                    : (dayTypePricing.regular_weekend || dayTypePricing.regular || basePrice);
+                            } else {
+                                rate = season === 'Peak'
+                                    ? (dayTypePricing.peak_weekday || dayTypePricing.peak || dayTypePricing.weekday || dayTypePricing.regular || basePrice)
+                                    : (dayTypePricing.regular_weekday || dayTypePricing.regular || basePrice);
+                            }
+                        } else {
+                            // Fallback to default pricing based on weekday/weekend
+                            rate = isWeekend ? basePrice + 1360 : basePrice;
+                        }
+
+                        rates.push(rate);
+                    }
+
+                    // Determine if we have a range or single price
+                    const uniqueRates = [...new Set(rates)];
+                    if (uniqueRates.length === 1) {
+                        return '₱' + uniqueRates[0].toLocaleString() + ' / night';
+                    } else {
+                        const minRate = Math.min(...uniqueRates);
+                        const maxRate = Math.max(...uniqueRates);
+                        return '₱' + minRate.toLocaleString() + ' - ₱' + maxRate.toLocaleString() + ' / night';
+                    }
+                },
+
                 calculateRoomPrice(room) {
                     const selectedRoom = this.selectedRooms[room.id];
                     const base = this.calculateBasePrice(room, selectedRoom);
@@ -1228,7 +1564,317 @@
                         const pet = this.calculatePetPrice(room);
                         total += base + mattress + pet;
                     }
+                    // If we have API breakdown data, verify the total by summing the breakdown
+                    const room = Object.values(this.selectedRooms)[0];
+                    if (room && this.priceBreakdowns && this.priceBreakdowns[room.id]) {
+                        const breakdownTotal = this.priceBreakdowns[room.id].reduce((sum, night) => sum + night.rate, 0);
+                        const mattress = this.calculateMattressPrice(room);
+                        const pet = this.calculatePetPrice(room);
+                        const verifiedTotal = breakdownTotal + mattress + pet;
+                        if (Math.abs(total - verifiedTotal) > 0.01) {
+                            console.warn('Price discrepancy detected:', { calculated: total, verified: verifiedTotal });
+                            total = verifiedTotal;
+                        }
+                    }
                     return '₱' + total.toLocaleString();
+                },
+
+                getPriceBreakdown(room) {
+                    const breakdown = [];
+
+                    if (!this.checkin || !this.checkout) return breakdown;
+
+                    const checkinDate = new Date(this.checkin);
+                    const checkoutDate = new Date(this.checkout);
+                    const nights = Math.max(1, Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24)));
+
+                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[room.id] ? this.roomDetailsMap[room.id] : null;
+
+                    // Check if BYOT or Car Camping (per quantity pricing)
+                    const roomNameLower = (room.name || '').toLowerCase();
+                    const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
+                    const isCarCamping = roomNameLower.includes('car camping');
+
+                    // Get dynamic pricing info from roomDetail
+                    const dayTypePricing = (roomDetail && roomDetail.day_type_pricing) ? roomDetail.day_type_pricing : {};
+                    const peakPeriods = (roomDetail && roomDetail.peak_periods) ? roomDetail.peak_periods : [];
+
+                    for (let i = 0; i < nights; i++) {
+                        const currentDate = new Date(checkinDate);
+                        currentDate.setDate(checkinDate.getDate() + i);
+
+                        const dateStr = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+                        const dayShort = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
+
+                        // Determine season based on peak periods
+                        let season = 'Non-Peak';
+                        const dateOnly = currentDate.toISOString().split('T')[0];
+                        
+                        console.log('=== SEASON DEBUG ===');
+                        console.log('Date:', dateOnly);
+                        console.log('roomDetail:', roomDetail);
+                        console.log('peakPeriods:', peakPeriods);
+                        
+                        // Check if peak periods exist
+                        if (peakPeriods && peakPeriods.length > 0) {
+                            for (const peak of peakPeriods) {
+                                const peakStart = peak.start_date ? String(peak.start_date).split('T')[0] : '';
+                                const peakEnd = peak.end_date ? String(peak.end_date).split('T')[0] : '';
+                                
+                                console.log('Checking peak:', peakStart, '-', peakEnd, 'Name:', peak.peak_type_name);
+                                
+                                if (peakStart && peakEnd && dateOnly >= peakStart && dateOnly <= peakEnd) {
+                                    season = peak.peak_type_name || 'Peak';
+                                    console.log('✓ MATCH! Season:', season);
+                                    break;
+                                }
+                            }
+                        } else {
+                            console.log('No peak periods, using roomDetail.seasonType:', roomDetail?.seasonType);
+                            // Fallback to roomDetail.seasonType if available
+                            if (roomDetail?.seasonType) {
+                                season = roomDetail.seasonType;
+                            }
+                        }
+                        
+                        console.log('Final season for', dateOnly, ':', season);
+
+                        // Determine day type (Weekday/Weekend) and get price
+                        let dayType = 'Weekday';
+                        let rate = 0;
+                        const dayLower = (dayShort || '').toLowerCase();
+                        const isWeekend = dayLower === 'sat' || dayLower === 'sun' || dayLower === 'saturday' || dayLower === 'sunday';
+                        if (isWeekend) dayType = 'Weekend';
+
+                        // Get price based on day type
+                        // Get base price for fallback
+                        const basePrice = (roomDetail && roomDetail.price) ? roomDetail.price : (room.type === 'glamping' ? 5500 : 3000);
+                        
+                        // Check for specific date pricing first
+                        const datePricing = (roomDetail && roomDetail.date_pricing) ? roomDetail.date_pricing : {};
+                        const dateOnlyStr = dateOnly;
+                        
+                        if (datePricing[dateOnlyStr]) {
+                            // Use specific date price override
+                            rate = parseFloat(datePricing[dateOnlyStr]) || basePrice;
+                        } else if (dayTypePricing && Object.keys(dayTypePricing).length > 0) {
+                            // Use dynamic pricing from roomDetail
+                            if (isWeekend) {
+                                dayType = 'Weekend';
+                                rate = season === 'Peak'
+                                    ? (dayTypePricing.peak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.regular || basePrice)
+                                    : (dayTypePricing.regular_weekend || dayTypePricing.regular || basePrice);
+                            } else {
+                                dayType = 'Weekday';
+                                rate = season === 'Peak'
+                                    ? (dayTypePricing.peak_weekday || dayTypePricing.peak || dayTypePricing.weekday || dayTypePricing.regular || basePrice)
+                                    : (dayTypePricing.regular_weekday || dayTypePricing.regular || basePrice);
+                            }
+                        } else {
+                            // Fallback to default pricing
+                            rate = isWeekend ? basePrice + 1360 : basePrice;
+                        }
+
+                        // For BYOT/Car Camping, show per quantity rate
+                        const quantity = room.extra_mattress || 1;
+                        const displayRate = isBYOT || isCarCamping ? rate * quantity : rate;
+
+                        breakdown.push({
+                            date: dateStr,
+                            day: dayShort,
+                            season: season,
+                            dayType: dayType,
+                            rate: displayRate
+                        });
+                    }
+
+                    return breakdown;
+                },
+
+                currentBreakdownTitle() {
+                    // Show count of selected rooms with dates
+                    const roomCount = Object.keys(this.selectedRooms).length;
+                    const nights = this.getNightsCount();
+                    const ci = this.checkin || '';
+                    const co = this.checkout || '';
+                    
+                    if (roomCount === 0) return 'No rooms selected';
+                    if (roomCount === 1) {
+                        const room = Object.values(this.selectedRooms)[0];
+                        return `${room.name} • ${nights} night(s) • ${ci} to ${co}`;
+                    }
+                    return `${roomCount} rooms • ${nights} night(s) • ${ci} to ${co}`;
+                },
+
+                getNightsCount() {
+                    if (!this.checkin || !this.checkout) return 0;
+                    const a = new Date(this.checkin);
+                    const b = new Date(this.checkout);
+                    return Math.max(0, Math.ceil((b - a) / (1000 * 60 * 60 * 24)));
+                },
+
+                getSingleRoomBreakdown() {
+                    const room = Object.values(this.selectedRooms)[0];
+                    if (!room) return [];
+
+                    // Use the breakdown from the API if available
+                    if (this.priceBreakdowns && this.priceBreakdowns[room.id]) {
+                        return this.priceBreakdowns[room.id].map(r => {
+                            // Determine if it's a peak type (for badge styling)
+                            const isPeak = r.season && r.season.toLowerCase().includes('peak') && !r.season.toLowerCase().includes('non');
+                            const isSuperPeak = r.season && r.season.toLowerCase().includes('super');
+                            
+                            return {
+                                dateRaw: r.date,
+                                dayLong: r.day_of_week,
+                                season: r.season,
+                                seasonType: isSuperPeak ? 'Super-Peak' : (isPeak ? 'Peak' : 'Non-Peak'),
+                                dayType: r.day_type,
+                                rate: r.rate
+                            };
+                        });
+                    }
+
+                    // Fallback to frontend calculation if API data not available
+                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[room.id] ? this.roomDetailsMap[room.id] : null;
+                    const peakPeriods = (roomDetail && roomDetail.peak_periods) ? roomDetail.peak_periods : [];
+                    
+                    const peakTypeMap = {};
+                    for (const peak of peakPeriods) {
+                        if (peak.start_date && peak.end_date) {
+                            const peakTypeName = peak.peak_type_name || peak.name || 'Peak';
+                            const start = new Date(peak.start_date);
+                            const end = new Date(peak.end_date);
+                            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                                const dateStr = d.toISOString().split('T')[0];
+                                peakTypeMap[dateStr] = peakTypeName;
+                            }
+                        }
+                    }
+
+                    const raw = this.getPriceBreakdown(room);
+
+                    const mapDayLong = {
+                        Sun: 'Sunday', Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday',
+                        Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday'
+                    };
+
+                    const toISO = (dateStr) => {
+                        const d = new Date(dateStr);
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, '0');
+                        const da = String(d.getDate()).padStart(2, '0');
+                        return `${y}-${m}-${da}`;
+                    };
+
+                    return raw.map(r => {
+                        const isoDate = toISO(r.date);
+                        const configuredSeason = r.season || 'Non-Peak';
+                        
+                        const isPeak = configuredSeason && configuredSeason.toLowerCase().includes('peak') && !configuredSeason.toLowerCase().includes('non');
+                        const isSuperPeak = configuredSeason && configuredSeason.toLowerCase().includes('super');
+                        
+                        return {
+                            dateRaw: isoDate,
+                            dayLong: mapDayLong[r.day] || r.day,
+                            season: configuredSeason,
+                            seasonType: isSuperPeak ? 'Super-Peak' : (isPeak ? 'Peak' : 'Non-Peak'),
+                            dayType: r.dayType,
+                            rate: r.rate
+                        };
+                    });
+                },
+
+                getAllRoomsBreakdown() {
+                    const rooms = Object.values(this.selectedRooms);
+                    if (rooms.length === 0) return [];
+
+                    // If single room, use existing breakdown
+                    if (rooms.length === 1) {
+                        return this.getSingleRoomBreakdown();
+                    }
+
+                    // For multiple rooms, aggregate all breakdowns with room name
+                    const allBreakdowns = [];
+                    
+                    for (const room of rooms) {
+                        const roomNameLower = (room.name || '').toLowerCase();
+                        const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
+                        const isCarCamping = roomNameLower.includes('car camping');
+                        const isSpecialRoom = isBYOT || isCarCamping;
+                        
+                        // For BYOT/Car Camping, show just single per-slot entry
+                        if (isSpecialRoom) {
+                            const roomDetail = this.roomDetailsMap && this.roomDetailsMap[room.id] ? this.roomDetailsMap[room.id] : null;
+                            const basePrice = (roomDetail && roomDetail.price) ? roomDetail.price : (room.price || 1500);
+                            const quantity = room.extra_mattress || 1;
+                            const totalPrice = basePrice * quantity;
+                            
+                            allBreakdowns.push({
+                                roomName: room.name,
+                                dateRaw: this.checkin || '-',
+                                dayLong: 'Per Slot',
+                                season: '-',
+                                seasonType: 'Non-Peak',
+                                dayType: 'Per Slot',
+                                rate: totalPrice
+                            });
+                            continue;
+                        }
+                        
+                        // For regular rooms, show nightly breakdown
+                        const roomDetail = this.roomDetailsMap && this.roomDetailsMap[room.id] ? this.roomDetailsMap[room.id] : null;
+                        const peakPeriods = (roomDetail && roomDetail.peak_periods) ? roomDetail.peak_periods : [];
+                        
+                        const peakTypeMap = {};
+                        for (const peak of peakPeriods) {
+                            if (peak.start_date && peak.end_date) {
+                                const peakTypeName = peak.peak_type_name || peak.name || 'Peak';
+                                const start = new Date(peak.start_date);
+                                const end = new Date(peak.end_date);
+                                for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                                    const dateStr = d.toISOString().split('T')[0];
+                                    peakTypeMap[dateStr] = peakTypeName;
+                                }
+                            }
+                        }
+
+                        const raw = this.getPriceBreakdown(room);
+                        
+                        const mapDayLong = {
+                            Sun: 'Sunday', Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday',
+                            Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday'
+                        };
+
+                        const toISO = (dateStr) => {
+                            const d = new Date(dateStr);
+                            const y = d.getFullYear();
+                            const m = String(d.getMonth() + 1).padStart(2, '0');
+                            const da = String(d.getDate()).padStart(2, '0');
+                            return `${y}-${m}-${da}`;
+                        };
+
+                        for (const r of raw) {
+                            const isoDate = toISO(r.date);
+                            const configuredSeason = r.season || 'Non-Peak';
+                            
+                            const isPeak = configuredSeason && configuredSeason.toLowerCase().includes('peak') && !configuredSeason.toLowerCase().includes('non');
+                            const isSuperPeak = configuredSeason && configuredSeason.toLowerCase().includes('super');
+                            
+                            allBreakdowns.push({
+                                roomName: room.name,
+                                dateRaw: isoDate,
+                                dayLong: mapDayLong[r.day] || r.day,
+                                season: configuredSeason,
+                                seasonType: isSuperPeak ? 'Super-Peak' : (isPeak ? 'Peak' : 'Non-Peak'),
+                                dayType: r.dayType,
+                                rate: r.rate
+                            });
+                        }
+                    }
+
+                    return allBreakdowns;
                 },
 
                 generateLegend() {
@@ -1294,6 +1940,15 @@
                 },
 
                 init() {
+                    // Listen for pricing updates from admin panel (only if Echo is available)
+                    if (window.Echo && window.Echo.channel) {
+                        window.Echo.channel('pricing-updates')
+                            .listen('PricingUpdated', (e) => {
+                                console.log('Pricing updated, refreshing data...', e);
+                                this.fetchUpdatedPricingData();
+                            });
+                    }
+                    
                     // Fetch booking settings from backend
                     this.fetchBookingSettings();
                     
@@ -1318,6 +1973,28 @@
                             @endif
                         @endforeach
                     });
+                },
+
+                fetchUpdatedPricingData() {
+                    // Fetch updated room details and pricing from server
+                    fetch('/api/booking/pricing-data')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.roomDetails) {
+                                this.roomDetailsMap = data.roomDetails;
+                                console.log('Updated pricing data loaded:', this.roomDetailsMap);
+                                
+                                // Recalculate prices for selected rooms
+                                for (const roomId of Object.keys(this.selectedRooms)) {
+                                    const room = this.selectedRooms[roomId];
+                                    const roomDetail = this.roomDetailsMap[roomId];
+                                    if (roomDetail) {
+                                        this.selectedRooms[roomId].accommodation_price = this.calculateBasePrice(room, roomDetail);
+                                    }
+                                }
+                            }
+                        })
+                        .catch(error => console.error('Failed to fetch updated pricing data:', error));
                 },
 
                 submitAndProceed(nextUrl = '{{ route("booking.staycationFood") }}') {
@@ -1376,6 +2053,7 @@
 
         // Real-time inventory updates
         @if(config('broadcasting.default') !== 'null')
+        if (window.Echo && window.Echo.channel) {
         window.Echo.channel('inventory')
             .listen('.inventory.updated', (e) => {
                 console.log('Inventory updated:', e);
@@ -1388,10 +2066,12 @@
                 // Update room card availability (optional but recommended)
                 updateRoomAvailability(e.staycationId);
             });
+        }
         @endif
 
         // Real-time pricing updates
         @if(config('broadcasting.default') !== 'null')
+        if (window.Echo && window.Echo.channel) {
         window.Echo.channel('pricing')
             .listen('.pricing.updated', (e) => {
                 console.log('Pricing updated:', e);
@@ -1433,6 +2113,7 @@
                         window.location.reload();
                     });
             });
+        }
         @endif
 
         function updateRoomAvailability(staycationId) {

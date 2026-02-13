@@ -11,7 +11,9 @@ return new class extends Migration
     public function up(): void
     {
         // First, expand ENUM to include 'messhall' alongside existing values
-        DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('breakfast', 'lunch', 'dinner', 'package', 'special', 'cook_your_own', 'messhall') DEFAULT 'package'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('breakfast', 'lunch', 'dinner', 'package', 'special', 'cook_your_own', 'messhall') DEFAULT 'package'");
+        }
         
         // Then, update all existing breakfast, lunch, dinner, package, special items to messhall
         DB::table('foods')
@@ -23,7 +25,9 @@ return new class extends Migration
             ->update(['category' => 'messhall']);
         
         // Finally, shrink ENUM to only accept 'messhall' and 'cook_your_own'
-        DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('messhall', 'cook_your_own') DEFAULT 'messhall'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('messhall', 'cook_your_own') DEFAULT 'messhall'");
+        }
     }
 
     /**
@@ -32,7 +36,9 @@ return new class extends Migration
     public function down(): void
     {
         // First expand ENUM to include old values
-        DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('breakfast', 'lunch', 'dinner', 'package', 'special', 'cook_your_own', 'messhall') DEFAULT 'package'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('breakfast', 'lunch', 'dinner', 'package', 'special', 'cook_your_own', 'messhall') DEFAULT 'package'");
+        }
         
         // Restore old categories from messhall (we'll default them back to package)
         DB::table('foods')
@@ -40,6 +46,8 @@ return new class extends Migration
             ->update(['category' => 'package']);
         
         // Finally shrink ENUM back to original
-        DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('breakfast', 'lunch', 'dinner', 'package', 'special', 'cook_your_own') DEFAULT 'package'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('breakfast', 'lunch', 'dinner', 'package', 'special', 'cook_your_own') DEFAULT 'package'");
+        }
     }
 };

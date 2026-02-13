@@ -26,10 +26,9 @@ return new class extends Migration
         
         // Populate total_quantity and available_quantity from staycations table
         DB::statement('
-            UPDATE staycation_inventories si
-            JOIN staycations s ON si.staycation_id = s.id
-            SET si.total_quantity = COALESCE(s.quantity, 0),
-                si.available_quantity = COALESCE(si.available_quantity, s.quantity, 0)
+            UPDATE staycation_inventories
+            SET total_quantity = COALESCE((SELECT quantity FROM staycations WHERE id = staycation_inventories.staycation_id), 0),
+                available_quantity = COALESCE(available_quantity, (SELECT quantity FROM staycations WHERE id = staycation_inventories.staycation_id), 0)
         ');
     }
 

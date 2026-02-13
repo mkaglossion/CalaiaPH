@@ -110,6 +110,7 @@ Route::get('/api/activity-images/{id}', function($id) {
 })->name('api.activity-images');
 Route::get('/api/booking/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.activities');
 Route::get('/api/booking/settings', [BookingController::class, 'getBookingSettings'])->name('api.booking.settings');
+Route::post('/api/booking/calculate-staycation-price', [BookingController::class, 'calculateStaycationPrice'])->name('api.booking.calculateStaycationPrice');
 Route::get('/booking/activities', [BookingController::class, 'activities'])->name('booking.activities');
 Route::post('/booking/activities', [BookingController::class, 'storeActivities'])->name('booking.storeActivities');
 Route::get('/booking/staycation/activities', [BookingController::class, 'staycationActivities'])->name('booking.staycationActivities');
@@ -168,6 +169,25 @@ Route::get('/test-failed', function() {
 Route::get('/booking/confirmation', [BookingController::class, 'confirmation'])->name('booking.confirmation');
 Route::get('/booking/widget', [BookingController::class, 'widget'])->name('booking.widget');
 Route::post('/booking/calculate-price', [BookingController::class, 'getDynamicPrice'])->name('booking.calculatePrice');
+Route::get('/debug-pricing', function () {
+    $configs = \App\Models\PricingConfig::where('unit_type', 'glamping')
+        ->with(['peakType', 'dayType'])
+        ->get();
+    
+    $data = [];
+    foreach ($configs as $config) {
+        $data[] = [
+            'id' => $config->id,
+            'unit_type' => $config->unit_type,
+            'peak_type' => $config->peakType->name,
+            'day_type' => $config->dayType->name,
+            'price' => $config->price
+        ];
+    }
+    
+    return response()->json($data);
+});
+
 Route::get('/debug-session', [BookingController::class, 'debugSession']);
 
 Route::get('/booking/reset-inventory', function () {
@@ -206,6 +226,8 @@ Route::get('/login', function () { return redirect('/'); })->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 Route::match(['GET', 'POST'], '/logout', [LoginController::class, 'logout'])->name('logout');
 
+Route::resource('testimonials', TestimonialController::class)->only(['create', 'store']);
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -239,10 +261,17 @@ Route::middleware('auth')->group(function () {
 
 
 // ========== Admin Routes ==========
-Route::prefix('admin')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Main Sections
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-    Route::get('/users', [AdminUsersController::class, 'index'])->name('admin.users');
+    Route::get('/reports', [AdminReportsController::class, 'index'])->name('admin.reports.index');
+    Route::resource('users', AdminUsersController::class, ['names' => [
+        'index' => 'admin.users.index',
+        'show' => 'admin.users.show',
+        'edit' => 'admin.users.edit',
+        'update' => 'admin.users.update',
+        'destroy' => 'admin.users.destroy'
+    ]]);
     
     // Bookings Management
     Route::prefix('bookings')->group(function () {
@@ -307,6 +336,9 @@ Route::prefix('admin')->group(function () {
     });
     Route::prefix('/testimonials')->group(function () {
         Route::get('/', [AdminController::class, 'testimonials'])->name('admin.testimonials.index');
+        Route::post('/', [TestimonialController::class, 'store'])->name('admin.testimonials.store');
+        Route::post('/{id}', [TestimonialController::class, 'update'])->name('admin.testimonials.update');
+        Route::delete('/{id}', [TestimonialController::class, 'destroy'])->name('admin.testimonials.destroy');
     });
     Route::prefix('/farm')->group(function () {
              Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farm.farmInfos');
@@ -380,7 +412,6 @@ Route::prefix('admin')->group(function () {
     Route::resource('menu-text', MenuTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-text', EventTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-experience-sections', EventExperienceSectionController::class)->only(['store', 'update', 'destroy']);
-    Route::resource('testimonials', TestimonialController::class)->only(['create', 'store', 'update', 'destroy']);
     Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('day-text', DayPackageTextController::class)->only(['store', 'update', 'destroy']);
     Route::post('/accommodations-text', [AccommodationTextController::class, 'store'])->name('accommodations-text.store');

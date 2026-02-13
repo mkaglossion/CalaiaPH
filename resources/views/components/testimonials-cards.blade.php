@@ -8,12 +8,10 @@
 
   <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-10">
-      <h2 class="mt-8 font-bold tracking-tight text-white uppercase"
-          style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
+      <h2 class="mt-8 font-bold tracking-tight text-white uppercase" style="font-size: 25px;">
         WHAT OUR GUESTS SAY ABOUT CALAIA
       </h2>
-      <p class="mt-3 text-white"
-         style="font-style: italic; font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+      <p class="mt-3 text-white" style="font-style: italic; font-size: 13px;">
         Hear from those who've experienced Calaia.
       </p>
       <div class="mt-6 mx-auto h-px w-80 bg-white"></div>
@@ -42,9 +40,8 @@
                 </div>
 
                 {{-- quote (minimal + italic) --}}
-                <p class="text-[#8f5d54] italic leading-[1.8]"
-                   style="font-size: 12px; font-family: 'Gotham Book', sans-serif;">
-                  “{{ $testimonial->content }}”
+                <p class="text-[#8f5d54] italic leading-[1.8]" style="font-size: 12px;">
+                  "{{ $testimonial->content }}"
                 </p>
 
                 {{-- star rating --}}
@@ -59,12 +56,10 @@
 
                 {{-- optional name/role (keep subtle) --}}
                 <div class="mt-4">
-                  <p class="font-semibold text-[#8f5d54]"
-                     style="font-size: 12px; font-family: 'Gotham Book', sans-serif;">
+                  <p class="font-semibold text-[#8f5d54]" style="font-size: 12px;">
                     {{ $testimonial->name }}
                   </p>
-                  <p class="text-[#8f5d54]/80"
-                     style="font-size: 11px; font-family: 'Gotham Book', sans-serif;">
+                  <p class="text-[#8f5d54]/80" style="font-size: 11px;">
                     {{ $testimonial->position }}
                   </p>
                 </div>

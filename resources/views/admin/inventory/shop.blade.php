@@ -84,7 +84,12 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 @if($product->image)
-                                <img class="h-10 w-10 rounded-lg object-cover mr-3" src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->title }}">
+                                    @php
+                                        $imageSrc = str_contains($product->image, 'res.cloudinary.com') 
+                                            ? $product->image 
+                                            : asset('storage/' . $product->image);
+                                    @endphp
+                                <img class="h-10 w-10 rounded-lg object-cover mr-3" src="{{ $imageSrc }}" alt="{{ $product->title }}">
                                 @else
                                 <div class="h-10 w-10 rounded-lg bg-gray-200 mr-3 flex items-center justify-center">
                                     <i class="fas fa-box text-gray-400"></i>

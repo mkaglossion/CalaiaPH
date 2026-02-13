@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/booking/staycation.js'],
+            input: ['resources/js/app.js', 'resources/js/booking/staycation.js'],
             refresh: true,
         }),
         tailwindcss({
@@ -27,6 +27,9 @@ export default defineConfig({
     ],
     build: {
         rollupOptions: {
+            output: {
+                manualChunks: undefined,
+            },
             onwarn(warning, warn) {
                 if (warning.code === 'UNRESOLVED_ENTRY' || 
                     (warning.message && warning.message.includes('didn\'t resolve at build time'))) {

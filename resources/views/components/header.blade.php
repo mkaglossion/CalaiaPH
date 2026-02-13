@@ -26,12 +26,31 @@
   x-data="{
     mobileOpen: false,
     init() {
-      Alpine.store('modals') || Alpine.store('modals', {
-        showLogin: false,
-        showSignup: false,
-        signupSuccess: false,
-        showCart: false
-      });
+      // Initialize modal store with default closed state
+      try {
+        if (!Alpine.store('modals')) {
+          Alpine.store('modals', {
+            showLogin: false,
+            showSignup: false,
+            signupSuccess: false,
+            showCart: false
+          });
+        } else {
+          // Ensure modals are closed on page load
+          Alpine.store('modals').showLogin = false;
+          Alpine.store('modals').showSignup = false;
+          Alpine.store('modals').showCart = false;
+        }
+      } catch (e) {
+        console.error('Alpine store initialization error:', e);
+        // Fallback: create store manually
+        Alpine.store('modals', {
+          showLogin: false,
+          showSignup: false,
+          signupSuccess: false,
+          showCart: false
+        });
+      }
     },
     closeAll() {
       this.mobileOpen = false;
@@ -43,7 +62,11 @@
   x-effect="
     const m = Alpine.store('modals');
     const lock = mobileOpen || (m && (m.showLogin || m.showSignup));
-    document.body.style.overflow = lock ? 'hidden' : '';
+    if (lock) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
   "
   @keydown.escape.window="closeAll()"
   class="bg-brand text-white shadow-lg top-0 z-50"
@@ -69,8 +92,7 @@
       <div class="w-16"></div>
 
       <!-- NAV centered -->
-      <nav class="flex-1 flex justify-center gap-5"
-           style="font-family: 'Gotham Book', sans-serif;">
+      <nav class="flex-1 flex justify-center gap-5">
         @foreach ($nav as $item)
           <a
             href="{{ $item['href'] }}"
@@ -118,7 +140,7 @@
               x-show="userOpen"
               @click.away="userOpen = false"
               x-transition
-              class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50"
+              class="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50"
             >
               <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
                 <i class="bi bi-person me-2"></i>My Profile
@@ -132,7 +154,7 @@
 
               @if (Auth::user()->user_type === 'admin')
                 <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
-                  <i class="bi bi-gear me-2"></i>Go to Admin Panel
+                  <i class="bi bi-gear me-2"></i>Admin Panel
                 </a>
               @endif
 
@@ -150,7 +172,7 @@
 
           <x-cart />
         @else
-          <div class="flex items-center gap-3" style="font-family: 'Gotham Book', sans-serif;">
+          <div class="flex items-center gap-3">
             <button
               @click="$store.modals.showLogin = true"
               class="text-white hover:text-white/80 font-medium transition"
@@ -217,11 +239,11 @@
       x-transition:leave-end="-translate-x-4 opacity-0"
     >
         <div class="flex items-center justify-between px-4 py-4 border-b border-brand/15">
-        <span class="font-semibold tracking-wide text-white" style="font-family: 'Gotham Book', sans-serif;">Menu</span>
+        <span class="font-semibold tracking-wide text-white">Menu</span>
         <button class="rounded-lg p-2 hover:bg-white/50" @click="mobileOpen = false">✕</button>
       </div>
 
-      <div class="px-4 py-3 space-y-1" style="font-family: 'Gotham Book', sans-serif;">
+      <div class="px-4 py-3 space-y-1">
         @foreach ($nav as $item)
           <a
             href="{{ $item['href'] }}"
@@ -278,14 +300,12 @@
             <button
               @click="$store.modals.showLogin = true; mobileOpen = false"
               class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/50 transition text-white"
-              style="font-family: 'Gotham Book', sans-serif;"
             >
               Log In
             </button>
             <button
               @click="$store.modals.showSignup = true; mobileOpen = false"
               class="w-full mt-2 bg-white text-brand px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-100 transition shadow"
-              style="font-family: 'Gotham Book', sans-serif;"
             >
               Sign Up
             </button>

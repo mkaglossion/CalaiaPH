@@ -389,6 +389,13 @@
               },
               onChange: function(selectedDates, dateStr, instance) {
                   updateAvailabilityText(dateStr);
+              },
+              onReady: function(selectedDates, dateStr, instance) {
+                  // Add id to month dropdown and year input for accessibility
+                  const monthSelect = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
+                  if (monthSelect) monthSelect.id = 'flatpickr-month';
+                  const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
+                  if (yearInput) yearInput.id = 'flatpickr-year';
               }
           });
 

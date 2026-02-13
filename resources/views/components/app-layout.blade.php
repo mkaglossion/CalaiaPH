@@ -27,6 +27,35 @@
 </head>
 
 <body class="{{ $bodyClass }}">
+    {{-- Force body to be interactive --}}
+    <style>
+        body { overflow: visible !important; position: relative !important; }
+        [x-cloak] { display: none !important; }
+        .fixed { position: fixed !important; }
+    </style>
+    
+    {{-- Close any stuck modals on page load --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Force close all modals
+            setTimeout(function() {
+                try {
+                    if (window.Alpine && Alpine.store('modals')) {
+                        Alpine.store('modals').showLogin = false;
+                        Alpine.store('modals').showSignup = false;
+                        Alpine.store('modals').showCart = false;
+                    }
+                    // Remove any fixed overlays
+                    document.querySelectorAll('.fixed.inset-0.bg-black').forEach(function(el) {
+                        el.remove();
+                    });
+                } catch (e) {
+                    console.log('Modal cleanup skipped');
+                }
+            }, 100);
+        });
+    </script>
+    
     {{-- Flash Messages --}}
     <x-flash-message />
 
