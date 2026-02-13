@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -6,41 +8,88 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-    --font-heading: 'Gotham', sans-serif;
-    --font-body: 'Vilaka Modern Serif', serif;
-    --font-gotham-book: 'Gotham Book', sans-serif;
+    --font-sans: 'Montserrat', 'system-ui', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-heading: 'Montserrat', 'system-ui', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-body: 'Vilaka Modern Serif', Georgia, 'Times New Roman', serif;
+    --font-gotham: 'Montserrat', 'system-ui', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-    /* ✅ add this */
+    /* Brand colors */
     --color-brand: #a75e3e;
-}
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Gotham', sans-serif;
-}
-p {
-  font-family: 'Vilaka Modern Serif', serif;
-}
-[x-cloak] {
-  display: none !important;
+    --color-brand-dark: #8a4825;
+    --color-brand-light: #593e2d;
 }
 
-/* Gotham Book font (place licensed font files in public/assets/fonts/) */
-@font-face {
-  font-family: 'Gotham Book';
-  src: url('/assets/fonts/Gotham-Book.woff2?v=1') format('woff2'),
-       url('/assets/fonts/Gotham-Book.woff?v=1') format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
+/* Font loading handled by Google Fonts import above */
+/* Additional weights will fall back to 400 if not available */
+/* TODO: Add Gotham-Medium.woff2, Gotham-Bold.woff2 when available */
 
+/* Typography Scale - Best Practices */
 :root {
-  --font-system: 'Gotham Book', sans-serif;
+  --font-system: var(--font-gotham);
+  --font-heading: var(--font-gotham);
+  --font-body: var(--font-body);
+
+  /* Font sizes with proper scale */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+  --text-4xl: 2.25rem;   /* 36px */
+  --text-5xl: 3rem;      /* 48px */
+
+  /* Line heights for readability */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
 }
 
-body, h1, h2, h3, h4, h5, h6, p, a, li {
+/* Heading Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.025em;
+}
+
+h1 { font-size: var(--text-4xl); }
+h2 { font-size: var(--text-3xl); }
+h3 { font-size: var(--text-2xl); }
+h4 { font-size: var(--text-xl); }
+h5 { font-size: var(--text-lg); }
+h6 { font-size: var(--text-base); }
+
+/* Body Text */
+p {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  font-weight: 400;
+}
+
+/* Global Text Elements */
+body, h1, h2, h3, h4, h5, h6, p, a, li, span, div {
   font-family: var(--font-system);
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Utility Classes for Font Weights */
+.font-light { font-weight: 300; }
+.font-normal { font-weight: 400; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.font-extrabold { font-weight: 800; }
+
+/* Responsive Typography */
+@media (max-width: 640px) {
+  h1 { font-size: var(--text-3xl); }
+  h2 { font-size: var(--text-2xl); }
+  h3 { font-size: var(--text-xl); }
 }
 
 /* Policy nav + container styles */

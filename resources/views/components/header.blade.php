@@ -141,7 +141,7 @@
               x-show="userOpen"
               @click.away="userOpen = false"
               x-transition
-              class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50"
+              class="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50"
             >
               <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
                 <i class="bi bi-person me-2"></i>My Profile
@@ -155,7 +155,7 @@
 
               @if (Auth::user()->user_type === 'admin')
                 <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
-                  <i class="bi bi-gear me-2"></i>Go to Admin Panel
+                  <i class="bi bi-gear me-2"></i>Admin Panel
                 </a>
               @endif
 

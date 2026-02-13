@@ -14,8 +14,10 @@
     [
       'label' => 'Users',
       'value' => $fmtInt($clientUsers),
-      'accent' => 'border-blue-500',
+      'accent' => 'border-blue-600',
       'valueClass' => 'text-blue-600',
+      'bg' => 'bg-gray-50',
+      'borderColor' => 'border-blue-600',
       'meta' => [
         ['Total', $fmtInt($totalUsers)],
         ['Verified', $fmtInt($verifiedUsers)],
@@ -89,12 +91,12 @@
   ];
 @endphp
 
-<div class="space-y-8">
+<div class="space-y-6 lg:space-y-8 min-w-0">
 
   {{-- Header + Date Filter --}}
   <header class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-    <div>
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+    <div class="min-w-0 flex-1">
+      <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Admin Dashboard</h1>
       <p class="text-sm text-gray-500 mt-1">
         Overview of users, bookings, revenue, and inventory
         @if(!empty($rangeLabel)) <span class="text-gray-400">·</span> <span class="font-medium">{{ $rangeLabel }}</span> @endif
@@ -119,8 +121,9 @@
           x-data="dashboard()"
           x-init="init()"
           @submit="isLoading = true"
-          class="flex flex-col sm:flex-row gap-3 sm:items-center">
-      <div class="inline-flex rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
+          class="w-full lg:w-auto">
+      <div class="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:items-center justify-start lg:justify-end">
+      <div class="inline-flex max-w-full rounded-xl border border-gray-200 bg-white p-1 shadow-sm overflow-x-auto">
         @foreach([
           'today' => 'Today',
           '7d' => '7 Days',
@@ -132,7 +135,7 @@
             name="range"
             value="{{ $k }}"
             @click="{{ $k === 'custom' ? 'range=\''.$k.'\'' : '' }}"
-            class="px-3 py-2 rounded-lg text-sm font-semibold transition
+            class="px-3 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap
               {{ $range === $k ? 'bg-[#8f5d54] text-white' : 'text-gray-600 hover:bg-gray-50' }}"
           >
             <span x-show="!isLoading">{{ $label }}</span>
@@ -147,7 +150,7 @@
       </div>
 
       {{-- Custom dates show only when custom is chosen --}}
-      <div class="flex gap-2 items-center" 
+      <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center" 
            x-show="range === 'custom'" 
            x-cloak
            x-transition:enter="transition ease-out duration-300"
@@ -157,14 +160,14 @@
            x-transition:leave-start="opacity-100 transform scale-100"
            x-transition:leave-end="opacity-0 transform scale-95">
         <input type="date" name="from" value="{{ $from }}"
-               class="rounded-xl border-gray-200 text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]" />
-        <span class="text-gray-400 text-sm">to</span>
+               class="rounded-xl border-gray-200 text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54] w-full sm:w-auto" />
+        <span class="text-gray-400 text-sm hidden sm:block">to</span>
         <input type="date" name="to" value="{{ $to }}"
-               class="rounded-xl border-gray-200 text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]" />
+               class="rounded-xl border-gray-200 text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54] w-full sm:w-auto" />
         <button
           type="submit"
           :disabled="isLoading"
-          class="rounded-xl bg-gray-900 text-white px-4 py-2 text-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
+          class="rounded-xl bg-gray-900 text-white px-4 py-2 text-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 w-full sm:w-auto"
         >
           <span x-show="!isLoading">Apply</span>
           <span x-show="isLoading" x-cloak>
@@ -177,7 +180,7 @@
       </div>
 
       {{-- Auto-refresh toggle --}}
-      <div class="relative flex items-center gap-2 ml-4">
+      <div class="relative flex items-center gap-2 ml-0 sm:ml-4">
         <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
           <input type="checkbox" 
                  x-model="autoRefresh" 
@@ -205,15 +208,41 @@
              x-transition:leave-start="opacity-100 transform scale-100"
              x-transition:leave-end="opacity-0 transform scale-95"
              @click.away="showShortcuts = false"
-             class="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs text-gray-700 z-50 min-w-max">
+             class="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs text-gray-700 z-50 min-w-max max-w-xs">
           <div class="font-semibold mb-2 text-gray-900">Keyboard Shortcuts:</div>
           <div class="space-y-1">
-            <div><kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">Ctrl</kbd> + <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">1</kbd> → Today</div>
-            <div><kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">Ctrl</kbd> + <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">2</kbd> → 7 Days</div>
-            <div><kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">Ctrl</kbd> + <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">3</kbd> → 30 Days</div>
-            <div><kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">Ctrl</kbd> + <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">4</kbd> → Custom</div>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+              <div class="flex items-center gap-1">
+                <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">Ctrl</kbd> + 
+                <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">1</kbd>
+              </div>
+              <span class="text-gray-600">→ Today</span>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+              <div class="flex items-center gap-1">
+                <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">Ctrl</kbd> + 
+                <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">2</kbd>
+              </div>
+              <span class="text-gray-600">→ 7 Days</span>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+              <div class="flex items-center gap-1">
+                <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">Ctrl</kbd> + 
+                <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">3</kbd>
+              </div>
+              <span class="text-gray-600">→ 30 Days</span>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+              <div class="flex items-center gap-1">
+                <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">Ctrl</kbd> + 
+                <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">4</kbd>
+              </div>
+              <span class="text-gray-600">→ Custom</span>
+            </div>
           </div>
         </div>
+      </div>
+
       </div>
     </form>
   </header>
@@ -326,13 +355,15 @@
 
   {{-- Key Metrics --}}
   <section aria-label="Key metrics">
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-6 min-w-0">
       @foreach($statCards as $c)
         <x-admin.stat-card
           :label="$c['label']"
           :value="$c['value']"
           :accent="$c['accent']"
           :value-class="$c['valueClass']"
+          :bg="$c['bg'] ?? 'bg-white'"
+          :border-color="$c['borderColor'] ?? 'border-gray-100'"
           :meta="$c['meta'] ?? null"
           :meta-inline="$c['metaInline'] ?? null"
         />
@@ -344,13 +375,13 @@
   @if($lowStockProducts > 0 || $lowStockFoods > 0)
     <section aria-label="Inventory alert">
       <div class="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 sm:p-5">
-        <div class="flex gap-3">
+        <div class="flex flex-col sm:flex-row gap-3">
           <div class="shrink-0 mt-0.5">
             <svg class="h-5 w-5 text-yellow-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
             </svg>
           </div>
-          <div>
+          <div class="min-w-0">
             <p class="text-sm text-yellow-800">
               <span class="font-semibold">Low Stock Alert:</span>
               @if($lowStockProducts > 0) {{ $lowStockProducts }} product(s) @endif
@@ -367,7 +398,7 @@
 
   {{-- Analytics --}}
   <section aria-label="Analytics tiles">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
 
       <x-admin.section-card title="Revenue Analytics">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -399,15 +430,15 @@
 
   {{-- Recent Bookings + Monthly Bookings --}}
   <section aria-label="Bookings overview">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
 
       <x-admin.section-card title="Recent Bookings" action-text="View all" :action-href="route('admin.bookings.index')">
         @if($recentBookings->count() > 0)
           <div class="divide-y divide-gray-100">
             @foreach($recentBookings as $booking)
-              <div class="py-4 flex items-start justify-between gap-4">
-                <div>
-                  <p class="text-sm font-semibold text-gray-900">
+              <div class="py-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-semibold text-gray-900 truncate">
                     {{ $booking->display_customer_name }}
                   </p>
                   <p class="text-sm text-gray-500">
@@ -415,7 +446,7 @@
                   </p>
                 </div>
 
-                <div class="text-right shrink-0">
+                <div class="text-left sm:text-right shrink-0">
                   <p class="text-sm font-semibold text-gray-900">{{ $fmtMoney($booking->total_amount) }}</p>
                   <x-admin.badge :status="$booking->status" class="mt-1">
                     {{ ucfirst($booking->status) }}
@@ -441,13 +472,13 @@
               @endphp
 
               <div class="flex items-center justify-between gap-4">
-                <span class="text-sm text-gray-600 w-24">{{ $label }}</span>
+                <span class="text-sm text-gray-600 w-16 sm:w-24 shrink-0">{{ $label }}</span>
 
-                <div class="flex items-center gap-3 flex-1">
+                <div class="flex items-center gap-3 flex-1 min-w-0">
                   <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div class="bg-[#8f5d54] h-2 rounded-full" style="width: {{ $pct }}%"></div>
+                    <div class="bg-[#8f5d54] h-2 rounded-full transition-all duration-300" style="width: {{ $pct }}%"></div>
                   </div>
-                  <span class="text-sm font-semibold text-gray-900 w-8 text-right">{{ $month->count }}</span>
+                  <span class="text-sm font-semibold text-gray-900 w-8 text-right shrink-0">{{ $month->count }}</span>
                 </div>
               </div>
             @endforeach
@@ -463,7 +494,7 @@
   {{-- Quick Actions --}}
   <section aria-label="Quick actions">
     <x-admin.section-card title="Quick Actions">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         @foreach($actions as $a)
           <x-admin.quick-action
             :href="$a['href']"
