@@ -386,7 +386,7 @@ function testimonialsManager() {
                 formData.append('avatar_file', this.avatarFile);
             }
 
-            let url = '{{ route('testimonials.store') }}';
+            let url = '{{ route('admin.testimonials.store') }}';
             let method = 'POST';
 
             if (this.editMode && this.form.id) {

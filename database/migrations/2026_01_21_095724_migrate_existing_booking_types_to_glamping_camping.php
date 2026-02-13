@@ -14,7 +14,9 @@ return new class extends Migration
     public function up(): void
     {
         // First, ensure the enum is updated to include glamping and camping
-        DB::statement("ALTER TABLE bookings MODIFY COLUMN booking_type ENUM('glamping', 'camping', 'dayvisit', 'staycation', 'regular') DEFAULT 'glamping'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE bookings MODIFY COLUMN booking_type ENUM('glamping', 'camping', 'dayvisit', 'staycation', 'regular') DEFAULT 'glamping'");
+        }
         
         // Get all staycations to map IDs to types
         $staycations = Staycation::all()->keyBy('id');

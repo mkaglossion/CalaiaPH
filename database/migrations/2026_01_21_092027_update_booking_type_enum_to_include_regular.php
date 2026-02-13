@@ -13,7 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         // Update booking_type enum to include 'glamping' and 'camping'
-        DB::statement("ALTER TABLE bookings MODIFY COLUMN booking_type ENUM('glamping', 'camping', 'dayvisit', 'staycation') DEFAULT 'glamping'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE bookings MODIFY COLUMN booking_type ENUM('glamping', 'camping', 'dayvisit', 'staycation') DEFAULT 'glamping'");
+        }
     }
 
     /**
@@ -22,6 +24,8 @@ return new class extends Migration
     public function down(): void
     {
         // Revert back to original enum
-        DB::statement("ALTER TABLE bookings MODIFY COLUMN booking_type ENUM('staycation', 'dayvisit') DEFAULT 'staycation'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE bookings MODIFY COLUMN booking_type ENUM('staycation', 'dayvisit') DEFAULT 'staycation'");
+        }
     }
 };

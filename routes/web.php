@@ -226,6 +226,8 @@ Route::get('/login', function () { return redirect('/'); })->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 Route::match(['GET', 'POST'], '/logout', [LoginController::class, 'logout'])->name('logout');
 
+Route::resource('testimonials', TestimonialController::class)->only(['create', 'store']);
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -334,6 +336,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     });
     Route::prefix('/testimonials')->group(function () {
         Route::get('/', [AdminController::class, 'testimonials'])->name('admin.testimonials.index');
+        Route::post('/', [TestimonialController::class, 'store'])->name('admin.testimonials.store');
+        Route::post('/{id}', [TestimonialController::class, 'update'])->name('admin.testimonials.update');
+        Route::delete('/{id}', [TestimonialController::class, 'destroy'])->name('admin.testimonials.destroy');
     });
     Route::prefix('/farm')->group(function () {
              Route::get('/farmInfos', [AdminController::class, 'farmInfo'])->name('admin.farm.farmInfos');
@@ -407,7 +412,6 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::resource('menu-text', MenuTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-text', EventTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-experience-sections', EventExperienceSectionController::class)->only(['store', 'update', 'destroy']);
-    Route::resource('testimonials', TestimonialController::class)->only(['create', 'store', 'update', 'destroy']);
     Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('day-text', DayPackageTextController::class)->only(['store', 'update', 'destroy']);
     Route::post('/accommodations-text', [AccommodationTextController::class, 'store'])->name('accommodations-text.store');
