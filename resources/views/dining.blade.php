@@ -58,8 +58,8 @@
               <img src="{{ asset('images/mess-hall.jpg') }}" alt="Mess Hall" class="w-full h-96 object-cover">
             @endif
             <div class="p-6 text-center">
-              <h2 class="text-3xl font-bold text-[#97655A] mb-4">Mess Hall</h2>
-              <p class="text-gray-700">Experience our spacious and elegant mess hall, perfect for group dining and special occasions.</p>
+              <h2 class="text-3xl font-bold text-[#97655A] mb-4" style="font-family: 'Gotham Book', sans-serif;">Mess Hall</h2>
+              <p class="text-gray-700" style="font-family: 'Gotham Book', sans-serif;">Experience our spacious and elegant mess hall, perfect for group dining and special occasions.</p>
             </div>
 
             {{-- CARDS SECTION (updated to match mock) --}}
@@ -107,10 +107,10 @@
               </div>
 
               <div class="px-6 pb-6 pt-1 text-center">
-                <h3 class="my-4 font-extrabold uppercase tracking-wide text-[#97655A] section-heading">
+                <h3 class="my-4 font-extrabold uppercase tracking-wide text-[#97655A]" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
                   {{ $food->name }}
                 </h3>
-                <p class="mb-2 text-[#97655A] text-xs">
+                <p class="mb-2 text-[#97655A] text-xs" style="font-family: 'Gotham Book', sans-serif;">
                   {!! nl2br($food->description ?? '') !!}
                 </p>
                 <p class="text-sm font-bold text-[#97655A] mb-3">PHP {{ $food->price ?? 'Contact for pricing' }}</p>
@@ -160,8 +160,8 @@
               <img src="{{ asset('images/cook-your-own.jpg') }}" alt="Cook Your Own" class="w-full h-96 object-cover">
             @endif
             <div class="p-6">
-              <h2 class="text-3xl font-bold text-[#97655A] mb-6 text-center">Cook Your Own</h2>
-              <p class="text-gray-700 mb-6 text-center">Experience the joy of cooking your own fresh ingredients from our farm. Choose from our available options:</p>
+              <h2 class="text-3xl font-bold text-[#97655A] mb-6 text-center" style="font-family: 'Gotham Book', sans-serif;">Cook Your Own</h2>
+              <p class="text-gray-700 mb-6 text-center" style="font-family: 'Gotham Book', sans-serif;">Experience the joy of cooking your own fresh ingredients from our farm. Choose from our available options:</p>
 
               {{-- Swiper Carousel --}}
               <div class="swiper cookYourOwnSwiper relative">
@@ -205,10 +205,10 @@
                       </div>
 
                       <div class="px-6 pb-6 pt-1 text-center">
-                        <h3 class="my-4 font-extrabold uppercase tracking-wide text-[#97655A] dining-subheading">
+                        <h3 class="my-4 font-extrabold uppercase tracking-wide text-[#97655A]" style="font-size: 20px; font-family: 'Gotham Book', sans-serif;">
                           {{ $food->name }}
                         </h3>
-                        <p class="mb-2 text-[#97655A] text-xs">
+                        <p class="mb-2 text-[#97655A] text-xs" style="font-family: 'Gotham Book', sans-serif;">
                           {!! nl2br($food->description ?? 'Delicious option') !!}
                         </p>
                         <p class="text-sm font-bold text-[#97655A] mb-3">PHP {{ $food->price ?? 'Contact for pricing' }}</p>

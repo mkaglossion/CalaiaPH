@@ -16,7 +16,7 @@
       <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="sustainable-farming-heading">
         <div class="container mx-auto px-4 max-w-7xl">
           <div class="max-w-4xl mx-auto">
-            <h2 class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center" style="font-family: 'Gotham Book', sans-serif;">
               Our Sustainable Farming
             </h2>
             <p class="mt-6 text-lg text-brand max-w-3xl mx-auto">
@@ -260,7 +260,7 @@
       <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="farm-experiences-heading">
         <div class="container mx-auto px-4 max-w-7xl">
           <div class="max-w-4xl mx-auto">
-            <h2 id="farm-experiences-heading" class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center">
+            <h2 id="farm-experiences-heading" class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center" style="font-family: 'Gotham Book', sans-serif;">
               Farm Experiences
             </h2>
             <p class="mt-6 text-lg text-brand max-w-3xl mx-auto">

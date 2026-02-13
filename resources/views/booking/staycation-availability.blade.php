@@ -66,9 +66,9 @@
         <div class="pt-6 px-4 sm:px-6 lg:px-12">
             {{-- Header --}}
             <div class="text-center mb-10">
-                <h1 class="text-2xl font-bold tracking-tight">Select Room(s)</h1>
+                <h1 class="text-2xl font-bold tracking-tight" style="font-family:'Gotham Book', sans-serif;">Select Room(s)</h1>
                 <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-                <p class="text-xs text-gray-500">
+                <p class="text-xs text-gray-500" style="font-family:'Gotham Book', sans-serif;">
                     Select your preferred accommodation + guests + pet options
                 </p>
             </div>
@@ -103,7 +103,7 @@
                     {{-- Filter --}}
                     <div class="mb-6 flex items-end gap-3 flex-wrap">
                         <div>
-                            <label for="roomType" class="block text-sm font-medium text-gray-700 mb-2">Filter by Type:</label>
+                            <label for="roomType" class="block text-sm font-medium text-gray-700 mb-2" style="font-family:'Gotham Book', sans-serif;">Filter by Type:</label>
                             <select id="roomType" x-model="roomType"
                                     class="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8f5d54] focus:border-[#8f5d54]">
                                 <option value="all">All Types</option>
@@ -210,7 +210,7 @@
                                 </div>
 
                                 <div class="p-6">
-                                    <h3 class="text-xl font-bold mb-2">
+                                    <h3 class="text-xl font-bold mb-2" style="font-family:'Gotham Book', sans-serif;">
                                         {{ $roomDetail['name'] }}
                                     </h3>
 
@@ -464,7 +464,7 @@
                 {{-- RIGHT --}}
                 <div class="lg:col-span-1">
                     <div class="bg-white rounded-2xl shadow-lg p-6">
-                        <h3 class="text-xl font-bold mb-6">Booking Summary</h3>
+                        <h3 class="text-xl font-bold mb-6" style="font-family:'Gotham Book', sans-serif;">Booking Summary</h3>
 
                         {{-- Dates --}}
                         <div class="mb-6">
@@ -1275,13 +1275,6 @@
                                     dayElem.style.outline = '2px solid #3b82f6';
                                     dayElem.style.outlineOffset = '-2px';
                                 }
-                            },
-                            onReady(selectedDates, dateStr, instance) {
-                                // Add id to month dropdown and year input for accessibility
-                                const monthSelect = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
-                                if (monthSelect) monthSelect.id = 'flatpickr-month';
-                                const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
-                                if (yearInput) yearInput.id = 'flatpickr-year';
                             }
                         });
                     })
@@ -1294,14 +1287,7 @@
                             mode: 'range',
                             dateFormat: 'Y-m-d',
                             defaultDate: [checkin, checkout],
-                            inline: true,
-                            onReady(selectedDates, dateStr, instance) {
-                                // Add id to month dropdown and year input for accessibility
-                                const monthSelect = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
-                                if (monthSelect) monthSelect.id = 'flatpickr-month';
-                                const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
-                                if (yearInput) yearInput.id = 'flatpickr-year';
-                            }
+                            inline: true
                         });
                     });
                 },

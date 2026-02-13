@@ -18,8 +18,8 @@
         <div class="w-full max-w-2xl">
             {{-- Header --}}
             <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold mb-2">Payment for</h1>
-                <h2 class="text-2xl text-[#8f5d54] font-semibold mb-6">Staycation Booking Payment</h2>
+                <h1 class="text-3xl font-bold mb-2" style="font-family: 'Gotham Book', sans-serif;">Payment for</h1>
+                <h2 class="text-2xl text-[#8f5d54] font-semibold mb-6" style="font-family: 'Gotham Book', sans-serif;">Staycation Booking Payment</h2>
                 <div class="border-b-2 border-gray-900 w-32 mx-auto"></div>
             </div>
 

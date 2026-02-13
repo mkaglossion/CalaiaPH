@@ -2,7 +2,7 @@
 
 {{-- Right column: Booking Summary --}}
 <div class="lg:w-1/3 bg-white rounded-xl shadow-md p-6 lg:sticky lg:top-6 transition-all duration-300">
-    <h3 class="text-2xl font-bold text-gray-900 mb-4">Booking Summary</h3>
+    <h3 class="text-2xl font-bold text-gray-900 mb-4" style="font-family: 'Gotham Book', sans-serif;">Booking Summary</h3>
 
     @if($datesSelected)
         <div class="space-y-3">
@@ -55,7 +55,7 @@
 
         <div class="mt-6 pt-6 border-t border-gray-200">
             <div class="text-center">
-                <h4 class="text-sm font-semibold text-gray-900 mb-3">Secure Booking</h4>
+                <h4 class="text-sm font-semibold text-gray-900 mb-3" style="font-family: 'Gotham Book', sans-serif;">Secure Booking</h4>
                 <div class="flex justify-center items-center space-x-4">
                     <div class="flex items-center">
                         <i class="fas fa-lock text-green-600 mr-2"></i>
@@ -70,6 +70,6 @@
             </div>
         </div>
     @else
-        <p class="text-xs text-gray-500">Please select your dates to see the booking summary.</p>
+        <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Please select your dates to see the booking summary.</p>
     @endif
 </div>

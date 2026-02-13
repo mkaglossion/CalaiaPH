@@ -81,13 +81,13 @@
                 <div class="min-h-10px mt-1">
                   <p class="text-xs text-gray-500"
                      x-text="activeTab === 'day-visit' ? 'Visit Time (1:00 PM)' : 'Check-in Time (1:00 PM)'"
-                     style="font-size: 13px;">
+                     style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                   </p>
 
                   <p class="text-xs text-gray-500"
                      x-show="availabilityText"
                      x-text="availabilityText"
-                     style="font-size: 13px;">
+                     style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                   </p>
                 </div>
               </div>
@@ -115,7 +115,7 @@
                 <div class="min-h-10px mt-1">
                   <p class="text-xs text-gray-500"
                      x-show="activeTab === 'room'"
-                     style="font-size: 13px;">
+                     style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
                     Check-out Time (11:00 PM)
                   </p>
                 </div>
@@ -128,6 +128,7 @@
                   name="start_booking"
                   class="w-full h-12 bg-brand text-white hover:bg-brand/90 transition-colors font-medium rounded-lg text-sm flex items-center justify-center"
                   id="check-availability-btn"
+                  style="font-family: 'Gotham Book', sans-serif;"
                 >
                   Check Availability
                 </button>
@@ -151,7 +152,7 @@
                     <span
                         x-show="activeTab === 'room'"
                         class="text-[11px] md:text-xs text-gray-500"
-                        style="font-size: 13px;"
+                        style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"
                     >
                         Select the date range for your room booking.
                     </span>
@@ -160,7 +161,7 @@
                     <span
                         x-show="activeTab === 'day-visit'"
                         class="text-[11px] md:text-xs text-gray-500"
-                        style="font-size: 13px;"
+                        style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"
                     >
                         Select the date for your day visit.
                     </span>
@@ -169,7 +170,7 @@
                     <span
                         x-show="activeTab === 'special-event'"
                         class="text-[11px] md:text-xs text-gray-500"
-                        style="font-size: 13px;"
+                        style="font-size: 13px; font-family: 'Gotham Book', sans-serif;"
                     >
                         Contact us for special event arrangements.
                     </span>
@@ -181,7 +182,7 @@
         <!-- Special Event Contact Section -->
         <div x-show="activeTab === 'special-event'" class="space-y-4">
             <div class="text-center">
-                <p class="text-sm text-gray-600 mb-4">
+                <p class="text-sm text-gray-600 mb-4" style="">
                     Message us here for special event arrangements
                 </p>
                 <div class="flex flex-col sm:flex-row gap-3 justify-center">
@@ -339,13 +340,6 @@
 
                         self.updateAvailabilityText();
                         self.updateStaySummary();
-                    },
-                    onReady(selectedDates, dateStr, instance) {
-                        // Add id to month dropdown and year input for accessibility
-                        const monthSelect = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
-                        if (monthSelect) monthSelect.id = 'flatpickr-month';
-                        const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
-                        if (yearInput) yearInput.id = 'flatpickr-year';
                     }
                 });
 

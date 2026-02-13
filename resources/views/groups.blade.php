@@ -326,8 +326,8 @@
             {{-- Details list --}}
             <div class="space-y-2">
               <template x-for="(p, idx) in modal.details" :key="idx">
-                <p class="modal-detail">
-                  <i class="bi bi-check-circle-fill mr-2 text-section-heading"></i>
+                <p style="font-size: 13px;">
+                  <i class="bi bi-check-circle-fill mr-2" style="color:#a97464;"></i>
                   <span x-text="p"></span>
                 </p>
               </template>

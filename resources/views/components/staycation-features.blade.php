@@ -3,9 +3,9 @@
 @if(!empty($features))
   <div class="mb-4">
     @if($showHeader)
-      <h6 class="{{ $headerClass }}">Features</h6>
+      <h6 class="{{ $headerClass }}" style="font-family: 'Gotham Book', sans-serif;">Features</h6>
     @endif
-    <ul class="{{ $ulClass }}">
+    <ul class="{{ $ulClass }}" style="font-family: 'Gotham Book', sans-serif;">
       @foreach($features as $feature)
         @if(trim($feature))
           <li class="{{ $liClass }}">{{ trim($feature) }}</li>

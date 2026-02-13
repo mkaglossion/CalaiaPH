@@ -91,9 +91,9 @@
         <div class="pt-6 px-4 sm:px-6 lg:px-12">
             {{-- Header --}}
             <div class="text-center mb-10">
-                <h1 class="text-2xl font-bold tracking-tight">Select Food & Beverages</h1>
+                <h1 class="text-2xl font-bold tracking-tight" style="font-family:'Gotham Book', sans-serif;">Select Food & Beverages</h1>
                 <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-                <p class="text-xs text-gray-500">
+                <p class="text-xs text-gray-500" style="font-family:'Gotham Book', sans-serif;">
                     Add food and beverages to your staycation (optional)
                 </p>
             </div>
@@ -128,7 +128,7 @@
                     {{-- Filter --}}
                     <div class="mb-6 flex items-end gap-3 flex-wrap">
                         <div>
-                            <label for="foodCategory" class="block text-sm font-medium text-gray-700 mb-2">Filter by:</label>
+                            <label for="foodCategory" class="block text-sm font-medium text-gray-700 mb-2" style="font-family:'Gotham Book', sans-serif;">Filter by:</label>
                             <select id="foodCategory" x-model="selectedCategory"
                                     class="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8f5d54] focus:border-[#8f5d54]">
                                 <option value="all">All Items</option>
@@ -215,7 +215,7 @@
                                 </div>
 
                                 <div class="p-6">
-                                    <h3 class="text-xl font-bold mb-2">
+                                    <h3 class="text-xl font-bold mb-2" style="font-family:'Gotham Book', sans-serif;">
                                         {{ $special->name }}
                                     </h3>
 
@@ -326,7 +326,7 @@
                                 </div>
 
                                 <div class="p-6">
-                                    <h3 class="text-xl font-bold mb-2">
+                                    <h3 class="text-xl font-bold mb-2" style="font-family:'Gotham Book', sans-serif;">
                                         {{ $food->name }}
                                     </h3>
 

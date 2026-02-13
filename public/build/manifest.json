@@ -1,4 +1,13 @@
 {
+  "resources/css/app.css": {
+    "file": "assets/app-Bkdv29dl.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
   "resources/js/app.js": {
     "file": "assets/app-CWfTKJZm.js",
     "name": "app",
@@ -10,9 +19,5 @@
     "name": "staycation",
     "src": "resources/js/booking/staycation.js",
     "isEntry": true
-  },
-  "style.css": {
-    "file": "assets/style-BJFruiZw.css",
-    "src": "style.css"
   }
 }

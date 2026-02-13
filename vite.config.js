@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/js/app.js', 'resources/js/booking/staycation.js'],
+            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/booking/staycation.js'],
             refresh: true,
         }),
         tailwindcss({
@@ -26,7 +26,6 @@ export default defineConfig({
         }),
     ],
     build: {
-        cssCodeSplit: false,
         rollupOptions: {
             onwarn(warning, warn) {
                 if (warning.code === 'UNRESOLVED_ENTRY' || 

@@ -10,7 +10,7 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
     --font-heading: 'Gotham', sans-serif;
     --font-body: 'Vilaka Modern Serif', serif;
-    --font-gotham-book: sans-serif;
+    --font-gotham-book: 'Gotham Book', sans-serif;
 
     /* ✅ add this */
     --color-brand: #a75e3e;
@@ -25,8 +25,18 @@ p {
   display: none !important;
 }
 
+/* Gotham Book font (place licensed font files in public/assets/fonts/) */
+@font-face {
+  font-family: 'Gotham Book';
+  src: url('/assets/fonts/Gotham-Book.woff2?v=1') format('woff2'),
+       url('/assets/fonts/Gotham-Book.woff?v=1') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --font-system: sans-serif;
+  --font-system: 'Gotham Book', sans-serif;
 }
 
 body, h1, h2, h3, h4, h5, h6, p, a, li {
@@ -75,51 +85,4 @@ body, h1, h2, h3, h4, h5, h6, p, a, li {
   margin-right: auto;
   padding-left: 1.5rem;
   padding-right: 1.5rem;
-}
-
-.section-heading {
-  color: #a97464;
-  font-size: 25px;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  margin-bottom: 1rem;
-}
-
-.text-section-heading {
-  color: #a97464;
-}
-
-.modal-detail {
-  font-size: 13px;
-  font-family: 'Gotham Book', sans-serif;
-}
-
-.font-gotham-book {
-  font-family: 'Gotham Book', sans-serif;
-}
-
-.variants-scroll {
-  max-height: calc(95vh - 160px);
-}
-
-.info-heading {
-  font-size: 25px;
-}
-
-.info-subtitle {
-  font-size: 12px;
-}
-
-.info-text {
-  font-size: 12px;
-}
-
-.dining-subheading {
-  font-size: 20px;
-}
-
-.staycation-heading {
-  color: #97655A;
-  font-size: 25px;
 }

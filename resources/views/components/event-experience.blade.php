@@ -51,7 +51,7 @@
                     <div class="{{ $reverse ? 'md:order-1' : 'md:order-2' }}">
                         <h2
                             class="uppercase font-bold tracking-wide {{ $t['title'] }} mb-4 text-center md:text-left"
-                            style="font-size:25px;"
+                            style="font-family:'Gotham Book', sans-serif; font-size:25px;"
                         >
                             {{ $section->title }}
                         </h2>
@@ -59,12 +59,14 @@
                         <div class="max-w-130 mx-auto md:mx-0">
                             <p
                                 class="{{ $t['text'] }} text-[13px] leading-[1.7] mb-3 text-center md:text-left"
+                                style="font-family:'Gotham Book', sans-serif;"
                             >
                                 {{ $section->description1 }}
                             </p>
 
                             <p
                                 class="{{ $t['text'] }} text-[13px] leading-[1.7] mb-6 text-center md:text-left"
+                                style="font-family:'Gotham Book', sans-serif;"
                             >
                                 {{ $section->description2 }}
                             </p>
@@ -73,6 +75,7 @@
                                 <a
                                     href="{{ $section->link_path }}"
                                     class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full transition-colors duration-300 {{ $t['btn'] }}"
+                                    style="font-family:'Gotham Book', sans-serif;"
                                 >
                                     LEARN MORE
                                 </a>
