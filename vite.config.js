@@ -26,8 +26,10 @@ export default defineConfig({
         }),
     ],
     build: {
-        cssCodeSplit: false,
         rollupOptions: {
+            output: {
+                manualChunks: undefined,
+            },
             onwarn(warning, warn) {
                 if (warning.code === 'UNRESOLVED_ENTRY' || 
                     (warning.message && warning.message.includes('didn\'t resolve at build time'))) {
