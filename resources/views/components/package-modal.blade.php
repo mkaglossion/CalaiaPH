@@ -23,7 +23,7 @@
     {{-- Modal Header --}}
     <div class="p-4 md:p-6 border-b border-gray-300 shrink-0">
       <div class="flex justify-between items-center">
-        <h3 id="{{ $id }}Label" class="text-xl md:text-2xl font-bold text-gray-800" style="font-size: 25px; font-family: 'Gotham Book', sans-serif; color: #8f5d54;"></h3>
+        <h3 id="{{ $id }}Label" class="text-xl md:text-2xl font-bold text-gray-800" style="font-size: 25px; color: #8f5d54;"></h3>
         <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" @click="closeModal()" aria-label="Close modal">
           <i class="bi bi-x-lg text-xl md:text-2xl"></i>
         </button>
@@ -152,8 +152,8 @@ window.openPackageModal = function(button) {
     }
   }
 
-  // Always show modal with cached images immediately (no loading state)
-  showPackageDetails(title, details, cachedImages, description, price);
+ modal with cached images immediately (no loading state)
+  show  // Always showPackageDetails(title, details, cachedImages, description, price);
 };
 
 window.closeModal = function() {
@@ -260,12 +260,10 @@ function buildCarouselSlides(modalId, imageUrls) {
       <div class="swiper-slide relative flex items-center justify-center bg-gray-200 overflow-hidden">
         <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
           <div class="text-center px-4">
-            <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                style="font-family: 'Gotham Book', sans-serif;">
+            <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase">
               No Image Available
             </h2>
-            <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-              style="font-family: 'Gotham Book', sans-serif; font-style: italic;">
+            <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase" style="font-style: italic;">
               Images will be added soon
             </p>
           </div>
@@ -319,7 +317,7 @@ function buildDynamicContent(modalId, title, details, description) {
 
     details.forEach(detail => {
       contentHTML += `
-        <p class="flex items-start text-gray-700" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+        <p class="flex items-start text-gray-700" style="font-size: 13px;">
           <i class="bi bi-check-circle-fill text-[#a75e3e] mr-3 mt-1 shrink-0"></i>
           <span class="flex-1">${detail}</span>
         </p>
@@ -334,7 +332,7 @@ function buildDynamicContent(modalId, title, details, description) {
     contentHTML = `
       <div class="space-y-4">
         <h4 class="text-lg font-semibold mb-3" style="color:#97655A;">${title} Details</h4>
-        <p class="text-gray-700" style="font-family: 'Gotham Book', sans-serif;">${description}</p>
+        <p class="text-gray-700">${description}</p>
       </div>
     `;
   }

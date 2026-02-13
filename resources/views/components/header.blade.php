@@ -92,8 +92,7 @@
       <div class="w-16"></div>
 
       <!-- NAV centered -->
-      <nav class="flex-1 flex justify-center gap-5"
-           style="font-family: 'Gotham Book', sans-serif;">
+      <nav class="flex-1 flex justify-center gap-5">
         @foreach ($nav as $item)
           <a
             href="{{ $item['href'] }}"
@@ -173,7 +172,7 @@
 
           <x-cart />
         @else
-          <div class="flex items-center gap-3" style="font-family: 'Gotham Book', sans-serif;">
+          <div class="flex items-center gap-3">
             <button
               @click="$store.modals.showLogin = true"
               class="text-white hover:text-white/80 font-medium transition"
@@ -240,11 +239,11 @@
       x-transition:leave-end="-translate-x-4 opacity-0"
     >
         <div class="flex items-center justify-between px-4 py-4 border-b border-brand/15">
-        <span class="font-semibold tracking-wide text-white" style="font-family: 'Gotham Book', sans-serif;">Menu</span>
+        <span class="font-semibold tracking-wide text-white">Menu</span>
         <button class="rounded-lg p-2 hover:bg-white/50" @click="mobileOpen = false">✕</button>
       </div>
 
-      <div class="px-4 py-3 space-y-1" style="font-family: 'Gotham Book', sans-serif;">
+      <div class="px-4 py-3 space-y-1">
         @foreach ($nav as $item)
           <a
             href="{{ $item['href'] }}"
@@ -301,14 +300,12 @@
             <button
               @click="$store.modals.showLogin = true; mobileOpen = false"
               class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/50 transition text-white"
-              style="font-family: 'Gotham Book', sans-serif;"
             >
               Log In
             </button>
             <button
               @click="$store.modals.showSignup = true; mobileOpen = false"
               class="w-full mt-2 bg-white text-brand px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-100 transition shadow"
-              style="font-family: 'Gotham Book', sans-serif;"
             >
               Sign Up
             </button>

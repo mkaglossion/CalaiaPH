@@ -10,7 +10,7 @@
 
 <header class="{{ $centered ? 'text-center' : '' }} mb-12" {{ $id ? 'id="' . $id . '"' : '' }}>
     @if($title)
-        <h2 class="{{ $titleSize }} font-bold text-brand mb-4 {{ $centered ? 'text-center' : '' }}" style="font-family: 'Gotham Book', sans-serif;">
+        <h2 class="{{ $titleSize }} font-bold text-brand mb-4 {{ $centered ? 'text-center' : '' }}">
             {{ $title }}
         </h2>
     @endif

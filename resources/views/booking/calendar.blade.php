@@ -329,9 +329,9 @@
     <div class="pt-6 px-4 sm:px-6 lg:px-12">
         {{-- Header --}}
         <div class="text-center mb-10">
-            <h1 class="text-2xl font-bold tracking-tight" style="font-family:'Gotham Book', sans-serif;">Select Your Staycation to Check-in & Check-out Date</h1>
+            <h1 class="text-2xl font-bold tracking-tight">Select Your Staycation to Check-in & Check-out Date</h1>
             <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-            <p class="text-xs text-gray-500" style="font-family:'Gotham Book', sans-serif;">
+            <p class="text-xs text-gray-500">
                 Choose your check-in and check-out dates
             </p>
         </div>
@@ -717,6 +717,13 @@
 
               // redraw to apply range outlines consistently
               this.initCalendar(true);
+            },
+            onReady(selectedDates, dateStr, instance) {
+              // Add id to month dropdown and year input for accessibility
+              const monthSelect = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
+              if (monthSelect) monthSelect.id = 'flatpickr-month';
+              const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
+              if (yearInput) yearInput.id = 'flatpickr-year';
             }
           });
         },

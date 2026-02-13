@@ -15,8 +15,7 @@
             <div class="p-6 flex flex-col h-full">
                 <div class="flex justify-between items-center mb-6">
                     <h2 id="variants-modal-title"
-                        class="font-bold text-gray-900 text-2xl"
-                        style="font-family: 'Gotham Book', sans-serif;">
+                        class="text-gray-900 text-2xl">
                         Select Options
                     </h2>
 
@@ -31,9 +30,8 @@
 
                 <!-- Variants container scrollable -->
                 <div
-                    class="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto flex-1"
-                    id="variants-container"
-                    style="max-height: calc(95vh - 160px);">
+                    class="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto flex-1 variants-scroll"
+                    id="variants-container">
                 </div>
 
                 <div class="mt-6 pt-4 border-t flex justify-end">
