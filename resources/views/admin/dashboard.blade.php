@@ -94,7 +94,7 @@
 <div class="space-y-6 lg:space-y-8 min-w-0">
 
   {{-- Header + Date Filter --}}
-  <header class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+  <header x-data="dashboard()" x-init="init()" class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
     <div class="min-w-0 flex-1">
       <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Admin Dashboard</h1>
       <p class="text-sm text-gray-500 mt-1">
@@ -118,8 +118,6 @@
 
     {{-- Filter (UI) --}}
     <form method="GET"
-          x-data="dashboard()"
-          x-init="init()"
           @submit="isLoading = true"
           class="w-full lg:w-auto">
       <div class="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:items-center justify-start lg:justify-end">
@@ -336,7 +334,7 @@
           
           // Submit form for non-custom ranges
           if (newRange !== 'custom') {
-            const form = this.$el;
+            const form = document.querySelector('form');
             const input = form.querySelector('input[name="range"]') || document.createElement('input');
             input.type = 'hidden';
             input.name = 'range';

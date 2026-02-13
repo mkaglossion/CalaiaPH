@@ -1,27 +1,17 @@
 {
-  "resources/css/app.css": {
-    "file": "assets/app-CmPLbH9G.css",
-    "src": "resources/css/app.css",
-    "isEntry": true,
-    "name": "app",
-    "names": [
-      "app.css"
-    ]
-  },
   "resources/js/app.js": {
-    "file": "assets/app-DRdGRvy0.js",
+    "file": "assets/app-CiI4O_Y1.js",
     "name": "app",
     "src": "resources/js/app.js",
-    "isEntry": true
+    "isEntry": true,
+    "css": [
+      "assets/app-D44JOrJr.css"
+    ]
   },
   "resources/js/booking/staycation.js": {
     "file": "assets/staycation-BSwZU-QC.js",
     "name": "staycation",
     "src": "resources/js/booking/staycation.js",
     "isEntry": true
-  },
-  "style.css": {
-    "file": "assets/style-BJFruiZw.css",
-    "src": "style.css"
   }
 }
