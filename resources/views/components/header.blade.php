@@ -139,7 +139,13 @@
               x-cloak
               x-show="userOpen"
               @click.away="userOpen = false"
-              x-transition
+              x-transition:enter="transition ease-out duration-200"
+              x-transition:enter-start="opacity-0 scale-95"
+              x-transition:enter-end="opacity-100 scale-100"
+              x-transition:leave="transition ease-in duration-150"
+              x-transition:leave-start="opacity-100 scale-100"
+              x-transition:leave-end="opacity-0 scale-95"
+              style="display: none;"
               class="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50"
             >
               <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
@@ -225,16 +231,16 @@
   </div>
 
   <!-- ✅ MOBILE OFF-CANVAS MENU -->
-  <div x-cloak x-show="mobileOpen" class="md:hidden">
+  <div x-cloak x-show="mobileOpen" style="display: none;" class="md:hidden">
     <div class="fixed inset-0 bg-black/40" @click="mobileOpen = false"></div>
 
     <div
       id="mobile-menu"
       class="fixed top-0 left-0 h-full w-[85%] max-w-sm bg-brand shadow-2xl z-50"
-      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter="transition ease-out duration-300"
       x-transition:enter-start="-translate-x-4 opacity-0"
       x-transition:enter-end="translate-x-0 opacity-100"
-      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave="transition ease-in duration-200"
       x-transition:leave-start="translate-x-0 opacity-100"
       x-transition:leave-end="-translate-x-4 opacity-0"
     >
@@ -247,7 +253,7 @@
         @foreach ($nav as $item)
           <a
             href="{{ $item['href'] }}"
-            @click="mobileOpen = false"
+            @click.prevent="mobileOpen = false; window.location.href = '{{ $item['href'] }}'"
             @class([
               'block rounded-lg px-3 py-2 uppercase tracking-wide transition text-white',
               $active === $item['key'] ? 'bg-white/70 font-semibold' : 'hover:bg-white/50'
@@ -260,7 +266,7 @@
         <a
           href="{{ route('cart.index') }}"
           data-js-cart-button
-          @click="mobileOpen = false"
+          @click.prevent="mobileOpen = false; window.location.href = '{{ route('cart.index') }}'"
           class="mt-2 flex items-center justify-between rounded-lg px-3 py-2 uppercase tracking-wide hover:bg-white/50 transition text-white"
         >
           <span>Cart</span>
@@ -273,27 +279,27 @@
 
           <div class="pt-3 mt-3 border-t border-brand/15">
           @auth
-            <a href="{{ route('profile.show') }}" @click="mobileOpen = false" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+            <a href="{{ route('profile.show') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('profile.show') }}'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
               <i class="bi bi-person me-2"></i>Profile
             </a>
-            <a href="/booking/staycation" @click="mobileOpen = false" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+            <a href="/booking/staycation" @click.prevent="mobileOpen = false; window.location.href = '/booking/staycation'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
               <i class="bi bi-calendar-check me-2"></i>Book Now
             </a>
-            <a href="{{ route('booking.history') }}" @click="mobileOpen = false" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+            <a href="{{ route('booking.history') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('booking.history') }}'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
               <i class="bi bi-calendar-event me-2"></i>My Bookings
             </a>
 
             @if (Auth::user()->user_type === 'admin')
-              <a href="{{ route('admin.dashboard') }}" @click="mobileOpen = false" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+              <a href="{{ route('admin.dashboard') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('admin.dashboard') }}'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
                 <i class="bi bi-gear me-2"></i>Admin Panel
               </a>
             @endif
 
-            <a href="{{ route('checkinout') }}" @click="mobileOpen = false" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+            <a href="{{ route('checkinout') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('checkinout') }}'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
               <i class="bi bi-person-check me-2"></i>Check-in / Check-out
             </a>
 
-            <a href="{{ route('logout') }}" @click="mobileOpen = false" class="block px-3 py-3 rounded-lg hover:bg-white/50 transition text-white pb-12">
+            <a href="{{ route('logout') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('logout') }}'" class="block px-3 py-3 rounded-lg hover:bg-white/50 transition text-white pb-12">
               <i class="bi bi-box-arrow-right me-2"></i>Log Out
             </a>
           @else
@@ -321,6 +327,7 @@
     x-transition
     @click.self="$store.modals.showSignup = false"
     x-cloak
+    style="display: none;"
     class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-60 p-4"
   >
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-gray-800 relative">
@@ -474,6 +481,7 @@
     x-transition
     @click.self="$store.modals.showLogin = false"
     x-cloak
+    style="display: none;"
     class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-60 p-4"
   >
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-gray-800 relative">
