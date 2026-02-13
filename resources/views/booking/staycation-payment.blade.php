@@ -76,9 +76,9 @@ $selectedActivities = $booking['selected_activities'] ?? [];
       <div class="pt-6 md:pt-12">
         {{-- Header --}}
         <div class="text-center mb-10">
-            <h1 class="text-2xl font-bold tracking-tight" style="font-family: 'Gotham Book', sans-serif;">Complete Staycation Payment</h1>
+            <h1 class="text-2xl font-bold tracking-tight">Complete Staycation Payment</h1>
             <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-            <p class="text-xs text-gray-500" style="font-family: 'Gotham Book', sans-serif;">Review your staycation details and complete your payment</p>
+            <p class="text-xs text-gray-500">Review your staycation details and complete your payment</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10 pb-12">
@@ -145,7 +145,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
 
                     {{-- Customer Information --}}
                     <div class="bg-gray-50 rounded-xl p-4 sm:py-6">
-                      <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center" style="font-family: 'Gotham Book', sans-serif;">
+                      <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
                         <i class="bi bi-person-circle mr-2 text-[#8f5d54]"></i>
                         Personal Information
                       </h3>
@@ -234,7 +234,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
                           placeholder="Any special requirements, celebrations, or notes..."
                         >{{ old('special_requests') }}</textarea>
-                        <p class="mt-1 text-xs text-gray-400" style="font-family: 'Gotham Book', sans-serif;">
+                        <p class="mt-1 text-xs text-gray-400">
                           Example: "Vegan meal options", "Birthday surprise setup", or accessibility needs.
                         </p>
                       </div>
@@ -245,7 +245,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                       <h3 class="block text-sm sm:text-base font-medium text-gray-800 mb-1">
                         Payment Method
                       </h3>
-                      <p class="text-xs text-gray-500 mb-2" style="font-family: 'Gotham Book', sans-serif;">
+                      <p class="text-xs text-gray-500 mb-2">
                         Secure payment via PayMongo. Choose your preferred payment method including card, GCash, PayMaya, or QR PH.
                       </p>
 
@@ -743,7 +743,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                         <span class="font-bold ml-2">₱{{ number_format($grandTotal, 2, '.', '') }}</span>
                       </button>
 
-                      <p class="mt-3 text-xs text-center text-gray-500" style="font-family: 'Gotham Book', sans-serif;">
+                      <p class="mt-3 text-xs text-center text-gray-500">
                         Your payment is secured with 256-bit SSL encryption. By proceeding, you agree to our terms of service.
                       </p>
                     </div>
@@ -770,12 +770,6 @@ $selectedActivities = $booking['selected_activities'] ?? [];
 
       {{-- Footer --}}
       <x-footer />
-
-      {{-- Temporary inline font helpers --}}
-      <style>
-        .font-gotham { font-family: 'Gotham Book', sans-serif; }
-        [x-cloak] { display: none !important; }
-      </style>
 
       <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 

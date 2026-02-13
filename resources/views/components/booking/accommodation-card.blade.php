@@ -11,17 +11,17 @@
 
     <div class="flex flex-col p-6 h-full">
         {{-- Name --}}
-        <h3 class="text-2xl font-extrabold text-gray-900 mb-2" style="font-family: 'Gotham Book', sans-serif;">
+        <h3 class="text-2xl font-extrabold text-gray-900 mb-2">
             {{ $accommodation->name }}
         </h3>
 
         {{-- Description --}}
-        <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
+        <p class="text-xs text-gray-600 leading-relaxed mb-3">
             {{ Str::limit($accommodation->description, 150) ?: '-' }}
         </p>
 
         {{-- Includes --}}
-        <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
+        <p class="text-xs text-gray-600 leading-relaxed mb-3">
         Includes: Standard and Premium glamping tents (static)
         </p>
 
@@ -47,14 +47,12 @@
                 ->content ?? null;
         @endphp
 
-        <p class="font-semibold mb-3" style="color: #7a7d52; font-family: 'Gotham Book', sans-serif; font-size: 16px;">
+        <p class="font-semibold mb-3" style="color: #7a7d52; font-size: 16px;">
             {{ $priceText ? $priceText : 'Price not available' }}
         </p>
 
         {{-- Options --}}
-        <p class="text-xs text-gray-600 leading-relaxed mb-3" style="font-family: 'Gotham Book', sans-serif;">
-            {{ $accommodation->accommodationVariants->count() }} option{{ $accommodation->accommodationVariants->count() !== 1 ? 's' : '' }} available
-        </p>
+        <p class="text-xs text-gray-600 leading-relaxed mb-3">
 
         {{-- Button --}}
         <button

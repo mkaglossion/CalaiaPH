@@ -177,11 +177,11 @@
       {{-- Information Section --}}
       <div class="bg-linear-to-r from-[#6b9691] to-[#7ba08a] text-white rounded-3xl p-8 md:p-10 shadow-xl mt-16 md:mt-20 lg:mt-24">
         <div class="text-center mb-8">
-          <h4 class="text-2xl md:text-3xl font-bold mb-4 flex items-center justify-center" style="font-size: 25px; font-family: 'Gotham Book', sans-serif;">
+          <h4 class="text-2xl md:text-3xl font-bold mb-4 flex items-center justify-center info-heading">
             <i class="bi bi-info-circle-fill mr-3 text-3xl"></i>
             {{ $infoTitle ?? 'Important Information' }}
           </h4>
-          <p class="text-lg/7 opacity-90" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+          <p class="text-lg/7 opacity-90 info-subtitle">
             {{ $infoSubtitle ?? 'Everything you need to know before your visit' }}
           </p>
         </div>
@@ -190,7 +190,7 @@
           @foreach($infoItems ?? [] as $info)
             <div class="flex items-start bg-white/10 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all duration-300">
               <i class="bi {{ $info['icon'] ?? 'bi-info-circle' }} text-xl mr-4 mt-1 shrink-0"></i>
-              <span class="text-sm md:text-base leading-relaxed" style="font-size: 13px; font-family: 'Gotham Book', sans-serif;">
+              <span class="text-sm md:text-base leading-relaxed info-text">
                 {{ $info['text'] ?? '' }}
               </span>
             </div>
