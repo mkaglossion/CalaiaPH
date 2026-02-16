@@ -158,7 +158,7 @@
               <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
                 <i class="bi bi-person me-2"></i>My Profile
               </a>
-              <a href="/booking/staycation" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+              <a href="{{ route('booking.calendar') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
                 <i class="bi bi-calendar-check me-2"></i>Book Now
               </a>
               <a href="{{ route('booking.history') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
@@ -289,7 +289,7 @@
             <a href="{{ route('profile.show') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('profile.show') }}'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
               <i class="bi bi-person me-2"></i>Profile
             </a>
-            <a href="/booking/staycation" @click.prevent="mobileOpen = false; window.location.href = '/booking/staycation'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+            <a href="{{ route('booking.calendar') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('booking.calendar') }}'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
               <i class="bi bi-calendar-check me-2"></i>Book Now
             </a>
             <a href="{{ route('booking.history') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('booking.history') }}'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
