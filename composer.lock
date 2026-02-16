@@ -6772,16 +6772,16 @@
         },
         {
             "name": "laravel/mcp",
-            "version": "v0.5.6",
+            "version": "v0.5.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/mcp.git",
-                "reference": "87905978bf2a230d6c01f8d03e172249e37917f7"
+                "reference": "97fcdacbce93c572e3d25457cf30395dede67088"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/mcp/zipball/87905978bf2a230d6c01f8d03e172249e37917f7",
-                "reference": "87905978bf2a230d6c01f8d03e172249e37917f7",
+                "url": "https://api.github.com/repos/laravel/mcp/zipball/97fcdacbce93c572e3d25457cf30395dede67088",
+                "reference": "97fcdacbce93c572e3d25457cf30395dede67088",
                 "shasum": ""
             },
             "require": {
@@ -6841,7 +6841,7 @@
                 "issues": "https://github.com/laravel/mcp/issues",
                 "source": "https://github.com/laravel/mcp"
             },
-            "time": "2026-02-09T22:08:43+00:00"
+            "time": "2026-02-13T14:08:37+00:00"
         },
         {
             "name": "laravel/pail",
