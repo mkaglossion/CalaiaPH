@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\WeatherController;
@@ -71,6 +72,9 @@ use App\Http\Controllers\PricingConfigController;
 use App\Http\Controllers\BookingCalendarController;
 use App\Http\Controllers\CheckInOutController;
 // ========== Root Route ==========
+
+
+
 Route::get('/', function () {
     return redirect('/home');
 });
@@ -225,6 +229,12 @@ Route::get('/verify-email/{token}', [RegisterController::class, 'verifyEmail'])-
 Route::get('/login', function () { return redirect('/'); })->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 Route::match(['GET', 'POST'], '/logout', [LoginController::class, 'logout'])->name('logout');
+
+// Password Reset Routes
+Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])->name('forgot.password');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'forgotPassword'])->name('forgot.password.post');
+Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('reset.password');
+Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->name('reset.password.post');
 
 Route::resource('testimonials', TestimonialController::class)->only(['create', 'store']);
 

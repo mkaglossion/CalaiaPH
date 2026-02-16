@@ -1,5 +1,7 @@
 {{-- resources/views/components/flash-message.blade.php --}}
 
+@props(['type' => null, 'message' => null])
+
 @php
     /**
      * Supported types: success, error, info, warning
@@ -8,22 +10,31 @@
 
     $messages = collect();
 
-    if ($errors->any()) {
-        // Show all errors
-        foreach ($errors->all() as $error) {
-            $messages->push([
-                'type' => 'error',
-                'text' => $error,
-            ]);
+    // If type and message props are provided, use only those
+    if ($type && $message) {
+        $messages->push([
+            'type' => $type,
+            'text' => $message,
+        ]);
+    } else {
+        // Otherwise, collect from errors and session
+        if ($errors->any()) {
+            // Show all errors
+            foreach ($errors->all() as $error) {
+                $messages->push([
+                    'type' => 'error',
+                    'text' => $error,
+                ]);
+            }
         }
-    }
 
-    foreach (['success', 'error', 'info', 'warning'] as $type) {
-        if (session()->has($type)) {
-            $messages->push([
-                'type' => $type,
-                'text' => session($type),
-            ]);
+        foreach (['success', 'error', 'info', 'warning'] as $t) {
+            if (session()->has($t)) {
+                $messages->push([
+                    'type' => $t,
+                    'text' => session($t),
+                ]);
+            }
         }
     }
 
@@ -56,14 +67,15 @@
 
     // Default auto-dismiss timeout (ms). Set to 0 to disable.
     // You can override per-message with ['timeout' => 5000]
-    $defaultTimeout = 3000;
+    $defaultTimeout = 0;
 @endphp
 
 @if ($messages->isNotEmpty())
     <div
         id="flash-messages"
-        class="fixed top-4 right-4 z-50 space-y-3 flex flex-col items-end w-auto max-w-4xl"
+        class="fixed top-4 right-4 left-auto z-9999 space-y-3 flex flex-col items-end w-auto max-w-4xl"
         data-controller="flash"
+        {{-- Always right-aligned. If you see a left-aligned flash-message, check for duplicate component or conflicting CSS. --}}
     >
         @foreach ($messages as $i => $msg)
             @php

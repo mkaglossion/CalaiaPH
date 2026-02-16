@@ -28,6 +28,8 @@ class User extends Authenticatable
         'address',
         'zip_code',
         'date_of_birth',
+        'password_reset_token',
+        'password_reset_expires',
     ];
 
 

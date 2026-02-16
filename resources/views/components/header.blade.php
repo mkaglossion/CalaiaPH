@@ -33,13 +33,15 @@
             showLogin: false,
             showSignup: false,
             signupSuccess: false,
-            showCart: false
+            showCart: false,
+            showForgotPassword: false
           });
         } else {
           // Ensure modals are closed on page load
           Alpine.store('modals').showLogin = false;
           Alpine.store('modals').showSignup = false;
           Alpine.store('modals').showCart = false;
+          Alpine.store('modals').showForgotPassword = false;
         }
       } catch (e) {
         console.error('Alpine store initialization error:', e);
@@ -48,20 +50,25 @@
           showLogin: false,
           showSignup: false,
           signupSuccess: false,
-          showCart: false
+          showCart: false,
+          showForgotPassword: false
         });
       }
     },
     closeAll() {
       this.mobileOpen = false;
       const m = Alpine.store('modals');
-      if (m) { m.showLogin = false; m.showSignup = false; }
+      if (m) { 
+        m.showLogin = false; 
+        m.showSignup = false; 
+        m.showForgotPassword = false; 
+      }
     }
   }"
   x-init="init()"
   x-effect="
     const m = Alpine.store('modals');
-    const lock = mobileOpen || (m && (m.showLogin || m.showSignup));
+    const lock = mobileOpen || (m && (m.showLogin || m.showSignup || m.showForgotPassword || m.showCart));
     if (lock) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -436,13 +443,13 @@
               <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
               <input x-ref="password" id="password" name="password" type="password" placeholder="********"
                 class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                required>
+                required autocomplete="new-password">
             </div>
             <div>
               <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
               <input x-ref="password_confirmation" id="password_confirmation" name="password_confirmation" type="password" placeholder="********"
                 class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                required>
+                required autocomplete="new-password">
             </div>
           </div>
 
@@ -503,17 +510,123 @@
           <label for="login_password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
           <input type="password" id="login_password" name="password" placeholder="Enter your password"
             class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            required>
+            required autocomplete="current-password">
         </div>
         <button type="submit"
           class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md">
           Log In
         </button>
       </form>
+
+      <div class="text-center mt-4">
+        <a href="#"
+          @click.prevent="
+            $store.modals.showLogin = false;
+            $nextTick(() => { $store.modals.showForgotPassword = true; })
+          "
+          class="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+        >
+          Forgot your password?
+        </a>
+      </div>
       <p class="text-center text-sm text-gray-500 mt-3">
         Don't have an account?
         <a href="#" @click.prevent="$store.modals.showLogin = false; $store.modals.showSignup = true" class="text-blue-600 hover:underline font-medium">Sign up</a>
       </p>
+    </div>
+  </div>
+
+  <!-- FORGOT PASSWORD MODAL -->
+  <div
+    x-show="$store.modals.showForgotPassword"
+    x-transition
+    @click.self="$store.modals.showForgotPassword = false"
+    x-cloak
+    style="display: none;"
+    class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-60 p-4"
+  >
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-gray-800 relative">
+      <button
+        @click="$store.modals.showForgotPassword = false; $nextTick(() => { $store.modals.showLogin = true; })"
+        class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition">
+        ✕
+      </button>
+
+      <h2 class="text-2xl font-semibold mb-4 text-center text-blue-600">Forgot Password</h2>
+
+      <form
+        id="forgotPasswordForm"
+        class="space-y-4"
+        @submit.prevent="
+          const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+          const formData = { email: $refs.forgotEmail.value };
+
+          $el.querySelector('button[type=submit]').innerText = 'Sending...';
+          $el.querySelector('button[type=submit]').disabled = true;
+
+          fetch('{{ route('forgot.password.post') }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': csrf,
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(formData)
+          })
+          .then(async res => {
+            let data;
+            try { data = await res.json(); } catch { throw new Error('Invalid JSON'); }
+
+            if (res.ok) {
+              if (data.success) {
+                alert(data.message);
+                $store.modals.showForgotPassword = false;
+                $nextTick(() => { $store.modals.showLogin = true; });
+              } else {
+                alert('Something went wrong.');
+              }
+            } else if (data.errors) {
+              const errorMessages = Object.values(data.errors).flat().join('\\n');
+              alert(errorMessages);
+            } else {
+              alert(data.message || 'Request failed.');
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            alert('Error sending request.');
+          })
+          .finally(() => {
+            const btn = $el.querySelector('button[type=submit]');
+            btn.innerText = 'Send Reset Link';
+            btn.disabled = false;
+          });
+        "
+      >
+        <div>
+          <label for="forgotEmail" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+          <input x-ref="forgotEmail" id="forgotEmail" name="email" type="email" placeholder="Enter your email address"
+            class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            required autocomplete="email">
+        </div>
+
+        <button type="submit"
+          class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md">
+          Send Reset Link
+        </button>
+      </form>
+
+      <div class="text-center mt-4">
+        <a href="#"
+          @click.prevent="
+            $store.modals.showForgotPassword = false;
+            $nextTick(() => { $store.modals.showLogin = true; })
+          "
+          class="text-sm text-blue-600 hover:text-blue-800 hover:underline">
+          Back to login
+        </a>
+      </div>
     </div>
   </div>
 </header>

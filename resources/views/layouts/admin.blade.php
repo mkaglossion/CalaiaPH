@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
 
   {{-- Vite --}}
-  @vite(['resources/css/app.css', 'resources/js/app.js'])
+  @vite(['resources/js/app.js'])
 
   <style>[x-cloak]{display:none !important;}</style>
 

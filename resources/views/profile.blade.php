@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calaia Farm - User Profile</title>
-    @vite(['resources/css/app.css'])
+    @vite(['resources/js/app.js'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
@@ -498,6 +498,7 @@
                                             class="w-full px-4 py-2 rounded-lg focus:ring-2 focus:outline-none"
                                             style="border:1px solid rgba(204,203,189,0.9);background-color:#ffffff;--tw-ring-color:#00848d;"
                                             required
+                                            autocomplete="current-password"
                                         >
                                     </div>
 
@@ -510,6 +511,7 @@
                                             class="w-full px-4 py-2 rounded-lg focus:ring-2 focus:outline-none"
                                             style="border:1px solid rgba(204,203,189,0.9);background-color:#ffffff;--tw-ring-color:#00848d;"
                                             required
+                                            autocomplete="new-password"
                                         >
                                     </div>
 
@@ -522,6 +524,7 @@
                                             class="w-full px-4 py-2 rounded-lg focus:ring-2 focus:outline-none"
                                             style="border:1px solid rgba(204,203,189,0.9);background-color:#ffffff;--tw-ring-color:#00848d;"
                                             required
+                                            autocomplete="new-password"
                                         >
                                     </div>
 

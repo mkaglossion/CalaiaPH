@@ -8,7 +8,7 @@
     <meta name="description" content="Checkout - CalaiaPH">
     <meta name="keywords" content="checkout, payment, CalaiaPH">
     <meta name="author" content="CalaiaPH">
-    @vite(['resources/css/app.css'])
+    @vite(['resources/js/app.js'])
     <title>Checkout - CalaiaPH</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
@@ -44,52 +44,7 @@
     </style>
   </head>
   <body class="bg-[#f5efe7]">
-    <div class="flex flex-col items-center justify-center px-4">
-      @if (session('success'))
-        <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">
-            {{ session('success') }}
-        </div>
 
-        <!-- Related Activities Suggestion -->
-        <div class="mt-12 bg-white rounded-2xl shadow-xl p-8">
-          <h3 class="text-2xl font-semibold text-gray-800 mb-6 text-center" style="">
-            <i class="bi bi-lightbulb text-[#8f5d54] mr-2"></i>
-            You might also like
-          </h3>
-          <div class="grid md:grid-cols-3 gap-6">
-            <a href="{{ url('/daytour') }}" class="group">
-              <div class="bg-linear-to-br from-blue-50 to-blue-100 p-6 rounded-xl hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
-                <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-4">
-                  <i class="bi bi-sun text-white text-xl"></i>
-                </div>
-                <h4 class="font-semibold text-gray-800 mb-2">Day Tours</h4>
-                <p class="text-gray-600 text-sm">Explore Calaia with guided day tours</p>
-              </div>
-            </a>
-
-            <a href="{{ url('/staycation') }}" class="group">
-              <div class="bg-linear-to-br from-green-50 to-green-100 p-6 rounded-xl hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
-                <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-4">
-                  <i class="bi bi-house-heart text-white text-xl"></i>
-                </div>
-                <h4 class="font-semibold text-gray-800 mb-2">Staycations</h4>
-                <p class="text-gray-600 text-sm">Relax in our beautiful accommodations</p>
-              </div>
-            </a>
-
-            <a href="{{ url('/dining') }}" class="group">
-              <div class="bg-linear-to-br from-orange-50 to-orange-100 p-6 rounded-xl hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
-                <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mb-4">
-                  <i class="bi bi-cup-hot text-white text-xl"></i>
-                </div>
-                <h4 class="font-semibold text-gray-800 mb-2">Food & Dining</h4>
-                <p class="text-gray-600 text-sm">Savor local delicacies and cuisine</p>
-              </div>
-            </a>
-          </div>
-        </div>
-    @endif
-</div>
 
     <!-- Logo -->
     <div class="bg-linear-to-r from-white via-gray-50 to-white border-b border-gray-100 shadow-sm relative">

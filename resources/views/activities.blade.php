@@ -1,29 +1,13 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    @include('layouts.partials.favicon')
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="Discover thrilling outdoor activities at CalaiaPH. From biking trails to adventure sports, experience the best of nature-based recreation and team-building activities.">
-    <meta name="keywords" content="outdoor activities, biking trails, adventure sports, team building, nature recreation, CalaiaPH, Philippines activities">
-    <meta name="author" content="CalaiaPH">
-    @vite(['resources/css/app.css'])
-    <title>CalaiaPH - Activities</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-  </head>
-  <body class="bg-[#f5efe7]">
-    <div class="flex flex-col items-center justify-center px-4">
-      @if (session('success'))
-        <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">
-            {{ session('success') }}
-        </div>
-      @endif
-    </div>
-
-    <x-header active="activities" />
+<x-page-layout 
+    title="CalaiaPH - Activities"
+    description="Discover thrilling outdoor activities at CalaiaPH. From biking trails to adventure sports, experience the best of nature-based recreation and team-building activities."
+    keywords="outdoor activities, biking trails, adventure sports, team building, nature recreation, CalaiaPH, Philippines activities"
+    activeHeader="activities"
+    bodyClass="bg-[#f5efe7]"
+>
+    @push('styles')
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    @endpush
 
    {{-- Hero Slider --}}
     <x-hero-slider :images="$swiperImages" :texts="$texts" />
@@ -493,41 +477,65 @@
         render(index);
       }
 
-      document.addEventListener('DOMContentLoaded', function () {
-        // Hero Swiper
-        const heroEl = document.querySelector('.heroSwiper');
-        if (heroEl) {
-          const slidesCount = parseInt(heroEl.dataset.slidesCount || '0', 10);
-          new Swiper('.heroSwiper', {
-            autoplay: {
-              delay: 3000,
-              disableOnInteraction: false,
+        // Fix for flushLogs fetch error - aggressive override
+        (function() {
+          // Override flushLogs before any other scripts can define it
+          Object.defineProperty(window, 'flushLogs', {
+            value: function() {
+              console.log('flushLogs called - disabled to prevent fetch errors');
+              return Promise.resolve();
             },
-            loop: slidesCount > 1,
-            effect: 'fade',
-            fadeEffect: {
-              crossFade: true
-            },
-            keyboard: {
-              enabled: true,
-            },
-            a11y: {
-              prevSlideMessage: 'Previous slide',
-              nextSlideMessage: 'Next slide',
-            },
+            writable: false,
+            enumerable: true,
+            configurable: true
           });
-        }
 
-        // Activity carousels by category
-        const carousels = [
-          { rootId: 'adventure-carousel', stageId: 'adventure-stage', dotsId: 'adventure-dots', dataId: 'slides-data-adventure' },
-          { rootId: 'sports-carousel',    stageId: 'sports-stage',    dotsId: 'sports-dots',    dataId: 'slides-data-sports' },
-          { rootId: 'rrcamp-carousel',    stageId: 'rrcamp-stage',    dotsId: 'rrcamp-dots',    dataId: 'slides-data-rrcamp' },
-          { rootId: 'farm-carousel',      stageId: 'farm-stage',      dotsId: 'farm-dots',      dataId: 'slides-data-farm' },
-        ];
+          // Also override any scheduleFlush function that might be calling flushLogs
+          Object.defineProperty(window, 'scheduleFlush', {
+            value: function() {
+              console.log('scheduleFlush called - disabled');
+            },
+            writable: false,
+            enumerable: true,
+            configurable: true
+          });
+        })();
 
-        carousels.forEach(initActivityCarousel);
-      });
+       document.addEventListener('DOMContentLoaded', function () {
+         // Hero Swiper
+         const heroEl = document.querySelector('.heroSwiper');
+         if (heroEl) {
+           const slidesCount = parseInt(heroEl.dataset.slidesCount || '0', 10);
+           new Swiper('.heroSwiper', {
+             autoplay: {
+               delay: 3000,
+               disableOnInteraction: false,
+             },
+             loop: slidesCount > 1,
+             effect: 'fade',
+             fadeEffect: {
+               crossFade: true
+             },
+             keyboard: {
+               enabled: true,
+             },
+             a11y: {
+               prevSlideMessage: 'Previous slide',
+               nextSlideMessage: 'Next slide',
+             },
+           });
+         }
+
+         // Activity carousels by category
+         const carousels = [
+           { rootId: 'adventure-carousel', stageId: 'adventure-stage', dotsId: 'adventure-dots', dataId: 'slides-data-adventure' },
+           { rootId: 'sports-carousel',    stageId: 'sports-stage',    dotsId: 'sports-dots',    dataId: 'slides-data-sports' },
+           { rootId: 'rrcamp-carousel',    stageId: 'rrcamp-stage',    dotsId: 'rrcamp-dots',    dataId: 'slides-data-rrcamp' },
+           { rootId: 'farm-carousel',      stageId: 'farm-stage',      dotsId: 'farm-dots',      dataId: 'slides-data-farm' },
+         ];
+
+         carousels.forEach(initActivityCarousel);
+       });
 
       // Override handleBookNow for activities page to redirect to calendar
       window.handleBookNow = function() {
@@ -543,7 +551,7 @@
     {{-- Footer --}}
     <x-footer />
 
-    {{-- Alpine (needed for modal) --}}
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-  </body>
-</html>
+    @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    @endpush
+</x-page-layout>

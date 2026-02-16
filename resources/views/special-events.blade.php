@@ -1,27 +1,13 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    @include('layouts.partials.favicon')
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="Create unforgettable special events at CalaiaPH. From weddings to corporate retreats, our beautiful farm setting provides the perfect backdrop for your celebration.">
-    <meta name="keywords" content="special events, weddings, corporate events, celebrations, CalaiaPH events, Philippines special occasions">
-    <meta name="author" content="CalaiaPH">
-    @vite(['resources/css/app.css'])
-    <title>CalaiaPH - Special Events</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-  </head>
-
-  <body class="bg-[#f5efe7]">
-      <div class="flex flex-col items-center justify-center px-4">
-        @if (session('success'))
-            <x-flash-message type="success" :message="session('success')" />
-        @endif
-      </div>
-    <x-header active="special-events" />
+<x-page-layout 
+    title="CalaiaPH - Special Events"
+    description="Create unforgettable special events at CalaiaPH. From weddings to corporate retreats, our beautiful farm setting provides the perfect backdrop for your celebration."
+    keywords="special events, weddings, corporate events, celebrations, CalaiaPH events, Philippines special occasions"
+    activeHeader="special-events"
+    bodyClass="bg-[#f5efe7]"
+>
+    @push('styles')
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    @endpush
 
      {{-- Hero Slider --}}
     <x-hero-slider :images="$swiperImages" :texts="$texts" />
@@ -107,6 +93,7 @@
     {{-- Footer --}}
     <x-footer />
 
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-  </body>
-</html>
+    @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    @endpush
+</x-page-layout>

@@ -19,7 +19,7 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    @vite(['resources/css/app.css'])
+    @vite(['resources/js/app.js'])
     <title>{{ $title }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
@@ -56,8 +56,7 @@
         });
     </script>
     
-    {{-- Flash Messages --}}
-    <x-flash-message />
+
 
     {{-- Header --}}
     <x-header active="{{ $activeHeader }}" />
@@ -70,5 +69,30 @@
 
     {{-- Scripts --}}
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script>
+    // Fix for flushLogs fetch error - aggressive override
+    (function() {
+      // Override flushLogs before any other scripts can define it
+      Object.defineProperty(window, 'flushLogs', {
+        value: function() {
+          console.log('flushLogs called - disabled to prevent fetch errors');
+          return Promise.resolve();
+        },
+        writable: false,
+        enumerable: true,
+        configurable: true
+      });
+
+      // Also override any scheduleFlush function that might be calling flushLogs
+      Object.defineProperty(window, 'scheduleFlush', {
+        value: function() {
+          console.log('scheduleFlush called - disabled');
+        },
+        writable: false,
+        enumerable: true,
+        configurable: true
+      });
+    })();
+    </script>
 </body>
 </html>

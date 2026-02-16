@@ -17,6 +17,7 @@
     <meta name="description" content="{{ $description }}">
     <meta name="keywords" content="{{ $keywords }}">
     <meta name="author" content="CalaiaPH">
+    {{-- Vite handles all app CSS/JS. Do not hardcode asset links. --}}
     @vite(['resources/js/app.js', 'resources/js/booking/staycation.js'])
     <title>{{ $title }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
@@ -24,6 +25,16 @@
     {{-- policy styles moved to resources/css/app.css --}}
 
     @stack('styles')
+
+    <noscript>
+        <style>
+            body { opacity: 1 !important; }
+            .no-js-warning { display: block !important; }
+        </style>
+        <div class="no-js-warning" style="background: #ffefc1; color: #a75e3e; padding: 1em; text-align: center; font-weight: bold;">
+            This site requires JavaScript for full functionality. Please enable JavaScript in your browser.
+        </div>
+    </noscript>
 </head>
 
 <body class="{{ $bodyClass }}">
@@ -68,11 +79,51 @@
     {{-- Footer --}}
     <x-footer />
 
-    <!-- Font Awesome CDN for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
 
     {{-- Scripts --}}
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     @stack('scripts')
+
+    <script>
+    // Fix for flushLogs fetch error - aggressive override
+    (function() {
+      // Override flushLogs before any other scripts can define it
+      Object.defineProperty(window, 'flushLogs', {
+        value: function() {
+          console.log('flushLogs called - disabled to prevent fetch errors');
+          return Promise.resolve();
+        },
+        writable: false,
+        enumerable: true,
+        configurable: true
+      });
+
+      // Also override any scheduleFlush function that might be calling flushLogs
+      Object.defineProperty(window, 'scheduleFlush', {
+        value: function() {
+          console.log('scheduleFlush called - disabled');
+        },
+        writable: false,
+        enumerable: true,
+        configurable: true
+      });
+    })();
+
+    // Fallback: warn if Vite JS fails to load (e.g., broken build, bad cache)
+    window.addEventListener('DOMContentLoaded', function() {
+        var viteScript = document.querySelector('script[src*="app"]');
+        if (!viteScript) {
+            var warn = document.createElement('div');
+            warn.style.background = '#ffeaea';
+            warn.style.color = '#a75e3e';
+            warn.style.padding = '1em';
+            warn.style.textAlign = 'center';
+            warn.style.fontWeight = 'bold';
+            warn.innerText = 'Warning: Site assets failed to load. Try clearing your browser cache or contact support.';
+            document.body.prepend(warn);
+        }
+    });
+    </script>
 </body>
 </html>

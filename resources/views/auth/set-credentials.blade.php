@@ -7,8 +7,8 @@
     <form method="POST" action="{{ url('/set-credentials/' . $token) }}">
       @csrf
       <input name="username" type="text" placeholder="Username" required class="w-full mb-3 p-2 border rounded">
-      <input name="password" type="password" placeholder="Password" required class="w-full mb-3 p-2 border rounded">
-      <input name="password_confirmation" type="password" placeholder="Confirm Password" required class="w-full mb-4 p-2 border rounded">
+      <input name="password" type="password" placeholder="Password" required class="w-full mb-3 p-2 border rounded" autocomplete="new-password">
+      <input name="password_confirmation" type="password" placeholder="Confirm Password" required class="w-full mb-4 p-2 border rounded" autocomplete="new-password">
       <button type="submit" class="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700 transition">
         Save
       </button>

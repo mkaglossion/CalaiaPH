@@ -1,28 +1,6 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    @include('layouts.partials.favicon')
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>CalaiaPH - Staycation</title>
-    @vite(['resources/css/app.css'])
+<x-page-layout>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    {{-- Pannellum CSS (VR) --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css" />
-  </head>
-  <body class="bg-[#f5efe7]">
-    {{-- Validation Errors --}}
-    <div class="flex flex-col items-center justify-center px-4">
-      @if (session('success'))
-        <x-flash-message type="success" :message="session('success')" />
-      @endif
-    </div>
 
-    <x-header active="staycation" />
 
     {{-- Hero Slider --}}
     <x-hero-slider :images="$swiperImages" :texts="$texts" />
@@ -472,7 +450,7 @@
 
     {{-- Floating Buttons --}} 
     <x-floating-buttons />
-    <x-footer />
+
 
     @php
     $vrData = [
@@ -679,4 +657,6 @@
     </script>
   </body>
 </html>
+
+</x-page-layout>
 

@@ -7,7 +7,7 @@
     <meta name="description" content="CalaiaPH - Farm stays and outdoor adventures">
     <meta name="keywords" content="farm stay, day tours, outdoor activities, nature retreat, CalaiaPH, Philippines farm experience">
     <meta name="author" content="CalaiaPH">
-    @vite(['resources/css/app.css'])
+    @vite(['resources/js/app.js'])
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">

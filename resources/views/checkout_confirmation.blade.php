@@ -8,19 +8,13 @@
     <meta name="description" content="Order Confirmation - CalaiaPH">
     <meta name="keywords" content="order confirmation, CalaiaPH">
     <meta name="author" content="CalaiaPH">
-    @vite(['resources/css/app.css'])
+    @vite(['resources/js/app.js'])
     <title>Order Confirmation - CalaiaPH</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   </head>
   <body class="bg-[#f5efe7]">
-    <div class="flex flex-col items-center justify-center px-4">
-      @if (session('success'))
-        <div class="bg-green-100 text-green-800 border border-green-400 px-4 py-3 rounded-lg relative max-w-md w-full text-center shadow-sm" role="alert">
-            {{ session('success') }}
-        </div>
-      @endif
-    </div>
+
 
     <x-header active="" />
 

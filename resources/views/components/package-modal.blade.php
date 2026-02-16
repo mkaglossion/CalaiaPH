@@ -16,65 +16,6 @@
 {{-- Swiper CSS --}}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
-{{-- Modal Container --}}
-<div id="{{ $id }}" x-data="packageModal()" :class="{ 'flex': modalOpen, 'hidden': !modalOpen }" class="hidden fixed inset-0 bg-black/50 items-center justify-center p-2 md:p-4 pt-16 md:pt-4 z-50" @keydown.escape.window="closeModal()" @click.self="closeModal()">
-  <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[95vh] md:max-h-[90vh] flex flex-col border border-gray-300 mx-2 sm:mx-4">
-
-    {{-- Modal Header --}}
-    <div class="p-4 md:p-6 border-b border-gray-300 shrink-0">
-      <div class="flex justify-between items-center">
-        <h3 id="{{ $id }}Label" class="text-xl md:text-2xl font-bold text-gray-800" style="font-size: 25px; color: #8f5d54;"></h3>
-        <button type="button" class="text-gray-500 hover:text-gray-700 transition-colors" @click="closeModal()" aria-label="Close modal">
-          <i class="bi bi-x-lg text-xl md:text-2xl"></i>
-        </button>
-      </div>
-    </div>
-
-    {{-- Modal Body --}}
-    <div class="p-4 md:p-6 flex-1 overflow-y-auto" id="{{ $id }}Body">
-
-      {{-- Image Carousel --}}
-      <div class="swiper relative packageSwiper mb-4 md:mb-6 rounded-2xl min-h-75" data-slides-count="0" data-swiper="modal">
-        <div class="swiper-wrapper rounded-2xl overflow-hidden" id="{{ $id }}Wrapper">
-          {{-- Images will be loaded here dynamically --}}
-        </div>
-
-        {{-- Navigation Buttons --}}
-        <x-slider-arrows-brand />
-
-        {{-- Pagination Dots --}}
-        <div class="swiper-pagination"></div>
-      </div>
-
-      {{-- Additional Content --}}
-      <div data-slot>
-        {{ $slot }}
-      </div>
-
-      {{-- Price Display --}}
-      @if($price)
-        <div id="{{ $id }}Price" class="mt-4 p-4 bg-linear-to-r from-[#8f5d54] to-[#a0675a] text-white rounded-xl text-center shadow-lg">
-          <div class="flex items-center justify-center mb-1">
-            <i class="bi bi-tag-fill text-lg mr-2"></i>
-            <span class="text-xs font-medium uppercase tracking-wide">Starting from</span>
-          </div>
-          <p class="text-lg md:text-xl font-bold" id="{{ $id }}PriceDisplay">{{ $price }}</p>
-        </div>
-      @endif
-    </div>
-
-    {{-- Modal Footer --}}
-    <div class="p-4 md:p-6 border-t border-gray-300 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4 justify-end shrink-0">
-      <button type="button" id="{{ $id }}Btn" class="bg-brand text-white px-6 py-3 rounded-2xl hover:bg-[#a0675a] transition-colors duration-300 w-full md:w-auto font-semibold">
-        {{ $buttonText }}
-      </button>
-      <button type="button" @click="closeModal()" class="bg-gray-500 text-white px-6 py-3 rounded-2xl hover:bg-gray-600 transition-colors duration-300 w-full md:w-auto font-semibold">
-        Close
-      </button>
-    </div>
-  </div>
-</div>
-
 {{-- Swiper JS --}}
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
@@ -152,8 +93,8 @@ window.openPackageModal = function(button) {
     }
   }
 
- modal with cached images immediately (no loading state)
-  show  // Always showPackageDetails(title, details, cachedImages, description, price);
+  // Show modal with cached images immediately (no loading state)
+  showPackageDetails(title, details, cachedImages, description, price);
 };
 
 window.closeModal = function() {

@@ -49,19 +49,41 @@
     }
   </style>
 
-  @vite(['resources/css/app.css'])
+   @vite(['resources/js/app.js'])
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  
+  <script>
+    // Define Alpine.js data for package modal
+    function packageModal() {
+      return {
+        modalOpen: false,
+        openModal() {
+          this.modalOpen = true;
+          document.body.style.overflow = 'hidden';
+          const modalEl = document.getElementById('detailsModal');
+          if (modalEl) {
+            modalEl.classList.remove('hidden');
+            modalEl.classList.add('flex');
+          }
+        },
+        closeModal() {
+          this.modalOpen = false;
+          document.body.style.overflow = '';
+          const modalEl = document.getElementById('detailsModal');
+          if (modalEl) {
+            modalEl.classList.remove('flex');
+            modalEl.classList.add('hidden');
+          }
+        }
+      }
+    }
+  </script>
 </head>
 
 <body class="bg-white">
-  <div class="flex flex-col items-center justify-center px-4">
-    @if (session('success'))
-      <x-flash-message type="success" :message="session('success')" />
-    @endif
-  </div>
 
   <x-header active="daytour" />
   <x-hero-slider :images="$swiperImages" :texts="array_diff_key($texts, ['info_items' => ''])" />

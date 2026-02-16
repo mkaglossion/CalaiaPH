@@ -1,49 +1,22 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    @include('layouts.partials.favicon')
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    {{-- Basic SEO --}}
-    <meta name="description" content="Calaia Farm — Food & Beverage: Set menus, special menus, and snack bar options for groups and families." />
-    <meta name="keywords" content="Calaia Farm, CalaiaPH, food, beverage, set menus, special menus, snack bar, farm to table" />
-    <meta name="author" content="CalaiaPH" />
-
-    <title>CalaiaPH - Food & Beverage</title>
-
-    {{-- Tailwind via Vite --}}
-    @vite(['resources/css/app.css'])
-
-    {{-- Custom Fonts --}}
-    <style>
-      body {
-       
-      }
-
-      /* Custom Swiper pagination bullets */
-      .swiper-pagination-bullet {
-        background-color: #a75e3e !important;
-      }
-      .swiper-pagination-bullet-active {
-        background-color: #a75e3e !important;
-      }
-    </style>
-
-    {{-- Icons / Swiper --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-  </head>
-
-  <body class="bg-linear-to-b from-[#f5efe7] to-[#ede3d8]">
-  {{-- flash message --}}
-    <div class="flex flex-col items-center justify-center px-4">
-      @if (session('success'))
-        <x-flash-message type="success" :message="session('success')" />
-      @endif
-    </div>
-    <x-header active="dining" />
+<x-page-layout 
+    title="CalaiaPH - Food & Beverage"
+    description="Calaia Farm — Food & Beverage: Set menus, special menus, and snack bar options for groups and families."
+    keywords="Calaia Farm, CalaiaPH, food, beverage, set menus, special menus, snack bar, farm to table"
+    activeHeader="dining"
+    bodyClass="bg-linear-to-b from-[#f5efe7] to-[#ede3d8]"
+>
+    @push('styles')
+        <style>
+          /* Custom Swiper pagination bullets */
+          .swiper-pagination-bullet {
+            background-color: #a75e3e !important;
+          }
+          .swiper-pagination-bullet-active {
+            background-color: #a75e3e !important;
+          }
+        </style>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    @endpush
 
       {{-- Hero Slider --}}
     <x-hero-slider :images="$swiperImages" :texts="$texts" />
@@ -257,71 +230,67 @@
     <x-floating-buttons />
     <x-footer />
 
-    {{-- Scripts --}}
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    @push('scripts')
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          // Initialize hero swiper
+          const heroSwiper = new Swiper('.heroSwiper', {
+            autoplay: {
+              delay: 3000,
+              disableOnInteraction: false,
+            },
+            loop: true,
+            effect: 'fade',
+            fadeEffect: {
+              crossFade: true
+            },
+            keyboard: {
+              enabled: true,
+            },
+            a11y: {
+              prevSlideMessage: 'Previous slide',
+              nextSlideMessage: 'Next slide',
+            },
+          });
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      // Initialize hero swiper
-      const heroSwiper = new Swiper('.heroSwiper', {
-        autoplay: {
-          delay: 3000,
-          disableOnInteraction: false,
-        },
-        loop: true,
-        effect: 'fade',
-        fadeEffect: {
-          crossFade: true
-        },
-        keyboard: {
-          enabled: true,
-        },
-        a11y: {
-          prevSlideMessage: 'Previous slide',
-          nextSlideMessage: 'Next slide',
-        },
-      });
+          // Initialize cook your own swiper
+          const cookYourOwnSwiper = new Swiper('.cookYourOwnSwiper', {
+            slidesPerView: 1,
+            spaceBetween: 20,
+            navigation: {
+              nextEl: '.cookYourOwnSwiper [data-custom-next]',
+              prevEl: '.cookYourOwnSwiper [data-custom-prev]'
+            },
+            pagination: {
+              el: '.cookYourOwnSwiper [data-custom-dots]',
+              clickable: true
+            },
+            breakpoints: {
+              640: { slidesPerView: 1 },
+              768: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 }
+            }
+          });
 
-      // Initialize cook your own swiper
-      const cookYourOwnSwiper = new Swiper('.cookYourOwnSwiper', {
-        slidesPerView: 1,
-        spaceBetween: 20,
-        navigation: {
-          nextEl: '.cookYourOwnSwiper [data-custom-next]',
-          prevEl: '.cookYourOwnSwiper [data-custom-prev]'
-        },
-        pagination: {
-          el: '.cookYourOwnSwiper [data-custom-dots]',
-          clickable: true
-        },
-        breakpoints: {
-          640: { slidesPerView: 1 },
-          768: { slidesPerView: 2 },
-          1024: { slidesPerView: 3 }
-        }
-      });
-
-      // Initialize mess hall swiper
-      const messHallSwiper = new Swiper('.messHallSwiper', {
-        slidesPerView: 1,
-        spaceBetween: 20,
-        navigation: {
-          nextEl: '.messHallSwiper [data-custom-next]',
-          prevEl: '.messHallSwiper [data-custom-prev]'
-        },
-        pagination: {
-          el: '.messHallSwiper [data-custom-dots]',
-          clickable: true
-        },
-        breakpoints: {
-          640: { slidesPerView: 1 },
-          768: { slidesPerView: 2 },
-          1024: { slidesPerView: 3 }
-        }
-      });
-    });
-
-    </script>
-  </body>
-</html>
+          // Initialize mess hall swiper
+          const messHallSwiper = new Swiper('.messHallSwiper', {
+            slidesPerView: 1,
+            spaceBetween: 20,
+            navigation: {
+              nextEl: '.messHallSwiper [data-custom-next]',
+              prevEl: '.messHallSwiper [data-custom-prev]'
+            },
+            pagination: {
+              el: '.messHallSwiper [data-custom-dots]',
+              clickable: true
+            },
+            breakpoints: {
+              640: { slidesPerView: 1 },
+              768: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 }
+            }
+          });
+        });
+        </script>
+    @endpush
+</x-page-layout>
