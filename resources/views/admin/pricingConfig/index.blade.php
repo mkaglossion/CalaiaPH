@@ -1,21 +1,28 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="container mx-auto p-6 space-y-8">
+<div class="p-4 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl space-y-6">
 
-    <h1 class="text-2xl font-bold">Pricing Configuration</h1>
+    <h1 class="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
+        Pricing Configuration
+    </h1>
+    <p class="text-gray-600">Manage your pricing rules, durations, holidays, and rate matrix.</p>
 
     @if(session('success'))
-        <div class="bg-green-200 p-3 rounded">{{ session('success') }}</div>
+        <div class="bg-green-100 text-green-700 p-4 rounded-xl mb-6 border border-green-200">
+            {{ session('success') }}
+        </div>
     @endif
     @if(session('warning'))
-        <div class="bg-yellow-200 p-3 rounded">{{ session('warning') }}</div>
+        <div class="bg-yellow-100 text-yellow-700 p-4 rounded-xl mb-6 border border-yellow-200">
+            {{ session('warning') }}
+        </div>
     @endif
 
     {{-- ========================= --}}
     {{-- Section 1: Weekend Rules --}}
     {{-- ========================= --}}
-    <div class="bg-white p-5 rounded shadow">
+    <div class="bg-white/70 backdrop-blur-lg rounded-2xl shadow-sm border border-gray-200 p-6">
         <h2 class="text-xl font-semibold mb-4">Weekend Rules</h2>
         
         <p class="text-sm text-gray-500 mb-3">
@@ -28,7 +35,7 @@
             @method('PUT')
 
             <div
-                class="grid grid-cols-7 gap-2 text-center"
+                class="grid grid-cols-7 gap-2 text-center sm:grid-cols-4"
                 x-data="{
                     weekendDays: {{ json_encode(array_map('strval', $weekendDays ?? [])) }}
                 }"
@@ -36,9 +43,10 @@
                 @foreach(['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as $i => $abbr)
                     @php $isWeekend = in_array($i, $weekendDays ?? []); @endphp
 
-                    <label class="cursor-pointer select-none">
+                    <label for="weekend-day-{{ $i }}" class="cursor-pointer select-none">
                         <input
                             type="checkbox"
+                            id="weekend-day-{{ $i }}"
                             name="weekend_days[]"
                             value="{{ $i }}"
                             class="sr-only peer"
@@ -78,7 +86,7 @@
                 </span>
             </div>
 
-            <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            <button class="mt-4 w-full md:w-auto px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
                 Save Weekend Rules
             </button>
         </form>
@@ -87,13 +95,13 @@
     {{-- ========================= --}}
     {{-- Section 2: Durations (Peak Periods) --}}
     {{-- ========================= --}}
-    <div class="bg-white p-5 rounded shadow" x-data="durationManager()">
+    <div class="bg-white/70 backdrop-blur-lg rounded-2xl shadow-sm border border-gray-200 p-6" x-data="durationManager()">
         <div class="flex justify-between items-center mb-4">
             <div>
                 <h2 class="text-xl font-semibold">Durations (Season Types)</h2>
                 <p class="text-sm text-gray-500">Configure Non-Peak, Peak, and Super-Peak periods</p>
             </div>
-            <button @click="openModal()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            <button @click="openModal()" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
                 + Add Duration
             </button>
         </div>
@@ -115,56 +123,60 @@
         </div>
 
         {{-- Duration Table --}}
-        <table class="w-full border text-sm">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="border px-3 py-2 text-left">Type</th>
-                    <th class="border px-3 py-2 text-left">Name</th>
-                    <th class="border px-3 py-2 text-left">Start Date</th>
-                    <th class="border px-3 py-2 text-left">End Date</th>
-                    <th class="border px-3 py-2 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($peakTypes as $peakType)
-                    @foreach($peakType->periods as $period)
-                        <tr class="{{ $peakType->name === 'Super-Peak' ? 'bg-red-50' : ($peakType->name === 'Peak' ? 'bg-yellow-50' : 'bg-green-50') }}">
-                            <td class="border px-3 py-2">
-                                <span class="px-2 py-1 rounded text-xs font-semibold {{ $peakType->name === 'Super-Peak' ? 'bg-red-200 text-red-800' : ($peakType->name === 'Peak' ? 'bg-yellow-200 text-yellow-800' : 'bg-green-200 text-green-800') }}">
-                                    {{ $peakType->name }}
-                                </span>
-                            </td>
-                            <td class="border px-3 py-2">{{ $period->name ?? '-' }}</td>
-                            <td class="border px-3 py-2">{{ \Carbon\Carbon::parse($period->start_date)->format('M d, Y') }}</td>
-                            <td class="border px-3 py-2">{{ \Carbon\Carbon::parse($period->end_date)->format('M d, Y') }}</td>
-                            <td class="border px-3 py-2 text-right">
-                                <button 
-                                    @click="editPeriod({{ $period->id }}, {{ $peakType->id }}, '{{ $period->start_date }}', '{{ $period->end_date }}', {{ $period->name ? "'$period->name'" : 'null' }})"
-                                    class="text-blue-600 hover:underline mr-2">
-                                    Edit
-                                </button>
-                                <form action="{{ route('admin.peak-periods.destroy', $period->id) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button 
-                                        type="submit"
-                                        class="text-red-600 hover:underline"
-                                        onclick="return confirm('Delete this duration period?')">
-                                        Delete
-                                    </button>
-                                </form>
+        <div class="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+            <table class="w-full text-left min-w-160">
+                <thead class="bg-gray-100/70 backdrop-blur">
+                    <tr>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700">Type</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700">Name</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700">Start Date</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700">End Date</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @forelse($peakTypes as $peakType)
+                        @foreach($peakType->periods as $period)
+                            <tr class="{{ $peakType->name === 'Super-Peak' ? 'bg-red-50' : ($peakType->name === 'Peak' ? 'bg-yellow-50' : 'bg-green-50') }} hover:bg-gray-50/70 transition">
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 rounded text-xs font-semibold {{ $peakType->name === 'Super-Peak' ? 'bg-red-200 text-red-800' : ($peakType->name === 'Peak' ? 'bg-yellow-200 text-yellow-800' : 'bg-green-200 text-green-800') }}">
+                                        {{ $peakType->name }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">{{ $period->name ?? '-' }}</td>
+                                <td class="px-6 py-4">{{ \Carbon\Carbon::parse($period->start_date)->format('M d, Y') }}</td>
+                                <td class="px-6 py-4">{{ \Carbon\Carbon::parse($period->end_date)->format('M d, Y') }}</td>
+                                <td class="px-6 py-4 text-right whitespace-nowrap">
+                                    <div class="flex justify-end gap-4">
+                                        <button 
+                                            @click="editPeriod({{ $period->id }}, {{ $peakType->id }}, '{{ $period->start_date }}', '{{ $period->end_date }}', {{ $period->name ? "'$period->name'" : 'null' }})"
+                                            class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition">
+                                            Edit
+                                        </button>
+                                        <form action="{{ route('admin.peak-periods.destroy', $period->id) }}" method="POST" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button 
+                                                type="submit"
+                                                class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                                                onclick="return confirm('Delete this duration period?')">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                No duration periods configured. Click "Add Duration" to create one.
                             </td>
                         </tr>
-                    @endforeach
-                @empty
-                    <tr>
-                        <td colspan="5" class="border px-3 py-4 text-center text-gray-500">
-                            No duration periods configured. Click "Add Duration" to create one.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
         {{-- Cross-Year Note --}}
         <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
@@ -177,183 +189,223 @@
         </div>
 
         <!-- Duration Modal -->
-        <div x-show="modalOpen" x-transition x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div @click.away="closeModal()" class="bg-white w-full max-w-lg rounded-lg shadow-lg p-6">
-                <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Duration' : 'Add Duration'"></h3>
+        <template x-teleport="body">
+            <div
+                x-show="modalOpen"
+                x-transition.opacity
+                x-cloak
+                @keydown.escape.window="closeModal()"
+                class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-9999 p-4"
+            >
+                <div
+                    @click.away="closeModal()"
+                    class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-5 sm:p-7 relative border border-gray-200"
+                >
+                    <button @click="closeModal()" class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
 
-                <form @submit.prevent="submitForm">
-                    @csrf
-                    <template x-if="editMode">
-                        @method('PUT')
-                    </template>
+                    <h3 class="text-xl font-bold mb-1 text-gray-900" x-text="editMode ? 'Edit Duration' : 'Add Duration'"></h3>
+                    <p class="text-sm text-gray-600 mb-4">Choose season type and set the date range.</p>
 
-                    <div class="mb-4">
-                        <label class="block font-semibold mb-2">Duration Type</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <template x-for="type in predefinedTypes" :key="type.id">
-                                <button
-                                    type="button"
-                                    @click="selectType(type.id)"
-                                    class="px-3 py-2 text-sm rounded border transition"
-                                    :class="selectedType === type.id
-                                        ? type.colorClass + ' ' + type.borderClass
-                                        : 'bg-white hover:bg-gray-100 border-gray-300'">
-                                    <span x-text="type.label"></span>
-                                </button>
-                            </template>
-                        </div>
-                        <input type="hidden" name="peak_type_id" x-model="form.peak_type_id">
-                        @error('peak_type_id')
-                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    <form @submit.prevent="submitForm" class="space-y-4">
+                        @csrf
+                        <template x-if="editMode">@method('PUT')</template>
 
-                    <div class="mb-4">
-                        <label class="block font-semibold mb-1">Period Name (Optional)</label>
-                        <input 
-                            type="text" 
-                            x-model="form.name"
-                            placeholder="e.g., Holy Week, Halloween, Holiday Season"
-                            class="border rounded w-full p-2">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
                         <div class="mb-4">
-                            <label class="block font-semibold mb-1">Start Date</label>
-                            <input 
-                                type="date" 
-                                x-model="form.start_date"
-                                class="border rounded w-full p-2"
-                                required>
+                            <label class="block font-semibold mb-2">Duration Type</label>
+                            <div class="grid gap-2 md:grid-cols-3 sm:grid-cols-2 grid-cols-1">
+                                <template x-for="type in predefinedTypes" :key="type.id">
+                                    <button
+                                        type="button"
+                                        @click="selectType(type.id)"
+                                        class="px-3 py-2 text-sm rounded border transition"
+                                        :class="selectedType === type.id
+                                            ? type.colorClass + ' ' + type.borderClass
+                                            : 'bg-white hover:bg-gray-100 border-gray-300'">
+                                        <span x-text="type.label"></span>
+                                    </button>
+                                </template>
+                            </div>
+                            <input type="hidden" name="peak_type_id" x-model="form.peak_type_id">
+                            @error('peak_type_id')
+                                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div class="mb-4">
-                            <label class="block font-semibold mb-1">End Date</label>
+                            <label for="duration-name" class="block font-semibold mb-1">Period Name (Optional)</label>
                             <input 
-                                type="date" 
-                                x-model="form.end_date"
+                                type="text" 
+                                id="duration-name"
+                                name="name"
+                                x-model="form.name"
+                                placeholder="e.g., Holy Week, Halloween, Holiday Season"
                                 class="border rounded w-full p-2"
-                                required>
+                                autocomplete="off">
                         </div>
-                    </div>
 
-                    <div class="flex justify-end gap-2">
-                        <button type="button" @click="closeModal()" class="px-4 py-2 border rounded">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                            <span x-text="editMode ? 'Update' : 'Save'"></span>
-                        </button>
-                    </div>
-                </form>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="mb-4">
+                                <label for="duration-start-date" class="block font-semibold mb-1">Start Date</label>
+                                <input 
+                                    type="date" 
+                                    id="duration-start-date"
+                                    name="start_date"
+                                    x-model="form.start_date"
+                                    class="border rounded w-full p-2"
+                                    required
+                                    autocomplete="off">
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="duration-end-date" class="block font-semibold mb-1">End Date</label>
+                                <input 
+                                    type="date" 
+                                    id="duration-end-date"
+                                    name="end_date"
+                                    x-model="form.end_date"
+                                    class="border rounded w-full p-2"
+                                    required
+                                    autocomplete="off">
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-2">
+                            <button type="button" @click="closeModal()" class="px-4 py-2 border rounded">Cancel</button>
+                            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+                                <span x-text="editMode ? 'Update' : 'Save'"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
+        </template>
     </div>
 
     {{-- ========================= --}}
     {{-- Section 3: Declared Holidays --}}
     {{-- ========================= --}}
-    <div class="bg-white p-5 rounded shadow" x-data="holidayManager()">
+    <div class="bg-white/70 backdrop-blur-lg rounded-2xl shadow-sm border border-gray-200 p-6" x-data="holidayManager()">
         <div class="flex justify-between items-center mb-4">
             <div>
                 <h2 class="text-xl font-semibold">Declared Holidays</h2>
                 <p class="text-sm text-gray-500">Holidays take priority over weekend/weekday rules</p>
             </div>
-            <button @click="openModal()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            <button @click="openModal()" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
                 + Add Holiday
             </button>
         </div>
 
-        <table class="w-full border text-sm">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="border px-3 py-2 text-left">Date</th>
-                    <th class="border px-3 py-2 text-left">Name</th>
-                    <th class="border px-3 py-2 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($holidays as $holiday)
+        <div class="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+            <table class="w-full text-left min-w-160">
+                <thead class="bg-gray-100/70 backdrop-blur">
                     <tr>
-                        <td class="border px-3 py-2">{{ \Carbon\Carbon::parse($holiday->date)->format('M d, Y') }}</td>
-                        <td class="border px-3 py-2">{{ $holiday->name }}</td>
-                        <td class="border px-3 py-2 text-right">
-                            <button 
-                                @click="editHoliday({{ $holiday->id }}, '{{ addslashes($holiday->name) }}', '{{ $holiday->date }}')"
-                                class="text-blue-600 hover:underline mr-2">
-                                Edit
-                            </button>
-                            <form action="{{ route('admin.holidays.destroy', $holiday->id) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button 
-                                    type="submit"
-                                    class="text-red-600 hover:underline"
-                                    onclick="return confirm('Delete this holiday?')">
-                                    Delete
-                                </button>
-                            </form>
-                        </td>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700">Date</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700">Name</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="3" class="border px-3 py-4 text-center text-gray-500">
-                            No holidays configured. Add holidays for special dates.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @forelse($holidays as $holiday)
+                        <tr class="hover:bg-gray-50/70 transition">
+                            <td class="px-6 py-4">{{ \Carbon\Carbon::parse($holiday->date)->format('M d, Y') }}</td>
+                            <td class="px-6 py-4">{{ $holiday->name }}</td>
+                            <td class="px-6 py-4 text-right whitespace-nowrap">
+                                <div class="flex justify-end gap-4">
+                                    <button 
+                                        @click="editHoliday({{ $holiday->id }}, '{{ addslashes($holiday->name) }}', '{{ $holiday->date }}')"
+                                        class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition">
+                                        Edit
+                                    </button>
+                                    <form action="{{ route('admin.holidays.destroy', $holiday->id) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button 
+                                            type="submit"
+                                            class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                                            onclick="return confirm('Delete this holiday?')">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="px-6 py-4 text-center text-gray-500">
+                                No holidays configured. Add holidays for special dates.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
         <!-- Holiday Modal -->
-        <div x-show="modalOpen" x-transition x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div @click.away="closeModal()" class="bg-white w-full max-w-md rounded-lg shadow-lg p-6">
-                <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Holiday' : 'Add Holiday'"></h3>
+        <template x-teleport="body">
+            <div x-show="modalOpen" x-transition x-cloak class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div @click.away="closeModal()" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-md p-7 border border-gray-200 max-h-[95vh] overflow-y-auto relative">
+                    <button 
+                        @click="closeModal()"
+                        class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+                    >&times;</button>
 
-                <form @submit.prevent="submitForm">
-                    @csrf
-                    <template x-if="editMode">
-                        @method('PUT')
-                    </template>
+                    <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editMode ? 'Edit Holiday' : 'Add Holiday'"></h3>
 
-                    <div class="mb-4">
-                        <label class="block font-semibold mb-1">Holiday Name</label>
-                        <input 
-                            type="text" 
-                            x-model="form.name"
-                            placeholder="e.g., Christmas Day, New Year's Day"
-                            class="border rounded w-full p-2"
-                            required>
-                    </div>
+                    <form @submit.prevent="submitForm">
+                        @csrf
+                        <template x-if="editMode">
+                            @method('PUT')
+                        </template>
 
-                    <div class="mb-4">
-                        <label class="block font-semibold mb-1">Holiday Date</label>
-                        <input 
-                            type="date" 
-                            x-model="form.date"
-                            class="border rounded w-full p-2"
-                            required>
-                    </div>
+                        <div class="mb-4">
+                            <label for="holiday-name" class="block font-semibold mb-1">Holiday Name</label>
+                            <input 
+                                type="text" 
+                                id="holiday-name"
+                                name="name"
+                                x-model="form.name"
+                                placeholder="e.g., Christmas Day, New Year's Day"
+                                class="border rounded w-full p-2"
+                                required
+                                autocomplete="off">
+                        </div>
 
-                    <div class="flex justify-end gap-2">
-                        <button type="button" @click="closeModal()" class="px-4 py-2 border rounded">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                            <span x-text="editMode ? 'Update' : 'Save'"></span>
-                        </button>
-                    </div>
-                </form>
+                        <div class="mb-4">
+                            <label for="holiday-date" class="block font-semibold mb-1">Holiday Date</label>
+                            <input 
+                                type="date" 
+                                id="holiday-date"
+                                name="date"
+                                x-model="form.date"
+                                class="border rounded w-full p-2"
+                                required
+                                autocomplete="off">
+                        </div>
+
+                        <div class="flex justify-end gap-2">
+                            <button type="button" @click="closeModal()" class="px-4 py-2 border rounded">Cancel</button>
+                            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+                                <span x-text="editMode ? 'Update' : 'Save'"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
+        </template>
     </div>
+
+
 
     {{-- ========================= --}}
     {{-- Section 4: Rate Matrix --}}
     {{-- ========================= --}}
-    <div class="bg-white p-5 rounded shadow" x-data="rateMatrixManager()">
+    <div class="bg-white/70 backdrop-blur-lg rounded-2xl shadow-sm border border-gray-200 p-6" x-data="rateMatrixManager()">
         <div class="flex justify-between items-center mb-4">
             <div>
                 <h2 class="text-xl font-semibold">Rate Matrix</h2>
                 <p class="text-sm text-gray-500">Set prices per unit type, season type, and day type</p>
             </div>
-            <button @click="openModal()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            <button @click="openModal()" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
                 + Add Rate
             </button>
         </div>
@@ -363,158 +415,186 @@
                 No rates configured. Add your first rate configuration below.
             </div>
         @else
-            <div class="overflow-x-auto">
-                <table class="w-full border text-sm">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="border px-3 py-2 text-left">Unit Type</th>
-                            <th class="border px-3 py-2 text-left">Season Type</th>
-                            <th class="border px-3 py-2 text-left">Day Type</th>
-                            <th class="border px-3 py-2 text-right">Price</th>
-                            <th class="border px-3 py-2 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($pricingConfigs as $unitType => $configs)
-                            @foreach($configs as $config)
-                                <tr>
-                                    <td class="border px-3 py-2">{{ $config->unit_type }}</td>
-                                    <td class="border px-3 py-2">
-                                        <span class="px-2 py-1 rounded text-xs font-semibold {{ $config->peakType->name === 'Super-Peak' ? 'bg-red-200 text-red-800' : ($config->peakType->name === 'Peak' ? 'bg-yellow-200 text-yellow-800' : 'bg-green-200 text-green-800') }}">
-                                            {{ $config->peakType->name }}
-                                        </span>
-                                    </td>
-                                    <td class="border px-3 py-2">
-                                        <span class="px-2 py-1 rounded text-xs font-semibold {{ $config->dayType->name === 'Weekend' ? 'bg-purple-200 text-purple-800' : ($config->dayType->name === 'Holiday' ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-800') }}">
-                                            {{ $config->dayType->name }}
-                                        </span>
-                                    </td>
-                                    <td class="border px-3 py-2 text-right font-semibold">
-                                        ₱{{ number_format($config->price, 2) }}
-                                    </td>
-                                    <td class="border px-3 py-2 text-right">
-                                        <button 
-                                            @click="editRate({{ $config->id }}, '{{ $config->unit_type }}', {{ $config->peak_type_id }}, {{ $config->day_type_id }}, {{ $config->price }})"
-                                            class="text-blue-600 hover:underline mr-2">
-                                            Edit
-                                        </button>
-                                        <form action="{{ route('admin.pricing-configs.destroy', $config->id) }}" method="POST" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button 
-                                                type="submit"
-                                                class="text-red-600 hover:underline"
-                                                onclick="return confirm('Delete this rate?')">
-                                                Delete
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
+            <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-100/70 backdrop-blur">
+                            <tr>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-700">Unit Type</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-700">Season Type</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-700">Day Type</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Price</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            @foreach($pricingConfigs as $unitType => $configs)
+                                @foreach($configs as $config)
+                                    <tr class="hover:bg-gray-50/70 transition">
+                                        <td class="px-6 py-4">{{ $config->unit_type }}</td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-1 rounded text-xs font-semibold {{ $config->peakType->name === 'Super-Peak' ? 'bg-red-200 text-red-800' : ($config->peakType->name === 'Peak' ? 'bg-yellow-200 text-yellow-800' : 'bg-green-200 text-green-800') }}">
+                                                {{ $config->peakType->name }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-1 rounded text-xs font-semibold {{ $config->dayType->name === 'Weekend' ? 'bg-purple-200 text-purple-800' : ($config->dayType->name === 'Holiday' ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-800') }}">
+                                                {{ $config->dayType->name }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-right font-semibold">
+                                            ₱{{ number_format($config->price, 2) }}
+                                        </td>
+                                        <td class="px-6 py-4 text-right whitespace-nowrap">
+                                            <div class="flex justify-end gap-4">
+                                                <button 
+                                                    @click="editRate({{ $config->id }}, '{{ $config->unit_type }}', {{ $config->peak_type_id }}, {{ $config->day_type_id }}, {{ $config->price }})"
+                                                    class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition">
+                                                    Edit
+                                                </button>
+                                                <form action="{{ route('admin.pricing-configs.destroy', $config->id) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button 
+                                                        type="submit"
+                                                        class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                                                        onclick="return confirm('Delete this rate?')">
+                                                        Delete
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
                             @endforeach
-                        @endforeach
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         @endif
 
         <!-- Rate Matrix Modal -->
-        <div x-show="modalOpen" x-transition x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div @click.away="closeModal()" class="bg-white w-full max-w-lg rounded-lg shadow-lg p-6">
-                <h3 class="text-lg font-semibold mb-4" x-text="editMode ? 'Edit Rate' : 'Add Rate'"></h3>
+        <template x-teleport="body">
+            <div x-show="modalOpen" x-transition x-cloak class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div @click.away="closeModal()" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-7 border border-gray-200 max-h-[95vh] overflow-y-auto relative">
+                    <button 
+                        @click="closeModal()"
+                        class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+                    >&times;</button>
 
-                <form @submit.prevent="submitForm">
-                    @csrf
-                    <template x-if="editMode">
-                        @method('PUT')
-                    </template>
+                    <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editMode ? 'Edit Rate' : 'Add Rate'"></h3>
 
-                    <div class="mb-4">
-                        <label class="block font-semibold mb-1">Unit Type</label>
-                        <input 
-                            type="text" 
-                            x-model="form.unit_type"
-                            placeholder="e.g., Glamping Tent, Cabin, Villa"
-                            class="border rounded w-full p-2"
-                            required>
-                    </div>
+                    <form @submit.prevent="submitForm">
+                        @csrf
+                        <template x-if="editMode">
+                            @method('PUT')
+                        </template>
 
-                    <div class="mb-4">
-                        <label class="block font-semibold mb-2">Season Type</label>
-                        <select x-model="form.peak_type_id" class="border rounded w-full p-2" required>
-                            <option value="">Select Season Type</option>
-                            @foreach($peakTypes as $peakType)
-                                <option value="{{ $peakType->id }}">{{ $peakType->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                        <div class="mb-4">
+                            <label for="rate-unit-type" class="block font-semibold mb-1">Unit Type</label>
+                            <input 
+                                type="text" 
+                                id="rate-unit-type"
+                                name="unit_type"
+                                x-model="form.unit_type"
+                                placeholder="e.g., Glamping Tent, Cabin, Villa"
+                                class="border rounded w-full p-2"
+                                required
+                                autocomplete="off">
+                        </div>
 
-                    <div class="mb-4">
-                        <label class="block font-semibold mb-2">Day Type</label>
-                        <select x-model="form.day_type_id" class="border rounded w-full p-2" required>
-                            <option value="">Select Day Type</option>
-                            @foreach($dayTypes as $dayType)
-                                <option value="{{ $dayType->id }}">{{ $dayType->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                        <div class="mb-4">
+                            <label for="rate-season-type" class="block font-semibold mb-2">Season Type</label>
+                            <select id="rate-season-type" name="peak_type_id" x-model="form.peak_type_id" class="border rounded w-full p-2" required>
+                                <option value="">Select Season Type</option>
+                                @foreach($peakTypes as $peakType)
+                                    <option value="{{ $peakType->id }}">{{ $peakType->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <div class="mb-4">
-                        <label class="block font-semibold mb-1">Price (₱)</label>
-                        <input 
-                            type="number" 
-                            x-model="form.price"
-                            step="0.01"
-                            min="0"
-                            class="border rounded w-full p-2"
-                            required>
-                    </div>
+                        <div class="mb-4">
+                            <label for="rate-day-type" class="block font-semibold mb-2">Day Type</label>
+                            <select id="rate-day-type" name="day_type_id" x-model="form.day_type_id" class="border rounded w-full p-2" required>
+                                <option value="">Select Day Type</option>
+                                @foreach($dayTypes as $dayType)
+                                    <option value="{{ $dayType->id }}">{{ $dayType->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <div class="flex justify-end gap-2">
-                        <button type="button" @click="closeModal()" class="px-4 py-2 border rounded">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                            <span x-text="editMode ? 'Update' : 'Save'"></span>
-                        </button>
-                    </div>
-                </form>
+                        <div class="mb-4">
+                            <label for="rate-price" class="block font-semibold mb-1">Price (₱)</label>
+                            <input 
+                                type="number" 
+                                id="rate-price"
+                                name="price"
+                                x-model="form.price"
+                                step="0.01"
+                                min="0"
+                                class="border rounded w-full p-2"
+                                required
+                                autocomplete="off">
+                        </div>
+
+                        <div class="flex justify-end gap-2">
+                            <button type="button" @click="closeModal()" class="px-4 py-2 border rounded">Cancel</button>
+                            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+                                <span x-text="editMode ? 'Update' : 'Save'"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
+        </template>
     </div>
+
+
 
     {{-- ========================= --}}
     {{-- Section 5: Price Calculator --}}
     {{-- ========================= --}}
-    <div class="bg-white p-5 rounded shadow" x-data="priceCalculator()">
+    <div class="bg-white/70 backdrop-blur-lg rounded-2xl shadow-sm border border-gray-200 p-6" x-data="priceCalculator()">
         <h2 class="text-xl font-semibold mb-4">Price Calculator</h2>
         <p class="text-sm text-gray-500 mb-4">Test your pricing configuration by calculating a booking price</p>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div>
-                <label class="block font-semibold mb-1">Unit Type</label>
+                <label for="calculator-unit-type" class="block font-semibold mb-1">Unit Type</label>
                 <input 
                     type="text" 
+                    id="calculator-unit-type"
+                    name="unitType"
                     x-model="unitType"
                     placeholder="e.g., Glamping Tent"
-                    class="border rounded w-full p-2">
+                    class="border rounded w-full p-2"
+                    autocomplete="off">
             </div>
             <div>
-                <label class="block font-semibold mb-1">Check-in Date</label>
+                <label for="calculator-check-in" class="block font-semibold mb-1">Check-in Date</label>
                 <input 
                     type="date" 
+                    id="calculator-check-in"
+                    name="checkIn"
                     x-model="checkIn"
-                    class="border rounded w-full p-2">
+                    class="border rounded w-full p-2"
+                    autocomplete="off">
             </div>
             <div>
-                <label class="block font-semibold mb-1">Check-out Date</label>
+                <label for="calculator-check-out" class="block font-semibold mb-1">Check-out Date</label>
                 <input 
                     type="date" 
+                    id="calculator-check-out"
+                    name="checkOut"
                     x-model="checkOut"
-                    class="border rounded w-full p-2">
+                    class="border rounded w-full p-2"
+                    autocomplete="off">
             </div>
             <div class="flex items-end">
                 <button 
                     @click="calculatePrice()"
                     :disabled="!unitType || !checkIn || !checkOut"
-                    class="px-4 py-2 bg-green-600 text-white rounded w-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                    class="px-4 py-2 rounded-xl bg-green-600 text-white font-medium shadow hover:bg-green-700 hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
                     Calculate Price
                 </button>
             </div>
@@ -528,13 +608,13 @@
             <div class="bg-gray-50 border rounded-lg p-4">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold">Calculation Result</h3>
-                    <span class="text-2xl font-bold text-green-600">₱<span x-text="result.total_price ? result.total_price.toLocaleString() : '0'"></span></span>
+                    <span class="text-2xl font-bold text-green-600">₱<span x-text="result && result.total_price ? result.total_price.toLocaleString() : '0'"></span></span>
                 </div>
                 
                 <p class="text-sm text-gray-500 mb-2" x-show="result && result.unit_type">
-                    <span x-text="result.unit_type"></span> • 
-                    <span x-text="result.nights"></span> night(s) • 
-                    <span x-text="result.check_in"></span> to <span x-text="result.check_out"></span>
+                    <span x-text="result && result.unit_type ? result.unit_type : ''"></span> • 
+                    <span x-text="result && result.nights ? result.nights : ''"></span> night(s) • 
+                    <span x-text="result && result.check_in ? result.check_in : ''"></span> to <span x-text="result && result.check_out ? result.check_out : ''"></span>
                 </p>
 
                 <table x-show="result && result.breakdown" class="w-full border text-sm mt-4">
@@ -548,7 +628,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template x-for="night in result.breakdown" :key="night.date">
+                        <template x-for="night in (result && result.breakdown ? result.breakdown : [])" :key="night.date">
                             <tr>
                                 <td class="border px-2 py-1" x-text="night.date"></td>
                                 <td class="border px-2 py-1" x-text="night.day_of_week"></td>
