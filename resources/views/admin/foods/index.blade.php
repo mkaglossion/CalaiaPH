@@ -3,54 +3,78 @@
 @section('title', 'Food Management')
 
 @section('content')
-<div x-data="foodCrud()">
-    <hr class="my-6">
+<div
+    x-data="foodCrud()"
+    class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
+>
 
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold">Food & Beverage Items</h2>
-        <button type="button" @click="openCreate()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition inline-flex items-center gap-2">
+    <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
+        Food Management
+    </h1>
+    <p class="text-gray-600 mb-10">Manage food & beverage items, categories, prices, and inventory.</p>
+
+    {{-- ============================================================= --}}
+    {{-- FOOD ITEMS SECTION --}}
+    {{-- ============================================================= --}}
+    <div class="flex justify-between items-end mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Food & Beverage Items</h2>
+            <p class="text-gray-500 text-sm">Manage all food and beverage items available for booking.</p>
+        </div>
+
+        <button 
+            type="button" 
+            @click="openCreate()" 
+            class="px-6 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition inline-flex items-center gap-2">
             <i data-lucide="plus" class="w-4 h-4"></i>
             Add New Food Item
         </button>
     </div>
 
     @if ($message = Session::get('success'))
-        <div class="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-start gap-3">
-            <i data-lucide="check-circle" class="w-5 h-5 shrink-0 mt-0.5"></i>
-            <div>
-                <p class="font-semibold">Success</p>
-                <p class="text-sm">{{ $message }}</p>
-            </div>
+        <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-6 py-3 rounded relative" role="alert">
+            <span class="block sm:inline">{{ $message }}</span>
+            <button type="button" class="absolute top-0 bottom-0 right-0 px-6 py-3" onclick="this.parentElement.style.display='none'">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
     @endif
 
     {{-- Food Items Table --}}
-    <div class="overflow-x-auto border rounded-lg shadow bg-white">
-        <table class="w-full text-sm text-left">
-            <thead class="bg-gray-100 border-b">
-                <tr>
-                    <th class="px-6 py-3 font-semibold text-gray-700">#</th>
-                    <th class="px-6 py-3 font-semibold text-gray-700">Name</th>
-                    <th class="px-6 py-3 font-semibold text-gray-700">Category</th>
-                    <th class="px-6 py-3 font-semibold text-gray-700">Price</th>
-                    <th class="px-6 py-3 font-semibold text-gray-700">Stock</th>
-                    <th class="px-6 py-3 font-semibold text-gray-700">Image</th>
-                    <th class="px-6 py-3 font-semibold text-gray-700">Status</th>
-                    <th class="px-6 py-3 font-semibold text-gray-700">Special Option</th>
-                    <th class="px-6 py-3 font-semibold text-gray-700 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
+    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-gray-100/70 backdrop-blur">
+                    <tr>
+                        <th class="w-12 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">#</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700">Name</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Category</th>
+                        <th class="w-32 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Price</th>
+                        <th class="w-32 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Stock</th>
+                        <th class="w-24 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Image</th>
+                        <th class="w-32 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Status</th>
+                        <th class="w-32 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Special</th>
+                        <th class="w-36 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap text-right">Actions</th>
+                    </tr>
+                </thead>
+            <tbody class="divide-y divide-gray-200">
                 @forelse ($foods as $index => $food)
-                    <tr class="border-b hover:bg-gray-50 transition">
-                            <td class="px-6 py-4 text-gray-600">{{ $foods->firstItem() ? $foods->firstItem() + $index : $index + 1 }}</td>
-                        <td class="px-6 py-4 font-medium text-gray-900">{{ $food->name }}</td>
+                    <tr class="hover:bg-gray-50/70 transition">
+                        <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ $foods->firstItem() ? $foods->firstItem() + $index : $index + 1 }}</td>
                         <td class="px-6 py-4">
-                            <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">
+                            <div class="min-w-0">
+                                <div class="text-sm font-medium text-gray-900 wrap-break-word">{{ $food->name }}</div>
+                                @if($food->description)
+                                    <div class="text-gray-600 text-sm wrap-break-word">{{ $food->description }}</div>
+                                @endif
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
                                 {{ ucfirst($food->category) }}
                             </span>
                             @if($food->subcategory)
-                                <span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                                <span class="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                                     {{ ucfirst($food->subcategory) }}
                                 </span>
                             @endif
@@ -58,120 +82,122 @@
                         <td class="px-6 py-4 font-medium text-gray-900">₱{{ number_format($food->price, 2) }}</td>
                         <td class="px-6 py-4">
                             @if($food->is_inventory_managed)
-                                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                                     {{ $food->stock_quantity }} left
                                 </span>
                             @else
-                                <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
                                     Not tracked
                                 </span>
                             @endif
                         </td>
                         <td class="px-6 py-4">
                             @if ($food->image)
-                                <img src="{{ $food->image }}" alt="{{ $food->name }}" class="h-12 w-12 rounded object-cover border border-gray-200" loading="lazy">
+                                <img src="{{ $food->image }}" alt="{{ $food->name }}" class="h-10 w-10 rounded object-cover" loading="lazy">
                             @else
                                 <span class="text-gray-400 text-xs">No image</span>
                             @endif
                         </td>
                         <td class="px-6 py-4">
                             @if ($food->is_active)
-                                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold flex items-center gap-1 w-fit">
-                                    <i data-lucide="check-circle" class="w-3 h-3"></i> Active
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> Active
                                 </span>
                             @else
-                                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold flex items-center gap-1 w-fit">
-                                    <i data-lucide="x-circle" class="w-3 h-3"></i> Inactive
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                    <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i> Inactive
                                 </span>
                             @endif
                         </td>
                         <td class="px-6 py-4">
                             @if ($food->is_special_option)
-                                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold flex items-center gap-1 w-fit">
-                                    <i data-lucide="star" class="w-3 h-3"></i> Special
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    <i data-lucide="star" class="w-3 h-3 mr-1"></i> Special
                                 </span>
                             @else
-                                <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">Regular</span>
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                                    Regular
+                                </span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-right space-x-3">
-                            <button type="button"
-                                    class="text-blue-600 hover:text-blue-900 font-medium text-sm transition"
-                                    @click="openEdit({
-                                        id: {{ $food->id }},
-                                        name: @js($food->name),
-                                        category: @js($food->category),
-                                        subcategory: @js($food->subcategory),
-                                        price: {{ $food->price ?? 0 }},
-                                        description: @js($food->description),
-                                        image: @js($food->image),
-                                        is_active: {{ $food->is_active ? 'true' : 'false' }},
-                                        is_special_option: {{ $food->is_special_option ? 'true' : 'false' }}
-                                    })">
-                                <i data-lucide="edit" class="w-4 h-4 inline mr-1"></i>Edit
-                            </button>
-                            <form method="POST" action="{{ route('admin.foods.destroy', $food->id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this food item?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:text-red-900 font-medium text-sm transition">
-                                    <i data-lucide="trash-2" class="w-4 h-4 inline mr-1"></i>Delete
+                        <td class="px-6 py-4 text-right whitespace-nowrap">
+                            <div class="flex justify-end gap-4">
+                                <button type="button"
+                                        class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                                        @click="openEdit({
+                                            id: {{ $food->id }},
+                                            name: @js($food->name),
+                                            category: @js($food->category),
+                                            subcategory: @js($food->subcategory),
+                                            price: {{ $food->price ?? 0 }},
+                                            description: @js($food->description),
+                                            image: @js($food->image),
+                                            is_active: {{ $food->is_active ? 'true' : 'false' }},
+                                            is_special_option: {{ $food->is_special_option ? 'true' : 'false' }}
+                                        })">
+                                    Edit
                                 </button>
-                            </form>
+                                <button type="button"
+                                        class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                                        onclick="deleteFoodItem({{ $food->id }}, '{{ $food->name }}')">
+                                    Delete
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="px-6 py-8 text-center">
+                        <td colspan="9" class="px-6 py-6 text-center text-gray-500">
                             <div class="flex flex-col items-center justify-center gap-3">
                                 <i data-lucide="inbox" class="w-8 h-8 text-gray-400"></i>
-                                <p class="text-gray-500">No food items found.</p>
+                                <p>No food items found.</p>
                                 <button type="button" @click="openCreate()" class="text-blue-600 hover:underline font-medium text-sm">Create your first food item →</button>
                             </div>
                         </td>
                     </tr>
                 @endforelse
             </tbody>
-        </table>
+            </table>
+        </div>
+
+        @if ($foods->hasPages())
+            <div class="px-6 py-4 border-t border-gray-200">
+                {{ $foods->links('pagination::tailwind') }}
+            </div>
+        @endif
     </div>
 
-    <hr class="my-6">
 
-    @if ($foods->hasPages())
-        <div class="mt-6">
-            {{ $foods->links('pagination::tailwind') }}
-        </div>
-    @endif
 
     {{-- Modal --}}
-    <div
+    <div 
         x-show="showModal"
-        x-transition
-        x-cloak
-        class="fixed inset-0 z-50 flex items-start md:items-center justify-center bg-black/50 px-3 sm:px-4 py-6"
-        @keydown.escape.window="showModal = false"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        x-transition.opacity
     >
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl md:max-w-4xl max-h-[90vh] overflow-y-auto"
-             @click.away="showModal = false">
-            <div class="px-4 sm:px-6 py-4 border-b flex items-center justify-between">
-                <h3 class="text-xl font-bold" x-text="editMode ? 'Edit Food Item' : 'Create Food Item'"></h3>
-                <button type="button" class="text-gray-500 hover:text-gray-800" @click="showModal = false">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
+        <div @click.away="showModal = false" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-3xl md:max-w-4xl max-h-[90vh] overflow-y-auto p-7 border border-gray-200">
+            <button 
+                @click="showModal = false"
+                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+            >&times;</button>
+
+            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editMode ? 'Edit Food Item' : 'Create Food Item'"></h3>
 
             <form class="p-4 sm:p-6 space-y-6" @submit.prevent="submitForm">
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Food Name *</label>
-                    <input type="text" x-model="form.name" required
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    <label for="food_name" class="block text-sm font-semibold text-gray-700 mb-2">Food Name *</label>
+                    <input type="text" x-model="form.name" id="food_name" name="name" required
+                           autocomplete="name"
+                           class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                            placeholder="e.g., Breakfast Buffet">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
-                        <select x-model="form.category" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                        <label for="food_category" class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+                        <select x-model="form.category" id="food_category" name="category" required
+                                autocomplete="category"
+                                class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
                             <option value="">Select Category</option>
                             <option value="messhall">Messhall</option>
                             <option value="cook_your_own">Cook Your Own</option>
@@ -179,31 +205,35 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Subcategory</label>
-                        <input type="text" x-model="form.subcategory"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        <label for="food_subcategory" class="block text-sm font-semibold text-gray-700 mb-2">Subcategory</label>
+                        <input type="text" x-model="form.subcategory" id="food_subcategory" name="subcategory"
+                               autocomplete="off"
+                               class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                placeholder="e.g., beef, pork, vegetables">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Price (₱) *</label>
-                        <input type="number" step="0.01" min="0" x-model="form.price" required
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        <label for="food_price" class="block text-sm font-semibold text-gray-700 mb-2">Price (₱) *</label>
+                        <input type="number" step="0.01" min="0" x-model="form.price" id="food_price" name="price" required
+                               autocomplete="price"
+                               class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                placeholder="1500">
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Stock Quantity</label>
-                        <input type="number" min="0" x-model="form.stock_quantity"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        <label for="food_stock_quantity" class="block text-sm font-semibold text-gray-700 mb-2">Stock Quantity</label>
+                        <input type="number" min="0" x-model="form.stock_quantity" id="food_stock_quantity" name="stock_quantity"
+                               autocomplete="off"
+                               class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                placeholder="50">
                     </div>
 
                     <div class="flex items-end">
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" x-model="form.is_inventory_managed"
+                        <label for="food_is_inventory_managed" class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" x-model="form.is_inventory_managed" id="food_is_inventory_managed" name="is_inventory_managed"
+                                   autocomplete="off"
                                    class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
                             <div>
                                 <p class="font-semibold text-gray-900">Manage Inventory</p>
@@ -214,21 +244,22 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                    <textarea rows="4" x-model="form.description"
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    <label for="food_description" class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                    <textarea rows="4" x-model="form.description" id="food_description" name="description"
+                              autocomplete="off"
+                              class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                               placeholder="Describe your food item..."></textarea>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Image</label>
+                    <label for="food_image" class="block text-sm font-semibold text-gray-700 mb-2">Image</label>
                     <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
                          @click="$refs.imageInput.click()">
                         <template x-if="form.image_preview">
                             <div class="mb-4 flex flex-col items-center gap-2">
                                 <img :src="form.image_preview" alt="Preview" class="max-h-40 rounded-lg shadow">
                                 <label class="inline-flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                                    <input type="checkbox" x-model="form.remove_image" class="rounded">
+                                    <input type="checkbox" x-model="form.remove_image" id="food_remove_image" name="remove_image" class="rounded">
                                     <span>Remove current image</span>
                                 </label>
                             </div>
@@ -242,13 +273,14 @@
                             </div>
                         </template>
 
-                        <input type="file" accept="image/*" class="hidden" x-ref="imageInput" @change="handleFile">
+                        <input type="file" accept="image/*" class="hidden" x-ref="imageInput" id="food_image" name="image" @change="handleFile">
                     </div>
                 </div>
 
                 <div class="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                     <label class="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" x-model="form.is_active"
+                        <input type="checkbox" x-model="form.is_active" id="food_is_active" name="is_active"
+                               autocomplete="off"
                                class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <div>
                             <p class="font-semibold text-gray-900">Active Status</p>
@@ -256,7 +288,8 @@
                         </div>
                     </label>
                     <label class="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" x-model="form.is_special_option"
+                        <input type="checkbox" x-model="form.is_special_option" id="food_is_special_option" name="is_special_option"
+                               autocomplete="off"
                                class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
                         <div>
                             <p class="font-semibold text-gray-900">Special Option</p>
@@ -265,14 +298,14 @@
                     </label>
                 </div>
 
-                <div class="flex gap-3 pt-2 border-t">
-                    <button type="submit" :disabled="loading"
-                            class="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-60">
-                        <i data-lucide="save" class="w-4 h-4"></i>
-                        <span x-text="loading ? 'Saving...' : (editMode ? 'Update Food Item' : 'Create Food Item')"></span>
-                    </button>
-                    <button type="button" class="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition" @click="showModal = false">
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" @click="showModal = false" class="px-6 py-2 border rounded-xl hover:bg-gray-100 transition">
                         Cancel
+                    </button>
+
+                    <button type="submit" :disabled="loading"
+                            class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition disabled:opacity-60"
+                            x-text="loading ? 'Saving...' : (editMode ? 'Update Food Item' : 'Create Food Item')">
                     </button>
                 </div>
             </form>
@@ -280,6 +313,59 @@
     </div>
 
     <script>
+        function deleteFoodItem(id, name) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to delete "${name}". This action cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`{{ route('admin.foods.destroy', ':id') }}`.replace(':id', id), {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        body: new URLSearchParams({
+                            '_method': 'DELETE'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire(
+                                'Deleted!',
+                                'Food item has been deleted successfully.',
+                                'success'
+                            ).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                'Error!',
+                                data.message || 'Failed to delete food item.',
+                                'error'
+                            );
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire(
+                            'Error!',
+                            'An error occurred while deleting the food item.',
+                            'error'
+                        );
+                    });
+                }
+            });
+        }
+
         function foodCrud() {
             return {
                 showModal: false,
@@ -394,22 +480,38 @@
                         console.log('Response:', data);
 
                         if (res.ok) {
-                            alert(data.message || 'Food item saved successfully! Image: ' + (data.image || 'No image URL returned'));
-                            this.showModal = false;
-                            window.location.reload();
+                            Swal.fire({
+                                title: 'Success!',
+                                text: data.message || 'Food item saved successfully!',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                this.showModal = false;
+                                window.location.reload();
+                            });
                         } else {
                             const errorMsg = data.message || data.errors?.name?.[0] || 'Failed to save food item.';
                             console.error('Server error:', data.errors);
-                            alert(errorMsg);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: errorMsg,
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
                         }
                     } catch (error) {
                         console.error('Error:', error);
-                        alert('An error occurred while saving the food item. Check the browser console for details.');
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'An error occurred while saving the food item. Check the browser console for details.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
                     } finally {
                         this.loading = false;
                     }
                 }
-            }
+            };
         }
     </script>
 </div>
