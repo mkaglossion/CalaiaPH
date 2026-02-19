@@ -8,6 +8,7 @@
     'storeRoute',
     'activitiesEndpoint' => '/api/activities',
     'totalGuests'       => 1,
+    'bookingDate'       => null,
     // false = start at 0 guests (general booking)
     // true  = auto-fill guests = totalGuests (dayvisit, special-event)
     'autoGuests'        => false,
@@ -27,7 +28,6 @@
     data-is-staycation="{{ $isStaycation ? '1' : '0' }}"
     data-accommodation-total="{{ $accommodationTotal }}"
 >
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8">
         {{-- Title --}}
         <header class="mb-6 sm:mb-8 text-center">
             @if($pretitle)
@@ -36,82 +36,97 @@
                 </p>
             @endif
 
-            <h1 class="text-2xl font-bold text-[#8f5d54]">
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[#8f5d54]">
                 {{ $title }}
             </h1>
 
             @if($subtitle)
-                <p class="mt-2 text-xs text-gray-500 max-w-2xl mx-auto px-2">
+                <p class="mt-2 text-sm sm:text-base text-gray-500 max-w-2xl mx-auto px-2">
                     {{ $subtitle }}
                 </p>
             @endif
         </header>
 
-        <div class="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] items-start">
-            {{-- Activities List --}}
-            <section aria-labelledby="activities-heading">
-                <h2 id="activities-heading" class="sr-only">Available Activities</h2>
+    <div class="rounded-xl max-w- mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-8 sm:py-12 lg:py-16">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
+            {{-- LEFT: Activities List (2/3 width) --}}
+            <div class="lg:col-span-2">
+                <section aria-labelledby="activities-heading">
+                    <h2 id="activities-heading" class="sr-only">Available Activities</h2>
 
-                {{-- Curated Activities --}}
-                <div class="mb-8">
-                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">
-                        Curated Activities
-                    </h3>
-                    <div id="activities-container" class="grid gap-4 sm:grid-cols-2">
-                        <!-- Activities will be loaded here -->
+                    {{-- Curated Activities --}}
+                    <div class="mb-8">
+                        <h3 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">
+                            Curated Activities
+                        </h3>
+                        <div id="activities-container" class="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
+                            <!-- Activities will be loaded here -->
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            </div>
 
-            {{-- Summary Sidebar --}}
-            <section
-                aria-labelledby="summary-heading"
-                class="bg-gray-50 rounded-xl border border-gray-100 p-4 sm:p-5 md:p-6 lg:sticky lg:top-4 order-2 lg:order-1"
-            >
-                <h2 id="summary-heading" class="text-lg font-semibold text-gray-900 mb-4">
-                    Selected Activities
-                </h2>
+            {{-- RIGHT: Summary Sidebar (1/3 width) --}}
+            <div class="lg:col-span-1">
+                <section aria-labelledby="summary-heading">
+                    <div class="bg-white rounded-xl border border-gray-100 p-4 sm:p-5 md:p-6 shadow-sm">
+                        <h2 id="summary-heading" class="text-base sm:text-lg font-semibold text-gray-900 mb-4">
+                            Booking Summary
+                        </h2>
+                        
+                        @if($bookingDate)
+                            <div class="mb-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm text-gray-600">Booking Date:</span>
+                                    <span class="text-sm font-medium text-gray-900">{{ \Carbon\Carbon::parse($bookingDate)->format('F j, Y') }}</span>
+                                </div>
+                            </div>
+                            <div class="border-t border-gray-200 mb-4"></div>
+                        @endif
 
-                <div id="selected-activities" class="space-y-3 mb-4">
-                    <!-- Selected activities will be added here -->
-                </div>
+                        <div id="selected-activities" class="space-y-3 mb-4">
+                            <!-- Selected activities will be added here -->
+                        </div>
 
-                <div class="border-t border-gray-200 pt-4">
-                    <div class="flex justify-between items-center text-lg font-semibold">
-                        <span>Total:</span>
-                        <span id="total-cost" class="text-[#8f5d54]">₱0.00</span>
+                        <div class="border-t border-gray-200 pt-4">
+                            <div class="flex justify-between items-center text-base sm:text-lg font-semibold">
+                                <span>Total:</span>
+                                <span id="total-cost" class="text-[#8f5d54]">₱0.00</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 space-y-3">
+                            <a
+                                href="{{ $backRoute }}"
+                                class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 sm:px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
+                            >
+                                <i class="bi bi-arrow-left"></i>
+                                Back to Details
+                            </a>
+
+                            <button
+                                type="button"
+                                id="skip-btn"
+                                class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 sm:px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
+                            >
+                                <span class="hidden sm:inline">Proceed to Payment Without Activities</span>
+                                <span class="sm:hidden">Skip Activities</span>
+                                <i class="bi bi-arrow-right"></i>
+                            </button>
+
+                            <button
+                                type="button"
+                                id="confirm-btn"
+                                class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#8f5d54] px-4 sm:px-6 py-3 text-sm font-semibold text-white hover:bg-[#a0675a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled
+                            >
+                                Confirm and Proceed
+                                <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
-
-                <div class="mt-6 space-y-3">
-                    <a
-                        href="{{ $backRoute }}"
-                        class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
-                    >
-                        <i class="bi bi-arrow-left"></i>
-                        Back to Details
-                    </a>
-
-                    <button
-                        type="button"
-                        id="skip-btn"
-                        class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
-                    >
-                        Proceed to Payment Without Activities
-                        <i class="bi bi-arrow-right"></i>
-                    </button>
-
-                    <button
-                        type="button"
-                        id="confirm-btn"
-                        class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#8f5d54] px-4 py-2 text-sm font-semibold text-white hover:bg-[#a0675a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled
-                    >
-                        Confirm and Proceed
-                        <i class="bi bi-arrow-right"></i>
-                    </button>
-                </div>
-            </section>
+                </section>
+            </div>
         </div>
     </div>
 
@@ -171,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 activities.forEach(activity => {
                     const activityDiv = document.createElement('div');
-                    activityDiv.className = 'bg-gray-50 rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow';
+                    activityDiv.className = 'bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow';
                     activityDiv.innerHTML = `
                         <div class="flex items-start space-x-3">
                           <input
@@ -186,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
                           <div class="flex-1">
                             <label for="activity-${activity.id}" class="cursor-pointer">
                               <div class="flex items-start space-x-3">
-                                ${activity.image ? `<img src="${activity.image}" alt="${activity.name}" class="w-16 h-16 object-cover rounded-lg flex-shrink-0">` : ''}
+                                ${activity.image ? `<img src="${activity.image}" alt="${activity.name}" class="w-25 h-25 object-cover rounded-lg flex-shrink-0">` : ''}
                                 <div class="flex-1">
                                   <h4 class="font-semibold text-gray-900">${activity.name}</h4>
                                   <p class="text-xs text-gray-600 mt-1">${activity.description}</p>

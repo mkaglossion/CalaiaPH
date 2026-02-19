@@ -71,6 +71,8 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\PricingConfigController;
 use App\Http\Controllers\BookingCalendarController;
 use App\Http\Controllers\CheckInOutController;
+use Illuminate\Support\Facades\Session;
+use App\Http\Controllers\DayVisitController;
 // ========== Root Route ==========
 
 
@@ -199,13 +201,67 @@ Route::get('/booking/reset-inventory', function () {
     return redirect('/booking/widget')->with('success', 'Inventory reset!');
 })->name('booking.reset-inventory');
 // Day Visit Routes
-Route::match(['GET', 'POST'], '/booking/dayvisit', [BookingController::class, 'dayvisit'])->name('booking.dayvisit');
-Route::post('/booking/dayvisit/store', [BookingController::class, 'storeDayvisit'])->name('booking.storeDayvisit');
+Route::get('/booking/dayvisit', [DayVisitController::class, 'index'])->name('dayvisit.index');
+Route::match(['GET', 'POST'], '/booking/dayvisit/availability', [DayVisitController::class, 'availability'])->name('dayvisit.availability');
+Route::post('/booking/dayvisit/storeAvailability', [DayVisitController::class, 'storeAvailability'])->name('dayvisit.storeAvailability');
+Route::get('/api/booking/dayvisit/availability', [DayVisitController::class, 'getAvailabilityApi'])->name('api.dayvisit.availability');
+
 // Use centralized API for dayvisit activities too
-Route::get('/api/booking/dayvisit/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.dayvisit.activities');
-Route::get('/booking/dayvisit/activities', [BookingController::class, 'dayvisitActivities'])->name('booking.dayvisitActivities');
-Route::post('/booking/dayvisit/activities', [BookingController::class, 'storeDayvisitActivities'])->name('booking.storeDayvisitActivities');
-Route::get('/booking/dayvisit/payment', [BookingController::class, 'dayvisitPayment'])->name('booking.dayvisitPayment');
+Route::get('/api/booking/dayvisit/activities', [DayVisitController::class, 'getActivitiesApi'])->name('api.booking.dayvisit.activities');
+Route::get('/booking/dayvisit/activities', [DayVisitController::class, 'activities'])->name('dayvisit.activities');
+Route::post('/booking/dayvisit/activities', [DayVisitController::class, 'storeActivities'])->name('dayvisit.storeActivities');
+Route::get('/booking/dayvisit/payment', [DayVisitController::class, 'payment'])->name('dayvisit.payment');
+Route::post('/booking/dayvisit/payment', [DayVisitController::class, 'processPayment'])->name('dayvisit.processPayment');
+Route::post('/booking/dayvisit/initiate-payment', [DayVisitController::class, 'initiatePayment'])->name('dayvisit.initiatePayment');
+Route::get('/booking/dayvisit/payment/success', [DayVisitController::class, 'paymentSuccess'])->name('dayvisit.paymentSuccess');
+Route::get('/booking/dayvisit/payment/failed', [DayVisitController::class, 'paymentFailed'])->name('dayvisit.paymentFailed');
+
+// Test route for payment page
+Route::get('/test-payment', function () {
+    // Set dummy booking data
+    Session::put('dayvisit_booking_data', [
+        'booking_date' => now()->toDateString(),
+        'guests' => 2,
+        'price' => 500,
+        'first_name' => 'Juan',
+        'last_name' => 'Dela Cruz',
+        'email' => 'juan@example.com',
+        'phone' => '+639123456789'
+    ]);
+
+    // Set dummy selected activities
+    Session::put('dayvisit_selected_activities', [
+        [
+            'name' => 'Farm Tour',
+            'price' => 200,
+            'guests' => 2,
+            'id' => 1
+        ],
+        [
+            'name' => 'Nature Hike',
+            'price' => 300,
+            'guests' => 2,
+            'id' => 2
+        ]
+    ]);
+
+    return redirect()->route('dayvisit.payment');
+});
+
+Route::get('/test-activities', function () {
+    // Set dummy booking data
+    Session::put('dayvisit_booking_data', [
+        'booking_date' => now()->toDateString(),
+        'guests' => 2,
+        'price' => 500,
+        'first_name' => 'Juan',
+        'last_name' => 'Dela Cruz',
+        'email' => 'juan@example.com',
+        'phone' => '+639123456789'
+    ]);
+
+    return redirect()->route('dayvisit.activities');
+});
 
 // ========== Cart Routes ==========
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');

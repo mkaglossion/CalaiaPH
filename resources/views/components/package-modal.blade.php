@@ -1,10 +1,9 @@
-{{-- Reusable Package Modal Component --}}
+{{-- resources/views/components/package-modal.blade.php --}}
 @props([
     'id' => 'detailsModal',
-    'images' => [],
-    'price' => null,
-    'buttonText' => 'Add to Cart',
-    'buttonAction' => 'addToCart',
+    'price' => true,
+    'buttonText' => 'Book Now',
+    'buttonAction' => 'bookNow',
     'csrfToken' => csrf_token(),
     'cartRoute' => route('cart.add'),
     'bookingRoute' => route('booking.create'),
@@ -13,397 +12,510 @@
     'customButtonAction' => null
 ])
 
-{{-- Swiper CSS --}}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+{{-- ✅ MODAL MARKUP - Best Practices Implementation --}}
+<div
+  id="{{ $id }}"
+  x-data="packageModal()"
+  x-cloak
+  x-show="modalOpen"
+  @keydown.escape.window="closeModal()"
+  class="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ease-in-out"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="{{ $id }}Label"
+  aria-describedby="{{ $id }}Description"
+>
+  <div
+    @click.away="closeModal()"
+    class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden relative transition-all duration-300 ease-in-out transform scale-95 x-cloak:scale-75"
+    x-transition:enter="transition ease-out duration-300 transform"
+    x-transition:enter-start="opacity-0 scale-90"
+    x-transition:enter-end="opacity-100 scale-100"
+    x-transition:leave="transition ease-in duration-200 transform"
+    x-transition:leave-start="opacity-100 scale-100"
+    x-transition:leave-end="opacity-0 scale-90"
+  >
+    {{-- Close Button - Accessible Design --}}
+    <button
+      type="button"
+      @click="closeModal()"
+      class="absolute top-4 right-4 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand/50 focus:ring-offset-2 z-10"
+      aria-label="Close package details modal"
+    >
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
 
-{{-- Swiper JS --}}
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    {{-- Header Section --}}
+    <div class="px-6 py-5 border-b border-gray-100">
+      <h3 id="{{ $id }}Label" class="text-xl sm:text-2xl font-extrabold text-gray-900 leading-tight">
+        Package Details
+      </h3>
+      <p id="{{ $id }}Description" class="sr-only">
+        View detailed information about the selected package including features, images, and pricing.
+      </p>
+    </div>
 
-<script>
-// Package Modal Management
-let packageSwipers = {};
-let currentDaytourId = null;
-let currentImageApiUrl = null;
-
-// Alpine.js data for modal
-function packageModal() {
-  return {
-    modalOpen: false,
-    openModal() {
-      this.modalOpen = true;
-      document.body.style.overflow = 'hidden';
-      // Also update classes as fallback
-      const modalEl = document.getElementById('{{ $id }}');
-      if (modalEl) {
-        modalEl.classList.remove('hidden');
-        modalEl.classList.add('flex');
-      }
-    },
-    closeModal() {
-      this.modalOpen = false;
-      document.body.style.overflow = '';
-      cleanupSwiper('{{ $id }}');
-      currentDaytourId = null;
-      currentImageApiUrl = null;
-      // Also update classes as fallback
-      const modalEl = document.getElementById('{{ $id }}');
-      if (modalEl) {
-        modalEl.classList.remove('flex');
-        modalEl.classList.add('hidden');
-      }
-    }
-  }
-}
-
-// Make openModal globally available
-window.openPackageModal = function(button) {
-  const title = button.dataset.title;
-  const details = JSON.parse(button.dataset.details || '[]');
-  const daytourId = button.dataset.daytourId;
-  const description = button.dataset.description || '';
-  const price = button.dataset.price;
-  const imageApiUrl = button.dataset.imageApiUrl || '{{ $imageApiUrl }}';
-
-  // Store current daytour ID for modal functionality
-  currentDaytourId = daytourId;
-  currentImageApiUrl = imageApiUrl;
-
-  // Get the modal instance and open it
-  const modalElement = document.getElementById('{{ $id }}');
-
-  if (modalElement) {
-    // Try Alpine.js first
-    if (modalElement._x_dataStack && modalElement._x_dataStack[0]) {
-      const modalData = modalElement._x_dataStack[0];
-      modalData.openModal();
-    } else {
-      // Fallback: directly manipulate the element
-      modalElement.classList.remove('hidden');
-      modalElement.classList.add('flex');
-      document.body.style.overflow = 'hidden';
-    }
-  }
-
-  // Check if images are already cached for instant display
-  let cachedImages = [];
-  if (window.imageCache && window.imageCache.has(daytourId)) {
-    const cacheEntry = window.imageCache.get(daytourId);
-    if (Array.isArray(cacheEntry) && cacheEntry.length > 0) {
-      cachedImages = cacheEntry;
-    }
-  }
-
-  // Show modal with cached images immediately (no loading state)
-  showPackageDetails(title, details, cachedImages, description, price);
-};
-
-window.closeModal = function() {
-  const modalElement = document.getElementById('{{ $id }}');
-  if (modalElement) {
-    // Try Alpine.js first
-    if (modalElement._x_dataStack && modalElement._x_dataStack[0]) {
-      const modalData = modalElement._x_dataStack[0];
-      modalData.closeModal();
-    } else {
-      // Fallback: directly manipulate the element
-      modalElement.classList.remove('flex');
-      modalElement.classList.add('hidden');
-      document.body.style.overflow = '';
-      cleanupSwiper('{{ $id }}');
-      currentDaytourId = null;
-      currentImageApiUrl = null;
-    }
-  }
-};
-
-window.closeModal = closeModal;
-
-function updateModalImages(imageUrls) {
-  const modalId = '{{ $id }}';
-  const swiperInstance = packageSwipers[modalId];
-  const swiperEl = document.querySelector('#' + modalId + ' .packageSwiper');
-
-  if (swiperInstance && imageUrls.length > 0) {
-    // If swiper exists and we have images, update slides smoothly
-    const swiperWrapper = document.getElementById(modalId + 'Wrapper');
-
-    // Build new slides with hero-slider structure
-    const newSlides = imageUrls.map((url, index) => `
-      <div class="swiper-slide relative flex items-center justify-center overflow-hidden">
-        ${url.includes('/video/') ?
-          `<video src="${url}" class="w-full h-64 md:h-96 object-cover" autoplay muted loop loading="lazy"></video>` :
-          `<img src="${url}"
-               alt="Slide Image ${index + 1}"
-               class="w-full h-64 md:h-96 object-cover"
-               loading="lazy">`
-        }
-      </div>
-    `).join('');
-
-    swiperWrapper.innerHTML = newSlides;
-
-    // Update slides count
-    if (swiperEl) swiperEl.dataset.slidesCount = imageUrls.length.toString();
-
-    // Update swiper
-    swiperInstance.update();
-    swiperInstance.updateSlides();
-    swiperInstance.updateSlidesClasses();
-
-    // Reset to first slide smoothly
-    swiperInstance.slideTo(0, 300);
-  } else {
-    // Fallback: recreate swiper if it doesn't exist
-    cleanupSwiper(modalId);
-    buildCarouselSlides(modalId, imageUrls);
-    requestAnimationFrame(() => {
-      initializeSwiper(modalId, imageUrls);
-      setupCustomDots(modalId, imageUrls);
-    });
-  }
-}
-
-function showPackageDetails(title, details, imageUrls, description, price = null) {
-  const modalId = '{{ $id }}';
-
-  // Clean up previous swiper instance
-  cleanupSwiper(modalId);
-
-  // Build carousel slides
-  buildCarouselSlides(modalId, imageUrls);
-
-  // Initialize swiper with correct images
-  initializeSwiper(modalId, imageUrls);
-
-  // Update modal content
-  updateModalContent(modalId, title, price);
-
-  // Build dynamic content
-  buildDynamicContent(modalId, title, details, description);
-
-  // Setup button action
-  setupButtonAction(modalId);
-}
-
-function cleanupSwiper(modalId) {
-  if (packageSwipers[modalId]) {
-    packageSwipers[modalId].destroy();
-    packageSwipers[modalId] = null;
-  }
-}
-
-function buildCarouselSlides(modalId, imageUrls) {
-  const swiperWrapper = document.getElementById(modalId + 'Wrapper');
-  const swiperEl = document.querySelector('#' + modalId + ' .packageSwiper');
-
-  if (!imageUrls || imageUrls.length === 0) {
-    swiperWrapper.innerHTML = `
-      <div class="swiper-slide relative flex items-center justify-center bg-gray-200 overflow-hidden">
-        <div class="absolute inset-0 flex items-center justify-center z-20 text-gray-600">
-          <div class="text-center px-4">
-            <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase">
-              No Image Available
-            </h2>
-            <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase" style="font-style: italic;">
-              Images will be added soon
-            </p>
+    {{-- Swiper Carousel --}}
+    <div class="px-6 py-4">
+      <div class="packageSwiper swiper rounded-xl overflow-hidden" data-swiper="modal">
+        <div id="{{ $id }}Wrapper" class="swiper-wrapper">
+          {{-- Slides will be injected by JavaScript --}}
+          <div class="swiper-slide flex items-center justify-center bg-gray-100 h-64 sm:h-80 md:h-96">
+            <div class="text-center">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-2"></div>
+              <span class="text-gray-600 text-sm">Loading images...</span>
+            </div>
           </div>
         </div>
-      </div>
-    `;
-    if (swiperEl) swiperEl.dataset.slidesCount = '0';
-    return;
-  }
 
-  swiperWrapper.innerHTML = imageUrls.map((url, index) => `
-    <div class="swiper-slide relative flex items-center justify-center overflow-hidden">
-      ${url.includes('/video/') ?
-        `<video src="${url}" class="w-full h-64 md:h-96 object-cover" autoplay muted loop loading="lazy"></video>` :
-        `<img src="${url}"
-             alt="Slide Image ${index + 1}"
-             class="w-full h-64 md:h-96 object-cover"
-             loading="lazy">`
-      }
+        <div class="swiper-pagination"></div>
+
+        {{-- Custom Navigation Buttons --}}
+        <button type="button"
+          class="absolute top-1/2 -translate-y-1/2 left-3 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-white shadow-lg hover:bg-black/75 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+          data-custom-prev
+          aria-label="Previous slide">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <button type="button"
+          class="absolute top-1/2 -translate-y-1/2 right-3 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-black/60 text-white shadow-lg hover:bg-black/75 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+          data-custom-next
+          aria-label="Next slide">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
-  `).join('');
 
-  if (swiperEl) swiperEl.dataset.slidesCount = imageUrls.length.toString();
-}
+    {{-- Dynamic Content Body --}}
+    <div class="px-6 py-5">
+      <div data-slot class="space-y-4 text-gray-700 text-sm sm:text-base">
+        {{-- Content will be injected by JavaScript --}}
+      </div>
+    </div>
 
-function updateModalContent(modalId, title, price) {
-  // Update title
-  document.getElementById(modalId + 'Label').textContent = `${title} Details`;
-
-  // Update price if provided
-  if (price && document.getElementById(modalId + 'PriceDisplay')) {
-    document.getElementById(modalId + 'PriceDisplay').textContent = price;
-  }
-}
-
-function buildDynamicContent(modalId, title, details, description) {
-  const slotContainer = document.querySelector(`#${modalId} [data-slot]`) ||
-                       document.querySelector(`#${modalId}Body > :not(.swiper):not([id$="Price"])`);
-
-  if (!slotContainer) return;
-
-  // Create dynamic content
-  let contentHTML = '';
-
-  if (details && details.length > 0) {
-    contentHTML += `
-      <div class="space-y-4">
-        <h4 class="text-lg font-semibold mb-3" style="color:#a75e3e;">${title} Experience</h4>
-        <div class="space-y-3">
-    `;
-
-    details.forEach(detail => {
-      contentHTML += `
-        <p class="flex items-start text-gray-700" style="font-size: 13px;">
-          <i class="bi bi-check-circle-fill text-[#a75e3e] mr-3 mt-1 shrink-0"></i>
-          <span class="flex-1">${detail}</span>
-        </p>
-      `;
-    });
-
-    contentHTML += `
+    {{-- Footer Section --}}
+    <div class="px-6 py-5 border-t border-gray-100 bg-gray-50/50">
+      @if($price)
+        <div id="{{ $id }}PriceDisplay" class="mb-5 text-lg sm:text-xl font-bold text-gray-900">
+          {{-- Price will be set by JavaScript --}}
         </div>
+      @else
+        <div id="{{ $id }}PriceDisplay" class="hidden"></div>
+      @endif
+
+      <div class="flex flex-col sm:flex-row gap-3 sm:justify-end">
+        <button
+          type="button"
+          @click="closeModal()"
+          class="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition-all duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+        >
+          Close
+        </button>
+
+        <button
+          id="{{ $id }}Btn"
+          type="button"
+          class="px-6 py-3 rounded-xl bg-brand text-white font-semibold hover:bg-brand/90 transition-all duration-200 shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-brand/50 focus:ring-offset-2"
+        >
+          {{ $buttonText }}
+        </button>
       </div>
-    `;
-  } else if (description) {
-    contentHTML = `
-      <div class="space-y-4">
-        <h4 class="text-lg font-semibold mb-3" style="color:#97655A;">${title} Details</h4>
-        <p class="text-gray-700">${description}</p>
-      </div>
-    `;
+    </div>
+  </div>
+</div>
+
+{{-- ✅ SCRIPT --}}
+@once
+<script>
+  // Package Modal Management - Best Practices Implementation
+  window.packageSwipers = window.packageSwipers || {};
+  window.currentDaytourId = null;
+  window.currentImageApiUrl = null;
+
+  // Alpine.js data for modal - Improved State Management
+  window.packageModal = function () {
+    return {
+      modalOpen: false,
+      isLoading: false,
+
+      openModal() {
+        this.modalOpen = true;
+        this.isLoading = false;
+        document.body.style.overflow = 'hidden';
+        document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
+      },
+
+      closeModal() {
+        this.modalOpen = false;
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+
+        cleanupSwiper('{{ $id }}');
+        window.currentDaytourId = null;
+        window.currentImageApiUrl = null;
+      }
+    };
+  };
+
+  // Calculate scrollbar width for proper body padding
+  function calculateScrollbarWidth() {
+    const scrollDiv = document.createElement('div');
+    scrollDiv.style.cssText = 'width: 100px; height: 100px; overflow: scroll; position: absolute; top: -9999px;';
+    document.body.appendChild(scrollDiv);
+    const scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth;
+    document.body.removeChild(scrollDiv);
+    return scrollbarWidth;
   }
 
-  slotContainer.innerHTML = contentHTML;
-}
+  // Set CSS variable for scrollbar width
+  document.documentElement.style.setProperty('--scrollbar-width', calculateScrollbarWidth() + 'px');
 
-function initializeSwiper(modalId, imageUrls = []) {
-  // Self-contained swiper initialization for modal
-  const swiperEl = document.querySelector('#' + modalId + ' .packageSwiper');
-  if (swiperEl && window.Swiper) {
-    // Destroy existing swiper if it exists
-    if (swiperEl.swiper) {
-      swiperEl.swiper.destroy();
+  // ✅ OPEN modal - Enhanced Error Handling & Performance
+  window.openPackageModal = function(button) {
+    const title = button.dataset.title || '';
+    const details = JSON.parse(button.dataset.details || '[]');
+    const daytourId = button.dataset.daytourId || null;
+    const description = button.dataset.description || '';
+    const price = button.dataset.price || '';
+    const imageApiUrl = button.dataset.imageApiUrl || '{{ $imageApiUrl }}';
+
+    window.currentDaytourId = daytourId;
+    window.currentImageApiUrl = imageApiUrl;
+
+    const modalElement = document.getElementById('{{ $id }}');
+    if (modalElement) {
+      if (modalElement._x_dataStack && modalElement._x_dataStack[0]) {
+        modalElement._x_dataStack[0].openModal();
+      } else {
+        console.warn('Alpine.js instance not found for modal');
+      }
     }
 
-    const slidesCount = parseInt(swiperEl.dataset.slidesCount) || imageUrls.length;
+    // Show cached images first for instant loading
+    let cachedImages = [];
+    if (window.imageCache && daytourId && window.imageCache.has(daytourId)) {
+      const entry = window.imageCache.get(daytourId);
+      if (Array.isArray(entry)) cachedImages = entry;
+    }
 
-    // Create new swiper instance with hero-slider configuration
-    packageSwipers[modalId] = new Swiper(swiperEl, {
-      autoplay: {
-        delay: 10000,
-        disableOnInteraction: false,
-      },
+    showPackageDetails(title, details, cachedImages, description, price);
+
+    // Fetch images asynchronously if not in cache
+    if (typeof window.preloadDaytourImages === 'function' && daytourId) {
+      window.preloadDaytourImages(daytourId).then((imgs) => {
+        if (Array.isArray(imgs) && imgs.length) {
+          updateModalImages(imgs);
+        }
+      }).catch((error) => {
+        console.error('Error loading images:', error);
+      });
+    }
+  };
+
+  // ✅ Close helper - Improved Reliability
+  window.closePackageModal = function() {
+    const modalElement = document.getElementById('{{ $id }}');
+    if (!modalElement) return;
+
+    if (modalElement._x_dataStack && modalElement._x_dataStack[0]) {
+      modalElement._x_dataStack[0].closeModal();
+    } else {
+      console.warn('Alpine.js instance not found, falling back to manual close');
+      cleanupSwiper('{{ $id }}');
+      window.currentDaytourId = null;
+      window.currentImageApiUrl = null;
+    }
+  };
+
+  // Cleanup Swiper instance - Prevent memory leaks
+  function cleanupSwiper(modalId) {
+    if (window.packageSwipers[modalId]) {
+      try {
+        window.packageSwipers[modalId].destroy(true, true);
+      } catch (error) {
+        console.warn('Error destroying swiper:', error);
+      }
+      window.packageSwipers[modalId] = null;
+    }
+  }
+
+  // Get Swiper wrapper - Improved DOM traversal
+  function getSwiperWrapper(modalId) {
+    return document.getElementById(modalId + 'Wrapper') ||
+           document.querySelector(`#${modalId} .packageSwiper .swiper-wrapper`);
+  }
+
+  // Build carousel slides - Enhanced XSS protection & video handling
+  function buildCarouselSlides(modalId, imageUrls) {
+    const wrapper = getSwiperWrapper(modalId);
+    const swiperEl = document.querySelector(`#${modalId} .packageSwiper`);
+
+    if (!wrapper) {
+      console.error('Swiper wrapper not found for modalId:', modalId);
+      return;
+    }
+
+    if (!imageUrls || imageUrls.length === 0) {
+      wrapper.innerHTML = `
+        <div class="swiper-slide flex items-center justify-center bg-gray-100 h-64 sm:h-80 md:h-96">
+          <div class="text-center text-gray-600">
+            <div class="text-lg font-semibold mb-2">No Images Available</div>
+            <div class="text-sm">Images will be added soon</div>
+          </div>
+        </div>
+      `;
+      if (swiperEl) swiperEl.dataset.slidesCount = '0';
+      return;
+    }
+
+    wrapper.innerHTML = imageUrls.map((url, index) => {
+      const isVideo = url.includes('/video/');
+      const safeUrl = encodeURI(decodeURI(url)).replace(/[^\w\-\./:]/g, '');
+      const altText = `Slide ${index + 1}`;
+
+      return `
+        <div class="swiper-slide">
+          ${isVideo ? `
+            <video 
+              src="${safeUrl}" 
+              class="w-full h-64 sm:h-80 md:h-96 object-cover" 
+              autoplay 
+              muted 
+              loop 
+              playsinline 
+              poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+              alt="${altText}"
+            ></video>
+          ` : `
+            <img 
+              src="${safeUrl}" 
+              class="w-full h-64 sm:h-80 md:h-96 object-cover" 
+              loading="lazy" 
+              decoding="async" 
+              alt="${altText}"
+            >
+          `}
+        </div>
+      `;
+    }).join('');
+
+    if (swiperEl) swiperEl.dataset.slidesCount = String(imageUrls.length);
+  }
+
+  // Initialize Swiper - Enhanced Configuration
+  function initializeSwiper(modalId, imageUrls = []) {
+    const swiperEl = document.querySelector(`#${modalId} .packageSwiper`);
+    if (!swiperEl || !window.Swiper) return;
+
+    // Cleanup existing swiper
+    if (swiperEl.swiper) {
+      try {
+        swiperEl.swiper.destroy(true, true);
+      } catch (error) {
+        console.warn('Error destroying existing swiper:', error);
+      }
+    }
+
+    const slidesCount = parseInt(swiperEl.dataset.slidesCount || '0', 10) || imageUrls.length;
+
+    window.packageSwipers[modalId] = new Swiper(swiperEl, {
+      slidesPerView: 1,
       loop: slidesCount > 1,
-      effect: 'fade',
-      fadeEffect: {
-        crossFade: true
+      effect: slidesCount > 1 ? 'fade' : 'slide',
+      fadeEffect: { crossFade: true },
+      autoplay: { 
+        delay: 10000, 
+        disableOnInteraction: false,
+        pauseOnMouseEnter: true
       },
-      keyboard: {
-        enabled: true,
-        onlyInViewport: false,
-      },
+      speed: 500,
       navigation: {
         nextEl: swiperEl.querySelector('[data-custom-next]'),
         prevEl: swiperEl.querySelector('[data-custom-prev]')
       },
       pagination: {
         el: swiperEl.querySelector('.swiper-pagination'),
-        clickable: true
+        clickable: true,
+        dynamicBullets: slidesCount > 3
       },
       a11y: {
+        enabled: true,
         prevSlideMessage: 'Previous slide',
-        nextSlideMessage: 'Next slide',
-        firstSlideMessage: 'This is the first slide',
-        lastSlideMessage: 'This is the last slide',
+        nextSlideMessage: 'Next slide'
       },
+      keyboard: {
+        enabled: true,
+        onlyInViewport: true
+      }
     });
   }
-}
 
-function setupCustomDots(modalId, imageUrls) {
-  // Custom dots are now handled by swiper-pagination
-  // This function is kept for backward compatibility but does nothing
-}
-
-function setupButtonAction(modalId) {
-  document.getElementById(modalId + 'Btn').onclick = function() {
-    const buttonAction = '{{ $buttonAction }}';
-    const customButtonAction = '{{ $customButtonAction }}';
-
-    if (customButtonAction) {
-      // Use custom button action if provided
-      if (typeof window[customButtonAction] === 'function') {
-        window[customButtonAction]();
-      } else {
-        console.error('Custom button action function not found:', customButtonAction);
-      }
-    } else if (buttonAction === 'addToCart') {
-      handleAddToCart();
-    } else if (buttonAction === 'bookNow') {
-      handleBookNow();
+  // Update modal content - Enhanced accessibility
+  function updateModalContent(modalId, title, price) {
+    const titleEl = document.getElementById(modalId + 'Label');
+    if (titleEl) {
+      titleEl.textContent = `${title} Details`;
+    } else {
+      console.error('Title element not found for modalId:', modalId);
     }
-  };
-}
 
-// Cart and Booking Functions
-function handleAddToCart() {
-  const title = document.getElementById('{{ $id }}Label').textContent.replace(' Details', '');
-  const image = document.querySelector('.packageSwiper img')?.src || '';
-
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = '{{ $cartRoute }}';
-
-  const csrfToken = document.createElement('input');
-  csrfToken.type = 'hidden';
-  csrfToken.name = '_token';
-  csrfToken.value = '{{ $csrfToken }}';
-  form.appendChild(csrfToken);
-
-  const isDining = title.toLowerCase().includes('menu');
-
-  const fields = {
-    'id': title.toLowerCase().replace(/\s+/g, '-'),
-    'title': title,
-    'price': isDining ? '3500.00' : '0.00',
-    'image': image,
-    'quantity': '1',
-    'isDining': isDining ? '1' : '0'
-  };
-
-  for (const [name, value] of Object.entries(fields)) {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = name;
-    input.value = value;
-    form.appendChild(input);
+    const priceEl = document.getElementById(modalId + 'PriceDisplay');
+    if (priceEl) {
+      priceEl.textContent = price || '';
+    } else {
+      console.error('Price display element not found for modalId:', modalId);
+    }
   }
 
-  document.body.appendChild(form);
-  form.submit();
-}
+  // Build dynamic content - Enhanced XSS protection
+  function buildDynamicContent(modalId, title, details, description) {
+    const slot = document.querySelector(`#${modalId} [data-slot]`);
+    if (!slot) return;
 
-function handleBookNow() {
-  const title = document.getElementById('{{ $id }}Label').textContent.replace(' Details', '');
-  const price = document.getElementById('{{ $id }}PriceDisplay')?.textContent || 'PHP 0';
+    let html = '';
 
-  const isDining = title.toLowerCase().includes('menu') || title.toLowerCase().includes('cook');
-  const type = isDining ? 'dining' : 'daytour';
+    if (details && details.length) {
+      html += `<h4 class="text-base sm:text-lg font-bold" style="color:#a75e3e;">${title} Experience</h4>`;
+      html += `<div class="space-y-2">`;
+      
+      details.forEach(d => {
+        // Enhanced XSS protection
+        const escapedDetail = document.createElement('div');
+        escapedDetail.textContent = d;
+        html += `<p class="flex items-start gap-2"><span class="mt-0.5 text-brand"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg></span><span>${escapedDetail.innerHTML}</span></p>`;
+      });
+      
+      html += `</div>`;
+    } else if (description) {
+      html += `<h4 class="text-base sm:text-lg font-bold" style="color:#97655A;">${title} Details</h4>`;
+      
+      // Enhanced XSS protection
+      const escapedDescription = document.createElement('div');
+      escapedDescription.textContent = description;
+      html += `<p>${escapedDescription.innerHTML}</p>`;
+    }
 
-  let url = '{{ $bookingRoute }}';
-  if ({{ $appendParams ? 'true' : 'false' }}) {
-    url += '?type=' + type + '&package=' + encodeURIComponent(title) + '&price=' + encodeURIComponent(price);
+    slot.innerHTML = html;
   }
-  window.location.href = url;
-}
 
-// Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
-  // Modal initialization if needed
-});
+  // Setup button action - Improved error handling
+  function setupButtonAction(modalId) {
+    const btn = document.getElementById(modalId + 'Btn');
+    if (!btn) {
+      console.error('Button element not found for modalId:', modalId);
+      return;
+    }
+
+    btn.onclick = function() {
+      const action = '{{ $buttonAction }}';
+      const custom = '{{ $customButtonAction }}';
+
+      if (custom && typeof window[custom] === 'function') {
+        try {
+          return window[custom]();
+        } catch (error) {
+          console.error('Error executing custom button action:', error);
+        }
+      }
+
+      if (action === 'addToCart') {
+        return handleAddToCart(modalId);
+      }
+
+      if (action === 'bookNow') {
+        return handleBookNow(modalId);
+      }
+
+      console.warn('Unknown button action:', action);
+    };
+  }
+
+  // Show package details - Enhanced flow
+  function showPackageDetails(title, details, imageUrls, description, price = null) {
+    const modalId = '{{ $id }}';
+    cleanupSwiper(modalId);
+    buildCarouselSlides(modalId, imageUrls);
+    initializeSwiper(modalId, imageUrls);
+    updateModalContent(modalId, title, price);
+    buildDynamicContent(modalId, title, details, description);
+    setupButtonAction(modalId);
+  }
+
+  // Update modal images - Optimized
+  function updateModalImages(imageUrls) {
+    const modalId = '{{ $id }}';
+    if (!imageUrls || !Array.isArray(imageUrls)) return;
+
+    cleanupSwiper(modalId);
+    buildCarouselSlides(modalId, imageUrls);
+    initializeSwiper(modalId, imageUrls);
+  }
+
+  // Handle add to cart - Enhanced security
+  function handleAddToCart(modalId) {
+    const title = (document.getElementById(modalId + 'Label')?.textContent || '').replace(' Details', '');
+    const image = document.querySelector(`#${modalId} .packageSwiper img`)?.src || '';
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ $cartRoute }}';
+
+    const csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = '_token';
+    csrf.value = '{{ $csrfToken }}';
+    form.appendChild(csrf);
+
+    const isDining = title.toLowerCase().includes('menu');
+
+    const fields = {
+      id: title.toLowerCase().replace(/\s+/g, '-'),
+      title,
+      price: isDining ? '3500.00' : '0.00',
+      image,
+      quantity: '1',
+      isDining: isDining ? '1' : '0'
+    };
+
+    Object.entries(fields).forEach(([key, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = value;
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  // Handle book now - Enhanced URL handling
+  function handleBookNow(modalId) {
+    const title = (document.getElementById(modalId + 'Label')?.textContent || '').replace(' Details', '');
+    const price = document.getElementById(modalId + 'PriceDisplay')?.textContent || 'PHP 0';
+
+    const isDining = title.toLowerCase().includes('menu') || title.toLowerCase().includes('cook');
+    const type = isDining ? 'dining' : 'daytour';
+
+    let url = '{{ $bookingRoute }}';
+    
+    @if($appendParams)
+    const params = new URLSearchParams({
+      type: type,
+      package: title,
+      price: price
+    });
+    url += '?' + params.toString();
+    @endif
+
+    window.location.href = url;
+  }
 </script>
+@endonce

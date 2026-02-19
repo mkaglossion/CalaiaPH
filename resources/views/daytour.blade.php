@@ -55,32 +55,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   
-  <script>
-    // Define Alpine.js data for package modal
-    function packageModal() {
-      return {
-        modalOpen: false,
-        openModal() {
-          this.modalOpen = true;
-          document.body.style.overflow = 'hidden';
-          const modalEl = document.getElementById('detailsModal');
-          if (modalEl) {
-            modalEl.classList.remove('hidden');
-            modalEl.classList.add('flex');
-          }
-        },
-        closeModal() {
-          this.modalOpen = false;
-          document.body.style.overflow = '';
-          const modalEl = document.getElementById('detailsModal');
-          if (modalEl) {
-            modalEl.classList.remove('flex');
-            modalEl.classList.add('hidden');
-          }
-        }
-      }
-    }
-  </script>
+
 </head>
 
 <body class="bg-white">
@@ -160,10 +135,12 @@
                           <button
                             type="button"
                             class="text-white text-[12px] tracking-[.12em] uppercase cursor-pointer transition no-underline hover:underline"
+                            onclick="window.openPackageModal(this)"
                             data-title="{{ $package->name }}"
                             data-price="{{ $package->price ? 'PHP ' . number_format($package->price, 2) . ' per person' : 'Price not set' }}"
                             data-details='@json($package->activities->pluck("name")->toArray())'
                             data-daytour-id="{{ $package->id }}"
+                            data-description="{{ $package->description ?? '' }}"
                             data-image-api-url="/day-tour-swiper-images/daytour"
                             style="background: none; border: none; padding: 0; font: inherit;"
                           >
@@ -253,6 +230,7 @@
         return [];
       }
     }
+    window.preloadDaytourImages = preloadDaytourImages;
 
     async function preloadAllImages() {
       const buttons = document.querySelectorAll('button[data-daytour-id]');

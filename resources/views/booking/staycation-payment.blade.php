@@ -446,7 +446,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                                     <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-rose-100 text-rose-700">
                                       <i class="bi bi-x"></i>
                                     </span>
-                                    <span><span class="font-semibold">&lt; 3 days</span> — No refund</span>
+                                    <span><span class="font-semibold">< 3 days</span> — No refund</span>
                                   </li>
                                 </ul>
                               </div>
@@ -461,7 +461,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                                 View full terms
                               </button>
 
-                              <div x-show="expanded === 'standard'" x-collapse class="rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600">
+                              <div x-show="expanded === 'standard'" x-transition class="rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600">
                                 <ul class="list-disc pl-5 space-y-1">
                                   <li>Refunds are computed based on the time the cancellation request is submitted.</li>
                                   <li>Processing time: 3–5 business days after approval (banks may take longer).</li>
@@ -541,7 +541,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                                     <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-rose-100 text-rose-700">
                                       <i class="bi bi-x"></i>
                                     </span>
-                                    <span><span class="font-semibold">&lt; 3 days</span> — No refund</span>
+                                    <span><span class="font-semibold">< 3 days</span> — No refund</span>
                                   </li>
                                 </ul>
                               </div>
@@ -556,7 +556,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                                 View full terms
                               </button>
 
-                              <div x-show="expanded === 'flexible'" x-collapse class="rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600">
+                              <div x-show="expanded === 'flexible'" x-transition class="rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600">
                                 <ul class="list-disc pl-5 space-y-1">
                                   <li>Refund tier is based on days before check-in (server time).</li>
                                   <li>Processing time: 3–5 business days after approval (banks may take longer).</li>
@@ -633,7 +633,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                                 View full terms
                               </button>
 
-                              <div x-show="expanded === 'nonrefundable'" x-collapse class="rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600">
+                              <div x-show="expanded === 'nonrefundable'" x-transition class="rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600">
                                 <ul class="list-disc pl-5 space-y-1">
                                   <li>No cash refund for cancellations, no-shows, or early departure.</li>
                                   <li>Date changes may be allowed depending on availability and lead time.</li>

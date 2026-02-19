@@ -16,6 +16,7 @@ use App\Services\ValidationService;
 use App\Models\StaycationAccommodation;
 use App\Models\Staycation;
 use App\Models\Food;
+use App\Models\DayTour;
 use App\Models\Holiday;
 use App\Models\DayType;
 use App\Models\DayTypeDay;
@@ -2152,103 +2153,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function dayvisit(Request $request)
-    {
-        // Handle POST request from landing page with selected date
-        if ($request->isMethod('post')) {
-            $selectedDate = $request->input('check_in');
-            if ($selectedDate) {
-                // Store the selected date and redirect to booking form
-                session(['selected_dayvisit_date' => $selectedDate]);
-                return redirect()->route('booking.dayvisit');
-            }
-        }
 
-        // For GET request, show day visit form with auto-selected date
-        $type = 'day-visit';
-        $package = 'Day Visit Package with Free Drinks (500 per person)';
-        $price = 500;
-
-        // Check if date was pre-selected from landing page
-        $selectedDate = session('selected_dayvisit_date');
-        if (!$selectedDate) {
-            // Auto-select today's date or next available date
-            $today = now()->format('Y-m-d');
-            $selectedDate = $today;
-
-            $inventory = $this->inventoryService->getAllInventory();
-
-            // If today is not available or has low availability, try next few days
-            if (!isset($inventory['day-visit'][$today]) || $inventory['day-visit'][$today] <= 0) {
-                for ($i = 1; $i <= 7; $i++) {
-                    $nextDate = now()->addDays($i)->format('Y-m-d');
-                    if (isset($inventory['day-visit'][$nextDate]) && $inventory['day-visit'][$nextDate] > 0) {
-                        $selectedDate = $nextDate;
-                        break;
-                    }
-                }
-            }
-        }
-
-        return view('booking.dayvisit', compact('type', 'package', 'price', 'selectedDate'));
-    }
-
-    public function storeDayvisit(Request $request)
-    {
-        $validated = $request->validate(ValidationService::dayvisitBookingRules());
-
-        // Use session date if no booking_date provided
-        $bookingDate = $validated['booking_date'] ?? session('selected_dayvisit_date');
-        if (!$bookingDate) {
-            return redirect()->route('booking.dayvisit')->with('error', 'Please select a booking date.');
-        }
-
-        $validated['booking_date'] = $bookingDate;
-        $validated['type'] = 'day-visit';
-        $validated['package'] = 'Day Visit (500 per person)';
-        $validated['price'] = 500 * $validated['guests'];
-
-        $date = $validated['booking_date'];
-
-        // Check availability
-        if (!$this->inventoryService->isAvailable('day-visit', $date)) {
-            return redirect()->back()->with('error', 'No availability for the selected date.');
-        }
-
-        // Deduct inventory
-        $this->inventoryService->reduceInventory('day-visit', $date);
-
-        // Store booking data in session
-        session(['dayvisit_booking_data' => $validated]);
-
-        // Clear the selected date from session
-        session()->forget('selected_dayvisit_date');
-
-        // Redirect to activities
-        return redirect()->route('booking.dayvisitActivities');
-    }
-
-    public function dayvisitActivities()
-    {
-        return $this->getBookingActivities('dayvisit');
-    }
-
-    public function getDayvisitActivitiesApi()
-    {
-        $activities = $this->bookingService->getActivitiesData();
-        return response()->json($activities);
-    }
-
-
-    public function storeDayvisitActivities(Request $request)
-    {
-        return $this->storeBookingActivities($request, 'dayvisit', ValidationService::activitiesRules(), 'dayvisit_selected_activities');
-    }
-
-    public function dayvisitPayment()
-    {
-        return $this->getBookingPayment('dayvisit');
-    }
 
     private function calculatePrice($staycation, $date, $guests = 2)
     {

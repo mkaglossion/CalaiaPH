@@ -96,9 +96,9 @@ class ValidationService
             'booking_date' => 'nullable|date|after:yesterday',
             'guests' => 'required|integer|min:1|max:50',
             'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => 'nullable|string|max:20',
             'special_requests' => 'nullable|string|max:1000',
         ];
     }
