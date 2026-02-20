@@ -83,11 +83,14 @@ class DayTourController extends Controller
             'name' => 'required|string|max:255|unique:day_tours,name',
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
+            'max_guests' => 'required|integer|min:1',
+            'pricing_type' => 'required|in:total,per_person',
+            'is_active' => 'nullable|boolean',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:51200',
         ]);
 
         try {
-            $tour = DayTour::create($request->only(['name', 'description', 'price']));
+            $tour = DayTour::create($request->only(['name', 'description', 'price', 'max_guests', 'pricing_type', 'is_active']));
             $tour->activities()->sync($request->activity_ids ?? []);
 
             // Handle package image upload (for card display only, separate from swiper images)
@@ -140,11 +143,14 @@ class DayTourController extends Controller
             'name' => 'required|string|max:255|unique:day_tours,name,' . $dayTour->id,
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
+            'max_guests' => 'required|integer|min:1',
+            'pricing_type' => 'required|in:total,per_person',
+            'is_active' => 'nullable|boolean',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:51200',
         ]);
 
         try {
-            $dayTour->update($request->only(['name', 'description', 'price']));
+            $dayTour->update($request->only(['name', 'description', 'price', 'max_guests', 'pricing_type', 'is_active']));
 
             $dayTour->activities()->sync($request->activity_ids ?? []);
 

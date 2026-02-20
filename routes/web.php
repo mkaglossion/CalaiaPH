@@ -128,7 +128,13 @@ Route::get('/booking/staycation/food', [BookingController::class, 'staycationFoo
 Route::post('/booking/staycation/food/save', [BookingController::class, 'saveFoodSelection'])->name('booking.saveFoodSelection');
 Route::get('/api/booking/staycation/availability', [BookingController::class, 'getStaycationAvailabilityApi'])->name('api.booking.staycationAvailability');
 Route::get('/api/booking/staycation/prices', [BookingController::class, 'getStaycationPricesApi'])->name('api.booking.staycationPrices');
+// API Routes for inventory (public access for preview purposes)
 Route::get('/api/inventory/{roomId}', [\App\Http\Controllers\Admin\InventoryController::class, 'getInventory'])->name('api.inventory.get');
+Route::get('/api/day-tour-inventory/{dayTourId}', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getInventory'])->name('api.day-tour-inventory.get');
+Route::get('/test-inventory/{dayTourId}', function($dayTourId) {
+    $controller = new \App\Http\Controllers\Admin\DayTourInventoryController(new \App\Services\DayTourInventoryService());
+    return $controller->getInventory($dayTourId);
+});
 Route::post('/booking/select-dates', [BookingController::class, 'selectDates'])->name('booking.selectDates');
 Route::post('/booking/check-availability', [BookingController::class, 'checkAvailability'])->name('booking.checkAvailability');
 Route::get('/booking/payment', [BookingController::class, 'payment'])->name('booking.payment');
@@ -361,6 +367,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/day', [AdminController::class, 'dayTour'])->name('admin.day.day');
         Route::get('/day-tour', [AdminPagesController::class, 'dayTour'])->name('admin.day.daytour');
         Route::get('/day-tour/days', [AdminController::class, 'dayTourDays'])->name('admin.day-tour.days');
+        Route::get('/day-tour/inventory', [AdminController::class, 'dayTourInventory'])->name('admin.day-tour.inventory');
     });
     Route::prefix('/stay')->group(function () {
         Route::get('/where-to-stay', [AdminPagesController::class, 'whereToStay'])->name('admin.stay.wheretostay');
@@ -531,6 +538,19 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::post('quickset', [InventoryController::class, 'quickset'])->name('admin.inventory.quickset');
         Route::post('delete', [InventoryController::class, 'delete'])->name('admin.inventory.delete');
     });
+
+    // ========== Day Tour Inventory Management Routes ==========
+    Route::prefix('/day-tour-inventory')->group(function () {
+        Route::post('/quickset', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'quickset'])->name('admin.day-tour-inventory.quickset');
+        Route::post('/store', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'store'])->name('admin.day-tour-inventory.store');
+        Route::get('/{dayTourId}/calendar', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getCalendar'])->name('admin.day-tour-inventory.calendar');
+        Route::post('/{dayTourId}/update', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'updateInventory'])->name('admin.day-tour-inventory.update');
+        Route::post('/{dayTourId}/block', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'blockDate'])->name('admin.day-tour-inventory.block');
+        Route::post('/{dayTourId}/unblock', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'unblockDate'])->name('admin.day-tour-inventory.unblock');
+        Route::post('/{dayTourId}/bulk-update', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'bulkUpdate'])->name('admin.day-tour-inventory.bulk');
+        Route::post('/{dayTourId}/initialize', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'initialize'])->name('admin.day-tour-inventory.initialize');
+        Route::get('/availability/all', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getAllAvailability'])->name('admin.day-tour-inventory.all-availability');
+    });
 });
 
 // ========== API Routes for Special Events ==========
@@ -542,3 +562,6 @@ Route::post('/api/special-events/upload-image', [EventApiController::class, 'upl
 
 // ========== API Routes for Farm Experiences ==========
 Route::post('/api/farm-experiences/upload-image', [\App\Http\Controllers\Api\FarmExperiencesApiController::class, 'uploadImage']);
+
+// ========== API Routes for Day Tour Inventory ==========
+Route::get('/api/day-tour-inventory/{dayTourId}', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getInventory'])->name('api.day-tour-inventory.get');

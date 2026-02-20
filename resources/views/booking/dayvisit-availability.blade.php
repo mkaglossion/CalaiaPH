@@ -59,7 +59,7 @@
                     Check Availability
                 </h1>
                 <p class="mt-3 text-base sm:text-lg text-gray-500 max-w-3xl mx-auto">
-                    Select your preferred date to check availability for our day visit packages
+                     Select a package that fits your group size and check available package.
                 </p>
             </div>
 
@@ -208,28 +208,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const availabilityResult = document.getElementById('availability-result');
     const packagesContainer = document.getElementById('packages-container');
     const unavailableMessage = document.getElementById('unavailable-message');
+    const guestsInput = document.getElementById('guests-input');
+    const checkAvailabilityBtn = document.getElementById('check-availability-btn');
 
     let selectedPackage = null;
+    let currentGuests = 1;
 
-    // Load packages on page load
+    // Load all packages on page load
     console.log('DOM loaded, calling loadPackages');
-    loadPackages();
+    loadAllPackages();
+
+
+
 
     // Continue to Activities button in Booking Summary
     summaryContinueBtn.addEventListener('click', function() {
         if (selectedPackage) {
-            const guests = selectedPackage.guests || 0;
-            
-            if (guests <= 0) {
-                Swal.fire({
-                    title: 'Oops!',
-                    text: 'Please enter the number of guests',
-                    icon: 'error',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#8f5d54'
-                });
-                return;
-            }
+            // Use the package's max capacity as the guest count
+            const guests = selectedPackage.max_guests;
             
             // Store selected package in session and redirect to activities
             fetch('{{ route("dayvisit.storeAvailability") }}', {
@@ -261,21 +257,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+
     // Proceed to Payment button functionality
     proceedToPaymentBtn.addEventListener('click', function() {
         if (selectedPackage) {
-            const guests = selectedPackage.guests || 0;
-            
-            if (guests <= 0) {
-                Swal.fire({
-                    title: 'Oops!',
-                    text: 'Please enter the number of guests',
-                    icon: 'error',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#8f5d54'
-                });
-                return;
-            }
+            // Use the package's max capacity as the guest count
+            const guests = selectedPackage.max_guests;
             
             // Store selected package in session and redirect to payment
             fetch('{{ route("dayvisit.storeAvailability") }}', {
@@ -291,6 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     price: selectedPackage.price
                 })
             })
+
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -307,19 +295,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function loadPackages() {
-        fetch(`{{ route("api.dayvisit.availability") }}?guests=1`)
+    function loadAllPackages() {
+        // Show loading state
+        packagesContainer.innerHTML = '<div class="text-center py-8"><i class="bi bi-arrow-repeat animate-spin text-3xl text-[#8f5d54]"></i><p class="mt-2 text-gray-600">Loading packages...</p></div>';
+        availabilityResult.classList.remove('hidden');
+
+        fetch(`{{ route("api.dayvisit.availability") }}`)
+
             .then(response => response.json())
             .then(data => {
-                availabilityResult.classList.remove('hidden');
-
-                if (data.available) {
+                if (data.available && data.packages.length > 0) {
                     displayPackages(data.packages);
+
                     unavailableMessage.classList.add('hidden');
                     updateBookingSummary();
                 } else {
                     packagesContainer.innerHTML = '';
                     unavailableMessage.classList.remove('hidden');
+                    // Update unavailable message with custom message from API
+                    const unavailableDiv = unavailableMessage.querySelector('p.text-gray-500');
+                    if (unavailableDiv && data.message) {
+                        unavailableDiv.textContent = data.message;
+                    }
                     summaryContinueBtn.disabled = true;
                     proceedToPaymentBtn.disabled = true;
                     selectedPackage = null;
@@ -338,21 +335,33 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+
     function displayPackages(packages) {
         packagesContainer.innerHTML = '';
         selectedPackage = null;
 
         packages.forEach(packageData => {
+
             const packageDiv = document.createElement('div');
             packageDiv.className = 'bg-gray-50 rounded-xl border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-shadow cursor-pointer';
+            packageDiv.setAttribute('data-package-id', packageData.id);
+            
             let imageHtml;
             if (packageData.image) {
-                imageHtml = '<div class="relative rounded-lg overflow-hidden h-96 bg-gray-200">' +
+                imageHtml = '<div class="relative rounded-lg overflow-hidden h-60 bg-gray-200">' +
                     '<img src="' + packageData.image + '" alt="' + packageData.name + '" class="w-full h-full object-cover">' +
                     '</div>';
             } else {
-                imageHtml = '<div class="relative rounded-lg overflow-hidden h-96 bg-gray-200 flex items-center justify-center">' +
+                imageHtml = '<div class="relative rounded-lg overflow-hidden h-48 bg-gray-200 flex items-center justify-center">' +
                     '<i class="bi bi-box text-4xl sm:text-5xl text-gray-400"></i>' +
+                    '</div>';
+            }
+            
+            // Build activities list
+            let activitiesHtml = '';
+            if (packageData.activities && packageData.activities.length > 0) {
+                activitiesHtml = '<div class="mt-3 flex flex-wrap gap-1">' +
+                    packageData.activities.map(a => '<span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">' + a.name + '</span>').join('') +
                     '</div>';
             }
             
@@ -361,44 +370,58 @@ document.addEventListener('DOMContentLoaded', function() {
                 imageHtml +
                 '<!-- Package Details -->' +
                 '<div>' +
-                    '<h4 class="font-semibold text-gray-900 text-base sm:text-lg">' + packageData.name + '</h4>' +
-                    '<p class="text-sm text-gray-600 mt-1 line-clamp-2">' + packageData.description + '</p>' +
-                    '<div class="flex items-center justify-between mt-3">' +
-                        '<span class="text-sm font-semibold text-[#8f5d54]">₱' + parseFloat(packageData.price).toFixed(2) + ' per person</span>' +
-                        '<span class="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">Available</span>' +
+                    '<div class="flex items-start justify-between">' +
+                        '<h4 class="font-semibold text-gray-900 text-base sm:text-lg">' + packageData.name + '</h4>' +
+                        '<span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">' +
+                            '<i class="bi bi-people mr-1"></i> Max ' + packageData.max_guests + ' pax' +
+                        '</span>' +
                     '</div>' +
-                    '<div class="mt-4">' +
-                        '<label for="guests-' + packageData.id + '" class="block text-sm font-medium text-gray-700 mb-1">Number of Guests</label>' +
-                        '<input type="number" id="guests-' + packageData.id + '" name="guests" value="0" min="0" max="20" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors" placeholder="0">' +
+                    '<p class="text-sm text-gray-600 mt-1 line-clamp-2">' + (packageData.description || '') + '</p>' +
+                    activitiesHtml +
+                    '<div class="mt-3 p-3 bg-white rounded-lg border border-gray-200">' +
+                        '<div class="flex items-center justify-between">' +
+                            '<span class="text-lg font-bold text-[#8f5d54]">' + packageData.price_display + '</span>' +
+                            '<span class="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">Available</span>' +
+                        '</div>' +
+                        '<p class="text-xs text-gray-500 mt-1">' + packageData.price_breakdown + '</p>' +
                     '</div>' +
                 '</div>' +
             '</div>';
 
-
             packageDiv.addEventListener('click', function(e) {
-                // Don't trigger if clicking on the input field
-                if (e.target.tagName === 'INPUT') return;
+                // Don't trigger if clicking on buttons or inputs
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
                 
                 console.log('Selected package:', packageData);
-                selectedPackage = packageData;
-                document.querySelectorAll('#packages-container > div').forEach(el => {
-                    el.classList.remove('ring-2', 'ring-[#8f5d54]');
-                });
-                packageDiv.classList.add('ring-2', 'ring-[#8f5d54]');
-                updateBookingSummary();
-            });
+                selectedPackage = {
+                    ...packageData,
+                    guests: packageData.max_guests // Use the package's max capacity
+                };
 
-            // Add event listener for guests input change
-            const guestsInput = packageDiv.querySelector(`#guests-${packageData.id}`);
-            guestsInput.addEventListener('input', function() {
-                packageData.guests = parseInt(this.value) || 1;
-                if (selectedPackage && selectedPackage.id === packageData.id) {
-                    updateBookingSummary();
-                }
+                
+                // Visual selection
+                document.querySelectorAll('#packages-container > div').forEach(el => {
+                    el.classList.remove('ring-2', 'ring-[#8f5d54]', 'bg-[#f5efe7]');
+                    el.classList.add('bg-gray-50');
+                });
+                packageDiv.classList.remove('bg-gray-50');
+                packageDiv.classList.add('ring-2', 'ring-[#8f5d54]', 'bg-[#f5efe7]');
+                
+                updateBookingSummary();
             });
 
             packagesContainer.appendChild(packageDiv);
         });
+    }
+
+
+    // Helper function to format price without .00
+    function formatPrice(price) {
+        const num = parseFloat(price);
+        if (Number.isInteger(num)) {
+            return `₱${num.toLocaleString()}`;
+        }
+        return `₱${num.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     }
 
     function updateBookingSummary() {
@@ -410,11 +433,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const summaryGuests = document.getElementById('summary-guests');
 
         if (selectedPackage) {
-            const guests = selectedPackage.guests || 1;
-            summaryPackage.textContent = selectedPackage.name;
-            summaryPricePerPerson.textContent = `₱${parseFloat(selectedPackage.price).toFixed(2)}`;
-            summaryTotalPrice.textContent = `₱${(selectedPackage.price * guests).toFixed(2)}`;
-            summaryGuests.textContent = guests;
+            summaryPackage.innerHTML = `
+                <div class="font-medium">${selectedPackage.name}</div>
+                <div class="text-xs text-gray-500 mt-1">
+                    <i class="bi bi-people mr-1"></i> Good for ${selectedPackage.max_guests} pax
+                </div>
+            `;
+            summaryPricePerPerson.textContent = formatPrice(selectedPackage.price);
+            summaryTotalPrice.textContent = formatPrice(selectedPackage.total_price);
+            summaryGuests.textContent = selectedPackage.max_guests;
+
+
             summaryStatus.innerHTML = `
                 <span class="text-green-600 font-semibold">
                     <i class="bi bi-check-circle mr-1"></i>Ready to book!
@@ -427,13 +456,14 @@ document.addEventListener('DOMContentLoaded', function() {
             summaryPackage.textContent = '—';
             summaryPricePerPerson.textContent = '—';
             summaryTotalPrice.textContent = '—';
-            summaryGuests.textContent = '—';
+            summaryGuests.textContent = currentGuests > 1 ? currentGuests : '—';
             summaryStatus.textContent = 'Please select a package to view booking details';
             // Disable buttons
             summaryContinueBtn.disabled = true;
             proceedToPaymentBtn.disabled = true;
         }
     }
+
 
     function showError(message) {
         // Show error toast

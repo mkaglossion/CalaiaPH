@@ -34,8 +34,8 @@ use App\Models\FarmSwiperImage;
 use App\Models\FarmText;
 use App\Models\Product;
 use App\Models\DayTourSwiperImage;
-
-
+use App\Models\DayTourInventory;
+use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Log;
 
@@ -258,11 +258,118 @@ class AdminController extends Controller
         return view('admin.dayTour.days', compact('packages', 'tours', 'texts', 'activities', 'images', 'infoTitle', 'infoSubtitle', 'infoItems', 'infoItemsJson'));
     }
 
+    public function dayTourInventory(Request $request)
+    {
+        // Date range filter
+        $dateFrom = $request->input('date_from') 
+            ? Carbon::parse($request->input('date_from')) 
+            : Carbon::today();
+        $dateTo = $request->input('date_to') 
+            ? Carbon::parse($request->input('date_to')) 
+            : Carbon::today()->addDays(30);
+
+        // Ensure date range is valid
+        if ($dateFrom->gt($dateTo)) {
+            $temp = $dateFrom;
+            $dateFrom = $dateTo;
+            $dateTo = $temp;
+        }
+
+        // Get all active day tour packages
+        $packages = DayTour::where('is_active', true)->get();
+
+        // Build inventory data for each package
+        $inventoryData = [];
+        foreach ($packages as $package) {
+            $inventories = DayTourInventory::where('day_tour_id', $package->id)
+                ->whereBetween('date', [$dateFrom->format('Y-m-d'), $dateTo->format('Y-m-d')])
+                ->orderBy('date')
+                ->get();
+
+            // If no inventory records exist, create default entries as stdClass objects
+            if ($inventories->isEmpty()) {
+                $defaultMaxGroups = $package->max_groups_per_day ?? 3;
+                $dates = [];
+                $current = $dateFrom->copy();
+                while ($current->lte($dateTo)) {
+                    $item = new \stdClass();
+                    $item->date = $current->format('Y-m-d');
+                    $item->max_groups = $defaultMaxGroups;
+                    $item->booked_groups = 0;
+                    $item->available_groups = $defaultMaxGroups;
+                    $item->is_blocked = false;
+                    $item->block_reason = null;
+                    $dates[] = $item;
+                    $current->addDay();
+                }
+                $inventories = collect($dates);
+            }
+
+            $inventoryData[] = [
+                'package' => $package,
+                'inventories' => $inventories,
+            ];
+        }
+
+        // Calculate daily totals across all packages
+        $dailyTotals = [];
+        $current = $dateFrom->copy();
+        while ($current->lte($dateTo)) {
+            $dateStr = $current->format('Y-m-d');
+            $totalAvailable = 0;
+            $totalMaxGroups = 0;
+
+            foreach ($inventoryData as $data) {
+                $inventory = $data['inventories']->firstWhere('date', $dateStr);
+                if ($inventory) {
+                    $totalAvailable += $inventory->available_groups ?? 0;
+                    $totalMaxGroups += $inventory->max_groups ?? ($data['package']->max_groups_per_day ?? 3);
+                } else {
+                    // Use default if no record
+                    $defaultGroups = $data['package']->max_groups_per_day ?? 3;
+                    $totalAvailable += $defaultGroups;
+                    $totalMaxGroups += $defaultGroups;
+                }
+            }
+
+
+            $dailyTotals[] = [
+                'date' => $dateStr,
+                'total_available' => $totalAvailable,
+                'total_max_groups' => $totalMaxGroups,
+            ];
+
+            $current->addDay();
+        }
+
+        // Paginate the daily totals
+        $perPage = 15;
+        $currentPage = $request->input('page', 1);
+        $total = count($dailyTotals);
+        $offset = ($currentPage - 1) * $perPage;
+        $paginatedTotals = array_slice($dailyTotals, $offset, $perPage);
+
+        $pagination = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginatedTotals,
+            $total,
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        return view('admin.dayTour.inventory', compact(
+            'packages',
+            'inventoryData',
+            'dailyTotals',
+            'pagination',
+            'dateFrom',
+            'dateTo'
+        ));
+    }
+
     public function specialEventsManager()
     {
         $events = Event::all();
         return view('admin.specialEvents.manager', compact('events'));
     }
 }
-
-

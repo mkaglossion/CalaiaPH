@@ -91,11 +91,12 @@
           ]],
           ['title'=>'Bookings','icon'=>'calendar-check','route'=>'admin.bookings.*','sub'=>[
             ['label'=>'All Bookings','route'=>'admin.bookings.index'],
-            ['label'=>'Inventory Monitor','route'=>'admin.bookings.inventory']
+            ['label'=>'Staycation Inventory','route'=>'admin.bookings.inventory'],
+            ['label'=>'Daytour Inventory','route'=>'admin.day-tour.inventory'],
           ]],
           ['title'=>'Day Tour','icon'=>'sun','route'=>'admin.day.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.day.daytour'],
-            ['label'=>'Items','route'=>'admin.day.day']
+            ['label'=>'Items','route'=>'admin.day.day'],
           ]],
           ['title'=>'Where to Stay','icon'=>'building','route'=>'admin.stay.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.stay.wheretostay'],

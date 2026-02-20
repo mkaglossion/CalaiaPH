@@ -101,8 +101,9 @@
 
                 {{-- Experience Title --}}
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Experience Title *</label>
+                    <label for="experience_title" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Experience Title *</label>
                     <input 
+                        id="experience_title"
                         type="text" 
                         x-model="currentExperience.title" 
                         required 
@@ -112,8 +113,9 @@
 
                 {{-- Description --}}
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Description *</label>
+                    <label for="experience_desc" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Description *</label>
                     <textarea 
+                        id="experience_desc"
                         x-model="currentExperience.desc" 
                         rows="3" 
                         required 
@@ -123,8 +125,9 @@
 
                 {{-- Time/Schedule --}}
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Time/Schedule *</label>
+                    <label for="experience_time" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Time/Schedule *</label>
                     <input 
+                        id="experience_time"
                         type="text" 
                         x-model="currentExperience.time" 
                         required 
@@ -134,8 +137,9 @@
 
                 {{-- Capacity --}}
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Capacity/Info *</label>
+                    <label for="experience_capacity" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Capacity/Info *</label>
                     <input 
+                        id="experience_capacity"
                         type="text" 
                         x-model="currentExperience.capacity" 
                         required 
@@ -145,8 +149,9 @@
 
                 {{-- CTA Button Text --}}
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Button Text (CTA) *</label>
+                    <label for="experience_cta" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Button Text (CTA) *</label>
                     <input 
+                        id="experience_cta"
                         type="text" 
                         x-model="currentExperience.cta" 
                         required 
@@ -156,8 +161,9 @@
 
                 {{-- Badge (Optional) --}}
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Badge (Optional)</label>
+                    <label for="experience_badge" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Badge (Optional)</label>
                     <input 
+                        id="experience_badge"
                         type="text" 
                         x-model="currentExperience.badge" 
                         placeholder="e.g., Guided Tour"
@@ -166,7 +172,7 @@
 
                 {{-- Image Upload --}}
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Experience Image</label>
+                    <label for="experience_image" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Experience Image</label>
                     <div>
                         <input 
                             type="file" 

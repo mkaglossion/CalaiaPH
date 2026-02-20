@@ -8,6 +8,7 @@ use App\Services\BookingService;
 use App\Services\PaymentService;
 use App\Services\ValidationService;
 use App\Services\InventoryService;
+use App\Services\DayTourInventoryService;
 use App\Models\DayTour;
 use Carbon\Carbon;
 
@@ -16,12 +17,19 @@ class DayVisitController extends Controller
     protected $bookingService;
     protected $paymentService;
     protected $inventoryService;
+    protected $dayTourInventoryService;
 
-    public function __construct(BookingService $bookingService, PaymentService $paymentService, InventoryService $inventoryService)
+    public function __construct(
+        BookingService $bookingService, 
+        PaymentService $paymentService, 
+        InventoryService $inventoryService,
+        DayTourInventoryService $dayTourInventoryService
+    )
     {
         $this->bookingService = $bookingService;
         $this->paymentService = $paymentService;
         $this->inventoryService = $inventoryService;
+        $this->dayTourInventoryService = $dayTourInventoryService;
     }
 
     /**
@@ -54,42 +62,84 @@ class DayVisitController extends Controller
     }
 
     /**
+     * Helper function to format price without .00 for whole numbers
+     */
+    private function formatPrice($price)
+    {
+        $num = (float) $price;
+        if (fmod($num, 1) == 0) {
+            return '₱' . number_format($num);
+        }
+        return '₱' . number_format($num, 2);
+    }
+
+    /**
      * Get day visit availability API
      */
     public function getAvailabilityApi(Request $request)
     {
-        $guests = $request->query('guests', 1);
-
-        // Get available packages
-        $packages = DayTour::all();
+        $date = $request->query('date', now()->format('Y-m-d'));
+        
+        // Get all active packages with their inventory for the selected date
+        $packages = DayTour::where('is_active', true)->get();
+        
         $packagesData = [];
 
         if ($packages->count() > 0) {
-            $packagesData = $packages->map(function($package) {
+            $packagesData = $packages->map(function($package) use ($date) {
+                // Get inventory for this package on this date
+                $inventory = $this->dayTourInventoryService->getOrCreateInventory($package->id, $date);
+                
+                // Calculate pricing based on pricing_type
+                if ($package->pricing_type === 'total') {
+                    // Total package price - divide by max guests to get per person rate
+                    $pricePerPerson = $package->price / $package->max_guests;
+                    $totalPrice = $package->price;
+                    $priceDisplay = $this->formatPrice($package->price) . ' total';
+                    $priceBreakdown = $this->formatPrice($pricePerPerson) . '/pax for ' . $package->max_guests . ' pax';
+                } else {
+                    // Per person pricing - multiply by max guests for total
+                    $pricePerPerson = $package->price;
+                    $totalPrice = $package->price * $package->max_guests;
+                    $priceDisplay = $this->formatPrice($package->price) . ' per person';
+                    $priceBreakdown = $this->formatPrice($totalPrice) . ' total for ' . $package->max_guests . ' pax';
+                }
+
                 return [
                     'id' => $package->id,
                     'name' => $package->name,
                     'description' => $package->description,
-                    'price' => $package->price,
-                    'image' => $package->image
+                    'price' => $pricePerPerson,
+                    'total_price' => $totalPrice,
+                    'max_guests' => $package->max_guests,
+                    'pricing_type' => $package->pricing_type,
+                    'price_display' => $priceDisplay,
+                    'price_breakdown' => $priceBreakdown,
+                    'image' => $package->image,
+                    'activities' => $package->activities->map(function($activity) {
+                        return [
+                            'id' => $activity->id,
+                            'name' => $activity->name
+                        ];
+                    }),
+                    // Inventory data
+                    'inventory' => [
+                        'total_slots' => $inventory->max_groups,
+                        'available_slots' => $inventory->available_groups,
+                        'booked_slots' => $inventory->booked_groups,
+                        'is_available' => $inventory->isAvailable(),
+                        'is_blocked' => $inventory->is_blocked,
+                        'status' => $inventory->status_color
+                    ]
                 ];
             });
-        } else {
-            // Fallback to hardcoded packages if no packages exist
-            $packagesData = [
-                [
-                    'id' => 1,
-                    'name' => 'Day Visit Package with Free Drinks',
-                    'description' => 'Enjoy a day of nature, fresh air, and free drinks',
-                    'price' => 500,
-                    'image' => null
-                ]
-            ];
         }
 
         return response()->json([
-            'available' => true,
-            'packages' => $packagesData
+            'available' => count($packagesData) > 0,
+            'date' => $date,
+            'packages' => $packagesData,
+            'message' => count($packagesData) === 0 ? 'No packages available at the moment. Please check back later.' : null
         ]);
     }
 
@@ -108,6 +158,17 @@ class DayVisitController extends Controller
         // Add visit date to validated data
         $validated['visit_date'] = Session::get('selected_dayvisit_date');
 
+        // Check inventory availability before allowing booking
+        $date = $validated['visit_date'] ?? now()->format('Y-m-d');
+        $inventory = $this->dayTourInventoryService->getOrCreateInventory($validated['package'], $date);
+        
+        if (!$inventory->isAvailable()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sorry, this package is no longer available for the selected date. Please choose another date or package.'
+            ], 422);
+        }
+
         // Store selection in session
         Session::put('dayvisit_availability', $validated);
 
@@ -119,6 +180,7 @@ class DayVisitController extends Controller
             'phone' => null,
             'guests' => $validated['guests'],
             'package' => $validated['package_name'],
+            'package_id' => $validated['package'],
             'price' => $validated['price'] * $validated['guests'],
             'booking_date' => $validated['visit_date'],
             'special_requests' => '',
@@ -194,7 +256,6 @@ class DayVisitController extends Controller
         return view('booking.dayvisit-payment', ['bookingData' => $bookingData]);
     }
 
-
     /**
      * Process payment
      */
@@ -226,6 +287,19 @@ class DayVisitController extends Controller
             'phone' => 'required|string|max:20',
             'payment_method' => 'required|string|in:paymongo,qr,gcash,paymaya,bank,qrph,grab_pay,billease',
         ]);
+
+        // Check inventory one more time before initiating payment
+        $date = $bookingData['booking_date'] ?? now()->format('Y-m-d');
+        $packageId = $bookingData['package_id'] ?? null;
+        
+        if ($packageId) {
+            $inventory = $this->dayTourInventoryService->getOrCreateInventory($packageId, $date);
+            
+            if (!$inventory->isAvailable()) {
+                return redirect()->route('dayvisit.availability')
+                    ->with('error', 'Sorry, this package is no longer available for the selected date. Please choose another date or package.');
+            }
+        }
 
         // Calculate grand total
         $activitiesTotal = collect(Session::get('dayvisit_selected_activities', []))->sum(function($activity) {
@@ -349,6 +423,27 @@ class DayVisitController extends Controller
 
                 if (!$bookingData || !$paymentData) {
                     return redirect()->route('dayvisit.payment')->with('error', 'Booking data not found.');
+                }
+
+                // Book the inventory slot
+                $date = $bookingData['booking_date'] ?? now()->format('Y-m-d');
+                $packageId = $bookingData['package_id'] ?? null;
+                
+                if ($packageId) {
+                    $slotBooked = $this->dayTourInventoryService->bookSlot(
+                        $packageId, 
+                        $date, 
+                        $checkoutId
+                    );
+                    
+                    if (!$slotBooked) {
+                        \Illuminate\Support\Facades\Log::error('Failed to book inventory slot after payment', [
+                            'package_id' => $packageId,
+                            'date' => $date,
+                            'checkout_id' => $checkoutId
+                        ]);
+                        // Continue with booking but log the error - admin can manually adjust
+                    }
                 }
 
                 // Process the payment
