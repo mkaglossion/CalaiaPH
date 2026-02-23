@@ -1,6 +1,6 @@
 {{-- Frozen Products --}}
 <div class="mb-16">
-  <h3 class="text-[25px] font-bold text-[#8f5d54] mb-8">Frozen Products</h3>
+  <h3 class="text-[25px] font-bold text-[#8f5d54] mb-8"><i class="fa-solid fa-square mr-2"></i>Frozen Products</h3>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
     @foreach ($frozenProducts as $product)
     <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-125 relative">
@@ -61,7 +61,7 @@
 
 {{-- Fresh Vegetables --}}
 <div>
-  <h3 class="text-[25px] font-bold text-[#8f5d54] mb-8">Fresh Vegetables</h3>
+  <h3 class="text-[25px] font-bold text-[#8f5d54] mb-8"><i class="fa-solid fa-square mr-2"></i>Fresh Vegetables</h3>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
     @foreach ($freshProducts as $product)
     <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-112.5 relative">

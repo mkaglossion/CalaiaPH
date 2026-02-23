@@ -19,7 +19,7 @@
             <h2 class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center">
               Our Sustainable Farming
             </h2>
-            <p class="mt-6 text-lg text-brand max-w-3xl mx-auto">
+            <p class="mt-6 text-lg text-brand max-w-3xl mx-auto text-center">
               Discover how we raise livestock and grow produce with respect for nature and animal welfare
             </p>
             <hr class="border-t-2 border-[#a97464] mt-6 mb-10 w-180 mx-auto rounded-full">
@@ -149,7 +149,7 @@
           <div class="relative z-10 px-6 md:px-10 py-10 md:py-14 max-w-xl">
             <h3 class="text-white font-extrabold text-2xl md:text-4xl mb-5">Vegetable Garden.</h3>
             <p class="text-white/90 text-base md:text-lg leading-relaxed mb-8">We grow over 50 varieties of vegetables using organic methods and natural amendments like compost and cover crops.</p>
-            <a href="#contact" class="inline-flex items-center bg-brand text-white font-semibold px-6 py-3 rounded-full hover:bg-brand/90 transition">GET OUR HARVEST SCHEDULE <span class="ml-2">&gt;</span></a>
+            <a href="#contact" class="inline-flex items-center bg-brand text-white font-semibold px-6 py-3 rounded-full hover:bg-brand/90 transition">GET OUR HARVEST SCHEDULE <span class="ml-2">></span></a>
           </div>
           <div class="h-80 md:h-100"></div>
         </article>
@@ -164,7 +164,7 @@
           <div class="relative z-10 px-6 md:px-10 py-10 md:py-14 max-w-xl ml-auto text-right">
             <h3 class="text-white font-extrabold text-2xl md:text-4xl mb-5">Orchard Fruits.</h3>
             <p class="text-white/90 text-base md:text-lg leading-relaxed mb-8">Our heritage fruit trees are grown without chemical sprays, allowing natural ecosystems to maintain balance.</p>
-            <a href="#contact" class="inline-flex items-center bg-brand text-white font-semibold px-6 py-3 rounded-full hover:bg-brand/90 transition">JOIN OUR FRUIT CSA <span class="ml-2">&gt;</span></a>
+            <a href="#contact" class="inline-flex items-center bg-brand text-white font-semibold px-6 py-3 rounded-full hover:bg-brand/90 transition">JOIN OUR FRUIT CSA <span class="ml-2">></span></a>
           </div>
           <div class="h-80 md:h-100"></div>
         </article>
@@ -313,4 +313,3 @@
     {{-- Floating Buttons --}}
     <x-floating-buttons />
 </x-page-layout>
-
