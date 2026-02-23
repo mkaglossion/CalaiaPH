@@ -121,7 +121,7 @@
     {{-- SWIPER IMAGES MANAGEMENT --}}
     <div class="flex justify-between items-end mb-6 mt-12">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Swiper Images</h2>
+            <h2 class="text-2xl font-bold text-gray-800">Swiper Images Management</h2>
             <p class="text-gray-500 text-sm">Photos that appear in the staycation carousel.</p>
         </div>
 

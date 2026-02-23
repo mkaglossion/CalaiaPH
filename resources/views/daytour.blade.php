@@ -200,7 +200,7 @@
     </div>
   </main>
 
-  <x-package-modal id="detailsModal" :price="true" buttonText="Book Now" buttonAction="bookNow" imageApiUrl="/day-tour-swiper-images/daytour" />
+  <x-package-modal id="detailsModal" :price="true" buttonText="Book Now" buttonAction="bookNow" imageApiUrl="/day-tour-swiper-images/daytour" :bookingRoute="route('booking.calendar') . '?type=daytour'" />
   <x-floating-buttons />
   <x-footer />
 

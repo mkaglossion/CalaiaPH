@@ -1,4 +1,4 @@
-{{-- resources/views/components/package-modal.blade.php --}}
+f{{-- resources/views/components/package-modal.blade.php --}}
 @props([
     'id' => 'detailsModal',
     'price' => true,
@@ -185,6 +185,16 @@
     const description = button.dataset.description || '';
     const price = button.dataset.price || '';
     const imageApiUrl = button.dataset.imageApiUrl || '{{ $imageApiUrl }}';
+    
+    // Parse images from data-images attribute (for food swiper images)
+    let providedImages = [];
+    if (button.dataset.images) {
+      try {
+        providedImages = JSON.parse(button.dataset.images);
+      } catch (e) {
+        console.warn('Failed to parse images from data-images:', e);
+      }
+    }
 
     window.currentDaytourId = daytourId;
     window.currentImageApiUrl = imageApiUrl;
@@ -198,17 +208,19 @@
       }
     }
 
-    // Show cached images first for instant loading
-    let cachedImages = [];
-    if (window.imageCache && daytourId && window.imageCache.has(daytourId)) {
+    // Use provided images if available (food items), otherwise check cache
+    let cachedImages = providedImages.length > 0 ? providedImages : [];
+    
+    // If no provided images and we have a daytourId, check the cache
+    if (cachedImages.length === 0 && window.imageCache && daytourId && window.imageCache.has(daytourId)) {
       const entry = window.imageCache.get(daytourId);
       if (Array.isArray(entry)) cachedImages = entry;
     }
 
     showPackageDetails(title, details, cachedImages, description, price);
 
-    // Fetch images asynchronously if not in cache
-    if (typeof window.preloadDaytourImages === 'function' && daytourId) {
+    // Fetch images asynchronously only if we don't have provided images and have a daytourId
+    if (providedImages.length === 0 && typeof window.preloadDaytourImages === 'function' && daytourId) {
       window.preloadDaytourImages(daytourId).then((imgs) => {
         if (Array.isArray(imgs) && imgs.length) {
           updateModalImages(imgs);
@@ -501,17 +513,15 @@
     const title = (document.getElementById(modalId + 'Label')?.textContent || '').replace(' Details', '');
     const price = document.getElementById(modalId + 'PriceDisplay')?.textContent || 'PHP 0';
 
-    const isDining = title.toLowerCase().includes('menu') || title.toLowerCase().includes('cook');
-    const type = isDining ? 'staycation' : 'daytour';
-
-    let url = '{{ route('booking.calendar') }}' + '?type=' + type;
+    // Use the bookingRoute passed from the component
+    let url = '{{ $bookingRoute }}';
     
     @if($appendParams)
     const params = new URLSearchParams({
       package: title,
       price: price
     });
-    url += '&' + params.toString();
+    url += (url.includes('?') ? '&' : '?') + params.toString();
     @endif
 
     window.location.href = url;

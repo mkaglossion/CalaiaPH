@@ -66,7 +66,7 @@ class AdminController extends Controller
 
         $currentSeason = $currentSeasonPeriod ? $currentSeasonPeriod->peakType->name : 'Non-Peak';
 
-        $images = StaycationSwiperImage::all();
+        $images = StaycationSwiperImage::with('staycation')->latest()->get();
         $texts = StaycationText::all();
         return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts', 'currentSeason'));
     }

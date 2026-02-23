@@ -41,7 +41,7 @@
               <div class="swiper messHallSwiper relative">
                 <div class="swiper-wrapper">
 
-          @foreach($messHallFoods as $index => $food)
+          @foreach($messHallFoods->sortBy('name') as $index => $food)
           @php
               $foodImages = $food->swiperImages->pluck('image_path')->toArray();
           @endphp
@@ -63,11 +63,11 @@
                   </div>
                 @endif
               @endif
-              {{-- inset image frame --}}
+              {{-- inset image frame - show food image from Food Management ONLY --}}
               <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10">
-                @if($food->swiperImages->first() || $food->image)
+                @if(!empty($food->image))
                   <img
-                    src="{{ $food->swiperImages->first() ? $food->swiperImages->first()->image_path : (str_starts_with($food->image ?? '', 'http') ? $food->image : asset('storage/' . $food->image)) }}"
+                    src="{{ str_starts_with($food->image, 'http') ? $food->image : asset('storage/' . $food->image) }}"
                     alt="{{ $food->name }}"
                     class="w-full aspect-4/3 object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                     loading="lazy"
@@ -139,7 +139,7 @@
               {{-- Swiper Carousel --}}
               <div class="swiper cookYourOwnSwiper relative">
                 <div class="swiper-wrapper">
-                  @foreach($cookYourOwnFoods as $index => $food)
+                  @foreach($cookYourOwnFoods->sortBy('name') as $index => $food)
                   @php
                       $foodImages = $food->swiperImages->pluck('image_path')->toArray();
                   @endphp
@@ -161,11 +161,11 @@
                           </div>
                         @endif
                       @endif
-                      {{-- inset image frame --}}
+                      {{-- inset image frame - show food image from Food Management ONLY --}}
                       <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10 mb-4">
-                        @if($food->swiperImages->first() || $food->image)
+                        @if(!empty($food->image))
                           <img
-                            src="{{ $food->swiperImages->first() ? $food->swiperImages->first()->image_path : (str_starts_with($food->image ?? '', 'http') ? $food->image : asset('storage/' . $food->image)) }}"
+                            src="{{ str_starts_with($food->image, 'http') ? $food->image : asset('storage/' . $food->image) }}"
                             alt="{{ $food->name }}"
                             class="w-full aspect-4/3 object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                             loading="lazy"
@@ -221,7 +221,7 @@
       </section>
 
       {{-- Dynamic Details Modal --}}
-      <x-package-modal id="detailsModal" :price="false" :buttonText="'Book Now'" :buttonAction="'bookNow'" :bookingRoute="route('booking.calendar') . '?type=staycation'" :appendParams="false">
+      <x-package-modal id="detailsModal" :price="false" :buttonText="'Book Now'" :buttonAction="'bookNow'" :bookingRoute="route('booking.calendar') . '?type=staycation'" :appendParams="true">
       </x-package-modal>
 
     </div>
@@ -257,6 +257,7 @@
           const cookYourOwnSwiper = new Swiper('.cookYourOwnSwiper', {
             slidesPerView: 1,
             spaceBetween: 20,
+            loop: true,
             navigation: {
               nextEl: '.cookYourOwnSwiper [data-custom-next]',
               prevEl: '.cookYourOwnSwiper [data-custom-prev]'
@@ -276,6 +277,7 @@
           const messHallSwiper = new Swiper('.messHallSwiper', {
             slidesPerView: 1,
             spaceBetween: 20,
+            loop: true,
             navigation: {
               nextEl: '.messHallSwiper [data-custom-next]',
               prevEl: '.messHallSwiper [data-custom-prev]'

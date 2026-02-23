@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DiningCategoryImage;
+use App\Models\FoodSwiperImage;
+use App\Models\Food;
 use Illuminate\Http\Request;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
@@ -15,7 +17,9 @@ class DiningCategoryImageController extends Controller
     public function index()
     {
         $diningImages = DiningCategoryImage::all()->keyBy('category');
-        return view('admin.dining.category-images.index', compact('diningImages'));
+        $images = FoodSwiperImage::with('food')->latest()->paginate(10);
+        $foods = Food::orderBy('name')->get();
+        return view('admin.dining.category-images.index', compact('diningImages', 'images', 'foods'));
     }
 
     /**

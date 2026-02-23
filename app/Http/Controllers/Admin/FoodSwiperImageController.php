@@ -22,6 +22,7 @@ class FoodSwiperImageController extends Controller
         $validated = $request->validate([
             'image' => 'required|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
             'title' => 'nullable|string|max:255',
+            'food_id' => 'required|exists:foods,id',
         ]);
 
         $file = $request->file('image');
@@ -37,6 +38,7 @@ class FoodSwiperImageController extends Controller
 
         // Save to DB
         FoodSwiperImage::create([
+            'food_id' => $validated['food_id'],
             'title' => $validated['title'] ?? null,
             'image_path' => $uploadedFileUrl, // store Cloudinary URL
             'public_id' => $publicId,
@@ -52,9 +54,13 @@ class FoodSwiperImageController extends Controller
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
             'image' => 'nullable|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
+            'food_id' => 'required|exists:foods,id',
         ]);
 
-        $data = ['title' => $validated['title'] ?? null];
+        $data = [
+            'food_id' => $validated['food_id'],
+            'title' => $validated['title'] ?? null
+        ];
 
         if ($request->hasFile('image')) {
             // Delete old image from Cloudinary

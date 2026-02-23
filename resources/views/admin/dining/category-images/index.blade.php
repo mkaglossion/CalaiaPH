@@ -9,11 +9,12 @@
     <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
         Page Information
     </h1>
-    <p class="text-gray-600 mb-10">Manage the category images displayed on your Dining page.</p>
+    <p class="text-gray-600 mb-10">Manage the category images and food swiper images displayed on your Dining page.</p>
 
     {{-- ============================================================= --}}
     {{-- DINING CATEGORY IMAGES SECTION --}}
     {{-- ============================================================= --}}
+
     <div class="flex justify-between items-end mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Dining Category Images</h2>
@@ -23,12 +24,12 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-10">
         <!-- Messhall Card -->
-        <div class="bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition">
+        <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative">
             <div class="overflow-hidden rounded-xl mb-4 bg-linear-to-br from-gray-100 to-gray-200">
                 @if(isset($diningImages['messhall']))
                     <img src="{{ $diningImages['messhall']->image_path }}" alt="Messhall" class="w-full h-48 object-cover transition hover:scale-105">
                 @else
-                    <div class="w-full h-48 flex items-center justify-center">
+                    <div class="w-full h-48 flex items-center justify-center bg-gray-50">
                         <div class="text-center">
                             <i data-lucide="image" class="w-12 h-12 text-gray-400 mx-auto mb-2"></i>
                             <span class="text-gray-500 text-sm">No image uploaded</span>
@@ -63,12 +64,12 @@
         </div>
 
         <!-- Cook Your Own Card -->
-        <div class="bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition">
+        <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative">
             <div class="overflow-hidden rounded-xl mb-4 bg-linear-to-br from-gray-100 to-gray-200">
                 @if(isset($diningImages['cook_your_own']))
                     <img src="{{ $diningImages['cook_your_own']->image_path }}" alt="Cook Your Own" class="w-full h-48 object-cover transition hover:scale-105">
                 @else
-                    <div class="w-full h-48 flex items-center justify-center">
+                    <div class="w-full h-48 flex items-center justify-center bg-gray-50">
                         <div class="text-center">
                             <i data-lucide="image" class="w-12 h-12 text-gray-400 mx-auto mb-2"></i>
                             <span class="text-gray-500 text-sm">No image uploaded</span>
@@ -103,7 +104,133 @@
         </div>
     </div>
 
-    <!-- Upload Modal -->
+    <hr class="my-14 border-gray-300">
+
+    {{-- SWIPER IMAGES MANAGEMENT --}}
+    <div class="flex justify-between items-end mb-6 mt-12">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Swiper Images Managementging</h2>
+            <p class="text-gray-500 text-sm">Photos that appear in the food carousel.</p>
+        </div>
+
+        <button 
+            @click="openSwiperModal()" 
+            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition"
+        >
+            + Add Image
+        </button>
+    </div>
+
+    @if(session('success'))
+        <div class="bg-green-100 text-green-700 p-4 rounded-xl mb-6 border border-green-200">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    {{-- Images Table --}}
+    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+        <table class="w-full text-left">
+            <thead class="bg-gray-100/70 backdrop-blur">
+                <tr>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">#</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Preview</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Food Name</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Title</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Uploaded</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                @forelse ($images as $index => $img)
+                    <tr class="hover:bg-gray-50/70 transition">
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ $images->firstItem() ? $images->firstItem() + $index : $index + 1 }}</td>
+                        <td class="px-6 py-4">
+                            <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
+                        </td>
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ $img->food->name ?? 'Untitled' }}</td>
+                        <td class="px-6 py-4 text-gray-600">{{ $img->title ?? 'Untitled' }}</td>
+                        <td class="px-6 py-4 text-gray-600">{{ $img->created_at->format('Y-m-d') }}</td>
+                        <td class="px-6 py-4 text-right space-x-4">
+                            <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition" @click="editSwiperImage({{ $img->id }}, '{{ $img->food_id }}', '{{ $img->title }}')">
+                                Edit
+                            </button>
+                            <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition" @click="deleteSwiperImage({{ $img->id }})">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-6 text-center text-gray-500">No images uploaded yet.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    @if ($images->hasPages())
+        <div class="px-6 py-4 border-t border-gray-200">
+            {{ $images->links('pagination::tailwind') }}
+        </div>
+    @endif
+
+    <!-- Swiper Image Upload/Edit Modal -->
+    <div 
+        x-show="showSwiperModal"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        x-transition.opacity
+    >
+        <div class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-md p-6 relative border border-gray-200">
+            <button 
+                @click="closeSwiperModal()"
+                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+            >&times;</button>
+
+            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editSwiperMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
+
+            <form id="swiperUploadForm" class="space-y-5" enctype="multipart/form-data" @submit.prevent="uploadSwiperImage">
+                @csrf
+
+                <div>
+                    <label for="food_id" class="block font-medium mb-1 text-gray-700">Food Item *</label>
+                    <select id="food_id" x-ref="foodSelect" name="food_id" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
+                        <option value="">Select Food Item</option>
+                        @foreach($foods as $food)
+                            <option value="{{ $food->id }}">{{ $food->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label for="swiper_title" class="block font-medium mb-1 text-gray-700">Title (Optional)</label>
+                    <input id="swiper_title" type="text" x-ref="swiperTitle" name="title" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Enter image title">
+                </div>
+
+                <div>
+                    <label for="swiper_image" class="block font-medium mb-1 text-gray-700">Upload Image/Video <span x-show="!editSwiperMode" class="text-red-500">*</span></label>
+                    <input id="swiper_image" type="file" x-ref="swiperImage" name="image" accept="image/*,video/*" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" :required="!editSwiperMode">
+                    <p class="text-xs text-gray-500 mt-1">Max 100MB • JPG, PNG, GIF, MP4, MOV</p>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button
+                        type="button"
+                        @click="closeSwiperModal()"
+                        class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition"
+                        x-text="editSwiperMode ? 'Update' : 'Upload'">
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Category Image Upload Modal -->
     <div 
         x-show="showUploadModal"
         class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
@@ -115,7 +242,7 @@
                 class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
             >&times;</button>
 
-            <h3 class="text-xl font-bold mb-4 text-gray-900">Upload Image</h3>
+            <h3 class="text-xl font-bold mb-4 text-gray-900">Upload Category Image</h3>
 
             <form id="diningUploadForm" class="space-y-5" enctype="multipart/form-data" @submit.prevent="uploadImage">
                 @csrf
@@ -170,11 +297,186 @@ function diningImageManager() {
     return {
         isLoading: false,
         showUploadModal: false,
+        showSwiperModal: false,
         selectedCategory: '',
+        editSwiperMode: false,
+        currentSwiperId: null,
 
         openUploadModal(category) {
             this.selectedCategory = category === 'messhall' ? 'Messhall' : 'Cook Your Own';
             this.showUploadModal = true;
+        },
+
+        openSwiperModal() {
+            this.editSwiperMode = false;
+            this.currentSwiperId = null;
+            this.showSwiperModal = true;
+            this.$nextTick(() => {
+                if (this.$refs.foodSelect) this.$refs.foodSelect.value = '';
+                if (this.$refs.swiperTitle) this.$refs.swiperTitle.value = '';
+                if (this.$refs.swiperImage) this.$refs.swiperImage.value = '';
+            });
+        },
+
+        closeSwiperModal() {
+            this.showSwiperModal = false;
+            this.editSwiperMode = false;
+            this.currentSwiperId = null;
+        },
+
+        editSwiperImage(id, foodId, title) {
+            this.currentSwiperId = id;
+            this.editSwiperMode = true;
+            this.showSwiperModal = true;
+            
+            this.$nextTick(() => {
+                const foodSelect = this.$refs.foodSelect;
+                const titleInput = this.$refs.swiperTitle;
+
+                if (foodSelect) foodSelect.value = foodId || '';
+                if (titleInput) titleInput.value = title || '';
+            });
+        },
+
+        async uploadSwiperImage() {
+            const fileInput = this.$refs.swiperImage;
+            const titleInput = this.$refs.swiperTitle;
+            const foodSelect = this.$refs.foodSelect;
+
+            if (!fileInput?.files?.[0] && !this.editSwiperMode) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Image Selected',
+                    text: 'Please select an image before uploading.'
+                });
+                return;
+            }
+
+            if (!foodSelect?.value) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Food Selected',
+                    text: 'Please select a food item.'
+                });
+                return;
+            }
+
+            const formData = new FormData();
+            if (fileInput.files[0]) formData.append('image', fileInput.files[0]);
+            formData.append('title', titleInput?.value || '');
+            formData.append('food_id', foodSelect.value);
+
+            if (this.editSwiperMode) {
+                formData.append('_method', 'PUT');
+            }
+
+            const url = this.editSwiperMode
+                ? `/admin/food-swiper-images/${this.currentSwiperId}`
+                : "{{ route('food-swiper-images.store') }}";
+
+            this.isLoading = true;
+
+            try {
+                const csrf = document.querySelector('meta[name=csrf-token]').content;
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    Swal.fire({
+                        icon: "success",
+                        title: this.editSwiperMode ? "Updated!" : "Uploaded!",
+                        text: data.message || "Image processed successfully!",
+                        confirmButtonColor: "#2563eb"
+                    }).then(() => {
+                        this.closeSwiperModal();
+                        window.location.reload();
+                    });
+                } else if (data.errors) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Validation Error",
+                        html: Object.values(data.errors).flat().join("<br>")
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Failed",
+                        text: data.message || "Failed to process image. Please try again."
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Unexpected Error",
+                    text: "Something went wrong. Please try again."
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        deleteSwiperImage(id) {
+            Swal.fire({
+                title: 'Delete Image?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    this.isLoading = true;
+
+                    const csrf = document.querySelector('meta[name=csrf-token]').content;
+                    const formData = new FormData();
+                    formData.append('_method', 'DELETE');
+                    
+                    try {
+                        const res = await fetch(`/admin/food-swiper-images/${id}`, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': csrf },
+                            body: formData
+                        });
+
+                        if (res.ok) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: 'Image deleted successfully.',
+                                confirmButtonColor: '#2563eb'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Failed to delete image.',
+                                confirmButtonColor: '#dc2626'
+                            });
+                        }
+                    } catch (err) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An error occurred while deleting.',
+                            confirmButtonColor: '#dc2626'
+                        });
+                    } finally {
+                        this.isLoading = false;
+                    }
+                }
+            });
         },
 
         async uploadImage() {
