@@ -346,6 +346,8 @@ class AdminController extends Controller
         $perPage = 15;
         $currentPage = $request->input('page', 1);
         $total = count($dailyTotals);
+        
+        // Slice the data for the current page
         $offset = ($currentPage - 1) * $perPage;
         $paginatedTotals = array_slice($dailyTotals, $offset, $perPage);
 
@@ -357,14 +359,24 @@ class AdminController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
-        return view('admin.dayTour.inventory', compact(
-            'packages',
-            'inventoryData',
-            'dailyTotals',
-            'pagination',
-            'dateFrom',
-            'dateTo'
-        ));
+        // Also need to paginate the inventory data for each package
+        $paginatedInventoryData = [];
+        foreach ($inventoryData as $data) {
+            $paginatedInventories = $data['inventories']->slice($offset, $perPage)->values();
+            $paginatedInventoryData[] = [
+                'package' => $data['package'],
+                'inventories' => $paginatedInventories,
+            ];
+        }
+
+        return view('admin.dayTour.inventory', [
+            'packages' => $packages,
+            'inventoryData' => $paginatedInventoryData,
+            'dailyTotals' => $paginatedTotals,
+            'pagination' => $pagination,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+        ]);
     }
 
     public function specialEventsManager()
