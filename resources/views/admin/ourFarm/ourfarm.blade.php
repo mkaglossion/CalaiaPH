@@ -165,13 +165,13 @@
                 <input type="hidden" name="_method" value="POST" x-bind:value="editImageMode ? 'PUT' : 'POST'">
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Title (optional)</label>
-                    <input type="text" x-ref="title" name="title" class="border rounded-xl p-3 w-full">
+                    <label for="farm-title" class="block font-medium mb-1 text-gray-700">Title (optional)</label>
+                    <input type="text" id="farm-title" x-ref="title" name="title" class="border rounded-xl p-3 w-full">
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded-xl p-3 w-full">
+                    <label for="farm-image" class="block font-medium mb-1 text-gray-700">Upload Image/Video</label>
+                    <input type="file" id="farm-image" x-ref="image" name="image" accept="image/*,video/*" class="border rounded-xl p-3 w-full">
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">
@@ -202,13 +202,13 @@
                 @csrf
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Label</label>
-                    <input type="text" x-model="form.title" class="w-full border rounded-xl px-3 py-2" placeholder="Optional">
+                    <label for="farm-text-title" class="block font-medium mb-1 text-gray-700">Label</label>
+                    <input type="text" id="farm-text-title" name="title" x-model="form.title" class="w-full border rounded-xl px-3 py-2" placeholder="Optional">
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Text</label>
-                    <textarea x-model="form.content" rows="4" class="w-full border rounded-xl px-3 py-2" placeholder="Enter text..." required></textarea>
+                    <label for="farm-text-content" class="block font-medium mb-1 text-gray-700">Text</label>
+                    <textarea id="farm-text-content" x-model="form.content" rows="4" class="w-full border rounded-xl px-3 py-2" placeholder="Enter text..." required></textarea>
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">

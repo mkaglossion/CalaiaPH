@@ -30,14 +30,14 @@
      <div class="bg-white/50 backdrop-blur-sm border border-gray-200 rounded-xl p-4 mb-6">
          <form method="GET" action="{{ route('admin.testimonials.index') }}" class="flex flex-col sm:flex-row gap-4">
              <div class="flex-1">
-                 <label class="block text-sm font-medium text-gray-700 mb-1">Search Testimonials</label>
-                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name, position, or content..."
+                 <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search Testimonials</label>
+                 <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="Search by name, position, or content..."
                         class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
              </div>
 
              <div class="sm:w-32">
-                 <label class="block text-sm font-medium text-gray-700 mb-1">Rating</label>
-                 <select name="rating" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                 <label for="filter_rating" class="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+                 <select id="filter_rating" name="rating" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                      <option value="">All Ratings</option>
                      <option value="5" {{ request('rating') === '5' ? 'selected' : '' }}>⭐⭐⭐⭐⭐ (5)</option>
                      <option value="4" {{ request('rating') === '4' ? 'selected' : '' }}>⭐⭐⭐⭐ (4)</option>
@@ -184,25 +184,25 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div>
-                         <label class="block font-medium mb-1 text-gray-700">Customer Name</label>
-                         <input type="text" x-model="form.name" class="border rounded-xl p-3 w-full" required>
+                         <label for="name" class="block font-medium mb-1 text-gray-700">Customer Name</label>
+                         <input type="text" id="name" name="name" x-model="form.name" class="border rounded-xl p-3 w-full" required autocomplete="name">
                      </div>
 
                      <div>
-                         <label class="block font-medium mb-1 text-gray-700">Position/Title</label>
-                         <input type="text" x-model="form.position" class="border rounded-xl p-3 w-full" required placeholder="e.g., Family Traveler">
+                         <label for="position" class="block font-medium mb-1 text-gray-700">Position/Title</label>
+                         <input type="text" id="position" name="position" x-model="form.position" class="border rounded-xl p-3 w-full" required placeholder="e.g., Family Traveler" autocomplete="organization-title">
                      </div>
                  </div>
 
                  <div>
-                     <label class="block font-medium mb-1 text-gray-700">Testimonial Content</label>
-                     <textarea x-model="form.content" rows="4" class="w-full border rounded-xl px-3 py-2" required placeholder="Enter the customer's testimonial..."></textarea>
+                     <label for="content" class="block font-medium mb-1 text-gray-700">Testimonial Content</label>
+                     <textarea id="content" name="content" x-model="form.content" rows="4" class="w-full border rounded-xl px-3 py-2" required placeholder="Enter the customer's testimonial..."></textarea>
                  </div>
 
                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div>
-                         <label class="block font-medium mb-1 text-gray-700">Rating (1-5 stars)</label>
-                         <select x-model="form.rating" class="border rounded-xl p-3 w-full" required>
+                         <label for="rating" class="block font-medium mb-1 text-gray-700">Rating (1-5 stars)</label>
+                         <select id="rating" name="rating" x-model="form.rating" class="border rounded-xl p-3 w-full" required>
                              <option value="5">⭐⭐⭐⭐⭐ (5 stars)</option>
                              <option value="4">⭐⭐⭐⭐ (4 stars)</option>
                              <option value="3">⭐⭐⭐ (3 stars)</option>
@@ -213,7 +213,7 @@
                  </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Avatar Image</label>
+                    <label for="avatar_file" class="block font-medium mb-1 text-gray-700">Avatar Image</label>
                     <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
                          @click="$refs.avatarInput.click()">
                         <template x-if="form.avatar">
@@ -234,13 +234,13 @@
                             </div>
                         </template>
 
-                        <input type="file" accept="image/*" class="hidden" x-ref="avatarInput" @change="handleAvatarUpload">
+                        <input type="file" id="avatar_file" name="avatar_file" accept="image/*" class="hidden" x-ref="avatarInput" @change="handleAvatarUpload">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Display Order</label>
-                    <input type="number" x-model="form.order" class="border rounded-xl p-3 w-full" required min="0" placeholder="0 = first, higher numbers = later">
+                    <label for="order" class="block font-medium mb-1 text-gray-700">Display Order</label>
+                    <input type="number" id="order" name="order" x-model="form.order" class="border rounded-xl p-3 w-full" required min="0" placeholder="0 = first, higher numbers = later">
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">

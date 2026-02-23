@@ -165,13 +165,13 @@
                 <input type="hidden" name="_method" value="POST" x-bind:value="editImageMode ? 'PUT' : 'POST'">
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Title (optional)</label>
-                    <input type="text" x-ref="title" name="title" class="border rounded-xl p-3 w-full">
+                    <label for="swiper_title" class="block font-medium mb-1 text-gray-700">Title (optional)</label>
+                    <input type="text" id="swiper_title" name="title" x-ref="title" class="border rounded-xl p-3 w-full">
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded-xl p-3 w-full">
+                    <label for="swiper_image" class="block font-medium mb-1 text-gray-700">Upload Image/Video</label>
+                    <input type="file" id="swiper_image" name="image" x-ref="image" accept="image/*,video/*" class="border rounded-xl p-3 w-full">
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">
@@ -202,13 +202,13 @@
                 @csrf
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Label</label>
-                    <input type="text" x-model="form.title" class="w-full border rounded-xl px-3 py-2" placeholder="Optional">
+                    <label for="text_label" class="block font-medium mb-1 text-gray-700">Label</label>
+                    <input type="text" id="text_label" name="title" x-model="form.title" class="w-full border rounded-xl px-3 py-2" placeholder="Optional">
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Text</label>
-                    <textarea x-model="form.content" rows="4" class="w-full border rounded-xl px-3 py-2" placeholder="Enter text..." required></textarea>
+                    <label for="text_content" class="block font-medium mb-1 text-gray-700">Text</label>
+                    <textarea id="text_content" name="content" x-model="form.content" rows="4" class="w-full border rounded-xl px-3 py-2" placeholder="Enter text..." required></textarea>
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">

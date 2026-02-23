@@ -12,14 +12,14 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                <input id="name" name="name" type="text" required
+                <input id="name" name="name" type="text" required autocomplete="name"
                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
                        style="font-size: 13px;"
                        placeholder="Your full name">
             </div>
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
-                <input id="email" name="email" type="email" required
+                <input id="email" name="email" type="email" required autocomplete="email"
                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
                        style="font-size: 13px;"
                        placeholder="your@email.com">
@@ -28,14 +28,14 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <input id="phone" name="phone" type="tel"
+                <input id="phone" name="phone" type="tel" autocomplete="tel"
                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
                        style="font-size: 13px;"
                        placeholder="+63 XXX XXX XXXX">
             </div>
             <div>
                 <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-                <select id="subject" name="subject"
+                <select id="subject" name="subject" autocomplete="off"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors bg-white"
                         style="font-size: 13px;">
                     <option value="" selected disabled>Select an option</option>
@@ -48,7 +48,7 @@
         </div>
         <div>
             <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Message</label>
-            <textarea id="message" name="message" rows="20"
+            <textarea id="message" name="message" rows="20" autocomplete="off"
                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors resize-vertical"
                       style="font-size: 13px;"
                       placeholder="Tell us about your inquiry...">

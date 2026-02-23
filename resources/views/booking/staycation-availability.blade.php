@@ -2053,66 +2053,66 @@
 
         // Real-time inventory updates
         @if(config('broadcasting.default') !== 'null')
-        if (window.Echo && window.Echo.channel) {
-        window.Echo.channel('inventory')
-            .listen('.inventory.updated', (e) => {
-                console.log('Inventory updated:', e);
+        if (typeof window.Echo !== 'undefined' && window.Echo.channel) {
+            window.Echo.channel('inventory')
+                .listen('.inventory.updated', (e) => {
+                    console.log('Inventory updated:', e);
 
-                // If calendar is open and matches the updated staycation
-                if (this.calendarModal && this.currentRoomId === e.staycationId) {
-                    this.initCalendar();
-                }
+                    // If calendar is open and matches the updated staycation
+                    if (this.calendarModal && this.currentRoomId === e.staycationId) {
+                        this.initCalendar();
+                    }
 
-                // Update room card availability (optional but recommended)
-                updateRoomAvailability(e.staycationId);
-            });
+                    // Update room card availability (optional but recommended)
+                    updateRoomAvailability(e.staycationId);
+                });
         }
         @endif
 
         // Real-time pricing updates
         @if(config('broadcasting.default') !== 'null')
-        if (window.Echo && window.Echo.channel) {
-        window.Echo.channel('pricing')
-            .listen('.pricing.updated', (e) => {
-                console.log('Pricing updated:', e);
-                // Fetch updated prices dynamically
-                fetch('/api/booking/staycation/prices?checkin={{ $checkin }}&checkout={{ $checkout }}')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Update roomDetailsMap with new prices
-                            Object.keys(data.prices).forEach(staycationId => {
-                                if (this.roomDetailsMap && this.roomDetailsMap[staycationId]) {
-                                    this.roomDetailsMap[staycationId].price = data.prices[staycationId].price;
-                                }
-                            });
+        if (typeof window.Echo !== 'undefined' && window.Echo.channel) {
+            window.Echo.channel('pricing')
+                .listen('.pricing.updated', (e) => {
+                    console.log('Pricing updated:', e);
+                    // Fetch updated prices dynamically
+                    fetch('/api/booking/staycation/prices?checkin={{ $checkin }}&checkout={{ $checkout }}')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Update roomDetailsMap with new prices
+                                Object.keys(data.prices).forEach(staycationId => {
+                                    if (this.roomDetailsMap && this.roomDetailsMap[staycationId]) {
+                                        this.roomDetailsMap[staycationId].price = data.prices[staycationId].price;
+                                    }
+                                });
 
-                            // Update selected rooms prices
-                            Object.keys(this.selectedRooms).forEach(roomId => {
-                                if (this.selectedRooms[roomId] && this.roomDetailsMap[roomId]) {
-                                    this.selectedRooms[roomId].accommodation_price = this.calculateBasePrice(
-                                        { id: roomId, name: this.selectedRooms[roomId].name, type: this.selectedRooms[roomId].type },
-                                        this.selectedRooms[roomId]
-                                    );
-                                }
-                            });
+                                // Update selected rooms prices
+                                Object.keys(this.selectedRooms).forEach(roomId => {
+                                    if (this.selectedRooms[roomId] && this.roomDetailsMap[roomId]) {
+                                        this.selectedRooms[roomId].accommodation_price = this.calculateBasePrice(
+                                            { id: roomId, name: this.selectedRooms[roomId].name, type: this.selectedRooms[roomId].type },
+                                            this.selectedRooms[roomId]
+                                        );
+                                    }
+                                });
 
-                            // Show notification
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Prices Updated',
-                                text: 'Room prices have been updated in real-time.',
-                                timer: 3000,
-                                showConfirmButton: false
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Failed to fetch updated prices:', error);
-                        // Fallback to reload
-                        window.location.reload();
-                    });
-            });
+                                // Show notification
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Prices Updated',
+                                    text: 'Room prices have been updated in real-time.',
+                                    timer: 3000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Failed to fetch updated prices:', error);
+                            // Fallback to reload
+                            window.location.reload();
+                        });
+                });
         }
         @endif
 

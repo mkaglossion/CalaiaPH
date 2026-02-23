@@ -168,8 +168,8 @@
         @endif
 
         {{-- Table --}}
-        <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
-            <table class="w-full text-left">
+        <div class="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+            <table class="w-full text-left min-w-150">
                 <thead class="bg-gray-100/70 backdrop-blur">
                     <tr>
                         <th class="px-6 py-4 text-sm font-semibold text-gray-700">#</th>
@@ -308,7 +308,7 @@
 
         <div class="bg-white/60 backdrop-blur rounded-2xl border border-gray-200 shadow-sm p-8">
             {{-- Title and Subtitle --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
                 <div>
                     <label for="info_title" class="block font-medium mb-2 text-gray-700">Section Title</label>
                     <input
@@ -359,14 +359,17 @@
 
                 <div class="space-y-4" x-show="infoForm.items.length > 0">
                     <template x-for="(item, index) in infoForm.items" :key="index">
-                        <div class="flex items-center space-x-4 bg-gray-50 p-4 rounded-xl">
-                            <div class="flex-1">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-gray-50 p-3 sm:p-4 rounded-xl">
+                            <div class="w-full sm:w-1/4">
+                                <label :for="'item_icon_' + index" class="block text-sm font-medium text-gray-700 mb-1">Icon</label>
                                 <select
+                                    :id="'item_icon_' + index"
                                     name="item_icon[]"
                                     x-model="item.icon"
                                     class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 >
+
+
                                     <option value="bi-clock">Clock (bi-clock)</option>
                                     <option value="bi-calendar-check">Calendar Check (bi-calendar-check)</option>
                                     <option value="bi-person">Person (bi-person)</option>
@@ -379,22 +382,26 @@
                                     <option value="bi-heart">Heart (bi-heart)</option>
                                 </select>
                             </div>
-                            <div class="flex-1">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Text</label>
+                            <div class="flex-1 w-full">
+                                <label :for="'item_text_' + index" class="block text-sm font-medium text-gray-700 mb-1">Text</label>
                                 <input
                                     type="text"
+                                    :id="'item_text_' + index"
                                     name="item_text[]"
                                     x-model="item.text"
                                     class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                     placeholder="Enter information text"
                                 >
                             </div>
-                            <button
-                                @click="confirmRemoveInfoItem(index)"
-                                class="px-3 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 shadow transition mt-6"
-                            >
-                                Remove
-                            </button>
+
+                            <div class="w-full sm:w-auto flex justify-end">
+                                <button
+                                    @click="confirmRemoveInfoItem(index)"
+                                    class="px-3 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 shadow transition sm:mt-6"
+                                >
+                                    Remove
+                                </button>
+                            </div>
                         </div>
                     </template>
                 </div>
@@ -445,8 +452,8 @@
                 <input type="hidden" name="_method" value="POST" x-bind:value="editImageMode ? 'PUT' : 'POST'">
 
                 <div>
-                    <label class="block font-semibold mb-1">Day Tour Package</label>
-                    <select x-ref="daytour" name="daytour_id" class="border rounded-xl p-3 w-full" x-bind:value="editImageMode ? currentDaytourId : ''" required>
+                    <label for="daytour_id" class="block font-semibold mb-1">Day Tour Package</label>
+                    <select id="daytour_id" x-ref="daytour" name="daytour_id" class="border rounded-xl p-3 w-full" x-bind:value="editImageMode ? currentDaytourId : ''" required>
                         <option value="">Select Day Tour Package</option>
                         @foreach($tours as $tour)
                             <option value="{{ $tour->id }}">{{ $tour->name }}</option>
@@ -455,13 +462,13 @@
                 </div>
 
                 <div>
-                    <label class="block font-semibold mb-1">Title (optional)</label>
-                    <input type="text" x-ref="title" name="title" class="border rounded-xl p-3 w-full" x-bind:value="editImageMode ? currentImageTitle : ''">
+                    <label for="swiper_title" class="block font-semibold mb-1">Title (optional)</label>
+                    <input type="text" id="swiper_title" x-ref="title" name="title" class="border rounded-xl p-3 w-full" x-bind:value="editImageMode ? currentImageTitle : ''">
                 </div>
 
                 <div>
-                    <label class="block font-semibold mb-1">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded-xl p-3 w-full" x-bind:required="!editImageMode">
+                    <label for="swiper_image" class="block font-semibold mb-1">Upload Image/Video</label>
+                    <input type="file" id="swiper_image" x-ref="image" name="image" accept="image/*,video/*" class="border rounded-xl p-3 w-full" x-bind:required="!editImageMode">
                 </div>
 
                 <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-1">
@@ -491,24 +498,24 @@
                 </template>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Package Name</label>
-                    <input type="text" name="name" x-model="form.name" class="w-full border rounded-xl px-3 py-2" placeholder="Package Name" required>
+                    <label for="package_name" class="block font-medium mb-1 text-gray-700">Package Name</label>
+                    <input type="text" id="package_name" name="name" x-model="form.name" class="w-full border rounded-xl px-3 py-2" placeholder="Package Name" required autocomplete="name">
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Description</label>
-                    <textarea name="description" x-model="form.description" rows="3" class="w-full border rounded-xl px-3 py-2" placeholder="Description"></textarea>
+                    <label for="package_description" class="block font-medium mb-1 text-gray-700">Description</label>
+                    <textarea id="package_description" name="description" x-model="form.description" rows="3" class="w-full border rounded-xl px-3 py-2" placeholder="Description"></textarea>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block font-medium mb-1 text-gray-700">Good For (Pax)</label>
-                        <input type="number" name="max_guests" x-model="form.max_guests" min="1" class="w-full border rounded-xl px-3 py-2" placeholder="e.g., 7" required>
+                        <label for="max_guests" class="block font-medium mb-1 text-gray-700">Good For (Pax)</label>
+                        <input type="number" id="max_guests" name="max_guests" x-model="form.max_guests" min="1" class="w-full border rounded-xl px-3 py-2" placeholder="e.g., 7" required>
                         <p class="text-xs text-gray-500 mt-1">Maximum guests for this package</p>
                     </div>
                     <div>
-                        <label class="block font-medium mb-1 text-gray-700">Pricing Type</label>
-                        <select name="pricing_type" x-model="form.pricing_type" class="w-full border rounded-xl px-3 py-2">
+                        <label for="pricing_type" class="block font-medium mb-1 text-gray-700">Pricing Type</label>
+                        <select id="pricing_type" name="pricing_type" x-model="form.pricing_type" class="w-full border rounded-xl px-3 py-2">
                             <option value="per_person">Per Person</option>
                             <option value="total">Total Package Price</option>
                         </select>
@@ -517,11 +524,11 @@
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">
+                    <label for="package_price" class="block font-medium mb-1 text-gray-700">
                         Price
                         <span x-text="form.pricing_type === 'total' ? '(Total for all guests)' : '(Per person)'" class="text-sm text-gray-500"></span>
                     </label>
-                    <input type="number" name="price" x-model="form.price" step="0.01" class="w-full border rounded-xl px-3 py-2" placeholder="Price" required>
+                    <input type="number" id="package_price" name="price" x-model="form.price" step="0.01" class="w-full border rounded-xl px-3 py-2" placeholder="Price" required>
                     <p class="text-xs text-gray-500 mt-1" x-show="form.max_guests && form.price">
                         <span x-text="form.pricing_type === 'total'
                             ? '₱' + (Number.isInteger(Number(form.price / form.max_guests)) ? Number(form.price / form.max_guests).toLocaleString() : Number(form.price / form.max_guests).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})) + ' per person equivalent'
@@ -539,8 +546,8 @@
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-2 text-gray-700">Included Activities</label>
-                    <div class="max-h-64 overflow-y-auto border rounded-xl p-2">
+                    <span id="included_activities_label" class="block font-medium mb-2 text-gray-700">Included Activities</span>
+                    <div class="max-h-64 overflow-y-auto border rounded-xl p-2" role="group" aria-labelledby="included_activities_label">
                         @foreach($activities as $activity)
                             <div class="flex items-center mb-1">
                                 <input type="checkbox" id="activity_{{ $activity->id }}" name="activity_ids[]" value="{{ $activity->id }}" x-model="form.activity_ids" class="mr-2">
@@ -576,8 +583,8 @@
                             <p class="text-xs sm:text-sm text-green-900 mb-3">Set the same quantity for the next 30 days</p>
                             <div class="flex flex-col sm:flex-row gap-2 items-end">
                                 <div class="flex-1 w-full">
-                                    <label class="block text-xs sm:text-sm font-medium mb-1">Max Groups per day</label>
-                                    <input type="number" name="inventory_qty" x-model.number="inventoryQty" min="1" class="w-full border rounded px-3 py-2 text-sm">
+                                    <label for="inventory_qty" class="block text-xs sm:text-sm font-medium mb-1">Max Groups per day</label>
+                                    <input type="number" id="inventory_qty" name="inventory_qty" x-model.number="inventoryQty" min="1" class="w-full border rounded px-3 py-2 text-sm">
                                 </div>
                                 <button type="button" @click="quickSetInventory()"
                                     class="w-full sm:w-auto px-3 sm:px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-semibold text-sm">
@@ -591,16 +598,16 @@
                             <div class="space-y-3">
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                                     <div>
-                                        <label class="block text-xs sm:text-sm font-medium mb-1">Start Date</label>
-                                        <input type="date" name="inventory_start_date" x-model="inventoryStartDate" class="w-full border rounded px-3 py-2 text-sm">
+                                        <label for="inventory_start_date" class="block text-xs sm:text-sm font-medium mb-1">Start Date</label>
+                                        <input type="date" id="inventory_start_date" name="inventory_start_date" x-model="inventoryStartDate" class="w-full border rounded px-3 py-2 text-sm">
                                     </div>
                                     <div>
-                                        <label class="block text-xs sm:text-sm font-medium mb-1">End Date</label>
-                                        <input type="date" name="inventory_end_date" x-model="inventoryEndDate" class="w-full border rounded px-3 py-2 text-sm">
+                                        <label for="inventory_end_date" class="block text-xs sm:text-sm font-medium mb-1">End Date</label>
+                                        <input type="date" id="inventory_end_date" name="inventory_end_date" x-model="inventoryEndDate" class="w-full border rounded px-3 py-2 text-sm">
                                     </div>
                                     <div>
-                                        <label class="block text-xs sm:text-sm font-medium mb-1">Max Groups</label>
-                                        <input type="number" name="inventory_qty_range" x-model.number="inventoryQtyRange" min="1" class="w-full border rounded px-3 py-2 text-sm">
+                                        <label for="inventory_qty_range" class="block text-xs sm:text-sm font-medium mb-1">Max Groups</label>
+                                        <input type="number" id="inventory_qty_range" name="inventory_qty_range" x-model.number="inventoryQtyRange" min="1" class="w-full border rounded px-3 py-2 text-sm">
                                     </div>
                                 </div>
                                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
@@ -630,11 +637,9 @@
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Package Image</label>
+                    <label for="package_image" class="block font-medium mb-1 text-gray-700">Package Image</label>
+                    <input type="file" id="package_image" x-ref="image" accept="image/*" class="w-full border rounded-xl px-3 py-2">
 
-
-
-                    <input type="file" x-ref="image" accept="image/*" class="w-full border rounded-xl px-3 py-2">
                     <p class="text-sm text-gray-500 mt-1">Upload a new image (optional)</p>
                 </div>
 
@@ -660,8 +665,8 @@
                 </template>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Package</label>
-                    <select name="package_id" x-model="form.package_id" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
+                    <label for="text_package_id" class="block font-medium mb-1 text-gray-700">Package</label>
+                    <select id="text_package_id" name="package_id" x-model="form.package_id" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
                         <option value="">Select Package</option>
                         @foreach($tours as $tour)
                             <option value="{{ $tour->id }}">{{ $tour->name }}</option>
@@ -670,13 +675,13 @@
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Label</label>
-                    <input type="text" name="label" x-model="form.label" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Optional">
+                    <label for="text_label" class="block font-medium mb-1 text-gray-700">Label</label>
+                    <input type="text" id="text_label" name="label" x-model="form.label" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Optional">
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Text</label>
-                    <textarea name="text" x-model="form.text" rows="4" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Enter text..." required></textarea>
+                    <label for="text_content" class="block font-medium mb-1 text-gray-700">Text</label>
+                    <textarea id="text_content" name="text" x-model="form.text" rows="4" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Enter text..." required></textarea>
                 </div>
 
                 <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-2">

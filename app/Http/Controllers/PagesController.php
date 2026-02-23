@@ -599,7 +599,17 @@ class PagesController extends Controller
             'Fresh farm-to-table ingredients available',
             'Guided cooking sessions with our chefs'
         ];
-        return $this->renderPage(FoodSwiperImage::class, FoodText::class, 'dining', 'dining', 'label', 'text', compact('messHallFoods', 'cookYourOwnFoods', 'diningCategoryImages', 'diningDetails'));
+        
+        // Only get hero swiper images (food_id is null), not Learn More modal images
+        $swiperImages = FoodSwiperImage::whereNull('food_id')->get();
+        $texts = FoodText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
+            return [strtolower($field) => $content];
+        })->toArray();
+        
+        $data = compact('swiperImages', 'texts', 'messHallFoods', 'cookYourOwnFoods', 'diningCategoryImages', 'diningDetails');
+        $data['active'] = 'dining';
+        
+        return view('dining', $data);
     }
 
     public function groups()

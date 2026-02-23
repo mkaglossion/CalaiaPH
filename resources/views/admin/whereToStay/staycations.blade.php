@@ -140,8 +140,8 @@
     @endif
 
     {{-- Images Table --}}
-    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
-        <table class="w-full text-left">
+    <div class="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+        <table class="w-full text-left min-w-200">
             <thead class="bg-gray-100/70 backdrop-blur">
                 <tr>
                     <th class="px-6 py-4 text-sm font-semibold text-gray-700">#</th>
@@ -202,19 +202,19 @@
                 <!-- Staycation Name, Days, Max Capacity, Adults & Children -->
                 <div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5" :class="isSpecialStaycation ? 'lg:grid-cols-3' : ''">
                     <div>
-                        <label class="block text-sm font-medium mb-1">Staycation Name</label>
-                        <input type="text" x-model="form.name" @input="updateSpecialRoomStatus()" class="w-full border rounded px-3 py-2 h-10" placeholder="Premium Glamping Tent" required>
+                        <label for="staycation_name" class="block text-sm font-medium mb-1">Staycation Name</label>
+                        <input type="text" id="staycation_name" name="name" autocomplete="off" x-model="form.name" @input="updateSpecialRoomStatus()" class="w-full border rounded px-3 py-2 h-10" placeholder="Premium Glamping Tent" required>
                         <p x-show="isSpecialStaycation" class="text-xs text-blue-600 mt-1">BYOT/Car Camping - No adults/children required</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Days</label>
-                        <input type="number" x-model.number="form.days" min="1" class="w-full border rounded px-3 py-2 h-10" placeholder="1" required>
+                        <label for="staycation_days" class="block text-sm font-medium mb-1">Days</label>
+                        <input type="number" id="staycation_days" name="days" x-model.number="form.days" min="1" class="w-full border rounded px-3 py-2 h-10" placeholder="1" required>
                         <p class="text-xs text-gray-500 mt-1">Duration of staycation</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Max Capacity</label>
+                        <label for="staycation_quantity" class="block text-sm font-medium mb-1">Max Capacity</label>
                         <div class="flex items-center gap-2">
-                            <input type="number" x-model.number="form.quantity" min="1" class="w-full border rounded px-3 py-2 h-10" placeholder="1" @input="updateThresholdFromQuantity()">
+                            <input type="number" id="staycation_quantity" name="quantity" x-model.number="form.quantity" min="1" class="w-full border rounded px-3 py-2 h-10" placeholder="1" @input="updateThresholdFromQuantity()">
                             <button type="button" class="shrink-0 text-xs px-3 py-2 h-10 rounded border bg-white hover:bg-gray-50" @click="computeAutoCapacity()">
                                 Suggest
                             </button>
@@ -224,26 +224,26 @@
                         </p>
                     </div>
                     <div x-show="!isSpecialStaycation">
-                        <label class="block text-sm font-medium mb-1">Adults</label>
-                        <input type="number" x-model.number="form.adults" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
+                        <label for="staycation_adults" class="block text-sm font-medium mb-1">Adults</label>
+                        <input type="number" id="staycation_adults" name="adults" x-model.number="form.adults" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
                     </div>
                     <div x-show="!isSpecialStaycation">
-                        <label class="block text-sm font-medium mb-1">Children</label>
-                        <input type="number" x-model.number="form.children" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
+                        <label for="staycation_children" class="block text-sm font-medium mb-1">Children</label>
+                        <input type="number" id="staycation_children" name="children" x-model.number="form.children" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
                     </div>
                 </div>
 
                 <!-- Dynamic Price Configs -->
                 <div class="space-y-3">
-                    <label class="block text-sm font-medium">Price Configurations</label>
+                    <span class="block text-sm font-medium">Price Configurations</span>
                     <template x-for="(config, index) in form.priceConfigs" :key="index">
                         <div class="border p-3 rounded space-y-2">
 
                             <!-- Config Name and Type -->
                             <div class="flex space-x-2 items-center">
-                                <input type="text" x-model="config.name" placeholder="Config Name (Weekend, Holiday, etc.)" class="flex-1 border rounded px-2 py-1" required>
+                                <input type="text" :id="'price_config_name_' + index" :name="'price_config_name_' + index" x-model="config.name" placeholder="Config Name (Weekend, Holiday, etc.)" class="flex-1 border rounded px-2 py-1" required>
 
-                                <select x-model="config.type" class="border rounded px-2 py-1">
+                                <select :id="'price_config_type_' + index" :name="'price_config_type_' + index" x-model="config.type" class="border rounded px-2 py-1">
                                     <option value="day">Day Type</option>
                                     <option value="date">Specific Dates</option>
                                 </select>
@@ -251,50 +251,53 @@
                                 <button type="button" @click="removePriceConfig(index)" class="text-red-500 font-bold">&times;</button>
                             </div>
 
+
                             <!-- Days checkboxes -->
                             <div x-show="config.type === 'day'" class="flex flex-wrap gap-1 sm:gap-2">
                                 <template x-for="day in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="day">
                                     <label class="flex items-center space-x-1">
-                                        <input type="checkbox" :value="day" x-model="config.days">
+                                        <input type="checkbox" :id="'day_' + day + '_' + index" :name="'day_' + day + '_' + index" :value="day" x-model="config.days">
                                         <span class="text-sm" x-text="day"></span>
                                     </label>
                                 </template>
                             </div>
 
+
                             <!-- Dates input -->
                             <div x-show="config.type === 'date'" class="space-y-2">
-                                <label class="block text-sm font-medium">Select Date(s)</label>
+                                <label :for="'config_dates_' + index" class="block text-sm font-medium">Select Date(s)</label>
 
                                 <!-- Single date -->
                                 <template x-if="!config.multipleDates">
-                                    <input type="date" x-model="config.dates" class="w-full border rounded px-2 py-1">
+                                    <input type="date" :id="'config_dates_' + index" :name="'config_dates_' + index" x-model="config.dates" class="w-full border rounded px-2 py-1">
                                 </template>
 
                                 <!-- Multiple dates (comma-separated) -->
-                                <template x-if="config.multipleDates">
-                                    <input type="text" x-model="config.dates" placeholder="YYYY-MM-DD, YYYY-MM-DD" class="w-full border rounded px-2 py-1">
+                                <template x:if="config.multipleDates">
+                                    <input type="text" :id="'config_dates_' + index" :name="'config_dates_' + index" x-model="config.dates" placeholder="YYYY-MM-DD, YYYY-MM-DD" class="w-full border rounded px-2 py-1">
                                 </template>
 
                                 <!-- Toggle for single/multiple dates -->
                                 <label class="flex items-center space-x-2 mt-1">
-                                    <input type="checkbox" x-model="config.multipleDates">
+                                    <input type="checkbox" :id="'multiple_dates_' + index" :name="'multiple_dates_' + index" x-model="config.multipleDates">
                                     <span class="text-sm text-gray-600">Allow multiple dates (comma-separated)</span>
                                 </label>
                             </div>
 
+
                             <!-- Rates per season -->
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 <div class="flex flex-col">
-                                    <label class="text-xs sm:text-sm font-semibold mb-1">Non-Peak</label>
-                                    <input type="number" x-model.number="config.rates.nonPeak" x-bind:value="config.rates.nonPeak" class="border rounded px-2 py-1 text-sm" min="0">
+                                    <label :for="'rate_nonpeak_' + index" class="text-xs sm:text-sm font-semibold mb-1">Non-Peak</label>
+                                    <input type="number" :id="'rate_nonpeak_' + index" :name="'rate_nonpeak_' + index" x-model.number="config.rates.nonPeak" x-bind:value="config.rates.nonPeak" class="border rounded px-2 py-1 text-sm" min="0">
                                 </div>
                                 <div class="flex flex-col">
-                                    <label class="text-xs sm:text-sm font-semibold mb-1">Peak</label>
-                                    <input type="number" x-model.number="config.rates.peak" x-bind:value="config.rates.peak" class="border rounded px-2 py-1 text-sm" min="0">
+                                    <label :for="'rate_peak_' + index" class="text-xs sm:text-sm font-semibold mb-1">Peak</label>
+                                    <input type="number" :id="'rate_peak_' + index" :name="'rate_peak_' + index" x-model.number="config.rates.peak" x-bind:value="config.rates.peak" class="border rounded px-2 py-1 text-sm" min="0">
                                 </div>
                                 <div class="flex flex-col">
-                                    <label class="text-xs sm:text-sm font-semibold mb-1">Super Peak</label>
-                                    <input type="number" x-model.number="config.rates.superPeak" x-bind:value="config.rates.superPeak" class="border rounded px-2 py-1 text-sm" min="0">
+                                    <label :for="'rate_superpeak_' + index" class="text-xs sm:text-sm font-semibold mb-1">Super Peak</label>
+                                    <input type="number" :id="'rate_superpeak_' + index" :name="'rate_superpeak_' + index" x-model.number="config.rates.superPeak" x-bind:value="config.rates.superPeak" class="border rounded px-2 py-1 text-sm" min="0">
                                 </div>
                             </div>
 
@@ -328,8 +331,8 @@
                             <p class="text-xs sm:text-sm text-green-900 mb-3">Set the same quantity for the next 30 days</p>
                             <div class="flex flex-col sm:flex-row gap-2 items-end">
                                 <div class="flex-1">
-                                    <label class="block text-xs sm:text-sm font-medium mb-1">Quantity per day</label>
-                                    <input type="number" x-model.number="inventoryQty" min="1" value="10" class="w-full border rounded px-3 py-2 text-sm">
+                                    <label for="inventory_qty" class="block text-xs sm:text-sm font-medium mb-1">Quantity per day</label>
+                                    <input type="number" id="inventory_qty" name="inventory_qty" x-model.number="inventoryQty" min="1" value="10" class="w-full border rounded px-3 py-2 text-sm">
                                 </div>
                                 <button type="button" @click="quickSetInventory()" class="w-full sm:w-auto px-3 sm:px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-semibold text-sm">
                                     Apply Quick Set
@@ -337,27 +340,28 @@
                             </div>
                         </div>
 
+
                         <!-- Custom Date Range Tab -->
                         <div x-show="inventoryTab === 'custom'" class="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4">
                             <p class="text-xs sm:text-sm text-blue-900 mb-3">Set inventory for a specific date range</p>
                             <div class="space-y-3">
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                                     <div>
-                                        <label class="block text-xs sm:text-sm font-medium mb-1">Start Date</label>
-                                        <input type="date" x-model="inventoryStartDate" class="w-full border rounded px-3 py-2 text-sm">
+                                        <label for="inventory_start_date" class="block text-xs sm:text-sm font-medium mb-1">Start Date</label>
+                                        <input type="date" id="inventory_start_date" name="inventory_start_date" x-model="inventoryStartDate" class="w-full border rounded px-3 py-2 text-sm">
                                     </div>
                                     <div>
-                                        <label class="block text-xs sm:text-sm font-medium mb-1">End Date</label>
-                                        <input type="date" x-model="inventoryEndDate" class="w-full border rounded px-3 py-2 text-sm">
+                                        <label for="inventory_end_date" class="block text-xs sm:text-sm font-medium mb-1">End Date</label>
+                                        <input type="date" id="inventory_end_date" name="inventory_end_date" x-model="inventoryEndDate" class="w-full border rounded px-3 py-2 text-sm">
                                     </div>
                                     <div>
-                                        <label class="block text-xs sm:text-sm font-medium mb-1">Quantity</label>
-                                        <input type="number" x-model.number="inventoryQtyRange" min="0" value="10" class="w-full border rounded px-3 py-2 text-sm">
+                                        <label for="inventory_qty_range" class="block text-xs sm:text-sm font-medium mb-1">Quantity</label>
+                                        <input type="number" id="inventory_qty_range" name="inventory_qty_range" x-model.number="inventoryQtyRange" min="0" value="10" class="w-full border rounded px-3 py-2 text-sm">
                                     </div>
                                 </div>
                                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                                     <label class="flex items-center gap-2">
-                                        <input type="checkbox" x-model="inventoryAvailable" checked>
+                                        <input type="checkbox" id="inventory_available" name="inventory_available" x-model="inventoryAvailable" checked>
                                         <span class="text-xs sm:text-sm font-medium">Available for booking</span>
                                     </label>
                                     <button type="button" @click="addDateRangeInventory()" class="w-full sm:w-auto px-3 sm:px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold text-sm">
@@ -366,6 +370,7 @@
                                 </div>
                             </div>
                         </div>
+
 
                         <!-- Inventory Preview -->
                         <div class="bg-gray-50 border rounded-lg p-4 max-h-64 overflow-y-auto">
@@ -381,8 +386,8 @@
 
                 <!-- Image Upload Section -->
                 <div class="space-y-3">
-                    <label class="block text-sm font-medium">Upload Image (optional)</label>
-                    <input type="file" accept="image/*" x-ref="imageInput" @change="handleImageUpload($event)" class="w-full border rounded px-3 py-2 text-sm">
+                    <label for="staycation_image" class="block text-sm font-medium">Upload Image (optional)</label>
+                    <input type="file" id="staycation_image" name="image" accept="image/*" x-ref="imageInput" @change="handleImageUpload($event)" class="w-full border rounded px-3 py-2 text-sm">
                     <template x-if="form.imagePreview">
                         <div class="mt-2 flex items-center gap-2">
                             <img :src="form.imagePreview" class="w-24 sm:w-32 h-16 sm:h-20 object-cover rounded border">
@@ -390,6 +395,7 @@
                         </div>
                     </template>
                 </div>
+
 
                 <!-- Actions -->
                 <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-2">
@@ -504,8 +510,8 @@
                 @csrf
                 <input type="hidden" name="_method" value="POST" x-bind:value="editImageMode ? 'PUT' : 'POST'">
                 <div class="mb-3">
-                    <label class="block font-semibold mb-1">Staycation</label>
-                    <select x-ref="staycation" name="staycation_id" class="border rounded p-2 w-full" x-bind:value="editImageMode ? currentStaycationId : ''" required>
+                    <label for="swiper_staycation_id" class="block font-semibold mb-1">Staycation</label>
+                    <select id="swiper_staycation_id" name="staycation_id" x-ref="staycation" class="border rounded p-2 w-full" x-bind:value="editImageMode ? currentStaycationId : ''" required>
                         <option value="">Select Staycation</option>
                         @foreach($staycations as $staycation)
                             <option value="{{ $staycation->id }}">{{ $staycation->name }}</option>
@@ -514,13 +520,13 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="block font-semibold mb-1">Title (optional)</label>
-                    <input type="text" x-ref="title" name="title" class="border rounded p-2 w-full" x-bind:value="editImageMode ? currentImageTitle : ''">
+                    <label for="swiper_image_title" class="block font-semibold mb-1">Title (optional)</label>
+                    <input type="text" id="swiper_image_title" name="title" x-ref="title" class="border rounded p-2 w-full" x-bind:value="editImageMode ? currentImageTitle : ''">
                 </div>
 
                 <div class="mb-3">
-                    <label class="block font-semibold mb-1">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" x-bind:required="!editImageMode">
+                    <label for="swiper_image_file" class="block font-semibold mb-1">Upload Image/Video</label>
+                    <input type="file" id="swiper_image_file" name="image" x-ref="image" accept="image/*,video/*" class="border rounded p-2 w-full" x-bind:required="!editImageMode">
                 </div>
 
                 <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2">
@@ -628,8 +634,9 @@
                 </template>
 
                 <div class="mb-3">
-                    <label class="block font-semibold mb-1">Staycation</label>
+                    <label for="features_staycation_id" class="block font-semibold mb-1">Staycation</label>
                     <select
+                        id="features_staycation_id"
                         name="staycation_id"
                         x-model="form.staycation_id"
                         class="border rounded p-2 w-full"
@@ -643,8 +650,9 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Features List</label>
+                    <label for="features_text" class="block text-sm font-medium mb-1">Features List</label>
                     <textarea
+                        id="features_text"
                         name="text"
                         x-model="form.text"
                         rows="8"
@@ -1413,35 +1421,38 @@ function staycationManager() {
 
 // Real-time inventory updates for admin panel
 document.addEventListener('DOMContentLoaded', function() {
-    // Listen for inventory updates
-    window.Echo.channel('inventory')
-        .listen('.inventory.updated', (e) => {
-            console.log('Admin: Inventory updated:', e);
+    // Only initialize Echo if it's available (Laravel Echo is loaded)
+    if (typeof window.Echo !== 'undefined') {
+        // Listen for inventory updates
+        window.Echo.channel('inventory')
+            .listen('.inventory.updated', (e) => {
+                console.log('Admin: Inventory updated:', e);
 
-            // Update the "Today Avail" column for the affected staycation
-            const availElement = document.querySelector(`.today-avail-${e.staycationId}`);
-            if (availElement) {
-                // Fetch updated availability for today
-                fetch(`/api/inventory/${e.staycationId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const items = data.items || [];
-                        const today = new Date().toISOString().split('T')[0];
-                        const todayItem = items.find(item => item.date === today);
-                        const todayAvail = todayItem ? todayItem.min_quantity : 0;
+                // Update the "Today Avail" column for the affected staycation
+                const availElement = document.querySelector(`.today-avail-${e.staycationId}`);
+                if (availElement) {
+                    // Fetch updated availability for today
+                    fetch(`/api/inventory/${e.staycationId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const items = data.items || [];
+                            const today = new Date().toISOString().split('T')[0];
+                            const todayItem = items.find(item => item.date === today);
+                            const todayAvail = todayItem ? todayItem.min_quantity : 0;
 
-                        availElement.textContent = todayAvail;
+                            availElement.textContent = todayAvail;
 
-                        // Optional: Add visual feedback
-                        availElement.style.transition = 'background-color 0.3s';
-                        availElement.style.backgroundColor = '#ffff99';
-                        setTimeout(() => {
-                            availElement.style.backgroundColor = '';
-                        }, 1000);
-                    })
-                    .catch(error => console.error('Failed to fetch updated inventory:', error));
-            }
-        });
+                            // Optional: Add visual feedback
+                            availElement.style.transition = 'background-color 0.3s';
+                            availElement.style.backgroundColor = '#ffff99';
+                            setTimeout(() => {
+                                availElement.style.backgroundColor = '';
+                            }, 1000);
+                        })
+                        .catch(error => console.error('Failed to fetch updated inventory:', error));
+                }
+            });
+    }
 });
 
 </script>

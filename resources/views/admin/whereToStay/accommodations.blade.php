@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+ll n@extends('layouts.admin')
 
 @section('title', 'Day Tour Page CMS')
 
@@ -177,15 +177,17 @@
 
                 <!-- Package Name -->
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Package Name</label>
-                    <input type="text" x-model="form.name" class="w-full border rounded-xl px-3 py-2" placeholder="Package Name" required>
+                    <label for="package_name" class="block font-medium mb-1 text-gray-700">Package Name</label>
+                    <input type="text" id="package_name" name="package_name" x-model="form.name" class="w-full border rounded-xl px-3 py-2" placeholder="Package Name" required>
                 </div>
 
                 <!-- Image -->
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Image</label>
+                    <label for="package_image" class="block font-medium mb-1 text-gray-700">Image</label>
                     <input 
                         type="file" 
+                        id="package_image"
+                        name="package_image"
                         @change="form.image = $event.target.files[0]" 
                         class="w-full border rounded-xl px-3 py-2" 
                         accept="image/*"
@@ -204,8 +206,8 @@
 
                 <!-- Description -->
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Description</label>
-                    <textarea x-model="form.description" rows="3" class="w-full border rounded-xl px-3 py-2" placeholder="Description"></textarea>
+                    <label for="package_description" class="block font-medium mb-1 text-gray-700">Description</label>
+                    <textarea id="package_description" name="package_description" x-model="form.description" rows="3" class="w-full border rounded-xl px-3 py-2" placeholder="Description"></textarea>
                 </div>
 
                 <!-- Price -->
@@ -216,8 +218,8 @@
 
                 <!-- Included Activities -->
                 <div>
-                    <label class="block font-medium mb-2 text-gray-700">Included Activities</label>
-                    <div class="max-h-64 overflow-y-auto border rounded-xl p-2">
+                    <label id="included_activities_label" class="block font-medium mb-2 text-gray-700">Included Activities</label>
+                    <div class="max-h-64 overflow-y-auto border rounded-xl p-2" role="group" aria-labelledby="included_activities_label">
                         @foreach($staycations as $activity)
                             <div class="flex items-center mb-1">
                                 <input type="checkbox" value="{{ $activity->id }}" x-model="form.staycation_ids" class="mr-2">
@@ -257,8 +259,9 @@
 
                 <!-- Package Selection -->
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Package</label>
+                    <label for="accommodation_id" class="block font-medium mb-1 text-gray-700">Package</label>
                     <select 
+                        id="accommodation_id"
                         name="accommodation_id" 
                         x-model="form.accommodation_id" 
                         class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -273,9 +276,10 @@
 
                 <!-- Label -->
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Label</label>
+                    <label for="text_label" class="block font-medium mb-1 text-gray-700">Label</label>
                     <input 
                         type="text" 
+                        id="text_label"
                         name="label" 
                         x-model="form.label" 
                         class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -285,8 +289,9 @@
 
                 <!-- Text -->
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Text</label>
+                    <label for="text_content" class="block font-medium mb-1 text-gray-700">Text</label>
                     <textarea 
+                        id="text_content"
                         name="text" 
                         x-model="form.text" 
                         rows="4" 

@@ -22,7 +22,7 @@ class FoodSwiperImageController extends Controller
         $validated = $request->validate([
             'image' => 'required|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
             'title' => 'nullable|string|max:255',
-            'food_id' => 'required|exists:foods,id',
+            'food_id' => 'nullable|exists:foods,id',
         ]);
 
         $file = $request->file('image');
@@ -36,13 +36,23 @@ class FoodSwiperImageController extends Controller
         $uploadedFileUrl = $uploadResult['secure_url']; // Cloudinary secure URL
         $publicId = $uploadResult['public_id']; // Store this if you want to delete later
 
+        // Get max sort_order for this food or global
+        $maxSortOrder = FoodSwiperImage::max('sort_order') ?? 0;
+
         // Save to DB
-        FoodSwiperImage::create([
-            'food_id' => $validated['food_id'],
+        $data = [
             'title' => $validated['title'] ?? null,
             'image_path' => $uploadedFileUrl, // store Cloudinary URL
             'public_id' => $publicId,
-        ]);
+            'sort_order' => $maxSortOrder + 1,
+        ];
+
+        // Only add food_id if provided
+        if (!empty($validated['food_id'])) {
+            $data['food_id'] = $validated['food_id'];
+        }
+
+        FoodSwiperImage::create($data);
 
         $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
 
@@ -54,13 +64,17 @@ class FoodSwiperImageController extends Controller
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
             'image' => 'nullable|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
-            'food_id' => 'required|exists:foods,id',
+            'food_id' => 'nullable|exists:foods,id',
         ]);
 
         $data = [
-            'food_id' => $validated['food_id'],
             'title' => $validated['title'] ?? null
         ];
+
+        // Only add food_id if provided
+        if (!empty($validated['food_id'])) {
+            $data['food_id'] = $validated['food_id'];
+        }
 
         if ($request->hasFile('image')) {
             // Delete old image from Cloudinary

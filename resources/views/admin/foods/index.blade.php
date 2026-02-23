@@ -42,45 +42,47 @@
 
     {{-- Food Items Table --}}
     <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
+        <div class="overflow-x-auto lg:overflow-visible">
+            <table class="w-full text-left table-fixed lg:table-auto">
                 <thead class="bg-gray-100/70 backdrop-blur">
                     <tr>
-                        <th class="w-12 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">#</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-gray-700">Name</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Category</th>
-                        <th class="w-32 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Price</th>
-                        <th class="w-32 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Stock</th>
-                        <th class="w-24 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Image</th>
-                        <th class="w-32 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Status</th>
-                        <th class="w-32 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Special</th>
-                        <th class="w-36 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap text-right">Actions</th>
+                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700 w-12">#</th>
+                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700 min-w-37.5">Name</th>
+                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700">Category</th>
+                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700">Price</th>
+                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700">Stock</th>
+                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700 w-20">Image</th>
+                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700">Status</th>
+                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700">Special</th>
+                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
                     </tr>
                 </thead>
             <tbody class="divide-y divide-gray-200">
                 @forelse ($foods as $index => $food)
                     <tr class="hover:bg-gray-50/70 transition">
-                        <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ $foods->firstItem() ? $foods->firstItem() + $index : $index + 1 }}</td>
-                        <td class="px-6 py-4">
+                        <td class="px-2 lg:px-6 py-4 font-medium text-gray-900">{{ $foods->firstItem() ? $foods->firstItem() + $index : $index + 1 }}</td>
+                        <td class="px-2 lg:px-6 py-4">
                             <div class="min-w-0">
                                 <div class="text-sm font-medium text-gray-900 wrap-break-word">{{ $food->name }}</div>
                                 @if($food->description)
-                                    <div class="text-gray-600 text-sm wrap-break-word">{{ $food->description }}</div>
+                                    <div class="text-gray-600 text-sm wrap-break-word line-clamp-2">{{ $food->description }}</div>
                                 @endif
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
-                                {{ ucfirst($food->category) }}
-                            </span>
-                            @if($food->subcategory)
-                                <span class="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                    {{ ucfirst($food->subcategory) }}
+                        <td class="px-2 lg:px-6 py-4">
+                            <div class="flex flex-wrap gap-1">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                    {{ ucfirst($food->category) }}
                                 </span>
-                            @endif
+                                @if($food->subcategory)
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        {{ ucfirst($food->subcategory) }}
+                                    </span>
+                                @endif
+                            </div>
                         </td>
-                        <td class="px-6 py-4 font-medium text-gray-900">₱{{ number_format($food->price, 2) }}</td>
-                        <td class="px-6 py-4">
+                        <td class="px-2 lg:px-6 py-4 font-medium text-gray-900">₱{{ number_format($food->price, 2) }}</td>
+                        <td class="px-2 lg:px-6 py-4">
                             @if($food->is_inventory_managed)
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                                     {{ $food->stock_quantity }} left
@@ -91,14 +93,14 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-2 lg:px-6 py-4">
                             @if ($food->image)
                                 <img src="{{ $food->image }}" alt="{{ $food->name }}" class="h-10 w-10 rounded object-cover" loading="lazy">
                             @else
                                 <span class="text-gray-400 text-xs">No image</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-2 lg:px-6 py-4">
                             @if ($food->is_active)
                                 <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                     <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> Active
@@ -109,7 +111,7 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-2 lg:px-6 py-4">
                             @if ($food->is_special_option)
                                 <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                     <i data-lucide="star" class="w-3 h-3 mr-1"></i> Special
@@ -120,10 +122,10 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-right whitespace-nowrap">
-                            <div class="flex justify-end gap-4">
+                        <td class="px-2 lg:px-6 py-4 text-right">
+                            <div class="flex justify-end gap-2 lg:gap-4 flex-wrap">
                                 <button type="button"
-                                        class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                                        class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition text-sm"
                                         @click="openEdit({
                                             id: {{ $food->id }},
                                             name: @js($food->name),
@@ -138,7 +140,7 @@
                                     Edit
                                 </button>
                                 <button type="button"
-                                        class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                                        class="text-red-600 font-semibold hover:text-red-700 hover:underline transition text-sm"
                                         onclick="deleteFoodItem({{ $food->id }}, '{{ $food->name }}')">
                                     Delete
                                 </button>

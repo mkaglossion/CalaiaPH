@@ -98,18 +98,18 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
-                        <label class="block font-medium mb-1 text-gray-700">Section ID</label>
-                        <input type="text" x-model="form.section_id" class="border rounded-xl p-3 w-full" required>
+                        <label for="section_id" class="block font-medium mb-1 text-gray-700">Section ID</label>
+                        <input type="text" id="section_id" name="section_id" x-model="form.section_id" class="border rounded-xl p-3 w-full" required>
                     </div>
 
                     <div>
-                        <label class="block font-medium mb-1 text-gray-700">Title</label>
-                        <input type="text" x-model="form.title" class="border rounded-xl p-3 w-full" required>
+                        <label for="title" class="block font-medium mb-1 text-gray-700">Title</label>
+                        <input type="text" id="title" name="title" x-model="form.title" class="border rounded-xl p-3 w-full" required>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Image</label>
+                    <label for="image_file" class="block font-medium mb-1 text-gray-700">Image</label>
                     <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 md:p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
                          @click="$refs.imageInput.click()">
                         <div x-show="form.image_preview" class="mb-4 flex flex-col items-center gap-2">
@@ -130,34 +130,34 @@
                             </div>
                         </template>
 
-                        <input type="file" accept="image/*" class="hidden" x-ref="imageInput" @change="handleFileUpload">
+                        <input type="file" id="image_file" name="image_file" accept="image/*" class="hidden" x-ref="imageInput" @change="handleFileUpload">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Description 1</label>
-                    <textarea x-model="form.description1" rows="3" class="w-full border rounded-xl px-3 py-2" required></textarea>
+                    <label for="description1" class="block font-medium mb-1 text-gray-700">Description 1</label>
+                    <textarea id="description1" name="description1" x-model="form.description1" rows="3" class="w-full border rounded-xl px-3 py-2" required></textarea>
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Description 2</label>
-                    <textarea x-model="form.description2" rows="3" class="w-full border rounded-xl px-3 py-2" required></textarea>
+                    <label for="description2" class="block font-medium mb-1 text-gray-700">Description 2</label>
+                    <textarea id="description2" name="description2" x-model="form.description2" rows="3" class="w-full border rounded-xl px-3 py-2" required></textarea>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
-                        <label class="block font-medium mb-1 text-gray-700">Link Path</label>
-                        <input type="text" x-model="form.link_path" class="border rounded-xl p-3 w-full" required>
+                        <label for="link_path" class="block font-medium mb-1 text-gray-700">Link Path</label>
+                        <input type="text" id="link_path" name="link_path" x-model="form.link_path" class="border rounded-xl p-3 w-full" required>
                     </div>
 
                     <div>
-                        <label class="block font-medium mb-1 text-gray-700">Order</label>
-                        <input type="number" x-model="form.order" class="border rounded-xl p-3 w-full" required>
+                        <label for="order" class="block font-medium mb-1 text-gray-700">Order</label>
+                        <input type="number" id="order" name="order" x-model="form.order" class="border rounded-xl p-3 w-full" required>
                     </div>
 
                     <div>
-                        <label class="block font-medium mb-1 text-gray-700">Theme</label>
-                        <select x-model="form.theme" :value="form.theme" name="theme" class="border rounded-xl p-3 w-full" required>
+                        <label for="theme" class="block font-medium mb-1 text-gray-700">Theme</label>
+                        <select id="theme" x-model="form.theme" :value="form.theme" name="theme" class="border rounded-xl p-3 w-full" required>
                             <option value="white" :selected="form.theme === 'white'">White</option>
                             <option value="tan" :selected="form.theme === 'tan'">Tan</option>
                             <option value="beige_swatch" :selected="form.theme === 'beige_swatch'">Beige Swatch</option>

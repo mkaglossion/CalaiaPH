@@ -90,9 +90,6 @@
     {{-- Floating Buttons --}}
     <x-floating-buttons />
 
-    {{-- Footer --}}
-    <x-footer />
-
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     @endpush

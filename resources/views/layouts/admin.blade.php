@@ -4,14 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta http-equiv="Permissions-Policy" content="unload=(self), fullscreen=(self), geolocation=(self), microphone=(self), camera=(self), display-capture=(self)">
   <title>@yield('title', 'Admin Panel')</title>
 
   @include('layouts.partials.favicon')
 
-  {{-- Vendor CSS first --}}
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+  {{-- Google Fonts - Preconnect for better performance --}}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  {{-- Vendor CSS with integrity hashes for security --}}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css" integrity="sha256-GzSkJVLJbxDk36qko2cnawOGiqz/Y8GsQv/jMTUrx1Q=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11.0.5/swiper-bundle.min.css" integrity="sha256-yUoNxsvX+Vo8Trj3lZ/Y5ZBf8HlBFsB6Xwm7rH75/9E=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
 
   {{-- Vite --}}
   @vite(['resources/js/app.js'])
@@ -110,11 +116,6 @@
             ['label'=>'Pages Information','route'=>'admin.food.foodandbeverage'],
             ['label'=>'Category Images','route'=>'admin.dining.category-images.index'],
             ['label'=>'Food Management','route'=>'admin.foods.index'],
-            ['label'=>'Inventory Monitor','route'=>'admin.inventory.food'],
-          ]],
-          ['title'=>'Special Events','icon'=>'calendar','route'=>'admin.specialEvents.*','sub'=>[
-            ['label'=>'Pages Information','route'=>'admin.specialEvents.specialevents'],
-            ['label'=>'Events Manager','route'=>'admin.specialEvents.manager']
           ]],
           ['title'=>'Our Farm','icon'=>'leaf','route'=>'admin.farm.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.farm.ourfarm'],

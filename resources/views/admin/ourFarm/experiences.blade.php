@@ -172,7 +172,7 @@
 
                 {{-- Image Upload --}}
                 <div>
-                    <label for="experience_image" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Experience Image</label>
+                    <label for="imageFileInput" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Experience Image</label>
                     <div>
                         <input 
                             type="file" 

@@ -49,6 +49,9 @@ class AdminPagesController extends Controller
         [$imageModel, $textModel, $view] = $this->pageConfigs[$page];
         if ($page === 'dayTour') {
             $images = $imageModel::whereNull('daytour_id')->get();
+        } elseif ($page === 'foodAndBeverage') {
+            // Only show hero swiper images (food_id is null), not Learn More modal images
+            $images = $imageModel::whereNull('food_id')->get();
         } else {
             $images = $imageModel::all();
         }

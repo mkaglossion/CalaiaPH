@@ -1,4 +1,4 @@
-﻿{{-- resources/views/booking/staycation-food.blade.php --}}
+﻿﻿{{-- resources/views/booking/staycation-food.blade.php --}}
 <x-app-layout active-header="booking">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -565,11 +565,13 @@
 
             // Listen for real-time food stock updates
             @if(config('broadcasting.default') !== 'null')
-            Echo.channel('food-stock')
-                .listen('.food.updated', (e) => {
-                    console.log('Food stock updated:', e);
-                    updateFoodStockDisplay(e.id, e.stock_quantity, e.is_inventory_managed);
-                });
+            if (typeof Echo !== 'undefined') {
+                Echo.channel('food-stock')
+                    .listen('.food.updated', (e) => {
+                        console.log('Food stock updated:', e);
+                        updateFoodStockDisplay(e.id, e.stock_quantity, e.is_inventory_managed);
+                    });
+            }
             @endif
         });
 

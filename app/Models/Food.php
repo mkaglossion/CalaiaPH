@@ -24,6 +24,7 @@ class Food extends Model
 
     public function swiperImages()
     {
-        return $this->hasMany(FoodSwiperImage::class);
+        // Order by created_at ascending (1, 2, 3 - oldest first) to match admin panel
+        return $this->hasMany(FoodSwiperImage::class)->orderBy('created_at', 'asc');
     }
 }

@@ -17,7 +17,9 @@ class DiningCategoryImageController extends Controller
     public function index()
     {
         $diningImages = DiningCategoryImage::all()->keyBy('category');
-        $images = FoodSwiperImage::with('food')->latest()->paginate(10);
+        // Only show Learn More modal images (food_id is set), not hero swiper images
+        // Order by created_at ascending (1, 2, 3 - oldest first)
+        $images = FoodSwiperImage::with('food')->whereNotNull('food_id')->orderBy('created_at', 'asc')->paginate(10);
         $foods = Food::orderBy('name')->get();
         return view('admin.dining.category-images.index', compact('diningImages', 'images', 'foods'));
     }

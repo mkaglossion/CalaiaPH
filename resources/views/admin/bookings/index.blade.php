@@ -65,20 +65,20 @@
     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <form method="GET" action="{{ route('admin.bookings.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
                 <div class="relative">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true" style="color:#6b7280;">
                         <circle cx="11" cy="11" r="7"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 16.5L21 21"/>
                     </svg>
-                    <input type="text" name="search" value="{{ request('search') }}" 
+                    <input type="text" id="search" name="search" value="{{ request('search') }}" 
                         placeholder="Name, email, transaction ID"
                         class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                         style="padding-left:2.5rem;">
                 </div>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select id="status" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                     <option value="">All</option>
                     <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
                     <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
@@ -86,8 +86,8 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
-                <select name="booking_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                <label for="booking_type" class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                <select id="booking_type" name="booking_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                     <option value="">All</option>
                     <option value="glamping" {{ request('booking_type') == 'glamping' ? 'selected' : '' }}>Glamping</option>
                     <option value="camping" {{ request('booking_type') == 'camping' ? 'selected' : '' }}>Camping</option>
@@ -95,13 +95,13 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">From</label>
-                <input type="date" name="date_from" value="{{ request('date_from') }}" 
+                <label for="date_from" class="block text-sm font-medium text-gray-700 mb-2">From</label>
+                <input type="date" id="date_from" name="date_from" value="{{ request('date_from') }}" 
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">To</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}" 
+                <label for="date_to" class="block text-sm font-medium text-gray-700 mb-2">To</label>
+                <input type="date" id="date_to" name="date_to" value="{{ request('date_to') }}" 
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
             </div>
             <div class="md:col-span-5 flex flex-wrap gap-2 pt-2">

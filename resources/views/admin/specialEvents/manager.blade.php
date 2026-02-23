@@ -99,9 +99,12 @@
 
                 {{-- Event Name --}}
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Event Name *</label>
+                    <label for="event_name" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Event Name *</label>
                     <input 
                         type="text" 
+                        id="event_name"
+                        name="name"
+                        autocomplete="off"
                         x-model="form.name" 
                         required 
                         placeholder="Enter event name"
@@ -110,8 +113,10 @@
 
                 {{-- Description --}}
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Description *</label>
+                    <label for="event_description" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Description *</label>
                     <textarea 
+                        id="event_description"
+                        name="description"
                         x-model="form.description" 
                         rows="3" 
                         required 
@@ -121,8 +126,10 @@
 
                 {{-- Features --}}
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Features (comma-separated) *</label>
+                    <label for="event_features" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Features (comma-separated) *</label>
                     <textarea 
+                        id="event_features"
+                        name="features"
                         x-model="form.features" 
                         rows="2" 
                         required 
@@ -133,13 +140,14 @@
 
                 {{-- Image Upload --}}
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Event Image</label>
+                    <label for="imageFileInput" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Event Image</label>
                     <div>
                         <input 
                             type="file" 
                             @change="handleImageUpload" 
                             accept="image/*" 
                             id="imageFileInput"
+                            name="image"
                             class="hidden">
                         <label for="imageFileInput" class="flex flex-col items-center justify-center w-full px-3 sm:px-4 py-6 sm:py-8 border-2 border-dashed border-gray-400 rounded-xl text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition bg-gray-50">
                             <svg class="w-8 sm:w-10 h-8 sm:h-10 text-blue-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

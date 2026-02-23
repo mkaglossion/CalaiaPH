@@ -7,18 +7,19 @@
 <div x-data="diningImageManager()" class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl">
     
     <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
-        Page Information
+        Dining Page Images
     </h1>
-    <p class="text-gray-600 mb-10">Manage the category images and food swiper images displayed on your Dining page.</p>
+    <p class="text-gray-600 mb-10">Manage hero category images and Learn More modal swiper images for the Dining page.</p>
 
     {{-- ============================================================= --}}
-    {{-- DINING CATEGORY IMAGES SECTION --}}
+    {{-- ============================================================= --}}
+    {{-- HERO CATEGORY IMAGES (Top of /dining page) --}}
     {{-- ============================================================= --}}
 
     <div class="flex justify-between items-end mb-6">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Dining Category Images</h2>
-            <p class="text-gray-500 text-sm">Hero images for Messhall and Cook Your Own categories.</p>
+            <h2 class="text-2xl font-bold text-gray-800">Hero Category Images</h2>
+            <p class="text-gray-500 text-sm">Large hero images at the top of the Dining page (Messhall & Cook Your Own).</p>
         </div>
     </div>
 
@@ -106,11 +107,14 @@
 
     <hr class="my-14 border-gray-300">
 
-    {{-- SWIPER IMAGES MANAGEMENT --}}
+    {{-- ============================================================= --}}
+    {{-- LEARN MORE MODAL SWIPER IMAGES --}}
+    {{-- ============================================================= --}}
+
     <div class="flex justify-between items-end mb-6 mt-12">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Swiper Images Managementging</h2>
-            <p class="text-gray-500 text-sm">Photos that appear in the food carousel.</p>
+            <h2 class="text-2xl font-bold text-gray-800">Learn More Modal Swiper</h2>
+            <p class="text-gray-500 text-sm">Carousel images inside food item modals when clicking "Learn More".</p>
         </div>
 
         <button 
@@ -129,43 +133,57 @@
 
     {{-- Images Table --}}
     <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
-        <table class="w-full text-left">
-            <thead class="bg-gray-100/70 backdrop-blur">
-                <tr>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">#</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Preview</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Food Name</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Title</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Uploaded</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                @forelse ($images as $index => $img)
-                    <tr class="hover:bg-gray-50/70 transition">
-                        <td class="px-6 py-4 text-sm text-gray-900">{{ $images->firstItem() ? $images->firstItem() + $index : $index + 1 }}</td>
-                        <td class="px-6 py-4">
-                            <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
-                        </td>
-                        <td class="px-6 py-4 font-medium text-gray-900">{{ $img->food->name ?? 'Untitled' }}</td>
-                        <td class="px-6 py-4 text-gray-600">{{ $img->title ?? 'Untitled' }}</td>
-                        <td class="px-6 py-4 text-gray-600">{{ $img->created_at->format('Y-m-d') }}</td>
-                        <td class="px-6 py-4 text-right space-x-4">
-                            <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition" @click="editSwiperImage({{ $img->id }}, '{{ $img->food_id }}', '{{ $img->title }}')">
-                                Edit
-                            </button>
-                            <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition" @click="deleteSwiperImage({{ $img->id }})">
-                                Delete
-                            </button>
-                        </td>
-                    </tr>
-                @empty
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-gray-100/70 backdrop-blur">
                     <tr>
-                        <td colspan="6" class="px-6 py-6 text-center text-gray-500">No images uploaded yet.</td>
+                        <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">#</th>
+                        <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Preview</th>
+                        <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Food Name</th>
+                        <th class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Title</th>
+                        <th class="hidden md:table-cell px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Uploaded</th>
+                        <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900 text-right">Actions</th>
                     </tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @forelse($images as $index => $img)
+                        <tr class="hover:bg-gray-50/70 transition">
+                            <td class="px-3 sm:px-4 lg:px-6 py-4 text-gray-700">
+                                {{ ($images->currentPage() - 1) * $images->perPage() + $index + 1 }}
+                            </td>
+                            <td class="px-3 sm:px-4 lg:px-6 py-4">
+                                <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-16 h-10 sm:w-20 sm:h-12 object-cover rounded-xl">
+                            </td>
+                            <td class="px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $img->food->name ?? 'Untitled' }}</td>
+                            <td class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $img->title ?? 'Untitled' }}</td>
+                            <td class="hidden md:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $img->created_at->format('Y-m-d') }}</td>
+                            <td class="px-3 sm:px-4 lg:px-6 py-4 text-right">
+                                <div class="inline-flex items-center justify-end gap-1 sm:gap-2 whitespace-nowrap">
+                                    <button
+                                        type="button"
+                                        class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition text-xs sm:text-sm"
+                                        @click="editSwiperImage({{ $img->id }}, '{{ $img->food_id }}', '{{ $img->title }}')"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="text-red-600 font-semibold hover:text-red-700 hover:underline transition text-xs sm:text-sm"
+                                        @click="deleteSwiperImage({{ $img->id }})"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-3 sm:px-4 lg:px-6 py-6 text-center text-gray-500">No images uploaded yet.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
     @if ($images->hasPages())
@@ -248,13 +266,13 @@
                 @csrf
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Category</label>
-                    <input type="text" x-model="selectedCategory" disabled class="border rounded-xl p-3 w-full bg-gray-50 text-gray-600">
+                    <label for="category" class="block font-medium mb-1 text-gray-700">Category</label>
+                    <input type="text" id="category" x-model="selectedCategory" disabled class="border rounded-xl p-3 w-full bg-gray-50 text-gray-600">
                 </div>
 
                 <div>
-                    <label class="block font-medium mb-1 text-gray-700">Upload Image *</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*" class="border rounded-xl p-3 w-full" required>
+                    <label for="category_image" class="block font-medium mb-1 text-gray-700">Upload Image *</label>
+                    <input type="file" id="category_image" x-ref="image" name="image" accept="image/*" class="border rounded-xl p-3 w-full" required>
                     <p class="text-xs text-gray-500 mt-1">Max 5MB • JPG, PNG, GIF</p>
                 </div>
 

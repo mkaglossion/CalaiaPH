@@ -228,7 +228,6 @@
 
     {{-- Floating Buttons --}}
     <x-floating-buttons />
-    <x-footer />
 
     @push('scripts')
         <script>

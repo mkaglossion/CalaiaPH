@@ -513,18 +513,25 @@ f{{-- resources/views/components/package-modal.blade.php --}}
     const title = (document.getElementById(modalId + 'Label')?.textContent || '').replace(' Details', '');
     const price = document.getElementById(modalId + 'PriceDisplay')?.textContent || 'PHP 0';
 
-    // Use the bookingRoute passed from the component
-    let url = '{{ $bookingRoute }}';
+    // Use the bookingRoute passed from the parent component
+    let baseUrl = '{{ $bookingRoute }}';
     
     @if($appendParams)
     const params = new URLSearchParams({
       package: title,
       price: price
     });
-    url += (url.includes('?') ? '&' : '?') + params.toString();
+    
+    // Check if baseUrl already has query params
+    if (baseUrl.includes('?')) {
+      baseUrl += '&' + params.toString();
+    } else {
+      baseUrl += '?' + params.toString();
+    }
     @endif
 
-    window.location.href = url;
+    window.location.href = baseUrl;
   }
+
 </script>
 @endonce

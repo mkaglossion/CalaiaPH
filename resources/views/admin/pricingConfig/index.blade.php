@@ -211,7 +211,7 @@
                         <template x-if="editMode">@method('PUT')</template>
 
                         <div class="mb-4">
-                            <label class="block font-semibold mb-2">Duration Type</label>
+                            <span class="block font-semibold mb-2">Duration Type</span>
                             <div class="grid gap-2 md:grid-cols-3 sm:grid-cols-2 grid-cols-1">
                                 <template x-for="type in predefinedTypes" :key="type.id">
                                     <button

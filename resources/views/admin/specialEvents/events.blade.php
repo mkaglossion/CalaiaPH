@@ -84,9 +84,10 @@
                 </template>
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Name</label>
+                    <label for="event_name" class="block text-sm font-medium mb-1">Name</label>
                     <input 
                         type="text" 
+                        id="event_name"
                         name="name" 
                         x-model="form.name" 
                         class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -260,8 +261,8 @@
             >
                 @csrf
                 <div class="mb-3">
-                    <label class="block font-semibold mb-1">Event</label>
-                    <select x-ref="event" name="event_id" class="border rounded p-2 w-full" required>
+                    <label for="swiper_event_id" class="block font-semibold mb-1">Event</label>
+                    <select id="swiper_event_id" x-ref="event" name="event_id" class="border rounded p-2 w-full" required>
                         <option value="">Select Event</option>
                         @foreach($events as $event)
                             <option value="{{ $event->id }}">{{ $event->name }}</option>
@@ -270,13 +271,13 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="block font-semibold mb-1">Title (optional)</label>
-                    <input type="text" x-ref="title" name="title" class="border rounded p-2 w-full">
+                    <label for="swiper_title" class="block font-semibold mb-1">Title (optional)</label>
+                    <input type="text" id="swiper_title" x-ref="title" name="title" class="border rounded p-2 w-full">
                 </div>
 
                 <div class="mb-3">
-                    <label class="block font-semibold mb-1">Upload Image/Video</label>
-                    <input type="file" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" required>
+                    <label for="swiper_image" class="block font-semibold mb-1">Upload Image/Video</label>
+                    <input type="file" id="swiper_image" x-ref="image" name="image" accept="image/*,video/*" class="border rounded p-2 w-full" required>
                 </div>
 
                 <div class="flex justify-end space-x-2">
@@ -366,8 +367,9 @@
                 </template>
 
                 <div class="mb-3">
-                    <label class="block font-semibold mb-1">Event</label>
+                    <label for="text_event_id" class="block font-semibold mb-1">Event</label>
                     <select 
+                        id="text_event_id"
                         name="event_id" 
                         x-model="form.event_id" 
                         class="border rounded p-2 w-full" 
@@ -382,9 +384,10 @@
 
             
                 <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Label</label>
+                    <label for="text_label" class="block text-sm font-medium mb-1">Label</label>
                     <input 
                         type="text" 
+                        id="text_label"
                         name="label" 
                         x-model="form.label" 
                         class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -393,13 +396,14 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1">Text</label>
+                    <label for="text_content" class="block text-sm font-medium mb-1">Text</label>
                     <textarea 
+                        id="text_content"
                         name="text" 
                         x-model="form.text" 
                         rows="4" 
                         class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        placeholder="Enter text text..."
+                        placeholder="Enter text content..."
                         required
                     ></textarea>
                 </div>
