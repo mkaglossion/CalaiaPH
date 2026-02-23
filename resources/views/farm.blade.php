@@ -143,7 +143,7 @@
         <article class="relative overflow-hidden shadow-lg group">
           <div class="absolute inset-0">
             <img src="{{ asset('assets/images/carousel/vegetable garden.jpg') }}" alt="Vegetable Garden" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-            <div class="absolute inset-0 bg-black/35"></div>
+            <div class="absolute inset-0 bg-black/30"></div>
           </div>
 
           <div class="relative z-10 px-6 md:px-10 py-10 md:py-14 max-w-xl">
@@ -158,7 +158,7 @@
         <article class="relative overflow-hidden shadow-lg group">
           <div class="absolute inset-0">
             <img src="{{ asset('assets/images/carousel/orchard fruits.jpg') }}" alt="Orchard Fruits" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-            <div class="absolute inset-0 bg-black/35"></div>
+            <div class="absolute inset-0 bg-black/30"></div>
           </div>
 
           <div class="relative z-10 px-6 md:px-10 py-10 md:py-14 max-w-xl ml-auto text-right">
