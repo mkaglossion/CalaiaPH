@@ -355,34 +355,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Skip button: for staycation, POST empty activities first
+    // Skip button: POST empty activities first, then redirect
     const skipBtn = root.querySelector('#skip-btn');
     if (skipBtn) {
         skipBtn.addEventListener('click', function() {
-            if (isStaycation) {
-                fetch(storeUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({ activities: [] })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.href = paymentUrl;
-                    } else {
-                        showToast('Error saving. Please try again.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
+            fetch(storeUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ activities: [] })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = paymentUrl;
+                } else {
                     showToast('Error saving. Please try again.');
-                });
-            } else {
-                window.location.href = paymentUrl;
-            }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error saving. Please try again.');
+            });
         });
     }
 

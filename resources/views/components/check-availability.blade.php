@@ -8,6 +8,10 @@
     'inventory' => null,
     // Total quantity for fallback when no inventory data exists
     'totalQuantity' => null,
+    // Day tour inventory data from DayTourInventory (per date availability)
+    'dayTourInventory' => null,
+    // Total day tour groups for fallback
+    'totalDayTourQuantity' => null,
 ])
 
 <div class="max-w-7xl mx-auto p-4 relative z-10 -mt-20">
@@ -16,6 +20,8 @@
         x-data='bookingWidget({
             inventory: @json($inventory ?? (object)[]),
             totalQuantity: @json($totalQuantity ?? 0),
+            dayTourInventory: @json($dayTourInventory ?? (object)[]),
+            totalDayTourQuantity: @json($totalDayTourQuantity ?? 0),
         })'
         x-init="initDatepickers()"
         x-cloak
@@ -263,6 +269,12 @@
             // total quantity for fallback
             totalQuantity: config.totalQuantity ?? 0,
 
+            // day tour inventory data from DayTourInventory (per date availability)
+            dayTourInventory: config.dayTourInventory ?? {},
+
+            // total day tour groups for fallback
+            totalDayTourQuantity: config.totalDayTourQuantity ?? 0,
+
             setTab(type) {
                 this.activeTab = type;
                 this.$refs.type.value = type;
@@ -397,11 +409,11 @@
                     return;
                 }
 
-                // DAY VISIT - single date only
+                // DAY VISIT - single date only, use day tour inventory
                 if (this.activeTab === 'day-visit') {
-                    const dateData = this.inventory[checkInVal];
+                    const dateData = this.dayTourInventory[checkInVal];
                     if (!dateData) {
-                        this.availabilityText = `Up to ${this.totalQuantity} slot(s) available (total across all staycations).`;
+                        this.availabilityText = `Up to ${this.totalDayTourQuantity} slot(s) available for day visits.`;
                         return;
                     }
 
@@ -411,7 +423,7 @@
                     if (!isAvailable || quantity <= 0) {
                         this.availabilityText = 'Fully booked for this date.';
                     } else {
-                        this.availabilityText = `${quantity} slot(s) available (total across all staycations).`;
+                        this.availabilityText = `${quantity} slot(s) available for day visits.`;
                     }
                     return;
                 }

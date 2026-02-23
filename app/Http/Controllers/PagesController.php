@@ -26,6 +26,7 @@ use App\Models\Product;
 use App\Models\Activity;
 use App\Models\Staycation;
 use App\Models\StaycationInventory;
+use App\Models\DayTourInventory;
 use App\Models\Holiday;
 use App\Models\DayTypeDay;
 use App\Models\BookingSetting;
@@ -95,7 +96,43 @@ class PagesController extends Controller
         // Get total quantity from staycations for legend
         $totalQuantity = Staycation::sum('quantity');
 
-        return $this->renderPage(HomeSwiperImage::class, HomeText::class, 'home', 'home', 'label', 'text', compact('availability', 'totalQuantity'));
+        // Build day tour availability data
+        $dayTourAvailability = [];
+        $dayTours = DayTour::where('is_active', true)->get();
+        $totalDayTourGroups = $dayTours->sum('max_groups_per_day');
+
+        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+            $key = $d->format('Y-m-d');
+
+            // Past dates invalid
+            if ($d->lt(Carbon::today())) {
+                $dayTourAvailability[$key] = [
+                    'is_available' => false,
+                    'min_quantity' => 0
+                ];
+                continue;
+            }
+
+            // Get total available groups for this date from day tour inventory
+            $totalAvailableGroups = DayTourInventory::where('date', $key)
+                ->where('is_blocked', false)
+                ->sum('available_groups');
+
+            // If no inventory records exist for this date, fall back to sum of max_groups_per_day
+            if ($totalAvailableGroups == 0) {
+                $totalAvailableGroups = $totalDayTourGroups;
+            }
+
+            $dayTourAvailability[$key] = [
+                'is_available' => $totalAvailableGroups > 0,
+                'min_quantity' => $totalAvailableGroups
+            ];
+        }
+
+        // Get total day tour groups for legend
+        $totalDayTourQuantity = $totalDayTourGroups;
+
+        return $this->renderPage(HomeSwiperImage::class, HomeText::class, 'home', 'home', 'label', 'text', compact('availability', 'totalQuantity', 'dayTourAvailability', 'totalDayTourQuantity'));
     }
 
     public function daytour()

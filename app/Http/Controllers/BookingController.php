@@ -1136,9 +1136,47 @@ class BookingController extends Controller
         // Get total quantity for fallback
         $totalQuantity = \App\Models\Staycation::sum('quantity');
 
+        // Build day tour availability data
+        $dayTourInventory = [];
+        $dayTours = \App\Models\DayTour::where('is_active', true)->get();
+        $totalDayTourGroups = $dayTours->sum('max_groups_per_day');
+
+        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+            $key = $d->format('Y-m-d');
+
+            // Past dates invalid
+            if ($d->lt(\Carbon\Carbon::today())) {
+                $dayTourInventory[$key] = [
+                    'is_available' => false,
+                    'min_quantity' => 0
+                ];
+                continue;
+            }
+
+            // Get total available groups for this date from day tour inventory
+            $totalAvailableGroups = \App\Models\DayTourInventory::where('date', $key)
+                ->where('is_blocked', false)
+                ->sum('available_groups');
+
+            // If no inventory records exist for this date, fall back to sum of max_groups_per_day
+            if ($totalAvailableGroups == 0) {
+                $totalAvailableGroups = $totalDayTourGroups;
+            }
+
+            $dayTourInventory[$key] = [
+                'is_available' => $totalAvailableGroups > 0,
+                'min_quantity' => $totalAvailableGroups
+            ];
+        }
+
+        // Get total day tour groups for fallback
+        $totalDayTourQuantity = $totalDayTourGroups;
+
         return view('booking.widget', [
             'inventory'     => $inventory,
             'totalQuantity' => $totalQuantity,
+            'dayTourInventory' => $dayTourInventory,
+            'totalDayTourQuantity' => $totalDayTourQuantity,
         ]);
     }
 
@@ -2295,44 +2333,6 @@ class BookingController extends Controller
             'unit_type' => 'required|string',
             'check_in' => 'required|date',
             'check_out' => 'required|date|after:check_in',
-            'guests' => 'required|integer|min:1|max:50'
-        ]);
-
-        $unitType = $request->unit_type;
-        $checkIn = $request->check_in;
-        $checkOut = $request->check_out;
-        $guests = $request->guests;
-
-        // Extract staycation ID from unit_type (format: staycation-{id})
-        if (!preg_match('/^staycation-(\d+)$/', $unitType, $matches)) {
-            return response()->json(['success' => false, 'message' => 'Invalid unit type']);
-        }
-
-        $staycationId = $matches[1];
-        $staycation = Staycation::find($staycationId);
-
-        if (!$staycation) {
-            return response()->json(['success' => false, 'message' => 'Staycation not found']);
-        }
-
-        // Calculate total price for the stay
-        $totalPrice = 0;
-        $checkinDate = \Carbon\Carbon::parse($checkIn);
-        $checkoutDate = \Carbon\Carbon::parse($checkOut);
-
-        $current = $checkinDate->copy();
-        while ($current->lt($checkoutDate)) {
-            $dateStr = $current->format('Y-m-d');
-            $price = $this->calculatePrice($staycation, $dateStr, $guests);
-            $totalPrice += $price;
-            $current->addDay();
-        }
-
-        return response()->json([
-            'success' => true,
-            'total_price' => $totalPrice,
-            'nights' => $checkinDate->diffInDays($checkoutDate),
-            'guests' => $guests
         ]);
     }
 

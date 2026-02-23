@@ -9,7 +9,7 @@
 
     {{-- Check Availability --}}
     <div class="bg-[#EADAC3]">
-        <x-check-availability :inventory="$availability" :totalQuantity="$totalQuantity" />
+        <x-check-availability :inventory="$availability" :totalQuantity="$totalQuantity" :dayTourInventory="$dayTourAvailability" :totalDayTourQuantity="$totalDayTourQuantity" />
     </div>
 
     {{-- Event Experience --}}
