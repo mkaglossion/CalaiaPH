@@ -492,6 +492,10 @@
 
                 <div>
                     <label class="block font-medium mb-1 text-gray-700">Package Name</label>
+                    <input type="text" name="name" x-model="form.name" class="w-full border rounded-xl px-3 py-2" placeholder="Package Name" required>
+                </div>
+
+                <div>
                     <label class="block font-medium mb-1 text-gray-700">Description</label>
                     <textarea name="description" x-model="form.description" rows="3" class="w-full border rounded-xl px-3 py-2" placeholder="Description"></textarea>
                 </div>
@@ -896,14 +900,15 @@ function dayTourManager() {
         const data = await res.json();
 
         if (res.ok) {
+          // Close modal immediately on success (like staycation)
+          this.showDayTourModal = false;
+          this.resetForm();
           Swal.fire({
             icon: 'success',
             title: this.editMode ? 'Updated!' : 'Created!',
             text: data.message || (this.editMode ? 'Day Tour updated successfully!' : 'Day Tour created successfully!'),
             confirmButtonColor: '#2563eb'
           }).then(() => {
-            this.showDayTourModal = false;
-            this.resetForm();
             window.location.reload();
           });
         } else if (data.errors) {
@@ -960,14 +965,15 @@ function dayTourManager() {
         const data = await res.json();
 
         if (res.ok) {
+          // Close modal immediately on success (like staycation)
+          this.showTextModal = false;
+          this.resetForm();
           Swal.fire({
             icon: 'success',
             title: this.editMode ? 'Updated!' : 'Created!',
             text: data.message || (this.editMode ? 'Text content updated successfully!' : 'Text content created successfully!'),
             confirmButtonColor: '#2563eb'
           }).then(() => {
-            this.showTextModal = false;
-            this.resetForm();
             window.location.reload();
           });
         } else if (data.errors) {
@@ -1221,14 +1227,15 @@ function dayTourManager() {
         const data = await res.json();
 
         if (res.ok) {
+          // Close modal immediately on success (like staycation)
+          this.showModal = false;
+          this.resetImageForm();
           Swal.fire({
             icon: 'success',
             title: this.editImageMode ? 'Updated!' : 'Uploaded!',
             text: data.message || (this.editImageMode ? 'Image updated successfully!' : 'Image uploaded successfully!'),
             confirmButtonColor: '#2563eb'
           }).then(() => {
-            this.showModal = false;
-            this.resetImageForm();
             window.location.reload();
           });
         } else if (data.errors) {

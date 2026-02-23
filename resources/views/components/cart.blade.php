@@ -50,10 +50,10 @@
                 <i class="bi bi-cart-x text-5xl text-gray-300 mb-3"></i>
                 <h2 class="text-lg font-semibold text-gray-600 mb-1">Your cart is empty</h2>
                 <p class="text-gray-500 mb-4 text-sm">Start booking your staycation, activities, and shop</p>
-                <a href="{{ route('booking.calendar') }}"
+                <a href="{{ route('booking.calendar') }}?type=staycation"
                    class="bg-[#8f5d54] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#8f5d54]/90 transition text-sm inline-flex items-center">
                     <i class="bi bi-calendar-event mr-1"></i>
-                    Book Now
+                    Book Staycation
                 </a>
             </div>
 

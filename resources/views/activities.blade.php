@@ -270,7 +270,7 @@
 
           <div class="px-5 py-4 border-t flex flex-col md:flex-row items-center justify-end gap-3">
             <template x-if="modal.price > 0">
-              <a href="{{ route('booking.calendar') }}" class="bg-brand text-white px-6 py-3 rounded-2xl hover:bg-[#a0675a] transition-colors duration-300 w-full md:w-auto font-semibold text-center inline-flex items-center justify-center">
+              <a href="{{ route('booking.calendar') }}?type=daytour" class="bg-brand text-white px-6 py-3 rounded-2xl hover:bg-[#a0675a] transition-colors duration-300 w-full md:w-auto font-semibold text-center inline-flex items-center justify-center">
                 <i class="bi bi-calendar-event mr-2"></i>
                 Book Now
               </a>
@@ -542,8 +542,8 @@
         const title = document.getElementById('detailsModalLabel').textContent.replace(' Details', '');
         const price = document.getElementById('detailsModalPriceDisplay')?.textContent || 'PHP 0';
 
-        // Redirect to booking calendar with activity parameters
-        const url = '{{ route("booking.calendar") }}?type=activity&package=' + encodeURIComponent(title) + '&price=' + encodeURIComponent(price);
+        // Redirect to booking calendar with daytour type (activities are part of day tours)
+        const url = '{{ route("booking.calendar") }}?type=daytour&package=' + encodeURIComponent(title) + '&price=' + encodeURIComponent(price);
         window.location.href = url;
       };
     </script>

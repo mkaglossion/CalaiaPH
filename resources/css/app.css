@@ -171,3 +171,8 @@ body, h1, h2, h3, h4, h5, h6, p, a, li {
   color: #97655A;
   font-size: 25px;
 }
+
+/* Alpine.js x-cloak - hides elements before Alpine initializes */
+[x-cloak] {
+  display: none !important;
+}

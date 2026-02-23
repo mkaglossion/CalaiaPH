@@ -502,17 +502,16 @@
     const price = document.getElementById(modalId + 'PriceDisplay')?.textContent || 'PHP 0';
 
     const isDining = title.toLowerCase().includes('menu') || title.toLowerCase().includes('cook');
-    const type = isDining ? 'dining' : 'daytour';
+    const type = isDining ? 'staycation' : 'daytour';
 
-    let url = '{{ $bookingRoute }}';
+    let url = '{{ route('booking.calendar') }}' + '?type=' + type;
     
     @if($appendParams)
     const params = new URLSearchParams({
-      type: type,
       package: title,
       price: price
     });
-    url += '?' + params.toString();
+    url += '&' + params.toString();
     @endif
 
     window.location.href = url;

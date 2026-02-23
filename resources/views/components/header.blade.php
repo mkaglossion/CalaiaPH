@@ -158,8 +158,11 @@
               <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
                 <i class="bi bi-person me-2"></i>My Profile
               </a>
-              <a href="{{ route('booking.calendar') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
-                <i class="bi bi-calendar-check me-2"></i>Book Now
+              <a href="{{ route('booking.calendar') }}?type=staycation" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                <i class="bi bi-calendar-check me-2"></i>Book Staycation
+              </a>
+              <a href="{{ route('booking.calendar') }}?type=daytour" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+                <i class="bi bi-sun me-2"></i>Book Day Tour
               </a>
               <a href="{{ route('booking.history') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
                 <i class="bi bi-calendar-event me-2"></i>My Bookings
@@ -289,8 +292,11 @@
             <a href="{{ route('profile.show') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('profile.show') }}'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
               <i class="bi bi-person me-2"></i>Profile
             </a>
-            <a href="{{ route('booking.calendar') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('booking.calendar') }}'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
-              <i class="bi bi-calendar-check me-2"></i>Book Now
+            <a href="{{ route('booking.calendar') }}?type=staycation" @click.prevent="mobileOpen = false; window.location.href = '{{ route('booking.calendar') }}?type=staycation'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+              <i class="bi bi-calendar-check me-2"></i>Book Staycation
+            </a>
+            <a href="{{ route('booking.calendar') }}?type=daytour" @click.prevent="mobileOpen = false; window.location.href = '{{ route('booking.calendar') }}?type=daytour'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+              <i class="bi bi-sun me-2"></i>Book Day Tour
             </a>
             <a href="{{ route('booking.history') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('booking.history') }}'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
               <i class="bi bi-calendar-event me-2"></i>My Bookings

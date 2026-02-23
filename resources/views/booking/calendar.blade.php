@@ -290,7 +290,9 @@
           .booking-calendar .flatpickr-innerContainer{
             gap: 16px !important;
           }
-          58px !important;
+          
+          .booking-calendar .flatpickr-day{
+            min-height: 58px !important;
             padding: 9px 3px !important;
             font-size: 18px !important;
           }
@@ -298,13 +300,7 @@
           .booking-calendar .flatpickr-day .avail-badge{
             font-size: 8px !important;
             padding: 2px 6px !important;
-            min-width: 21ortant;
-          }
-          
-          .booking-calendar .flatpickr-day .avail-badge{
-            font-size: 6px !important;
-            padding: 1px 3px !important;
-            min-width: 14px !important;
+            min-width: 21px !important;
           }
         }
 
@@ -320,7 +316,7 @@
         }
     </style>
 
-    <title>Booking Calendar - Calaia Farm</title>
+    <title>{{ $bookingType === 'daytour' ? 'Day Tour Calendar' : 'Booking Calendar' }} - Calaia Farm</title>
   </head>
 
   <body class="bg-[#f5efe7]">
@@ -329,16 +325,27 @@
     <div class="pt-6 px-4 sm:px-6 lg:px-12">
         {{-- Header --}}
         <div class="text-center mb-10">
-            <h1 class="text-2xl font-bold tracking-tight">Select Your Staycation to Check-in & Check-out Date</h1>
-            <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
-            <p class="text-xs text-gray-500">
-                Choose your check-in and check-out dates
-            </p>
+            @if($bookingType === 'daytour')
+                <h1 class="text-2xl font-bold tracking-tight">Select Your Day Tour Date</h1>
+                <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
+                <p class="text-xs text-gray-500">
+                    Choose your preferred date for the day tour
+                </p>
+            @else
+                <h1 class="text-2xl font-bold tracking-tight">Select Your Staycation to Check-in & Check-out Date</h1>
+                <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
+                <p class="text-xs text-gray-500">
+                    Choose your check-in and check-out dates
+                </p>
+            @endif
         </div>
 
         {{-- Progress --}}
         <div class="mb-6">
-            <x-booking.progress-indicator :stepNumber="1" :totalSteps="4" :bookingType="'staycation'" />
+            @php
+                $totalSteps = $bookingType === 'daytour' ? 3 : 4;
+            @endphp
+            <x-booking.progress-indicator :stepNumber="1" :totalSteps="$totalSteps" :bookingType="$bookingType" />
         </div>
 
         {{-- Back + Guest mode --}}
@@ -357,6 +364,20 @@
             @endif
         </div>
 
+        @if($bookingType === 'daytour')
+        <div
+          class="max-w-4xl mx-auto pb-10"
+          x-data="dayTourPicker({
+            availability: @js($availability),
+            initialDate: @js($selectedDate),
+            lowThreshold: @js($totalQuantity - 1),
+            totalQuantity: @js($totalQuantity),
+            maxQty: @js($maxQty),
+            dayTours: @js($dayToursList)
+          })"
+          x-init="init()"
+        >
+        @else
         <div
           class="max-w-4xl mx-auto pb-10"
           x-data="dateRangePicker({
@@ -369,7 +390,25 @@
           })"
           x-init="init()"
         >
+        @endif
             {{-- TOP INPUTS --}}
+            @if($bookingType === 'daytour')
+            <section class="grid grid-cols-1 gap-4 items-end mb-6">
+                <div>
+                  <label class="block text-sm font-bold text-gray-900 mb-1">Selected Date</label>
+                  <div class="relative">
+                    <i class="bi bi-calendar3 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <input
+                      type="text"
+                      readonly
+                      class="w-full border border-gray-300 bg-gray-100 rounded-none pl-10 pr-3 py-2 text-sm"
+                      x-model="selectedDateDisplay"
+                      placeholder="Select a date"
+                    >
+                  </div>
+                </div>
+            </section>
+            @else
             <section class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mb-6">
                 <div>
                   <label class="block text-sm font-bold text-gray-900 mb-1">Check-in</label>
@@ -404,6 +443,7 @@
                   <div class="text-sm text-gray-800" x-text="nightsText"></div>
                 </div>
             </section>
+            @endif
 
             {{-- CALENDAR WRAP --}}
             <section class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
@@ -412,6 +452,18 @@
                   <div x-ref="calendar" class="booking-calendar"></div>
                 </div>
 
+                @if($bookingType === 'daytour')
+                <!-- Day Tour Info Bar -->
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-6 py-4 text-white"
+                     style="background:#91b474;">
+                  <div class="text-sm font-semibold">
+                    Operating Hours: <span class="font-normal">8:00 AM - 5:00 PM</span>
+                  </div>
+                  <div class="text-sm italic">
+                    * Select a date to see available packages and group slots.
+                  </div>
+                </div>
+                @else
                 <!-- GREEN BAR (check-in/out time + note) -->
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-6 py-4 text-white"
                      style="background:#91b474;">
@@ -423,6 +475,7 @@
                     * Rates are subject to change without prior notice and indicative only.
                   </div>
                 </div>
+                @endif
             </section>
 
             {{-- LEGEND --}}
@@ -455,6 +508,7 @@
                       <span class="text-sm">Fully Booked (0)</span>
                     </div>
 
+                    @if($bookingType !== 'daytour')
                     <div class="flex items-center gap-2">
                       <span class="w-4 h-4 inline-block rounded fp-checkin"></span>
                       <span class="text-sm">Check-in Date</span>
@@ -469,6 +523,7 @@
                       <span class="w-4 h-4 inline-block rounded fp-inrange"></span>
                       <span class="text-sm">Period of Stay</span>
                     </div>
+                    @endif
 
                     <div class="flex items-center gap-2">
                       <span class="w-4 h-4 inline-block rounded fp-invalid"></span>
@@ -479,6 +534,15 @@
 
             {{-- CONTINUE BUTTON --}}
             <div class="flex justify-center">
+                @if($bookingType === 'daytour')
+                <button
+                  class="bg-[#8f5d54] text-white py-3 px-8 rounded-lg font-semibold hover:bg-[#7a4e48] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="!selectedDate"
+                  @click="continueBooking()"
+                >
+                  Continue to Packages <i class="bi bi-arrow-right ml-2"></i>
+                </button>
+                @else
                 <button
                   class="bg-[#8f5d54] text-white py-3 px-8 rounded-lg font-semibold hover:bg-[#7a4e48] transition disabled:opacity-50 disabled:cursor-not-allowed"
                   :disabled="!checkin || !checkout"
@@ -486,10 +550,234 @@
                 >
                   Continue to Rooms <i class="bi bi-arrow-right ml-2"></i>
                 </button>
+                @endif
             </div>
         </div>
     </div>
 
+  @if($bookingType === 'daytour')
+  <script>
+    function dayTourPicker({ availability, initialDate, lowThreshold, totalQuantity, maxQty, dayTours }) {
+      return {
+        availability: availability || {},
+        selectedDate: initialDate || null,
+        calendarInstance: null,
+        dayTours: dayTours || [],
+
+        legendMaxQty: maxQty || 0,
+        legendLowThreshold: 2,
+        totalQuantity: totalQuantity || 0,
+
+        _months: 2,
+        _resizeTimer: null,
+
+        init() {
+           if (initialDate) this.selectedDate = initialDate;
+
+           // Smart threshold calculation
+           this.calculateSmartThresholds();
+
+           this._months = this.getResponsiveMonths();
+           this.$nextTick(() => this.initCalendar());
+
+          // re-init on resize
+          window.addEventListener('resize', () => {
+            clearTimeout(this._resizeTimer);
+            this._resizeTimer = setTimeout(() => {
+              const next = this.getResponsiveMonths();
+              if (next !== this._months) {
+                this._months = next;
+                this.initCalendar(true);
+              }
+            }, 200);
+          });
+        },
+
+        getResponsiveMonths() {
+          return window.matchMedia('(min-width: 768px)').matches ? 2 : 1;
+        },
+
+        get selectedDateDisplay() {
+          return this.selectedDate ? this.formatDisplay(this.selectedDate) : '';
+        },
+
+        availableThresholdText: 'Loading...',
+        limitedThresholdText: 'Loading...',
+
+        calculateSmartThresholds() {
+           this.legendLowThreshold = Math.max(1, Math.floor(this.totalQuantity * 0.3));
+           this.availableThresholdText = (this.legendLowThreshold + 1) + '+ slots';
+           this.limitedThresholdText = '1-' + this.legendLowThreshold + ' slots';
+        },
+
+        initCalendar(keepSelected = false) {
+           const selected = keepSelected ? this.selectedDate : null;
+
+           if (this.calendarInstance) {
+             this.calendarInstance.destroy();
+             this.calendarInstance = null;
+           }
+
+           this.calculateSmartThresholds();
+
+          const disabledDates = [];
+          for (const [dateString, details] of Object.entries(this.availability)) {
+            if (!details.is_available) disabledDates.push(dateString);
+          }
+
+          if (!this.$refs.calendar) return;
+
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          const months = this._months;
+
+          this.calendarInstance = flatpickr(this.$refs.calendar, {
+            mode: 'single',
+            dateFormat: 'Y-m-d',
+            inline: true,
+            disableMobile: true,
+            monthSelectorType: 'static',
+            showMonths: months,
+
+            defaultDate: selected || this.selectedDate,
+
+            disable: [
+              (date) => {
+                const checkDate = new Date(date);
+                checkDate.setHours(0, 0, 0, 0);
+                if (checkDate < today) return true;
+                
+                const dateStr = this.formatDateForCompare(date);
+                return disabledDates.includes(dateStr);
+              }
+            ],
+
+            onDayCreate: (_, __, fp, dayElem) => {
+              const dateString = fp.formatDate(dayElem.dateObj, 'Y-m-d');
+
+              dayElem.classList.remove('fp-avail-high','fp-avail-low','fp-not-avail','fp-invalid');
+              dayElem.style.borderRadius = '6px';
+              dayElem.style.position = 'relative';
+
+              const checkDate = new Date(dayElem.dateObj);
+              checkDate.setHours(0, 0, 0, 0);
+              const isPast = checkDate < today;
+
+              if (disabledDates.includes(dateString) || isPast) {
+                dayElem.classList.add('fp-invalid');
+                const badge = document.createElement('div');
+                badge.className = 'avail-badge';
+                badge.textContent = '-';
+                badge.style.position = 'absolute';
+                badge.style.top = '2px';
+                badge.style.right = '2px';
+                badge.style.fontSize = '9px';
+                badge.style.fontWeight = '600';
+                badge.style.padding = '1px 3px';
+                badge.style.borderRadius = '8px';
+                badge.style.lineHeight = '1';
+                badge.style.minWidth = '14px';
+                badge.style.textAlign = 'center';
+                badge.style.backgroundColor = '#f3f4f6';
+                badge.style.color = '#6b7280';
+                badge.style.border = '1px solid #d1d5db';
+                dayElem.appendChild(badge);
+                return;
+              }
+
+              const details = this.availability && this.availability[dateString];
+              const qty = details ? Number(details.min_quantity || 0) : 10;
+
+              if (qty === 0) {
+                dayElem.classList.add('fp-not-avail');
+              } else if (qty <= this.legendLowThreshold) {
+                dayElem.classList.add('fp-avail-low');
+              } else {
+                dayElem.classList.add('fp-avail-high');
+              }
+
+              const badge = document.createElement('div');
+              badge.className = 'avail-badge';
+              badge.textContent = qty > 0 ? qty : '0';
+              badge.style.position = 'absolute';
+              badge.style.top = '2px';
+              badge.style.right = '2px';
+              badge.style.fontSize = '9px';
+              badge.style.fontWeight = '600';
+              badge.style.padding = '1px 3px';
+              badge.style.borderRadius = '8px';
+              badge.style.lineHeight = '1';
+              badge.style.minWidth = '14px';
+              badge.style.textAlign = 'center';
+              
+              if (qty === 0) {
+                badge.style.backgroundColor = '#fee2e2';
+                badge.style.color = '#dc2626';
+                badge.style.border = '1px solid #fecaca';
+              } else if (qty <= this.legendLowThreshold) {
+                badge.style.backgroundColor = '#fef3c7';
+                badge.style.color = '#d97706';
+                badge.style.border = '1px solid #fde68a';
+              } else {
+                badge.style.backgroundColor = '#d1fae5';
+                badge.style.color = '#059669';
+                badge.style.border = '1px solid #a7f3d0';
+              }
+              dayElem.appendChild(badge);
+
+              // Highlight selected date
+              if (this.selectedDate === dateString) {
+                dayElem.style.outline = '2px solid #2563eb';
+                dayElem.style.outlineOffset = '-2px';
+              }
+            },
+
+            onChange: (selectedDates, _, fp) => {
+              if (selectedDates.length === 1) {
+                this.selectedDate = fp.formatDate(selectedDates[0], 'Y-m-d');
+              } else {
+                this.selectedDate = null;
+              }
+              this.initCalendar(true);
+            },
+            onReady(selectedDates, dateStr, instance) {
+              const monthSelect = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
+              if (monthSelect) monthSelect.id = 'flatpickr-month';
+              const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
+              if (yearInput) yearInput.id = 'flatpickr-year';
+            }
+          });
+        },
+
+        continueBooking() {
+          const url = new URL(window.location.origin + '/booking/dayvisit/availability');
+          url.searchParams.set('date', this.selectedDate);
+          window.location.href = url.toString();
+        },
+
+        parseDate(dateStr) {
+          const [y,m,d] = (dateStr || '').split('-').map(Number);
+          if (!y || !m || !d) return null;
+          return new Date(y, m - 1, d);
+        },
+
+        formatDisplay(dateStr) {
+          const d = this.parseDate(dateStr);
+          if (!d) return '';
+          return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+        },
+
+        formatDateForCompare(date) {
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, '0');
+          const d = String(date.getDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        }
+      }
+    }
+  </script>
+  @else
   <script>
     function dateRangePicker({ availability, initialCheckin, initialCheckout, lowThreshold, totalQuantity, maxQty }) {
       return {
@@ -756,6 +1044,7 @@
       }
     }
   </script>
+  @endif
     {{-- Floating Buttons --}}
     <x-floating-buttons />
     <x-footer />

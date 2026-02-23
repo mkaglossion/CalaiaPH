@@ -21,18 +21,27 @@ class DayTourInventoryService
 
         if (!$inventory) {
             $dayTour = DayTour::findOrFail($dayTourId);
-            $inventory = DayTourInventory::create([
+            $maxGroups = $dayTour->max_groups_per_day ?? 3;
+            
+            // Create inventory - available_groups will be auto-calculated by model boot method
+            $inventory = new DayTourInventory([
                 'day_tour_id' => $dayTourId,
                 'date' => $date,
-                'max_groups' => $dayTour->max_groups_per_day ?? 3,
+                'max_groups' => $maxGroups,
                 'booked_groups' => 0,
-                'available_groups' => $dayTour->max_groups_per_day ?? 3,
+                'available_groups' => $maxGroups, // This will be recalculated by the model
                 'is_blocked' => false
             ]);
+            $inventory->save();
+            
+            // Refresh to get the correct calculated values
+            $inventory->refresh();
         }
 
         return $inventory;
     }
+
+
 
     /**
      * Check availability for a package on a date

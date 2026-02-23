@@ -39,15 +39,21 @@ class DayTour extends Model
      */
     public function getInventoryForDate($date)
     {
-        return $this->inventory()->firstOrCreate(
-            ['date' => $date],
-            [
-                'max_groups' => 3, // Default capacity
+        $maxGroups = $this->max_groups_per_day ?? 3;
+        
+        $inventory = $this->inventory()->where('date', $date)->first();
+        
+        if (!$inventory) {
+            $inventory = $this->inventory()->create([
+                'date' => $date,
+                'max_groups' => $maxGroups,
                 'booked_groups' => 0,
-                'available_groups' => 3,
+                'available_groups' => $maxGroups,
                 'is_blocked' => false
-            ]
-        );
+            ]);
+        }
+        
+        return $inventory;
     }
 
     /**

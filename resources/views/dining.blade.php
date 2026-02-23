@@ -221,7 +221,7 @@
       </section>
 
       {{-- Dynamic Details Modal --}}
-      <x-package-modal id="detailsModal" :price="false" :buttonText="'Book Now'" :buttonAction="'bookNow'" :bookingRoute="route('booking.calendar')" :appendParams="false">
+      <x-package-modal id="detailsModal" :price="false" :buttonText="'Book Now'" :buttonAction="'bookNow'" :bookingRoute="route('booking.calendar') . '?type=staycation'" :appendParams="false">
       </x-package-modal>
 
     </div>

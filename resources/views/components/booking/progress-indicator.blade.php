@@ -7,6 +7,11 @@
             2 => 'Select Your Staycation',
             3 => 'Select Activities',
             4 => 'Confirm Booking'
+        ],
+        'daytour' => [
+            1 => 'Select Your Date',
+            2 => 'Select Package',
+            3 => 'Confirm Booking'
         ]
     ];
     $percentage = ($stepNumber / $totalSteps) * 100;
