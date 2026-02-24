@@ -157,14 +157,16 @@ class BookingCalendarController extends Controller
             if ($totalAvailable > $maxQty) {
                 $maxQty = $totalAvailable;
             }
-
-            $totalQuantity += $totalAvailable;
         }
 
         // Use max from inventory if available, otherwise use base total
         if ($maxQty === 0) {
             $maxQty = $dayTours->sum('max_groups_per_day');
         }
+
+        // For day tours, totalQuantity should be the max available per day (same as maxQty)
+        // NOT the cumulative sum across all dates
+        $totalQuantity = $maxQty;
 
         // Determine season for pricing
         $season = $this->determineSeasonForCalendar();
