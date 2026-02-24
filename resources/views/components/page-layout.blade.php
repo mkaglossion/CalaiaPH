@@ -17,6 +17,12 @@
     <meta name="description" content="{{ $description }}">
     <meta name="keywords" content="{{ $keywords }}">
     <meta name="author" content="CalaiaPH">
+    
+    {{-- Prevent caching issues --}}
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     {{-- Vite handles all app CSS/JS. Do not hardcode asset links. --}}
     @vite(['resources/js/app.js', 'resources/js/booking/staycation.js'])
     <title>{{ $title }}</title>
@@ -65,6 +71,37 @@
                 }
             }, 100);
         });
+    </script>
+    
+    {{-- Clear browser cache to prevent ERR_CACHE_OPERATION_NOT_SUPPORTED errors --}}
+    <script>
+        (function() {
+            // Clear any problematic caches
+            if ('caches' in window) {
+                caches.keys().then(function(cacheNames) {
+                    cacheNames.forEach(function(cacheName) {
+                        if (cacheName.includes('workbox') || cacheName.includes('vite')) {
+                            caches.delete(cacheName);
+                            console.log('Cleared cache:', cacheName);
+                        }
+                    });
+                }).catch(function(err) {
+                    console.log('Cache clear skipped:', err);
+                });
+            }
+            
+            // Unregister service workers that might cause cache issues
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    registrations.forEach(function(registration) {
+                        registration.unregister();
+                        console.log('Unregistered service worker');
+                    });
+                }).catch(function(err) {
+                    console.log('Service worker unregister skipped:', err);
+                });
+            }
+        })();
     </script>
     
     {{-- Flash Messages --}}

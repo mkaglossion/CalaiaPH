@@ -1,4 +1,4 @@
-LEA<?php
+<?php
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -108,15 +108,37 @@ Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show')
 Route::get('/booking', [BookingController::class, 'create'])->name('booking.create');
 Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
 Route::get('/booking/calendar', [BookingCalendarController::class, 'show'])->name('booking.calendar');
-// Centralized API for activities
-Route::get('/api/activities', [BookingController::class, 'getActivitiesApi'])->name('api.activities');
-Route::get('/api/activity-images/{id}', function($id) {
-    $activity = \App\Models\Activity::find($id);
-    return $activity ? $activity->swiperImages->pluck('image_path') : [];
-})->name('api.activity-images');
-Route::get('/api/booking/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.activities');
-Route::get('/api/booking/settings', [BookingController::class, 'getBookingSettings'])->name('api.booking.settings');
-Route::post('/api/booking/calculate-staycation-price', [BookingController::class, 'calculateStaycationPrice'])->name('api.booking.calculateStaycationPrice');
+// Centralized API for activities - protected with rate limiting and security
+// General API routes (60 req/min)
+Route::middleware(['api.throttle:api', 'api.security'])->group(function () {
+    Route::get('/api/activities', [BookingController::class, 'getActivitiesApi'])->name('api.activities');
+    Route::get('/api/activity-images/{id}', function($id) {
+        $activity = \App\Models\Activity::find($id);
+        return $activity ? $activity->swiperImages->pluck('image_path') : [];
+    })->name('api.activity-images');
+    Route::get('/api/booking/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.activities');
+    
+    // API Routes for inventory (public access for preview purposes)
+    Route::get('/api/inventory/{roomId}', [\App\Http\Controllers\Admin\InventoryController::class, 'getInventory'])->name('api.inventory.get');
+    Route::get('/api/day-tour-inventory/{dayTourId}', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getInventory'])->name('api.day-tour-inventory.get');
+    
+    // Pricing API routes
+    Route::get('api/pricing/peak-types', [PricingConfigController::class, 'getPeakTypes'])->name('api.pricing.peakTypes');
+    Route::get('api/pricing/holidays', [PricingConfigController::class, 'getHolidays'])->name('api.pricing.holidays');
+    Route::get('api/pricing/weekend-config', [PricingConfigController::class, 'getWeekendConfig'])->name('api.pricing.weekendConfig');
+});
+
+// Booking API routes (30 req/min) - stricter rate limiting for booking operations
+Route::middleware(['api.throttle:booking', 'api.security'])->group(function () {
+    Route::get('/api/booking/settings', [BookingController::class, 'getBookingSettings'])->name('api.booking.settings');
+    Route::post('/api/booking/calculate-staycation-price', [BookingController::class, 'calculateStaycationPrice'])->name('api.booking.calculateStaycationPrice');
+    Route::get('/api/booking/staycation/availability', [BookingController::class, 'getStaycationAvailabilityApi'])->name('api.booking.staycationAvailability');
+    Route::get('/api/booking/staycation/prices', [BookingController::class, 'getStaycationPricesApi'])->name('api.booking.staycationPrices');
+    
+    // Day visit API routes
+    Route::get('/api/booking/dayvisit/availability', [DayVisitController::class, 'getAvailabilityApi'])->name('api.dayvisit.availability');
+    Route::get('/api/booking/dayvisit/activities', [DayVisitController::class, 'getActivitiesApi'])->name('api.booking.dayvisit.activities');
+});
 Route::get('/booking/activities', [BookingController::class, 'activities'])->name('booking.activities');
 Route::post('/booking/activities', [BookingController::class, 'storeActivities'])->name('booking.storeActivities');
 Route::get('/booking/staycation/activities', [BookingController::class, 'staycationActivities'])->name('booking.staycationActivities');
@@ -458,10 +480,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         // Seed Peak Types
         Route::get('seed-peak-types', [PricingConfigController::class, 'seedPeakTypes'])->name('admin.pricing.seedPeakTypes');
 
-        // API Endpoints
-        Route::get('api/peak-types', [PricingConfigController::class, 'getPeakTypes'])->name('api.pricing.peakTypes');
-        Route::get('api/holidays', [PricingConfigController::class, 'getHolidays'])->name('api.pricing.holidays');
-        Route::get('api/weekend-config', [PricingConfigController::class, 'getWeekendConfig'])->name('api.pricing.weekendConfig');
+        // API Endpoints (admin context - different names to avoid conflicts)
+        Route::get('api/peak-types', [PricingConfigController::class, 'getPeakTypes'])->name('admin.api.pricing.peakTypes');
+        Route::get('api/holidays', [PricingConfigController::class, 'getHolidays'])->name('admin.api.pricing.holidays');
+        Route::get('api/weekend-config', [PricingConfigController::class, 'getWeekendConfig'])->name('admin.api.pricing.weekendConfig');
     });
 
     // ========== Admin CRUD Routes ==========
@@ -553,15 +575,46 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     });
 });
 
-// ========== API Routes for Special Events ==========
-Route::post('/api/special-events', [EventApiController::class, 'store']);
-Route::post('/api/special-events/{event}', [EventApiController::class, 'update']);
-Route::put('/api/special-events/{event}', [EventApiController::class, 'update']);
-Route::delete('/api/special-events/{event}', [EventApiController::class, 'destroy']);
-Route::post('/api/special-events/upload-image', [EventApiController::class, 'uploadImage']);
+// ========== API Routes with Rate Limiting ==========
 
-// ========== API Routes for Farm Experiences ==========
-Route::post('/api/farm-experiences/upload-image', [\App\Http\Controllers\Api\FarmExperiencesApiController::class, 'uploadImage']);
+// General API Routes (60 requests per minute)
+Route::group(['middleware' => ['api.throttle:api', 'api.security', 'xss']], function () {
+    // Centralized API for activities
+    Route::get('/api/activities', [BookingController::class, 'getActivitiesApi'])->name('api.activities');
+    Route::get('/api/activity-images/{id}', function($id) {
+        $activity = \App\Models\Activity::find($id);
+        return $activity ? $activity->swiperImages->pluck('image_path') : [];
+    })->name('api.activity-images');
+    Route::get('/api/booking/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.activities');
+    
+    // API Routes for inventory (public access for preview purposes)
+    Route::get('/api/inventory/{roomId}', [\App\Http\Controllers\Admin\InventoryController::class, 'getInventory'])->name('api.inventory.get');
+    Route::get('/api/day-tour-inventory/{dayTourId}', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getInventory'])->name('api.day-tour-inventory.get');
+});
 
-// ========== API Routes for Day Tour Inventory ==========
-Route::get('/api/day-tour-inventory/{dayTourId}', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getInventory'])->name('api.day-tour-inventory.get');
+// Booking API Routes (30 requests per minute - stricter to prevent abuse)
+Route::group(['middleware' => ['api.throttle:booking', 'api.security', 'xss']], function () {
+    Route::get('/api/booking/settings', [BookingController::class, 'getBookingSettings'])->name('api.booking.settings');
+    Route::post('/api/booking/calculate-staycation-price', [BookingController::class, 'calculateStaycationPrice'])->name('api.booking.calculateStaycationPrice');
+    Route::get('/api/booking/staycation/availability', [BookingController::class, 'getStaycationAvailabilityApi'])->name('api.booking.staycationAvailability');
+    Route::get('/api/booking/staycation/prices', [BookingController::class, 'getStaycationPricesApi'])->name('api.booking.staycationPrices');
+    Route::get('/api/booking/dayvisit/availability', [DayVisitController::class, 'getAvailabilityApi'])->name('api.dayvisit.availability');
+    Route::get('/api/booking/dayvisit/activities', [DayVisitController::class, 'getActivitiesApi'])->name('api.booking.dayvisit.activities');
+});
+
+// Upload API Routes (5 requests per minute - very strict for file uploads)
+Route::group(['middleware' => ['api.throttle:upload', 'api.security', 'xss']], function () {
+    // API Routes for Special Events
+    Route::post('/api/special-events/upload-image', [EventApiController::class, 'uploadImage']);
+    
+    // API Routes for Farm Experiences
+    Route::post('/api/farm-experiences/upload-image', [\App\Http\Controllers\Api\FarmExperiencesApiController::class, 'uploadImage']);
+});
+
+// Special Events API Routes (10 requests per minute - stricter for write operations)
+Route::group(['middleware' => ['api.throttle:api_strict', 'api.security', 'xss']], function () {
+    Route::post('/api/special-events', [EventApiController::class, 'store']);
+    Route::post('/api/special-events/{event}', [EventApiController::class, 'update']);
+    Route::put('/api/special-events/{event}', [EventApiController::class, 'update']);
+    Route::delete('/api/special-events/{event}', [EventApiController::class, 'destroy']);
+});
