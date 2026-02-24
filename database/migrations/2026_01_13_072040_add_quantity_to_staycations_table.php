@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('staycations', function (Blueprint $table) {
-            $table->integer('quantity')->after('name');
-        });
+        if (!Schema::hasColumn('staycations', 'quantity')) {
+            Schema::table('staycations', function (Blueprint $table) {
+                $table->integer('quantity')->default(1)->after('name');
+            });
+        }
     }
 
     /**

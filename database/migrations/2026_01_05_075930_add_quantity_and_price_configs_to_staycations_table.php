@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('staycations', function (Blueprint $table) {
-            $table->integer('quantity')->default(1)->after('name');
-            $table->json('price_configs')->nullable()->after('quantity');
+            if (!Schema::hasColumn('staycations', 'quantity')) {
+                $table->integer('quantity')->default(1)->after('name');
+            }
+            if (!Schema::hasColumn('staycations', 'price_configs')) {
+                $table->json('price_configs')->nullable()->after('quantity');
+            }
         });
     }
 
