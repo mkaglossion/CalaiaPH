@@ -22,3 +22,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Vite build files - DO NOT IGNORE these for production
+# The build folder should be committed so assets are available on server
+# /public/build  # Commented out - we want to commit build files

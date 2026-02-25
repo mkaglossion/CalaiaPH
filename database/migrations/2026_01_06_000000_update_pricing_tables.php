@@ -10,14 +10,14 @@ return new class extends Migration {
         // Add unit_type to pricing_configs for rate matrix
         if (!Schema::hasColumn('pricing_configs', 'unit_type')) {
             Schema::table('pricing_configs', function (Blueprint $table) {
-                $table->string('unit_type')->after('id')->comment('e.g., Glamping Tent, Cabin, Villa');
+                $table->string('unit_type')->default('')->after('id')->comment('e.g., Glamping Tent, Cabin, Villa');
             });
         }
 
         // Add peak_type_id to pricing_configs (for direct peak type reference instead of peak_period_id)
         if (!Schema::hasColumn('pricing_configs', 'peak_type_id')) {
             Schema::table('pricing_configs', function (Blueprint $table) {
-                $table->foreignId('peak_type_id')->constrained()->cascadeOnDelete()->after('unit_type');
+                $table->foreignId('peak_type_id')->nullable()->constrained()->cascadeOnDelete()->after('unit_type');
             });
         }
 
