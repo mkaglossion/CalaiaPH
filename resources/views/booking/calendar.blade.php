@@ -1,3 +1,4 @@
+
  <!doctype html>
 <html lang="en">
   <head>
@@ -145,7 +146,7 @@
           text-align: center !important;
           transition: all 0.2s ease !important;
         }
-        
+
         /* Availability badge styling - always visible, positioned top-right */
         .booking-calendar .flatpickr-day .avail-badge{
           position: absolute !important;
@@ -231,7 +232,7 @@
           padding: 8px 0 !important;
           width: 100% !important;
         }
-        
+
         .booking-calendar .flatpickr-weekday{
           color: #666 !important;
           font-weight: 500 !important;
@@ -250,23 +251,23 @@
             gap: 20px !important;
             width: 100% !important;
           }
-          
+
           .booking-calendar .flatpickr-months{
             width: 100% !important;
             max-width: 100% !important;
             flex: none !important;
           }
-          
+
           .booking-calendar .flatpickr-month{
             width: 100% !important;
           }
-          
+
           .booking-calendar .flatpickr-day{
             min-height: 54px !important;
             padding: 8px 3px !important;
             font-size: 16px !important;
           }
-          
+
           .booking-calendar .flatpickr-day .avail-badge{
             font-size: 6px !important;
             padding: 1px 3px !important;
@@ -274,12 +275,12 @@
             bottom: 2px !important;
             right: 2px !important;
           }
-          
+
           /* On mobile, show badge on tap/touch */
           .booking-calendar .flatpickr-day:active .avail-badge{
             display: block !important;
           }
-          
+
           .booking-calendar .flatpickr-weekday{
             font-size: 11px !important;
           }
@@ -290,13 +291,13 @@
           .booking-calendar .flatpickr-innerContainer{
             gap: 16px !important;
           }
-          
+
           .booking-calendar .flatpickr-day{
             min-height: 58px !important;
             padding: 9px 3px !important;
             font-size: 18px !important;
           }
-          
+
           .booking-calendar .flatpickr-day .avail-badge{
             font-size: 8px !important;
             padding: 2px 6px !important;
@@ -309,7 +310,7 @@
           .booking-calendar .flatpickr-innerContainer{
             gap: 24px !important;
           }
-          
+
           .booking-calendar .flatpickr-months{
             max-width: 420px !important;
           }
@@ -373,7 +374,9 @@
             lowThreshold: @js($totalQuantity - 1),
             totalQuantity: @js($totalQuantity),
             maxQty: @js($maxQty),
-            dayTours: @js($dayToursList)
+            dayTours: @js($dayToursList),
+            bookingStartDate: @js($bookingStartDate),
+            bookingEndDate: @js($bookingEndDate)
           })"
           x-init="init()"
         >
@@ -386,7 +389,9 @@
             initialCheckout: @js($checkout),
             lowThreshold: @js($totalQuantity - 1),
             totalQuantity: @js($totalQuantity),
-            maxQty: @js($maxQty)
+            maxQty: @js($maxQty),
+            bookingStartDate: @js($bookingStartDate),
+            bookingEndDate: @js($bookingEndDate)
           })"
           x-init="init()"
         >
@@ -395,11 +400,13 @@
             @if($bookingType === 'daytour')
             <section class="grid grid-cols-1 gap-4 items-end mb-6">
                 <div>
-                  <label class="block text-sm font-bold text-gray-900 mb-1">Selected Date</label>
+                  <label for="selected-date" class="block text-sm font-bold text-gray-900 mb-1">Selected Date</label>
                   <div class="relative">
                     <i class="bi bi-calendar3 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
                     <input
                       type="text"
+                      id="selected-date"
+                      name="selected_date"
                       readonly
                       class="w-full border border-gray-300 bg-gray-100 rounded-none pl-10 pr-3 py-2 text-sm"
                       x-model="selectedDateDisplay"
@@ -411,11 +418,13 @@
             @else
             <section class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mb-6">
                 <div>
-                  <label class="block text-sm font-bold text-gray-900 mb-1">Check-in</label>
+                  <label for="checkin-date" class="block text-sm font-bold text-gray-900 mb-1">Check-in</label>
                   <div class="relative">
                     <i class="bi bi-calendar3 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
                     <input
                       type="text"
+                      id="checkin-date"
+                      name="checkin_date"
                       readonly
                       class="w-full border border-gray-300 bg-gray-100 rounded-none pl-10 pr-3 py-2 text-sm"
                       x-model="checkinDisplay"
@@ -425,11 +434,13 @@
                 </div>
 
                 <div>
-                  <label class="block text-sm font-bold text-gray-900 mb-1">Check-out</label>
+                  <label for="checkout-date" class="block text-sm font-bold text-gray-900 mb-1">Check-out</label>
                   <div class="relative">
                     <i class="bi bi-calendar3 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
                     <input
                       type="text"
+                      id="checkout-date"
+                      name="checkout_date"
                       readonly
                       class="w-full border border-gray-300 bg-gray-100 rounded-none pl-10 pr-3 py-2 text-sm"
                       x-model="checkoutDisplay"
@@ -448,8 +459,14 @@
             {{-- CALENDAR WRAP --}}
             <section class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
                 <div class="p-6">
+                  <!-- No inventory configured message -->
+                  <div x-show="!bookingStartDate || !bookingEndDate" class="text-center py-12">
+                    <i class="bi bi-calendar-x text-6xl text-gray-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Booking Not Available</h3>
+                    <p class="text-gray-500">No booking dates are currently configured. Please check back later or contact us for assistance.</p>
+                  </div>
                   <!-- flatpickr mounts here -->
-                  <div x-ref="calendar" class="booking-calendar"></div>
+                  <div x-show="bookingStartDate && bookingEndDate" x-ref="calendar" class="booking-calendar"></div>
                 </div>
 
                 @if($bookingType === 'daytour')
@@ -557,12 +574,14 @@
 
   @if($bookingType === 'daytour')
   <script>
-    function dayTourPicker({ availability, initialDate, lowThreshold, totalQuantity, maxQty, dayTours }) {
+    function dayTourPicker({ availability, initialDate, lowThreshold, totalQuantity, maxQty, dayTours, bookingStartDate, bookingEndDate }) {
       return {
         availability: availability || {},
         selectedDate: initialDate || null,
         calendarInstance: null,
         dayTours: dayTours || [],
+        bookingStartDate: bookingStartDate || null,
+        bookingEndDate: bookingEndDate || null,
 
         legendMaxQty: maxQty || 0,
         legendLowThreshold: 2,
@@ -611,6 +630,11 @@
         },
 
         initCalendar(keepSelected = false) {
+           // Don't initialize if no booking range is configured
+           if (!this.bookingStartDate || !this.bookingEndDate) {
+             return;
+           }
+
            const selected = keepSelected ? this.selectedDate : null;
 
            if (this.calendarInstance) {
@@ -630,6 +654,10 @@
           const today = new Date();
           today.setHours(0, 0, 0, 0);
 
+          // Parse booking range dates
+          const minDate = this.parseDate(this.bookingStartDate) || today;
+          const maxDate = this.parseDate(this.bookingEndDate);
+
           const months = this._months;
 
           this.calendarInstance = flatpickr(this.$refs.calendar, {
@@ -640,6 +668,10 @@
             monthSelectorType: 'static',
             showMonths: months,
 
+            // Restrict to configured booking range
+            minDate: minDate,
+            maxDate: maxDate,
+
             defaultDate: selected || this.selectedDate,
 
             disable: [
@@ -647,8 +679,13 @@
                 const checkDate = new Date(date);
                 checkDate.setHours(0, 0, 0, 0);
                 if (checkDate < today) return true;
-                
+
                 const dateStr = this.formatDateForCompare(date);
+
+                // Disable if no inventory for this date OR if explicitly disabled
+                const hasInventory = this.availability && this.availability.hasOwnProperty(dateStr);
+                if (!hasInventory) return true;
+
                 return disabledDates.includes(dateStr);
               }
             ],
@@ -664,7 +701,11 @@
               checkDate.setHours(0, 0, 0, 0);
               const isPast = checkDate < today;
 
-              if (disabledDates.includes(dateString) || isPast) {
+              // Check if this date has inventory configured
+              const hasInventory = this.availability && this.availability.hasOwnProperty(dateString);
+
+              // If no inventory configured for this date, or it's disabled/past = invalid
+              if (!hasInventory || disabledDates.includes(dateString) || isPast) {
                 dayElem.classList.add('fp-invalid');
                 const badge = document.createElement('div');
                 badge.className = 'avail-badge';
@@ -687,7 +728,7 @@
               }
 
               const details = this.availability && this.availability[dateString];
-              const qty = details ? Number(details.min_quantity || 0) : 10;
+              const qty = details ? Number(details.min_quantity || 0) : 0;
 
               if (qty === 0) {
                 dayElem.classList.add('fp-not-avail');
@@ -710,7 +751,7 @@
               badge.style.lineHeight = '1';
               badge.style.minWidth = '14px';
               badge.style.textAlign = 'center';
-              
+
               if (qty === 0) {
                 badge.style.backgroundColor = '#fee2e2';
                 badge.style.color = '#dc2626';
@@ -742,10 +783,17 @@
               this.initCalendar(true);
             },
             onReady(selectedDates, dateStr, instance) {
-              const monthSelect = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
-              if (monthSelect) monthSelect.id = 'flatpickr-month';
-              const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
-              if (yearInput) yearInput.id = 'flatpickr-year';
+              const monthSelects = instance.calendarContainer.querySelectorAll('.flatpickr-monthDropdown-months');
+              monthSelects.forEach((select, index) => {
+                if (select) select.id = 'flatpickr-month-' + index;
+              });
+              const yearInputs = instance.calendarContainer.querySelectorAll('.numInput.cur-year');
+              yearInputs.forEach((input, index) => {
+                if (input) {
+                  input.id = 'flatpickr-year-' + index;
+                  input.name = 'year-' + index;
+                }
+              });
             }
           });
         },
@@ -779,12 +827,14 @@
   </script>
   @else
   <script>
-    function dateRangePicker({ availability, initialCheckin, initialCheckout, lowThreshold, totalQuantity, maxQty }) {
+    function dateRangePicker({ availability, initialCheckin, initialCheckout, lowThreshold, totalQuantity, maxQty, bookingStartDate, bookingEndDate }) {
       return {
         availability: availability || {},
         checkin: null,
         checkout: null,
         calendarInstance: null,
+        bookingStartDate: bookingStartDate || null,
+        bookingEndDate: bookingEndDate || null,
 
         legendMaxQty: maxQty || 0,
         legendLowThreshold: 2,
@@ -848,6 +898,11 @@
         },
 
         initCalendar(keepSelected = false) {
+           // Don't initialize if no booking range is configured
+           if (!this.bookingStartDate || !this.bookingEndDate) {
+             return;
+           }
+
            const selected = keepSelected ? [this.checkin, this.checkout] : null;
 
            if (this.calendarInstance) {
@@ -869,6 +924,10 @@
           const today = new Date();
           today.setHours(0, 0, 0, 0);
 
+          // Parse booking range dates
+          const minDate = this.parseDate(this.bookingStartDate) || today;
+          const maxDate = this.parseDate(this.bookingEndDate);
+
           const months = this._months;
 
           this.calendarInstance = flatpickr(this.$refs.calendar, {
@@ -878,6 +937,10 @@
             disableMobile: true,
             monthSelectorType: 'static',
             showMonths: months,
+
+            // Restrict to configured booking range
+            minDate: minDate,
+            maxDate: maxDate,
 
             // ✅ keep selection when re-init
             defaultDate: selected ? selected.filter(Boolean) : [this.checkin, this.checkout].filter(Boolean),
@@ -889,9 +952,14 @@
                 const checkDate = new Date(date);
                 checkDate.setHours(0, 0, 0, 0);
                 if (checkDate < today) return true;
-                
-                // unavailable dates are disabled
+
                 const dateStr = this.formatDateForCompare(date);
+
+                // Disable if no inventory for this date OR if explicitly disabled
+                const hasInventory = this.availability && this.availability.hasOwnProperty(dateStr);
+                if (!hasInventory) return true;
+
+                // unavailable dates are disabled
                 return disabledDates.includes(dateStr);
               }
             ],
@@ -909,8 +977,11 @@
               checkDate.setHours(0, 0, 0, 0);
               const isPast = checkDate < today;
 
-              // disabled or past = invalid (gray)
-              if (disabledDates.includes(dateString) || isPast) {
+              // Check if this date has inventory configured
+              const hasInventory = this.availability && this.availability.hasOwnProperty(dateString);
+
+              // If no inventory configured for this date, or it's disabled/past = invalid (gray)
+              if (!hasInventory || disabledDates.includes(dateString) || isPast) {
                 dayElem.classList.add('fp-invalid');
                 // Add badge for disabled dates too
                 const badge = document.createElement('div');
@@ -934,7 +1005,7 @@
               }
 
               const details = this.availability && this.availability[dateString];
-              const qty = details ? Number(details.min_quantity || 0) : 10; // Default to 10 if no data
+              const qty = details ? Number(details.min_quantity || 0) : 0; // No inventory = 0
 
               // ✅ No inventory = not available (fully booked)
               if (qty === 0) {
@@ -961,7 +1032,7 @@
               badge.style.lineHeight = '1';
               badge.style.minWidth = '14px';
               badge.style.textAlign = 'center';
-              
+
               // Apply colors based on quantity
               if (qty === 0) {
                 badge.style.backgroundColor = '#fee2e2';
@@ -1008,10 +1079,17 @@
             },
             onReady(selectedDates, dateStr, instance) {
               // Add id to month dropdown and year input for accessibility
-              const monthSelect = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
-              if (monthSelect) monthSelect.id = 'flatpickr-month';
-              const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
-              if (yearInput) yearInput.id = 'flatpickr-year';
+              const monthSelects = instance.calendarContainer.querySelectorAll('.flatpickr-monthDropdown-months');
+              monthSelects.forEach((select, index) => {
+                if (select) select.id = 'flatpickr-month-' + index;
+              });
+              const yearInputs = instance.calendarContainer.querySelectorAll('.numInput.cur-year');
+              yearInputs.forEach((input, index) => {
+                if (input) {
+                  input.id = 'flatpickr-year-' + index;
+                  input.name = 'year-' + index;
+                }
+              });
             }
           });
         },

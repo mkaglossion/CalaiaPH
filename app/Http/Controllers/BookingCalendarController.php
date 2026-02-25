@@ -27,22 +27,80 @@ class BookingCalendarController extends Controller
 
     /**
      * Show staycation calendar with date range selection
+     * Only shows dates that have inventory configured in the admin panel
      */
     private function showStaycationCalendar(Request $request)
     {
-        $start = Carbon::today();
-        $end = (clone $start)->addMonths(6);
+        $today = Carbon::today();
 
-        // Build availability from staycation inventory — per-date total across ALL rooms
+        // Get inventory dates - only dates that have explicit inventory records
+        // No future limit - shows whatever dates admin configured
+        $earliestDate = StaycationInventory::where('date', '>=', $today)
+            ->min('date');
+        $latestDate = StaycationInventory::where('date', '>=', $today)
+            ->max('date');
+
+        // If no inventory configured at all
+        if (!$earliestDate || !$latestDate) {
+            $bookingStartDate = null;
+            $bookingEndDate = null;
+            $availability = [];
+            $maxQty = 0;
+            $totalQuantity = Staycation::sum('quantity');
+
+            $season = $this->determineSeasonForCalendar();
+            $checkin = $request->query('checkin');
+            $checkout = $request->query('checkout');
+            $bookingType = 'staycation';
+
+            return view('booking.calendar', compact(
+                'availability', 'checkin', 'checkout', 'totalQuantity',
+                'maxQty', 'season', 'bookingType', 'bookingStartDate', 'bookingEndDate'
+            ));
+        }
+
+        // Get all unique dates that have inventory configured
+        $inventoryDates = StaycationInventory::whereBetween('date', [$earliestDate, $latestDate])
+            ->distinct()
+            ->pluck('date')
+            ->map(function ($date) {
+                return Carbon::parse($date)->format('Y-m-d');
+            })
+            ->toArray();
+
+        // If no inventory configured, show message or fallback to empty range
+        if (empty($inventoryDates)) {
+            $bookingStartDate = null;
+            $bookingEndDate = null;
+            $availability = [];
+            $maxQty = 0;
+            $totalQuantity = Staycation::sum('quantity');
+
+            $season = $this->determineSeasonForCalendar();
+            $checkin = $request->query('checkin');
+            $checkout = $request->query('checkout');
+            $bookingType = 'staycation';
+
+            return view('booking.calendar', compact(
+                'availability', 'checkin', 'checkout', 'totalQuantity',
+                'maxQty', 'season', 'bookingType', 'bookingStartDate', 'bookingEndDate'
+            ));
+        }
+
+        // Get min and max dates for calendar navigation
+        $bookingStartDate = min($inventoryDates);
+        $bookingEndDate = max($inventoryDates);
+
+        // Build availability ONLY for dates that have inventory records
         $availability = [];
         $maxQty = 0;
 
-        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-            $key = $d->format('Y-m-d');
+        foreach ($inventoryDates as $dateStr) {
+            $d = Carbon::parse($dateStr);
 
-            // Past dates invalid
+            // Skip past dates
             if ($d->lt(Carbon::today())) {
-                $availability[$key] = [
+                $availability[$dateStr] = [
                     'is_available' => false,
                     'min_quantity' => 0
                 ];
@@ -50,16 +108,10 @@ class BookingCalendarController extends Controller
             }
 
             // Get total available quantity for this date from inventory table
-            // This sums available_quantity across all staycations for this date
-            $totalAvailable = StaycationInventory::where('date', $key)
+            $totalAvailable = StaycationInventory::where('date', $dateStr)
                 ->sum('available_quantity');
 
-            // If no inventory records exist for this date, fall back to total base quantity
-            if ($totalAvailable == 0) {
-                $totalAvailable = Staycation::sum('quantity');
-            }
-
-            $availability[$key] = [
+            $availability[$dateStr] = [
                 'is_available' => $totalAvailable > 0,
                 'min_quantity' => $totalAvailable
             ];
@@ -87,31 +139,94 @@ class BookingCalendarController extends Controller
 
         $bookingType = 'staycation';
 
-        return view('booking.calendar', compact('availability', 'checkin', 'checkout', 'totalQuantity', 'maxQty', 'season', 'bookingType'));
+        return view('booking.calendar', compact(
+            'availability', 'checkin', 'checkout', 'totalQuantity',
+            'maxQty', 'season', 'bookingType', 'bookingStartDate', 'bookingEndDate'
+        ));
     }
 
     /**
      * Show day tour calendar with single date selection
+     * Only shows dates that have inventory configured in the admin panel
      */
     private function showDayTourCalendar(Request $request)
     {
-        $start = Carbon::today();
-        $end = (clone $start)->addMonths(6);
+        $today = Carbon::today();
+
+        // Get inventory dates - only dates that have explicit inventory records
+        // No future limit - shows whatever dates admin configured
+        $earliestDate = DayTourInventory::where('date', '>=', $today)
+            ->min('date');
+        $latestDate = DayTourInventory::where('date', '>=', $today)
+            ->max('date');
+
+        // If no inventory configured at all
+        if (!$earliestDate || !$latestDate) {
+            $bookingStartDate = null;
+            $bookingEndDate = null;
+            $availability = [];
+            $maxQty = 0;
+            $totalQuantity = 0;
+            $dayToursList = DayTour::where('is_active', true)->get();
+
+            $season = $this->determineSeasonForCalendar();
+            $selectedDate = $request->query('date');
+            $bookingType = 'daytour';
+
+            return view('booking.calendar', compact(
+                'availability', 'selectedDate', 'totalQuantity',
+                'maxQty', 'season', 'bookingType', 'dayToursList',
+                'bookingStartDate', 'bookingEndDate'
+            ));
+        }
+
+        // Get all unique dates that have day tour inventory configured
+        $inventoryDates = DayTourInventory::whereBetween('date', [$earliestDate, $latestDate])
+            ->distinct()
+            ->pluck('date')
+            ->map(function ($date) {
+                return Carbon::parse($date)->format('Y-m-d');
+            })
+            ->toArray();
+
+        // If no inventory configured, show message or fallback to empty range
+        if (empty($inventoryDates)) {
+            $bookingStartDate = null;
+            $bookingEndDate = null;
+            $availability = [];
+            $maxQty = 0;
+            $totalQuantity = 0;
+            $dayToursList = DayTour::where('is_active', true)->get();
+
+            $season = $this->determineSeasonForCalendar();
+            $selectedDate = $request->query('date');
+            $bookingType = 'daytour';
+
+            return view('booking.calendar', compact(
+                'availability', 'selectedDate', 'totalQuantity',
+                'maxQty', 'season', 'bookingType', 'dayToursList',
+                'bookingStartDate', 'bookingEndDate'
+            ));
+        }
+
+        // Get min and max dates for calendar navigation
+        $bookingStartDate = min($inventoryDates);
+        $bookingEndDate = max($inventoryDates);
 
         // Get all active day tours
         $dayTours = DayTour::where('is_active', true)->get();
 
-        // Build availability for each day tour package
+        // Build availability ONLY for dates that have inventory records
         $availability = [];
         $maxQty = 0;
         $totalQuantity = 0;
 
-        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-            $key = $d->format('Y-m-d');
+        foreach ($inventoryDates as $dateStr) {
+            $d = Carbon::parse($dateStr);
 
-            // Past dates invalid
+            // Skip past dates
             if ($d->lt(Carbon::today())) {
-                $availability[$key] = [
+                $availability[$dateStr] = [
                     'is_available' => false,
                     'min_quantity' => 0,
                     'packages' => []
@@ -120,24 +235,19 @@ class BookingCalendarController extends Controller
             }
 
             // Get total available groups across all day tours for this date
-            $totalAvailable = DayTourInventory::where('date', $key)
+            $totalAvailable = DayTourInventory::where('date', $dateStr)
                 ->where('is_blocked', false)
                 ->sum('available_groups');
-
-            // If no inventory records exist, calculate from day tour defaults
-            if ($totalAvailable == 0) {
-                $totalAvailable = $dayTours->sum('max_groups_per_day');
-            }
 
             // Get per-package availability
             $packages = [];
             foreach ($dayTours as $tour) {
                 $inventory = DayTourInventory::where('day_tour_id', $tour->id)
-                    ->where('date', $key)
+                    ->where('date', $dateStr)
                     ->first();
 
-                $availableGroups = $inventory ? $inventory->available_groups : $tour->max_groups_per_day;
-                
+                $availableGroups = $inventory ? $inventory->available_groups : 0;
+
                 $packages[] = [
                     'id' => $tour->id,
                     'name' => $tour->name,
@@ -147,7 +257,7 @@ class BookingCalendarController extends Controller
                 ];
             }
 
-            $availability[$key] = [
+            $availability[$dateStr] = [
                 'is_available' => $totalAvailable > 0,
                 'min_quantity' => $totalAvailable,
                 'packages' => $packages
@@ -177,7 +287,11 @@ class BookingCalendarController extends Controller
         $bookingType = 'daytour';
         $dayToursList = $dayTours;
 
-        return view('booking.calendar', compact('availability', 'selectedDate', 'totalQuantity', 'maxQty', 'season', 'bookingType', 'dayToursList'));
+        return view('booking.calendar', compact(
+            'availability', 'selectedDate', 'totalQuantity',
+            'maxQty', 'season', 'bookingType', 'dayToursList',
+            'bookingStartDate', 'bookingEndDate'
+        ));
     }
 
     private function determineSeasonForCalendar()
