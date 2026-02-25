@@ -78,7 +78,7 @@
                             <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-start sm:items-center gap-2 sm:gap-3">
                                 <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white font-bold text-sm shrink-0">
                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.82 1.573l-7 10A1 1 0 08 15H3a3 3 0 01-3-3V6zm14.854-2.854a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414zM1 6a2 2 0 012-2h6a1 1 0 01.894.553l7 10a1 1 0 11-1.788.894l-1.447-2.067H7a1 1 0 01-.894-.553l-7-10a1 1 0 011.342-1.414L4.5 7.586h-1.5a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
+                                        <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.82 1.573l-7 10A1 1 0 0 0 8 15H3a3 3 0 01-3-3V6zm14.854-2.854a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414zM1 6a2 2 0 012-2h6a1 1 0 01.894.553l7 10a1 1 0 11-1.788.894l-1.447-2.067H7a1 1 0 01-.894-.553l-7-10a1 1 0 011.342-1.414L4.5 7.586h-1.5a2 2 0 01-2-2V6z" clip-rule="evenodd"/>
                                     </svg>
                                 </span>
                                 <span>Prohibited Conduct</span>
@@ -400,7 +400,7 @@
                                 </span>
                                 <div>
                                     <p class="font-bold text-gray-900 text-base">Phone</p>
-                                    <p class="text-gray-700 font-semibold">+63 949 139 4912</p>
+                                    <p class="text-gray-700 font-semibold">+63 905 129 4741</p>
                                 </div>
                             </div>
                             <div class="flex items-start gap-4 md:col-span-2">
