@@ -51,6 +51,10 @@ $activitiesTotal = $booking['final_totals']['activities_total'] ?? 0;
 $foodTotal = $booking['final_totals']['food_total'] ?? 0;
 $grandTotal = $booking['final_totals']['grand_total'] ?? 0;
 
+// Calculate VAT breakdown using VatService (12% Philippine VAT)
+$vatService = app(\App\Services\VatService::class);
+$vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, true); // true = VAT inclusive
+
 // Get selected activities from session
 $selectedActivities = $booking['selected_activities'] ?? [];
 @endphp

@@ -62,7 +62,14 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
           $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1); // No nights multiplication
       }
   }
+  
+  // Calculate grand total for staycation
+  $grandTotal = $accommodationTotal + $activitiesTotal + $foodTotal;
 }
+
+// Calculate VAT breakdown using VatService (12% Philippine VAT)
+$vatService = app(\App\Services\VatService::class);
+$vatBreakdown = $vatService->generateBreakdown((float) ($grandTotal ?? 0), true); // true = VAT inclusive
 @endphp
 
 @php
@@ -226,10 +233,23 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                   <span>Activities Total:</span>
                   <span>₱{{ number_format(collect($selectedActivities ?? [])->sum(function($activity) { return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1); }), 2) }}</span>
                 </div>
+                {{-- Subtotal (VAT-inclusive) --}}
+                <div class="flex justify-between items-center text-sm border-t border-gray-200 pt-2">
+                  <span>Subtotal:</span>
+                  <span class="font-medium">₱{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal ?? 0, 2) }}</span>
+                </div>
+                {{-- VAT Included --}}
+                <div class="flex justify-between items-center text-sm text-gray-500">
+                  <span>Includes 12% VAT:</span>
+                  <span>₱{{ number_format($vatBreakdown['vat_amount'] ?? 0, 2) }}</span>
+                </div>
                 <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
                   <span>Total Amount Paid:</span>
-                  <span class="text-[#8f5d54]">₱{{ number_format($grandTotal ?? 0, 2) }}</span>
+                  <span class="text-[#8f5d54]">₱{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal ?? 0, 2) }}</span>
                 </div>
+                <p class="text-xs text-gray-500 italic text-center mt-2">
+                  * All prices are VAT-inclusive as required by Philippine tax regulations.
+                </p>
               </div>
             </div>
           @elseif(isset($isStaycation) && $isStaycation)
@@ -396,10 +416,23 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                   <span>₱{{ number_format($activitiesTotal, 2) }}</span>
                 </div>
                 @endif
+                {{-- Subtotal (VAT-inclusive) --}}
+                <div class="flex justify-between items-center text-sm border-t border-gray-200 pt-2">
+                  <span>Subtotal:</span>
+                  <span class="font-medium">₱{{ number_format($vatBreakdown['gross_amount'] ?? ($accommodationTotal + $foodTotal + $activitiesTotal), 2) }}</span>
+                </div>
+                {{-- VAT Included --}}
+                <div class="flex justify-between items-center text-sm text-gray-500">
+                  <span>Includes 12% VAT:</span>
+                  <span>₱{{ number_format($vatBreakdown['vat_amount'] ?? 0, 2) }}</span>
+                </div>
                 <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
                   <span>Total Amount Paid:</span>
-                  <span class="text-[#8f5d54]">₱{{ number_format($accommodationTotal + $foodTotal + $activitiesTotal, 2) }}</span>
+                  <span class="text-[#8f5d54]">₱{{ number_format($vatBreakdown['gross_amount'] ?? ($accommodationTotal + $foodTotal + $activitiesTotal), 2) }}</span>
                 </div>
+                <p class="text-xs text-gray-500 italic text-center mt-2">
+                  * All prices are VAT-inclusive as required by Philippine tax regulations.
+                </p>
               </div>
             </div>
           @else
@@ -480,10 +513,23 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                   <span>₱{{ number_format($activitiesTotal, 2) }}</span>
                 </div>
                 @endif
+                {{-- Subtotal (VAT-inclusive) --}}
+                <div class="flex justify-between items-center text-sm border-t border-gray-200 pt-2">
+                  <span>Subtotal:</span>
+                  <span class="font-medium">₱{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal, 2) }}</span>
+                </div>
+                {{-- VAT Included --}}
+                <div class="flex justify-between items-center text-sm text-gray-500">
+                  <span>Includes 12% VAT:</span>
+                  <span>₱{{ number_format($vatBreakdown['vat_amount'] ?? 0, 2) }}</span>
+                </div>
                 <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
                   <span>Total Amount Paid:</span>
-                  <span class="text-[#8f5d54]">₱{{ number_format($grandTotal, 2) }}</span>
+                  <span class="text-[#8f5d54]">₱{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal, 2) }}</span>
                 </div>
+                <p class="text-xs text-gray-500 italic text-center mt-2">
+                  * All prices are VAT-inclusive as required by Philippine tax regulations.
+                </p>
               </div>
             </div>
           @endif

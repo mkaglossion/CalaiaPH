@@ -53,6 +53,15 @@ if (!empty($selectedFoods)) {
         $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1); // No nights multiplication
     }
 }
+
+// Calculate grand total and VAT breakdown
+$grandTotal = isset($booking['final_totals']['grand_total']) 
+    ? $booking['final_totals']['grand_total'] 
+    : ($accommodationTotal + (!empty($selectedActivities) ? $activitiesTotal : 0) + ($calculatedFoodTotal ?? $foodTotal));
+
+// Calculate VAT breakdown using VatService (12% Philippine VAT)
+$vatService = app(\App\Services\VatService::class);
+$vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, true); // true = VAT inclusive
 @endphp
 
 <div class="bg-white rounded-2xl shadow-lg p-6 space-y-6">
@@ -317,14 +326,36 @@ if (!empty($selectedFoods)) {
             <span id="activities-total" class="font-semibold">₱{{ !empty($selectedActivities) ? number_format($activitiesTotal, 0) : '0' }}</span>
         </div>
         @endif
-        <div class="flex justify-between items-center text-lg font-bold border-t border-gray-100 pt-2">
+        
+        {{-- Subtotal (VAT-inclusive) --}}
+        <div class="flex justify-between items-center text-sm border-t border-gray-100 pt-2">
+            <span class="text-gray-600">Subtotal:</span>
+            <span class="font-semibold">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
+        </div>
+        
+        {{-- VAT Included Breakdown --}}
+        <div class="flex justify-between items-center text-sm text-gray-500">
+            <span>
+                <i class="bi bi-info-circle text-gray-400 text-xs cursor-help" title="Value Added Tax as per Philippine TRAIN Law"></i>
+                Includes 12% VAT:
+            </span>
+            <span>₱{{ number_format($vatBreakdown['vat_amount'], 2) }}</span>
+        </div>
+        
+        {{-- Grand Total --}}
+        <div class="flex justify-between items-center text-lg font-bold border-t border-gray-200 pt-2">
             <span>Grand Total:</span>
             @if($showDynamicFood)
                 <span id="grand-total" class="text-[#8f5d54]" x-text="calculateTotal()" data-food-total="0"></span>
             @else
-                <span id="grand-total" class="text-[#8f5d54]" data-food-total="{{ $calculatedFoodTotal ?? $foodTotal }}">₱{{ number_format(isset($booking['final_totals']['grand_total']) ? $booking['final_totals']['grand_total'] : ($accommodationTotal + (!empty($selectedActivities) ? $activitiesTotal : 0) + ($calculatedFoodTotal ?? $foodTotal)), 0) }}</span>
+                <span id="grand-total" class="text-[#8f5d54]" data-food-total="{{ $calculatedFoodTotal ?? $foodTotal }}">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
             @endif
         </div>
+        
+        {{-- VAT Note --}}
+        <p class="text-xs text-gray-500 italic text-center mt-2">
+            * All prices are VAT-inclusive as required by Philippine tax regulations.
+        </p>
     </div>
     @endif
 

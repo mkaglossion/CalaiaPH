@@ -317,9 +317,9 @@
                                             {{-- BYOT: Show "How many BYOT" only --}}
                                             <div class="grid grid-cols-1 gap-2">
                                                 <div>
-                                                    <label for="byot-qty-{{ $staycation->id }}" class="md:hidden text-xs text-gray-600 font-semibold">How many BYOT?</label>
+                                                    <label for="byot-qty-{{ $staycation->id }}" class="block text-xs text-gray-600 font-semibold mb-1">How many BYOT?</label>
                                                     <input type="number" id="byot-qty-{{ $staycation->id }}" min="1" max="{{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }}"
-                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
                                                            :value="getRoom({{ $staycation->id }}).extra_mattress || 1"
                                                            @input="validateQuantity({{ $staycation->id }}, 'extra_mattress', $event.target.value, {{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }})"
                                                     >
@@ -330,9 +330,9 @@
                                             {{-- Car Camping: Show "Number of Vehicles" only --}}
                                             <div class="grid grid-cols-1 gap-2">
                                                 <div>
-                                                    <label for="vehicles-{{ $staycation->id }}" class="md:hidden text-xs text-gray-600 font-semibold">Number of Vehicles</label>
+                                                    <label for="vehicles-{{ $staycation->id }}" class="block text-xs text-gray-600 font-semibold mb-1">Number of Vehicles</label>
                                                     <input type="number" id="vehicles-{{ $staycation->id }}" min="1" max="{{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }}"
-                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
                                                            :value="getRoom({{ $staycation->id }}).extra_mattress || 1"
                                                            @input="validateQuantity({{ $staycation->id }}, 'extra_mattress', $event.target.value, {{ $roomDetails[$staycation->id]['available_quantity'] ?? 8 }})"
                                                     >
@@ -343,25 +343,25 @@
                                             {{-- Regular rooms: Adults, Children, Extra Mattress --}}
                                             <div class="grid grid-cols-3 gap-2">
                                                 <div>
-                                                    <label for="adults-{{ $staycation->id }}" class="md:hidden text-xs text-gray-600">Adults</label>
+                                                    <label for="adults-{{ $staycation->id }}" class="block text-xs text-gray-600 mb-1">Adults</label>
                                                     <input type="number" id="adults-{{ $staycation->id }}" min="1" max="20"
-                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
                                                            :value="getRoom({{ $staycation->id }}).adults"
                                                            @input="validateAndSetGuests({{ $staycation->id }}, 'adults', $event.target.value, '{{ strtolower($roomDetail['name']) }}')"
                                                     >
                                                 </div>
                                                 <div>
-                                                    <label for="children-{{ $staycation->id }}" class="md:hidden text-xs text-gray-600">Children</label>
+                                                    <label for="children-{{ $staycation->id }}" class="block text-xs text-gray-600 mb-1">Children</label>
                                                     <input type="number" id="children-{{ $staycation->id }}" min="0" max="20"
-                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
                                                            :value="getRoom({{ $staycation->id }}).children"
                                                            @input="validateAndSetGuests({{ $staycation->id }}, 'children', $event.target.value, '{{ strtolower($roomDetail['name']) }}')"
                                                     >
                                                 </div>
                                                 <div>
-                                                    <label for="mattress-{{ $staycation->id }}" class="md:hidden text-xs text-gray-600">Extra Mattress</label>
+                                                    <label for="mattress-{{ $staycation->id }}" class="block text-xs text-gray-600 mb-1">Extra Mattress</label>
                                                     <input type="number" id="mattress-{{ $staycation->id }}" min="0" max="8"
-                                                           class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
+                                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#8f5d54] focus:border-[#8f5d54]"
                                                            :value="getRoom({{ $staycation->id }}).extra_mattress"
                                                            @input="setField({{ $staycation->id }}, 'extra_mattress', $event.target.value)"
                                                     >
@@ -422,9 +422,9 @@
                                                     </label>
 
                                                     <div class="mt-3">
-                                                        <label for="pets-{{ $staycation->id }}" class="md:hidden text-xs text-gray-700">Number of pets</label>
+                                                        <label for="pets-{{ $staycation->id }}" class="block text-xs text-gray-700 mb-1">Number of pets</label>
                                                         <input type="number" id="pets-{{ $staycation->id }}" min="0" max="2"
-                                                               class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                                                                :disabled="!getRoom({{ $staycation->id }}).pet_agreement"
                                                                :value="getRoom({{ $staycation->id }}).num_pets"
                                                                @input="setField({{ $staycation->id }}, 'num_pets', $event.target.value)"

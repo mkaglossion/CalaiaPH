@@ -24,6 +24,10 @@ class Booking extends Model
         'checkout_date',
         'booking_data', // JSON field for all booking details
         'total_amount',
+        'subtotal', // Amount before VAT
+        'vat_amount', // 12% VAT amount
+        'vat_rate', // VAT rate applied
+        'is_vat_inclusive', // Whether prices include VAT
         'payment_method',
         'payment_status',
         'status', // 'confirmed', 'cancelled', 'completed'
@@ -39,6 +43,10 @@ class Booking extends Model
         'checkin_timestamp' => 'datetime',
         'checkout_timestamp' => 'datetime',
         'total_amount' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'vat_amount' => 'decimal:2',
+        'vat_rate' => 'decimal:4',
+        'is_vat_inclusive' => 'boolean',
     ];
 
     const CHECKIN_STATUS_PENDING = 'pending';
@@ -99,6 +107,64 @@ class Booking extends Model
         }
 
         return $label ?: 'N/A';
+    }
+
+    /**
+     * Calculate and set VAT fields for this booking.
+     * Uses VatService for Philippine tax compliance (12% VAT).
+     * 
+     * @param float $totalAmount The total amount (VAT-inclusive for B2C)
+     * @param bool $isVatInclusive Whether the amount includes VAT
+     * @return void
+     */
+    public function calculateAndSetVat(float $totalAmount, bool $isVatInclusive = true): void
+    {
+        $vatService = app(\App\Services\VatService::class);
+        $breakdown = $vatService->generateBreakdown($totalAmount, $isVatInclusive);
+
+        $this->total_amount = $breakdown['gross_amount'];
+        $this->subtotal = $breakdown['net_amount'];
+        $this->vat_amount = $breakdown['vat_amount'];
+        $this->vat_rate = $breakdown['vat_rate'];
+        $this->is_vat_inclusive = $isVatInclusive;
+    }
+
+    /**
+     * Get VAT breakdown for this booking.
+     * 
+     * @return array
+     */
+    public function getVatBreakdown(): array
+    {
+        return [
+            'gross_amount' => (float) $this->total_amount,
+            'net_amount' => (float) $this->subtotal,
+            'vat_amount' => (float) $this->vat_amount,
+            'vat_rate' => (float) $this->vat_rate,
+            'vat_rate_display' => (float) $this->vat_rate * 100,
+            'vat_label' => ((float) $this->vat_rate * 100) . '% VAT',
+            'is_vat_inclusive' => (bool) $this->is_vat_inclusive,
+        ];
+    }
+
+    /**
+     * Get formatted VAT amount for display.
+     * 
+     * @return string
+     */
+    public function getFormattedVatAttribute(): string
+    {
+        return '₱' . number_format((float) $this->vat_amount, 2);
+    }
+
+    /**
+     * Get formatted subtotal for display.
+     * 
+     * @return string
+     */
+    public function getFormattedSubtotalAttribute(): string
+    {
+        return '₱' . number_format((float) $this->subtotal, 2);
     }
 
     /**
