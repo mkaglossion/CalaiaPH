@@ -7,10 +7,53 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>CalaiaPH - Staycation Payment</title>
 
-  {{-- Styles --}}
+    {{-- Styles --}}
   @vite(['resources/js/app.js'])
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Discount type radio buttons
+      const discountTypeRadios = document.querySelectorAll('input[name="discount_type"]');
+      const discountIdField = document.getElementById('discount-id-field');
+      const discountIdInput = document.getElementById('discount_id_number');
+      const discountIdLabel = discountIdField.querySelector('label');
+
+      // Function to update discount ID field
+      function updateDiscountIdField(discountType) {
+        if (discountType === 'none') {
+          discountIdField.classList.add('hidden');
+          discountIdInput.disabled = true;
+          discountIdInput.removeAttribute('required');
+        } else {
+          discountIdField.classList.remove('hidden');
+          discountIdInput.disabled = false;
+          discountIdInput.setAttribute('required', 'required');
+
+          // Update label text based on discount type
+          if (discountType === 'senior') {
+            discountIdLabel.innerHTML = 'Senior Citizen ID Number <span class="text-red-500">*</span>';
+            discountIdInput.placeholder = 'e.g., SC-123456';
+          } else if (discountType === 'pwd') {
+            discountIdLabel.innerHTML = 'PWD ID Number <span class="text-red-500">*</span>';
+            discountIdInput.placeholder = 'e.g., PWD-123456';
+          }
+        }
+      }
+
+      // Add event listeners to radio buttons
+      discountTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+          updateDiscountIdField(this.value);
+        });
+      });
+
+      // Initial update based on default value
+      const defaultDiscountType = document.querySelector('input[name="discount_type"]:checked').value;
+      updateDiscountIdField(defaultDiscountType);
+    });
+  </script>
 </head>
 
 @php
@@ -134,6 +177,9 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                     <input type="hidden" name="selected_activities" value="{{ json_encode($booking['selected_activities'] ?? []) }}">
                     <input type="hidden" name="booking_type" value="{{ $booking['booking_type'] ?? 'general' }}">
                     <input type="hidden" name="total_guests" value="{{ $totalGuests }}">
+                    
+                    {{-- Discount Fields --}}
+                    <input type="hidden" name="discount_type" value="{{ old('discount_type', $booking['discount_type'] ?? 'none') }}">
 
                     {{-- Validation Errors --}}
                     @if ($errors->any())
@@ -224,6 +270,52 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                             required
                           >
                         </div>
+                      </div>
+
+                      {{-- Discount Selection --}}
+                      <div class="mt-4 sm:mt-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">
+                          Discount Type (Optional)
+                        </label>
+                        <div class="space-y-3">
+                          <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="radio" name="discount_type" value="none"
+                                   class="w-4 h-4 text-[#8f5d54] focus:ring-[#8f5d54]"
+                                   {{ old('discount_type', $booking['discount_type'] ?? 'none') === 'none' ? 'checked' : '' }}>
+                            <span class="text-sm text-gray-700">No Discount</span>
+                          </label>
+                          <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="radio" name="discount_type" value="senior"
+                                   class="w-4 h-4 text-[#8f5d54] focus:ring-[#8f5d54]"
+                                   {{ old('discount_type', $booking['discount_type'] ?? 'none') === 'senior' ? 'checked' : '' }}>
+                            <span class="text-sm text-gray-700">Senior Citizen Discount (20%)</span>
+                          </label>
+                          <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="radio" name="discount_type" value="pwd"
+                                   class="w-4 h-4 text-[#8f5d54] focus:ring-[#8f5d54]"
+                                   {{ old('discount_type', $booking['discount_type'] ?? 'none') === 'pwd' ? 'checked' : '' }}>
+                            <span class="text-sm text-gray-700">PWD Discount (20%)</span>
+                          </label>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">
+                          * Discounts are subject to validation upon arrival with valid ID.
+                        </p>
+                      </div>
+
+                      {{-- Discount ID Number (only visible if discount is selected) --}}
+                      <div id="discount-id-field" class="{{ (old('discount_type', $booking['discount_type'] ?? 'none') === 'none') ? 'hidden' : '' }} mt-4 sm:mt-6">
+                        <label for="discount_id_number" class="block text-sm font-medium text-gray-700 mb-2">
+                          {{ old('discount_type', $booking['discount_type'] ?? 'none') === 'senior' ? 'Senior Citizen ID Number' : 'PWD ID Number' }} <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          id="discount_id_number"
+                          name="discount_id_number"
+                          value="{{ old('discount_id_number', $booking['discount_id_number'] ?? '') }}"
+                          class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
+                          placeholder="{{ old('discount_type', $booking['discount_type'] ?? 'none') === 'senior' ? 'e.g., SC-123456' : 'e.g., PWD-123456' }}"
+                          {{ (old('discount_type', $booking['discount_type'] ?? 'none') === 'none') ? 'disabled' : 'required' }}
+                        >
                       </div>
 
                       {{-- Special Requests --}}

@@ -3,20 +3,34 @@
     'booking' => [],
     'selectedActivities' => [],
     'showActivities' => true,
-    'showTrustElements' => true
+    'showTrustElements' => true,
+    'vatBreakdown' => null
 ])
 
 @php
 // Calculate totals
 $activitiesTotal = 0;
-$grandTotal = $booking['price'] ?? 0;
+$baseTotal = $booking['price'] ?? 0;
 
 // Activities total
 foreach ($selectedActivities as $activity) {
     $activitiesTotal += ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
 }
 
-$grandTotal += $activitiesTotal;
+$baseTotal += $activitiesTotal;
+
+// VAT calculation
+if ($vatBreakdown) {
+    $subtotal = $vatBreakdown['net_amount'] ?? $baseTotal;
+    $vatAmount = $vatBreakdown['vat_amount'] ?? 0;
+    $grandTotal = $vatBreakdown['gross_amount'] ?? $baseTotal;
+} else {
+    // Default 12% VAT calculation
+    $vatRate = 0.12;
+    $subtotal = $baseTotal / (1 + $vatRate);
+    $vatAmount = $baseTotal - $subtotal;
+    $grandTotal = $baseTotal;
+}
 
 // Date calculations
 $bookingDate = $booking['booking_date'] ?? null;
@@ -93,7 +107,7 @@ $packageName = $booking['package'] ?? $booking['package_name'] ?? 'Day Visit Pac
     <hr class="border-gray-300">
     @endif
 
-    {{-- Pricing Summary --}}
+    {{-- Pricing Summary with VAT Breakdown --}}
     <div class="space-y-3">
         <div class="flex justify-between items-center text-sm">
             <span class="text-gray-600 uppercase">{{ $packageName }}:</span>
@@ -105,10 +119,27 @@ $packageName = $booking['package'] ?? $booking['package_name'] ?? 'Day Visit Pac
             <span id="activities-total" class="font-semibold">₱{{ !empty($selectedActivities) ? number_format($activitiesTotal, 0) : '0' }}</span>
         </div>
         @endif
+        
+        {{-- VAT Breakdown --}}
+        <div class="border-t border-gray-200 pt-3 mt-3 space-y-2">
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-600">Subtotal:</span>
+                <span class="font-semibold">₱{{ number_format($subtotal, 2) }}</span>
+            </div>
+            <div class="flex justify-between items-center text-xs text-gray-500">
+                <span>Includes 12% VAT:</span>
+                <span>₱{{ number_format($vatAmount, 2) }}</span>
+            </div>
+        </div>
+        
         <div class="flex justify-between items-center text-lg font-bold border-t border-gray-100 pt-2">
             <span>Grand Total:</span>
-            <span id="grand-total" class="text-[#8f5d54]">₱{{ number_format($grandTotal, 0) }}</span>
+            <span id="grand-total" class="text-[#8f5d54]">₱{{ number_format($grandTotal, 2) }}</span>
         </div>
+        
+        <p class="text-xs text-gray-500 mt-2">
+            * All prices are VAT-inclusive as required by Philippine tax regulations.
+        </p>
     </div>
 
 

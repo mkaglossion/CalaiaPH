@@ -1,109 +1,802 @@
-<x-page-layout title="CalaiaPH - Day Visit Payment" active-header="daytour">
-  @php
-  $selectedActivities = session('dayvisit_selected_activities', []);
-  $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
-      return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
-  });
-  $grandTotal = ($bookingData['price'] ?? 0) + $activitiesTotal;
-  @endphp
-  {{-- Progress Indicator --}}
-  <div class="bg-white shadow-sm border-b border-gray-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex items-center justify-center space-x-2 sm:space-x-4 max-w-md sm:max-w-lg mx-auto">
-        {{-- Step 1: Availability (completed) --}}
-        <div class="flex flex-col items-center text-green-600">
-          <div class="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
-            <i class="bi bi-check-circle-fill"></i>
-          </div>
-          <span class="text-xs sm:text-sm font-medium text-center">Availability</span>
-        </div>
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>CalaiaPH - Day Visit Payment</title>
 
-        <div class="flex-1 h-px bg-gray-300"></div>
+  {{-- Styles --}}
+  @vite(['resources/js/app.js'])
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
-        {{-- Step 2: Activities (completed) --}}
-        <div class="flex flex-col items-center text-green-600">
-          <div class="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
-            <i class="bi bi-check-circle-fill"></i>
-          </div>
-          <span class="text-xs sm:text-sm font-medium text-center">Activities</span>
-        </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Discount type radio buttons
+      const discountTypeRadios = document.querySelectorAll('input[name="discount_type"]');
+      const discountIdField = document.getElementById('discount-id-field');
+      const discountIdInput = document.getElementById('discount_id_number');
+      const discountIdLabel = discountIdField.querySelector('label');
 
-        <div class="flex-1 h-px bg-gray-300"></div>
+      // Function to update discount ID field
+      function updateDiscountIdField(discountType) {
+        if (discountType === 'none') {
+          discountIdField.classList.add('hidden');
+          discountIdInput.disabled = true;
+          discountIdInput.removeAttribute('required');
+        } else {
+          discountIdField.classList.remove('hidden');
+          discountIdInput.disabled = false;
+          discountIdInput.setAttribute('required', 'required');
 
-        {{-- Step 3: Payment (current) --}}
-        <div class="flex flex-col items-center text-[#8f5d54]">
-          <div class="w-6 h-6 sm:w-8 sm:h-8 bg-[#8f5d54] text-white rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
-            3
-          </div>
-          <span class="text-xs sm:text-sm font-medium text-center">Payment</span>
-        </div>
+          // Update label text based on discount type
+          if (discountType === 'senior') {
+            discountIdLabel.innerHTML = 'Senior Citizen ID Number <span class="text-red-500">*</span>';
+            discountIdInput.placeholder = 'e.g., SC-123456';
+          } else if (discountType === 'pwd') {
+            discountIdLabel.innerHTML = 'PWD ID Number <span class="text-red-500">*</span>';
+            discountIdInput.placeholder = 'e.g., PWD-123456';
+          }
+        }
+      }
 
-        <div class="flex-1 h-px bg-gray-300"></div>
+      // Add event listeners to radio buttons
+      discountTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+          updateDiscountIdField(this.value);
+        });
+      });
 
-        {{-- Step 4: Confirmation --}}
-        <div class="flex flex-col items-center text-gray-400">
-          <div class="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
-            4
-          </div>
-          <span class="text-xs sm:text-sm font-medium text-center">Confirmation</span>
-        </div>
+      // Initial update based on default value
+      const checkedRadio = document.querySelector('input[name="discount_type"]:checked');
+      const defaultDiscountType = checkedRadio ? checkedRadio.value : 'none';
+      updateDiscountIdField(defaultDiscountType);
+    });
+  </script>
+</head>
+
+@php
+$selectedActivities = session('dayvisit_selected_activities', []);
+$activitiesTotal = collect($selectedActivities)->sum(function($activity) {
+    return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+});
+$baseTotal = ($bookingData['price'] ?? 0) + $activitiesTotal;
+
+// Calculate VAT breakdown using VatService (12% Philippine VAT)
+$vatService = app(\App\Services\VatService::class);
+$vatBreakdown = $vatService->generateBreakdown((float) $baseTotal, true); // true = VAT inclusive
+$grandTotal = $vatBreakdown['gross_amount'];
+@endphp
+
+<body class="bg-[#f5efe7]">
+  <x-header active="booking" />
+
+  <div class="min-h-screen">
+    <div class="pt-6 md:pt-12">
+      {{-- Header --}}
+      <div class="text-center mb-10">
+        <h1 class="text-2xl font-bold tracking-tight">Complete Day Visit Payment</h1>
+        <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
+        <p class="text-xs text-gray-500">Review your day visit details and complete your payment</p>
       </div>
-    </div>
-  </div>
 
-  <main class="py-6 sm:py-8 md:py-12 lg:py-16 min-h-[70vh] bg-[#f5efe7]">
-    <div class="rounded-xl max-w- mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-8 sm:py-12 lg:py-16">
-      {{-- Page Title --}}
-      <header class="mb-6 sm:mb-8 text-center">
-        <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">
-          CalaiaPH Booking
-        </p>
-        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-[#8f5d54]" style="">
-          Complete Your Payment
-        </h1>
-        <p class="mt-2 text-sm sm:text-base text-gray-500 max-w-2xl mx-auto">
-          Review your booking details and choose your preferred payment method.
-        </p>
-      </header>
-
-      {{-- Layout: Payment + Summary --}}
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
-        {{-- LEFT: Payment Form (2/3 width) --}}
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10 pb-12">
+        {{-- Main content --}}
         <div class="lg:col-span-2">
-          {{-- Back Button --}}
-          <div class="mb-4">
-            <a
-              href="{{ route('dayvisit.activities') }}"
-              class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors"
-            >
-              <i class="bi bi-arrow-left"></i>
-              Back to Activities
-            </a>
-          </div>
+          <div class="flex flex-col">
+            {{-- Progress indicator --}}
+            <div class="mb-6">
+              <div class="flex justify-between items-center mb-2">
+                <small class="text-gray-500 text-sm">Step 4 of 4: Payment & Checkout</small>
+                <small class="text-gray-500 text-sm">100% Complete</small>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-[#8f5d54] h-2 rounded-full transition-all duration-300" style="width: 100%"></div>
+              </div>
+            </div>
 
-          <div class="bg-white rounded-xl border border-gray-100 p-6 md:p-8 shadow-sm">
-            <x-payment-form
-                action="{{ route('dayvisit.initiatePayment') }}"
-                :booking-data="$bookingData"
-                :grand-total="$grandTotal ?? 0"
-                :errors="$errors ?? null"
-            />
+            {{-- Navigation --}}
+            <div class="flex items-end justify-between my-3">
+              <a href="{{ route('dayvisit.activities') }}"
+                 class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                <i class="bi bi-arrow-left mr-2"></i>
+                Back
+              </a>
+            </div>
+
+            {{-- Payment Form --}}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8">
+              <section aria-labelledby="payment-method-heading">
+                <form action="{{ route('dayvisit.initiatePayment') }}" method="POST" class="space-y-8">
+                  @csrf
+
+                  {{-- Hidden Booking Data --}}
+                  <input type="hidden" name="booking_data" value="{{ json_encode($bookingData) }}">
+
+                  {{-- Validation Errors --}}
+                  @if ($errors->any())
+                    <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                      <p class="font-semibold mb-1">There were some problems with your submission:</p>
+                      <ul class="list-disc list-inside space-y-0.5">
+                        @foreach ($errors->all() as $error)
+                          <li>{{ $error }}</li>
+                        @endforeach
+                      </ul>
+                    </div>
+                  @endif
+
+                  {{-- Customer Information --}}
+                  <div class="bg-gray-50 rounded-xl p-4 sm:py-6">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                      <i class="bi bi-person-circle mr-2 text-[#8f5d54]"></i>
+                      Personal Information
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                      {{-- First Name --}}
+                      <div>
+                        <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">
+                          First Name <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          id="first_name"
+                          name="first_name"
+                          value="{{ old('first_name') }}"
+                          autocomplete="given-name"
+                          class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
+                          placeholder="Juan"
+                          required
+                        >
+                      </div>
+
+                      {{-- Last Name --}}
+                      <div>
+                        <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">
+                          Last Name <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          id="last_name"
+                          name="last_name"
+                          value="{{ old('last_name') }}"
+                          autocomplete="family-name"
+                          class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
+                          placeholder="Dela Cruz"
+                          required
+                        >
+                      </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4 sm:mt-6">
+                      {{-- Email --}}
+                      <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                          Email Address <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          value="{{ old('email') }}"
+                          autocomplete="email"
+                          class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
+                          placeholder="you@example.com"
+                          required
+                        >
+                      </div>
+
+                      {{-- Phone --}}
+                      <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                          Phone Number <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          value="{{ old('phone') }}"
+                          autocomplete="tel"
+                          class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors"
+                          placeholder="+63 9XX XXX XXXX"
+                          required
+                        >
+                      </div>
+                    </div>
+
+                    {{-- Discount Selection --}}
+                    <div class="mt-4 sm:mt-6">
+                      <label class="block text-sm font-medium text-gray-700 mb-3">
+                        Discount Type (Optional)
+                      </label>
+                      <div class="space-y-3">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                          <input type="radio" name="discount_type" value="none"
+                                 class="w-4 h-4 text-[#8f5d54] focus:ring-[#8f5d54]"
+                                 {{ old('discount_type', 'none') === 'none' ? 'checked' : '' }}>
+                          <span class="text-sm text-gray-700">No Discount</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                          <input type="radio" name="discount_type" value="senior"
+                                 class="w-4 h-4 text-[#8f5d54] focus:ring-[#8f5d54]"
+                                 {{ old('discount_type') === 'senior' ? 'checked' : '' }}>
+                          <span class="text-sm text-gray-700">Senior Citizen Discount (20%)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                          <input type="radio" name="discount_type" value="pwd"
+                                 class="w-4 h-4 text-[#8f5d54] focus:ring-[#8f5d54]"
+                                 {{ old('discount_type') === 'pwd' ? 'checked' : '' }}>
+                          <span class="text-sm text-gray-700">PWD Discount (20%)</span>
+                        </label>
+                      </div>
+                      <p class="mt-2 text-xs text-gray-500">
+                        * Discounts are subject to validation upon arrival with valid ID.
+                      </p>
+                    </div>
+
+                    {{-- Discount ID Number --}}
+                    <div id="discount-id-field" class="{{ old('discount_type') && old('discount_type') !== 'none' ? '' : 'hidden' }} mt-4 sm:mt-6">
+                      <label for="discount_id_number" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ old('discount_type') === 'senior' ? 'Senior Citizen ID Number' : (old('discount_type') === 'pwd' ? 'PWD ID Number' : 'ID Number') }} <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="discount_id_number"
+                        name="discount_id_number"
+                        value="{{ old('discount_id_number') }}"
+                        class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
+                        placeholder="{{ old('discount_type') === 'senior' ? 'e.g., SC-123456' : (old('discount_type') === 'pwd' ? 'e.g., PWD-123456' : 'Enter ID number') }}"
+                        {{ old('discount_type') && old('discount_type') !== 'none' ? 'required' : 'disabled' }}
+                      >
+                    </div>
+
+                    {{-- Special Requests --}}
+                    <div class="mt-4 sm:mt-6">
+                      <label for="special_requests" class="block text-sm font-medium text-gray-700 mb-2">
+                        Special Requests (Optional)
+                      </label>
+                      <textarea
+                        id="special_requests"
+                        name="special_requests"
+                        rows="4"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
+                        placeholder="Any special requirements, celebrations, or notes..."
+                      >{{ old('special_requests') }}</textarea>
+                      <p class="mt-1 text-xs text-gray-400">
+                        Example: "Vegan meal options", "Birthday surprise setup", or accessibility needs.
+                      </p>
+                    </div>
+                  </div>
+
+                  {{-- Payment Method --}}
+                  <div class="space-y-3">
+                    <h3 class="block text-sm sm:text-base font-medium text-gray-800 mb-1">
+                      Payment Method
+                    </h3>
+                    <p class="text-xs text-gray-500 mb-2">
+                      Secure payment via PayMongo. Choose your preferred payment method including card, GCash, PayMaya, or QR PH.
+                    </p>
+
+                    {{-- Credit/Debit Card --}}
+                    <div class="space-y-3">
+                      <label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition-colors cursor-pointer">
+                        <input
+                          id="payment_paymongo"
+                          type="radio"
+                          name="payment_method"
+                          value="paymongo"
+                          class="h-4 w-4 text-[#8f5d54] border-gray-300 focus:ring-[#8f5d54]"
+                          checked
+                        >
+                        <div class="flex items-center gap-3">
+                          <i class="bi bi-credit-card text-base text-gray-600"></i>
+                          <div>
+                            <span class="text-sm font-semibold text-gray-900">Credit/Debit Card</span>
+                            <span class="text-xs text-gray-500 block">Secure payment via PayMongo</span>
+                          </div>
+                        </div>
+                        <i class="fa-solid fa-shield-halved text-gray-300 text-sm ml-auto"></i>
+                      </label>
+
+                      {{-- Scan QR Code --}}
+                      <label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition-colors cursor-pointer">
+                        <input
+                          id="payment_qr"
+                          type="radio"
+                          name="payment_method"
+                          value="qr"
+                          class="h-4 w-4 text-[#8f5d54] border-gray-300 focus:ring-[#8f5d54]"
+                        >
+                        <div class="flex items-center gap-3">
+                          <i class="bi bi-qr-code text-base text-gray-600"></i>
+                          <div>
+                            <span class="text-sm font-semibold text-gray-900">Scan QR Code</span>
+                            <span class="text-xs text-gray-500 block">Pay using GCash, PayMaya, QR PH, or other QR-enabled wallets</span>
+                          </div>
+                        </div>
+                        <i class="fa-solid fa-mobile-screen-button text-gray-300 text-sm ml-auto"></i>
+                      </label>
+                    </div>
+                  </div>
+
+                  {{-- Cancellation Policy --}}
+                  @php
+                    $defaultPolicy = old('cancellation_policy', 'flexible');
+                  @endphp
+
+                  <div
+                    class="space-y-4"
+                    x-data="{
+                      policy: @js($defaultPolicy),
+                      expanded: null,
+                      policies: {
+                        standard: {
+                          label: 'Standard (Free cancellation window)',
+                          badge: 'STANDARD',
+                          icon: '📅',
+                          highlight: 'border-emerald-200 bg-emerald-50/60',
+                          ring: 'ring-emerald-200',
+                          bullets: [
+                            '≥ 7 days before visit: 100% refund',
+                            '3–6 days before visit: 50% refund',
+                            '< 3 days before visit: No refund'
+                          ],
+                          fine: [
+                            'Refunds are returned to the original payment method when possible.',
+                            'Processing time: 3–5 business days after approval.'
+                          ]
+                        },
+                        flexible: {
+                          label: 'Flexible (Best value)',
+                          badge: 'RECOMMENDED',
+                          icon: '🔄',
+                          highlight: 'border-amber-300 bg-amber-50/70',
+                          ring: 'ring-amber-200',
+                          bullets: [
+                            '30+ days: 100% refund',
+                            '15–29 days: 75% refund',
+                            '7–14 days: 50% refund',
+                            '3–6 days: 25% refund',
+                            '< 3 days: No refund'
+                          ],
+                          fine: [
+                            'Best for unsure plans—more refund tiers as your date gets closer.',
+                            'Processing time: 3–5 business days after approval.'
+                          ]
+                        },
+                        nonrefundable: {
+                          label: 'Economy (Non-refundable)',
+                          badge: 'LOWEST PRICE',
+                          icon: '💰',
+                          highlight: 'border-rose-200 bg-rose-50/70',
+                          ring: 'ring-rose-200',
+                          bullets: [
+                            'No cash refund after booking is confirmed',
+                            'You may rebook based on availability (date change rules may apply)'
+                          ],
+                          fine: [
+                            'Best for confirmed travel dates.',
+                            'Fees may apply when changing dates close to check-in.'
+                          ]
+                        }
+                      }
+                    }"
+                  >
+                    <div class="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                          <i class="bi bi-calendar-check text-2xl text-[#8f5d54]"></i>
+                          Cancellation Policy
+                        </h3>
+                        <p class="text-sm text-gray-600 mt-1">
+                          Choose the cancellation terms that match your flexibility. Refund tiers are based on <span class="font-semibold">days before visit</span>.
+                        </p>
+                      </div>
+
+                      <div class="hidden sm:flex items-center gap-2 text-xs text-gray-500">
+                        <span class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1">
+                          <i class="bi bi-shield-check text-green-600"></i>
+                          Clear refund tiers
+                        </span>
+                        <span class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1">
+                          <i class="bi bi-clock-history text-blue-600"></i>
+                          3–5 business days
+                        </span>
+                      </div>
+                    </div>
+
+                    {{-- Server-side error for policy --}}
+                    @error('cancellation_policy')
+                      <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                        {{ $message }}
+                      </div>
+                    @enderror
+
+                    <fieldset class="space-y-3">
+                      <legend class="sr-only">Select cancellation policy</legend>
+
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {{-- Standard --}}
+                        <label
+                          class="group relative cursor-pointer rounded-2xl border-2 p-5 transition-all hover:shadow-lg"
+                          :class="policy === 'standard' ? policies.standard.highlight + ' ring-2 ' + policies.standard.ring : 'border-gray-200 bg-white hover:border-[#8f5d54]/30'"
+                        >
+                          <input
+                            type="radio"
+                            name="cancellation_policy"
+                            value="standard"
+                            class="sr-only"
+                            x-model="policy"
+                            required
+                          >
+
+                          <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-start gap-3">
+                              <div class="text-3xl leading-none" aria-hidden="true" x-text="policies.standard.icon"></div>
+                              <div>
+                                <div class="flex items-center gap-2">
+                                  <p class="text-sm font-semibold text-gray-900">Standard</p>
+                                  <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                                    <span x-text="policies.standard.badge"></span>
+                                  </span>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-1">Good balance of savings + protection.</p>
+                              </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                              <span
+                                class="inline-flex h-6 w-6 items-center justify-center rounded-full border transition"
+                                :class="policy === 'standard' ? 'border-emerald-400 bg-emerald-100 text-emerald-700' : 'border-gray-200 bg-white text-gray-400'"
+                                aria-hidden="true"
+                              >
+                                <i class="bi bi-check-lg"></i>
+                              </span>
+                            </div>
+                          </div>
+
+                          <div class="mt-4 space-y-2 text-xs text-gray-700">
+                            <div class="rounded-xl border border-emerald-200/60 bg-white/60 p-3">
+                              <ul class="space-y-1.5">
+                                <li class="flex items-start gap-2">
+                                  <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                                    <i class="bi bi-check"></i>
+                                  </span>
+                                  <span><span class="font-semibold">≥ 7 days</span> — 100% refund</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                  <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                                    <i class="bi bi-dash"></i>
+                                  </span>
+                                  <span><span class="font-semibold">3–6 days</span> — 50% refund</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                  <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-rose-100 text-rose-700">
+                                    <i class="bi bi-x"></i>
+                                  </span>
+                                  <span><span class="font-semibold">< 3 days</span> — No refund</span>
+                                </li>
+                              </ul>
+                            </div>
+
+                            <button
+                              type="button"
+                              class="inline-flex items-center gap-2 text-xs font-semibold text-gray-700 hover:text-gray-900"
+                              @click.stop="expanded = expanded === 'standard' ? null : 'standard'"
+                              :aria-expanded="expanded === 'standard'"
+                            >
+                              <i class="bi" :class="expanded === 'standard' ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                              View full terms
+                            </button>
+
+                            <div x-show="expanded === 'standard'" x-transition class="rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600">
+                              <ul class="list-disc pl-5 space-y-1">
+                                <li>Refunds are computed based on the time the cancellation request is submitted.</li>
+                                <li>Processing time: 3–5 business days after approval (banks may take longer).</li>
+                                <li>No-show or early departure is non-refundable.</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </label>
+
+                        {{-- Flexible (Recommended) --}}
+                        <label
+                          class="group relative cursor-pointer rounded-2xl border-2 p-5 transition-all hover:shadow-lg"
+                          :class="policy === 'flexible' ? policies.flexible.highlight + ' ring-2 ' + policies.flexible.ring : 'border-gray-200 bg-white hover:border-[#8f5d54]/30'"
+                        >
+                          <input
+                            type="radio"
+                            name="cancellation_policy"
+                            value="flexible"
+                            class="sr-only"
+                            x-model="policy"
+                            required
+                          >
+
+                          <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-start gap-3">
+                              <div class="text-3xl leading-none" aria-hidden="true" x-text="policies.flexible.icon"></div>
+                              <div>
+                                <div class="flex items-center gap-2">
+                                  <p class="text-sm font-semibold text-gray-900">Flexible</p>
+                                  <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                                    <span x-text="policies.flexible.badge"></span>
+                                  </span>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-1">Most flexible refund tiers as dates get closer.</p>
+                              </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                              <span
+                                class="inline-flex h-6 w-6 items-center justify-center rounded-full border transition"
+                                :class="policy === 'flexible' ? 'border-amber-400 bg-amber-100 text-amber-700' : 'border-gray-200 bg-white text-gray-400'"
+                                aria-hidden="true"
+                              >
+                                <i class="bi bi-check-lg"></i>
+                              </span>
+                            </div>
+                          </div>
+
+                          <div class="mt-4 space-y-2 text-xs text-gray-700">
+                            <div class="rounded-xl border border-amber-200/60 bg-white/60 p-3">
+                              <ul class="space-y-1.5">
+                                <li class="flex items-start gap-2">
+                                  <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                                    <i class="bi bi-check"></i>
+                                  </span>
+                                  <span><span class="font-semibold">30+ days</span> — 100%</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                  <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                                    <i class="bi bi-check"></i>
+                                  </span>
+                                  <span><span class="font-semibold">15–29 days</span> — 75%</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                  <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                                    <i class="bi bi-dash"></i>
+                                  </span>
+                                  <span><span class="font-semibold">7–14 days</span> — 50%</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                  <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-orange-100 text-orange-700">
+                                    <i class="bi bi-dash"></i>
+                                  </span>
+                                  <span><span class="font-semibold">3–6 days</span> — 25%</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                  <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-rose-100 text-rose-700">
+                                    <i class="bi bi-x"></i>
+                                  </span>
+                                  <span><span class="font-semibold">< 3 days</span> — No refund</span>
+                                </li>
+                              </ul>
+                            </div>
+
+                            <button
+                              type="button"
+                              class="inline-flex items-center gap-2 text-xs font-semibold text-gray-700 hover:text-gray-900"
+                              @click.stop="expanded = expanded === 'flexible' ? null : 'flexible'"
+                              :aria-expanded="expanded === 'flexible'"
+                            >
+                              <i class="bi" :class="expanded === 'flexible' ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                              View full terms
+                            </button>
+
+                            <div x-show="expanded === 'flexible'" x-transition class="rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600">
+                              <ul class="list-disc pl-5 space-y-1">
+                                <li>Refund tier is based on days before visit (server time).</li>
+                                <li>Processing time: 3–5 business days after approval (banks may take longer).</li>
+                                <li>No-show or early departure is non-refundable.</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </label>
+
+                        {{-- Non-refundable --}}
+                        <label
+                          class="group relative cursor-pointer rounded-2xl border-2 p-5 transition-all hover:shadow-lg"
+                          :class="policy === 'nonrefundable' ? policies.nonrefundable.highlight + ' ring-2 ' + policies.nonrefundable.ring : 'border-gray-200 bg-white hover:border-[#8f5d54]/30'"
+                        >
+                          <input
+                            type="radio"
+                            name="cancellation_policy"
+                            value="nonrefundable"
+                            class="sr-only"
+                            x-model="policy"
+                            required
+                          >
+
+                          <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-start gap-3">
+                              <div class="text-3xl leading-none" aria-hidden="true" x-text="policies.nonrefundable.icon"></div>
+                              <div>
+                                <div class="flex items-center gap-2">
+                                  <p class="text-sm font-semibold text-gray-900">Non-Refundable</p>
+                                  <span class="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+                                    <span x-text="policies.nonrefundable.badge"></span>
+                                  </span>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-1">Lowest price for fixed travel plans.</p>
+                              </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                              <span
+                                class="inline-flex h-6 w-6 items-center justify-center rounded-full border transition"
+                                :class="policy === 'nonrefundable' ? 'border-rose-400 bg-rose-100 text-rose-700' : 'border-gray-200 bg-white text-gray-400'"
+                                aria-hidden="true"
+                              >
+                                <i class="bi bi-check-lg"></i>
+                              </span>
+                            </div>
+                          </div>
+
+                          <div class="mt-4 space-y-2 text-xs text-gray-700">
+                            <div class="rounded-xl border border-rose-200/60 bg-white/60 p-3">
+                              <ul class="space-y-1.5">
+                                <li class="flex items-start gap-2">
+                                  <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-rose-100 text-rose-700">
+                                    <i class="bi bi-x"></i>
+                                  </span>
+                                  <span class="font-semibold">No refund after booking confirmation</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                  <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 text-gray-700">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                  </span>
+                                  <span>Rebook options may be available (subject to rules/availability)</span>
+                                </li>
+                              </ul>
+                            </div>
+
+                            <button
+                              type="button"
+                              class="inline-flex items-center gap-2 text-xs font-semibold text-gray-700 hover:text-gray-900"
+                              @click.stop="expanded = expanded === 'nonrefundable' ? null : 'nonrefundable'"
+                              :aria-expanded="expanded === 'nonrefundable'"
+                            >
+                              <i class="bi" :class="expanded === 'nonrefundable' ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                              View full terms
+                            </button>
+
+                            <div x-show="expanded === 'nonrefundable'" x-transition class="rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600">
+                              <ul class="list-disc pl-5 space-y-1">
+                                <li>No cash refund for cancellations, no-shows, or early departure.</li>
+                                <li>Date changes may be allowed depending on availability and lead time.</li>
+                                <li>Any fare/price difference will be charged upon rebooking.</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </fieldset>
+
+                    {{-- Quick summary (what you selected) --}}
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
+                      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div>
+                          <p class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                            <i class="bi bi-check2-circle text-green-600"></i>
+                            Selected Policy:
+                            <span class="text-[#8f5d54]" x-text="policy ? (policy === 'standard' ? 'Standard' : (policy === 'flexible' ? 'Flexible' : 'Non-Refundable')) : '—'"></span>
+                          </p>
+                          <p class="text-xs text-gray-600 mt-1">
+                            Tip: Flexible is recommended if your plans might change.
+                          </p>
+                        </div>
+
+                        <div class="text-xs text-gray-600">
+                          <p class="font-semibold text-gray-800">Refund timeline</p>
+                          <p>3–5 business days after approval</p>
+                        </div>
+                      </div>
+
+                      <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <template x-for="(b, idx) in (policy ? policies[policy].bullets : [])" :key="idx">
+                          <div class="flex items-start gap-2 rounded-xl border border-white bg-white px-3 py-2">
+                            <span class="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-gray-700">
+                              <i class="bi bi-dot"></i>
+                            </span>
+                            <p class="text-xs text-gray-700" x-text="b"></p>
+                          </div>
+                        </template>
+                      </div>
+
+                      <div class="mt-3 text-xs text-gray-600">
+                        <p class="font-semibold text-gray-800 mb-1">Important notes</p>
+                        <ul class="list-disc pl-5 space-y-1">
+                          <li>Peak season dates (e.g., Dec 15–Jan 5, Holy Week & Summer) may have stricter rules.</li>
+                          <li>No-show or early departure is typically non-refundable.</li>
+                          <li>Cancellations must be requested through the booking system.</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {{-- Cancellation Policy Acknowledgment --}}
+                  <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 sm:p-6">
+                    <div class="flex items-start">
+                      <input
+                        type="checkbox"
+                        id="cancellation_acknowledge"
+                        name="cancellation_acknowledge"
+                        class="mt-1 mr-3 h-4 w-4 text-purple-600 border-gray-300 focus:ring-purple-600"
+                        {{ old('cancellation_acknowledge') ? 'checked' : '' }}
+                        required
+                      >
+                      <label for="cancellation_acknowledge" class="text-xs sm:text-sm text-gray-700 leading-relaxed">
+                        <strong>I acknowledge and accept the selected Cancellation Policy</strong><br>
+                        I understand the refund terms, timelines, and conditions for the cancellation policy I selected above.
+                        I agree that cancellations must be made through the booking system, and refunds will be processed according to the chosen policy terms.
+                        During peak seasons, stricter policies may apply.
+                      </label>
+                    </div>
+                    @error('cancellation_acknowledge')
+                      <p class="text-xs text-red-600 mt-2">{{ $message }}</p>
+                    @enderror
+                  </div>
+
+                  {{-- Terms and Conditions --}}
+                  <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 sm:p-6">
+                    <div class="flex items-start">
+                      <input
+                        type="checkbox"
+                        id="terms"
+                        name="terms_accepted"
+                        class="mt-1 mr-3 h-4 w-4 text-[#8f5d54] border-gray-300 focus:ring-[#8f5d54]"
+                        {{ old('terms_accepted') ? 'checked' : '' }}
+                        required
+                      >
+                      <label for="terms" class="text-xs sm:text-sm text-gray-700 leading-relaxed">
+                        I agree to the
+                        <a href="#" class="text-[#8f5d54] hover:underline font-medium">Terms and Conditions</a> and
+                        <a href="#" class="text-[#8f5d54] hover:underline font-medium">Cancellation Policy</a>.
+                        I understand that this booking is subject to availability and confirmation. I also acknowledge that payment is non-refundable except in cases specified in the policy.
+                      </label>
+                    </div>
+                  </div>
+
+                  {{-- Action Buttons --}}
+                  <div class="pt-4 space-y-3">
+                    <button
+                      type="submit"
+                      class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold text-white shadow-lg shadow-[#8f5d54]/20 hover:bg-[#a0675a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-all duration-300 transform hover:-translate-y-0.5"
+                    >
+                      <i class="bi bi-lock-fill mr-2"></i>
+                      <span>Complete Day Visit Payment</span>
+                      <span class="font-bold ml-2">₱{{ number_format($grandTotal, 2, '.', '') }}</span>
+                    </button>
+
+                    <p class="mt-3 text-xs text-center text-gray-500">
+                      Your payment is secured with 256-bit SSL encryption. By proceeding, you agree to our terms of service.
+                    </p>
+                  </div>
+                </form>
+              </section>
+            </div>
           </div>
         </div>
 
-        {{-- RIGHT: Booking Summary (1/3 width) --}}
+        {{-- Sidebar: booking summary --}}
         <div class="lg:col-span-1">
-          <div class="bg-white rounded-xl border border-gray-100 p-6 md:p-8 shadow-sm lg:sticky lg:top-4">
-            <x-dayvisit-booking-summary
-                :booking="$bookingData"
-                :selectedActivities="$selectedActivities"
-                :showActivities="true"
-                :showTrustElements="true"
-            />
-          </div>
+          <x-dayvisit-booking-summary
+            :booking="$bookingData"
+            :selectedActivities="$selectedActivities"
+            :showActivities="true"
+            :showTrustElements="true"
+            :vatBreakdown="$vatBreakdown"
+          />
         </div>
       </div>
     </div>
-  </main>
 
-</x-page-layout>
+    {{-- Footer --}}
+    <x-footer />
+
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  </div>
+</body>
+</html>
