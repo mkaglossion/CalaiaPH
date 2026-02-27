@@ -620,4 +620,3 @@ Route::group(['middleware' => ['api.throttle:api_strict', 'api.security', 'xss']
     Route::put('/api/special-events/{event}', [EventApiController::class, 'update']);
     Route::delete('/api/special-events/{event}', [EventApiController::class, 'destroy']);
 });
-

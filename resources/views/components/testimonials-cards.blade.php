@@ -1,10 +1,11 @@
+@php
+  $testimonials = \App\Models\Testimonial::active()->ordered()->get();
+@endphp
+
+@if($testimonials->count() > 0)
 <section class="relative py-12 min-h-125"
   style="background: linear-gradient(rgba(143, 93, 84, 0.5), rgba(143, 93, 84, 0.5)),
   url('/assets/images/carousel/our-farm.jpg'); background-size: cover; background-position: center; background-attachment: fixed;">
-
-  @php
-    $testimonials = \App\Models\Testimonial::active()->ordered()->get();
-  @endphp
 
   <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-10">
@@ -140,3 +141,4 @@
 
   </div>
 </section>
+@endif

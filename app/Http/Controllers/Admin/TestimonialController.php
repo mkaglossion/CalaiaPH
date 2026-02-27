@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Testimonial;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class TestimonialController extends Controller
@@ -50,9 +51,20 @@ class TestimonialController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Testimonial $testimonial)
+    public function update(Request $request, $id)
     {
-        $request->validate([
+        $testimonial = Testimonial::find($id);
+        
+        if (!$testimonial) {
+            return response()->json(['message' => 'Testimonial not found.'], 404);
+        }
+
+        Log::info('Update testimonial called', [
+            'testimonial_id' => $testimonial->id,
+            'request_data' => $request->all()
+        ]);
+
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
             'content' => 'required|string',
@@ -62,6 +74,8 @@ class TestimonialController extends Controller
             'order' => 'nullable|integer',
             'rating' => 'nullable|integer|min:1|max:5'
         ]);
+
+        Log::info('Validation passed', ['validated' => $validated]);
 
         $data = [
             'name' => $request->name,
@@ -83,18 +97,32 @@ class TestimonialController extends Controller
             $data['image_path'] = $request->image_path ?: $testimonial->image_path;
         }
 
-        $testimonial->update($data);
+        Log::info('Data to update', ['data' => $data]);
 
-        return response()->json(['message' => 'Testimonial updated successfully.']);
+        $updated = $testimonial->update($data);
+
+        $fresh = $testimonial->fresh();
+        Log::info('Update result', ['updated' => $updated, 'testimonial_after' => $fresh ? $fresh->toArray() : null]);
+
+        return response()->json([
+            'message' => 'Testimonial updated successfully.',
+            'testimonial' => $fresh
+        ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Testimonial $testimonial)
+    public function destroy($id)
     {
+        $testimonial = Testimonial::find($id);
+        
+        if (!$testimonial) {
+            return response()->json(['message' => 'Testimonial not found.'], 404);
+        }
+
         $testimonial->delete();
 
-        return redirect()->back()->with('success', 'Testimonial deleted successfully.');
+        return response()->json(['message' => 'Testimonial deleted successfully.']);
     }
 }

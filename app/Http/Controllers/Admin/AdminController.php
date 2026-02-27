@@ -194,11 +194,14 @@ class AdminController extends Controller
         }
 
         // Default ordering
-        $query->ordered();
-
         $testimonials = $query->ordered()->paginate(10);
 
-        return view('admin.testimonials.index', compact('testimonials'));
+
+        // Get the next available order number (highest order + 1)
+        $maxOrder = \App\Models\Testimonial::max('order') ?? 0;
+        $nextOrder = $maxOrder + 1;
+
+        return view('admin.testimonials.index', compact('testimonials', 'nextOrder'));
     }
 
     public function staySettings()

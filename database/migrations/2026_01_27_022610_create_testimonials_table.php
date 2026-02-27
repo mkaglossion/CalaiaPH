@@ -18,8 +18,10 @@ return new class extends Migration
             $table->text('content');
             $table->integer('rating');
             $table->string('avatar')->nullable();
+            $table->string('image_path')->nullable();
             $table->integer('order')->default(0);
             $table->boolean('is_active')->default(true);
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();
         });
     }

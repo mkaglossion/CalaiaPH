@@ -283,6 +283,7 @@ function testimonialsManager() {
         isLoading: false,
         showModal: false,
         editMode: false,
+        nextOrder: {{ $nextOrder }},
         form: {
             id: null,
             name: '',
@@ -290,7 +291,7 @@ function testimonialsManager() {
             content: '',
             avatar: '',
             avatar_preview: null,
-            order: 1,
+            order: {{ $nextOrder }},
             rating: 5,
             remove_avatar: false
         },
@@ -304,7 +305,7 @@ function testimonialsManager() {
                 content: '',
                 avatar: '',
                 avatar_preview: null,
-                order: 1,
+                order: this.nextOrder,
                 rating: 5,
                 remove_avatar: false
             };
@@ -379,11 +380,11 @@ function testimonialsManager() {
             formData.append('order', this.form.order);
             formData.append('rating', this.form.rating);
             formData.append('status', 'approved'); // Always approved since only admins add testimonials
-            if (this.form.remove_avatar) formData.append('remove_avatar', 1);
+            if (this.form.remove_avatar) formData.append('remove_image', 1);
 
-            // Add avatar file if present
+            // Add image file if present
             if (this.avatarFile) {
-                formData.append('avatar_file', this.avatarFile);
+                formData.append('image_file', this.avatarFile);
             }
 
             let url = '{{ route('admin.testimonials.store') }}';
@@ -392,7 +393,6 @@ function testimonialsManager() {
             if (this.editMode && this.form.id) {
                 url = `/admin/testimonials/${this.form.id}`;
                 method = 'POST';
-                formData.append('_method', 'PUT');
             }
 
             try {
@@ -443,13 +443,12 @@ function testimonialsManager() {
 
             try {
                 const res = await fetch(`/admin/testimonials/${id}`, {
-                    method: 'POST',
+                    method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': csrf,
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ _method: 'DELETE' })
+                    }
                 });
 
                 const data = await res.json();
