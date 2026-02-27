@@ -62,20 +62,6 @@
             </div>
         </section>
     </div>
-
-    {{-- Toast (shared) --}}
-    <div class="toast fixed bottom-4 right-4 z-50 items-center text-white bg-emerald-600 border-0 rounded-lg shadow-lg px-4 py-3 hidden"
-         role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="flex items-center w-full">
-            <div class="toast-body text-sm flex-1"></div>
-            <button type="button"
-                    class="ml-3 text-white text-xs font-semibold uppercase tracking-wide btn-close"
-                    data-bs-dismiss="toast"
-                    aria-label="Close">
-                ✕
-            </button>
-        </div>
-    </div>
 </div>
 
 {{-- Shared JS just for this component --}}
@@ -99,19 +85,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const grandTotalElement = document.getElementById('grand-total');
     const foodTotal = parseFloat(grandTotalElement?.dataset.foodTotal) || 0;
 
-    // Helpers
+    // Helpers - SweetAlert notifications
     function showToast(message) {
-        const toastEl = root.querySelector('.toast') || document.querySelector('.toast');
-        if (toastEl) {
-            const toastBody = toastEl.querySelector('.toast-body');
-            if (toastBody) toastBody.textContent = message;
-            toastEl.classList.remove('hidden');
-            toastEl.classList.add('flex');
-            setTimeout(() => {
-                toastEl.classList.remove('flex');
-                toastEl.classList.add('hidden');
-            }, 3000);
-        }
+        Swal.fire({
+            icon: 'success',
+            title: message,
+            toast: true,
+            position: 'bottom-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            customClass: {
+                popup: 'colored-toast'
+            }
+        });
     }
 
     function updateSummary() {
@@ -399,12 +386,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         window.location.href = paymentUrl;
                     } else {
-                        showToast('Error saving. Please try again.');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error saving. Please try again.',
+                            confirmButtonColor: '#8f5d54'
+                        });
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showToast('Error saving. Please try again.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Error saving. Please try again.',
+                        confirmButtonColor: '#8f5d54'
+                    });
                 });
             } else {
                 window.location.href = paymentUrl;
@@ -415,37 +412,93 @@ document.addEventListener('DOMContentLoaded', function() {
     // Confirm button: show confirm dialog
     const confirmBtn = document.querySelector('#confirm-btn');
     if (confirmBtn) {
-        confirmBtn.addEventListener('click', function() {
+        confirmBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
             if (selectedActivities.length === 0) {
-                showToast('Please select at least one activity.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Activities Selected',
+                    text: 'Please select at least one activity.',
+                    confirmButtonColor: '#8f5d54'
+                });
                 return;
             }
+            
             const activitiesTotal = totalCost;
-            const grandTotal = accommodationTotal + totalCost;
-            const message = `Are you sure you want to proceed with ${selectedActivities.length} selected activities?\n\nActivities Total: ₱${activitiesTotal.toFixed(2)}\nGrand Total: ₱${grandTotal.toFixed(2)}\n\nYou will be taken to payment next.`;
-            if (!confirm(message)) {
-                return;
-            }
-            fetch(storeUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ activities: selectedActivities })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.href = paymentUrl + '?activities=' + encodeURIComponent(btoa(JSON.stringify(selectedActivities)));
-                } else {
-                    showToast('Error saving activities. Please try again.');
+            const grandTotal = accommodationTotal + foodTotal + totalCost;
+            
+            Swal.fire({
+                icon: 'question',
+                title: 'Confirm Activities',
+                html: `<div class="text-left">
+                    <p class="mb-3">Are you sure you want to proceed with <strong>${selectedActivities.length}</strong> selected activities?</p>
+                    <div class="bg-gray-50 rounded-lg p-3 mb-3 space-y-1">
+                        ${accommodationTotal > 0 ? `
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Accommodation:</span>
+                            <span class="font-medium">₱${accommodationTotal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        </div>` : ''}
+                        ${foodTotal > 0 ? `
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Food & Dining:</span>
+                            <span class="font-medium">₱${foodTotal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        </div>` : ''}
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Activities:</span>
+                            <span class="font-medium">₱${activitiesTotal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        </div>
+                        <div class="border-t border-gray-200 my-2 pt-2 flex justify-between text-lg font-bold text-[#8f5d54]">
+                            <span>Grand Total:</span>
+                            <span>₱${grandTotal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500">You will be taken to payment next.</p>
+                </div>`,
+                showCancelButton: true,
+                confirmButtonText: 'Yes, proceed',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#8f5d54',
+                cancelButtonColor: '#6b7280',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    proceedWithSave();
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Error saving activities. Please try again.');
             });
+            
+            function proceedWithSave() {
+                fetch(storeUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ activities: selectedActivities })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = paymentUrl + '?activities=' + encodeURIComponent(btoa(JSON.stringify(selectedActivities)));
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error saving activities. Please try again.',
+                            confirmButtonColor: '#8f5d54'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Error saving activities. Please try again.',
+                        confirmButtonColor: '#8f5d54'
+                    });
+                });
+            }
         });
     }
 

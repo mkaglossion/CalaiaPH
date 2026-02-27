@@ -1,4 +1,7 @@
 {{-- resources/views/components/activities-page.blade.php --}}
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 @props([
     'pretitle'          => '',
     'title'             => 'Select or Add Activities',
@@ -51,7 +54,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
             {{-- LEFT: Activities List (2/3 width) --}}
             <div class="lg:col-span-2">
-                <section aria-labelledby="activities-heading">
+                <section aria-labelledby="activities-heading" class="bg-white rounded-xl border border-gray-100 p-6 sm:p-8 shadow-sm">
                     <h2 id="activities-heading" class="sr-only">Available Activities</h2>
 
                     {{-- Curated Activities --}}
@@ -163,18 +166,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const accommodationTotal = parseFloat(root.dataset.accommodationTotal) || 0;
 
     // Helpers
-    function showToast(message) {
-        const toastEl = root.querySelector('.toast') || document.querySelector('.toast');
-        if (toastEl) {
-            const toastBody = toastEl.querySelector('.toast-body');
-            if (toastBody) toastBody.textContent = message;
-            toastEl.classList.remove('hidden');
-            toastEl.classList.add('flex');
-            setTimeout(() => {
-                toastEl.classList.remove('flex');
-                toastEl.classList.add('hidden');
-            }, 3000);
-        }
+    function showToast(message, icon = 'success') {
+        Swal.fire({
+            icon: icon,
+            title: message,
+            toast: true,
+            position: 'bottom-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
     }
 
     function loadActivities() {
@@ -225,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error loading activities:', error);
-                showToast('Error loading activities. Please refresh the page.');
+                showToast('Error loading activities. Please refresh the page.', 'error');
             });
     }
 
@@ -372,12 +373,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     window.location.href = paymentUrl;
                 } else {
-                    showToast('Error saving. Please try again.');
+                    showToast('Error saving. Please try again.', 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showToast('Error saving. Please try again.');
+                showToast('Error saving. Please try again.', 'error');
             });
         });
     }
@@ -399,12 +400,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     window.location.href = paymentUrl;
                 } else {
-                    showToast('Error saving activities. Please try again.');
+                    showToast('Error saving activities. Please try again.', 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showToast('Error saving activities. Please try again.');
+                showToast('Error saving activities. Please try again.', 'error');
             });
         });
     }

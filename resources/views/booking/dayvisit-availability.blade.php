@@ -408,6 +408,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 packageDiv.classList.add('ring-2', 'ring-[#8f5d54]', 'bg-[#f5efe7]');
                 
                 updateBookingSummary();
+                
+                // Show SweetAlert toast for package selection
+                Swal.fire({
+                    icon: 'success',
+                    title: `${packageData.name} selected`,
+                    toast: true,
+                    position: 'bottom-end',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true
+                });
             });
 
             packagesContainer.appendChild(packageDiv);
@@ -466,15 +477,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     function showError(message) {
-        // Show error toast
-        const toast = document.createElement('div');
-        toast.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-        toast.textContent = message;
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            toast.remove();
-        }, 3000);
+        // Show SweetAlert error toast
+        Swal.fire({
+            icon: 'error',
+            title: message,
+            toast: true,
+            position: 'bottom-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
     }
 
     // Initial summary update

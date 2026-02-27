@@ -8,16 +8,21 @@
 
   {{-- Styles --}}
   @vite(['resources/js/app.js'])
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      // ID Capture state - declare FIRST before any functions use it
+      let capturedImage = null;
+
       // Discount type radio buttons
       const discountTypeRadios = document.querySelectorAll('input[name="discount_type"]');
       const discountIdField = document.getElementById('discount-id-field');
       const discountIdInput = document.getElementById('discount_id_number');
       const discountIdLabel = discountIdField.querySelector('label');
+      const idCaptureSection = document.getElementById('id-capture-section');
 
       // Function to update discount ID field
       function updateDiscountIdField(discountType) {
@@ -25,10 +30,13 @@
           discountIdField.classList.add('hidden');
           discountIdInput.disabled = true;
           discountIdInput.removeAttribute('required');
+          idCaptureSection.classList.add('hidden');
+          resetIdCapture();
         } else {
           discountIdField.classList.remove('hidden');
           discountIdInput.disabled = false;
           discountIdInput.setAttribute('required', 'required');
+          idCaptureSection.classList.remove('hidden');
 
           // Update label text based on discount type
           if (discountType === 'senior') {
@@ -52,6 +60,348 @@
       const checkedRadio = document.querySelector('input[name="discount_type"]:checked');
       const defaultDiscountType = checkedRadio ? checkedRadio.value : 'none';
       updateDiscountIdField(defaultDiscountType);
+
+      function isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      }
+
+      function openCamera() {
+        if (isMobileDevice()) {
+          document.getElementById('id-camera-input').click();
+        } else {
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            startCameraStream();
+          } else {
+            document.getElementById('id-file-input').click();
+          }
+        }
+      }
+
+      async function startCameraStream() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment' } 
+          });
+          showCameraModal(stream);
+        } catch (err) {
+          console.error('Camera access denied:', err);
+          document.getElementById('id-file-input').click();
+        }
+      }
+
+      function showCameraModal(stream) {
+        let modal = document.getElementById('camera-modal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'camera-modal';
+          modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+          modal.innerHTML = `
+            <div class="bg-white rounded-lg p-4 max-w-lg w-full mx-4">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">Capture ID</h3>
+                <button id="close-camera" class="text-gray-500 hover:text-gray-700">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+              <div class="relative">
+                <video id="camera-video" class="w-full rounded-lg" autoplay playsinline></video>
+                <canvas id="camera-canvas" class="hidden"></canvas>
+              </div>
+              <div class="mt-4 flex justify-center">
+                <button id="btn-snap" class="bg-[#8f5d54] text-white px-6 py-2 rounded-lg hover:bg-[#7a4a42]">
+                  <i class="bi bi-camera"></i> Take Photo
+                </button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(modal);
+        }
+
+        const video = document.getElementById('camera-video');
+        const canvas = document.getElementById('camera-canvas');
+        
+        video.srcObject = stream;
+        video.play();
+
+        document.getElementById('btn-snap').onclick = () => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          canvas.getContext('2d').drawImage(video, 0, 0);
+          
+          capturedImage = canvas.toDataURL('image/jpeg', 0.9);
+          showPreview(capturedImage);
+          
+          stream.getTracks().forEach(track => track.stop());
+          modal.remove();
+        };
+
+        document.getElementById('close-camera').onclick = () => {
+          stream.getTracks().forEach(track => track.stop());
+          modal.remove();
+        };
+      }
+
+      function showPreview(imageSrc) {
+        document.getElementById('id-preview').src = imageSrc;
+        document.getElementById('preview-container').classList.remove('hidden');
+        // Show success toast for ID upload
+        Swal.fire({
+          icon: 'success',
+          title: 'ID image uploaded',
+          toast: true,
+          position: 'bottom-end',
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true
+        });
+      }
+
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+          showIdStatus('error', 'Please select an image file.');
+          return;
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+          showIdStatus('error', 'File size must be less than 2MB.');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          capturedImage = e.target.result;
+          showPreview(capturedImage);
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function showIdStatus(type, message) {
+        const statusEl = document.getElementById('id-status-message');
+        statusEl.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+        
+        if (type === 'success') {
+          statusEl.classList.add('bg-green-100', 'text-green-700', 'p-3', 'rounded-lg', 'text-sm');
+        } else {
+          statusEl.classList.add('bg-red-100', 'text-red-700', 'p-3', 'rounded-lg', 'text-sm');
+        }
+        
+        statusEl.innerHTML = '<i class="bi bi-' + (type === 'success' ? 'check-circle' : 'exclamation-circle') + ' mr-2"></i>' + message;
+      }
+
+      function resetIdCapture() {
+        const hasImage = document.getElementById('id-preview').src && 
+                         document.getElementById('id-preview').src !== window.location.href &&
+                         !document.getElementById('preview-container').classList.contains('hidden');
+        
+        if (hasImage) {
+          // Show confirmation before removing
+          Swal.fire({
+            title: 'Remove ID Image?',
+            text: 'Are you sure you want to remove the uploaded ID image?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, remove',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              performReset();
+              Swal.fire({
+                icon: 'info',
+                title: 'ID image removed',
+                toast: true,
+                position: 'bottom-end',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+              });
+            }
+          });
+        } else {
+          performReset();
+        }
+      }
+
+      function performReset() {
+        document.getElementById('id-preview').src = '';
+        document.getElementById('preview-container').classList.add('hidden');
+        document.getElementById('id-file-input').value = '';
+        document.getElementById('id-camera-input').value = '';
+        document.getElementById('discount_id_number').value = '';
+        const idError = document.getElementById('id-format-error');
+        if (idError) idError.classList.add('hidden');
+        const idInput = document.getElementById('discount_id_number');
+        if (idInput) {
+          idInput.classList.remove('border-red-500');
+          idInput.classList.add('border-gray-300');
+        }
+        if (typeof capturedImage !== 'undefined') {
+          capturedImage = null;
+        }
+      }
+
+      function validateIdFormat(input) {
+        const discountType = document.querySelector('input[name="discount_type"]:checked').value;
+        const value = input.value.toUpperCase();
+        const errorEl = document.getElementById('id-format-error');
+        
+        // Auto-format: add prefix if missing
+        if (value && !value.startsWith('SC-') && !value.startsWith('PWD-')) {
+          if (discountType === 'senior' && /^\d/.test(value)) {
+            input.value = 'SC-' + value;
+          } else if (discountType === 'pwd' && /^\d/.test(value)) {
+            input.value = 'PWD-' + value;
+          }
+        }
+        
+        // Validate format
+        const seniorPattern = /^SC-\d{6,}$/;
+        const pwdPattern = /^PWD-\d{6,}$/;
+        
+        let isValid = false;
+        if (discountType === 'senior') {
+          isValid = seniorPattern.test(input.value);
+        } else if (discountType === 'pwd') {
+          isValid = pwdPattern.test(input.value);
+        }
+        
+        if (input.value && !isValid) {
+          errorEl.classList.remove('hidden');
+          input.classList.add('border-red-500');
+          input.classList.remove('border-gray-300', 'focus:ring-[#8f5d54]');
+        } else {
+          errorEl.classList.add('hidden');
+          input.classList.remove('border-red-500');
+          input.classList.add('border-gray-300', 'focus:ring-[#8f5d54]');
+        }
+        
+        return isValid;
+      }
+
+      // Bind ID capture events
+      document.getElementById('btn-capture').addEventListener('click', openCamera);
+      document.getElementById('btn-upload').addEventListener('click', () => {
+        document.getElementById('id-file-input').click();
+      });
+      document.getElementById('id-file-input').addEventListener('change', handleFileSelect);
+      document.getElementById('id-camera-input').addEventListener('change', handleFileSelect);
+      document.getElementById('btn-remove-image').addEventListener('click', resetIdCapture);
+    });
+
+    // Global function for onchange attribute
+    function toggleIdCapture() {
+      const discountType = document.querySelector('input[name="discount_type"]:checked').value;
+      const idCaptureSection = document.getElementById('id-capture-section');
+      const discountIdField = document.getElementById('discount-id-field');
+      const discountIdInput = document.getElementById('discount_id_number');
+      const idFormatNotice = document.getElementById('id-format-notice');
+      
+      if (discountType === 'senior' || discountType === 'pwd') {
+        idCaptureSection.classList.remove('hidden');
+        discountIdField.classList.remove('hidden');
+        if (idFormatNotice) idFormatNotice.classList.remove('hidden');
+        discountIdInput.disabled = false;
+        discountIdInput.setAttribute('required', 'required');
+        // Update placeholder based on discount type
+        if (discountType === 'senior') {
+          discountIdInput.placeholder = 'SC-123456';
+        } else {
+          discountIdInput.placeholder = 'PWD-123456';
+        }
+      } else {
+        idCaptureSection.classList.add('hidden');
+        discountIdField.classList.add('hidden');
+        if (idFormatNotice) idFormatNotice.classList.add('hidden');
+        discountIdInput.disabled = true;
+        discountIdInput.removeAttribute('required');
+        // Reset values
+        discountIdInput.value = '';
+        const idError = document.getElementById('id-format-error');
+        if (idError) idError.classList.add('hidden');
+      }
+    }
+
+    // Form validation before submission with SweetAlert
+    document.querySelector('form[action="{{ route('dayvisit.initiatePayment') }}"]').addEventListener('submit', function(e) {
+      const discountType = document.querySelector('input[name="discount_type"]:checked').value;
+      
+      if (discountType === 'senior' || discountType === 'pwd') {
+        const idNumber = document.getElementById('discount_id_number').value;
+        const idImage = document.getElementById('id-preview').src;
+        
+        // Validate ID format
+        const seniorPattern = /^SC-\d{6,}$/;
+        const pwdPattern = /^PWD-\d{6,}$/;
+        let isValidFormat = false;
+        
+        if (discountType === 'senior') {
+          isValidFormat = seniorPattern.test(idNumber);
+        } else {
+          isValidFormat = pwdPattern.test(idNumber);
+        }
+        
+        if (!isValidFormat) {
+          e.preventDefault();
+          Swal.fire({
+            icon: 'error',
+            title: 'Invalid ID Format',
+            html: 'Please enter a valid ID number format:<br><br>' +
+                  '<strong>Senior:</strong> SC-123456<br>' +
+                  '<strong>PWD:</strong> PWD-123456',
+            confirmButtonColor: '#8f5d54'
+          });
+          document.getElementById('discount_id_number').focus();
+          return false;
+        }
+        
+        // Validate ID image is uploaded
+        if (!idImage || idImage === '' || idImage === window.location.href) {
+          e.preventDefault();
+          Swal.fire({
+            icon: 'warning',
+            title: 'ID Image Required',
+            text: 'Please upload or capture your ID image to claim the discount.',
+            confirmButtonColor: '#8f5d54'
+          });
+          return false;
+        }
+        
+        // Show confirmation - prevent default and handle async
+        e.preventDefault();
+        
+        const discountLabel = discountType === 'senior' ? 'Senior Citizen' : 'PWD';
+        
+        Swal.fire({
+          icon: 'info',
+          title: 'Discount Verification Notice',
+          html: `<div class="text-left">
+            <p class="mb-2">You have selected <strong>${discountLabel}</strong> discount.</p>
+            <p class="mb-3">ID Number: <strong>${idNumber}</strong></p>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+              <p class="font-semibold text-amber-800 mb-2">⚠️ Important:</p>
+              <ul class="list-disc list-inside text-amber-700 space-y-1">
+                <li>Your ID will be verified at check-in/arrival</li>
+                <li>Invalid or fake IDs will require full payment</li>
+                <li>Discount is subject to admin approval</li>
+              </ul>
+            </div>
+          </div>`,
+          showCancelButton: true,
+          confirmButtonText: 'Yes, proceed',
+          cancelButtonText: 'Cancel',
+          confirmButtonColor: '#8f5d54',
+          cancelButtonColor: '#6b7280',
+          reverseButtons: true
+        }).then((result) => {
+          if (result.isConfirmed) {
+            e.target.submit();
+          }
+        });
+      }
     });
   </script>
 </head>
@@ -207,32 +557,53 @@ $grandTotal = $vatBreakdown['gross_amount'];
 
                     {{-- Discount Selection --}}
                     <div class="mt-4 sm:mt-6">
-                      <label class="block text-sm font-medium text-gray-700 mb-3">
+                      <p class="block text-sm font-medium text-gray-700 mb-3">
                         Discount Type (Optional)
-                      </label>
+                      </p>
                       <div class="space-y-3">
                         <label class="flex items-center space-x-3 cursor-pointer">
                           <input type="radio" name="discount_type" value="none"
                                  class="w-4 h-4 text-[#8f5d54] focus:ring-[#8f5d54]"
-                                 {{ old('discount_type', 'none') === 'none' ? 'checked' : '' }}>
+                                 {{ old('discount_type', 'none') === 'none' ? 'checked' : '' }}
+                                 onchange="toggleIdCapture()">
                           <span class="text-sm text-gray-700">No Discount</span>
                         </label>
                         <label class="flex items-center space-x-3 cursor-pointer">
                           <input type="radio" name="discount_type" value="senior"
                                  class="w-4 h-4 text-[#8f5d54] focus:ring-[#8f5d54]"
-                                 {{ old('discount_type') === 'senior' ? 'checked' : '' }}>
+                                 {{ old('discount_type') === 'senior' ? 'checked' : '' }}
+                                 onchange="toggleIdCapture()">
                           <span class="text-sm text-gray-700">Senior Citizen Discount (20%)</span>
                         </label>
                         <label class="flex items-center space-x-3 cursor-pointer">
                           <input type="radio" name="discount_type" value="pwd"
                                  class="w-4 h-4 text-[#8f5d54] focus:ring-[#8f5d54]"
-                                 {{ old('discount_type') === 'pwd' ? 'checked' : '' }}>
+                                 {{ old('discount_type') === 'pwd' ? 'checked' : '' }}
+                                 onchange="toggleIdCapture()">
                           <span class="text-sm text-gray-700">PWD Discount (20%)</span>
                         </label>
                       </div>
                       <p class="mt-2 text-xs text-gray-500">
                         * Discounts are subject to validation upon arrival with valid ID.
                       </p>
+                    </div>
+
+                    {{-- ID Format Notice --}}
+                    <div id="id-format-notice" class="{{ old('discount_type') && old('discount_type') !== 'none' ? '' : 'hidden' }} mt-4 sm:mt-6 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                      <div class="flex items-start gap-2">
+                        <i class="bi bi-info-circle text-amber-600 mt-0.5"></i>
+                        <div class="text-sm text-amber-800">
+                          <p class="font-medium mb-1">ID Format Requirements:</p>
+                          <ul class="list-disc list-inside space-y-1 text-xs">
+                            <li>Senior Citizen: <strong>SC-XXXXXX</strong> (e.g., SC-123456)</li>
+                            <li>PWD: <strong>PWD-XXXXXX</strong> (e.g., PWD-123456)</li>
+                          </ul>
+                          <p class="mt-2 text-xs font-semibold text-amber-900">
+                            <i class="bi bi-exclamation-triangle-fill mr-1"></i>
+                            Important: Your 20% discount is subject to ID verification. Please present your valid ID at check-in. Invalid or missing IDs will require payment of the discount difference.
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
                     {{-- Discount ID Number --}}
@@ -246,9 +617,110 @@ $grandTotal = $vatBreakdown['gross_amount'];
                         name="discount_id_number"
                         value="{{ old('discount_id_number') }}"
                         class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent"
-                        placeholder="{{ old('discount_type') === 'senior' ? 'e.g., SC-123456' : (old('discount_type') === 'pwd' ? 'e.g., PWD-123456' : 'Enter ID number') }}"
+                        placeholder="{{ old('discount_type') === 'senior' ? 'SC-123456' : (old('discount_type') === 'pwd' ? 'PWD-123456' : 'Enter ID number') }}"
+                        pattern="(SC|PWD)-[0-9]{6,}"
+                        oninput="validateIdFormat(this)"
                         {{ old('discount_type') && old('discount_type') !== 'none' ? 'required' : 'disabled' }}
                       >
+                      <p id="id-format-error" class="text-xs text-red-600 mt-1 hidden">
+                        <i class="bi bi-exclamation-circle mr-1"></i>
+                        Invalid format. Use SC-XXXXXX or PWD-XXXXXX
+                      </p>
+                    </div>
+
+                    {{-- ID Capture Section (shown when discount is selected) --}}
+                    <div id="id-capture-section" class="{{ old('discount_type') && old('discount_type') !== 'none' ? '' : 'hidden' }} mt-6">
+                      <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                        <div class="flex items-center gap-3 mb-4">
+                          <div class="w-10 h-10 bg-[#8f5d54] bg-opacity-10 rounded-full flex items-center justify-center">
+                            <i class="bi bi-person-badge text-[#8f5d54] text-xl"></i>
+                          </div>
+                          <div>
+                            <h3 class="text-lg font-semibold text-gray-800">ID Verification</h3>
+                            <p class="text-sm text-gray-500">Upload or capture your ID to claim discount</p>
+                          </div>
+                        </div>
+
+                        {{-- Capture/Upload Options --}}
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                          {{-- Camera Capture Button --}}
+                          <button 
+                            type="button"
+                            id="btn-capture"
+                            class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-[#8f5d54] rounded-lg hover:bg-[#8f5d54] hover:bg-opacity-5 transition-colors group"
+                          >
+                            <i class="bi bi-camera text-2xl text-[#8f5d54] group-hover:scale-110 transition-transform mb-2"></i>
+                            <span class="text-sm font-medium text-[#8f5d54]">Capture with Camera</span>
+                            <span class="text-xs text-gray-500 mt-1">Take a photo</span>
+                          </button>
+
+                          {{-- File Upload Button --}}
+                          <button 
+                            type="button"
+                            id="btn-upload"
+                            class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#8f5d54] hover:bg-[#8f5d54] hover:bg-opacity-5 transition-colors group"
+                          >
+                            <i class="bi bi-upload text-2xl text-gray-400 group-hover:text-[#8f5d54] transition-colors mb-2"></i>
+                            <span class="text-sm font-medium text-gray-600 group-hover:text-[#8f5d54]">Upload File</span>
+                            <span class="text-xs text-gray-500 mt-1">Select from device</span>
+                          </button>
+                        </div>
+
+                        {{-- Hidden File Inputs --}}
+                        <input 
+                          type="file" 
+                          id="id-file-input" 
+                          accept="image/jpeg,image/png,image/jpg"
+                          class="hidden"
+                        >
+                        <input 
+                          type="file" 
+                          id="id-camera-input" 
+                          accept="image/*" 
+                          capture="environment"
+                          class="hidden"
+                        >
+
+                        {{-- Image Preview --}}
+                        <div id="preview-container" class="hidden mb-4">
+                          <p class="block text-sm font-medium text-gray-700 mb-2">Preview</p>
+                          <div class="relative">
+                            <img 
+                              id="id-preview" 
+                              src="" 
+                              alt="ID Preview" 
+                              class="w-full max-h-64 object-contain rounded-lg border border-gray-200"
+                            >
+                            <button 
+                              type="button"
+                              id="btn-remove-image"
+                              class="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-md"
+                              title="Remove image"
+                            >
+                              <i class="bi bi-trash text-sm"></i>
+                            </button>
+                          </div>
+                        </div>
+
+                        {{-- Instructions --}}
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                          <div class="flex items-start gap-2">
+                            <i class="bi bi-info-circle text-blue-500 mt-0.5"></i>
+                            <div class="text-sm text-blue-700">
+                              <p class="font-medium mb-1">Tips for best results:</p>
+                              <ul class="list-disc list-inside space-y-1 text-xs">
+                                <li>Ensure good lighting</li>
+                                <li>Keep the ID flat and clearly visible</li>
+                                <li>All corners of the ID should be visible</li>
+                                <li>Text should be readable</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        {{-- Status Message --}}
+                        <div id="id-status-message" class="hidden"></div>
+                      </div>
                     </div>
 
                     {{-- Special Requests --}}
@@ -797,6 +1269,88 @@ $grandTotal = $vatBreakdown['gross_amount'];
     <x-footer />
 
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+      // Form validation before submission with SweetAlert
+      document.querySelector('form[action="{{ route('dayvisit.initiatePayment') }}"]').addEventListener('submit', function(e) {
+        const discountType = document.querySelector('input[name="discount_type"]:checked').value;
+        
+        if (discountType === 'senior' || discountType === 'pwd') {
+          const idNumber = document.getElementById('discount_id_number').value;
+          const idImage = document.getElementById('id-preview').src;
+          
+          // Validate ID format
+          const seniorPattern = /^SC-\d{6,}$/;
+          const pwdPattern = /^PWD-\d{6,}$/;
+          let isValidFormat = false;
+          
+          if (discountType === 'senior') {
+            isValidFormat = seniorPattern.test(idNumber);
+          } else {
+            isValidFormat = pwdPattern.test(idNumber);
+          }
+          
+          if (!isValidFormat) {
+            e.preventDefault();
+            Swal.fire({
+              icon: 'error',
+              title: 'Invalid ID Format',
+              html: 'Please enter a valid ID number format:<br><br>' +
+                    '<strong>Senior:</strong> SC-123456<br>' +
+                    '<strong>PWD:</strong> PWD-123456',
+              confirmButtonColor: '#8f5d54'
+            });
+            document.getElementById('discount_id_number').focus();
+            return false;
+          }
+          
+          // Validate ID image is uploaded
+          if (!idImage || idImage === '' || idImage === window.location.href) {
+            e.preventDefault();
+            Swal.fire({
+              icon: 'warning',
+              title: 'ID Image Required',
+              text: 'Please upload or capture your ID image to claim the discount.',
+              confirmButtonColor: '#8f5d54'
+            });
+            return false;
+          }
+          
+          // Show confirmation - prevent default and handle async
+          e.preventDefault();
+          
+          const discountLabel = discountType === 'senior' ? 'Senior Citizen' : 'PWD';
+          
+          Swal.fire({
+            icon: 'info',
+            title: 'Discount Verification Notice',
+            html: `<div class="text-left">
+              <p class="mb-2">You have selected <strong>${discountLabel}</strong> discount.</p>
+              <p class="mb-3">ID Number: <strong>${idNumber}</strong></p>
+              <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+                <p class="font-semibold text-amber-800 mb-2">⚠️ Important:</p>
+                <ul class="list-disc list-inside text-amber-700 space-y-1">
+                  <li>Your ID will be verified at check-in/arrival</li>
+                  <li>Invalid or fake IDs will require full payment</li>
+                  <li>Discount is subject to admin approval</li>
+                </ul>
+              </div>
+            </div>`,
+            showCancelButton: true,
+            confirmButtonText: 'Yes, proceed',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#8f5d54',
+            cancelButtonColor: '#6b7280',
+            reverseButtons: true
+          }).then((result) => {
+            if (result.isConfirmed) {
+              e.target.submit();
+            }
+          });
+        }
+      });
+    </script>
   </div>
 </body>
 </html>

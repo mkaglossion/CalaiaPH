@@ -38,6 +38,17 @@ class Booking extends Model
         'checkin_status',
         'checkin_timestamp',
         'checkout_timestamp',
+        // Discount verification fields
+        'discount_id_number',
+        'discount_id_image',
+        'discount_verification_status',
+        'discount_rejection_reason',
+        'discount_verified_at',
+        'discount_verified_by',
+        'discount_claimed_at_checkin',
+        'discount_difference_paid',
+        'discount_difference_paid_at',
+        'discount_verification_method',
     ];
 
     protected $casts = [
@@ -54,11 +65,26 @@ class Booking extends Model
         'discount_amount' => 'decimal:2',
         'discount_rate' => 'decimal:4',
         'is_vat_exempt' => 'boolean',
+        'discount_verified_at' => 'datetime',
+        'discount_difference_paid_at' => 'datetime',
+        'discount_claimed_at_checkin' => 'boolean',
+        'discount_difference_paid' => 'decimal:2',
     ];
 
     const CHECKIN_STATUS_PENDING = 'pending';
     const CHECKIN_STATUS_CHECKED_IN = 'checked_in';
     const CHECKIN_STATUS_CHECKED_OUT = 'checked_out';
+
+    // Discount verification statuses
+    const DISCOUNT_STATUS_NOT_REQUIRED = 'not_required';
+    const DISCOUNT_STATUS_PENDING = 'pending';
+    const DISCOUNT_STATUS_VERIFIED = 'verified';
+    const DISCOUNT_STATUS_REJECTED = 'rejected';
+
+    // Verification methods
+    const VERIFICATION_METHOD_NONE = 'none';
+    const VERIFICATION_METHOD_UPLOAD = 'upload';
+    const VERIFICATION_METHOD_PRESENT_AT_CHECKIN = 'present_at_checkin';
 
     /**
      * Fallback display name if customer_name is missing.
@@ -101,30 +127,20 @@ class Booking extends Model
                         return $staycation->name;
                     }
                 }
-                $label = $accommodation['name']
-                    ?? $accommodation['package']
-                    ?? $accommodation['room_type']
-                    ?? $label;
             }
-        } else {
-            $label = $data['package']
-                ?? $data['package_name']
-                ?? $data['type']
-                ?? $label;
         }
 
-        return $label ?: 'N/A';
+        return $label;
     }
 
     /**
      * Calculate and set discount fields for this booking.
-     * Uses DiscountService for Philippine senior citizen and PWD discounts.
      * 
-     * @param float $originalAmount Original amount before discount
-     * @param string $discountType Type of discount: 'senior' or 'pwd'
+     * @param float $originalAmount The original amount before discount
+     * @param string $discountType The type of discount (senior, pwd, or none)
      * @return void
      */
-    public function calculateAndSetDiscount(float $originalAmount, string $discountType = 'none'): void
+    public function calculateAndSetDiscount(float $originalAmount, string $discountType): void
     {
         $discountService = app(\App\Services\DiscountService::class);
         $breakdown = $discountService->applyDiscount($originalAmount, $discountType);

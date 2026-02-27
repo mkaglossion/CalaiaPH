@@ -1,4 +1,4 @@
-﻿﻿{{-- resources/views/booking/staycation-food.blade.php --}}
+﻿﻿﻿﻿{{-- resources/views/booking/staycation-food.blade.php --}}
 <x-app-layout active-header="booking">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -393,6 +393,16 @@
                     const index = this.selectedFoods.findIndex(f => f.id === foodId);
                     if (index > -1) {
                         this.selectedFoods.splice(index, 1);
+                        // Show SweetAlert toast for removal
+                        Swal.fire({
+                            icon: 'info',
+                            title: `${name} removed`,
+                            toast: true,
+                            position: 'bottom-end',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        });
                         return;
                     }
                     this.selectedFoods.push({
@@ -403,11 +413,34 @@
                         quantity: 1,
                         notes: ''
                     });
+                    // Show SweetAlert toast for addition
+                    Swal.fire({
+                        icon: 'success',
+                        title: `${name} added`,
+                        toast: true,
+                        position: 'bottom-end',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true
+                    });
                 },
 
                 removeFood(foodId) {
                     const index = this.selectedFoods.findIndex(f => f.id === foodId);
-                    if (index > -1) this.selectedFoods.splice(index, 1);
+                    if (index > -1) {
+                        const foodName = this.selectedFoods[index].name;
+                        this.selectedFoods.splice(index, 1);
+                        // Show SweetAlert toast for removal
+                        Swal.fire({
+                            icon: 'info',
+                            title: `${foodName} removed`,
+                            toast: true,
+                            position: 'bottom-end',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        });
+                    }
                 },
 
                 isSelected(foodId) {

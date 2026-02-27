@@ -99,6 +99,7 @@
             ['label'=>'All Bookings','route'=>'admin.bookings.index'],
             ['label'=>'Staycation Inventory','route'=>'admin.bookings.inventory'],
             ['label'=>'Daytour Inventory','route'=>'admin.day-tour.inventory'],
+            ['label'=>'Discount Verifications','route'=>'admin.discount-verifications.index'],
           ]],
           ['title'=>'Day Tour','icon'=>'sun','route'=>'admin.day.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.day.daytour'],

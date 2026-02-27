@@ -55,9 +55,9 @@
             <i class="bi bi-cart-x text-3xl text-gray-400"></i>
           </div>
           <h2 class="text-xl font-medium text-gray-700 mb-3" style="">Your cart is empty</h2>
-          <p class="text-gray-500 mb-8">Add some activities to get started</p>
-          <a href="{{ url('/activities') }}" class="inline-flex items-center bg-[#8f5d54] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#7a4a42] transition-colors">
-            Browse Activities
+          <p class="text-gray-500 mb-8">Add products to get started</p>
+          <a href="{{ url('/shop') }}" class="inline-flex items-center bg-[#8f5d54] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#7a4a42] transition-colors">
+            Browse Shop
           </a>
         </div>
       @else
@@ -94,7 +94,7 @@
                               @endif
                             </span>
                           @else
-                            <span class="text-gray-400 mx-2">per person</span>
+                            <span class="text-gray-400 mx-2">per item</span>
                           @endif
                         </div>
                       </div>
@@ -171,25 +171,34 @@
                 Order Summary
               </h3>
 
-              <div class="space-y-4 mb-6">
+              <!-- Price Breakdown -->
+              <div class="space-y-3 mb-6">
                 <div class="flex justify-between text-gray-600">
                   <span>Items ({{ $cartCount }})</span>
                   <span>₱{{ number_format($cartTotal, 2) }}</span>
                 </div>
+                
                 @if(!empty($cartReference))
-                <div class="flex justify-between text-gray-500 text-sm mt-2">
+                <div class="flex justify-between text-gray-500 text-sm">
                   <span>Reference</span>
                   <span class="font-medium">#{{ $cartReference }}</span>
                 </div>
                 @endif
+
                 <div class="flex justify-between text-gray-600">
-                  <span>Service Fee</span>
-                  <span>₱0.00</span>
+                  <span>VAT (12%)</span>
+                  <span>₱{{ number_format($vatAmount, 2) }}</span>
                 </div>
-                <div class="border-t border-gray-200 pt-4">
-                  <div class="flex justify-between text-2xl font-bold text-[#8f5d54]">
-                    <span>Total</span>
-                    <span>₱{{ number_format($cartTotal, 2) }}</span>
+
+                <div class="border-t border-gray-200 pt-4 mt-4">
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <span class="text-lg font-bold text-[#8f5d54]">Subtotal</span>
+                      <p class="text-xs text-gray-500">Discounts applied at checkout</p>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-2xl font-bold text-[#8f5d54]">₱{{ number_format($cartTotal + $vatAmount, 2) }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -204,7 +213,7 @@
                 </a>
 
                 <a
-                  href="{{ url('/activities') }}"
+                  href="{{ url('/shop') }}"
                   class="w-full bg-gray-100 text-gray-700 py-4 px-6 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-300 flex items-center justify-center"
                 >
                   <i class="bi bi-arrow-left mr-2"></i>
@@ -220,51 +229,12 @@
                     <span>Secure</span>
                   </div>
                   <div class="flex items-center">
-                    <i class="bi bi-house-heart text-blue-500 mr-1"></i>
-                    <span>Farm Booking</span>
+                    <i class="bi bi-shop text-blue-500 mr-1"></i>
+                    <span>Shop</span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <!-- Related Activities Suggestion -->
-        <div class="mt-12 bg-white rounded-2xl shadow-xl p-8">
-          <h3 class="text-2xl font-semibold text-gray-800 mb-6 text-center" style="">
-            <i class="bi bi-lightbulb text-[#8f5d54] mr-2"></i>
-            You might also like
-          </h3>
-          <div class="grid md:grid-cols-3 gap-6">
-            <a href="{{ url('/daytour') }}" class="group">
-              <div class="bg-linear-to-br from-blue-50 to-blue-100 p-6 rounded-xl hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
-                <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-4">
-                  <i class="bi bi-sun text-white text-xl"></i>
-                </div>
-                <h4 class="font-semibold text-gray-800 mb-2">Day Tours</h4>
-                <p class="text-gray-600 text-sm">Explore Calaia with guided day tours</p>
-              </div>
-            </a>
-
-            <a href="{{ url('/staycation') }}" class="group">
-              <div class="bg-linear-to-br from-green-50 to-green-100 p-6 rounded-xl hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
-                <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-4">
-                  <i class="bi bi-house-heart text-white text-xl"></i>
-                </div>
-                <h4 class="font-semibold text-gray-800 mb-2">Staycations</h4>
-                <p class="text-gray-600 text-sm">Relax in our beautiful accommodations</p>
-              </div>
-            </a>
-
-            <a href="{{ url('/dining') }}" class="group">
-              <div class="bg-linear-to-br from-orange-50 to-orange-100 p-6 rounded-xl hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
-                <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mb-4">
-                  <i class="bi bi-cup-hot text-white text-xl"></i>
-                </div>
-                <h4 class="font-semibold text-gray-800 mb-2">Food & Dining</h4>
-                <p class="text-gray-600 text-sm">Savor local delicacies and cuisine</p>
-              </div>
-            </a>
           </div>
         </div>
       @endif

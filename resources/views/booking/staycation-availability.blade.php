@@ -898,6 +898,18 @@
                         return;
                     }
 
+                    // Show SweetAlert toast for room selection
+                    const roomName = room.name || 'Room';
+                    Swal.fire({
+                        icon: 'success',
+                        title: `${roomName} selected`,
+                        toast: true,
+                        position: 'bottom-end',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true
+                    });
+
                     // select with defaults
                     const defaultAdults = 2;
                     const roomNameLower = (room.name || '').toLowerCase();
@@ -926,7 +938,21 @@
                 },
 
                 removeRoom(roomId) {
-                    if (this.selectedRooms[roomId]) delete this.selectedRooms[roomId];
+                    if (this.selectedRooms[roomId]) {
+                        const roomName = this.selectedRooms[roomId].name || 'Room';
+                        delete this.selectedRooms[roomId];
+                        
+                        // Show SweetAlert toast for room removal
+                        Swal.fire({
+                            icon: 'info',
+                            title: `${roomName} removed`,
+                            toast: true,
+                            position: 'bottom-end',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        });
+                    }
                 },
 
                 isSelected(roomId) {

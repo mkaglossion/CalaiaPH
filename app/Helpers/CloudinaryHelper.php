@@ -125,4 +125,112 @@ class CloudinaryHelper
         // Thumbs: no need super high quality; still crisp due to dpr_auto
         return self::optimize($url, $size, false, true, 'eco');
     }
+
+    /**
+     * Upload a base64 encoded image to Cloudinary
+     *
+     * @param string $base64Image Base64 encoded image data (with or without data URI prefix)
+     * @param string $folder Folder path in Cloudinary (e.g., 'shop-ids', 'discount-ids')
+     * @param string|null $publicId Optional public ID for the image
+     * @return array Upload result with secure_url, public_id, etc.
+     * @throws \Exception
+     */
+    public static function uploadBase64Image(string $base64Image, string $folder = 'uploads', ?string $publicId = null): array
+    {
+        // Remove data URI prefix if present (e.g., "data:image/jpeg;base64,")
+        if (str_contains($base64Image, ',')) {
+            $base64Image = explode(',', $base64Image)[1];
+        }
+
+        // Decode base64
+        $imageData = base64_decode($base64Image);
+        if ($imageData === false) {
+            throw new \Exception('Invalid base64 image data');
+        }
+
+        // Create temporary file
+        $tempFile = tempnam(sys_get_temp_dir(), 'cloudinary_');
+        file_put_contents($tempFile, $imageData);
+
+        try {
+            // Get Cloudinary configuration
+            $cloudName = config('cloudinary.cloud_name');
+            $apiKey = config('cloudinary.api_key');
+            $apiSecret = config('cloudinary.api_secret');
+
+            if (!$cloudName || !$apiKey || !$apiSecret) {
+                throw new \Exception('Cloudinary credentials not configured');
+            }
+
+            // Generate timestamp and signature
+            $timestamp = time();
+            $params = [
+                'folder' => $folder,
+                'timestamp' => $timestamp,
+            ];
+
+            if ($publicId) {
+                $params['public_id'] = $publicId;
+            }
+
+            // Generate signature
+            $signatureString = http_build_query($params) . $apiSecret;
+            $signature = sha1($signatureString);
+
+            // Prepare multipart form data
+            $postFields = [
+                'file' => new \CURLFile($tempFile),
+                'api_key' => $apiKey,
+                'timestamp' => $timestamp,
+                'folder' => $folder,
+                'signature' => $signature,
+            ];
+
+            if ($publicId) {
+                $postFields['public_id'] = $publicId;
+            }
+
+            // Upload to Cloudinary
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, "https://api.cloudinary.com/v1_1/{$cloudName}/image/upload");
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+
+            // Clean up temp file
+            unlink($tempFile);
+
+            if ($curlError) {
+                throw new \Exception('cURL Error: ' . $curlError);
+            }
+
+            if ($httpCode !== 200) {
+                throw new \Exception('Cloudinary upload failed with HTTP ' . $httpCode . ': ' . $response);
+            }
+
+            $result = json_decode($response, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Invalid JSON response from Cloudinary');
+            }
+
+            if (isset($result['error'])) {
+                throw new \Exception('Cloudinary error: ' . ($result['error']['message'] ?? 'Unknown error'));
+            }
+
+            return $result;
+
+        } catch (\Exception $e) {
+            // Clean up temp file on error
+            if (file_exists($tempFile)) {
+                unlink($tempFile);
+            }
+            throw $e;
+        }
+    }
 }
