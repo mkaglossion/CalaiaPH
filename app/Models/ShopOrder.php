@@ -16,8 +16,6 @@ class ShopOrder extends Model
         'customer_phone',
         'cart_items',
         'original_total',
-        'discount_amount',
-        'discounted_total',
         'vat_amount',
         'final_total',
         'delivery_option',
@@ -25,82 +23,80 @@ class ShopOrder extends Model
         'pickup_date',
         'payment_method',
         'transaction_id',
-        'paymongo_checkout_id',
         'payment_status',
-        'paid_at',
-        'discount_type',
-        'discount_id_number',
-        'id_image_path',
-        'discount_status',
-        'rejection_reason',
-        'verified_at',
-        'claimed_at',
-        'verified_by',
         'order_status',
         'special_requests',
+        'paymongo_checkout_id',
+        'paid_at',
     ];
 
     protected $casts = [
         'cart_items' => 'array',
-        'original_total' => 'decimal:2',
-        'discount_amount' => 'decimal:2',
-        'discounted_total' => 'decimal:2',
-        'vat_amount' => 'decimal:2',
-        'final_total' => 'decimal:2',
         'pickup_date' => 'date',
         'paid_at' => 'datetime',
-        'verified_at' => 'datetime',
-        'claimed_at' => 'datetime',
+        'original_total' => 'decimal:2',
+        'vat_amount' => 'decimal:2',
+        'final_total' => 'decimal:2',
     ];
 
+    const PAYMENT_STATUS_PENDING = 'pending';
+    const PAYMENT_STATUS_PAID = 'paid';
+    const PAYMENT_STATUS_FAILED = 'failed';
+
+    const ORDER_STATUS_PENDING = 'pending';
+    const ORDER_STATUS_CONFIRMED = 'confirmed';
+    const ORDER_STATUS_PROCESSING = 'processing';
+    const ORDER_STATUS_COMPLETED = 'completed';
+    const ORDER_STATUS_CANCELLED = 'cancelled';
+
+    const DELIVERY_OPTION_PICKUP = 'pickup';
+    const DELIVERY_OPTION_DELIVERY = 'delivery';
+
     /**
-     * Scope for pending discount verifications
+     * Get formatted final total for display.
      */
-    public function scopePendingDiscount($query)
+    public function getFormattedTotalAttribute(): string
     {
-        return $query->where('discount_type', '!=', 'none')
-                     ->where('discount_status', 'pending');
+        return '₱' . number_format((float) $this->final_total, 2);
     }
 
     /**
-     * Scope for orders needing verification (same logic as bookings)
+     * Get formatted VAT amount for display.
      */
-    public function scopeNeedsVerification($query)
+    public function getFormattedVatAttribute(): string
     {
-        return $query->where('discount_type', '!=', 'none')
-                     ->whereIn('discount_status', ['pending', 'rejected']);
+        return '₱' . number_format((float) $this->vat_amount, 2);
     }
 
     /**
-     * Check if order has discount
+     * Get formatted original total for display.
      */
-    public function hasDiscount(): bool
+    public function getFormattedOriginalTotalAttribute(): string
     {
-        return $this->discount_type !== 'none' && $this->discount_type !== null;
+        return '₱' . number_format((float) $this->original_total, 2);
     }
 
     /**
-     * Get discount label
+     * Check if order is paid.
      */
-    public function getDiscountLabelAttribute(): string
+    public function isPaid(): bool
     {
-        return match($this->discount_type) {
-            'senior' => 'Senior Citizen',
-            'pwd' => 'PWD',
-            default => 'None',
-        };
+        return $this->payment_status === self::PAYMENT_STATUS_PAID;
     }
 
     /**
-     * Get status badge color
+     * Check if order is confirmed/completed.
      */
-    public function getStatusColorAttribute(): string
+    public function isConfirmed(): bool
     {
-        return match($this->discount_status) {
-            'verified' => 'green',
-            'claimed' => 'blue',
-            'rejected' => 'red',
-            default => 'yellow',
-        };
+        return in_array($this->order_status, [self::ORDER_STATUS_CONFIRMED, self::ORDER_STATUS_COMPLETED]);
+    }
+
+    /**
+     * Get the total item count in the order.
+     */
+    public function getItemCountAttribute(): int
+    {
+        return collect($this->cart_items)->sum('quantity');
     }
 }

@@ -194,7 +194,6 @@
                   <div class="flex justify-between items-center">
                     <div>
                       <span class="text-lg font-bold text-[#8f5d54]">Subtotal</span>
-                      <p class="text-xs text-gray-500">Discounts applied at checkout</p>
                     </div>
                     <div class="text-right">
                       <span class="text-2xl font-bold text-[#8f5d54]">₱{{ number_format($cartTotal + $vatAmount, 2) }}</span>

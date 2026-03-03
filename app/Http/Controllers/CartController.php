@@ -7,17 +7,15 @@ use Illuminate\Support\Facades\Log;
 use App\Mail\Receipt;
 use App\Models\Product;
 use App\Events\ProductStockUpdated;
-use App\Services\DiscountService;
 use App\Services\VatService;
 use App\Models\ShopOrder;
-use App\Helpers\CloudinaryHelper;
 
 class CartController extends Controller
 {
     /**
-     * Build a normalized cart summary array with discount and VAT calculations.
+     * Build a normalized cart summary array with VAT calculations.
      */
-    protected function buildCartSummary(array $cart, string $discountType = 'none'): array
+    protected function buildCartSummary(array $cart): array
     {
         $items = [];
         $total = 0;
@@ -31,7 +29,7 @@ class CartController extends Controller
             $isDining = str_contains(strtolower($it['title'] ?? ''), 'set menus');
 
             if ($isDining) {
-                // Tiered pricing for dining based on pax
+                // Tiered pricing for dining based on persons
                 if ($qty <= 4) {
                     $price = 5980.00;
                 } elseif ($qty <= 6) {
@@ -59,30 +57,16 @@ class CartController extends Controller
             $count += $qty;
         }
 
-        // Apply discount if applicable
-        $discountService = app(DiscountService::class);
-        $discountBreakdown = $discountService->applyDiscount($total, $discountType);
-        
-        // Calculate VAT if not VAT exempt
+        // Calculate VAT
         $vatService = app(VatService::class);
-        $vatAmount = 0;
-        $finalTotal = $discountBreakdown['discounted_amount'];
-        
-        if (!$discountBreakdown['is_vat_exempt']) {
-            $vatBreakdown = $vatService->generateBreakdown($discountBreakdown['discounted_amount'], true);
-            $vatAmount = $vatBreakdown['vat_amount'];
-            $finalTotal = $vatBreakdown['gross_amount'];
-        }
+        $vatBreakdown = $vatService->generateBreakdown($total, true);
+        $vatAmount = $vatBreakdown['vat_amount'];
+        $finalTotal = $vatBreakdown['gross_amount'];
 
         return [
             'items' => $items,
-            'total' => $total, // Original total before discount
+            'total' => $total,
             'count' => $count,
-            'discount_type' => $discountBreakdown['discount_type'],
-            'discount_rate' => $discountBreakdown['discount_rate'],
-            'discount_amount' => $discountBreakdown['discount_amount'],
-            'discounted_total' => $discountBreakdown['discounted_amount'],
-            'is_vat_exempt' => $discountBreakdown['is_vat_exempt'],
             'vat_amount' => $vatAmount,
             'final_total' => $finalTotal,
         ];
@@ -100,8 +84,7 @@ class CartController extends Controller
     {
         $rawCart = session('cart', []);
         $cart    = is_array($rawCart) ? $rawCart : [];
-        $discountType = session('cart_discount_type', 'none');
-        $summary = $this->buildCartSummary($cart, $discountType);
+        $summary = $this->buildCartSummary($cart);
 
         // For header dropdown / AJAX
         if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
@@ -124,62 +107,9 @@ class CartController extends Controller
             'cartCount' => $summary['count'],
             'cartTotal' => $summary['total'],
             'cartReference' => $reference,
-            'discountType' => $summary['discount_type'],
-            'discountRate' => $summary['discount_rate'],
-            'discountAmount' => $summary['discount_amount'],
-            'discountedTotal' => $summary['discounted_total'],
-            'isVatExempt' => $summary['is_vat_exempt'],
             'vatAmount' => $summary['vat_amount'],
             'finalTotal' => $summary['final_total'],
         ]);
-    }
-
-    /**
-     * Set discount type for the cart (senior or pwd).
-     */
-    public function setDiscount(Request $request)
-    {
-        $data = $request->validate([
-            'discount_type' => 'required|in:none,senior,pwd',
-        ]);
-
-        session(['cart_discount_type' => $data['discount_type']]);
-
-        $rawCart = session('cart', []);
-        $cart = is_array($rawCart) ? $rawCart : [];
-        $summary = $this->buildCartSummary($cart, $data['discount_type']);
-
-        if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Discount updated.',
-                'summary' => $summary,
-            ]);
-        }
-
-        return redirect()->back()->with('success', 'Discount updated.');
-    }
-
-    /**
-     * Clear discount from the cart.
-     */
-    public function clearDiscount(Request $request)
-    {
-        session(['cart_discount_type' => 'none']);
-
-        $rawCart = session('cart', []);
-        $cart = is_array($rawCart) ? $rawCart : [];
-        $summary = $this->buildCartSummary($cart, 'none');
-
-        if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Discount removed.',
-                'summary' => $summary,
-            ]);
-        }
-
-        return redirect()->back()->with('success', 'Discount removed.');
     }
 
     public function add(Request $request)
@@ -345,18 +275,12 @@ class CartController extends Controller
     {
         $rawCart = session('cart', []);
         $cart    = is_array($rawCart) ? $rawCart : [];
-        $discountType = session('cart_discount_type', 'none');
-        $summary = $this->buildCartSummary($cart, $discountType);
+        $summary = $this->buildCartSummary($cart);
 
         return view('checkout', [
             'cart'      => $cart,
             'cartCount' => $summary['count'],
             'cartTotal' => $summary['total'],
-            'discountType' => $summary['discount_type'],
-            'discountRate' => $summary['discount_rate'],
-            'discountAmount' => $summary['discount_amount'],
-            'discountedTotal' => $summary['discounted_total'],
-            'isVatExempt' => $summary['is_vat_exempt'],
             'vatAmount' => $summary['vat_amount'],
             'finalTotal' => $summary['final_total'],
         ]);
@@ -372,35 +296,19 @@ class CartController extends Controller
             'address'        => 'required_if:delivery_option,delivery|nullable|string',
             'booking_date'   => 'required|date|after_or_equal:today',
             'payment_method' => 'required|in:card,qr_code',
-            'discount_type'  => 'nullable|in:none,senior,pwd',
-            'id_number'      => 'required_if:discount_type,senior,pwd|nullable|string',
-            'id_image_data'  => 'nullable|string',
             'special_requests' => 'nullable|string',
         ]);
 
         $rawCart = session('cart', []);
         $cart    = is_array($rawCart) ? $rawCart : [];
         
-        // Use submitted discount type or fall back to session
-        $discountType = $data['discount_type'] ?? session('cart_discount_type', 'none');
-        $summary = $this->buildCartSummary($cart, $discountType);
+        $summary = $this->buildCartSummary($cart);
         
-        // Use final total (after discount and VAT) for payment
+        // Use final total (with VAT) for payment
         $cartTotal = $summary['final_total'];
 
         // Generate order reference
         $orderReference = 'SHOP-' . strtoupper(uniqid());
-
-        // Upload ID image to Cloudinary if provided
-        $idImagePath = null;
-        if (!empty($data['id_image_data']) && $discountType !== 'none') {
-            try {
-                $uploadResult = CloudinaryHelper::uploadBase64Image($data['id_image_data'], 'shop-ids');
-                $idImagePath = $uploadResult['secure_url'] ?? null;
-            } catch (\Exception $e) {
-                Log::error('Failed to upload ID image for shop order', ['error' => $e->getMessage()]);
-            }
-        }
 
         // Create shop order in database
         $shopOrder = ShopOrder::create([
@@ -410,8 +318,6 @@ class CartController extends Controller
             'customer_phone' => $data['phone'],
             'cart_items' => $cart,
             'original_total' => $summary['total'],
-            'discount_amount' => $summary['discount_amount'],
-            'discounted_total' => $summary['discounted_total'],
             'vat_amount' => $summary['vat_amount'],
             'final_total' => $summary['final_total'],
             'delivery_option' => $data['delivery_option'],
@@ -420,10 +326,6 @@ class CartController extends Controller
             'payment_method' => $data['payment_method'],
             'transaction_id' => 'TXN-' . strtoupper(uniqid()),
             'payment_status' => 'pending',
-            'discount_type' => $discountType,
-            'discount_id_number' => $data['id_number'] ?? null,
-            'id_image_path' => $idImagePath,
-            'discount_status' => $discountType !== 'none' ? 'pending' : 'verified',
             'order_status' => 'pending',
             'special_requests' => $data['special_requests'] ?? null,
         ]);
@@ -431,12 +333,8 @@ class CartController extends Controller
         // Add payment details for email
         $data['transaction_id'] = $shopOrder->transaction_id;
         $data['payment_date'] = now()->toDateTimeString();
-        $data['discount_type'] = $summary['discount_type'];
-        $data['discount_amount'] = $summary['discount_amount'];
-        $data['is_vat_exempt'] = $summary['is_vat_exempt'];
         $data['vat_amount'] = $summary['vat_amount'];
         $data['original_total'] = $summary['total'];
-        $data['discounted_total'] = $summary['discounted_total'];
         $data['order_reference'] = $orderReference;
 
         // Reduce inventory for products
@@ -450,14 +348,11 @@ class CartController extends Controller
             }
         }
 
-        // Store order ID in session for later reference
-        session(['current_shop_order_id' => $shopOrder->id]);
-
         // Redirect to PayMongo for payment
         try {
-            // Create PayMongo checkout session with discounted amount
+            // Create PayMongo checkout session
             $checkoutResponse = $this->createPaymongoCheckout(
-                (int)($cartTotal * 100), // Convert to centavos (discounted amount)
+                (int)($cartTotal * 100), // Convert to centavos
                 $data['email'],
                 $data['name'],
                 $data['transaction_id'],
@@ -644,11 +539,7 @@ class CartController extends Controller
                 'items' => [],
                 'total' => $shopOrder->original_total,
                 'count' => collect($cart)->sum('quantity'),
-                'discount_type' => $shopOrder->discount_type,
-                'discount_rate' => $shopOrder->discount_type !== 'none' ? 0.20 : 0,
-                'discount_amount' => $shopOrder->discount_amount,
-                'discounted_total' => $shopOrder->discounted_total,
-                'is_vat_exempt' => $shopOrder->discount_type !== 'none',
+                'is_vat_exempt' => false,
                 'vat_amount' => $shopOrder->vat_amount,
                 'final_total' => $shopOrder->final_total,
             ];
@@ -675,12 +566,8 @@ class CartController extends Controller
                 'payment_method' => $shopOrder->payment_method,
                 'transaction_id' => $shopOrder->transaction_id,
                 'payment_date' => $shopOrder->paid_at,
-                'discount_type' => $shopOrder->discount_type,
-                'discount_amount' => $shopOrder->discount_amount,
-                'is_vat_exempt' => $shopOrder->discount_type !== 'none',
                 'vat_amount' => $shopOrder->vat_amount,
                 'original_total' => $shopOrder->original_total,
-                'discounted_total' => $shopOrder->discounted_total,
                 'order_reference' => $shopOrder->order_reference,
             ];
 
@@ -701,7 +588,6 @@ class CartController extends Controller
             // Clear cart and session
             session()->forget('cart');
             session()->forget('cart_reference');
-            session()->forget('cart_discount_type');
             session()->forget('current_shop_order_id');
             session()->forget('pending_order');
 

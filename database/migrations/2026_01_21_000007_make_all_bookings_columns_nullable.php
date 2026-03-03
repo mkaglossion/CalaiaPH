@@ -16,12 +16,7 @@ return new class extends Migration
         if (DB::getDriverName() === 'sqlite') {
             $columns = DB::select("PRAGMA table_info(bookings)");
         } else {
-            // MariaDB/MySQL compatible approach
-            $columns = DB::select("
-                SELECT COLUMN_NAME as name, DATA_TYPE as type, IS_NULLABLE as nullable 
-                FROM INFORMATION_SCHEMA.COLUMNS 
-                WHERE TABLE_NAME = 'bookings' AND TABLE_SCHEMA = DATABASE()
-            ");
+            $columns = Schema::getConnection()->getDoctrineSchemaManager()->listTableColumns('bookings');
         }
         
         Schema::table('bookings', function (Blueprint $table) use ($columns) {
@@ -31,9 +26,9 @@ return new class extends Migration
                     $isNullable = $column->notnull == 0;
                     $type = strtolower($column->type);
                 } else {
-                    $columnName = $column->name;
-                    $isNullable = $column->nullable === 'YES';
-                    $type = strtolower($column->type);
+                    $columnName = $column->getName();
+                    $isNullable = !$column->getNotnull();
+                    $type = $column->getType()->getName();
                 }
                 
                 // Skip primary key, timestamps, and columns we specifically need
@@ -51,18 +46,16 @@ return new class extends Migration
                 }
                 
                 // Make it nullable based on type
-                if (strpos($type, 'varchar') !== false || strpos($type, 'text') !== false || $type === 'string' || $type === 'char') {
+                if (strpos($type, 'varchar') !== false || strpos($type, 'text') !== false || $type === 'string') {
                     $table->string($columnName)->nullable()->change();
                 } elseif (strpos($type, 'int') !== false || strpos($type, 'bigint') !== false || $type === 'integer') {
                     $table->integer($columnName)->nullable()->change();
-                } elseif (strpos($type, 'decimal') !== false || $type === 'decimal' || $type === 'float' || $type === 'double') {
+                } elseif (strpos($type, 'decimal') !== false || $type === 'decimal') {
                     $table->decimal($columnName, 10, 2)->nullable()->change();
                 } elseif (strpos($type, 'date') !== false || $type === 'date') {
                     $table->date($columnName)->nullable()->change();
                 } elseif (strpos($type, 'timestamp') !== false || $type === 'datetime') {
                     $table->timestamp($columnName)->nullable()->change();
-                } elseif ($type === 'json') {
-                    $table->json($columnName)->nullable()->change();
                 }
             }
         });

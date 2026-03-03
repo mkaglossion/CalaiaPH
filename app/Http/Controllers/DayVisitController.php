@@ -9,6 +9,7 @@ use App\Services\PaymentService;
 use App\Services\ValidationService;
 use App\Services\InventoryService;
 use App\Services\DayTourInventoryService;
+use App\Services\VatService;
 use App\Models\DayTour;
 use Carbon\Carbon;
 
@@ -18,18 +19,21 @@ class DayVisitController extends Controller
     protected $paymentService;
     protected $inventoryService;
     protected $dayTourInventoryService;
+    protected $vatService;
 
     public function __construct(
         BookingService $bookingService, 
         PaymentService $paymentService, 
         InventoryService $inventoryService,
-        DayTourInventoryService $dayTourInventoryService
+        DayTourInventoryService $dayTourInventoryService,
+        VatService $vatService
     )
     {
         $this->bookingService = $bookingService;
         $this->paymentService = $paymentService;
         $this->inventoryService = $inventoryService;
         $this->dayTourInventoryService = $dayTourInventoryService;
+        $this->vatService = $vatService;
     }
 
     /**
@@ -90,20 +94,23 @@ class DayVisitController extends Controller
                 // Get inventory for this package on this date
                 $inventory = $this->dayTourInventoryService->getOrCreateInventory($package->id, $date);
                 
-                // Calculate pricing based on pricing_type
+                // Calculate pricing based on pricing_type - use raw prices from admin (already include VAT)
                 if ($package->pricing_type === 'total') {
                     // Total package price - divide by max guests to get per person rate
                     $pricePerPerson = $package->price / $package->max_guests;
                     $totalPrice = $package->price;
                     $priceDisplay = $this->formatPrice($package->price) . ' total';
-                    $priceBreakdown = $this->formatPrice($pricePerPerson) . '/pax for ' . $package->max_guests . ' pax';
+                    $priceBreakdown = $this->formatPrice($pricePerPerson) . '/person for ' . $package->max_guests . ' persons';
                 } else {
                     // Per person pricing - multiply by max guests for total
                     $pricePerPerson = $package->price;
                     $totalPrice = $package->price * $package->max_guests;
                     $priceDisplay = $this->formatPrice($package->price) . ' per person';
-                    $priceBreakdown = $this->formatPrice($totalPrice) . ' total for ' . $package->max_guests . ' pax';
+                    $priceBreakdown = $this->formatPrice($totalPrice) . ' total for ' . $package->max_guests . ' persons';
                 }
+
+                // Calculate VAT amount for the total price (prices already include VAT)
+                $vatAmount = $this->vatService->extractVatFromInclusive($totalPrice);
 
                 return [
                     'id' => $package->id,
@@ -122,6 +129,11 @@ class DayVisitController extends Controller
                             'name' => $activity->name
                         ];
                     }),
+                    // VAT information
+                    'vat' => [
+                        'rate' => $this->vatService->getVatInfo()['rate_percentage'],
+                        'amount' => $vatAmount,
+                    ],
                     // Inventory data
                     'inventory' => [
                         'total_slots' => $inventory->max_groups,
@@ -139,6 +151,11 @@ class DayVisitController extends Controller
             'available' => count($packagesData) > 0,
             'date' => $date,
             'packages' => $packagesData,
+            'vat_info' => [
+                'rate' => $this->vatService->getVatInfo()['rate_percentage'],
+                'label' => $this->vatService->getVatInfo()['label'],
+                'description' => $this->vatService->getVatInfo()['description'],
+            ],
             'message' => count($packagesData) === 0 ? 'No packages available at the moment. Please check back later.' : null
         ]);
     }
@@ -215,7 +232,17 @@ class DayVisitController extends Controller
     public function getActivitiesApi()
     {
         $activities = $this->bookingService->getActivitiesData();
-        return response()->json($activities);
+        
+        // Return raw activity prices (no VAT added) - VAT will be shown in booking summary only
+        
+        return response()->json([
+            'activities' => $activities,
+            'vat_info' => [
+                'rate' => $this->vatService->getVatInfo()['rate_percentage'],
+                'label' => $this->vatService->getVatInfo()['label'],
+                'description' => $this->vatService->getVatInfo()['description'],
+            ],
+        ]);
     }
 
     /**
@@ -301,23 +328,28 @@ class DayVisitController extends Controller
             }
         }
 
-        // Calculate grand total
+        // Calculate grand total - prices are already VAT-inclusive from admin
+        $packagePrice = (float) ($bookingData['price'] ?? 0);
         $activitiesTotal = collect(Session::get('dayvisit_selected_activities', []))->sum(function($activity) {
-            return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+            $price = $activity['price'] ?? 0;
+            return $price * ($activity['guests'] ?? 1);
         });
-        $grandTotal = ($bookingData['price'] ?? 0) + $activitiesTotal;
+        
+        // Prices are already VAT-inclusive, calculate VAT breakdown for display only
+        $subtotal = $packagePrice + $activitiesTotal;
+        $vatBreakdown = $this->vatService->generateBreakdown($subtotal, true);
+        $grandTotal = $vatBreakdown['gross_amount'];
 
         // Ensure minimum amount (PayMongo requires at least 100 centavos = 1 PHP)
         if ($grandTotal < 1) {
             $grandTotal = 1;
         }
 
-        // Build line items for PayMongo
+        // Build line items for PayMongo - prices are already VAT-inclusive
         $lineItems = [];
         
-        // Add package line item - ensure name is a string and not empty
+        // Add package line item - prices already include VAT
         $packageName = isset($bookingData['package']) && !empty($bookingData['package']) ? (string) $bookingData['package'] : 'Day Visit Package';
-        $packagePrice = (float) ($bookingData['price'] ?? 0);
         
         // Ensure package price is at least 1 PHP if it's the only item
         if ($packagePrice < 1 && empty($selectedActivities)) {
@@ -330,20 +362,23 @@ class DayVisitController extends Controller
             'quantity' => 1,
         ];
 
-        // Add activity line items - ensure names are strings
+        // Add activity line items - prices already include VAT
         $selectedActivities = Session::get('dayvisit_selected_activities', []);
         foreach ($selectedActivities as $activity) {
             if (!empty($activity) && isset($activity['name']) && !empty($activity['name']) && isset($activity['price'])) {
                 $guestCount = (int) ($activity['guests'] ?? 1);
-                $unit = (float) $activity['price'];
+                $unitPrice = (float) $activity['price']; // Already includes VAT
                 $activityName = (string) $activity['name'];
                 $lineItems[] = [
                     'name' => $activityName,
-                    'unit_price' => $unit,
+                    'unit_price' => $unitPrice,
                     'quantity' => $guestCount,
                 ];
             }
         }
+
+        // Store VAT information in session for receipt
+        Session::put('dayvisit_vat', $vatBreakdown);
 
         // Store booking and payment data in session
         Session::put('dayvisit_payment_data', [

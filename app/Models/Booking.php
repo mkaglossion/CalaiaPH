@@ -28,27 +28,12 @@ class Booking extends Model
         'vat_amount', // 12% VAT amount
         'vat_rate', // VAT rate applied
         'is_vat_inclusive', // Whether prices include VAT
-        'discount_type', // 'senior', 'pwd', or null
-        'discount_amount', // Discount amount
-        'discount_rate', // Discount rate applied
-        'is_vat_exempt', // Whether the booking is VAT-exempt (for senior/PWD)
         'payment_method',
         'payment_status',
         'status', // 'confirmed', 'cancelled', 'completed'
         'checkin_status',
         'checkin_timestamp',
         'checkout_timestamp',
-        // Discount verification fields
-        'discount_id_number',
-        'discount_id_image',
-        'discount_verification_status',
-        'discount_rejection_reason',
-        'discount_verified_at',
-        'discount_verified_by',
-        'discount_claimed_at_checkin',
-        'discount_difference_paid',
-        'discount_difference_paid_at',
-        'discount_verification_method',
     ];
 
     protected $casts = [
@@ -62,29 +47,12 @@ class Booking extends Model
         'vat_amount' => 'decimal:2',
         'vat_rate' => 'decimal:4',
         'is_vat_inclusive' => 'boolean',
-        'discount_amount' => 'decimal:2',
-        'discount_rate' => 'decimal:4',
         'is_vat_exempt' => 'boolean',
-        'discount_verified_at' => 'datetime',
-        'discount_difference_paid_at' => 'datetime',
-        'discount_claimed_at_checkin' => 'boolean',
-        'discount_difference_paid' => 'decimal:2',
     ];
 
     const CHECKIN_STATUS_PENDING = 'pending';
     const CHECKIN_STATUS_CHECKED_IN = 'checked_in';
     const CHECKIN_STATUS_CHECKED_OUT = 'checked_out';
-
-    // Discount verification statuses
-    const DISCOUNT_STATUS_NOT_REQUIRED = 'not_required';
-    const DISCOUNT_STATUS_PENDING = 'pending';
-    const DISCOUNT_STATUS_VERIFIED = 'verified';
-    const DISCOUNT_STATUS_REJECTED = 'rejected';
-
-    // Verification methods
-    const VERIFICATION_METHOD_NONE = 'none';
-    const VERIFICATION_METHOD_UPLOAD = 'upload';
-    const VERIFICATION_METHOD_PRESENT_AT_CHECKIN = 'present_at_checkin';
 
     /**
      * Fallback display name if customer_name is missing.
@@ -134,24 +102,6 @@ class Booking extends Model
     }
 
     /**
-     * Calculate and set discount fields for this booking.
-     * 
-     * @param float $originalAmount The original amount before discount
-     * @param string $discountType The type of discount (senior, pwd, or none)
-     * @return void
-     */
-    public function calculateAndSetDiscount(float $originalAmount, string $discountType): void
-    {
-        $discountService = app(\App\Services\DiscountService::class);
-        $breakdown = $discountService->applyDiscount($originalAmount, $discountType);
-
-        $this->discount_type = $breakdown['discount_type'];
-        $this->discount_rate = $breakdown['discount_rate'] / 100; // Store as decimal
-        $this->discount_amount = $breakdown['discount_amount'];
-        $this->is_vat_exempt = $breakdown['is_vat_exempt'];
-    }
-
-    /**
      * Calculate and set VAT fields for this booking.
      * Uses VatService for Philippine tax compliance (12% VAT).
      * 
@@ -161,16 +111,6 @@ class Booking extends Model
      */
     public function calculateAndSetVat(float $totalAmount, bool $isVatInclusive = true): void
     {
-        // If VAT-exempt (senior/PWD), no VAT calculation
-        if ($this->is_vat_exempt) {
-            $this->vat_amount = 0;
-            $this->vat_rate = 0;
-            $this->subtotal = $totalAmount;
-            $this->total_amount = $totalAmount;
-            $this->is_vat_inclusive = true;
-            return;
-        }
-
         $vatService = app(\App\Services\VatService::class);
         $breakdown = $vatService->generateBreakdown($totalAmount, $isVatInclusive);
 
@@ -179,25 +119,6 @@ class Booking extends Model
         $this->vat_amount = $breakdown['vat_amount'];
         $this->vat_rate = $breakdown['vat_rate'];
         $this->is_vat_inclusive = $isVatInclusive;
-    }
-
-    /**
-     * Get discount breakdown for this booking.
-     * 
-     * @return array
-     */
-    public function getDiscountBreakdown(): array
-    {
-        $discountService = app(\App\Services\DiscountService::class);
-        
-        return [
-            'discount_type' => $this->discount_type,
-            'discount_rate' => (float) $this->discount_rate,
-            'discount_rate_display' => (float) $this->discount_rate * 100,
-            'discount_amount' => (float) $this->discount_amount,
-            'discount_label' => $discountService->getDiscountLabel($this->discount_type ?? 'none'),
-            'is_vat_exempt' => (bool) $this->is_vat_exempt,
-        ];
     }
 
     /**
@@ -216,16 +137,6 @@ class Booking extends Model
             'vat_label' => ((float) $this->vat_rate * 100) . '% VAT',
             'is_vat_inclusive' => (bool) $this->is_vat_inclusive,
         ];
-    }
-
-    /**
-     * Get formatted discount amount for display.
-     * 
-     * @return string
-     */
-    public function getFormattedDiscountAttribute(): string
-    {
-        return '₱' . number_format((float) $this->discount_amount, 2);
     }
 
     /**

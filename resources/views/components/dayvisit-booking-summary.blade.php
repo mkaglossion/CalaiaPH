@@ -3,34 +3,29 @@
     'booking' => [],
     'selectedActivities' => [],
     'showActivities' => true,
-    'showTrustElements' => true,
-    'vatBreakdown' => null
+    'showTrustElements' => true
 ])
 
 @php
-// Calculate totals
-$activitiesTotal = 0;
-$baseTotal = $booking['price'] ?? 0;
+// Prices from admin are already customer-facing (VAT-inclusive)
+// Just use them directly without adding VAT
 
-// Activities total
+// Calculate totals - prices are already VAT-inclusive from admin
+$activitiesTotal = 0;
+$packagePrice = $booking['price'] ?? 0;
+
+// Activities total - use price as-is (VAT-inclusive)
 foreach ($selectedActivities as $activity) {
+    // Use price as-is (VAT-inclusive from admin), no need to add VAT
     $activitiesTotal += ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
 }
 
-$baseTotal += $activitiesTotal;
-
-// VAT calculation
-if ($vatBreakdown) {
-    $subtotal = $vatBreakdown['net_amount'] ?? $baseTotal;
-    $vatAmount = $vatBreakdown['vat_amount'] ?? 0;
-    $grandTotal = $vatBreakdown['gross_amount'] ?? $baseTotal;
-} else {
-    // Default 12% VAT calculation
-    $vatRate = 0.12;
-    $subtotal = $baseTotal / (1 + $vatRate);
-    $vatAmount = $baseTotal - $subtotal;
-    $grandTotal = $baseTotal;
-}
+// Calculate VAT breakdown - prices are already VAT-inclusive
+$vatService = app(\App\Services\VatService::class);
+$subtotal = $packagePrice + $activitiesTotal;
+$vatBreakdown = $vatService->generateBreakdown($subtotal, true); // true = input is VAT-inclusive
+$grandTotal = $vatBreakdown['gross_amount'];
+$vatAmount = $vatBreakdown['vat_amount'];
 
 // Date calculations
 $bookingDate = $booking['booking_date'] ?? null;
@@ -72,7 +67,7 @@ $packageName = $booking['package'] ?? $booking['package_name'] ?? 'Day Visit Pac
         <div class="bg-gray-50 rounded-lg p-3">
             <div class="flex justify-between items-center">
                 <span class="font-semibold text-gray-900">{{ $packageName }}</span>
-                <span class="font-bold text-[#8f5d54]">₱{{ number_format($booking['price'] ?? 0, 0) }}</span>
+                <span class="font-bold text-[#8f5d54]">₱{{ number_format($packagePrice, 0) }}</span>
             </div>
         </div>
     </div>
@@ -91,7 +86,11 @@ $packageName = $booking['package'] ?? $booking['package_name'] ?? 'Day Visit Pac
                 <div class="bg-white rounded border border-gray-100 p-2">
                     <div class="flex justify-between items-start">
                         <span class="font-semibold text-gray-900">{{ $activity['name'] }}</span>
-                        <span class="font-bold text-[#8f5d54]">₱{{ number_format(($activity['price'] ?? 0) * ($activity['guests'] ?? 1), 0) }}</span>
+                        @php
+                        // Use price as-is (VAT-inclusive from admin)
+                        $activityTotal = ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+                        @endphp
+                        <span class="font-bold text-[#8f5d54]">₱{{ number_format($activityTotal, 0) }}</span>
                     </div>
                     <div class="text-gray-600 mt-1">
                         {{ $activity['guests'] }} guest{{ ($activity['guests'] ?? 1) > 1 ? 's' : '' }}
@@ -107,39 +106,26 @@ $packageName = $booking['package'] ?? $booking['package_name'] ?? 'Day Visit Pac
     <hr class="border-gray-300">
     @endif
 
-    {{-- Pricing Summary with VAT Breakdown --}}
+    {{-- Pricing Summary --}}
     <div class="space-y-3">
         <div class="flex justify-between items-center text-sm">
             <span class="text-gray-600 uppercase">{{ $packageName }}:</span>
-            <span class="font-semibold">₱{{ number_format($booking['price'] ?? 0, 0) }}</span>
+            <span class="font-semibold">₱{{ number_format($packagePrice, 0) }}</span>
         </div>
         @if($showActivities)
         <div class="flex justify-between items-center text-sm">
             <span class="text-gray-600">Activities:</span>
-            <span id="activities-total" class="font-semibold">₱{{ !empty($selectedActivities) ? number_format($activitiesTotal, 0) : '0' }}</span>
+            <span id="activities-total" class="font-semibold">₱{{ number_format($activitiesTotal, 0) }}</span>
         </div>
         @endif
-        
-        {{-- VAT Breakdown --}}
-        <div class="border-t border-gray-200 pt-3 mt-3 space-y-2">
-            <div class="flex justify-between items-center text-sm">
-                <span class="text-gray-600">Subtotal:</span>
-                <span class="font-semibold">₱{{ number_format($subtotal, 2) }}</span>
-            </div>
-            <div class="flex justify-between items-center text-xs text-gray-500">
-                <span>Includes 12% VAT:</span>
-                <span>₱{{ number_format($vatAmount, 2) }}</span>
-            </div>
+        <div class="flex justify-between items-center text-sm">
+            <span class="text-gray-600">VAT (12%):</span>
+            <span id="vat-amount" class="font-semibold">₱{{ number_format($vatAmount, 0) }}</span>
         </div>
-        
         <div class="flex justify-between items-center text-lg font-bold border-t border-gray-100 pt-2">
             <span>Grand Total:</span>
-            <span id="grand-total" class="text-[#8f5d54]">₱{{ number_format($grandTotal, 2) }}</span>
+            <span id="grand-total" class="text-[#8f5d54]">₱{{ number_format($grandTotal, 0) }}</span>
         </div>
-        
-        <p class="text-xs text-gray-500 mt-2">
-            * All prices are VAT-inclusive as required by Philippine tax regulations.
-        </p>
     </div>
 
 

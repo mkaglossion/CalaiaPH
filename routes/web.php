@@ -71,7 +71,6 @@ use App\Http\Controllers\Admin\StaycationAccommodationController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\PricingConfigController;
-use App\Http\Controllers\Admin\DiscountVerificationController;
 use App\Http\Controllers\BookingCalendarController;
 use App\Http\Controllers\CheckInOutController;
 use Illuminate\Support\Facades\Session;
@@ -299,10 +298,6 @@ Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 Route::patch('/cart/{id}', [CartController::class, 'update'])->where('id', '.*')->name('cart.update');
 Route::delete('/cart/{id}', [CartController::class, 'remove'])->where('id', '.*')->name('cart.remove');
-
-// Cart Discount Routes
-Route::post('/cart/discount', [CartController::class, 'setDiscount'])->name('cart.discount.set');
-Route::delete('/cart/discount', [CartController::class, 'clearDiscount'])->name('cart.discount.clear');
 
 Route::get('/checkout', [CartController::class, 'checkoutForm'])->name('checkout.form');
 Route::post('/checkout', [CartController::class, 'checkoutSubmit'])->name('checkout.submit');
@@ -586,18 +581,6 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/availability/all', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getAllAvailability'])->name('admin.day-tour-inventory.all-availability');
     });
 
-    // ========== Discount Verification Management Routes ==========
-    Route::prefix('/discount-verifications')->group(function () {
-        Route::get('/', [DiscountVerificationController::class, 'index'])->name('admin.discount-verifications.index');
-        Route::get('/bookings/{id}', [DiscountVerificationController::class, 'show'])->name('admin.discount-verifications.show');
-        Route::get('/shop-orders/{shopOrder}', [DiscountVerificationController::class, 'showShopOrder'])->name('admin.discount-verifications.show-shop-order');
-        Route::post('/{type}/{id}/approve', [DiscountVerificationController::class, 'approve'])->name('admin.discount-verifications.approve');
-        Route::post('/{type}/{id}/reject', [DiscountVerificationController::class, 'reject'])->name('admin.discount-verifications.reject');
-        Route::post('/{type}/{id}/claim', [DiscountVerificationController::class, 'claim'])->name('admin.discount-verifications.claim');
-        Route::post('/{type}/{id}/record-payment', [DiscountVerificationController::class, 'recordPayment'])->name('admin.discount-verifications.record-payment');
-        Route::post('/bulk-approve', [DiscountVerificationController::class, 'bulkApprove'])->name('admin.discount-verifications.bulk-approve');
-        Route::get('/api/pending-count', [DiscountVerificationController::class, 'pendingCount'])->name('admin.discount-verifications.pending-count');
-    });
 
 });
 
@@ -632,9 +615,6 @@ Route::middleware(['api.throttle:booking', 'api.security'])->group(function () {
 
 // Upload API Routes (5 requests per minute - very strict for file uploads)
 Route::group(['middleware' => ['api.throttle:upload', 'api.security', 'xss']], function () {
-    // Discount Verification Upload
-    Route::post('/api/discount-verification/upload/{id}', [DiscountVerificationController::class, 'uploadIdImage'])->name('api.discount-verification.upload');
-
     // ID Verification API Routes (AI-powered real-time ID verification)
     Route::post('/api/id-verification/verify', [IdVerificationController::class, 'verify'])->name('api.id-verification.verify');
     Route::post('/api/id-verification/quick-check', [IdVerificationController::class, 'quickCheck'])->name('api.id-verification.quick-check');

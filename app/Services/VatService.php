@@ -191,8 +191,6 @@ class VatService
         $exemptTypes = [
             'export',           // Export sales
             'foreign_currency', // Foreign currency transactions
-            'senior_citizen',   // Senior citizen discounts (portion)
-            'pwd',             // PWD discounts (portion)
         ];
 
         return in_array($type, $exemptTypes);

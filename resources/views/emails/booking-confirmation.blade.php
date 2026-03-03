@@ -132,12 +132,6 @@
                     @if($activitiesTotal > 0)
                         <p><strong>Activities Total:</strong> ₱{{ number_format($activitiesTotal, 2) }}</p>
                     @endif
-                    
-                    {{-- Discount Breakdown --}}
-                    @if(!empty($bookingData['final_totals']['discount_type']) && $bookingData['final_totals']['discount_type'] !== 'none')
-                        <p><strong>{{ $bookingData['final_totals']['discount_type'] === 'senior' ? 'Senior Citizen Discount (20%)' : 'PWD Discount (20%)' }}:</strong> -₱{{ number_format($bookingData['final_totals']['discount_amount'], 2) }}</p>
-                    @endif
-                    
                     @if($grandTotal > 0)
                     <p><strong>Total Amount Paid:</strong> ₱{{ number_format($grandTotal, 2) }}</p>
                     @endif

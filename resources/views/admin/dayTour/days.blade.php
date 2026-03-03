@@ -78,7 +78,7 @@
                     {{-- Package Capacity & Pricing --}}
                     <div class="mt-2 flex flex-wrap items-center gap-2">
                         <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                            <i class="bi bi-people mr-1"></i> Good for {{ $tour->max_guests }} pax
+                            <i class="bi bi-people mr-1"></i> Good for {{ $tour->max_guests }} persons
                         </span>
                         @if(!$tour->is_active)
                             <span class="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
@@ -98,7 +98,7 @@
                         @if($tour->pricing_type === 'total')
                             ₱{{ $priceWhole ? number_format($tour->price) : number_format($tour->price, 2) }} total
                             <span class="text-sm text-gray-500">
-                                (₱{{ $perPersonWhole ? number_format($perPerson) : number_format($perPerson, 2) }}/pax)
+                                (₱{{ $perPersonWhole ? number_format($perPerson) : number_format($perPerson, 2) }}/person)
                             </span>
                         @else
                             ₱{{ $priceWhole ? number_format($tour->price) : number_format($tour->price, 2) }} per person
@@ -509,9 +509,9 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="max_guests" class="block font-medium mb-1 text-gray-700">Good For (Pax)</label>
+                        <label for="max_guests" class="block font-medium mb-1 text-gray-700">Good For (Persons)</label>
                         <input type="number" id="max_guests" name="max_guests" x-model="form.max_guests" min="1" class="w-full border rounded-xl px-3 py-2" placeholder="e.g., 7" required>
-                        <p class="text-xs text-gray-500 mt-1">Maximum guests for this package</p>
+                        <p class="text-xs text-gray-500 mt-1">Maximum persons for this package</p>
                     </div>
                     <div>
                         <label for="pricing_type" class="block font-medium mb-1 text-gray-700">Pricing Type</label>
@@ -532,7 +532,7 @@
                     <p class="text-xs text-gray-500 mt-1" x-show="form.max_guests && form.price">
                         <span x-text="form.pricing_type === 'total'
                             ? '₱' + (Number.isInteger(Number(form.price / form.max_guests)) ? Number(form.price / form.max_guests).toLocaleString() : Number(form.price / form.max_guests).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})) + ' per person equivalent'
-                            : '₱' + (Number.isInteger(Number(form.price * form.max_guests)) ? Number(form.price * form.max_guests).toLocaleString() : Number(form.price * form.max_guests).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})) + ' total for ' + form.max_guests + ' pax'">
+                            : '₱' + (Number.isInteger(Number(form.price * form.max_guests)) ? Number(form.price * form.max_guests).toLocaleString() : Number(form.price * form.max_guests).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})) + ' total for ' + form.max_guests + ' persons'">
                         </span>
                     </p>
                 </div>

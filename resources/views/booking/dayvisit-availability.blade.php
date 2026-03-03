@@ -153,6 +153,10 @@
                                     <span class="text-sm text-gray-600">Total Price</span>
                                     <span id="summary-total-price" class="font-semibold text-[#8f5d54] text-lg">—</span>
                                 </div>
+                                <div id="vat-display" class="flex justify-between items-center text-xs text-gray-500">
+                                    <span>12% VAT:</span>
+                                    <span id="summary-vat">—</span>
+                                </div>
                             </div>
                         </div>
 
@@ -228,6 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const guests = selectedPackage.max_guests;
             
             // Store selected package in session and redirect to activities
+            // Use price_exclusive (VAT-exclusive) to avoid double VAT calculation
             fetch('{{ route("dayvisit.storeAvailability") }}', {
                 method: 'POST',
                 headers: {
@@ -238,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     guests: guests,
                     package: selectedPackage.id,
                     package_name: selectedPackage.name,
-                    price: selectedPackage.price
+                    price: selectedPackage.price_exclusive || selectedPackage.price
                 })
             })
             .then(response => response.json())
@@ -265,6 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const guests = selectedPackage.max_guests;
             
             // Store selected package in session and redirect to payment
+            // Use price_exclusive (VAT-exclusive) to avoid double VAT calculation
             fetch('{{ route("dayvisit.storeAvailability") }}', {
                 method: 'POST',
                 headers: {
@@ -275,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     guests: guests,
                     package: selectedPackage.id,
                     package_name: selectedPackage.name,
-                    price: selectedPackage.price
+                    price: selectedPackage.price_exclusive || selectedPackage.price
                 })
             })
 
@@ -373,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     '<div class="flex items-start justify-between">' +
                         '<h4 class="font-semibold text-gray-900 text-base sm:text-lg">' + packageData.name + '</h4>' +
                         '<span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">' +
-                            '<i class="bi bi-people mr-1"></i> Max ' + packageData.max_guests + ' pax' +
+                            '<i class="bi bi-people mr-1"></i> Max ' + packageData.max_guests + ' persons' +
                         '</span>' +
                     '</div>' +
                     '<p class="text-sm text-gray-600 mt-1 line-clamp-2">' + (packageData.description || '') + '</p>' +
@@ -442,18 +448,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const summaryTotalPrice = document.getElementById('summary-total-price');
         const summaryStatus = document.getElementById('summary-status');
         const summaryGuests = document.getElementById('summary-guests');
+        const vatDisplay = document.getElementById('vat-display');
+        const summaryVat = document.getElementById('summary-vat');
 
         if (selectedPackage) {
             summaryPackage.innerHTML = `
                 <div class="font-medium">${selectedPackage.name}</div>
                 <div class="text-xs text-gray-500 mt-1">
-                    <i class="bi bi-people mr-1"></i> Good for ${selectedPackage.max_guests} pax
+                    <i class="bi bi-people mr-1"></i> Good for ${selectedPackage.max_guests} persons
                 </div>
             `;
             summaryPricePerPerson.textContent = formatPrice(selectedPackage.price);
             summaryTotalPrice.textContent = formatPrice(selectedPackage.total_price);
             summaryGuests.textContent = selectedPackage.max_guests;
-
+            
+            // Show VAT display
+            if (vatDisplay && selectedPackage.vat) {
+                vatDisplay.classList.remove('hidden');
+                summaryVat.textContent = formatPrice(selectedPackage.vat.amount);
+            }
 
             summaryStatus.innerHTML = `
                 <span class="text-green-600 font-semibold">
@@ -469,6 +482,10 @@ document.addEventListener('DOMContentLoaded', function() {
             summaryTotalPrice.textContent = '—';
             summaryGuests.textContent = currentGuests > 1 ? currentGuests : '—';
             summaryStatus.textContent = 'Please select a package to view booking details';
+            // Hide VAT display
+            if (vatDisplay) {
+                vatDisplay.classList.add('hidden');
+            }
             // Disable buttons
             summaryContinueBtn.disabled = true;
             proceedToPaymentBtn.disabled = true;

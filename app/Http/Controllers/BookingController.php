@@ -902,8 +902,6 @@ class BookingController extends Controller
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
             'payment_method' => 'required|string|in:paymongo,qr,gcash,paymaya,bank,qrph,grab_pay,billease',
-            'discount_type' => 'nullable|string|in:none,senior,pwd',
-            'discount_id_number' => 'nullable|string|max:50',
         ]);
 
         $lineItems = [];
@@ -957,25 +955,6 @@ class BookingController extends Controller
             }
         }
 
-        // Apply discount if applicable
-        $discountType = $request->discount_type ?? 'none';
-        $discountIdNumber = $request->discount_id_number ?? '';
-        $discountAmount = 0.0;
-
-        if (in_array($discountType, ['senior', 'pwd'])) {
-            $discountService = app(\App\Services\DiscountService::class);
-            $discountBreakdown = $discountService->applyDiscount($grandTotal, $discountType);
-            $discountAmount = $discountBreakdown['discount_amount'];
-            $grandTotal = $discountBreakdown['total_payable'];
-
-            Log::info('Discount applied:', [
-                'type' => $discountType,
-                'original_amount' => $discountBreakdown['original_amount'],
-                'discount_amount' => $discountAmount,
-                'discounted_amount' => $grandTotal,
-            ]);
-        }
-
         Log::info('Line items being sent to PayMongo (in order):', $lineItems);
         Log::info('Calculated grand total (from line items):', ['total' => $grandTotal]);
 
@@ -990,9 +969,6 @@ class BookingController extends Controller
                 'special_requests' => $request->special_requests,
                 'cancellation_policy' => $request->cancellation_policy,
                 'payment_method' => $request->payment_method,
-                'discount_type' => $discountType,
-                'discount_id_number' => $discountIdNumber,
-                'discount_amount' => $discountAmount,
             ]
         ]);
 

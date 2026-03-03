@@ -181,13 +181,21 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadActivities() {
         fetch(activitiesEndpoint)
             .then(response => response.json())
-            .then(activities => {
+            .then(activitiesData => {
+                // Handle both array response and object with activities key
+                const activities = activitiesData.activities || activitiesData;
                 const container = root.querySelector('#activities-container');
                 container.innerHTML = '';
 
                 activities.forEach(activity => {
                     const activityDiv = document.createElement('div');
                     activityDiv.className = 'bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow';
+                    
+                    // Use price_exclusive if available (for dayvisit with VAT), otherwise use price
+                    // The API now returns VAT-inclusive prices for display, but we store price_exclusive for calculation
+                    const displayPrice = activity.price_exclusive !== undefined ? activity.price_exclusive : activity.price;
+                    const storedPrice = activity.price_exclusive !== undefined ? activity.price_exclusive : activity.price;
+                    
                     activityDiv.innerHTML = `
                         <div class="flex items-start space-x-3">
                           <input
@@ -196,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             name="activities[]"
                             value="${activity.id}"
                             class="activity-checkbox mt-1 text-[#8f5d54] focus:ring-[#8f5d54]"
-                            data-price="${activity.price}"
+                            data-price="${storedPrice}"
                             data-name="${activity.name}"
                           >
                           <div class="flex-1">
@@ -210,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <span class="text-xs text-gray-500">
                                       <i class="bi bi-clock mr-1"></i>${activity.duration}
                                     </span>
-                                    <span class="text-xs font-semibold text-[#8f5d54]">₱${parseFloat(activity.price).toFixed(2)}</span>
+                                    <span class="text-xs font-semibold text-[#8f5d54]">₱${parseFloat(displayPrice).toFixed(2)}</span>
                                   </div>
                                   <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
                                     ${activity.availability}

@@ -54,34 +54,36 @@ if (!empty($selectedFoods)) {
     }
 }
 
-// Calculate grand total and VAT breakdown
-$grandTotal = isset($booking['final_totals']['grand_total']) 
-    ? $booking['final_totals']['grand_total'] 
-    : ($accommodationTotal + (!empty($selectedActivities) ? $activitiesTotal : 0) + ($calculatedFoodTotal ?? $foodTotal));
+// Calculate grand total - ALWAYS use cumulative totals from all previous steps
+// Get totals from final_totals if available, otherwise calculate from current items
+$previousAccommodationTotal = $booking['final_totals']['accommodation_total'] ?? 0;
+$previousFoodTotal = $booking['final_totals']['food_total'] ?? 0;
+$previousActivitiesTotal = $booking['final_totals']['activities_total'] ?? 0;
 
-// Calculate discount and VAT breakdown
-$discountService = app(\App\Services\DiscountService::class);
-$discountType = $booking['discount_type'] ?? 'none'; // 'senior', 'pwd', or 'none'
-$discountBreakdown = $discountService->applyDiscount((float) $grandTotal, $discountType);
-
-// Calculate VAT based on discount status
-$vatService = app(\App\Services\VatService::class);
-if ($discountBreakdown['is_vat_exempt']) {
-    $vatBreakdown = [
-        'gross_amount' => $discountBreakdown['total_payable'],
-        'net_amount' => $discountBreakdown['total_payable'],
-        'vat_amount' => 0,
-        'vat_rate' => 0,
-        'vat_rate_display' => 0,
-        'vat_label' => 'VAT Exempt',
-        'is_vat_inclusive' => true,
-    ];
-} else {
-    $vatBreakdown = $vatService->generateBreakdown((float) $discountBreakdown['total_payable'], true);
+// Calculate current step totals
+$currentAccommodationTotal = 0;
+foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
+    if (!empty($acc)) {
+        $currentAccommodationTotal += $acc['total_price'] ?? 0;
+    }
 }
 
-// Update grand total with discount applied
-$grandTotal = $discountBreakdown['total_payable'];
+// Use the greater of previous or current (prefer previous which has cumulative data)
+$accommodationTotal = max($previousAccommodationTotal, $currentAccommodationTotal);
+$foodTotal = max($previousFoodTotal, $calculatedFoodTotal ?? $foodTotal);
+$activitiesTotal = max($previousActivitiesTotal, $activitiesTotal);
+
+// Calculate cumulative grand total
+$grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
+
+// If grandTotal is still 0, fallback to direct calculation
+if ($grandTotal === 0) {
+    $grandTotal = ($accommodationTotal ?? 0) + ($activitiesTotal ?? 0) + ($calculatedFoodTotal ?? $foodTotal ?? 0);
+}
+
+// Calculate VAT breakdown using VatService (12% Philippine VAT)
+$vatService = app(\App\Services\VatService::class);
+$vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, true); // true = VAT inclusive
 @endphp
 
 <div class="bg-white rounded-2xl shadow-lg p-6 space-y-6">
@@ -350,27 +352,16 @@ $grandTotal = $discountBreakdown['total_payable'];
         {{-- Subtotal (VAT-inclusive) --}}
         <div class="flex justify-between items-center text-sm border-t border-gray-100 pt-2">
             <span class="text-gray-600">Subtotal:</span>
-            <span class="font-semibold">₱{{ number_format($discountBreakdown['original_amount'], 2) }}</span>
+            <span class="font-semibold">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
         </div>
         
-        {{-- Discount Breakdown --}}
-        @if($discountBreakdown['discount_amount'] > 0)
-        <div class="flex justify-between items-center text-sm text-green-600">
-            <span>
-                <i class="bi bi-percent text-green-500 text-xs cursor-help" title="{{ $discountBreakdown['discount_type'] === 'senior' ? 'Senior Citizen Discount (20%)' : 'PWD Discount (20%)' }}"></i>
-                {{ $discountBreakdown['discount_type'] === 'senior' ? 'Senior Citizen Discount (20%)' : 'PWD Discount (20%)' }}:
-            </span>
-            <span>-₱{{ number_format($discountBreakdown['discount_amount'], 2) }}</span>
-        </div>
-        @endif
-        
-        {{-- VAT Breakdown --}}
+        {{-- VAT Included Breakdown --}}
         <div class="flex justify-between items-center text-sm text-gray-500">
             <span>
-                <i class="bi bi-info-circle text-gray-400 text-xs cursor-help" title="{{ $discountBreakdown['is_vat_exempt'] ? 'VAT Exempt for ' . ucfirst($discountBreakdown['discount_type']) : 'Value Added Tax as per Philippine TRAIN Law' }}"></i>
-                {{ $discountBreakdown['is_vat_exempt'] ? 'VAT Exempt' : 'Includes 12% VAT' }}:
+                <i class="bi bi-info-circle text-gray-400 text-xs cursor-help" title="Value Added Tax as per Philippine TRAIN Law"></i>
+                Includes 12% VAT:
             </span>
-            <span>{{ $discountBreakdown['is_vat_exempt'] ? '₱0' : '₱' . number_format($vatBreakdown['vat_amount'], 2) }}</span>
+            <span>₱{{ number_format($vatBreakdown['vat_amount'], 2) }}</span>
         </div>
         
         {{-- Grand Total --}}
@@ -379,21 +370,14 @@ $grandTotal = $discountBreakdown['total_payable'];
             @if($showDynamicFood)
                 <span id="grand-total" class="text-[#8f5d54]" x-text="calculateTotal()" data-food-total="0"></span>
             @else
-                <span id="grand-total" class="text-[#8f5d54]" data-food-total="{{ $calculatedFoodTotal ?? $foodTotal }}">₱{{ number_format($grandTotal, 2) }}</span>
+                <span id="grand-total" class="text-[#8f5d54]" data-food-total="{{ $calculatedFoodTotal ?? $foodTotal }}">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
             @endif
         </div>
         
-        {{-- Discount Note --}}
-        @if($discountBreakdown['discount_amount'] > 0)
-        <p class="text-xs text-green-600 italic text-center mt-2">
-            * {{ $discountBreakdown['discount_type'] === 'senior' ? 'Senior Citizen' : 'PWD' }} discount applied. VAT exempt as per Philippine tax regulations.
-        </p>
-        @else
         {{-- VAT Note --}}
         <p class="text-xs text-gray-500 italic text-center mt-2">
             * All prices are VAT-inclusive as required by Philippine tax regulations.
         </p>
-        @endif
     </div>
     @endif
 

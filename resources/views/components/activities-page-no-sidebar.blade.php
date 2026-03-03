@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     item.innerHTML = `
                       <div class="flex-1">
                         <p class="text-xs font-medium text-gray-900">${activity.name}</p>
-                        <p class="text-xs text-gray-500 mt-1">₱${activity.price.toLocaleString()} / pax</p>
+                        <p class="text-xs text-gray-500 mt-1">₱${activity.price.toLocaleString()} / persons</p>
                         ${!isByotOrCamping ? `
                         <div class="mt-2">
                           <label class="block text-xs text-gray-600 mb-1">Number of Guests</label>
@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <span class="text-xs text-gray-500">
                                       <i class="bi bi-clock mr-1"></i>${activity.duration}
                                     </span>
-                                    <span class="text-xs font-semibold text-[#8f5d54]">₱${parseFloat(activity.price).toFixed(2)} / pax</span>
+                                    <span class="text-xs font-semibold text-[#8f5d54]">₱${parseFloat(activity.price).toFixed(2)} / persons</span>
                                   </div>
                                   <span class="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
                                     ${activity.availability}

@@ -576,25 +576,45 @@
                             </div>
                         </div>
 
-                        {{-- Total Price --}}
+                        {{-- Total Price with VAT --}}
                         <div class="mb-6" x-show="selectedCount() > 0">
                             <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
                                 <i class="bi bi-cash mr-2 text-[#8f5d54]"></i> Estimated Total
                             </h4>
 
-                            <div class="bg-green-50 rounded-lg p-4 border border-green-200">
-                                <div class="text-2xl font-bold text-green-600" x-text="calculateTotalPrice()"></div>
-                                <div class="text-sm text-green-700 mt-1">Includes accommodation + extras (final price calculated at checkout)</div>
+                            <div class="bg-green-50 rounded-lg p-4 border border-green-200 space-y-2">
+                                {{-- Subtotal (before VAT) --}}
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-600">Subtotal:</span>
+                                    <span class="font-semibold" x-text="calculateSubtotal()"></span>
+                                </div>
+                                
+                                {{-- VAT (12%) --}}
+                                <div class="flex justify-between items-center text-sm text-gray-500">
+                                    <span>
+                                        <i class="bi bi-info-circle text-gray-400 text-xs" title="Value Added Tax as per Philippine TRAIN Law"></i>
+                                        12% VAT:
+                                    </span>
+                                    <span x-text="calculateVAT()"></span>
+                                </div>
+                                
+                                {{-- Grand Total --}}
+                                <div class="border-t border-green-200 pt-2 flex justify-between items-center">
+                                    <span class="font-semibold text-gray-800">Grand Total:</span>
+                                    <span class="text-2xl font-bold text-green-600" x-text="calculateTotalPrice()"></span>
+                                </div>
+                                
+                                <div class="text-xs text-gray-500 mt-1">Final price with VAT (calculated at checkout)</div>
                                 <button type="button"
                                         x-show="hasRegularRooms()"
                                         @click="showPriceBreakdownModal = true"
-                                        class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition">
+                                        class="mt-2 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition">
 
                                     <i class="bi bi-eye text-base"></i>
                                     <span>View Price Breakdown</span>
 
                                 </button>
-                                 <div x-show="!hasRegularRooms()" class="mt-3 text-sm text-gray-500">
+                                 <div x-show="!hasRegularRooms()" class="mt-2 text-sm text-gray-500">
                                      <i class="bi bi-info-circle mr-1"></i>
                                      <span>Per slot pricing - no nightly breakdown</span>
                                  </div>
@@ -1579,6 +1599,35 @@
 
                     const total = base + mattress + pet;
                     return '₱' + total.toLocaleString();
+                },
+
+                calculateSubtotal() {
+                    // Calculate total WITHOUT VAT (gross_amount from VAT calculation)
+                    let total = 0;
+                    for (const room of Object.values(this.selectedRooms)) {
+                        const base = room.accommodation_price || 0;
+                        const mattress = this.calculateMattressPrice(room);
+                        const pet = this.calculatePetPrice(room);
+                        total += base + mattress + pet;
+                    }
+                    // Reverse the VAT-inclusive calculation: gross = total / 1.12
+                    const subtotal = total / 1.12;
+                    return '₱' + subtotal.toLocaleString();
+                },
+
+                calculateVAT() {
+                    // Calculate 12% VAT
+                    let total = 0;
+                    for (const room of Object.values(this.selectedRooms)) {
+                        const base = room.accommodation_price || 0;
+                        const mattress = this.calculateMattressPrice(room);
+                        const pet = this.calculatePetPrice(room);
+                        total += base + mattress + pet;
+                    }
+                    // Reverse the VAT-inclusive calculation to get VAT amount
+                    const subtotal = total / 1.12;
+                    const vat = total - subtotal;
+                    return '₱' + vat.toLocaleString();
                 },
 
                 calculateTotalPrice() {

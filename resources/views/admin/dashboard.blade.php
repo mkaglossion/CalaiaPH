@@ -10,16 +10,6 @@
   $from = request('from');
   $to = request('to');
 
-  $pendingBookings = \App\Models\Booking::where('discount_type', '!=', 'none')
-      ->where('discount_verification_status', 'pending')
-      ->count();
-
-  $pendingShopOrders = \App\Models\ShopOrder::where('discount_type', '!=', 'none')
-      ->where('discount_status', 'pending')
-      ->count();
-
-  $pendingVerifications = $pendingBookings + $pendingShopOrders;
-
   $statCards = [
     [
       'label' => 'Users',
@@ -379,32 +369,6 @@
     </div>
   </section>
 
-  {{-- Discount Verification Alert --}}
-  @if($pendingVerifications > 0)
-    <section aria-label="Discount verification alert">
-      <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
-        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="shrink-0">
-              <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                <i class="bi bi-person-badge text-amber-600 text-xl"></i>
-              </div>
-            </div>
-            <div>
-              <p class="text-sm text-amber-800">
-                <span class="font-semibold">{{ $pendingVerifications }} Pending Discount Verification{{ $pendingVerifications > 1 ? 's' : '' }}</span>
-              </p>
-              <p class="text-xs text-amber-700 mt-1">Senior Citizen and PWD discounts awaiting review</p>
-            </div>
-          </div>
-          <a href="{{ route('admin.discount-verifications.index') }}" 
-             class="inline-flex items-center gap-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition text-sm font-medium">
-            <i class="bi bi-eye"></i> Review Now
-          </a>
-        </div>
-      </div>
-    </section>
-  @endif
 
   {{-- Inventory Alerts --}}
   @if($lowStockProducts > 0 || $lowStockFoods > 0)

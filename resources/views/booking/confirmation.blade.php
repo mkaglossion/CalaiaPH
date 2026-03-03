@@ -239,35 +239,20 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                   <span class="font-medium">₱{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal ?? 0, 2) }}</span>
                 </div>
                 
-                {{-- Discount Breakdown --}}
-                @if(!empty($customerInfo['discount_type']) && $customerInfo['discount_type'] !== 'none')
-                <div class="flex justify-between items-center text-sm text-green-600">
-                  <span>
-                    <i class="bi bi-percent text-green-500 text-xs"></i>
-                    {{ $customerInfo['discount_type'] === 'senior' ? 'Senior Citizen Discount (20%)' : 'PWD Discount (20%)' }}:
-                  </span>
-                  <span>-₱{{ number_format($customerInfo['discount_amount'] ?? 0, 2) }}</span>
-                </div>
-                @endif
-                
                 {{-- VAT Breakdown --}}
                 <div class="flex justify-between items-center text-sm text-gray-500">
                   <span>
                     <i class="bi bi-info-circle text-gray-400 text-xs"></i>
-                    {{ (!empty($customerInfo['discount_type']) && $customerInfo['discount_type'] !== 'none') ? 'VAT Exempt' : 'Includes 12% VAT' }}:
+                    Includes 12% VAT:
                   </span>
-                  <span>{{ (!empty($customerInfo['discount_type']) && $customerInfo['discount_type'] !== 'none') ? '₱0' : '₱' . number_format($vatBreakdown['vat_amount'] ?? 0, 2) }}</span>
+                  <span>₱{{ number_format($vatBreakdown['vat_amount'] ?? 0, 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
                   <span>Total Amount Paid:</span>
                   <span class="text-[#8f5d54]">₱{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal ?? 0, 2) }}</span>
                 </div>
                 <p class="text-xs text-gray-500 italic text-center mt-2">
-                  @if(!empty($customerInfo['discount_type']) && $customerInfo['discount_type'] !== 'none')
-                    * {{ $customerInfo['discount_type'] === 'senior' ? 'Senior Citizen' : 'PWD' }} discount applied. VAT exempt as per Philippine tax regulations.
-                  @else
-                    * All prices are VAT-inclusive as required by Philippine tax regulations.
-                  @endif
+                  * All prices are VAT-inclusive as required by Philippine tax regulations.
                 </p>
               </div>
             </div>

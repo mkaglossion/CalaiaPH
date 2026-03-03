@@ -230,47 +230,11 @@ class PaymentService
                 }
             }
 
-            $baseTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
-            
-            // Apply discount if applicable (Senior/PWD - 20% discount, VAT exempt)
-            $discountType = $paymentData['discount_type'] ?? 'none';
-            $discountAmount = 0.0;
-            $discountedTotal = $baseTotal;
-            $isVatExempt = false;
-
-            if (in_array($discountType, ['senior', 'pwd'])) {
-                $discountService = app(\App\Services\DiscountService::class);
-                $discountBreakdown = $discountService->applyDiscount($baseTotal, $discountType);
-                $discountAmount = $discountBreakdown['discount_amount'];
-                $discountedTotal = $discountBreakdown['discounted_amount'];
-                $isVatExempt = $discountBreakdown['is_vat_exempt'];
-            }
-
-            // Calculate VAT (12%) if not VAT exempt
-            $vatAmount = 0.0;
-            $subtotal = $discountedTotal;
-            $grandTotal = $discountedTotal;
-
-            if (!$isVatExempt) {
-                $vatService = app(\App\Services\VatService::class);
-                $vatBreakdown = $vatService->generateBreakdown($discountedTotal, true);
-                $vatAmount = $vatBreakdown['vat_amount'];
-                $subtotal = $vatBreakdown['net_amount'];
-                $grandTotal = $vatBreakdown['gross_amount'];
-            }
-
             $staycationBooking['final_totals'] = [
                 'accommodation_total' => $accommodationTotal,
                 'food_total' => $foodTotal,
                 'activities_total' => $activitiesTotal,
-                'base_total' => $baseTotal,
-                'discount_type' => $discountType,
-                'discount_amount' => $discountAmount,
-                'discounted_total' => $discountedTotal,
-                'vat_amount' => $vatAmount,
-                'subtotal' => $subtotal,
-                'grand_total' => $grandTotal,
-                'is_vat_exempt' => $isVatExempt,
+                'grand_total' => $accommodationTotal + $foodTotal + $activitiesTotal
             ];
         }
 
@@ -316,17 +280,9 @@ class PaymentService
             'checkout_date' => $staycationBooking['checkout'],
             'booking_data' => $staycationBooking,
             'total_amount' => $staycationBooking['final_totals']['grand_total'] ?? 0,
-            'subtotal' => $staycationBooking['final_totals']['subtotal'] ?? 0,
-            'vat_amount' => $staycationBooking['final_totals']['vat_amount'] ?? 0,
-            'vat_rate' => ($staycationBooking['final_totals']['is_vat_exempt'] ?? false) ? 0 : 0.12,
-            'is_vat_inclusive' => true,
             'payment_method' => 'paymongo',
             'payment_status' => $paymentStatus,
             'status' => 'confirmed',
-            'discount_type' => $paymentData['discount_type'] ?? 'none',
-            'discount_amount' => $staycationBooking['final_totals']['discount_amount'] ?? 0,
-            'discount_rate' => ($paymentData['discount_type'] ?? 'none') !== 'none' ? 0.20 : 0,
-            'is_vat_exempt' => $staycationBooking['final_totals']['is_vat_exempt'] ?? false,
         ]);
 
         try {
@@ -359,52 +315,13 @@ class PaymentService
 
     public function processDayvisitPayment($dayvisitBooking, $paymentData)
     {
-        // Calculate base total (package price + activities)
-        $baseTotal = $dayvisitBooking['price'] + collect(session('dayvisit_selected_activities', []))->sum(function($activity) {
+        $grandTotal = $dayvisitBooking['price'] + collect(session('dayvisit_selected_activities', []))->sum(function($activity) {
             return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
         });
 
-        // Apply discount if applicable (Senior/PWD - 20% discount, VAT exempt)
-        $discountType = $paymentData['discount_type'] ?? 'none';
-        $discountAmount = 0.0;
-        $discountedTotal = $baseTotal;
-        $isVatExempt = false;
-
-        if (in_array($discountType, ['senior', 'pwd'])) {
-            $discountService = app(\App\Services\DiscountService::class);
-            $discountBreakdown = $discountService->applyDiscount($baseTotal, $discountType);
-            $discountAmount = $discountBreakdown['discount_amount'];
-            $discountedTotal = $discountBreakdown['discounted_amount'];
-            $isVatExempt = $discountBreakdown['is_vat_exempt'];
-        }
-
-        // Calculate VAT (12%) if not VAT exempt
-        $vatAmount = 0.0;
-        $subtotal = $discountedTotal;
-        $grandTotal = $discountedTotal;
-
-        if (!$isVatExempt) {
-            $vatService = app(\App\Services\VatService::class);
-            $vatBreakdown = $vatService->generateBreakdown($discountedTotal, true);
-            $vatAmount = $vatBreakdown['vat_amount'];
-            $subtotal = $vatBreakdown['net_amount'];
-            $grandTotal = $vatBreakdown['gross_amount'];
-        }
-
-        // Store calculation details in booking data
         $dayvisitBooking['transaction_id'] = 'TXN-' . strtoupper(uniqid());
         $dayvisitBooking['payment_method'] = $paymentData['payment_method'] ?? 'N/A';
         $dayvisitBooking['payment_date'] = now()->toDateTimeString();
-        $dayvisitBooking['final_totals'] = [
-            'base_total' => $baseTotal,
-            'discount_type' => $discountType,
-            'discount_amount' => $discountAmount,
-            'discounted_total' => $discountedTotal,
-            'vat_amount' => $vatAmount,
-            'subtotal' => $subtotal,
-            'grand_total' => $grandTotal,
-            'is_vat_exempt' => $isVatExempt,
-        ];
 
         $amount = (int) ($grandTotal * 100);
 
@@ -453,14 +370,6 @@ class PaymentService
             'checkout_date' => null,
             'booking_data' => $dayvisitBooking,
             'total_amount' => $grandTotal,
-            'subtotal' => $subtotal,
-            'vat_amount' => $vatAmount,
-            'vat_rate' => $isVatExempt ? 0 : 0.12,
-            'is_vat_inclusive' => true,
-            'discount_type' => $discountType,
-            'discount_amount' => $discountAmount,
-            'discount_rate' => $discountType !== 'none' ? 0.20 : 0,
-            'is_vat_exempt' => $isVatExempt,
             'payment_method' => 'paymongo',
             'payment_status' => $paymentStatus,
             'status' => 'confirmed',

@@ -18,7 +18,7 @@
             :back-route="route('dayvisit.index')"
             :payment-route="route('dayvisit.payment')"
             :store-route="route('dayvisit.storeActivities')"
-            activities-endpoint="/api/activities"
+            activities-endpoint="/api/booking/dayvisit/activities"
             :total-guests="$bookingData['guests'] ?? 1"
             :auto-guests="true"
             :booking-date="$bookingData['booking_date'] ?? null"
