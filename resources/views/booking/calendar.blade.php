@@ -443,20 +443,33 @@
               </div>
               <i class="bi" :class="isGuestsPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
             </button>
-            <div class="mt-1"><p class="text-xs text-gray-500" style="font-size:13px;">Add rooms and guests (Adults/Children)</p></div>
+            <div class="mt-1">
+              @if($bookingType === 'daytour')
+                <p class="text-xs text-gray-500" style="font-size:13px;">Add guests (Adults/Children)</p>
+              @else
+                <p class="text-xs text-gray-500" style="font-size:13px;">Add rooms and guests (Adults/Children)</p>
+              @endif
+            </div>
 
             <div id="guests-panel" x-show="isGuestsPanelOpen" x-cloak x-transition.origin.top
                  class="absolute top-full mt-2 z-9999 left-1/2 -translate-x-1/2 w-[min(600px,calc(100vw-2rem))] bg-white border border-gray-200 rounded-2xl shadow-xl p-4">
               <div class="flex items-start justify-between gap-4">
                 <div>
-                  <h3 class="text-base font-semibold text-gray-800">Rooms & Guests</h3>
-                  <p class="text-xs text-gray-500">Add up to 4 rooms. Set adults/children per room.</p>
+                  @if($bookingType === 'daytour')
+                    <h3 class="text-base font-semibold text-gray-800">Guests</h3>
+                    <p class="text-xs text-gray-500">Set number of adults and children</p>
+                  @else
+                    <h3 class="text-base font-semibold text-gray-800">Rooms & Guests</h3>
+                    <p class="text-xs text-gray-500">Add up to 4 rooms. Set adults/children per room.</p>
+                  @endif
                 </div>
                 <button type="button" class="text-gray-400 hover:text-gray-600 shrink-0" @click="closeGuestsPanel()">
                   <i class="bi bi-x-lg"></i>
                 </button>
               </div>
 
+              @if($bookingType !== 'daytour')
+              {{-- Rooms count - Staycation only --}}
               <div class="mt-3 flex items-center justify-between border border-gray-200 rounded-xl p-3">
                 <div>
                   <p class="text-sm font-medium text-gray-800">Rooms</p>
@@ -474,7 +487,51 @@
                   </button>
                 </div>
               </div>
+              @endif
 
+              @if($bookingType === 'daytour')
+              {{-- Simplified Guests Controls for Day Tour --}}
+              <div class="mt-3 space-y-3">
+                {{-- Adults (Day Tour) --}}
+                <div class="flex items-center justify-between border border-gray-200 rounded-xl p-4">
+                  <div>
+                    <p class="text-sm font-medium text-gray-800">Adults</p>
+                    <p class="text-xs text-gray-500">Age 18+</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="w-10 h-10 rounded-lg border border-gray-300 hover:border-brand/70 disabled:opacity-40"
+                            @click.stop="decAdults(0)" :disabled="rooms[0].adults <= 1">
+                      <i class="bi bi-dash-lg"></i>
+                    </button>
+                    <span class="min-w-8 text-center font-semibold" x-text="rooms[0].adults"></span>
+                    <button type="button" class="w-10 h-10 rounded-lg border border-gray-300 hover:border-brand/70"
+                            @click.stop="incAdults(0)">
+                      <i class="bi bi-plus-lg"></i>
+                    </button>
+                  </div>
+                </div>
+
+                {{-- Children (Day Tour) --}}
+                <div class="flex items-center justify-between border border-gray-200 rounded-xl p-4">
+                  <div>
+                    <p class="text-sm font-medium text-gray-800">Children</p>
+                    <p class="text-xs text-gray-500">Age 0–12</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="w-10 h-10 rounded-lg border border-gray-300 hover:border-brand/70 disabled:opacity-40"
+                            @click.stop="decChildren(0)" :disabled="rooms[0].children <= 0">
+                      <i class="bi bi-dash-lg"></i>
+                    </button>
+                    <span class="min-w-8 text-center font-semibold" x-text="rooms[0].children"></span>
+                    <button type="button" class="w-10 h-10 rounded-lg border border-gray-300 hover:border-brand/70"
+                            @click.stop="incChildren(0)">
+                      <i class="bi bi-plus-lg"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              @else
+              {{-- Per-room controls - Staycation only --}}
               <div class="mt-3 space-y-3 max-h-80 md:max-h-96 overflow-auto pr-1">
                 <template x-for="(room, idx) in rooms" :key="idx">
                   <div class="border border-gray-200 rounded-xl p-3">
@@ -489,7 +546,7 @@
                       <div class="flex items-center justify-between border border-gray-200 rounded-lg p-3">
                         <div class="pr-2">
                           <p class="text-sm font-medium text-gray-800">Adults</p>
-                          <p class="text-xs text-gray-500">Age 13+</p>
+                          <p class="text-xs text-gray-500">Age 18+</p>
                         </div>
                         <div class="flex items-center gap-1">
                           <button type="button" class="w-9 h-9 rounded-lg border border-gray-300 hover:border-brand/70 disabled:opacity-40"
@@ -525,6 +582,7 @@
                   </div>
                 </template>
               </div>
+              @endif
 
               <div class="mt-4 flex gap-2 justify-end">
                 <button type="button" class="px-4 py-2 rounded-lg border border-gray-300 hover:border-brand/70 text-sm"
@@ -760,13 +818,11 @@
         get totalAdults() { return this.rooms.reduce((sum, r) => sum + Number(r.adults || 0), 0); },
         get totalChildren() { return this.rooms.reduce((sum, r) => sum + Number(r.children || 0), 0); },
         get guestsSummary() {
-          const rooms = this.roomsCount;
           const a = this.totalAdults;
           const c = this.totalChildren;
-          const roomLabel = rooms === 1 ? 'Room' : 'Rooms';
           const adultLabel = a === 1 ? 'Adult' : 'Adults';
           const childLabel = c === 1 ? 'Child' : 'Children';
-          return `${rooms} ${roomLabel}, ${a} ${adultLabel}${c > 0 ? `, ${c} ${childLabel}` : ''}`;
+          return `${a} ${adultLabel}${c > 0 ? `, ${c} ${childLabel}` : ''}`;
         },
 
         setRoomsCount(val) {

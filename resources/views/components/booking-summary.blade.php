@@ -139,7 +139,12 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, true); // tr
                             $isSpecialRoom = $isBYOT || $isCarCamping;
                         @endphp
                         <div class="bg-white rounded border border-gray-100 p-3 text-xs">
-                            <div class="font-semibold text-gray-900 mb-2">{{ $staycation->name ?? 'Room #' . $actualRoomId }}</div>
+                            <div class="font-semibold text-gray-900 mb-2">
+                                {{ $staycation->name ?? 'Room #' . $actualRoomId }}
+                                @if(($room['instance_num'] ?? 1) > 1)
+                                    <span class="text-[#8f5d54]">#{{ $room['instance_num'] }}</span>
+                                @endif
+                            </div>
                             <div class="text-gray-600 space-y-1 mb-3">
                                 @if($isBYOT)
                                     <div>BYOT Qty: <span class="font-semibold">{{ $room['extra_mattress'] ?? 1 }}</span></div>
@@ -147,7 +152,6 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, true); // tr
                                     <div>Vehicles: <span class="font-semibold">{{ $room['extra_mattress'] ?? 1 }}</span></div>
                                 @else
                                     <div>Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
-                                    <div>Mattress: <span class="font-semibold">{{ $room['extra_mattress'] ?? 0 }}</span></div>
                                     <div>Pets: <span class="font-semibold">{{ $room['pets'] ?? 'no' }}</span>
                                         @if(($room['pets'] ?? 'no') === 'yes')
                                             <span>(#{{ $room['num_pets'] ?? 0 }})</span>
@@ -164,19 +168,13 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, true); // tr
                                         <span>Accommodation:</span>
                                         <span class="font-semibold">₱{{ number_format($room['accommodation_price'] ?? 0, 0) }}</span>
                                     </div>
-                                    @if($room['mattress_price'] ?? 0 > 0)
-                                        <div class="flex justify-between">
-                                            <span>Extra Mattress:</span>
-                                            <span class="font-semibold">₱{{ number_format($room['mattress_price'] ?? 0, 0) }}</span>
-                                        </div>
-                                    @endif
                                     @if($room['pet_price'] ?? 0 > 0)
                                         <div class="flex justify-between">
                                             <span>Pets:</span>
                                             <span class="font-semibold">₱{{ number_format($room['pet_price'] ?? 0, 0) }}</span>
                                         </div>
-                                        @endif
-                                    </div>
+                                    @endif
+                                </div>
                             </div>
                             @endif
                             

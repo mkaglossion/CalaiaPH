@@ -4,6 +4,9 @@
   
   $selectedActivities = session('dayvisit_selected_activities', []);
   
+  // Handle both new (multiple packages) and legacy (single package) data structures
+  $isMultiPackage = isset($bookingData['packages']) && is_array($bookingData['packages']);
+  
   // Prices from admin are already customer-facing (VAT-inclusive)
   // Just use them directly without adding VAT
   
@@ -13,7 +16,11 @@
   });
   
   // Package price is already VAT-inclusive (from session/admin)
-  $packagePrice = $bookingData['price'] ?? 0;
+  if ($isMultiPackage) {
+      $packagePrice = $bookingData['total_price'] ?? 0;
+  } else {
+      $packagePrice = $bookingData['price'] ?? 0;
+  }
   
   // Calculate VAT breakdown - prices are already VAT-inclusive
   $subtotal = $packagePrice + $activitiesTotal;

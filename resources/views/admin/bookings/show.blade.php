@@ -95,9 +95,6 @@
                                     @if(isset($accommodation['children']) && $accommodation['children'] > 0)
                                     <p><span class="font-medium">Children:</span> {{ $accommodation['children'] }}</p>
                                     @endif
-                                    @if(isset($accommodation['mattress']) && $accommodation['mattress'] > 0)
-                                    <p><span class="font-medium">Extra Mattress:</span> {{ $accommodation['mattress'] }}</p>
-                                    @endif
                                     @if(isset($accommodation['pet']) && $accommodation['pet'] > 0)
                                     <p><span class="font-medium">Pets:</span> {{ $accommodation['pet'] }}</p>
                                     @endif

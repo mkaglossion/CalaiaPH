@@ -60,6 +60,8 @@
             <input type="hidden" name="rooms_count" :value="roomsCount">
             <input type="hidden" name="adults_total" :value="totalAdults">
             <input type="hidden" name="children_total" :value="totalChildren">
+            <!-- Total guests for day-visit -->
+            <input type="hidden" name="guests" :value="totalAdults + totalChildren">
 
             <!-- Promo code (hidden, still submitted) -->
             <input type="hidden" name="promo_code" :value="promoCode">
@@ -147,8 +149,7 @@
                     </button>
 
                     <div class="min-h-10px mt-1">
-                        <p class="text-xs text-gray-500" style="font-size: 13px;">
-                            Add rooms and guests (Adults/Children)
+                        <p class="text-xs text-gray-500" style="font-size: 13px;" x-text="activeTab === 'day-visit' ? 'Add guests (Adults/Children)' : 'Add rooms and guests (Adults/Children)'">
                         </p>
                     </div>
 
@@ -165,16 +166,16 @@
                     >
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <h3 class="text-base font-semibold text-gray-800">Rooms & Guests</h3>
-                                <p class="text-xs text-gray-500">Add up to 4 rooms. Set adults/children per room.</p>
+                                <h3 class="text-base font-semibold text-gray-800" x-text="activeTab === 'day-visit' ? 'Guests' : 'Rooms & Guests'"></h3>
+                                <p class="text-xs text-gray-500" x-text="activeTab === 'day-visit' ? 'Set number of adults and children' : 'Add up to 4 rooms. Set adults/children per room.'"></p>
                             </div>
                             <button type="button" class="text-gray-400 hover:text-gray-600 shrink-0" @click="closeGuestsPanel()">
                                 <i class="bi bi-x-lg"></i>
                             </button>
                         </div>
 
-                        <!-- Rooms count -->
-                        <div class="mt-3 flex items-center justify-between border border-gray-200 rounded-xl p-3">
+                        <!-- Rooms count - HIDDEN for day-visit -->
+                        <div x-show="activeTab !== 'day-visit'" class="mt-3 flex items-center justify-between border border-gray-200 rounded-xl p-3">
                             <div>
                                 <p class="text-sm font-medium text-gray-800">Rooms</p>
                                 <p class="text-xs text-gray-500">Choose 1 to 4 rooms</p>
@@ -194,8 +195,55 @@
                             </div>
                         </div>
 
-                        <!-- Per-room controls -->
-                        <div class="mt-3 space-y-3 max-h-80 md:max-h-96 overflow-auto pr-1">
+                        <!-- Simplified Guests Controls for Day Visit -->
+                        <div x-show="activeTab === 'day-visit'" class="mt-3 space-y-3">
+                            <!-- Adults (Day Visit) -->
+                            <div class="flex items-center justify-between border border-gray-200 rounded-xl p-4">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-800">Adults</p>
+                                    <p class="text-xs text-gray-500">Age 18+</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button type="button"
+                                            class="w-10 h-10 rounded-lg border border-gray-300 hover:border-brand/70 disabled:opacity-40"
+                                            @click="decAdults(0)"
+                                            :disabled="rooms[0].adults <= 1">
+                                        <i class="bi bi-dash-lg"></i>
+                                    </button>
+                                    <span class="min-w-8 text-center font-semibold" x-text="rooms[0].adults"></span>
+                                    <button type="button"
+                                            class="w-10 h-10 rounded-lg border border-gray-300 hover:border-brand/70"
+                                            @click="incAdults(0)">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Children (Day Visit) -->
+                            <div class="flex items-center justify-between border border-gray-200 rounded-xl p-4">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-800">Children</p>
+                                    <p class="text-xs text-gray-500">Age 0–12</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button type="button"
+                                            class="w-10 h-10 rounded-lg border border-gray-300 hover:border-brand/70 disabled:opacity-40"
+                                            @click="decChildren(0)"
+                                            :disabled="rooms[0].children <= 0">
+                                        <i class="bi bi-dash-lg"></i>
+                                    </button>
+                                    <span class="min-w-8 text-center font-semibold" x-text="rooms[0].children"></span>
+                                    <button type="button"
+                                            class="w-10 h-10 rounded-lg border border-gray-300 hover:border-brand/70"
+                                            @click="incChildren(0)">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Per-room controls - Room tab only -->
+                        <div x-show="activeTab !== 'day-visit'" class="mt-3 space-y-3 max-h-80 md:max-h-96 overflow-auto pr-1">
                             <template x-for="(room, idx) in rooms" :key="idx">
                                 <div class="border border-gray-200 rounded-xl p-3">
                                     <div class="flex items-center justify-between">
@@ -210,7 +258,7 @@
                                         <div class="flex items-center justify-between border border-gray-200 rounded-lg p-3">
                                             <div class="pr-2">
                                                 <p class="text-sm font-medium text-gray-800">Adults</p>
-                                                <p class="text-xs text-gray-500">Age 17+</p>
+                                                <p class="text-xs text-gray-500">Age 18+</p>
                                             </div>
                                             <div class="flex items-center gap-1">
                                                 <button type="button"
@@ -457,9 +505,16 @@
                 const rooms = this.roomsCount;
                 const a = this.totalAdults;
                 const c = this.totalChildren;
-                const roomLabel = rooms === 1 ? 'Room' : 'Rooms';
                 const adultLabel = a === 1 ? 'Adult' : 'Adults';
                 const childLabel = c === 1 ? 'Child' : 'Children';
+
+                // For day-visit, show only guests (no rooms)
+                if (this.activeTab === 'day-visit') {
+                    return `${a} ${adultLabel}${c > 0 ? `, ${c} ${childLabel}` : ''}`;
+                }
+
+                // For room booking, show rooms and guests
+                const roomLabel = rooms === 1 ? 'Room' : 'Rooms';
                 return `${rooms} ${roomLabel}, ${a} ${adultLabel}${c > 0 ? `, ${c} ${childLabel}` : ''}`;
             },
 

@@ -162,54 +162,129 @@ class DayVisitController extends Controller
 
     /**
      * Store availability selection and redirect to activities
+     * Supports multiple packages like staycation
      */
     public function storeAvailability(Request $request)
     {
-        $validated = $request->validate([
-            'guests' => 'required|integer|min:1|max:20',
-            'package' => 'required',
-            'package_name' => 'required|string',
-            'price' => 'required|numeric|min:0'
-        ]);
+        // Support both single package (legacy) and multiple packages (new)
+        if ($request->has('selected_packages')) {
+            // New: Multiple packages selection (like staycation)
+            $validated = $request->validate([
+                'selected_packages' => 'required|array|min:1',
+                'selected_packages.*.id' => 'required|integer',
+                'selected_packages.*.name' => 'required|string',
+                'selected_packages.*.price' => 'required|numeric|min:0',
+                'selected_packages.*.guests' => 'required|integer|min:1',
+                'selected_packages.*.quantity' => 'nullable|integer|min:1',
+            ]);
 
-        // Add visit date to validated data
-        $validated['visit_date'] = Session::get('selected_dayvisit_date');
+            $visitDate = Session::get('selected_dayvisit_date') ?? now()->format('Y-m-d');
+            $selectedPackages = $validated['selected_packages'];
 
-        // Check inventory availability before allowing booking
-        $date = $validated['visit_date'] ?? now()->format('Y-m-d');
-        $inventory = $this->dayTourInventoryService->getOrCreateInventory($validated['package'], $date);
-        
-        if (!$inventory->isAvailable()) {
+            // Check inventory for all selected packages
+            $date = $visitDate;
+            foreach ($selectedPackages as $package) {
+                $inventory = $this->dayTourInventoryService->getOrCreateInventory($package['id'], $date);
+                $requestedSlots = $package['quantity'] ?? 1;
+
+                if (!$inventory->isAvailable() || $inventory->available_groups < $requestedSlots) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Sorry, {$package['name']} is no longer available for the selected date. Please choose another package or reduce quantity."
+                    ], 422);
+                }
+            }
+
+            // Normalize packages data (similar to staycation accommodations)
+            $normalizedPackages = [];
+            $totalGuests = 0;
+            $totalPrice = 0;
+
+            foreach ($selectedPackages as $key => $package) {
+                $packageId = $package['id'];
+                $quantity = $package['quantity'] ?? 1;
+                $guests = $package['guests'];
+                $pricePerPerson = $package['price'];
+                $packageTotal = $pricePerPerson * $guests * $quantity;
+
+                $normalizedPackages[$key] = [
+                    'package_id' => $packageId,
+                    'name' => $package['name'],
+                    'guests' => $guests,
+                    'quantity' => $quantity,
+                    'price_per_person' => $pricePerPerson,
+                    'total_price' => $packageTotal,
+                ];
+
+                $totalGuests += $guests * $quantity;
+                $totalPrice += $packageTotal;
+            }
+
+            // Store in session (similar to staycation structure)
+            $bookingData = [
+                'booking_type' => 'dayvisit',
+                'visit_date' => $visitDate,
+                'packages' => $normalizedPackages,
+                'total_guests' => $totalGuests,
+                'total_price' => $totalPrice,
+                'package_count' => count($normalizedPackages),
+            ];
+
+            Session::put('dayvisit_booking_data', $bookingData);
+            Session::put('dayvisit_selected_packages', $normalizedPackages);
+
             return response()->json([
-                'success' => false,
-                'message' => 'Sorry, this package is no longer available for the selected date. Please choose another date or package.'
-            ], 422);
+                'success' => true,
+                'redirect' => route('dayvisit.activities')
+            ]);
+        } else {
+            // Legacy: Single package selection
+            $validated = $request->validate([
+                'guests' => 'required|integer|min:1|max:20',
+                'package' => 'required',
+                'package_name' => 'required|string',
+                'price' => 'required|numeric|min:0'
+            ]);
+
+            // Add visit date to validated data
+            $validated['visit_date'] = Session::get('selected_dayvisit_date');
+
+            // Check inventory availability before allowing booking
+            $date = $validated['visit_date'] ?? now()->format('Y-m-d');
+            $inventory = $this->dayTourInventoryService->getOrCreateInventory($validated['package'], $date);
+
+            if (!$inventory->isAvailable()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sorry, this package is no longer available for the selected date. Please choose another date or package.'
+                ], 422);
+            }
+
+            // Store selection in session
+            Session::put('dayvisit_availability', $validated);
+
+            // Create minimal booking data and proceed directly to activities
+            $bookingData = [
+                'first_name' => 'Guest',
+                'last_name' => null,
+                'email' => 'guest@example.com',
+                'phone' => null,
+                'guests' => $validated['guests'],
+                'package' => $validated['package_name'],
+                'package_id' => $validated['package'],
+                'price' => $validated['price'] * $validated['guests'],
+                'booking_date' => $validated['visit_date'],
+                'special_requests' => '',
+                'type' => 'day-visit'
+            ];
+
+            Session::put('dayvisit_booking_data', $bookingData);
+
+            return response()->json([
+                'success' => true,
+                'redirect' => route('dayvisit.activities')
+            ]);
         }
-
-        // Store selection in session
-        Session::put('dayvisit_availability', $validated);
-
-        // Create minimal booking data and proceed directly to activities
-        $bookingData = [
-            'first_name' => 'Guest',
-            'last_name' => null,
-            'email' => 'guest@example.com',
-            'phone' => null,
-            'guests' => $validated['guests'],
-            'package' => $validated['package_name'],
-            'package_id' => $validated['package'],
-            'price' => $validated['price'] * $validated['guests'],
-            'booking_date' => $validated['visit_date'],
-            'special_requests' => '',
-            'type' => 'day-visit'
-        ];
-
-        Session::put('dayvisit_booking_data', $bookingData);
-
-        return response()->json([
-            'success' => true,
-            'redirect' => route('dayvisit.activities')
-        ]);
     }
 
     /**

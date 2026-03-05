@@ -10,11 +10,35 @@
 // Prices from admin are already customer-facing (VAT-inclusive)
 // Just use them directly without adding VAT
 
-// Calculate totals - prices are already VAT-inclusive from admin
-$activitiesTotal = 0;
-$packagePrice = $booking['price'] ?? 0;
+// Handle both new (multiple packages) and legacy (single package) data structures
+$isMultiPackage = isset($booking['packages']) && is_array($booking['packages']);
+
+if ($isMultiPackage) {
+    // New structure: multiple packages
+    $packagePrice = $booking['total_price'] ?? 0;
+    $bookingDate = $booking['visit_date'] ?? null;
+    $totalGuests = $booking['total_guests'] ?? 1;
+    $packageCount = $booking['package_count'] ?? 1;
+    
+    // Get first package name or show count
+    $firstPackage = $booking['packages'][0] ?? null;
+    if ($packageCount > 1) {
+        $packageName = ($firstPackage['name'] ?? 'Day Visit Package') . ' + ' . ($packageCount - 1) . ' more';
+    } else {
+        $packageName = $firstPackage['name'] ?? 'Day Visit Package';
+    }
+} else {
+    // Legacy structure: single package
+    $packagePrice = $booking['price'] ?? 0;
+    $bookingDate = $booking['booking_date'] ?? null;
+    $totalGuests = $booking['guests'] ?? 1;
+    $packageName = $booking['package'] ?? $booking['package_name'] ?? 'Day Visit Package';
+}
+
+$datesSelected = !empty($bookingDate);
 
 // Activities total - use price as-is (VAT-inclusive)
+$activitiesTotal = 0;
 foreach ($selectedActivities as $activity) {
     // Use price as-is (VAT-inclusive from admin), no need to add VAT
     $activitiesTotal += ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
@@ -26,13 +50,6 @@ $subtotal = $packagePrice + $activitiesTotal;
 $vatBreakdown = $vatService->generateBreakdown($subtotal, true); // true = input is VAT-inclusive
 $grandTotal = $vatBreakdown['gross_amount'];
 $vatAmount = $vatBreakdown['vat_amount'];
-
-// Date calculations
-$bookingDate = $booking['booking_date'] ?? null;
-$datesSelected = !empty($bookingDate);
-
-// Get package name - check multiple possible keys
-$packageName = $booking['package'] ?? $booking['package_name'] ?? 'Day Visit Package';
 @endphp
 
 <div class="bg-white rounded-2xl shadow-lg p-6 space-y-6">
@@ -49,7 +66,7 @@ $packageName = $booking['package'] ?? $booking['package_name'] ?? 'Day Visit Pac
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-600">Number of Guests:</span>
-                    <span class="font-semibold">{{ $booking['guests'] ?? 1 }}</span>
+                    <span class="font-semibold">{{ $totalGuests }}</span>
                 </div>
             @else
                 <p class="text-gray-500 text-xs">No date selected</p>

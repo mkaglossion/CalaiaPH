@@ -200,8 +200,11 @@ class BookingController extends Controller
     /**
      * Calculate min and max nightly rates for a staycation within a date range
      * Returns array with keys: min_price, max_price, min_label, max_label
+     *
+     * FIXED: Now determines season type for EACH individual day instead of using
+     * a single season key for the entire range.
      */
-    private function calculatePriceRangeForDateRange(Staycation $staycation, string $checkinDate, string $checkoutDate, string $seasonKey): array
+    private function calculatePriceRangeForDateRange(Staycation $staycation, string $checkinDate, string $checkoutDate, string $seasonKey = null): array
     {
         $checkin = \Carbon\Carbon::parse($checkinDate);
         $checkout = \Carbon\Carbon::parse($checkoutDate);
@@ -210,12 +213,17 @@ class BookingController extends Controller
         $current = $checkin->copy();
         
         while ($current->lt($checkout)) {
-            $rate = $this->pricingService->getStaycationRate($staycation, $current, $seasonKey);
+            // Determine the season type for THIS specific day (not the whole range)
+            $daySeasonType = $this->getSeasonTypeForDate($current);
+            $daySeasonKey = $this->mapSeasonToKey($daySeasonType);
+            
+            $rate = $this->pricingService->getStaycationRate($staycation, $current, $daySeasonKey);
             if ($rate > 0) {
                 $prices[] = [
                     'rate' => $rate,
                     'day' => $current->format('D'),
-                    'date' => $current->format('Y-m-d')
+                    'date' => $current->format('Y-m-d'),
+                    'season' => $daySeasonType
                 ];
             }
             $current->addDay();
@@ -1417,8 +1425,18 @@ class BookingController extends Controller
                  */
                 $normalized = [];
 
-                foreach ($selectedRooms as $roomId => $room) {
-                    $roomId = (int)$roomId;
+                foreach ($selectedRooms as $roomKey => $room) {
+                    // Handle composite keys for multiple instances (e.g., "5_2" for room 5, instance 2)
+                    $originalKey = $roomKey;
+                    $roomId = (int)$roomKey;
+                    
+                    // Check if this is a composite key (e.g., "5_2")
+                    $instanceNum = 1;
+                    if (is_string($roomKey) && str_contains($roomKey, '_')) {
+                        $parts = explode('_', $roomKey);
+                        $roomId = (int)$parts[0];
+                        $instanceNum = (int)($parts[1] ?? 1);
+                    }
                     
                     // Fetch staycation to get pricing info
                     $staycation = Staycation::find($roomId);
@@ -1475,9 +1493,10 @@ class BookingController extends Controller
                     // Calculate costs for display
                     $adults = (int)($room['adults'] ?? 1);
 
-                    $normalized[$roomId] = [
+                    $normalized[$originalKey] = [
                         'room_id'        => $roomId,
                         'accommodation_id' => $roomId,
+                        'instance_num'   => $instanceNum,
                         'accommodation_price' => $accommodationPrice,
                         'adults'         => $adults,
                         'children'       => (int)($room['children'] ?? 0),
@@ -1576,6 +1595,11 @@ class BookingController extends Controller
                 $booking['completed_steps'] = [1];
                 $booking['current_step'] = 1;
                 $booking['timestamp'] = now()->timestamp;
+                // Store rooms and guests data
+                $booking['rooms_count'] = $request->input('rooms_count', 1);
+                $booking['adults_total'] = $request->input('adults_total', 2);
+                $booking['children_total'] = $request->input('children_total', 0);
+                $booking['rooms'] = $request->input('rooms', [['adults' => 2, 'children' => 0]]);
                 session(['booking' => $booking]);
                 return redirect()->route('booking.staycationAvailability');
             }
@@ -1631,11 +1655,11 @@ class BookingController extends Controller
             $checkout = $booking['checkout'] ?? now()->addDays(2)->format('Y-m-d');
         }
 
-        // Store dates in session for subsequent requests
-        session(['booking' => [
-            'checkin' => $checkin,
-            'checkout' => $checkout
-        ]]);
+        // Store dates in session for subsequent requests (preserve existing data)
+        $booking = session('booking', []);
+        $booking['checkin'] = $checkin;
+        $booking['checkout'] = $checkout;
+        session(['booking' => $booking]);
 
         // Determine season for the booking date range
         $checkinCarbon = \Carbon\Carbon::parse($checkin);
@@ -1794,7 +1818,10 @@ class BookingController extends Controller
             }
 
             // Calculate the rate per night using the pricing service
-            $currentRate = $this->pricingService->getStaycationRate($staycation, $checkinCarbon, $seasonKey);
+            // FIXED: Use the check-in date's specific season, not the overall range season
+            $checkinSeasonType = $this->getSeasonTypeForDate($checkinCarbon);
+            $checkinSeasonKey = $this->mapSeasonToKey($checkinSeasonType);
+            $currentRate = $this->pricingService->getStaycationRate($staycation, $checkinCarbon, $checkinSeasonKey);
 
             // If no rate configured for the season, use staycation's price field
             if ($currentRate <= 0) {
@@ -1807,7 +1834,8 @@ class BookingController extends Controller
             }
 
             // Calculate price range for the selected date range
-            $priceRange = $this->calculatePriceRangeForDateRange($staycation, $checkin, $checkout, $seasonKey);
+            // FIXED: No longer passing $seasonKey - calculatePriceRangeForDateRange now determines season per-day
+            $priceRange = $this->calculatePriceRangeForDateRange($staycation, $checkin, $checkout);
             
             // Build date_pricing array for JavaScript
             $datePricing = [];
@@ -1833,7 +1861,14 @@ class BookingController extends Controller
             ];
         }
 
-        return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'currentSeason'));
+        // Get rooms/guests data from session (preserved from check-availability POST)
+        $booking = session('booking', []);
+        $roomsCount = $booking['rooms_count'] ?? 1;
+        $adultsTotal = $booking['adults_total'] ?? 2;
+        $childrenTotal = $booking['children_total'] ?? 0;
+        $rooms = $booking['rooms'] ?? [['adults' => 2, 'children' => 0]];
+
+        return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'currentSeason', 'roomsCount', 'adultsTotal', 'childrenTotal', 'rooms'));
     }
 
     /**

@@ -3,9 +3,9 @@
 @section('content')
 <div class="container mx-auto p-6 space-y-8">
 
-    <h1 class="text-2xl font-bold">Booking Extra Fees</h1>
-    
-    <p class="text-gray-600 text-sm mb-6">Configure additional fees for staycation bookings. These settings apply to all regular accommodations except BYOT and Car Camping.</p>
+    <h1 class="text-2xl font-bold">Booking Pet Fee</h1>
+
+    <p class="text-gray-600 text-sm mb-6">Configure pet fee for staycation bookings. This setting applies to all regular accommodations except BYOT and Car Camping.</p>
 
     @if(session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
@@ -18,33 +18,7 @@
             @csrf
 
             {{-- Additional Fees --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {{-- Extra Mattress Price --}}
-                <div>
-                    <label for="mattress_price_per_night" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Extra Mattress Price (per night)
-                    </label>
-                    <div class="flex items-center">
-                        <span class="text-gray-600 text-lg font-semibold">₱</span>
-                        <input
-                            type="number"
-                            id="mattress_price_per_night"
-                            name="mattress_price_per_night"
-                            value="{{ $settings->where('key', 'mattress_price_per_night')->first()?->value ?? 800 }}"
-                            step="0.01"
-                            min="0"
-                            class="ml-2 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        />
-                    </div>
-                    <p class="text-xs text-gray-500 mt-2">
-                        Applied when customers select extra mattresses. Multiplied by number of mattresses and number of nights.
-                    </p>
-                    @error('mattress_price_per_night')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
+            <div class="grid grid-cols-1 md:grid-cols-1 gap-8">
                 {{-- Pet Price --}}
                 <div>
                     <label for="pet_price" class="block text-sm font-semibold text-gray-700 mb-2">
