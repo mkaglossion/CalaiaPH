@@ -462,11 +462,17 @@ class PricingService
 
         // Helper to safely get rate from config
         $getRate = function (array $config) use ($season): float {
+            if (!isset($config['rates']) || !is_array($config['rates'])) {
+                return 0;
+            }
             return $config['rates'][$season] ?? 0;
         };
 
         // 1. Find config with specific date match
         foreach ($priceConfigs as $config) {
+            if (!is_array($config)) {
+                continue;
+            }
             $dates = $config['dates'] ?? [];
             $dates = is_array($dates) ? $dates : [$dates];
             if (!empty($dates) && in_array($checkinDateStr, $dates)) {
@@ -481,6 +487,9 @@ class PricingService
 
         // 2. Find config with day type (weekday/weekend) match - check before days
         foreach ($priceConfigs as $config) {
+            if (!is_array($config)) {
+                continue;
+            }
             if (($config['day_type'] ?? null) === $dayType) {
                 return $getRate($config);
             }
@@ -488,6 +497,9 @@ class PricingService
 
         // 3. Find config with day-of-week match
         foreach ($priceConfigs as $config) {
+            if (!is_array($config)) {
+                continue;
+            }
             $days = $config['days'] ?? null;
             if (is_array($days) && !empty($days) && in_array($checkinDayOfWeek, $days)) {
                 return $getRate($config);
@@ -495,7 +507,10 @@ class PricingService
         }
 
         // 4. Fallback to first config
-        $firstConfig = $priceConfigs[0];
+        $firstConfig = $priceConfigs[0] ?? null;
+        if (!$firstConfig || !isset($firstConfig['rates'])) {
+            return $staycation->price ?? 0;
+        }
         return $getRate($firstConfig);
     }
 }

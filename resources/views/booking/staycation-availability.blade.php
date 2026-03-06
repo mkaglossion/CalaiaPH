@@ -385,7 +385,7 @@
                                     <span class="text-sm text-gray-600">Check-in</span>
                                     <span class="font-semibold">
                                         @if ($selCheckin)
-                                            {{ \Carbon\Carbon::parse($selCheckin)->format('m-d-Y') }}
+                                            {{ \Carbon\Carbon::parse($selCheckin)->format('M j, Y') }}
                                         @else
                                             —
                                         @endif
@@ -395,7 +395,7 @@
                                     <span class="text-sm text-gray-600">Check-out</span>
                                     <span class="font-semibold">
                                         @if ($selCheckout)
-                                            {{ \Carbon\Carbon::parse($selCheckout)->format('m-d-Y') }}
+                                            {{ \Carbon\Carbon::parse($selCheckout)->format('M j, Y') }}
                                         @else
                                             —
                                         @endif
@@ -1179,6 +1179,9 @@
 
                     selectedRoomData.accommodation_price = this.calculateBasePrice(room, selectedRoomData);
                     this.selectedRooms[roomId] = selectedRoomData;
+                    
+                    // Auto-expand guest input when room is selected
+                    this.editingRoom = roomId;
                 },
 
                 addRoomInstance(roomId, type, instanceNum) {
@@ -1211,6 +1214,9 @@
 
                     selectedRoomData.accommodation_price = this.calculateBasePrice(room, selectedRoomData);
                     this.selectedRooms[compositeKey] = selectedRoomData;
+                    
+                    // Auto-expand guest input when room instance is added
+                    this.editingRoom = compositeKey;
 
                     Swal.fire({
                         icon: 'success',
@@ -1794,7 +1800,7 @@
                         const base = room.accommodation_price || 0;
                         total += base + this.calculatePetPrice(room);
                     }
-                    return '₱' + (total / 1.12).toLocaleString();
+                    return '₱' + total.toLocaleString();
                 },
 
                 calculateVAT() {
@@ -1803,8 +1809,9 @@
                         const base = room.accommodation_price || 0;
                         total += base + this.calculatePetPrice(room);
                     }
-                    const subtotal = total / 1.12;
-                    return '₱' + (total - subtotal).toLocaleString();
+                    // Calculate 12% VAT from subtotal (total is already pre-VAT)
+                    const vat = total * 0.12;
+                    return '₱' + vat.toLocaleString();
                 },
 
                 calculateTotalPrice() {
@@ -1813,7 +1820,9 @@
                         const base = room.accommodation_price || 0;
                         total += base + this.calculatePetPrice(room);
                     }
-                    return '₱' + total.toLocaleString();
+                    // Calculate Grand Total (subtotal + 12% VAT)
+                    const grandTotal = total * 1.12;
+                    return '₱' + grandTotal.toLocaleString();
                 },
 
                 // breakdown helpers (unchanged behavior)
