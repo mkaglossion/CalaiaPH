@@ -12,7 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('testimonials', function (Blueprint $table) {
-            $table->string('status')->default('pending')->after('is_active');
+            if (!Schema::hasColumn('testimonials', 'is_active')) {
+                $table->boolean('is_active')->default(true);
+            }
+            if (!Schema::hasColumn('testimonials', 'status')) {
+                $table->string('status')->default('pending')->after('is_active');
+            }
         });
     }
 
