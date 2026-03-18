@@ -15,6 +15,11 @@ class ActivityController extends Controller
         return view('admin.whatToDo.activities', compact('activities'));
     }
 
+    public function show(Activity $activity_list)
+    {
+        return response()->json($activity_list);
+    }
+
     public function store(Request $request)
     {
         $request->validate([

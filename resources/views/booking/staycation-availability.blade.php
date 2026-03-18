@@ -283,12 +283,20 @@
                                         {{ $roomDetail['description'] }}
                                     </p>
 
-                                    {{-- Features --}}
+                                    {{-- Get features for modal --}}
                                     @php
                                         $featuresText = $staycation->texts->firstWhere('section', 'features');
                                         $features = $featuresText ? explode("\n", $featuresText->content) : [];
                                     @endphp
-                                    <x-staycation-features :features="$features" />
+
+                                    {{-- View Room Details Button --}}
+                                    <button
+                                        type="button"
+                                        @click.stop="showRoomDetailsModal({{ $staycation->id }}, '{{ addslashes($roomDetail['name']) }}', '{{ addslashes($roomDetail['description']) }}', '{{ addslashes(json_encode($features)) }}')"
+                                        class="w-full bg-gray-50 text-gray-700 py-2 px-4 rounded-lg font-semibold hover:bg-gray-100 transition text-sm mb-4 border border-gray-200"
+                                    >
+                                        <i class="bi bi-info-circle mr-1"></i> View Room Details
+                                    </button>
 
                                     {{-- Availability info --}}
                                     @if($status === 'limited')
@@ -762,6 +770,180 @@
                     </div>
                 </div>
 
+                {{-- Room Details Modal --}}
+                <div 
+                    x-show="roomDetailsModal" 
+                    x-cloak 
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+                    @click.self="roomDetailsModal = false"
+                    @keydown.escape.window="roomDetailsModal = false"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                >
+                    <div 
+                        class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden"
+                        style="max-height: 100vh;"
+                        @click.stop
+                        x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                        x-transition:leave="transition ease-in duration-200"
+                        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                        x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+                    >
+                        {{-- Header with Image Carousel --}}
+                        <div class="relative">
+                            {{-- Image Carousel --}}
+                            <div x-show="roomDetailsImages && roomDetailsImages.length > 0" class="relative">
+                                <div class="swiper room-details-swiper" x-ref="roomDetailsSwiper">
+                                    <div class="swiper-wrapper">
+                                        <template x-for="(img, index) in roomDetailsImages" :key="index">
+                                            <div class="swiper-slide">
+                                                <img :src="img" alt="Room Image" class="w-full h-64 md:h-80 object-cover">
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="swiper-pagination room-details-swiper-pagination"></div>
+                                    <div class="swiper-button-next room-details-swiper-next"></div>
+                                    <div class="swiper-button-prev room-details-swiper-prev"></div>
+                                </div>
+                            </div>
+
+                            {{-- Close Button --}}
+                            <button 
+                                type="button" 
+                                class="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-700 hover:bg-white hover:text-gray-900 transition shadow-lg z-10"
+                                @click="roomDetailsModal = false"
+                            >
+                                <i class="bi bi-x-lg text-lg"></i>
+                            </button>
+
+                            {{-- Room Type Badge --}}
+                            <div class="absolute bottom-4 left-4 z-10">
+                                <span class="px-4 py-1.5 bg-[#8f5d54] text-white text-sm font-semibold rounded-full shadow-lg" x-text="roomDetailsType"></span>
+                            </div>
+
+                            {{-- Status Badge --}}
+                            <div class="absolute bottom-4 right-4 z-10">
+                                <span 
+                                    class="px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg"
+                                    :class="roomDetailsStatus === 'available' ? 'bg-green-500' : (roomDetailsStatus === 'limited' ? 'bg-yellow-500' : 'bg-gray-500')"
+                                >
+                                    <template x-if="roomDetailsStatus === 'available'">
+                                        <span><i class="bi bi-check-circle-fill mr-1"></i>Available</span>
+                                    </template>
+                                    <template x-if="roomDetailsStatus === 'limited'">
+                                        <span><i class="bi bi-exclamation-triangle-fill mr-1"></i>Limited</span>
+                                    </template>
+                                    <template x-if="roomDetailsStatus === 'unavailable'">
+                                        <span><i class="bi bi-x-circle-fill mr-1"></i>Unavailable</span>
+                                    </template>
+                                </span>
+                            </div>
+                        </div>
+
+                        {{-- Content --}}
+                        <div class="p-10 overflow-y-auto" style="max-height: calc(100vh - 20rem);">
+                            {{-- Room Name & Price --}}
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+                                <div>
+                                    <h3 class="text-2xl font-bold text-gray-900" x-text="roomDetailsName"></h3>
+                                    <div class="flex items-center gap-3 mt-2">
+                                        <span class="flex items-center gap-1 text-sm text-gray-600">
+                                        </span>
+                                        <span class="flex items-center gap-1 text-sm text-gray-600" x-show="roomDetailsSize">
+                                            <i class="bi bi-arrows-angle-expand text-[#8f5d54]"></i>
+                                            <span x-text="roomDetailsSize"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-3xl font-bold text-[#8f5d54]" x-text="roomDetailsPrice"></div>
+                                    <div class="text-sm text-gray-500" x-text="roomDetailsPriceLabel"></div>
+                                </div>
+                            </div>
+
+                            {{-- Quick Stats --}}
+                            <div class="grid grid-cols-3 gap-3 mb-6">
+                                <div class="bg-gray-50 rounded-xl p-4 text-center">
+                                    <div class="text-2xl font-bold text-gray-900" x-text="roomDetailsAvailable"></div>
+                                    <div class="text-xs text-gray-500 uppercase tracking-wide">Available</div>
+                                </div>
+                                <div class="bg-gray-50 rounded-xl p-4 text-center">
+                                    <div class="text-2xl font-bold text-gray-900" x-text="roomDetailsNights"></div>
+                                    <div class="text-xs text-gray-500 uppercase tracking-wide">Nights</div>
+                                </div>
+                                <div class="bg-gray-50 rounded-xl p-4 text-center">
+                                    <div class="text-2xl font-bold text-gray-900" x-text="roomDetailsGuests"></div>
+                                    <div class="text-xs text-gray-500 uppercase tracking-wide">Guests</div>
+                                </div>
+                            </div>
+
+                            {{-- Description --}}
+                            <div class="mb-6">
+                                <h4 class="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                    <i class="bi bi-card-text text-[#8f5d54]"></i>
+                                    Description
+                                </h4>
+                                <p class="text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-xl p-4" x-text="roomDetailsDescription"></p>
+                            </div>
+
+                            {{-- Amenities / Features --}}
+                            <div x-show="roomDetailsFeatures && roomDetailsFeatures.length > 0">
+                                <h4 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                    <i class="bi bi-grid text-[#8f5d54]"></i>
+                                    Room Amenities
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    <template x-for="feature in roomDetailsFeatures" :key="feature">
+                                        <div class="flex items-center gap-3 px-4 py-3 bg-linear-to-r from-gray-50 to-white rounded-xl border border-gray-100 hover:border-[#8f5d54]/30 transition">
+                                            <div class="w-8 h-8 bg-[#8f5d54]/10 rounded-full flex items-center justify-center shrink-0">
+                                                <i class="bi bi-check-lg text-[#8f5d54]"></i>
+                                            </div>
+                                            <span class="text-sm text-gray-700" x-text="feature"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            {{-- Additional Info --}}
+                            <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                <div class="flex items-start gap-3">
+                                    <i class="bi bi-info-circle text-blue-500 mt-0.5"></i>
+                                    <div class="text-sm text-blue-700">
+                                        <p class="font-semibold">Booking Information</p>
+                                        <p class="mt-1">Prices may vary based on season and day of the week. Select this room to see final pricing.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Footer Actions --}}
+                        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
+                            <button 
+                                type="button" 
+                                class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-xl font-semibold transition flex items-center justify-center gap-2"
+                                @click="roomDetailsModal = false"
+                            >
+                                <i class="bi bi-x-lg"></i>
+                                Close
+                            </button>
+                            <button 
+                                type="button" 
+                                class="flex-1 px-6 py-3 bg-[#8f5d54] text-white hover:bg-[#7a4e48] rounded-xl font-semibold transition flex items-center justify-center gap-2"
+                                @click="roomDetailsModal = false; $dispatch('click')"
+                            >
+                                <i class="bi bi-calendar-check"></i>
+                                Select This Room
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Quantity Selector Modal --}}
                 <div x-show="showQuantityModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
                      @click.self="showQuantityModal=false">
@@ -830,7 +1012,7 @@
 
                         <div class="p-6 space-y-6">
                             <div class="rounded-lg border border-green-200 bg-green-50 p-6">
-                                <div class="text-4xl font-extrabold text-green-600" x-text="calculateTotalPrice()"></div>
+                                <div class="text-4xl font-extrabold text-green-600" x-text="calculateBreakdownTotal()"></div>
                                 <div class="text-sm text-gray-700 mt-2">Total Amount</div>
                             </div>
 
@@ -884,7 +1066,7 @@
                                         <tr class="bg-green-50 border-t border-green-200">
                                             <td colspan="5" class="px-4 py-4 text-right font-semibold text-gray-800">Total:</td>
                                             <td class="px-4 py-4 text-right font-bold text-green-600"
-                                                x-text="calculateTotalPrice()">
+                                                x-text="calculateBreakdownTotal()">
                                             </td>
                                         </tr>
                                         </tbody>
@@ -1022,6 +1204,20 @@
 
                 calendarModal: false,
                 petPolicyModal: false,
+                roomDetailsModal: false,
+                roomDetailsName: '',
+                roomDetailsDescription: '',
+                roomDetailsFeatures: [],
+                roomDetailsType: '',
+                roomDetailsStatus: 'available',
+                roomDetailsCapacity: '',
+                roomDetailsSize: '',
+                roomDetailsPrice: '',
+                roomDetailsPriceLabel: '/ night',
+                roomDetailsAvailable: '',
+                roomDetailsNights: '',
+                roomDetailsGuests: '',
+                roomDetailsImages: [],
                 showPriceBreakdownModal: false,
                 showQuantityModal: false,
                 quantityModalRoomId: null,
@@ -1465,6 +1661,109 @@
                     this.$nextTick(() => this.initCalendar());
                 },
 
+                showRoomDetailsModal(roomId, name, description, features) {
+                    this.roomDetailsName = name;
+                    this.roomDetailsDescription = description;
+                    
+                    // Get room details from roomDetailsMap
+                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[roomId] ? this.roomDetailsMap[roomId] : null;
+                    
+                    // Set room type
+                    this.roomDetailsType = roomDetail ? (roomDetail.type ? roomDetail.type.charAt(0).toUpperCase() + roomDetail.type.slice(1) : 'Room') : 'Room';
+                    
+                    // Set status
+                    this.roomDetailsStatus = roomDetail ? roomDetail.status : 'available';
+                    
+                    // Set capacity
+                    const maxAdults = roomDetail?.max_adults || roomDetail?.capacity || 2;
+                    const maxChildren = roomDetail?.max_children || 0;
+                    this.roomDetailsCapacity = `${maxAdults} Adults${maxChildren > 0 ? ', ' + maxChildren + ' Children' : ''}`;
+                    
+                    // Set size if available
+                    this.roomDetailsSize = roomDetail?.size || '';
+                    
+                    // Set price
+                    const priceRange = roomDetail?.price_range || null;
+                    if (priceRange && priceRange.min_price > 0 && priceRange.max_price > 0) {
+                        if (priceRange.min_price === priceRange.max_price) {
+                            this.roomDetailsPrice = priceRange.min_label || '₱' + priceRange.min_price.toLocaleString();
+                        } else {
+                            this.roomDetailsPrice = (priceRange.min_label || '₱' + priceRange.min_price.toLocaleString()) + ' - ' + (priceRange.max_label || '₱' + priceRange.max_price.toLocaleString());
+                        }
+                        this.roomDetailsPriceLabel = '/ night';
+                    } else if (roomDetail?.price) {
+                        this.roomDetailsPrice = '₱' + parseInt(roomDetail.price).toLocaleString();
+                        const roomNameLower = (name || '').toLowerCase();
+                        const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own');
+                        const isCarCamping = roomNameLower.includes('car camping');
+                        this.roomDetailsPriceLabel = (isBYOT || isCarCamping) ? '' : '/ night';
+                    } else {
+                        this.roomDetailsPrice = '₱0';
+                        this.roomDetailsPriceLabel = '/ night';
+                    }
+                    
+                    // Set available quantity
+                    this.roomDetailsAvailable = roomDetail?.available_quantity || roomDetail?.total_quantity || '∞';
+                    
+                    // Calculate nights
+                    if (this.checkin && this.checkout) {
+                        const checkinDate = new Date(this.checkin);
+                        const checkoutDate = new Date(this.checkout);
+                        const nights = Math.max(1, Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24)));
+                        this.roomDetailsNights = nights;
+                    } else {
+                        this.roomDetailsNights = '—';
+                    }
+                    
+                    // Set total guests
+                    this.roomDetailsGuests = this.targetAdults + this.targetChildren;
+                    
+                    // Parse features
+                    if (typeof features === 'string') {
+                        try {
+                            this.roomDetailsFeatures = JSON.parse(features);
+                        } catch (e) {
+                            this.roomDetailsFeatures = [];
+                        }
+                    } else if (Array.isArray(features)) {
+                        this.roomDetailsFeatures = features;
+                    } else {
+                        this.roomDetailsFeatures = [];
+                    }
+                    
+                    // Set images
+                    this.roomDetailsImages = [];
+                    
+                    this.roomDetailsModal = true;
+                    
+                    // Initialize Swiper after modal is shown
+                    this.$nextTick(() => {
+                        setTimeout(() => {
+                            const swiperEl = this.$refs.roomDetailsSwiper;
+                            if (swiperEl && this.roomDetailsImages.length > 1) {
+                                if (swiperEl.swiper) {
+                                    swiperEl.swiper.destroy(true, true);
+                                }
+                                new Swiper(swiperEl, {
+                                    loop: true,
+                                    pagination: { 
+                                        el: '.room-details-swiper-pagination', 
+                                        clickable: true,
+                                        dynamicBullets: true
+                                    },
+                                    navigation: { 
+                                        nextEl: '.room-details-swiper-next', 
+                                        prevEl: '.room-details-swiper-prev' 
+                                    },
+                                    autoplay: { delay: 4000, disableOnInteraction: false },
+                                    effect: 'fade',
+                                    fadeEffect: { crossFade: true }
+                                });
+                            }
+                        }, 100);
+                    });
+                },
+
                 initCalendar() {
                     if (this.calendarInstance) this.calendarInstance.destroy();
 
@@ -1823,6 +2122,16 @@
                     // Calculate Grand Total (subtotal + 12% VAT)
                     const grandTotal = total * 1.12;
                     return '₱' + grandTotal.toLocaleString();
+                },
+
+                // For breakdown modal - shows base total without VAT and WITHOUT pet price (pet price only in subtotal)
+                calculateBreakdownTotal() {
+                    let total = 0;
+                    for (const room of Object.values(this.selectedRooms)) {
+                        const base = room.accommodation_price || 0;
+                        total += base; // Only room price, not pet price
+                    }
+                    return '₱' + total.toLocaleString();
                 },
 
                 // breakdown helpers (unchanged behavior)

@@ -43,22 +43,83 @@
     .swiper-pagination-bullet-active {
         background: #3b82f6 !important;
     }
+    
+    /* Toast notifications */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { to { transform: translateX(400px); opacity: 0; } }
+    .toast.hide { animation: slideOut 0.3s ease-out forwards; }
+    .toast.success { background: #10b981; color: white; }
+    .toast.error { background: #ef4444; color: white; }
+    .toast.info { background: #3b82f6; color: white; }
+    
+    /* Undo notification */
+    .undo-banner {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        padding: 16px 20px;
+        background: #374151;
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        z-index: 9998;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    .undo-banner button {
+        background: #fbbf24;
+        color: #1f2937;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    .undo-banner button:hover { background: #fcd34d; }
 </style>
 
 <div
     x-data="menuComponent()"
+    x-init="setupKeyboardShortcuts()"
 
 >
     <hr class="my-6">
 
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Menus</h2>
+    <div class="flex justify-between items-end mb-6">
+        <div>
+            <h2 class="text-xl font-semibold">Menus</h2>
+            <p class="text-gray-500 text-sm">Manage your menus.</p>
+        </div>
         <button 
             @click="showMenuModal = true; resetForm()" 
             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
             + Add Menu
         </button>
+    </div>
+    
+    <div class="mb-6">
+        <input 
+            x-model="searchQuery"
+            @input="filterMenus()"
+            type="text" 
+            placeholder="🔍 Search menus..." 
+            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition"
+        >
     </div>
 
     <div class="overflow-x-auto border rounded-lg shadow">
@@ -73,7 +134,11 @@
             </thead>
             <tbody>
                 @forelse($menus as $index => $act)
-                <tr class="border-b hover:bg-gray-50">
+                <tr 
+                    class="border-b hover:bg-gray-50"
+                    x-show="!searchQuery || '{{ ($act->name ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase())"
+                    x-cloak
+                >
                     <td class="px-4 py-2">{{ $index + 1 }}</td>
                     <td class="px-4 py-2">{{ $act->name ?? 'Untitled' }}</td>
                     <td class="px-4 py-2">{{ $act->created_at->format('Y-m-d') }}</td>
@@ -81,17 +146,13 @@
                         <button class="text-blue-600 hover:underline" @click="editMenu({{ $act->id }})">
                             Edit
                         </button>
-                        <form action="{{ route('menu-list.destroy', $act->id) }}" method="POST" class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <button 
-                                type="submit"
-                                class="text-red-600 hover:underline"
-                                onclick="return confirm('Delete this menu?')"
-                            >
-                                Delete
-                            </button>
-                        </form>
+                        <button
+                            type="button"
+                            class="text-red-600 hover:underline"
+                            @click="deleteMenu({{ $act->id }}, '{{ $act->name ?? 'Menu' }}')"
+                        >
+                            Delete
+                        </button>
                     </td>
                 </tr>
                 @empty
@@ -483,9 +544,102 @@ function menuComponent() {
         showTextModal: false,
         editMode: false,
         editModeMenu: false,
-        texts: @js($texts),
-        menus: @js($menus),
+        searchQuery: '',
+        texts: [],
+        menus: [],
         form: { id: null, name: '', label: '', text: '' },
+        
+        // Toast notifications
+        showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        },
+        
+        // Keyboard shortcuts  
+        setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    this.showMenuModal = false;
+                    this.showModal = false;
+                    this.showTextModal = false;
+                } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    const activeForm = document.querySelector('form');
+                    if (activeForm) activeForm.dispatchEvent(new Event('submit'));
+                }
+            });
+        },
+        
+        // Search/Filter
+        filterMenus() {
+            // Filtering handled by x-show directives
+        },
+        
+        // Undo for delete
+        deleteMenu(id, name) {
+            this.scheduleDeleteMenu(id, name);
+        },
+        
+        scheduleDeleteMenu(id, name) {
+            const banner = document.createElement('div');
+            banner.className = 'undo-banner';
+            let secondsLeft = 5;
+            banner.innerHTML = `
+                <span>Menu "${name}" marked for deletion</span>
+                <button id="undo_menu_${id}">Undo (${secondsLeft}s)</button>
+            `;
+            document.body.appendChild(banner);
+            
+            const btn = banner.querySelector(`#undo_menu_${id}`);
+            let timer = setInterval(() => {
+                secondsLeft--;
+                btn.textContent = `Undo (${secondsLeft}s)`;
+                if (secondsLeft <= 0) {
+                    clearInterval(timer);
+                    banner.remove();
+                    this.confirmDeleteMenu(id);
+                }
+            }, 1000);
+
+            btn.addEventListener('click', () => {
+                clearInterval(timer);
+                banner.remove();
+            });
+        },
+        
+        confirmDeleteMenu(id) {
+            this.submitDeleteForm('menu-list', id);
+        },
+        
+        submitDeleteForm(route, id) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `{{ url('/admin') }}/${route}/${id}`;
+
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+            form.appendChild(csrfInput);
+
+            const methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'DELETE';
+            form.appendChild(methodInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        },
 
         resetForm() {
             this.form = { id: null, name: '', label: '', text: '' };
@@ -493,13 +647,23 @@ function menuComponent() {
             this.editModeMenu = false;
         },
 
-        editMenu(id) {
-            const menu = this.menus.find(a => a.id === id);
-            if (menu) {
+        async editMenu(id) {
+            try {
+                const response = await fetch(`/admin/menu-list/${id}`, {
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'same-origin'
+                });
+                if (!response.ok) {
+                    this.showToast('Failed to load menu', 'error');
+                    return;
+                }
+                const menu = await response.json();
                 this.form.id = menu.id;
                 this.form.name = menu.name;
                 this.editModeMenu = true;
                 this.showMenuModal = true;
+            } catch (error) {
+                this.showToast('Error loading menu', 'error');
             }
         },
 
@@ -521,7 +685,7 @@ function menuComponent() {
 
             formData.append('title', this.form.label);
             formData.append('content', this.form.text);
-            formData.append('menu_id', this.form.menu_id); // make sure this is populated
+            formData.append('menu_id', this.form.menu_id);
 
             let url = '{{ route('menu-text.store') }}';
 
@@ -531,6 +695,7 @@ function menuComponent() {
             }
 
             const btn = document.querySelector('#textUploadForm button[type=submit]');
+            const origText = btn.innerText;
             btn.innerText = this.editMode ? 'Updating...' : 'Uploading...';
             btn.disabled = true;
 
@@ -545,20 +710,21 @@ function menuComponent() {
                 const data = await res.json();
 
                 if (res.ok) {
-                    alert(data.message || (this.editMode ? 'Text updated successfully!' : 'Text added successfully!'));
+                    this.showToast(data.message || (this.editMode ? 'Text updated!' : 'Text added!'), 'success');
                     this.resetForm();
                     this.showTextModal = false;
                     window.location.reload();
                 } else if (data.errors) {
-                    alert(Object.values(data.errors).flat().join('\n'));
+                    const errorMsg = Object.values(data.errors).flat().join(', ');
+                    this.showToast(errorMsg, 'error');
                 } else {
-                    alert(data.message || 'Operation failed.');
+                    this.showToast(data.message || 'Operation failed.', 'error');
                 }
             } catch(err) {
                 console.error(err);
-                alert('Error submitting text.');
+                this.showToast('Error submitting text.', 'error');
             } finally {
-                btn.innerText = this.editMode ? 'Update' : 'Add';
+                btn.innerText = origText;
                 btn.disabled = false;
             }
         },
@@ -576,6 +742,7 @@ function menuComponent() {
             }
 
             const btn = document.querySelector('#menuForm button[type=submit]');
+            const origText = btn.innerText;
             btn.innerText = this.editModeMenu ? 'Updating...' : 'Adding...';
             btn.disabled = true;
 
@@ -588,11 +755,24 @@ function menuComponent() {
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    alert(data.message || (this.editModeMenu ? 'Menu updated!' : 'Menu added!'));
+                    this.showToast(data.message || (this.editModeMenu ? 'Menu updated!' : 'Menu added!'), 'success');
                     this.resetForm();
                     this.showMenuModal = false;
                     window.location.reload();
                 } else if (data.errors) {
+                    const errorMsg = Object.values(data.errors).flat().join(', ');
+                    this.showToast(errorMsg, 'error');
+                } else {
+                    this.showToast(data.message || 'Operation failed.', 'error');
+                }
+            } catch(err) {
+                console.error(err);
+                this.showToast('Error submitting menu.', 'error');
+            } finally {
+                btn.innerText = origText;
+                btn.disabled = false;
+            }
+        },
                     alert(Object.values(data.errors).flat().join('\n'));
                 } else {
                     alert(data.message || 'Operation failed.');

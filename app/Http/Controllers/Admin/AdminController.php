@@ -73,9 +73,23 @@ class AdminController extends Controller
 
     public function activity()
     {
+        // Paginate activities first
         $activities = Activity::orderBy('sort_order')->paginate(10);
-        $images = ActivitySwiperImage::all();
-        $texts = ActivityText::all();
+        
+        // Load related data only for current page
+        $activityIds = $activities->pluck('id')->toArray();
+        
+        // Limit images to 50 max and only for current page activities
+        $images = ActivitySwiperImage::with('activity')
+            ->whereIn('activity_id', $activityIds)
+            ->limit(50)
+            ->get();
+            
+        // Limit texts as well
+        $texts = ActivityText::whereIn('activity_id', $activityIds)
+            ->limit(50)
+            ->get();
+        
         return view('admin.whatToDo.activities', compact('activities', 'images', 'texts'));
     }
 

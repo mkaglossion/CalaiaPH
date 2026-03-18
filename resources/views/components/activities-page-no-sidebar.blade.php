@@ -121,8 +121,24 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isStaycation) {
             const grandTotalElement = document.getElementById('grand-total');
             if (grandTotalElement) {
-                const grandTotal = accommodationTotal + foodTotal + totalCost;
-                grandTotalElement.textContent = `₱${grandTotal.toLocaleString('en-PH', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                const subtotal = accommodationTotal + foodTotal + totalCost;
+                // Add 12% VAT
+                const vatAmount = subtotal * 0.12;
+                const grandTotal = subtotal + vatAmount;
+                
+                // Update subtotal if element exists
+                const subtotalElement = document.querySelector('#subtotal');
+                if (subtotalElement) {
+                    subtotalElement.textContent = `₱${subtotal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                }
+                
+                // Update VAT display if element exists
+                const vatElement = document.querySelector('#vat-amount');
+                if (vatElement) {
+                    vatElement.textContent = `₱${vatAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                }
+                
+                grandTotalElement.textContent = `₱${grandTotal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             }
         }
 
@@ -156,6 +172,8 @@ document.addEventListener('DOMContentLoaded', function() {
                           <div class="flex items-center gap-2">
                             <button type="button" class="decrease-guest-btn w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" data-activity-id="${activity.id}">-</button>
                             <input type="number"
+                              id="activity-guests-${activity.id}"
+                              name="activity_guests[${activity.id}]"
                               class="activity-guests w-16 text-center border border-gray-300 rounded-md py-1 text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent"
                               value="${activity.guests}"
                               min="1"
@@ -201,7 +219,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 activitiesTotalElement.textContent = `₱${Math.round(totalCost).toLocaleString()}`;
                             }
                             if (isStaycation && grandTotalElement) {
-                                const grandTotal = accommodationTotal + foodTotal + totalCost;
+                                const subtotal = accommodationTotal + foodTotal + totalCost;
+                                const vatAmount = subtotal * 0.12;
+                                const grandTotal = subtotal + vatAmount;
+                                
+                                // Update subtotal if element exists
+                                const subtotalElement = document.querySelector('#subtotal');
+                                if (subtotalElement) {
+                                    subtotalElement.textContent = `₱${Math.round(subtotal).toLocaleString()}`;
+                                }
                                 grandTotalElement.textContent = `₱${Math.round(grandTotal).toLocaleString()}`;
                             }
                             
@@ -426,7 +452,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             const activitiesTotal = totalCost;
-            const grandTotal = accommodationTotal + foodTotal + totalCost;
+            const subtotal = accommodationTotal + foodTotal + totalCost;
+            const vatAmount = subtotal * 0.12;
+            const grandTotal = subtotal + vatAmount;
             
             Swal.fire({
                 icon: 'question',
@@ -447,6 +475,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Activities:</span>
                             <span class="font-medium">₱${activitiesTotal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        </div>
+                        <div class="flex justify-between text-sm border-t border-gray-200 pt-2 mt-2">
+                            <span class="text-gray-600">Subtotal:</span>
+                            <span class="font-medium">₱${subtotal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-500">
+                            <span>Includes 12% VAT:</span>
+                            <span>₱${vatAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                         <div class="border-t border-gray-200 my-2 pt-2 flex justify-between text-lg font-bold text-[#8f5d54]">
                             <span>Grand Total:</span>
@@ -504,6 +540,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // initial load
     loadActivities();
+    updateSummary();
+    // Initialize the grand total on page load
     updateSummary();
 });
 </script>

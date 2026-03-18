@@ -403,50 +403,81 @@ class DayVisitController extends Controller
             }
         }
 
-        // Calculate grand total - prices are already VAT-inclusive from admin
-        $packagePrice = (float) ($bookingData['price'] ?? 0);
+        // Calculate grand total - prices from admin are VAT-exclusive, need to add VAT
+        // Support both legacy single-package ('price') and new multi-package ('total_price') data structures
+        if (isset($bookingData['total_price'])) {
+            // New multi-package structure (from availability page selection)
+            $packagePrice = (float) $bookingData['total_price'];
+        } else {
+            // Legacy single-package structure or fallback
+            $packagePrice = (float) ($bookingData['price'] ?? 0);
+        }
+        
         $activitiesTotal = collect(Session::get('dayvisit_selected_activities', []))->sum(function($activity) {
             $price = $activity['price'] ?? 0;
             return $price * ($activity['guests'] ?? 1);
         });
         
-        // Prices are already VAT-inclusive, calculate VAT breakdown for display only
+        // Prices are VAT-exclusive, calculate VAT breakdown and add VAT to get final amount
         $subtotal = $packagePrice + $activitiesTotal;
-        $vatBreakdown = $this->vatService->generateBreakdown($subtotal, true);
-        $grandTotal = $vatBreakdown['gross_amount'];
+        $vatBreakdown = $this->vatService->generateBreakdown($subtotal, false); // false = prices are VAT-exclusive
+        $grandTotal = $vatBreakdown['gross_amount']; // This includes VAT
 
         // Ensure minimum amount (PayMongo requires at least 100 centavos = 1 PHP)
         if ($grandTotal < 1) {
             $grandTotal = 1;
         }
 
-        // Build line items for PayMongo - prices are already VAT-inclusive
+        // Build line items for PayMongo - prices need to include VAT for correct display
         $lineItems = [];
         
-        // Add package line item - prices already include VAT
-        $packageName = isset($bookingData['package']) && !empty($bookingData['package']) ? (string) $bookingData['package'] : 'Day Visit Package';
-        
-        // Ensure package price is at least 1 PHP if it's the only item
-        if ($packagePrice < 1 && empty($selectedActivities)) {
-            $packagePrice = 1;
+        // Handle both multi-package and legacy single-package flows
+        if (isset($bookingData['packages']) && is_array($bookingData['packages'])) {
+            // Multi-package flow: create a line item for each package slot
+            $selectedPackages = Session::get('dayvisit_selected_packages', $bookingData['packages']);
+            foreach ($selectedPackages as $package) {
+                $packageNameToShow = $package['name'] ?? 'Day Visit Package';
+                $pricePerPersonExclusive = (float) ($package['price_per_person'] ?? 0);
+                $pricePerPersonWithVat = round($pricePerPersonExclusive * (1 + 0.12), 2);
+                $guests = (int) ($package['guests'] ?? 1);
+                $quantity = (int) ($package['quantity'] ?? 1);
+                
+                $lineItems[] = [
+                    'name' => $packageNameToShow,
+                    'unit_price' => $pricePerPersonWithVat,
+                    'quantity' => $guests * $quantity,  // Total persons for this package slot
+                ];
+            }
+        } else {
+            // Legacy single-package flow
+            $packageName = isset($bookingData['package']) && !empty($bookingData['package']) ? (string) $bookingData['package'] : 'Day Visit Package';
+            
+            // Calculate package price with VAT
+            $packagePriceWithVat = round($packagePrice * (1 + 0.12), 2);
+            
+            // Ensure package price is at least 1 PHP if it's the only item
+            if ($packagePriceWithVat < 1 && empty($selectedActivities)) {
+                $packagePriceWithVat = 1;
+            }
+            
+            $lineItems[] = [
+                'name' => $packageName,
+                'unit_price' => $packagePriceWithVat,
+                'quantity' => 1,
+            ];
         }
-        
-        $lineItems[] = [
-            'name' => $packageName,
-            'unit_price' => $packagePrice,
-            'quantity' => 1,
-        ];
 
-        // Add activity line items - prices already include VAT
+        // Add activity line items with VAT included
         $selectedActivities = Session::get('dayvisit_selected_activities', []);
         foreach ($selectedActivities as $activity) {
             if (!empty($activity) && isset($activity['name']) && !empty($activity['name']) && isset($activity['price'])) {
                 $guestCount = (int) ($activity['guests'] ?? 1);
-                $unitPrice = (float) $activity['price']; // Already includes VAT
+                $unitPriceExclusive = (float) $activity['price'];
+                $unitPriceWithVat = round($unitPriceExclusive * (1 + 0.12), 2); // Add VAT
                 $activityName = (string) $activity['name'];
                 $lineItems[] = [
                     'name' => $activityName,
-                    'unit_price' => $unitPrice,
+                    'unit_price' => $unitPriceWithVat,
                     'quantity' => $guestCount,
                 ];
             }

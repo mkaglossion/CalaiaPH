@@ -70,8 +70,12 @@ foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
     }
 }
 
-// Get selected foods from booking data
+// Get selected foods from booking data and calculate total
 $selectedFoods = $booking['selected_foods'] ?? [];
+$foodTotal = 0;
+foreach ($selectedFoods as $food) {
+    $foodTotal += ($food['price'] ?? 0) * ($food['quantity'] ?? 1);
+}
 
 // Get selected activities from booking data
 $selectedActivities = $booking['selected_activities'] ?? [];
@@ -164,6 +168,9 @@ $staycations = $staycations->keyBy('id');
                 :showDynamicActivities="true"
                 :showActionButtons="true"
                 :actionButtonType="'activities'"
+                :showEmptyActivities="true"
+                :accommodationTotal="$accommodationTotal + $breakfastTotal"
+                :foodTotal="$foodTotal"
             />
         </div>
     </div>

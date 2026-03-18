@@ -14,15 +14,78 @@
     .swiper-pagination-bullet-active {
         background-color: #a75e3e;
     }
+    
+    /* Toast notifications */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { to { transform: translateX(400px); opacity: 0; } }
+    .toast.hide { animation: slideOut 0.3s ease-out forwards; }
+    .toast.success { background: #10b981; color: white; }
+    .toast.error { background: #ef4444; color: white; }
+    .toast.info { background: #3b82f6; color: white; }
+    
+    /* Undo notification */
+    .undo-banner {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        padding: 16px 20px;
+        background: #374151;
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        z-index: 9998;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    .undo-banner button {
+        background: #fbbf24;
+        color: #1f2937;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    .undo-banner button:hover { background: #fcd34d; }
 </style>
 
 <script>
-  window.texts = @js($texts);
-  window.activities = @js($activities);
+  // Minimal data - no serialization of large objects
+  window.activitiesData = {
+    page: {{ $activities->currentPage() }},
+    lastPage: {{ $activities->lastPage() }},
+    total: {{ $activities->total() }},
+    perPage: {{ $activities->perPage() }}
+  };
 </script>
 
 <div
     x-data="activityManager()"
+    x-init="
+        isLoading = false;
+        setupKeyboardShortcuts();
+        // Safety timeout: auto-hide loading after 60 seconds
+        setInterval(() => {
+            if (isLoading) {
+                console.warn('Loading stuck for too long, resetting...');
+                isLoading = false;
+            }
+        }, 60000);
+    "
     class="p-4 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 rounded-xl"
 >
 
@@ -44,6 +107,17 @@
         >
             + Add Activity
         </button>
+    </div>
+
+    {{-- Search Box --}}
+    <div class="mb-6">
+        <input 
+            x-model="searchQuery"
+            @input="filterActivities()"
+            type="text" 
+            placeholder="🔍 Search by name, category, or description..." 
+            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
+        >
     </div>
 
     @if(session('success'))
@@ -71,7 +145,14 @@
 
             <tbody class="divide-y divide-gray-200">
                 @forelse($activities as $index => $act)
-                    <tr class="hover:bg-gray-50/70 transition">
+                    <tr 
+                        class="hover:bg-gray-50/70 transition"
+                        x-show="!searchQuery || 
+                            '{{ ($act->name ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            '{{ ($act->category ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            '{{ ($act->description ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase())"
+                        x-cloak
+                    >
                         <td class="px-3 sm:px-4 lg:px-6 py-4 text-gray-700">
                             {{ ($activities->currentPage() - 1) * $activities->perPage() + $index + 1 }}
                         </td>
@@ -82,24 +163,25 @@
                         <td class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $act->price ? '₱' . number_format($act->price, 2) : 'N/A' }}</td>
                         <td class="hidden xl:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $act->created_at->format('Y-m-d') }}</td>
                         <td class="px-3 sm:px-4 lg:px-6 py-4 text-right">
-  <div class="inline-flex items-center justify-end gap-1 sm:gap-2 whitespace-nowrap">
-    <button
-      type="button"
-      class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition text-xs sm:text-sm"
-      @click="editActivity({{ $act->id }})"
-    >
-      Edit
-    </button>
+                            <div class="inline-flex items-center justify-end gap-1 sm:gap-2 whitespace-nowrap">
+                                <button
+                                    type="button"
+                                    class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition text-xs sm:text-sm"
+                                    @click="editActivity({{ $act->id }})"
+                                >
+                                    Edit
+                                </button>
 
-    <button
-      type="button"
-      class="text-red-600 font-semibold hover:text-red-700 hover:underline transition text-xs sm:text-sm"
-      @click="deleteActivity({{ $act->id }})"
-    >
-      Delete
-    </button>
-  </div>
-</td>
+                                <button
+                                    type="button"
+                                    class="text-red-600 font-semibold hover:text-red-700 hover:underline transition text-xs sm:text-sm"
+                                    @click="deleteActivity({{ $act->id }})"
+                                    :id="`undo_click_${{{ $act->id }}}`"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
                     </tr>
                 @empty
                     <tr>
@@ -252,12 +334,6 @@
         </button>
     </div>
 
-    @if(session('success'))
-        <div class="bg-green-100 text-green-700 p-4 rounded-xl mb-6 border border-green-200">
-            {{ session('success') }}
-        </div>
-    @endif
-
     {{-- Images Table --}}
     <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
         <div class="overflow-x-auto">
@@ -367,6 +443,7 @@
         x-show="isLoading"
         x-transition.opacity
         class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-9999"
+        style="display: none;"
     >
         <div class="flex flex-col items-center space-y-3">
             <svg class="animate-spin h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -390,12 +467,10 @@ function activityManager() {
         editModeActivity: false,
         editImageMode: false,
         currentImageId: null,
+        searchQuery: '',
 
         // Data
-        texts: window.texts || [],
-        activities: Array.isArray(window.activities?.data)
-            ? window.activities.data
-            : (Array.isArray(window.activities) ? window.activities : []),
+        texts: [],
 
         // Form data
         form: {
@@ -411,6 +486,74 @@ function activityManager() {
             title: '',
             image: null,
             imagePreview: null,
+        },
+
+        // Toast notifications
+        showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        },
+
+        // Search and filter (simplified - uses x-show directives on rows)
+        filterActivities() {
+            // This method is called by @input on the search box,
+            // but the actual filtering is handled by x-show directives on table rows
+        },
+
+        // Keyboard shortcuts
+        setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    this.showActivityModal = false;
+                    this.showModal = false;
+                    this.showTextModal = false;
+                } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    const activeForm = document.querySelector('form');
+                    if (activeForm) activeForm.dispatchEvent(new Event('submit'));
+                }
+            });
+        },
+
+        // Undo for delete
+        scheduleDelete(id, name) {
+            this.showUndoBanner(`Activity "${name}" marked for deletion`, id);
+        },
+
+        showUndoBanner(message, activityId) {
+            const banner = document.createElement('div');
+            banner.className = 'undo-banner';
+            let secondsLeft = 5;
+            banner.innerHTML = `
+                <span>${message}</span>
+                <button id="undo_action_${activityId}">Undo (${secondsLeft}s)</button>
+            `;
+            document.body.appendChild(banner);
+            
+            const btn = banner.querySelector(`#undo_action_${activityId}`);
+            let timer = setInterval(() => {
+                secondsLeft--;
+                btn.textContent = `Undo (${secondsLeft}s)`;
+                if (secondsLeft <= 0) {
+                    clearInterval(timer);
+                    banner.remove();
+                    this.confirmDelete(activityId);
+                }
+            }, 1000);
+
+            btn.addEventListener('click', () => {
+                clearInterval(timer);
+                banner.remove();
+            });
         },
 
         // Methods
@@ -465,7 +608,7 @@ function activityManager() {
 
             // Validate file type
             if (!file.type.startsWith('image/')) {
-                alert('Please select a valid image file.');
+                this.showToast('Please select a valid image file.', 'error');
                 event.target.value = '';
                 return;
             }
@@ -473,7 +616,7 @@ function activityManager() {
             // Validate file size (5MB limit)
             const maxSize = 5 * 1024 * 1024; // 5MB
             if (file.size > maxSize) {
-                alert('File size must not exceed 5MB.');
+                this.showToast('File size must not exceed 5MB.', 'error');
                 event.target.value = '';
                 return;
             }
@@ -489,39 +632,50 @@ function activityManager() {
                 this.form.imagePreview = e.target.result;
             };
             reader.onerror = () => {
-                alert('Error reading file.');
+                this.showToast('Error reading file.', 'error');
                 this.form.image = null;
                 this.form.imagePreview = null;
             };
             reader.readAsDataURL(file);
         },
 
-        editActivity(id) {
-            const activity = this.activities.find(a => a.id === id);
-            if (!activity) {
-                console.error('Activity not found');
-                return;
+        async editActivity(id) {
+            try {
+                const response = await fetch(`/admin/activity-list/${id}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) {
+                    this.showToast('Failed to load activity', 'error');
+                    return;
+                }
+                
+                const activity = await response.json();
+
+                // Populate form
+                this.form.id = activity.id;
+                this.form.name = activity.name || '';
+                this.form.description = activity.description || '';
+                this.form.duration = activity.duration || '';
+                this.form.price = activity.price || '';
+                this.form.category = activity.category || '';
+                this.form.image = null;
+
+                // Handle image preview
+                this.setImagePreview(activity.image);
+
+                this.editModeActivity = true;
+                this.showActivityModal = true;
+            } catch (error) {
+                this.showToast('Error loading activity data.', 'error');
             }
-
-            // Populate form
-            this.form.id = activity.id;
-            this.form.name = activity.name || '';
-            this.form.description = activity.description || '';
-            this.form.duration = activity.duration || '';
-            this.form.price = activity.price || '';
-            this.form.category = activity.category || '';
-            this.form.image = null; // Reset for new uploads
-
-            // Handle image preview
-            this.setImagePreview(activity.image);
-
-            this.editModeActivity = true;
-            this.showActivityModal = true;
         },
 
         setImagePreview(imagePath) {
             if (imagePath) {
-                // Check if full URL or local path
                 const isFullUrl = imagePath.startsWith('http://') || imagePath.startsWith('https://');
                 this.form.imagePreview = isFullUrl ? imagePath : `/storage/${imagePath}`;
             } else {
@@ -531,10 +685,7 @@ function activityManager() {
 
         editText(id) {
             const text = this.texts.find(t => t.id === id);
-            if (!text) {
-                console.error('Text not found');
-                return;
-            }
+            if (!text) return;
 
             this.form.id = text.id;
             this.form.label = text.title || '';
@@ -546,45 +697,48 @@ function activityManager() {
         },
 
         deleteActivity(id) {
-            Swal.fire({
-                title: 'Delete Activity?',
-                text: 'This action cannot be undone.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Delete',
-                cancelButtonText: 'Cancel',
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#6b7280',
-                customClass: {
-                    confirmButton: 'swal-confirm-btn',
-                    cancelButton: 'swal-cancel-btn'
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    this.submitDeleteForm('activity-list', id);
-                }
-            });
+            const nameEl = event.target.closest('tr')?.querySelector('td:nth-child(2)');
+            const actName = nameEl?.textContent || 'Activity';
+            this.scheduleDelete(id, actName);
+        },
+
+        confirmDelete(id) {
+            this.submitDeleteForm('activity-list', id);
         },
 
         deleteImage(id) {
-            Swal.fire({
-                title: 'Delete Image?',
-                text: 'This action cannot be undone.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Delete',
-                cancelButtonText: 'Cancel',
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#6b7280',
-                customClass: {
-                    confirmButton: 'swal-confirm-btn',
-                    cancelButton: 'swal-cancel-btn'
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    this.submitDeleteForm('activity-image', id);
-                }
-            });
+            this.scheduleDeleteImage(id);
+        },
+
+        scheduleDeleteImage(id) {
+            const image = document.querySelector(`[data-image-id="${id}"]`);
+            if (image) {
+                const actName = image.textContent;
+                const banner = document.createElement('div');
+                banner.className = 'undo-banner';
+                let secondsLeft = 5;
+                banner.innerHTML = `
+                    <span>Image marked for deletion</span>
+                    <button id="undo_img_${id}">Undo (${secondsLeft}s)</button>
+                `;
+                document.body.appendChild(banner);
+                
+                const btn = banner.querySelector(`#undo_img_${id}`);
+                let timer = setInterval(() => {
+                    secondsLeft--;
+                    btn.textContent = `Undo (${secondsLeft}s)`;
+                    if (secondsLeft <= 0) {
+                        clearInterval(timer);
+                        banner.remove();
+                        this.submitDeleteForm('activity-image', id);
+                    }
+                }, 1000);
+
+                btn.addEventListener('click', () => {
+                    clearInterval(timer);
+                    banner.remove();
+                });
+            }
         },
 
         submitDeleteForm(route, id) {
@@ -592,14 +746,12 @@ function activityManager() {
             form.method = 'POST';
             form.action = `{{ url('/admin') }}/${route}/${id}`;
 
-            // Add CSRF token
             const csrfInput = document.createElement('input');
             csrfInput.type = 'hidden';
             csrfInput.name = '_token';
             csrfInput.value = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             form.appendChild(csrfInput);
 
-            // Add method spoofing
             const methodInput = document.createElement('input');
             methodInput.type = 'hidden';
             methodInput.name = '_method';
@@ -627,11 +779,18 @@ function activityManager() {
             submitBtn.textContent = this.editMode ? 'Updating...' : 'Adding...';
             submitBtn.disabled = true;
 
+            const safetyTimeout = setTimeout(() => {
+                this.isLoading = false;
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }, 45000);
+
             try {
                 const response = await this.submitForm(url, formData);
+                clearTimeout(safetyTimeout);
 
                 if (response.ok) {
-                    await this.handleSuccess(response, this.editMode ? 'Updated!' : 'Added!', 'Text saved successfully!');
+                    this.showToast(this.editMode ? 'Text updated!' : 'Text added!', 'success');
                     this.resetForm();
                     this.showTextModal = false;
                     window.location.reload();
@@ -639,8 +798,8 @@ function activityManager() {
                     await this.handleError(response);
                 }
             } catch (error) {
-                console.error('Error saving text:', error);
-                this.showErrorAlert('Error submitting text.');
+                clearTimeout(safetyTimeout);
+                this.showToast('Error submitting text.', 'error');
             } finally {
                 this.isLoading = false;
                 submitBtn.textContent = originalText;
@@ -674,11 +833,18 @@ function activityManager() {
             submitBtn.textContent = this.editModeActivity ? 'Updating...' : 'Adding...';
             submitBtn.disabled = true;
 
+            const safetyTimeout = setTimeout(() => {
+                this.isLoading = false;
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }, 45000);
+
             try {
                 const response = await this.submitForm(url, formData);
+                clearTimeout(safetyTimeout);
 
                 if (response.ok) {
-                    await this.handleSuccess(response, this.editModeActivity ? 'Updated!' : 'Added!', 'Activity saved successfully!');
+                    this.showToast(this.editModeActivity ? 'Activity updated!' : 'Activity added!', 'success');
                     this.resetForm();
                     this.showActivityModal = false;
                     window.location.reload();
@@ -686,8 +852,8 @@ function activityManager() {
                     await this.handleError(response);
                 }
             } catch (error) {
-                console.error('Error saving activity:', error);
-                this.showErrorAlert('Error submitting activity.');
+                clearTimeout(safetyTimeout);
+                this.showToast('Error submitting activity.', 'error');
             } finally {
                 this.isLoading = false;
                 submitBtn.textContent = originalText;
@@ -701,12 +867,12 @@ function activityManager() {
             const activitySelect = this.$refs.activity;
 
             if (!fileInput?.files?.[0] && !this.editImageMode) {
-                this.showWarningAlert('No Image Selected', 'Please select an image before uploading.');
+                this.showToast('Please select an image before uploading.', 'error');
                 return;
             }
 
             if (!activitySelect?.value) {
-                this.showWarningAlert('No Activity Selected', 'Please select an activity.');
+                this.showToast('Please select an activity.', 'error');
                 return;
             }
 
@@ -729,11 +895,18 @@ function activityManager() {
             submitBtn.textContent = this.editImageMode ? 'Updating...' : 'Uploading...';
             submitBtn.disabled = true;
 
+            const safetyTimeout = setTimeout(() => {
+                this.isLoading = false;
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }, 45000);
+
             try {
                 const response = await this.submitForm(url, formData);
+                clearTimeout(safetyTimeout);
 
                 if (response.ok) {
-                    await this.handleSuccess(response, this.editImageMode ? 'Updated!' : 'Uploaded!', 'Image processed successfully!');
+                    this.showToast(this.editImageMode ? 'Image updated!' : 'Image uploaded!', 'success');
                     this.showModal = false;
                     this.resetImageForm();
                     window.location.reload();
@@ -741,8 +914,8 @@ function activityManager() {
                     await this.handleError(response);
                 }
             } catch (error) {
-                console.error('Error processing image:', error);
-                this.showErrorAlert('Error processing image.');
+                clearTimeout(safetyTimeout);
+                this.showToast('Error processing image.', 'error');
             } finally {
                 this.isLoading = false;
                 submitBtn.textContent = originalText;
@@ -753,73 +926,46 @@ function activityManager() {
         async submitForm(url, formData) {
             const csrfToken = document.querySelector('meta[name=csrf-token]').getAttribute('content');
 
-            return await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json',
-                },
-                body: formData,
-                credentials: 'same-origin'
-            });
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                    credentials: 'same-origin',
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
         },
 
         async handleSuccess(response, title, defaultMessage) {
             const data = await response.json();
             const message = data.message || defaultMessage;
-
-            await Swal.fire({
-                icon: 'success',
-                title: title,
-                text: message,
-                confirmButtonColor: '#2563eb',
-                customClass: {
-                    confirmButton: 'swal-confirm-btn'
-                }
-            });
+            this.showToast(message, 'success');
         },
 
         async handleError(response) {
-            const data = await response.json();
-
-            if (data.errors) {
-                const errorMessages = Object.values(data.errors).flat().join('<br>');
-                await Swal.fire({
-                    icon: 'warning',
-                    title: 'Validation Error',
-                    html: errorMessages,
-                    customClass: {
-                        confirmButton: 'swal-confirm-btn'
-                    }
-                });
-            } else {
-                const message = data.message || 'Operation failed.';
-                this.showErrorAlert(message);
+            try {
+                const data = await response.json();
+                if (data.errors) {
+                    const errorMessage = Object.values(data.errors).flat().join(', ');
+                    this.showToast(errorMessage, 'error');
+                } else {
+                    this.showToast(data.message || 'Operation failed.', 'error');
+                }
+            } catch (e) {
+                this.showToast('An error occurred.', 'error');
             }
-        },
-
-        showWarningAlert(title, text) {
-            Swal.fire({
-                icon: 'warning',
-                title: title,
-                text: text,
-                confirmButtonColor: '#2563eb',
-                customClass: {
-                    confirmButton: 'swal-confirm-btn'
-                }
-            });
-        },
-
-        showErrorAlert(text) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: text,
-                confirmButtonColor: '#2563eb',
-                customClass: {
-                    confirmButton: 'swal-confirm-btn'
-                }
-            });
         },
 
         editImage(id, activityId, title) {
@@ -827,7 +973,6 @@ function activityManager() {
             this.editImageMode = true;
             this.showModal = true;
 
-            // Set form values after DOM update
             this.$nextTick(() => {
                 const activitySelect = this.$refs.activity;
                 const titleInput = this.$refs.title;

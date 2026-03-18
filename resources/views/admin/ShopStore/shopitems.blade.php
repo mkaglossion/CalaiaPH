@@ -3,6 +3,34 @@
 @section('title', 'Store Management')
 
 @section('content')
+<style>
+    /* Undo notification */
+    .undo-banner {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        padding: 16px 20px;
+        background: #374151;
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        z-index: 9998;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    .undo-banner button {
+        background: #fbbf24;
+        color: #1f2937;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    .undo-banner button:hover { background: #fcd34d; }
+</style>
+
 <div
     x-data="productCrud()"
     class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
@@ -29,6 +57,17 @@
             <i data-lucide="plus" class="w-4 h-4"></i>
             Add New Product
         </button>
+    </div>
+
+    {{-- Search Box --}}
+    <div class="mb-6">
+        <input 
+            x-model="searchQuery"
+            @input="filterProducts()"
+            type="text" 
+            placeholder="🔍 Search by name, category, or description..." 
+            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
+        >
     </div>
 
     @if(session('success'))
@@ -58,7 +97,13 @@
                 </thead>
             <tbody class="divide-y divide-gray-200">
                 @forelse ($products as $index => $product)
-                    <tr class="hover:bg-gray-50/70 transition">
+                    <tr 
+                        class="hover:bg-gray-50/70 transition"
+                        x-show="!searchQuery || 
+                            '{{ ($product->title ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            '{{ ($product->category ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            '{{ ($product->description ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase())"
+                    >
                         <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ $products->firstItem() ? $products->firstItem() + $index : $index + 1 }}</td>
                         <td class="px-6 py-4">
                             <div class="min-w-0">
@@ -285,55 +330,71 @@
 
     <script>
         function deleteProductItem(id, name) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: `You are about to delete "${name}". This action cannot be undone.`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Delete',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch(`{{ route('products.destroy', ':id') }}`.replace(':id', id), {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
-                        },
-                        body: new URLSearchParams({
-                            '_method': 'DELETE'
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire(
-                                'Deleted!',
-                                'Product has been deleted successfully.',
-                                'success'
-                            ).then(() => {
-                                window.location.reload();
-                            });
-                        } else {
-                            Swal.fire(
-                                'Error!',
-                                data.message || 'Failed to delete product.',
-                                'error'
-                            );
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire(
-                            'Error!',
-                            'An error occurred while deleting the product.',
-                            'error'
-                        );
-                    });
+            // Show undo banner instead of Swal dialog
+            const banner = document.createElement('div');
+            banner.className = 'undo-banner';
+            let secondsLeft = 5;
+            banner.innerHTML = `
+                <span>Product "${name}" marked for deletion</span>
+                <button id="undo_product_${id}">Undo (${secondsLeft}s)</button>
+            `;
+            document.body.appendChild(banner);
+            
+            const btn = banner.querySelector(`#undo_product_${id}`);
+            let timer = setInterval(() => {
+                secondsLeft--;
+                btn.textContent = `Undo (${secondsLeft}s)`;
+                if (secondsLeft <= 0) {
+                    clearInterval(timer);
+                    banner.remove();
+                    // Perform actual deletion after undo window closes
+                    performProductDeletion(id, name);
                 }
+            }, 1000);
+
+            btn.addEventListener('click', () => {
+                clearInterval(timer);
+                banner.remove();
+            });
+        }
+
+        function performProductDeletion(id, name) {
+            fetch(`{{ route('products.destroy', ':id') }}`.replace(':id', id), {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: new URLSearchParams({
+                    '_method': 'DELETE'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Product has been deleted successfully.',
+                        'success'
+                    ).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire(
+                        'Error!',
+                        data.message || 'Failed to delete product.',
+                        'error'
+                    );
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire(
+                    'Error!',
+                    'An error occurred while deleting the product.',
+                    'error'
+                );
             });
         }
 
@@ -342,6 +403,7 @@
                 showModal: false,
                 editMode: false,
                 loading: false,
+                searchQuery: '',
                 form: {
                     id: null,
                     title: '',
@@ -359,6 +421,11 @@
                 openCreate() {
                     this.resetForm();
                     this.showModal = true;
+                },
+
+                filterProducts() {
+                    // This method is called by @input on the search box,
+                    // but the actual filtering is handled by x-show directives on table rows
                 },
 
                 openEdit(product) {

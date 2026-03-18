@@ -7,6 +7,7 @@
     <title>Reset Password - Calaia PH</title>
     @vite(['resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
         .auth-container {
             min-height: 100vh;
@@ -128,12 +129,6 @@
                 <p>Enter your new password below to reset your account password.</p>
             </div>
             
-            @if (session('status'))
-                <div class="mb-4 p-3 bg-green-100 text-green-700 rounded-lg">
-                    {{ session('status') }}
-                </div>
-            @endif
-            
             <form id="resetPasswordForm" class="space-y-4">
                 @csrf
                 <input type="hidden" name="token" value="{{ $token }}">
@@ -169,6 +164,7 @@
     </div>
     
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('resetPasswordForm');
@@ -204,27 +200,66 @@
                     
                     if (res.ok) {
                         if (responseData.success) {
-                            alert(responseData.message);
-                            window.location.href = '{{ route('login') }}';
+                            Swal.fire({
+                                title: 'Success!',
+                                html: responseData.message,
+                                icon: 'success',
+                                confirmButtonText: 'Back to Login',
+                                confirmButtonColor: '#1e40af'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = '{{ route('login') }}';
+                                }
+                            });
                         } else {
-                            alert('Something went wrong. Please try again.');
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'Something went wrong. Please try again.',
+                                icon: 'error',
+                                confirmButtonColor: '#dc2626'
+                            });
                         }
                     } else {
-                        const errorMessage = responseData.message || responseData.errors ? 
+                        const errorMessage = responseData.message || (responseData.errors ? 
                             Object.values(responseData.errors).flat().join('\n') : 
-                            'Password reset failed';
-                        alert(errorMessage);
+                            'Password reset failed');
+                        Swal.fire({
+                            title: 'Error',
+                            text: errorMessage,
+                            icon: 'error',
+                            confirmButtonColor: '#dc2626'
+                        });
                     }
                 })
                 .catch(err => {
                     console.error('Error:', err);
-                    alert('An error occurred. Please check your internet connection and try again.');
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'An error occurred. Please check your internet connection and try again.',
+                        icon: 'error',
+                        confirmButtonColor: '#dc2626'
+                    });
                 })
                 .finally(() => {
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
                 });
             });
+            
+            // Show success message if redirected with status
+            @if (session('status'))
+                Swal.fire({
+                    title: 'Success!',
+                    html: '{{ session('status') }}',
+                    icon: 'success',
+                    confirmButtonText: 'Back to Login',
+                    confirmButtonColor: '#1e40af'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '{{ route('login') }}';
+                    }
+                });
+            @endif
         });
     </script>
 </body>

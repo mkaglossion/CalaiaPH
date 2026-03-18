@@ -12,7 +12,7 @@
   {{-- Google Fonts - Preconnect for better performance --}}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" crossorigin>
 
   {{-- Vendor CSS with integrity hashes for security --}}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css" integrity="sha256-GzSkJVLJbxDk36qko2cnawOGiqz/Y8GsQv/jMTUrx1Q=" crossorigin="anonymous">
@@ -219,16 +219,7 @@
     <div class="py-4 md:py-8">
       <div class="w-full mx-auto max-w-screen-2xl px-3 sm:px-4 md:px-6 lg:px-8 2xl:px-10">
 
-        {{-- Flash --}}
-        @if (session('success'))
-          <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-            <span class="block sm:inline">{{ session('success') }}</span>
-            <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.style.display='none'">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        @endif
-
+        {{-- Error alerts only (Success handled via SweetAlert toasts in individual pages) --}}
         @if (session('error'))
           <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
             <span class="block sm:inline">{{ session('error') }}</span>

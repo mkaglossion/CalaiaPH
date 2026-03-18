@@ -13,26 +13,34 @@
     'showDynamicActivities' => false,
     'showActionButtons' => false,
     'actionButtonType' => 'food', // 'food', 'activities', 'payment'
-    'showTrustElements' => false
+    'showTrustElements' => false,
+    'showEmptyActivities' => false, // Show activities section even when empty
+    // Additional props for dynamic integration
+    'accommodationTotal' => 0,
+    'activitiesTotal' => 0,
+    'foodTotal' => 0,
 ])
 
 @php
-// Calculate totals
-$accommodationTotal = 0;
-$activitiesTotal = 0;
-$foodTotal = 0;
-
-// Accommodation total
-foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
-    if (!empty($acc)) {
-        $accommodationTotal += $acc['total_price'] ?? 0;
-    }
+// Ensure selectedActivities is always an array
+if (is_string($selectedActivities)) {
+    $selectedActivities = json_decode($selectedActivities, true) ?? [];
+} elseif ($selectedActivities === null) {
+    $selectedActivities = [];
 }
 
-// Activities total
-$selectedActivities = $selectedActivities ?? $booking['selected_activities'] ?? [];
-foreach ($selectedActivities as $activity) {
-    $activitiesTotal += ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+// Calculate totals - use provided props if available (for dynamic updates)
+$accommodationTotal = $accommodationTotal > 0 ? $accommodationTotal : 0;
+$activitiesTotalProp = $activitiesTotal;
+$foodTotalProp = $foodTotal;
+
+// If dynamic props are 0, calculate from booking data
+if ($accommodationTotal === 0) {
+    foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
+        if (!empty($acc)) {
+            $accommodationTotal += $acc['total_price'] ?? 0;
+        }
+    }
 }
 
 // Date calculations
@@ -68,22 +76,43 @@ foreach ($booking['accommodations'] ?? [] as $roomId => $acc) {
     }
 }
 
-// Use the greater of previous or current (prefer previous which has cumulative data)
-$accommodationTotal = max($previousAccommodationTotal, $currentAccommodationTotal);
-$foodTotal = max($previousFoodTotal, $calculatedFoodTotal ?? $foodTotal);
-$activitiesTotal = max($previousActivitiesTotal, $activitiesTotal);
+// Use final_totals if available (they have cumulative data from all steps)
+// Otherwise use current calculated totals
+$accommodationTotal = ($previousAccommodationTotal > 0) ? $previousAccommodationTotal : $currentAccommodationTotal;
+$foodTotal = ($previousFoodTotal > 0) ? $previousFoodTotal : ($calculatedFoodTotal ?? $foodTotal);
+$activitiesTotal = ($previousActivitiesTotal > 0) ? $previousActivitiesTotal : $activitiesTotal;
 
 // Calculate cumulative grand total
 $grandTotal = $accommodationTotal + $foodTotal + $activitiesTotal;
 
-// If grandTotal is still 0, fallback to direct calculation
+// If grandTotal is still 0, try to get from final_totals
+if ($grandTotal === 0 && isset($booking['final_totals']['grand_total'])) {
+    $grandTotal = (float) $booking['final_totals']['grand_total'];
+}
+
+// Debug: Log the values for troubleshooting
+// file_put_contents(storage_path('logs/debug.log'), "grandTotal: $grandTotal, accommodation: $accommodationTotal, food: $foodTotal, activities: $activitiesTotal\n", FILE_APPEND);
+
+// If grandTotal is 0, try to get from final_totals
+if ($grandTotal === 0 && isset($booking['final_totals']['grand_total'])) {
+    $grandTotal = (float) $booking['final_totals']['grand_total'];
+}
+
+// If grandTotal is still 0, fallback to direct calculation from individual totals
 if ($grandTotal === 0) {
-    $grandTotal = ($accommodationTotal ?? 0) + ($activitiesTotal ?? 0) + ($calculatedFoodTotal ?? $foodTotal ?? 0);
+    // Get from final_totals if available
+    if (isset($booking['final_totals'])) {
+        $grandTotal = (float) ($booking['final_totals']['accommodation_total'] ?? 0) + 
+                      (float) ($booking['final_totals']['food_total'] ?? 0) + 
+                      (float) ($booking['final_totals']['activities_total'] ?? 0);
+    } else {
+        $grandTotal = ($accommodationTotal ?? 0) + ($activitiesTotal ?? 0) + ($calculatedFoodTotal ?? $foodTotal ?? 0);
+    }
 }
 
 // Calculate VAT breakdown using VatService (12% Philippine VAT)
 $vatService = app(\App\Services\VatService::class);
-$vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, true); // true = VAT inclusive
+$vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // false = VAT exclusive (we add VAT to base price)
 @endphp
 
 <div class="bg-white rounded-2xl shadow-lg p-6 space-y-6">
@@ -228,7 +257,7 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, true); // tr
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
                                 <button type="button" class="w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" @click="decreaseQty(food.id)">-</button>
-                                <input type="number" min="1" max="20" class="w-16 text-center border border-gray-300 rounded-md py-1 text-sm" :value="food.quantity" @change="setField(food.id, 'quantity', $event.target.value)">
+                                <input type="number" id="quantity" name="quantity" min="1" max="20" class="w-16 text-center border border-gray-300 rounded-md py-1 text-sm" :value="food.quantity" @change="setField(food.id, 'quantity', $event.target.value)">
                                 <button type="button" class="w-8 h-8 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition" @click="increaseQty(food.id)">+</button>
                             </div>
                             <div class="text-right text-[#8f5d54] font-bold text-sm" x-text="'₱' + (food.price * food.quantity).toLocaleString()"></div>
@@ -293,7 +322,30 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, true); // tr
     @endif
 
     {{-- Selected Activities Section --}}
-    @if($showActivities)
+    @if($showDynamicActivities && !empty($selectedActivities))
+    <div>
+        <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+            <i class="bi bi-ticket-detailed mr-2 text-[#8f5d54]"></i> Selected Activities
+        </h4>
+        <div id="selected-activities" class="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
+            @foreach($selectedActivities as $activity)
+            <div class="bg-white rounded border border-gray-100 p-2">
+                <div class="flex justify-between items-start">
+                    <span class="font-semibold text-gray-900">{{ $activity['name'] }}</span>
+                    <span class="font-bold text-[#8f5d54]">₱{{ number_format(($activity['price'] ?? 0) * ($activity['guests'] ?? 1), 0) }}</span>
+                </div>
+                <div class="flex items-center gap-2 mt-2">
+                    <button type="button" class="w-6 h-6 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 text-xs">-</button>
+                    <span class="text-xs font-semibold">{{ $activity['guests'] ?? 1 }} guest{{ ($activity['guests'] ?? 1) > 1 ? 's' : '' }}</span>
+                    <button type="button" class="w-6 h-6 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 text-xs">+</button>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+
+    <hr class="border-gray-100">
+    @elseif($showActivities && (!empty($selectedActivities) || $showEmptyActivities))
     <div>
         <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
             <i class="bi bi-ticket-detailed mr-2 text-[#8f5d54]"></i> Selected Activities
@@ -325,14 +377,21 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, true); // tr
     {{-- Pricing Summary --}}
     @if($showPricing)
     <div class="space-y-3">
+        @if($showDynamicFood || $showDynamicActivities)
+        <div class="flex justify-between items-center text-sm">
+            <span class="text-gray-600">Accommodation:</span>
+            <span class="font-semibold" x-text="formatCurrency(accommodationTotal)"></span>
+        </div>
+        @else
         <div class="flex justify-between items-center text-sm">
             <span class="text-gray-600">Accommodation:</span>
             <span class="font-semibold">₱{{ number_format($accommodationTotal, 0) }}</span>
         </div>
+        @endif
         @if($showDynamicFood)
         <div class="flex justify-between items-center text-sm">
             <span class="text-gray-600">Food & Beverages:</span>
-            <span class="font-semibold" x-text="calculateFoodTotal() || '₱0'"></span>
+            <span class="font-semibold" x-text="calculateFoodTotal()"></span>
         </div>
         @elseif(!empty($selectedFoods) && count($selectedFoods) > 0)
         <div class="flex justify-between items-center text-sm">
@@ -340,17 +399,21 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, true); // tr
             <span class="font-semibold">₱{{ number_format($calculatedFoodTotal ?? $foodTotal, 0) }}</span>
         </div>
         @endif
-        @if($showActivities)
+        @if(($showActivities && !empty($selectedActivities)) || $showDynamicActivities)
         <div class="flex justify-between items-center text-sm">
             <span class="text-gray-600">Activities:</span>
-            <span id="activities-total" class="font-semibold">₱{{ !empty($selectedActivities) ? number_format($activitiesTotal, 0) : '0' }}</span>
+            <span id="activities-total" class="font-semibold" x-text="calculateActivitiesTotal()"></span>
         </div>
         @endif
         
-        {{-- Subtotal (VAT-inclusive) --}}
+        {{-- Subtotal (before VAT) --}}
         <div class="flex justify-between items-center text-sm border-t border-gray-100 pt-2">
             <span class="text-gray-600">Subtotal:</span>
-            <span class="font-semibold">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
+            @if($showDynamicFood || $showDynamicActivities)
+                <span id="subtotal" class="font-semibold" x-text="calculateSubtotal()"></span>
+            @else
+                <span id="subtotal" class="font-semibold">₱{{ number_format($grandTotal, 2) }}</span>
+            @endif
         </div>
         
         {{-- VAT Included Breakdown --}}
@@ -359,16 +422,20 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, true); // tr
                 <i class="bi bi-info-circle text-gray-400 text-xs cursor-help" title="Value Added Tax as per Philippine TRAIN Law"></i>
                 Includes 12% VAT:
             </span>
-            <span>₱{{ number_format($vatBreakdown['vat_amount'], 2) }}</span>
+            @if($showDynamicFood || $showDynamicActivities)
+            <span id="vat-amount" x-text="calculateVAT()"></span>
+            @else
+            <span id="vat-amount">₱{{ number_format($vatBreakdown['vat_amount'], 2) }}</span>
+            @endif
         </div>
         
         {{-- Grand Total --}}
         <div class="flex justify-between items-center text-lg font-bold border-t border-gray-200 pt-2">
             <span>Grand Total:</span>
-            @if($showDynamicFood)
-                <span id="grand-total" class="text-[#8f5d54]" x-text="calculateTotal()" data-food-total="0"></span>
+            @if($showDynamicFood || $showDynamicActivities)
+                <span id="grand-total" class="text-[#8f5d54]" x-text="calculateTotal()" data-food-total="{{ $foodTotalProp }}"></span>
             @else
-                <span id="grand-total" class="text-[#8f5d54]" data-food-total="{{ $calculatedFoodTotal ?? $foodTotal }}">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
+                <span id="grand-total" class="text-[#8f5d54]" data-food-total="{{ $foodTotal }}">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
             @endif
         </div>
         

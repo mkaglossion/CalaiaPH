@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\DayTour;
 use App\Models\DayTourInventory;
 use App\Events\DayTourInventoryUpdated;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 

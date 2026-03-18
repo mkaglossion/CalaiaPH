@@ -1,4 +1,4 @@
-﻿﻿﻿﻿{{-- resources/views/booking/staycation-food.blade.php --}}
+{{-- resources/views/booking/staycation-food.blade.php --}}
 <x-app-layout active-header="booking">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -374,6 +374,8 @@
                         :showDynamicFood="true"
                         :showActionButtons="true"
                         :showActivities="false"
+                        :accommodationTotal="$accommodationTotal"
+                        :activitiesTotal="$activitiesTotal"
                     />
                 </div>
             </div>
@@ -493,16 +495,45 @@
                     this.selectedFoods.forEach(food => {
                         foodTotal += food.price * food.quantity; // No nights multiplication
                     });
-                    const grandTotal = this.accommodationTotal + this.activitiesTotal + foodTotal;
+                    const subtotal = this.accommodationTotal + this.activitiesTotal + foodTotal;
+                    const vat = subtotal * 0.12;
+                    const grandTotal = subtotal + vat;
                     return '₱' + grandTotal.toLocaleString();
+                },
+
+                calculateSubtotal() {
+                    let foodTotal = 0;
+                    this.selectedFoods.forEach(food => {
+                        foodTotal += food.price * food.quantity;
+                    });
+                    const subtotal = this.accommodationTotal + this.activitiesTotal + foodTotal;
+                    return '₱' + subtotal.toLocaleString();
+                },
+
+                calculateVAT() {
+                    let foodTotal = 0;
+                    this.selectedFoods.forEach(food => {
+                        foodTotal += food.price * food.quantity;
+                    });
+                    const subtotal = this.accommodationTotal + this.activitiesTotal + foodTotal;
+                    const vat = subtotal * 0.12;
+                    return '₱' + vat.toLocaleString();
                 },
 
                 calculateFoodTotal() {
                     let total = 0;
                     this.selectedFoods.forEach(food => {
-                        total += food.price * food.quantity; // No nights multiplication
+                        total += food.price * food.quantity;
                     });
                     return '₱' + total.toLocaleString();
+                },
+
+                calculateActivitiesTotal() {
+                    return '₱' + this.activitiesTotal.toLocaleString();
+                },
+
+                formatCurrency(amount) {
+                    return '₱' + Number(amount).toLocaleString();
                 },
 
                 submitAndProceed(nextUrl = '{{ route("booking.staycationActivities") }}') {

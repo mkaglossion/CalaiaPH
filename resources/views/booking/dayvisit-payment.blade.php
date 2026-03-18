@@ -7,25 +7,25 @@
   // Handle both new (multiple packages) and legacy (single package) data structures
   $isMultiPackage = isset($bookingData['packages']) && is_array($bookingData['packages']);
   
-  // Prices from admin are already customer-facing (VAT-inclusive)
-  // Just use them directly without adding VAT
+  // Prices from admin are VAT-exclusive (before tax)
+  // We need to add 12% VAT to calculate the final amount
   
-  // Activities total - use price as-is (VAT-inclusive from admin)
+  // Activities total - use price as-is (VAT-exclusive from admin)
   $activitiesTotal = collect($selectedActivities)->sum(function($activity) {
       return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
   });
   
-  // Package price is already VAT-inclusive (from session/admin)
+  // Package price is VAT-exclusive (from session/admin)
   if ($isMultiPackage) {
       $packagePrice = $bookingData['total_price'] ?? 0;
   } else {
       $packagePrice = $bookingData['price'] ?? 0;
   }
   
-  // Calculate VAT breakdown - prices are already VAT-inclusive
+  // Calculate VAT breakdown - prices from admin are VAT-exclusive, need to add VAT
   $subtotal = $packagePrice + $activitiesTotal;
-  $vatBreakdown = $vatService->generateBreakdown($subtotal, true);
-  $grandTotal = $vatBreakdown['gross_amount'];
+  $vatBreakdown = $vatService->generateBreakdown($subtotal, false); // false = prices are VAT-exclusive
+  $grandTotal = $vatBreakdown['gross_amount']; // This includes VAT
   $vatAmount = $vatBreakdown['vat_amount'];
   @endphp
   {{-- Progress Indicator --}}

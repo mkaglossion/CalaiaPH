@@ -4,6 +4,8 @@
 
 @section('content')
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
 <div class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl">
 
     <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
@@ -17,11 +19,7 @@
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-            {{ session('success') }}
-        </div>
-    @endif
+
 
     {{-- ============================================================= --}}
     {{-- USER ACCOUNTS SECTION --}}
@@ -66,13 +64,14 @@
                             <a href="{{ route('admin.users.edit', $user->id) }}" class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition">
                                 Edit
                             </a>
-                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline" 
-                                  onsubmit="return confirm('Are you sure you want to delete this user?')">
+                            <button type="button" 
+                                    onclick="confirmDelete({{ $user->id }}, '{{ $user->first_name }} {{ $user->last_name }}');" 
+                                    class="text-red-600 font-semibold hover:text-red-700 hover:underline transition">
+                                Delete
+                            </button>
+                            <form id="delete-form-{{ $user->id }}" action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="hidden">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="text-red-600 font-semibold hover:text-red-700 hover:underline transition">
-                                    Delete
-                                </button>
                             </form>
                         </td>
                     </tr>
@@ -91,5 +90,54 @@
         {{ $users->links() }}
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmDelete(userId, userName) {
+        let timerInterval;
+        Swal.fire({
+            title: 'Delete User?',
+            html: `Are you sure you want to delete <strong>${userName}</strong>?<br><br>This action cannot be undone.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: `Delete (<span id="timer">5</span>s)`,
+            didOpen: () => {
+                let seconds = 5;
+                timerInterval = setInterval(() => {
+                    seconds--;
+                    document.getElementById('timer').textContent = seconds;
+                    if (seconds === 0) {
+                        clearInterval(timerInterval);
+                    }
+                }, 1000);
+            },
+            willClose: () => {
+                clearInterval(timerInterval);
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('delete-form-' + userId).submit();
+            }
+        });
+    }
+
+    // Show success toast if there's a success message in the session
+    @if(session('success'))
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: 'Success!',
+                text: "{{ session('success') }}",
+                icon: 'success',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        });
+    @endif
+</script>
 
 @endsection

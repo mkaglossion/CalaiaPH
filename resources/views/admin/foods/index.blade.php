@@ -3,8 +3,57 @@
 @section('title', 'Food Management')
 
 @section('content')
+<style>
+    /* Toast notifications */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { to { transform: translateX(400px); opacity: 0; } }
+    .toast.hide { animation: slideOut 0.3s ease-out forwards; }
+    .toast.success { background: #10b981; color: white; }
+    .toast.error { background: #ef4444; color: white; }
+    .toast.info { background: #3b82f6; color: white; }
+    
+    /* Undo notification */
+    .undo-banner {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        padding: 16px 20px;
+        background: #374151;
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        z-index: 9998;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    .undo-banner button {
+        background: #fbbf24;
+        color: #1f2937;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    .undo-banner button:hover { background: #fcd34d; }
+</style>
 <div
     x-data="foodCrud()"
+    x-init="setupKeyboardShortcuts()"
     class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
 >
 
@@ -29,6 +78,16 @@
             <i data-lucide="plus" class="w-4 h-4"></i>
             Add New Food Item
         </button>
+    </div>
+    
+    <div class="mb-6">
+        <input 
+            x-model="searchQuery"
+            @input="filterFoods()"
+            type="text" 
+            placeholder="🔍 Search by name or category..." 
+            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
+        >
     </div>
 
     @if ($message = Session::get('success'))
@@ -59,7 +118,11 @@
                 </thead>
             <tbody class="divide-y divide-gray-200">
                 @forelse ($foods as $index => $food)
-                    <tr class="hover:bg-gray-50/70 transition">
+                    <tr 
+                        class="hover:bg-gray-50/70 transition"
+                        x-show="!searchQuery || '{{ ($food->name ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase()) || '{{ ($food->category ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase())"
+                        x-cloak
+                    >
                         <td class="px-2 lg:px-6 py-4 font-medium text-gray-900">{{ $foods->firstItem() ? $foods->firstItem() + $index : $index + 1 }}</td>
                         <td class="px-2 lg:px-6 py-4">
                             <div class="min-w-0">
@@ -126,22 +189,12 @@
                             <div class="flex justify-end gap-2 lg:gap-4 flex-wrap">
                                 <button type="button"
                                         class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition text-sm"
-                                        @click="openEdit({
-                                            id: {{ $food->id }},
-                                            name: @js($food->name),
-                                            category: @js($food->category),
-                                            subcategory: @js($food->subcategory),
-                                            price: {{ $food->price ?? 0 }},
-                                            description: @js($food->description),
-                                            image: @js($food->image),
-                                            is_active: {{ $food->is_active ? 'true' : 'false' }},
-                                            is_special_option: {{ $food->is_special_option ? 'true' : 'false' }}
-                                        })">
+                                        @click="openEdit({{ $food->id }})">
                                     Edit
                                 </button>
                                 <button type="button"
                                         class="text-red-600 font-semibold hover:text-red-700 hover:underline transition text-sm"
-                                        onclick="deleteFoodItem({{ $food->id }}, '{{ $food->name }}')">
+                                        @click="deleteFood({{ $food->id }}, '{{ $food->name }}')">
                                     Delete
                                 </button>
                             </div>
@@ -315,64 +368,12 @@
     </div>
 
     <script>
-        function deleteFoodItem(id, name) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: `You are about to delete "${name}". This action cannot be undone.`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Delete',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch(`{{ route('admin.foods.destroy', ':id') }}`.replace(':id', id), {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
-                        },
-                        body: new URLSearchParams({
-                            '_method': 'DELETE'
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire(
-                                'Deleted!',
-                                'Food item has been deleted successfully.',
-                                'success'
-                            ).then(() => {
-                                window.location.reload();
-                            });
-                        } else {
-                            Swal.fire(
-                                'Error!',
-                                data.message || 'Failed to delete food item.',
-                                'error'
-                            );
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire(
-                            'Error!',
-                            'An error occurred while deleting the food item.',
-                            'error'
-                        );
-                    });
-                }
-            });
-        }
-
         function foodCrud() {
             return {
                 showModal: false,
                 editMode: false,
                 loading: false,
+                searchQuery: '',
                 form: {
                     id: null,
                     name: '',
@@ -388,27 +389,131 @@
                     image_preview: null,
                     remove_image: false
                 },
+                
+                // Toast notifications
+                showToast(message, type = 'info') {
+                    const toast = document.createElement('div');
+                    toast.className = `toast ${type}`;
+                    toast.innerHTML = `
+                        <span>${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
+                        <span>${message}</span>
+                    `;
+                    document.body.appendChild(toast);
+                    setTimeout(() => {
+                        toast.classList.add('hide');
+                        setTimeout(() => toast.remove(), 300);
+                    }, 3000);
+                },
+                
+                // Keyboard shortcuts
+                setupKeyboardShortcuts() {
+                    document.addEventListener('keydown', (e) => {
+                        if (e.key === 'Escape') {
+                            this.showModal = false;
+                        } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                            e.preventDefault();
+                            const form = document.querySelector('#foodForm');
+                            if (form) form.dispatchEvent(new Event('submit'));
+                        }
+                    });
+                },
+                
+                // Search/Filter
+                filterFoods() {
+                    // Filtering handled by x-show directives on table rows
+                },
+                
+                // Delete with undo
+                deleteFood(id, name) {
+                    this.scheduleDeleteFood(id, name);
+                },
+                
+                scheduleDeleteFood(id, name) {
+                    const banner = document.createElement('div');
+                    banner.className = 'undo-banner';
+                    let secondsLeft = 5;
+                    banner.innerHTML = `
+                        <span>Food item "${name}" marked for deletion</span>
+                        <button id="undo_food_${id}">Undo (${secondsLeft}s)</button>
+                    `;
+                    document.body.appendChild(banner);
+                    
+                    const btn = banner.querySelector(`#undo_food_${id}`);
+                    let timer = setInterval(() => {
+                        secondsLeft--;
+                        btn.textContent = `Undo (${secondsLeft}s)`;
+                        if (secondsLeft <= 0) {
+                            clearInterval(timer);
+                            banner.remove();
+                            this.confirmDeleteFood(id);
+                        }
+                    }, 1000);
+
+                    btn.addEventListener('click', () => {
+                        clearInterval(timer);
+                        banner.remove();
+                    });
+                },
+                
+                confirmDeleteFood(id) {
+                    const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+                    fetch(`{{ route('admin.foods.destroy', ':id') }}`.replace(':id', id), {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        body: new URLSearchParams({
+                            '_method': 'DELETE'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.showToast('Food item deleted successfully!', 'success');
+                            setTimeout(() => window.location.reload(), 1000);
+                        } else {
+                            this.showToast(data.message || 'Failed to delete food item.', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        this.showToast('An error occurred while deleting the food item.', 'error');
+                    });
+                },
 
                 openCreate() {
                     this.resetForm();
                     this.showModal = true;
                 },
 
-                openEdit(food) {
+                openEdit(foodId) {
                     this.resetForm();
-                    this.editMode = true;
-                    this.form.id = food.id;
-                    this.form.name = food.name || '';
-                    this.form.category = food.category || '';
-                    this.form.subcategory = food.subcategory || '';
-                    this.form.price = food.price ?? '';
-                    this.form.description = food.description || '';
-                    this.form.is_active = !!food.is_active;
-                    this.form.is_special_option = !!food.is_special_option;
-                    this.form.stock_quantity = food.stock_quantity ?? '';
-                    this.form.is_inventory_managed = !!food.is_inventory_managed;
-                    this.form.image_preview = food.image || null;
-                    this.showModal = true;
+                    this.loading = true;
+                    
+                    fetch(`/admin/foods/${foodId}`, {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin'
+                    })
+                    .then(r => r.ok ? r.json() : Promise.reject())
+                    .then(food => {
+                        this.editMode = true;
+                        this.form.id = food.id;
+                        this.form.name = food.name || '';
+                        this.form.category = food.category || '';
+                        this.form.subcategory = food.subcategory || '';
+                        this.form.price = food.price ?? '';
+                        this.form.description = food.description || '';
+                        this.form.is_active = !!food.is_active;
+                        this.form.is_special_option = !!food.is_special_option;
+                        this.form.stock_quantity = food.stock_quantity ?? '';
+                        this.form.is_inventory_managed = !!food.is_inventory_managed;
+                        this.form.image_preview = food.image || null;
+                        this.showModal = true;
+                    })
+                    .catch(() => this.showToast('Failed to load food data', 'error'))
+                    .finally(() => this.loading = false);
                 },
 
                 resetForm() {

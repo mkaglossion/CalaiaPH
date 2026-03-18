@@ -26,11 +26,10 @@ class MenuController extends Controller
 
     }
 
-    // public function show(Menu $menu)
-    // {
-    //     $menu->load(['swiperImages', 'texts']);
-    //     return view('admin.activities', compact('menu'));
-    // }
+    public function show(Menu $menu_list)
+    {
+        return response()->json($menu_list);
+    }
 
     public function update(Request $request, Menu $menu_list)
     {

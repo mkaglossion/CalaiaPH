@@ -1,4 +1,3 @@
-  
 {{-- resources/views/staycation-payment.blade.php --}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -61,7 +60,7 @@ $grandTotal = $booking['final_totals']['grand_total'] ?? 0;
 
 // Calculate VAT breakdown using VatService (12% Philippine VAT)
 $vatService = app(\App\Services\VatService::class);
-$vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, true); // true = VAT inclusive
+$vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // false = VAT exclusive
 
 // Get selected activities from session
 $selectedActivities = $booking['selected_activities'] ?? [];
@@ -752,7 +751,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                       >
                         <i class="bi bi-lock-fill mr-2"></i>
                         <span>Complete Staycation Payment</span>
-                        <span class="font-bold ml-2">₱{{ number_format($grandTotal, 2, '.', '') }}</span>
+                        <span class="font-bold ml-2">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
                       </button>
 
                       <p class="mt-3 text-xs text-center text-gray-500">
@@ -976,13 +975,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
           // Bind ID capture events
-          document.getElementById('btn-capture').addEventListener('click', openCamera);
-          document.getElementById('btn-upload').addEventListener('click', () => {
-            document.getElementById('id-file-input').click();
-          });
-          document.getElementById('id-file-input').addEventListener('change', handleFileSelect);
-          document.getElementById('id-camera-input').addEventListener('change', handleFileSelect);
-          document.getElementById('btn-remove-image').addEventListener('click', resetIdCapture);
+          if (document.getElementById('btn-capture')) {
+            document.getElementById('btn-capture').addEventListener('click', openCamera);
+          }
+          if (document.getElementById('btn-upload')) {
+            document.getElementById('btn-upload').addEventListener('click', () => {
+              document.getElementById('id-file-input').click();
+            });
+          }
+          if (document.getElementById('id-file-input')) {
+            document.getElementById('id-file-input').addEventListener('change', handleFileSelect);
+          }
+          if (document.getElementById('id-camera-input')) {
+            document.getElementById('id-camera-input').addEventListener('change', handleFileSelect);
+          }
+          if (document.getElementById('btn-remove-image')) {
+            document.getElementById('btn-remove-image').addEventListener('click', resetIdCapture);
+          }
         });
 
       </script>

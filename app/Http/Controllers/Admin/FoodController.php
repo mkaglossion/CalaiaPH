@@ -27,6 +27,11 @@ class FoodController extends Controller
         return view('admin.foods.form', compact('food'));
     }
 
+    public function show(Food $food)
+    {
+        return response()->json($food);
+    }
+
     public function store(Request $request)
     {
         try {

@@ -362,7 +362,7 @@
 
                         <div class="mt-3">
                             <input
-                                type="text"
+                                type="text" id="promo_code" autocomplete="off"
                                 x-model.trim="promoCode"
                                 placeholder="Add promo code (Optional)"
                                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand focus:border-brand outline-none text-sm"

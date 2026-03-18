@@ -540,7 +540,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::resource('farmInfo-image', FarmInfoSwiperImageController::class)->only(['store', 'destroy']);
 
     // List Controllers
-    Route::resource('activity-list', ActivityController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('activity-list', ActivityController::class)->only(['store', 'show', 'update', 'destroy']);
     Route::resource('staycation-list', StaycationController::class, [
         'names' => [
             'store' => 'admin.staycation-list.store',
@@ -549,7 +549,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
             'destroy' => 'admin.staycation-list.destroy'
         ]
     ])->only(['store', 'show', 'update', 'destroy']);
-    Route::resource('menu-list', MenuController::class)->only(['store', 'destroy']);
+    Route::resource('menu-list', MenuController::class)->only(['store', 'show', 'destroy']);
     Route::resource('event-list', EventController::class)->only(['store', 'destroy']);
     Route::resource('farmInfo-list', FarmInfoController::class)->only(['store', 'destroy']);
     Route::resource('products', ProductController::class);

@@ -449,7 +449,7 @@ class BookingController extends Controller
     public function create(Request $request)
     {
         // Get booking type from URL or default to day-visit
-        $type = $request->get('type', 'day-visit');
+        $type = $request->input('type', 'day-visit');
 
         // Handle different type variations
         $allowedTypes = ['day-visit', 'room', 'daytour'];
@@ -461,8 +461,8 @@ class BookingController extends Controller
         }
 
         // Get package details
-        $package = $request->get('package', 'Day Visit Package');
-        $price = $request->get('price', '1000');
+        $package = $request->input('package', 'Day Visit Package');
+        $price = $request->input('price', '1000');
         $price = preg_replace('/[^\d.]/', '', $price); // Remove currency symbols
 
         // Set guest limits based on package type
@@ -564,7 +564,10 @@ class BookingController extends Controller
             $foods = \App\Models\Food::whereIn('id', $foodIds)->get()->keyBy('id');
         }
 
-            return view('booking.staycation-activities', compact('booking', 'activities', 'staycations', 'selectedFoods', 'foods'));
+            // Get selected activities from session
+        $selectedActivities = $booking['selected_activities'] ?? session('selected_activities', []);
+        
+        return view('booking.staycation-activities', compact('booking', 'activities', 'staycations', 'selectedFoods', 'foods', 'selectedActivities'));
     }
 
     public function storeStaycationActivities(Request $request)
@@ -762,7 +765,10 @@ class BookingController extends Controller
         // Fetch staycations for room names
         $staycations = \App\Models\Staycation::all()->keyBy('id');
 
-        return view('booking.staycation-payment', compact('booking', 'selectedFoods', 'foods', 'staycations'));
+        // Get selected activities from session
+        $selectedActivities = $booking['selected_activities'] ?? [];
+        
+        return view('booking.staycation-payment', compact('booking', 'selectedFoods', 'foods', 'staycations', 'selectedActivities'));
     }
 
     public function payment()
@@ -966,6 +972,22 @@ class BookingController extends Controller
         Log::info('Line items being sent to PayMongo (in order):', $lineItems);
         Log::info('Calculated grand total (from line items):', ['total' => $grandTotal]);
 
+        // Add 12% VAT to the grand total (PHP and PayMongo expect VAT-inclusive amounts)
+        $vatService = app(\App\Services\VatService::class);
+        $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // false = VAT exclusive (we add VAT)
+        $grandTotalWithVat = $vatBreakdown['gross_amount']; // This includes VAT
+        
+        Log::info('Grand total with VAT:', ['subtotal' => $grandTotal, 'vat' => $vatBreakdown['vat_amount'], 'total' => $grandTotalWithVat]);
+
+        // Apply VAT to each line item so PayMongo displays them with VAT included
+        $vatMultiplier = 1.12; // 12% PHP VAT
+        foreach ($lineItems as &$item) {
+            $item['unit_price'] = round((float)$item['unit_price'] * $vatMultiplier, 2);
+        }
+        unset($item); // Break the reference
+
+        Log::info('Line items with VAT being sent to PayMongo:', $lineItems);
+
         // Store booking and payment data in session
         session([
             'staycation_booking_data' => $booking,
@@ -989,7 +1011,7 @@ class BookingController extends Controller
         session()->put('staycation_payment_data.reference_id', $referenceId);
 
         Log::info('Creating PayMongo checkout', [
-            'amount' => $grandTotal * 100,
+            'amount' => $grandTotalWithVat * 100,
             'success_url' => $successUrl,
             'failed_url' => $failedUrl,
             'line_items_count' => count($lineItems),
@@ -998,7 +1020,7 @@ class BookingController extends Controller
         ]);
 
         try {
-            $checkout = $this->paymentService->createCheckout((int)round($grandTotal * 100), 'staycation', $successUrl, $failedUrl, $lineItems, $referenceId, $request->email);
+            $checkout = $this->paymentService->createCheckout((int)round($grandTotalWithVat * 100), 'staycation', $successUrl, $failedUrl, $lineItems, $referenceId, $request->email);
             Log::info('PayMongo checkout created successfully', ['checkout_url' => $checkout->checkout_url]);
             return redirect($checkout->checkout_url);
         } catch (\Exception $e) {
@@ -2058,13 +2080,23 @@ class BookingController extends Controller
             $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
         }
         
+        // Calculate accommodation total from current accommodations if available
+        $accommodationTotal = 0;
+        if (!empty($booking['accommodations'])) {
+            foreach ($booking['accommodations'] as $acc) {
+                if (!empty($acc)) {
+                    $accommodationTotal += $acc['total_price'] ?? 0;
+                }
+            }
+        }
+        
         // Update final_totals to include food cost
         if (!isset($booking['final_totals'])) {
             $booking['final_totals'] = [
-                'accommodation_total' => 0,
+                'accommodation_total' => $accommodationTotal,
                 'activities_total' => 0,
                 'food_total' => $foodTotal,
-                'grand_total' => $foodTotal
+                'grand_total' => $accommodationTotal + $foodTotal
             ];
         } else {
             $booking['final_totals']['food_total'] = $foodTotal;
