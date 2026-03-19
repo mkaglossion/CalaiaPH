@@ -50,6 +50,24 @@ class User extends Authenticatable
      */
     protected $appends = ['name', 'phone'];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($user) {
+            if ($user->user_type === 'admin') {
+                $user->adminPreference()->create([
+                    'email_low_inventory_alerts' => true,
+                    'email_pending_payments' => true,
+                    'email_bookings' => true,
+                    'email_user_signups' => false,
+                    'theme_preference' => 'light',
+                    'language' => 'en',
+                ]);
+            }
+        });
+    }
+
     public function getNameAttribute()
     {
         return trim($this->first_name . ' ' . $this->last_name);
@@ -66,5 +84,27 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function adminPreference()
+    {
+        return $this->hasOne(AdminPreference::class);
+    }
+
+    public function getOrCreateAdminPreference()
+    {
+        return $this->adminPreference ?? $this->adminPreference()->create([
+            'email_low_inventory_alerts' => true,
+            'email_pending_payments' => true,
+            'email_bookings' => true,
+            'email_user_signups' => false,
+            'theme_preference' => 'light',
+            'language' => 'en',
+        ]);
+    }
+
+    public function adminActivityLogs()
+    {
+        return $this->hasMany(AdminActivityLog::class);
     }
 }

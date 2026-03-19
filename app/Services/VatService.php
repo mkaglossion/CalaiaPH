@@ -13,14 +13,42 @@ namespace App\Services;
 class VatService
 {
     /**
-     * Philippine VAT rate (12%)
+     * Default Philippine VAT rate (12%)
+     * Used when admin settings don't specify a rate
      */
-    const VAT_RATE = 0.12;
+    const DEFAULT_VAT_RATE = 0.12;
+    const DEFAULT_VAT_RATE_PERCENTAGE = 12;
 
     /**
-     * VAT rate as percentage for display
+     * @deprecated Use getDynamicVatRate() or getCurrentVatRate() instead
+     * Kept for backward compatibility
      */
+    const VAT_RATE = 0.12;
     const VAT_RATE_PERCENTAGE = 12;
+
+    /**
+     * Get current VAT rate from admin settings (0-1 format)
+     * Defaults to 12% if not configured
+     * 
+     * @return float VAT rate as decimal (e.g., 0.12 for 12%)
+     */
+    public function getCurrentVatRate(): float
+    {
+        $settings = cache()->get('admin.settings', []);
+        $vatPercentage = $settings['vat_rate'] ?? self::DEFAULT_VAT_RATE_PERCENTAGE;
+        return $vatPercentage / 100;
+    }
+
+    /**
+     * Get current VAT rate as percentage (0-100 format)
+     * 
+     * @return float VAT rate as percentage (e.g., 12 for 12%)
+     */
+    public function getCurrentVatRatePercentage(): float
+    {
+        $settings = cache()->get('admin.settings', []);
+        return $settings['vat_rate'] ?? self::DEFAULT_VAT_RATE_PERCENTAGE;
+    }
 
     /**
      * Calculate VAT from VAT-inclusive price
@@ -28,11 +56,13 @@ class VatService
      * Example: VAT from ₱5,600 = ₱5,600 × (0.12/1.12) = ₱600
      * 
      * @param float $inclusivePrice Price that already includes VAT
+     * @param float|null $vatRate Optional VAT rate (0-1 format). Uses current rate if null
      * @return float VAT amount
      */
-    public function extractVatFromInclusive(float $inclusivePrice): float
+    public function extractVatFromInclusive(float $inclusivePrice, ?float $vatRate = null): float
     {
-        return round($inclusivePrice * (self::VAT_RATE / (1 + self::VAT_RATE)), 2);
+        $rate = $vatRate ?? $this->getCurrentVatRate();
+        return round($inclusivePrice * ($rate / (1 + $rate)), 2);
     }
 
     /**
@@ -41,11 +71,13 @@ class VatService
      * Example: VAT from ₱5,000 = ₱5,000 × 0.12 = ₱600
      * 
      * @param float $exclusivePrice Price without VAT
+     * @param float|null $vatRate Optional VAT rate (0-1 format). Uses current rate if null
      * @return float VAT amount
      */
-    public function calculateVatFromExclusive(float $exclusivePrice): float
+    public function calculateVatFromExclusive(float $exclusivePrice, ?float $vatRate = null): float
     {
-        return round($exclusivePrice * self::VAT_RATE, 2);
+        $rate = $vatRate ?? $this->getCurrentVatRate();
+        return round($exclusivePrice * $rate, 2);
     }
 
     /**
@@ -54,11 +86,13 @@ class VatService
      * Example: Net from ₱5,600 = ₱5,600 / 1.12 = ₱5,000
      * 
      * @param float $inclusivePrice Price that already includes VAT
+     * @param float|null $vatRate Optional VAT rate (0-1 format). Uses current rate if null
      * @return float Net price without VAT
      */
-    public function getNetPrice(float $inclusivePrice): float
+    public function getNetPrice(float $inclusivePrice, ?float $vatRate = null): float
     {
-        return round($inclusivePrice / (1 + self::VAT_RATE), 2);
+        $rate = $vatRate ?? $this->getCurrentVatRate();
+        return round($inclusivePrice / (1 + $rate), 2);
     }
 
     /**
@@ -67,11 +101,13 @@ class VatService
      * Example: ₱5,000 + 12% VAT = ₱5,600
      * 
      * @param float $exclusivePrice Price without VAT
+     * @param float|null $vatRate Optional VAT rate (0-1 format). Uses current rate if null
      * @return float Price with VAT included
      */
-    public function addVat(float $exclusivePrice): float
+    public function addVat(float $exclusivePrice, ?float $vatRate = null): float
     {
-        return round($exclusivePrice * (1 + self::VAT_RATE), 2);
+        $rate = $vatRate ?? $this->getCurrentVatRate();
+        return round($exclusivePrice * (1 + $rate), 2);
     }
 
     /**
@@ -79,29 +115,33 @@ class VatService
      * 
      * @param float $amount The price amount
      * @param bool $isVatInclusive Whether the amount already includes VAT (default: true for B2C)
+     * @param float|null $vatRate Optional VAT rate (0-1 format). Uses current rate if null
      * @return array Detailed breakdown with net, VAT, and gross amounts
      */
-    public function generateBreakdown(float $amount, bool $isVatInclusive = true): array
+    public function generateBreakdown(float $amount, bool $isVatInclusive = true, ?float $vatRate = null): array
     {
+        $rate = $vatRate ?? $this->getCurrentVatRate();
+        $ratePercentage = $this->getCurrentVatRatePercentage();
+
         if ($isVatInclusive) {
             // Amount already includes VAT - extract it
-            $vat = $this->extractVatFromInclusive($amount);
+            $vat = $this->extractVatFromInclusive($amount, $rate);
             $netPrice = round($amount - $vat, 2);
             $grossAmount = $amount;
         } else {
             // Amount is net - add VAT
             $netPrice = $amount;
-            $vat = $this->calculateVatFromExclusive($amount);
-            $grossAmount = $this->addVat($amount);
+            $vat = $this->calculateVatFromExclusive($amount, $rate);
+            $grossAmount = $this->addVat($amount, $rate);
         }
 
         return [
             'gross_amount' => $grossAmount,      // Total amount including VAT
             'net_amount' => $netPrice,           // Amount before VAT
             'vat_amount' => $vat,                // VAT amount
-            'vat_rate' => self::VAT_RATE,        // 0.12
-            'vat_rate_display' => self::VAT_RATE_PERCENTAGE, // 12
-            'vat_label' => self::VAT_RATE_PERCENTAGE . '% VAT',
+            'vat_rate' => $rate,                 // 0.12 or dynamic
+            'vat_rate_display' => $ratePercentage, // 12 or dynamic
+            'vat_label' => $ratePercentage . '% VAT',
             'is_vat_inclusive' => $isVatInclusive,
         ];
     }
@@ -164,16 +204,19 @@ class VatService
     }
 
     /**
-     * Get VAT rate information
+     * Get VAT rate information (dynamic from admin settings)
      * 
      * @return array VAT rate details
      */
     public function getVatInfo(): array
     {
+        $ratePercentage = $this->getCurrentVatRatePercentage();
+        $rate = $this->getCurrentVatRate();
+        
         return [
-            'rate' => self::VAT_RATE,
-            'rate_percentage' => self::VAT_RATE_PERCENTAGE,
-            'label' => self::VAT_RATE_PERCENTAGE . '% VAT',
+            'rate' => $rate,
+            'rate_percentage' => $ratePercentage,
+            'label' => $ratePercentage . '% VAT',
             'description' => 'Value Added Tax (VAT) as per Philippine TRAIN Law',
             'effective_date' => '2018-01-01', // TRAIN Law implementation
         ];

@@ -71,12 +71,15 @@
     </div>
 
     @if(session('success'))
-        <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-6 py-3 rounded relative" role="alert">
-            <span class="block sm:inline">{{ session('success') }}</span>
-            <button type="button" class="absolute top-0 bottom-0 right-0 px-6 py-3" onclick="this.parentElement.style.display='none'">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
+        <script>
+            toastr.success("{{ session('success') }}", 'Success');
+        </script>
+    @endif
+
+    @if(session('error'))
+        <script>
+            toastr.error("{{ session('error') }}", 'Error');
+        </script>
     @endif
 
     {{-- Products Table --}}

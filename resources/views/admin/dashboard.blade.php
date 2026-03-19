@@ -490,7 +490,78 @@
     </div>
   </section>
 
-  {{-- Quick Actions --}}
+  {{-- System Alerts & Activity --}}
+  <section aria-label="System alerts and recent activity" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    
+    {{-- System Alerts --}}
+    <x-admin.section-card title="System Alerts" class="lg:col-span-1">
+      @if($systemAlerts->count() > 0)
+        <div class="space-y-3">
+          @foreach($systemAlerts as $alert)
+            <div class="p-3 rounded-lg border-l-4 bg-white flex items-start gap-3"
+              :style="{
+                'border-color': '{{ in_array($alert->severity, ['critical']) ? '#dc2626' : '#f59e0b' }}',
+                'background-color': '{{ in_array($alert->severity, ['critical']) ? '#fef2f2' : '#fffbeb' }}'
+              }">
+              <div class="w-2 h-2 rounded-full mt-1.5 shrink-0"
+                :style="{ backgroundColor: '{{ in_array($alert->severity, ['critical']) ? '#dc2626' : '#f59e0b' }}' }"></div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900">{{ ucfirst(str_replace('_', ' ', $alert->type)) }}</p>
+                <p class="text-xs text-gray-600 mt-1">{{ $alert->message }}</p>
+                <p class="text-xs text-gray-500 mt-1">{{ $alert->created_at->diffForHumans() }}</p>
+              </div>
+            </div>
+          @endforeach
+        </div>
+        <div class="mt-4 pt-3 border-t border-gray-100">
+          <a href="{{ route('admin.settings.alerts') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            View All Alerts →
+          </a>
+        </div>
+      @else
+        <div class="py-8 text-center">
+          <i data-lucide="check-circle" class="w-8 h-8 text-green-500 mx-auto mb-2"></i>
+          <p class="text-sm text-gray-600">All systems operational</p>
+        </div>
+      @endif
+    </x-admin.section-card>
+
+    {{-- Recent Admin Activity --}}
+    <x-admin.section-card title="Recent Activity" class="lg:col-span-1">
+      @if($recentActivity->count() > 0)
+        <div class="space-y-3 text-sm">
+          @foreach($recentActivity as $activity)
+            <div class="flex items-start justify-between pb-3 border-b border-gray-100 last:border-0">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                    :style="{
+                      'background-color': '{{ in_array($activity->action, ['create', 'store']) ? '#dcfce7' : (in_array($activity->action, ['update', 'edit']) ? '#dbeafe' : '#fee2e2') }}',
+                      'color': '{{ in_array($activity->action, ['create', 'store']) ? '#166534' : (in_array($activity->action, ['update', 'edit']) ? '#1e40af' : '#991b1b') }}'
+                    }">
+                    {{ ucfirst($activity->action) }}
+                  </span>
+                  <p class="text-gray-900 font-medium">{{ $activity->user->first_name ?? 'Admin' }}</p>
+                </div>
+                <p class="text-gray-600">{{ $activity->description ?? ucfirst(str_replace('_', ' ', $activity->action)) }}</p>
+                <p class="text-xs text-gray-400 mt-1">{{ $activity->created_at->diffForHumans() }}</p>
+              </div>
+            </div>
+          @endforeach
+        </div>
+        <div class="mt-4 pt-3 border-t border-gray-100">
+          <a href="{{ route('admin.settings.activity-log') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            View Full Log →
+          </a>
+        </div>
+      @else
+        <div class="py-8 text-center">
+          <p class="text-sm text-gray-600">No recent activity</p>
+        </div>
+      @endif
+    </x-admin.section-card>
+
+  </section>
   <section aria-label="Quick actions">
     <x-admin.section-card title="Quick Actions">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

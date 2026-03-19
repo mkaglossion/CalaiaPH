@@ -52,6 +52,8 @@ use App\Http\Controllers\Admin\FarmInfoTextController;
 use App\Http\Controllers\Admin\DayPackageTextController;
 use App\Http\Controllers\Admin\AccommodationTextController;
 use App\Http\Controllers\Admin\DiningCategoryImageController;
+use App\Http\Controllers\Admin\AdminSettingsController;
+use App\Http\Controllers\Admin\AdminSystemSettingsController;
 
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\DayTourController;
@@ -77,7 +79,15 @@ use Illuminate\Support\Facades\Session;
 use App\Http\Controllers\DayVisitController;
 // ========== Root Route ==========
 
-
+// Debug route to check maintenance mode cache
+Route::get('/debug/maintenance', function () {
+    $settings = cache()->get('admin.settings', []);
+    return response()->json([
+        'cache_settings' => $settings,
+        'is_maintenance_active' => $settings['system_maintenance'] ?? false,
+        'cache_exists' => cache()->has('admin.settings'),
+    ]);
+});
 
 Route::get('/', function () {
     return redirect('/home');
@@ -85,6 +95,7 @@ Route::get('/', function () {
 
 // ========== Public Routes ==========
 Route::get('/home', [PagesController::class, 'home'])->name('home');
+Route::get('/settings-test', function() { return view('settings-test'); })->name('settings.test');
 Route::get('/our-story', [PagesController::class, 'ourStory'])->name('our-story');
 Route::get('/sustainability', [PagesController::class, 'sustainability'])->name('sustainability');
 Route::get('/our-services', [PagesController::class, 'ourServices'])->name('our-services');
@@ -128,6 +139,16 @@ Route::middleware(['api.throttle:api', 'api.security'])->group(function () {
     Route::get('api/pricing/peak-types', [PricingConfigController::class, 'getPeakTypes'])->name('api.pricing.peakTypes');
     Route::get('api/pricing/holidays', [PricingConfigController::class, 'getHolidays'])->name('api.pricing.holidays');
     Route::get('api/pricing/weekend-config', [PricingConfigController::class, 'getWeekendConfig'])->name('api.pricing.weekendConfig');
+
+    // VAT rate configuration (public access for pricing calculations)
+    Route::get('/api/vat-rate', function() {
+        $vatService = app(\App\Services\VatService::class);
+        return [
+            'rate' => $vatService->getCurrentVatRate(),
+            'rate_percentage' => $vatService->getCurrentVatRatePercentage(),
+            'label' => $vatService->getCurrentVatRatePercentage() . '% VAT',
+        ];
+    })->name('api.vat-rate');
 });
 
 // Booking API routes (30 req/min) - stricter rate limiting for booking operations
@@ -581,7 +602,29 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/availability/all', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getAllAvailability'])->name('admin.day-tour-inventory.all-availability');
     });
 
+    // ========== Admin Settings & Profile Routes ==========
+    Route::prefix('/settings')->group(function () {
+        Route::get('/profile', [AdminSettingsController::class, 'edit'])->name('admin.settings.profile');
+        Route::put('/profile', [AdminSettingsController::class, 'updateProfile'])->name('admin.settings.profile.update');
+        Route::put('/password', [AdminSettingsController::class, 'updatePassword'])->name('admin.settings.password.update');
+        Route::put('/preferences', [AdminSettingsController::class, 'updatePreferences'])->name('admin.settings.preferences.update');
+        Route::get('/activity-log', [AdminSettingsController::class, 'showActivityLog'])->name('admin.settings.activity-log');
+        
+        Route::get('/system', [AdminSystemSettingsController::class, 'index'])->name('admin.settings.system');
+        Route::put('/system', [AdminSystemSettingsController::class, 'updateSettings'])->name('admin.settings.system.update');
+        Route::get('/alerts', [AdminSystemSettingsController::class, 'showAlerts'])->name('admin.settings.alerts');
+        Route::post('/alerts/{id}/resolve', [AdminSystemSettingsController::class, 'resolveAlert'])->name('admin.settings.alerts.resolve');
+        Route::post('/alerts/clear-resolved', [AdminSystemSettingsController::class, 'clearResolvedAlerts'])->name('admin.settings.alerts.clear');
+        Route::post('/backup', [AdminSystemSettingsController::class, 'backup'])->name('admin.settings.backup');
+    });
 
+    // ========== Admin Help & Documentation Routes ==========
+    Route::get('/help', function() {
+        return view('admin.help.index');
+    })->name('admin.help');
+
+    // ========== Admin Search API ==========
+    Route::get('/api/search', [AdminDashboardController::class, 'search'])->name('admin.api.search');
 });
 
 // ========== API Routes with Rate Limiting ==========

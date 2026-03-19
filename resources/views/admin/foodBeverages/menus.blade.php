@@ -230,9 +230,15 @@
     </div>
 
     @if(session('success'))
-        <div class="bg-green-100 text-green-700 p-2 rounded mb-4">
-            {{ session('success') }}
-        </div>
+        <script>
+            toastr.success("{{ session('success') }}", 'Success');
+        </script>
+    @endif
+
+    @if(session('error'))
+        <script>
+            toastr.error("{{ session('error') }}", 'Error');
+        </script>
     @endif
 
     <div class="overflow-x-auto border rounded-lg shadow">

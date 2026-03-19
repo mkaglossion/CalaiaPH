@@ -7,6 +7,27 @@
         <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
         <script>
+        // Dynamic VAT rate from admin settings
+        let dynamicVatRate = 0.12; // Default to 12%
+        let dynamicVatRatePercentage = 12;
+
+        // Fetch VAT rate from API
+        function fetchVatRateForDayVisit() {
+            fetch('/api/vat-rate')
+                .then(response => response.json())
+                .then(data => {
+                    dynamicVatRate = data.rate || 0.12;
+                    dynamicVatRatePercentage = data.rate_percentage || 12;
+                    // Update the VAT label
+                    document.getElementById('vat-label').textContent = `${dynamicVatRatePercentage}% VAT`;
+                    // Recalculate totals with new VAT rate
+                    updateSummaryFromSelected();
+                })
+                .catch(error => console.error('Failed to fetch VAT rate:', error));
+        }
+
+        // Call on page load
+        document.addEventListener('DOMContentLoaded', fetchVatRateForDayVisit);
             window.Echo = new Echo({
                 broadcaster: 'pusher',
                 key: '{{ config('broadcasting.connections.pusher.key') }}',
@@ -184,7 +205,7 @@
                                     <span id="summary-subtotal" class="font-semibold">—</span>
                                 </div>
                                 <div class="flex justify-between items-center">
-                                    <span class="text-sm text-gray-600">12% VAT</span>
+                                    <span class="text-sm text-gray-600" id="vat-label">12% VAT</span>
                                     <span id="summary-vat-amount" class="font-semibold">—</span>
                                 </div>
                                 <div class="border-t pt-3 flex justify-between items-center">
@@ -710,7 +731,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 totalGuests += pkg.guests * pkg.quantity;
             });
 
-            const vatAmount = subtotal * 0.12; // 12% VAT
+            const vatAmount = subtotal * dynamicVatRate; // Dynamic VAT from admin settings
             const grandTotal = subtotal; // Price already includes VAT
 
             // Render slot visualization (like staycation rooms) - dynamic based on highest max_slots
@@ -763,7 +784,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `).join('');
 
             // Update totals
-            summarySubtotal.textContent = formatPrice(subtotal / 1.12); // Remove VAT from display
+            summarySubtotal.textContent = formatPrice(subtotal / (1 + dynamicVatRate)); // Remove VAT from display
             summaryVatAmount.textContent = formatPrice(vatAmount);
             summaryGrandTotal.textContent = formatPrice(grandTotal);
             summaryGuests.textContent = totalGuests;

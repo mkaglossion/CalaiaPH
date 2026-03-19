@@ -8,9 +8,15 @@
     <p class="text-gray-600 text-sm mb-6">Configure pet fee for staycation bookings. This setting applies to all regular accommodations except BYOT and Car Camping.</p>
 
     @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-            {{ session('success') }}
-        </div>
+        <script>
+            toastr.success("{{ session('success') }}", 'Success');
+        </script>
+    @endif
+
+    @if(session('error'))
+        <script>
+            toastr.error("{{ session('error') }}", 'Error');
+        </script>
     @endif
 
     <div class="bg-white p-6 rounded-lg shadow">

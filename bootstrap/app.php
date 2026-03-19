@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\CheckForMaintenanceMode::class,
         ]);
 
         $middleware->alias([
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.throttle' => \App\Http\Middleware\ApiRateLimiter::class,
             'api.security' => \App\Http\Middleware\ApiSecurity::class,
             'xss' => \App\Http\Middleware\XssProtection::class,
+            'ensure.two.factor.verified' => \App\Http\Middleware\EnsureTwoFactorIsVerified::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

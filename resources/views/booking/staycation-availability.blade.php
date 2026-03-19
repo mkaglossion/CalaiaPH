@@ -612,7 +612,7 @@
                                 <div class="flex justify-between items-center text-sm text-gray-500">
                                     <span>
                                         <i class="bi bi-info-circle text-gray-400 text-xs" title="Value Added Tax as per Philippine TRAIN Law"></i>
-                                        12% VAT:
+                                        <span x-text="`${vatRatePercentage}% VAT:`"></span>
                                     </span>
                                     <span x-text="calculateVAT()"></span>
                                 </div>
@@ -1099,6 +1099,10 @@
                 targetChildren: targetChildren,
 
                 maxSlots: Math.min(Math.max(targetRooms, 1), 4),
+
+                // Dynamic VAT rate from admin settings (default to 12%)
+                vatRate: 0.12,
+                vatRatePercentage: 12,
 
                 addRoomSlot() {
                     if (this.maxSlots >= 4) {
@@ -2108,8 +2112,8 @@
                         const base = room.accommodation_price || 0;
                         total += base + this.calculatePetPrice(room);
                     }
-                    // Calculate 12% VAT from subtotal (total is already pre-VAT)
-                    const vat = total * 0.12;
+                    // Calculate dynamic VAT from subtotal (using dynamic rate from admin settings)
+                    const vat = total * this.vatRate;
                     return '₱' + vat.toLocaleString();
                 },
 
@@ -2119,8 +2123,8 @@
                         const base = room.accommodation_price || 0;
                         total += base + this.calculatePetPrice(room);
                     }
-                    // Calculate Grand Total (subtotal + 12% VAT)
-                    const grandTotal = total * 1.12;
+                    // Calculate Grand Total (subtotal + dynamic VAT)
+                    const grandTotal = total * (1 + this.vatRate);
                     return '₱' + grandTotal.toLocaleString();
                 },
 
@@ -2482,6 +2486,16 @@
                         .catch(error => console.error('Failed to fetch booking settings:', error));
                 },
 
+                fetchVatRate() {
+                    fetch('/api/vat-rate')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.rate !== undefined) this.vatRate = data.rate;
+                            if (data.rate_percentage !== undefined) this.vatRatePercentage = data.rate_percentage;
+                        })
+                        .catch(error => console.error('Failed to fetch VAT rate:', error));
+                },
+
                 init() {
                     if (window.Echo && window.Echo.channel) {
                         window.Echo.channel('pricing-updates')
@@ -2491,6 +2505,7 @@
                     }
 
                     this.fetchBookingSettings();
+                    this.fetchVatRate();
 
                     this.$nextTick(() => {
                         @foreach($staycations as $staycation)

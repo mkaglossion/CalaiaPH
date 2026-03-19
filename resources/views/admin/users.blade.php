@@ -138,6 +138,22 @@
             });
         });
     @endif
+
+    // Show error toast if there's an error message in the session
+    @if(session('error'))
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: 'Error!',
+                text: "{{ session('error') }}",
+                icon: 'error',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        });
+    @endif
 </script>
 
 @endsection

@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Models\Booking;
 use App\Models\Product;
 use App\Models\Food;
+use App\Models\AdminSystemAlert;
+use App\Models\AdminActivityLog;
 use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
@@ -99,13 +101,30 @@ class AdminDashboardController extends Controller
             ->orderBy('month')
             ->get();
 
+        // -----------------------------------------------
+        // SYSTEM ALERTS (Unresolved Critical + Warnings)
+        // -----------------------------------------------
+        $systemAlerts = AdminSystemAlert::unresolved()
+            ->orderBy('severity', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        // -----------------------------------------------
+        // RECENT ADMIN ACTIVITY
+        // -----------------------------------------------
+        $recentActivity = AdminActivityLog::with('user')
+            ->latest()
+            ->limit(8)
+            ->get();
+
         return view('admin.dashboard', compact(
             'rangeLabel', 'start', 'end', 'range',
             'clientUsers', 'totalUsers', 'verifiedUsers', 'adminUsers',
             'totalBookings', 'activeBookings', 'completedBookings',
             'netRevenue', 'totalRevenue', 'pendingRevenue', 'completedRevenue', 'refundedRevenue',
             'totalProducts', 'totalFoods', 'lowStockProducts', 'lowStockFoods',
-            'recentBookings', 'monthlyBookings'
+            'recentBookings', 'monthlyBookings', 'systemAlerts', 'recentActivity'
         ));
     }
 
@@ -144,5 +163,59 @@ class AdminDashboardController extends Controller
         }
 
         return [$start, $end, $label, $range];
+    }
+
+    /**
+     * Search bookings and users
+     */
+    public function search(Request $request)
+    {
+        $query = $request->input('q', '');
+        
+        if (strlen($query) < 2) {
+            return response()->json(['results' => []]);
+        }
+
+        $results = [];
+
+        // Search Bookings (use correct column names: customer_* not guest_*)
+        $bookings = Booking::where('id', 'like', "%$query%")
+            ->orWhere('customer_email', 'like', "%$query%")
+            ->orWhere('customer_name', 'like', "%$query%")
+            ->orWhere('customer_phone', 'like', "%$query%")
+            ->orWhere('transaction_id', 'like', "%$query%")
+            ->limit(5)
+            ->get(['id', 'customer_name', 'customer_email', 'status', 'created_at', 'transaction_id']);
+
+        foreach ($bookings as $booking) {
+            $results[] = [
+                'type' => 'booking',
+                'id' => $booking->id,
+                'title' => "Booking #{$booking->id}",
+                'subtitle' => $booking->customer_name . ' (' . $booking->customer_email . ')',
+                'status' => $booking->status,
+                'url' => route('admin.bookings.show', $booking->id),
+            ];
+        }
+
+        // Search Users
+        $users = User::where('first_name', 'like', "%$query%")
+            ->orWhere('last_name', 'like', "%$query%")
+            ->orWhere('email', 'like', "%$query%")
+            ->limit(5)
+            ->get(['id', 'first_name', 'last_name', 'email', 'user_type']);
+
+        foreach ($users as $user) {
+            $results[] = [
+                'type' => 'user',
+                'id' => $user->id,
+                'title' => $user->first_name . ' ' . $user->last_name,
+                'subtitle' => $user->email,
+                'badge' => ucfirst($user->user_type),
+                'url' => route('admin.users.show', $user->id),
+            ];
+        }
+
+        return response()->json(['results' => $results]);
     }
 }

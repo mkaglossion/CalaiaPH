@@ -121,9 +121,15 @@
     </div>
 
     @if(session('success'))
-        <div class="bg-green-100 text-green-700 p-4 rounded-xl mb-6 border border-green-200">
-            {{ session('success') }}
-        </div>
+        <script>
+            toastr.success("{{ session('success') }}", 'Success');
+        </script>
+    @endif
+
+    @if(session('error'))
+        <script>
+            toastr.error("{{ session('error') }}", 'Error');
+        </script>
     @endif
 
     {{-- Activities Table --}}
