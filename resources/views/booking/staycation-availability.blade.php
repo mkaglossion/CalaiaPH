@@ -1551,12 +1551,12 @@
 
                         if (field === 'num_pets') {
                             if (isBYOTorCar) value = 0;
-                            else if (value > 2) {
-                                value = 2;
+                            else if (value > {{ $maxPetsPerRoom }}) {
+                                value = {{ $maxPetsPerRoom }};
                                 Swal.fire({
                                     icon: 'warning',
                                     title: 'Pet Limit Exceeded',
-                                    text: 'Maximum 2 pets allowed for this room',
+                                    text: 'Maximum {{ $maxPetsPerRoom }} pets allowed for this room',
                                     confirmButtonColor: '#8f5d54',
                                 });
                             }

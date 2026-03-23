@@ -28,6 +28,13 @@ class BookingSettingSeeder extends Seeder
                 'description' => 'One-time pet fee per booking (₱)',
                 'category' => 'pricing',
             ],
+            [
+                'key' => 'max_pets_per_room',
+                'label' => 'Maximum Pets Per Room',
+                'value' => 2,
+                'description' => 'Maximum number of pets allowed per room',
+                'category' => 'policy',
+            ],
         ];
 
         foreach ($settings as $setting) {

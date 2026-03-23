@@ -38,7 +38,7 @@
     };
 
     // Alpine.js component functions - MUST be defined before Alpine.js initializes
-    function dayTourPicker({ availability, initialDate, lowThreshold, totalQuantity, maxQty, dayTours, bookingStartDate, bookingEndDate }) {
+    function dayTourPicker({ availability, initialDate, lowThreshold, totalQuantity, maxQty, dayTours, bookingStartDate, bookingEndDate, maxPetsPerRoom }) {
       return {
         availability: availability || {},
         selectedDate: initialDate || null,
@@ -244,7 +244,7 @@
       }
     }
 
-    function dateRangePicker({ availability, initialCheckin, initialCheckout, lowThreshold, totalQuantity, maxQty, bookingStartDate, bookingEndDate }) {
+    function dateRangePicker({ availability, initialCheckin, initialCheckout, lowThreshold, totalQuantity, maxQty, bookingStartDate, bookingEndDate, maxPetsPerRoom }) {
       return {
         availability: availability || {},
         checkin: null,
@@ -252,6 +252,7 @@
         calendarInstance: null,
         bookingStartDate: bookingStartDate || null,
         bookingEndDate: bookingEndDate || null,
+        maxPetsPerRoom: maxPetsPerRoom || 2,
         isGuestsPanelOpen: false,
         toggleGuestsPanel() { this.isGuestsPanelOpen = !this.isGuestsPanelOpen; },
         closeGuestsPanel() { this.isGuestsPanelOpen = false; },
@@ -304,7 +305,7 @@
         decChildren(idx) { this.rooms[idx].children = Math.max(0, Number(this.rooms[idx].children || 0) - 1); this.calculatePrice(); },
         incPets(idx) {
           const currentPets = Number(this.rooms[idx].pets || 0);
-          if (currentPets >= 2) { fireSwalOverModal({ title: 'Pet Limit', text: 'Maximum 2 pets per room', icon: 'info', confirmButtonText: 'OK', confirmButtonColor: '#8f5d54' }); return; }
+          if (currentPets >= this.maxPetsPerRoom) { fireSwalOverModal({ title: 'Pet Limit', text: `Maximum ${this.maxPetsPerRoom} pets per room`, icon: 'info', confirmButtonText: 'OK', confirmButtonColor: '#8f5d54' }); return; }
           this.rooms[idx].pets = currentPets + 1;
           this.calculatePrice();
         },
@@ -1053,7 +1054,8 @@
               maxQty: @js($maxQty),
               dayTours: @js($dayToursList),
               bookingStartDate: @js($bookingStartDate),
-              bookingEndDate: @js($bookingEndDate)
+              bookingEndDate: @js($bookingEndDate),
+              maxPetsPerRoom: @js($maxPetsPerRoom)
            })"
            x-init="init()">
     @else
@@ -1066,7 +1068,8 @@
               totalQuantity: @js($totalQuantity),
               maxQty: @js($maxQty),
               bookingStartDate: @js($bookingStartDate),
-              bookingEndDate: @js($bookingEndDate)
+              bookingEndDate: @js($bookingEndDate),
+              maxPetsPerRoom: @js($maxPetsPerRoom)
            })"
            x-init="init()">
     @endif

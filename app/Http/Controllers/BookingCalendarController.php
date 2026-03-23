@@ -10,6 +10,7 @@ use App\Models\DayTour;
 use App\Models\DayTourInventory;
 use App\Models\PeakPeriod;
 use App\Models\PeakType;
+use App\Models\BookingSetting;
 
 class BookingCalendarController extends Controller
 {
@@ -52,10 +53,11 @@ class BookingCalendarController extends Controller
             $checkin = $request->query('checkin');
             $checkout = $request->query('checkout');
             $bookingType = 'staycation';
+            $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);
 
             return view('booking.calendar', compact(
                 'availability', 'checkin', 'checkout', 'totalQuantity',
-                'maxQty', 'season', 'bookingType', 'bookingStartDate', 'bookingEndDate'
+                'maxQty', 'season', 'bookingType', 'bookingStartDate', 'bookingEndDate', 'maxPetsPerRoom'
             ));
         }
 
@@ -80,10 +82,11 @@ class BookingCalendarController extends Controller
             $checkin = $request->query('checkin');
             $checkout = $request->query('checkout');
             $bookingType = 'staycation';
+            $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);
 
             return view('booking.calendar', compact(
                 'availability', 'checkin', 'checkout', 'totalQuantity',
-                'maxQty', 'season', 'bookingType', 'bookingStartDate', 'bookingEndDate'
+                'maxQty', 'season', 'bookingType', 'bookingStartDate', 'bookingEndDate', 'maxPetsPerRoom'
             ));
         }
 
@@ -138,10 +141,11 @@ class BookingCalendarController extends Controller
         $checkout = $request->query('checkout');
 
         $bookingType = 'staycation';
+        $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);
 
         return view('booking.calendar', compact(
             'availability', 'checkin', 'checkout', 'totalQuantity',
-            'maxQty', 'season', 'bookingType', 'bookingStartDate', 'bookingEndDate'
+            'maxQty', 'season', 'bookingType', 'bookingStartDate', 'bookingEndDate', 'maxPetsPerRoom'
         ));
     }
 
@@ -172,11 +176,12 @@ class BookingCalendarController extends Controller
             $season = $this->determineSeasonForCalendar();
             $selectedDate = $request->query('date');
             $bookingType = 'daytour';
+            $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);
 
             return view('booking.calendar', compact(
                 'availability', 'selectedDate', 'totalQuantity',
                 'maxQty', 'season', 'bookingType', 'dayToursList',
-                'bookingStartDate', 'bookingEndDate'
+                'bookingStartDate', 'bookingEndDate', 'maxPetsPerRoom'
             ));
         }
 
@@ -201,11 +206,12 @@ class BookingCalendarController extends Controller
             $season = $this->determineSeasonForCalendar();
             $selectedDate = $request->query('date');
             $bookingType = 'daytour';
+            $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);
 
             return view('booking.calendar', compact(
                 'availability', 'selectedDate', 'totalQuantity',
                 'maxQty', 'season', 'bookingType', 'dayToursList',
-                'bookingStartDate', 'bookingEndDate'
+                'bookingStartDate', 'bookingEndDate', 'maxPetsPerRoom'
             ));
         }
 
@@ -286,11 +292,12 @@ class BookingCalendarController extends Controller
 
         $bookingType = 'daytour';
         $dayToursList = $dayTours;
+        $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);
 
         return view('booking.calendar', compact(
             'availability', 'selectedDate', 'totalQuantity',
             'maxQty', 'season', 'bookingType', 'dayToursList',
-            'bookingStartDate', 'bookingEndDate'
+            'bookingStartDate', 'bookingEndDate', 'maxPetsPerRoom'
         ));
     }
 

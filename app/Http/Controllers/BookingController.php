@@ -1489,6 +1489,9 @@ class BookingController extends Controller
         if ($request->isMethod('post')) {
             $data = $request->all();
 
+            // Get dynamic max pets per room
+            $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);
+
             // Handle selected_rooms from availability page
             if ($request->has('selected_rooms')) {
                 $validator = \Illuminate\Support\Facades\Validator::make($data, [
@@ -1500,7 +1503,7 @@ class BookingController extends Controller
                     'selected_rooms.*.extra_mattress' => ['nullable', 'integer', 'min:0', 'max:100'], // Increased to allow BYOT/Car Camping quantities
                     'selected_rooms.*.pets' => ['required', 'in:yes,no'],
                     'selected_rooms.*.pet_agreement' => ['nullable', 'boolean'],
-                    'selected_rooms.*.num_pets' => ['nullable', 'integer', 'min:0', 'max:2'],
+                    'selected_rooms.*.num_pets' => ['nullable', 'integer', 'min:0', 'max:' . $maxPetsPerRoom],
                     'proceed_to_activities' => ['nullable', 'boolean'],
                 ]);
 
@@ -1527,10 +1530,10 @@ class BookingController extends Controller
                             ], 422);
                         }
 
-                        if ($numPets < 1 || $numPets > 2) {
+                        if ($numPets < 1 || $numPets > $maxPetsPerRoom) {
                             return response()->json([
                                 'success' => false,
-                                'message' => "Please set number of pets (1-2) for room ID {$roomId}.",
+                                'message' => "Please set number of pets (1-{$maxPetsPerRoom}) for room ID {$roomId}.",
                             ], 422);
                         }
                     }
@@ -2031,7 +2034,10 @@ class BookingController extends Controller
         $childrenTotal = $booking['children_total'] ?? 0;
         $rooms = $booking['rooms'] ?? [['adults' => 2, 'children' => 0]];
 
-        return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'currentSeason', 'roomsCount', 'adultsTotal', 'childrenTotal', 'rooms'));
+        // Get dynamic max pets per room setting
+        $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);
+
+        return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'currentSeason', 'roomsCount', 'adultsTotal', 'childrenTotal', 'rooms', 'maxPetsPerRoom'));
     }
 
     /**

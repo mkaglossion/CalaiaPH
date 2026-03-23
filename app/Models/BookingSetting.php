@@ -14,11 +14,23 @@ class BookingSetting extends Model
 
     /**
      * Get a setting value by key
+     * For max_pets_per_room, returns integer; otherwise returns float
      */
     public static function getValue($key, $default = null)
     {
         $setting = self::where('key', $key)->first();
-        return $setting ? (float)$setting->value : $default;
+        
+        if (!$setting) {
+            return $default;
+        }
+
+        // For policy settings (max_pets_per_room), return as integer
+        if ($setting->category === 'policy') {
+            return (int)$setting->value;
+        }
+
+        // For pricing settings, return as float
+        return (float)$setting->value;
     }
 
     /**

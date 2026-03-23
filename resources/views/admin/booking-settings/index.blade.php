@@ -1,30 +1,21 @@
 @extends('layouts.admin')
 
 @section('content')
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <div class="container mx-auto p-6 space-y-8">
 
-    <h1 class="text-2xl font-bold">Booking Pet Fee</h1>
+    <h1 class="text-2xl font-bold">Booking Pet Settings</h1>
 
-    <p class="text-gray-600 text-sm mb-6">Configure pet fee for staycation bookings. This setting applies to all regular accommodations except BYOT and Car Camping.</p>
-
-    @if(session('success'))
-        <script>
-            toastr.success("{{ session('success') }}", 'Success');
-        </script>
-    @endif
-
-    @if(session('error'))
-        <script>
-            toastr.error("{{ session('error') }}", 'Error');
-        </script>
-    @endif
+    <p class="text-gray-600 text-sm mb-6">Configure pet fees and maximum pets per room for staycation bookings. These settings apply to all regular accommodations.</p>
 
     <div class="bg-white p-6 rounded-lg shadow">
-        <form action="{{ route('admin.booking-settings.update') }}" method="POST">
+        <form id="bookingSettingsForm" action="{{ route('admin.booking-settings.update') }}" method="POST">
             @csrf
 
-            {{-- Additional Fees --}}
-            <div class="grid grid-cols-1 md:grid-cols-1 gap-8">
+            {{-- Pet Settings --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {{-- Pet Price --}}
                 <div>
                     <label for="pet_price" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -50,21 +41,45 @@
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
+
+                {{-- Max Pets Per Room --}}
+                <div>
+                    <label for="max_pets_per_room" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Maximum Pets Per Room
+                    </label>
+                    <input
+                        type="number"
+                        id="max_pets_per_room"
+                        name="max_pets_per_room"
+                        value="{{ intval($settings->where('key', 'max_pets_per_room')->first()?->value ?? 2) }}"
+                        min="1"
+                        max="10"
+                        class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                    />
+                    <p class="text-xs text-gray-500 mt-2">
+                        Set the maximum number of pets allowed per room (1-10). This setting is dynamic and will update across all bookings.
+                    </p>
+                    @error('max_pets_per_room')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
 
             <div class="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h3 class="text-sm font-semibold text-blue-900 mb-2">ℹ️ Important Notes:</h3>
                 <ul class="text-sm text-blue-800 space-y-1 list-disc list-inside">
-                    <li>These settings apply to all regular room types</li>
-                    <li>BYOT and Car Camping accommodations are NOT affected</li>
-                    <li>Changes broadcast in real-time to the booking system</li>
-                    <li>Frontend calculations update automatically</li>
+                    <li>Pet fee is a one-time charge per booking when pets are brought</li>
+                    <li>Maximum pets setting enforces limits per room during bookings</li>
+                    <li>Changes are immediately reflected in the booking calendar</li>
+                    <li>Your changes are automatically saved on refresh</li>
                 </ul>
             </div>
 
             <div class="mt-6 flex gap-3">
                 <button 
                     type="submit" 
+                    id="saveBtn"
                     class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
                 >
                     Save Settings
@@ -80,4 +95,98 @@
     </div>
 
 </div>
+
+<script>
+document.getElementById('bookingSettingsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const petPrice = document.getElementById('pet_price').value;
+    const maxPets = document.getElementById('max_pets_per_room').value;
+    
+    // Validation
+    if (!petPrice || petPrice < 0) {
+        Swal.fire({
+            title: 'Validation Error',
+            text: 'Pet Fee must be a positive number',
+            icon: 'error',
+            confirmButtonColor: '#3085d6'
+        });
+        return;
+    }
+    
+    if (!maxPets || maxPets < 1 || maxPets > 10) {
+        Swal.fire({
+            title: 'Validation Error',
+            text: 'Maximum Pets must be between 1 and 10',
+            icon: 'error',
+            confirmButtonColor: '#3085d6'
+        });
+        return;
+    }
+    
+    // Show confirmation dialog
+    Swal.fire({
+        title: 'Confirm Changes',
+        html: `<div class="text-left">
+            <p><strong>Pet Fee:</strong> ₱${parseFloat(petPrice).toFixed(2)}</p>
+            <p><strong>Max Pets Per Room:</strong> ${maxPets}</p>
+        </div>`,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, Update',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading state
+            document.getElementById('saveBtn').disabled = true;
+            document.getElementById('saveBtn').innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+            
+            // Submit the form
+            const form = document.getElementById('bookingSettingsForm');
+            const formData = new FormData(form);
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => Promise.reject(data));
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Success
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'All booking settings have been updated.',
+                    icon: 'success',
+                    confirmButtonColor: '#3085d6'
+                }).then(() => {
+                    location.reload();
+                });
+            })
+            .catch(error => {
+                document.getElementById('saveBtn').disabled = false;
+                document.getElementById('saveBtn').innerHTML = 'Save Settings';
+                
+                const errorMessage = error.message || 'Failed to update settings';
+                Swal.fire({
+                    title: 'Error!',
+                    text: errorMessage,
+                    icon: 'error',
+                    confirmButtonColor: '#3085d6'
+                });
+            });
+        }
+    });
+});
+</script>
+
 @endsection
