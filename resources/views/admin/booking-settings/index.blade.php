@@ -109,7 +109,11 @@ document.getElementById('bookingSettingsForm').addEventListener('submit', functi
             title: 'Validation Error',
             text: 'Pet Fee must be a positive number',
             icon: 'error',
-            confirmButtonColor: '#3085d6'
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
         });
         return;
     }
@@ -119,72 +123,68 @@ document.getElementById('bookingSettingsForm').addEventListener('submit', functi
             title: 'Validation Error',
             text: 'Maximum Pets must be between 1 and 10',
             icon: 'error',
-            confirmButtonColor: '#3085d6'
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
         });
         return;
     }
     
-    // Show confirmation dialog
-    Swal.fire({
-        title: 'Confirm Changes',
-        html: `<div class="text-left">
-            <p><strong>Pet Fee:</strong> ₱${parseFloat(petPrice).toFixed(2)}</p>
-            <p><strong>Max Pets Per Room:</strong> ${maxPets}</p>
-        </div>`,
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, Update',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Show loading state
-            document.getElementById('saveBtn').disabled = true;
-            document.getElementById('saveBtn').innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
-            
-            // Submit the form
-            const form = document.getElementById('bookingSettingsForm');
-            const formData = new FormData(form);
-            
-            fetch(form.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => Promise.reject(data));
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Success
-                Swal.fire({
-                    title: 'Success!',
-                    text: 'All booking settings have been updated.',
-                    icon: 'success',
-                    confirmButtonColor: '#3085d6'
-                }).then(() => {
-                    location.reload();
-                });
-            })
-            .catch(error => {
-                document.getElementById('saveBtn').disabled = false;
-                document.getElementById('saveBtn').innerHTML = 'Save Settings';
-                
-                const errorMessage = error.message || 'Failed to update settings';
-                Swal.fire({
-                    title: 'Error!',
-                    text: errorMessage,
-                    icon: 'error',
-                    confirmButtonColor: '#3085d6'
-                });
-            });
+    // Show loading state
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+    
+    // Submit the form
+    const form = document.getElementById('bookingSettingsForm');
+    const formData = new FormData(form);
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
         }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => Promise.reject(data));
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Success toast
+        Swal.fire({
+            title: 'Success!',
+            text: 'Booking settings updated successfully.',
+            icon: 'success',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        }).then(() => {
+            location.reload();
+        });
+    })
+    .catch(error => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = 'Save Settings';
+        
+        const errorMessage = error.message || 'Failed to update settings';
+        Swal.fire({
+            title: 'Error!',
+            text: errorMessage,
+            icon: 'error',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
     });
 });
 </script>
