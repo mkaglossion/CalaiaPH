@@ -307,6 +307,115 @@ class BookingController extends Controller
     }
 
     /**
+     * Calculate day tour price in real-time for calendar
+     * Used when user selects a date and updates guests
+     */
+    public function calculateDayTourPrice(Request $request)
+    {
+        $request->validate([
+            'date' => 'required|date',
+            'adults' => 'required|integer|min:1',
+            'children' => 'required|integer|min:0',
+        ]);
+
+        try {
+            // For day tours, we need a default day tour or just use basic pricing
+            // Since we don't know which specific tour yet, we calculate a generic price
+            // You might want to pass a tour_id if available
+            $date = Carbon::parse($request->date);
+            
+            // Get a sample day tour for pricing
+            $dayTour = DayTour::where('is_active', true)->first();
+            if (!$dayTour) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No active day tours available',
+                    'total' => 0
+                ]);
+            }
+
+            // Use basic pricing: adults + children (at reduced rate)
+            // Adjust these multipliers based on your business logic
+            $adultPrice = $dayTour->price ?? 0;
+            $childrenPrice = ($dayTour->price ?? 0) * 0.7; // Children at 70% price
+            
+            $totalPrice = ($request->adults * $adultPrice) + ($request->children * $childrenPrice);
+
+            return response()->json([
+                'success' => true,
+                'total' => round($totalPrice, 2),
+                'breakdown' => [
+                    'adults' => $request->adults,
+                    'children' => $request->children,
+                    'adult_price' => round($adultPrice, 2),
+                    'children_price' => round($childrenPrice, 2),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error calculating price: ' . $e->getMessage(),
+                'total' => 0
+            ], 500);
+        }
+    }
+
+    /**
+     * Calculate staycation price in real-time for calendar
+     * Used when user selects dates and updates rooms/guests
+     */
+    public function calculateStaycationPriceCalendar(Request $request)
+    {
+        $request->validate([
+            'checkin' => 'required|date',
+            'checkout' => 'required|date|after:checkin',
+            'rooms' => 'required|integer|min:1|max:4',
+            'adults' => 'required|integer|min:1',
+            'children' => 'required|integer|min:0',
+            'pets' => 'required|integer|min:0',
+        ]);
+
+        try {
+            $checkin = $request->checkin;
+            $checkout = $request->checkout;
+            
+            // Get a sample staycation for pricing
+            $staycation = Staycation::whereNotNull('price')->first();
+            if (!$staycation) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No staycations available',
+                    'total' => 0
+                ]);
+            }
+
+            // Calculate price using the pricing service
+            $priceResult = $this->calculateCentralizedStaycationPrice(
+                $staycation,
+                $checkin,
+                $checkout,
+                $request->rooms,
+                0, // extra_mattresses - not needed for calendar preview
+                $request->pets,
+                $request->pets > 0
+            );
+
+            return response()->json([
+                'success' => true,
+                'total' => round($priceResult['total_price'], 2),
+                'breakdown' => $priceResult['breakdown'] ?? [],
+                'nights' => $priceResult['nights'] ?? 0,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error calculating price: ' . $e->getMessage(),
+                'total' => 0
+            ], 500);
+        }
+    }
+
+    /**
      * Calculate staycation price using centralized method via API
      */
     public function calculateStaycationPrice(Request $request)
@@ -1663,6 +1772,38 @@ class BookingController extends Controller
 
         // For GET requests, delegate to the availability page builder
         return $this->staycationAvailability($request);
+    }
+
+    /**
+     * Save booking form data to session (for calendar form selections)
+     */
+    public function saveBookingSession(Request $request)
+    {
+        $validated = $request->validate([
+            'checkin' => 'required|date_format:Y-m-d',
+            'checkout' => 'required|date_format:Y-m-d',
+            'rooms_count' => 'required|integer|min:1|max:4',
+            'adults_total' => 'required|integer|min:1',
+            'children_total' => 'required|integer|min:0',
+            'pets_total' => 'required|integer|min:0',
+            'rooms' => 'required|array',
+            'rooms.*.adults' => 'required|integer|min:1',
+            'rooms.*.children' => 'required|integer|min:0',
+            'rooms.*.pets' => 'integer|min:0',
+        ]);
+
+        // Store booking data in session
+        session(['booking' => [
+            'checkin' => $validated['checkin'],
+            'checkout' => $validated['checkout'],
+            'rooms_count' => $validated['rooms_count'],
+            'adults_total' => $validated['adults_total'],
+            'children_total' => $validated['children_total'],
+            'pets_total' => $validated['pets_total'],
+            'rooms' => $validated['rooms'],
+        ]]);
+
+        return response()->json(['success' => true, 'message' => 'Booking data saved to session']);
     }
 
     public function staycationAvailability(Request $request)

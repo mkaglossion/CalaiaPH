@@ -48,15 +48,30 @@ class AdminBookingsController extends Controller
         $bookings = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
         
         // Get stats
+        $confirmed = Booking::where('status', 'confirmed')->count();
+        $cancelled = Booking::where('status', 'cancelled')->count();
+        $completed = Booking::where('status', 'completed')->count();
+        $total = Booking::count();
+        $today = Booking::whereDate('created_at', Carbon::today())->count();
+        
         $stats = [
-            'total' => Booking::count(),
-            'confirmed' => Booking::where('status', 'confirmed')->count(),
-            'cancelled' => Booking::where('status', 'cancelled')->count(),
-            'completed' => Booking::where('status', 'completed')->count(),
-            'today' => Booking::whereDate('created_at', Carbon::today())->count(),
+            'total' => $total,
+            'confirmed' => $confirmed,
+            'cancelled' => $cancelled,
+            'completed' => $completed,
+            'today' => $today,
         ];
         
-        return view('admin.bookings.index', compact('bookings', 'stats'));
+        // Stats for stat cards with subtitles
+        $statCardsData = [
+            ['label' => 'Total Bookings', 'value' => $total, 'subtitle' => ''],
+            ['label' => 'Confirmed', 'value' => $confirmed, 'subtitle' => 'Confirmed: ' . $confirmed],
+            ['label' => 'Completed', 'value' => $completed, 'subtitle' => 'Completed: ' . $completed],
+            ['label' => 'Cancelled', 'value' => $cancelled, 'subtitle' => 'Cancelled: ' . $cancelled],
+            ['label' => 'Today', 'value' => $today, 'subtitle' => ''],
+        ];
+        
+        return view('admin.bookings.index', compact('bookings', 'stats', 'statCardsData'));
     }
     
     public function show($id)

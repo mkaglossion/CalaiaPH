@@ -16,6 +16,8 @@
           }
         </style>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+        <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @endpush
 
       {{-- Hero Slider --}}
@@ -36,17 +38,32 @@
             </div>
 
             {{-- CARDS SECTION (updated to match mock) --}}
-            <div class="p-6">
-              {{-- Swiper Carousel --}}
-              <div class="swiper messHallSwiper relative">
-                <div class="swiper-wrapper">
+            <div class="p-6" x-data="{ showAll: false }">
+              {{-- 4-Column Grid Layout --}}
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="messHallGrid">
 
           @foreach($messHallFoods->sortBy('name') as $index => $food)
           @php
               $foodImages = $food->swiperImages->pluck('image_path')->toArray();
+              $categoryColors = [
+                  'Buffet' => ['bg' => 'bg-orange-100', 'text' => 'text-orange-800'],
+                  'Pastry' => ['bg' => 'bg-pink-100', 'text' => 'text-pink-800'],
+                  'Chinese' => ['bg' => 'bg-red-100', 'text' => 'text-red-800'],
+                  'Japanese' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800'],
+                  'International' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800'],
+                  'Lounge and Bar' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800'],
+                  'Grill and Steakhouse' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-800'],
+                  'Seafood' => ['bg' => 'bg-cyan-100', 'text' => 'text-cyan-800'],
+              ];
+              $cat = $categoryColors[$food->category] ?? ['bg' => 'bg-gray-100', 'text' => 'text-gray-800'];
           @endphp
-          <div class="swiper-slide">
-            <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100 group hover:shadow-2xl hover:shadow-[#97655A]/20 transition-all duration-500 hover:-translate-y-2 mx-2 relative">
+          <div class="h-full" x-show="showAll || {{ $index }} < 8" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100 group hover:shadow-2xl hover:shadow-[#97655A]/20 transition-all duration-500 hover:-translate-y-2 h-full flex flex-col relative">
+              {{-- Category Badge --}}
+              <div class="absolute top-4 left-4 {{ $cat['bg'] }} {{ $cat['text'] }} px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10">
+                {{ ucfirst(str_replace('_', ' ', $food->category)) }}
+              </div>
+
               {{-- Stock Availability Badge --}}
               @if($food->is_inventory_managed)
                 @if($food->stock_quantity <= 0)
@@ -79,44 +96,47 @@
                 @endif
               </div>
 
-              <div class="px-6 pb-6 pt-1 text-center">
+              <div class="px-6 pb-6 pt-1 text-center flex flex-col grow">
                 <h3 class="my-4 font-extrabold uppercase tracking-wide text-[#97655A] section-heading">
                   {{ $food->name }}
                 </h3>
-                <p class="mb-2 text-[#97655A] text-xs">
+                <p class="mb-2 text-[#97655A] text-xs grow">
                   {!! nl2br($food->description ?? '') !!}
                 </p>
                 <p class="text-sm font-bold text-[#97655A] mb-3">PHP {{ $food->price ?? 'Contact for pricing' }}</p>
 
                 <button
                   data-title="{{ $food->name }}"
-                  data-price="PHP {{ $food->price ?? 'Contact for pricing' }}"
-                  data-details='@json($food->texts->where("section", "details")->pluck("content")->toArray())'
-                  data-images='@json($foodImages)'
-                  data-description="{{ $food->description ?? 'Delicious food option' }}"
-                  onclick="openPackageModal(this)"
-                  aria-label="Learn more about {{ $food->name }}"
-                  class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-4 bg-brand text-white hover:bg-brand transition-colors focus:ring-2 focus:ring-brand focus:outline-none {{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                  data-food-id="{{ $food->id }}"
+                  data-max-stock="{{ $food->stock_quantity ?? 100 }}"
+                  data-price="{{ $food->price ?? 0 }}"
+                  onclick="window.openDiningReservationModal(this)"
+                  aria-label="Book {{ $food->name }}"
+                  class="inline-flex items-center justify-center rounded-full px-10 py-3 text-sm font-semibold uppercase tracking-wide shadow-md mt-auto bg-brand text-white hover:bg-brand transition-colors focus:ring-2 focus:ring-brand focus:outline-none {{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
                   {{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'disabled' : '' }}>
-                  LEARN MORE
+                  Book Now
                 </button>
               </div>
             </div>
           </div>
           @endforeach
 
-                </div>
-                <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-brand text-white shadow" data-custom-prev>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
+              </div>
+
+              {{-- View All / Show Less Buttons --}}
+              <div class="text-center mt-8 flex justify-center gap-4">
+                <button 
+                  x-show="!showAll && {{ $messHallFoods->count() }} > 8"
+                  @click="showAll = true; setTimeout(() => document.getElementById('messHallGrid').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)"
+                  class="text-[#97655A] font-semibold underline hover:text-[#7a4d45] transition-colors">
+                  View All
                 </button>
-                <button type="button" aria-label="Next slide" class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-brand text-white shadow" data-custom-next>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
+                <button 
+                  x-show="showAll"
+                  @click="showAll = false; setTimeout(() => document.getElementById('messHallGrid').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)"
+                  class="text-[#97655A] font-semibold underline hover:text-[#7a4d45] transition-colors">
+                  Show Less
                 </button>
-                <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
               </div>
             </div>
           </div>
@@ -132,88 +152,106 @@
             @else
               <img src="{{ asset('images/cook-your-own.jpg') }}" alt="Cook Your Own" class="w-full h-96 object-cover">
             @endif
-            <div class="p-6">
+            <div class="p-6" x-data="{ showAll: false }">
               <h2 class="text-3xl font-bold text-[#97655A] mb-6 text-center">Cook Your Own</h2>
               <p class="text-gray-700 mb-6 text-center">Experience the joy of cooking your own fresh ingredients from our farm. Choose from our available options:</p>
 
-              {{-- Swiper Carousel --}}
-              <div class="swiper cookYourOwnSwiper relative">
-                <div class="swiper-wrapper">
-                  @foreach($cookYourOwnFoods->sortBy('name') as $index => $food)
-                  @php
-                      $foodImages = $food->swiperImages->pluck('image_path')->toArray();
-                  @endphp
-                  <div class="swiper-slide">
-                    <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100 group hover:shadow-2xl hover:shadow-[#97655A]/20 transition-all duration-500 hover:-translate-y-2 mx-2 relative">
-                      {{-- Stock Availability Badge --}}
-                      @if($food->is_inventory_managed)
-                        @if($food->stock_quantity <= 0)
-                          <div class="absolute top-4 right-4 bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10">
-                            Out of Stock
-                          </div>
-                        @elseif($food->stock_quantity <= 5)
-                          <div class="absolute top-4 right-4 bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10">
-                            Only {{ $food->stock_quantity }} left
-                          </div>
-                        @else
-                          <div class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10">
-                            In Stock
-                          </div>
-                        @endif
-                      @endif
-                      {{-- inset image frame - show food image from Food Management ONLY --}}
-                      <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10 mb-4">
-                        @if(!empty($food->image))
-                          <img
-                            src="{{ str_starts_with($food->image, 'http') ? $food->image : asset('storage/' . $food->image) }}"
-                            alt="{{ $food->name }}"
-                            class="w-full aspect-4/3 object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                            loading="lazy"
-                          >
-                        @else
-                          <div class="w-full aspect-4/3 bg-gray-100 flex items-center justify-center">
-                            <span class="text-gray-500">No Image</span>
-                          </div>
-                        @endif
-                      </div>
-
-                      <div class="px-6 pb-6 pt-1 text-center">
-                        <h3 class="my-4 font-extrabold uppercase tracking-wide text-[#97655A] dining-subheading">
-                          {{ $food->name }}
-                        </h3>
-                        <p class="mb-2 text-[#97655A] text-xs">
-                          {!! nl2br($food->description ?? 'Delicious option') !!}
-                        </p>
-                        <p class="text-sm font-bold text-[#97655A] mb-3">PHP {{ $food->price ?? 'Contact for pricing' }}</p>
-
-                        <button
-                          data-title="{{ $food->name }}"
-                          data-price="PHP {{ $food->price ?? 'Contact for pricing' }}"
-                          data-details='@json($food->texts->where("section", "details")->pluck("content")->toArray())'
-                          data-images='@json($foodImages)'
-                          data-description="{{ $food->description ?? 'Delicious food option' }}"
-                          onclick="openPackageModal(this)"
-                          aria-label="Learn more about {{ $food->name }}"
-                          class="inline-flex items-center justify-center rounded-full px-8 py-2 text-sm font-semibold uppercase tracking-wide shadow-md mt-2 bg-brand text-white hover:bg-brand transition-colors focus:ring-2 focus:ring-brand focus:outline-none {{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
-                          {{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'disabled' : '' }}>
-                          LEARN MORE
-                        </button>
-                      </div>
-                    </div>
+              {{-- 4-Column Grid Layout --}}
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="cookYourOwnGrid">
+                @foreach($cookYourOwnFoods->sortBy('name') as $index => $food)
+                @php
+                    $foodImages = $food->swiperImages->pluck('image_path')->toArray();
+                    $categoryColors = [
+                        'Buffet' => ['bg' => 'bg-orange-100', 'text' => 'text-orange-800'],
+                        'Pastry' => ['bg' => 'bg-pink-100', 'text' => 'text-pink-800'],
+                        'Chinese' => ['bg' => 'bg-red-100', 'text' => 'text-red-800'],
+                        'Japanese' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800'],
+                        'International' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-800'],
+                        'Lounge and Bar' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800'],
+                        'Grill and Steakhouse' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-800'],
+                        'Seafood' => ['bg' => 'bg-cyan-100', 'text' => 'text-cyan-800'],
+                    ];
+                    $cat = $categoryColors[$food->category] ?? ['bg' => 'bg-gray-100', 'text' => 'text-gray-800'];
+                @endphp
+                <div class="h-full" x-show="showAll || {{ $index }} < 8" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+                <div class="bg-white rounded-2xl shadow-[0_6px_16px_rgba(0,0,0,0.08)] border border-gray-100 group hover:shadow-2xl hover:shadow-[#97655A]/20 transition-all duration-500 hover:-translate-y-2 h-full flex flex-col relative">
+                  {{-- Category Badge --}}
+                  <div class="absolute top-4 left-4 {{ $cat['bg'] }} {{ $cat['text'] }} px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10">
+                    {{ ucfirst(str_replace('_', ' ', $food->category)) }}
                   </div>
-                  @endforeach
+
+                  {{-- Stock Availability Badge --}}
+                  @if($food->is_inventory_managed)
+                    @if($food->stock_quantity <= 0)
+                      <div class="absolute top-4 right-4 bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10">
+                        Out of Stock
+                      </div>
+                    @elseif($food->stock_quantity <= 5)
+                      <div class="absolute top-4 right-4 bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10">
+                        Only {{ $food->stock_quantity }} left
+                      </div>
+                    @else
+                      <div class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10">
+                        In Stock
+                      </div>
+                    @endif
+                  @endif
+                  {{-- inset image frame - show food image from Food Management ONLY --}}
+                  <div class="m-3 rounded-xl overflow-hidden bg-[#97655A]/10 mb-4">
+                    @if(!empty($food->image))
+                      <img
+                        src="{{ str_starts_with($food->image, 'http') ? $food->image : asset('storage/' . $food->image) }}"
+                        alt="{{ $food->name }}"
+                        class="w-full aspect-4/3 object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                        loading="lazy"
+                      >
+                    @else
+                      <div class="w-full aspect-4/3 bg-gray-100 flex items-center justify-center">
+                        <span class="text-gray-500">No Image</span>
+                      </div>
+                    @endif
+                  </div>
+
+                  <div class="px-6 pb-6 pt-1 text-center flex flex-col grow">
+                    <h3 class="my-4 font-extrabold uppercase tracking-wide text-[#97655A] dining-subheading">
+                      {{ $food->name }}
+                    </h3>
+                    <p class="mb-2 text-[#97655A] text-xs grow">
+                      {!! nl2br($food->description ?? 'Delicious option') !!}
+                    </p>
+                    <p class="text-sm font-bold text-[#97655A] mb-3">PHP {{ $food->price ?? 'Contact for pricing' }}</p>
+
+                    <button
+                      data-title="{{ $food->name }}"
+                      data-food-id="{{ $food->id }}"
+                      data-max-stock="{{ $food->stock_quantity ?? 100 }}"
+                      data-price="{{ $food->price ?? 0 }}"
+                      onclick="window.openDiningReservationModal(this)"
+                      aria-label="Book {{ $food->name }}"
+                      class="inline-flex items-center justify-center rounded-full px-8 py-2 text-sm font-semibold uppercase tracking-wide shadow-md mt-auto bg-brand text-white hover:bg-brand transition-colors focus:ring-2 focus:ring-brand focus:outline-none {{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                      {{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'disabled' : '' }}>
+                      Book Now
+                    </button>
+                  </div>
                 </div>
-                <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-brand text-white shadow" data-custom-prev>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
+                </div>
+                @endforeach
+              </div>
+
+              {{-- View All / Show Less Buttons --}}
+              <div class="text-center mt-8 flex justify-center gap-4">
+                <button 
+                  x-show="!showAll && {{ $cookYourOwnFoods->count() }} > 8"
+                  @click="showAll = true; setTimeout(() => document.getElementById('cookYourOwnGrid').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)"
+                  class="text-[#97655A] font-semibold underline hover:text-[#7a4d45] transition-colors">
+                  View All
                 </button>
-                <button type="button" aria-label="Next slide" class="absolute top-1/2 -translate-y-1/2 right-2 z-10 grid place-items-center w-10 h-10 rounded-full bg-brand text-white shadow" data-custom-next>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
+                <button 
+                  x-show="showAll"
+                  @click="showAll = false; setTimeout(() => document.getElementById('cookYourOwnGrid').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)"
+                  class="text-[#97655A] font-semibold underline hover:text-[#7a4d45] transition-colors">
+                  Show Less
                 </button>
-                <div class="flex gap-2 justify-center py-3" role="tablist" aria-label="Slides" data-custom-dots></div>
               </div>
             </div>
           </div>
@@ -223,6 +261,9 @@
       {{-- Dynamic Details Modal --}}
       <x-package-modal id="detailsModal" :price="false" :buttonText="'Book Now'" :buttonAction="'bookNow'" :bookingRoute="route('booking.calendar') . '?type=staycation'" :appendParams="true">
       </x-package-modal>
+
+      {{-- Dining Reservation Modal --}}
+      <x-dining-reservation-modal />
 
     </div>
 
@@ -250,46 +291,6 @@
               prevSlideMessage: 'Previous slide',
               nextSlideMessage: 'Next slide',
             },
-          });
-
-          // Initialize cook your own swiper
-          const cookYourOwnSwiper = new Swiper('.cookYourOwnSwiper', {
-            slidesPerView: 1,
-            spaceBetween: 20,
-            loop: true,
-            navigation: {
-              nextEl: '.cookYourOwnSwiper [data-custom-next]',
-              prevEl: '.cookYourOwnSwiper [data-custom-prev]'
-            },
-            pagination: {
-              el: '.cookYourOwnSwiper [data-custom-dots]',
-              clickable: true
-            },
-            breakpoints: {
-              640: { slidesPerView: 1 },
-              768: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 }
-            }
-          });
-
-          // Initialize mess hall swiper
-          const messHallSwiper = new Swiper('.messHallSwiper', {
-            slidesPerView: 1,
-            spaceBetween: 20,
-            loop: true,
-            navigation: {
-              nextEl: '.messHallSwiper [data-custom-next]',
-              prevEl: '.messHallSwiper [data-custom-prev]'
-            },
-            pagination: {
-              el: '.messHallSwiper [data-custom-dots]',
-              clickable: true
-            },
-            breakpoints: {
-              640: { slidesPerView: 1 },
-              768: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 }
-            }
           });
         });
         </script>

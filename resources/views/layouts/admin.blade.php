@@ -93,6 +93,9 @@
             ['label'=>'Staycation Inventory','route'=>'admin.bookings.inventory'],
             ['label'=>'Daytour Inventory','route'=>'admin.day-tour.inventory'],
           ]],
+          ['title'=>'Reservation Monitor','icon'=>'bell-ring','route'=>'admin.reservations.*','sub'=>[
+            ['label'=>'Monitor','route'=>'admin.reservations.monitor'],
+          ]],
           ['title'=>'Day Tour','icon'=>'sun','route'=>'admin.day.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.day.daytour'],
             ['label'=>'Items','route'=>'admin.day.day'],
@@ -124,6 +127,7 @@
           ]],
           ['title'=>'Settings','icon'=>'settings','route'=>'admin.settings.*','sub'=>[
             ['label'=>'Profile','route'=>'admin.settings.profile'],
+            ['label'=>'Change Password','route'=>'admin.settings.password'],
             ['label'=>'Activity Log','route'=>'admin.settings.activity-log'],
             ['label'=>'System Settings','route'=>'admin.settings.system'],
             ['label'=>'Alerts','route'=>'admin.settings.alerts'],
@@ -387,6 +391,11 @@
             <a href="{{ route('admin.settings.profile') }}" role="menuitem" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition text-sm focus:outline-none focus:bg-gray-100 pt-2 rounded-t-lg">
               <i data-lucide="user" class="w-4 h-4"></i>
               My Profile
+            </a>
+
+            <a href="{{ route('admin.settings.password') }}" role="menuitem" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition text-sm focus:outline-none focus:bg-gray-100">
+              <i data-lucide="lock" class="w-4 h-4"></i>
+              Change Password
             </a>
 
             <a href="{{ route('admin.settings.activity-log') }}" role="menuitem" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition text-sm focus:outline-none focus:bg-gray-100">

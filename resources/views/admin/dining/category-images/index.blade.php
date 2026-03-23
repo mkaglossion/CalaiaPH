@@ -105,13 +105,13 @@
         </div>
     </div>
 
-    <hr class="my-14 border-gray-300">
+    {{--<hr class="my-14 border-gray-300"> --}}
 
     {{-- ============================================================= --}}
     {{-- LEARN MORE MODAL SWIPER IMAGES --}}
     {{-- ============================================================= --}}
 
-    <div class="flex justify-between items-end mb-6 mt-12">
+    {{-- <div class="flex justify-between items-end mb-6 mt-12">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Learn More Modal Swiper</h2>
             <p class="text-gray-500 text-sm">Carousel images inside food item modals when clicking "Learn More".</p>
@@ -123,7 +123,7 @@
         >
             + Add Image
         </button>
-    </div>
+    </div> --}}
 
     @if(session('success'))
         <div class="bg-green-100 text-green-700 p-4 rounded-xl mb-6 border border-green-200">
@@ -132,7 +132,7 @@
     @endif
 
     {{-- Images Table --}}
-    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+    {{-- <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
         <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead class="bg-gray-100/70 backdrop-blur">
@@ -190,7 +190,7 @@
         <div class="px-6 py-4 border-t border-gray-200">
             {{ $images->links('pagination::tailwind') }}
         </div>
-    @endif
+    @endif --}}
 
     <!-- Swiper Image Upload/Edit Modal -->
     <div 

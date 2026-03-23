@@ -80,32 +80,46 @@
                       <!-- Item Info -->
                       <div class="flex-1">
                         <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ $item['title'] }}</h3>
-                        <div class="flex items-center text-gray-600 mb-3">
-                          <i class="bi bi-tag mr-1"></i>
-                          <span class="font-medium">₱{{ number_format($item['price'], 2) }}</span>
+                        <div class="flex flex-col text-gray-600 mb-3">
+                          <div class="flex items-center mb-2">
+                            <i class="bi bi-tag mr-1"></i>
+                            <span class="font-medium">₱{{ number_format($item['price'], 2) }}</span>
+                          </div>
                           @if(isset($item['isDining']) && $item['isDining'])
-                            <span class="text-gray-400 mx-2">
-                              @if($item['price'] == 5980)
-                                (3–4 Person)
-                              @elseif($item['price'] == 8790)
-                                (5–6 Person)
-                              @else
-                                (7–9 Person)
+                            <div class="text-sm space-y-1">
+                              @if(!empty($item['meal_period']))
+                                <div class="text-gray-600">
+                                  <span class="font-medium">{{ ucfirst($item['meal_period']) }}</span>
+                                  @if(!empty($item['reservation_date']) && $item['reservation_date'] !== '1970-01-01')
+                                    <span class="text-gray-400">•</span>
+                                    <span>{{ date('M d, Y', strtotime($item['reservation_date'])) }}</span>
+                                  @endif
+                                  @if(!empty($item['reservation_time']))
+                                    <span class="text-gray-400">•</span>
+                                    <span>{{ $item['reservation_time'] }}</span>
+                                  @endif
+                                </div>
                               @endif
-                            </span>
+                              @if(isset($item['adults']) || isset($item['children']))
+                                <div class="text-gray-500">
+                                  @if(isset($item['adults']) && $item['adults'] > 0)
+                                    {{ $item['adults'] }} Adult{{ $item['adults'] > 1 ? 's' : '' }}
+                                  @endif
+                                  @if(isset($item['children']) && $item['children'] > 0)
+                                    {{ isset($item['adults']) && $item['adults'] > 0 ? ', ' : '' }}{{ $item['children'] }} Child{{ $item['children'] > 1 ? 'ren' : '' }}
+                                  @endif
+                                </div>
+                              @endif
+                            </div>
                           @else
-                            <span class="text-gray-400 mx-2">per item</span>
+                            <span class="text-gray-400 text-sm">per item</span>
                           @endif
                         </div>
                       </div>
 
                       <!-- Quantity Controls -->
                       <div class="flex items-center justify-between md:justify-end gap-4">
-                        @if(isset($item['isDining']) && $item['isDining'])
-                          <div class="flex items-center bg-gray-50 rounded-xl p-3">
-                            <span class="text-sm text-gray-600">Set Menu</span>
-                          </div>
-                        @else
+                        @if(!isset($item['isDining']) || !$item['isDining'])
                           <form action="{{ route('cart.update', str_replace('%2F', '-', urlencode($id))) }}" method="POST" class="flex items-center bg-gray-50 rounded-xl p-1">
                             @csrf
                             @method('PATCH')

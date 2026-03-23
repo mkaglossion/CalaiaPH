@@ -120,7 +120,7 @@ class CheckForMaintenanceMode
         HTML;
 
         $html = str_replace('{{ MAINTENANCE_MESSAGE }}', htmlspecialchars($maintenanceMessage), $html);
-        $html = str_replace('{{ CURRENT_TIME }}', now()->format('Y-m-d H:i:s'), $html);
+        $html = str_replace('{{ CURRENT_TIME }}', now()->format('Y-m-d h:i A'), $html);
 
         return new Response($html, 503, [
             'Retry-After' => '300', // Tell browsers to retry after 5 minutes

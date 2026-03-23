@@ -31,11 +31,11 @@
         @php
             // Explicit chip styles keep icons visible even if utility classes are not available.
             $statCards = [
-                ['label' => 'Total Bookings', 'value' => $stats['total'], 'accent' => 'border-slate-700 text-slate-900', 'chip' => 'bg-slate-700 text-white', 'chipStyle' => 'background-color:#0f172a;color:#fff;', 'icon' => 'grid'],
-                ['label' => 'Confirmed', 'value' => $stats['confirmed'], 'accent' => 'border-emerald-600 text-emerald-900', 'chip' => 'bg-emerald-600 text-white', 'chipStyle' => 'background-color:#059669;color:#fff;', 'icon' => 'check'],
-                ['label' => 'Completed', 'value' => $stats['completed'], 'accent' => 'border-blue-600 text-blue-900', 'chip' => 'bg-blue-600 text-white', 'chipStyle' => 'background-color:#1d4ed8;color:#fff;', 'icon' => 'flag'],
-                ['label' => 'Cancelled', 'value' => $stats['cancelled'], 'accent' => 'border-rose-600 text-rose-900', 'chip' => 'bg-rose-600 text-white', 'chipStyle' => 'background-color:#e11d48;color:#fff;', 'icon' => 'ban'],
-                ['label' => 'Today', 'value' => $stats['today'], 'accent' => 'border-amber-600 text-amber-900', 'chip' => 'bg-amber-500 text-white', 'chipStyle' => 'background-color:#f59e0b;color:#fff;', 'icon' => 'sun'],
+                array_merge($statCardsData[0], ['accent' => 'border-slate-700 text-slate-900', 'chip' => 'bg-slate-700 text-white', 'chipStyle' => 'background-color:#0f172a;color:#fff;', 'icon' => 'grid']),
+                array_merge($statCardsData[1], ['accent' => 'border-emerald-600 text-emerald-900', 'chip' => 'bg-emerald-600 text-white', 'chipStyle' => 'background-color:#059669;color:#fff;', 'icon' => 'check']),
+                array_merge($statCardsData[2], ['accent' => 'border-blue-600 text-blue-900', 'chip' => 'bg-blue-600 text-white', 'chipStyle' => 'background-color:#1d4ed8;color:#fff;', 'icon' => 'flag']),
+                array_merge($statCardsData[3], ['accent' => 'border-rose-600 text-rose-900', 'chip' => 'bg-rose-600 text-white', 'chipStyle' => 'background-color:#e11d48;color:#fff;', 'icon' => 'ban']),
+                array_merge($statCardsData[4], ['accent' => 'border-amber-600 text-amber-900', 'chip' => 'bg-amber-500 text-white', 'chipStyle' => 'background-color:#f59e0b;color:#fff;', 'icon' => 'sun']),
             ];
         @endphp
         @foreach($statCards as $card)
@@ -56,64 +56,65 @@
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $card['label'] }}</p>
                 <p class="text-2xl font-bold text-gray-900">{{ $card['value'] }}</p>
+                @if(isset($card['subtitle']) && $card['subtitle'])
+                <p class="text-xs text-gray-500 mt-0.5">{{ $card['subtitle'] }}</p>
+                @endif
             </div>
         </div>
         @endforeach
     </div>
 
     <!-- Filters -->
-    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <form method="GET" action="{{ route('admin.bookings.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div class="md:col-span-2">
-                <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <form method="GET" action="{{ route('admin.bookings.index') }}" class="flex flex-col md:flex-row gap-3 items-end flex-wrap">
+            <div class="flex-1 min-w-64">
+                <label for="search" class="block text-xs font-semibold text-gray-600 mb-1">Search</label>
                 <div class="relative">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true" style="color:#6b7280;">
                         <circle cx="11" cy="11" r="7"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 16.5L21 21"/>
                     </svg>
                     <input type="text" id="search" name="search" value="{{ request('search') }}" 
-                        placeholder="Name, email, transaction ID"
-                        class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                        placeholder="Name, email, ID"
+                        class="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                         style="padding-left:2.5rem;">
                 </div>
             </div>
-            <div>
-                <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select id="status" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+            <div class="w-full sm:w-auto">
+                <label for="status" class="block text-xs font-semibold text-gray-600 mb-1">Status</label>
+                <select id="status" name="status" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                     <option value="">All</option>
                     <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
                     <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                     <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
                 </select>
             </div>
-            <div>
-                <label for="booking_type" class="block text-sm font-medium text-gray-700 mb-2">Type</label>
-                <select id="booking_type" name="booking_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+            <div class="w-full sm:w-auto">
+                <label for="booking_type" class="block text-xs font-semibold text-gray-600 mb-1">Type</label>
+                <select id="booking_type" name="booking_type" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                     <option value="">All</option>
                     <option value="glamping" {{ request('booking_type') == 'glamping' ? 'selected' : '' }}>Glamping</option>
                     <option value="camping" {{ request('booking_type') == 'camping' ? 'selected' : '' }}>Camping</option>
                     <option value="dayvisit" {{ request('booking_type') == 'dayvisit' ? 'selected' : '' }}>Day Visit</option>
                 </select>
             </div>
-            <div>
-                <label for="date_from" class="block text-sm font-medium text-gray-700 mb-2">From</label>
+            <div class="w-full sm:w-auto">
+                <label for="date_from" class="block text-xs font-semibold text-gray-600 mb-1">From</label>
                 <input type="date" id="date_from" name="date_from" value="{{ request('date_from') }}" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                    class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
             </div>
-            <div>
-                <label for="date_to" class="block text-sm font-medium text-gray-700 mb-2">To</label>
+            <div class="w-full sm:w-auto">
+                <label for="date_to" class="block text-xs font-semibold text-gray-600 mb-1">To</label>
                 <input type="date" id="date_to" name="date_to" value="{{ request('date_to') }}" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                    class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
             </div>
-            <div class="md:col-span-5 flex flex-wrap gap-2 pt-2">
-                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg shadow hover:bg-amber-700" style="background-color:#f59e0b;color:#fff;border:1px solid #d97706;">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18L13 12.5V19l-2-1v-5.5z"/></svg>
-                    <span>Apply Filters</span>
-                </button>
-                <a href="{{ route('admin.bookings.index') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v6h6M20 20v-6h-6M5 19l14-14"/></svg>
-                    <span>Clear</span>
-                </a>
-            </div>
+            <button type="submit" class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-600 text-white text-sm rounded-lg shadow hover:bg-amber-700" style="background-color:#f59e0b;color:#fff;border:1px solid #d97706;white-space:nowrap;">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18L13 12.5V19l-2-1v-5.5z"/></svg>
+                <span>Filter</span>
+            </button>
+            <a href="{{ route('admin.bookings.index') }}" class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200" style="white-space:nowrap;">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v6h6M20 20v-6h-6M5 19l14-14"/></svg>
+                <span>Clear</span>
+            </a>
         </form>
     </div>
 
@@ -130,6 +131,7 @@
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Check-out</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -183,30 +185,81 @@
                                 {{ ucfirst($booking->status) }}
                             </span>
                         </td>
+                        <td class="px-6 py-4 text-sm">
+                            @php
+                                $paymentStatus = $booking->payment_status ?? 'pending';
+                                $paymentColors = [
+                                    'paid' => 'bg-green-100 text-green-800',
+                                    'pending' => 'bg-yellow-100 text-yellow-800',
+                                    'failed' => 'bg-red-100 text-red-800',
+                                ];
+                                $pColor = $paymentColors[$paymentStatus] ?? 'bg-gray-100 text-gray-800';
+                            @endphp
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold {{ $pColor }}">
+                                    {{ ucfirst($paymentStatus) }}
+                                </span>
+                                @if($paymentStatus !== 'paid')
+                                    <button type="button" 
+                                        onclick="openPaymentModal({{ $booking->id }}, '{{ addslashes($booking->display_customer_name) }}', {{ $booking->total_amount }})"
+                                        class="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded-lg transition text-xs font-medium">
+                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h10M5 21h14M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+                                        Pay
+                                    </button>
+                                @endif
+                            </div>
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex items-center gap-3">
                             <a href="{{ route('admin.bookings.show', $booking->id) }}" class="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.522 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7s-8.268-2.943-9.542-7z"/></svg>
                                 <span>View</span>
                             </a>
-                            @if($booking->status == 'confirmed')
-                            <form action="{{ route('admin.bookings.cancel', $booking->id) }}" method="POST" class="inline" 
-                                onsubmit="return confirm('Cancel this booking? Inventory will be restored.');">
-                                @csrf
-                                @method('POST')
-                                <button type="submit" class="text-rose-600 hover:text-rose-800 inline-flex items-center gap-1" style="color:#e11d48;">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true" style="color:#e11d48;">
-                                        <circle cx="12" cy="12" r="9" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 9l6 6m0-6l-6 6" />
-                                    </svg>
-                                    <span>Cancel</span>
+                            
+                            <!-- Status Menu Button -->
+                            <div class="relative">
+                                <button type="button" 
+                                    onclick="toggleActionMenu(this)" 
+                                    class="inline-flex items-center justify-center px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition" 
+                                    title="More actions">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
                                 </button>
-                            </form>
-                            @endif
+                                
+                                <!-- Dropdown Menu -->
+                                <div class="action-menu hidden absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-40">
+                                    @if($booking->status !== 'completed')
+                                        <button type="button" 
+                                            onclick="updateReservationStatus({{ $booking->id }}, 'completed')"
+                                            class="w-full text-left px-4 py-2 text-green-600 hover:bg-green-50 text-xs font-medium flex items-center gap-2">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            Mark as Completed
+                                        </button>
+                                    @endif
+                                    
+                                    @if($booking->status !== 'confirmed')
+                                        <button type="button" 
+                                            onclick="updateReservationStatus({{ $booking->id }}, 'confirmed')"
+                                            class="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-xs font-medium flex items-center gap-2">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            Confirm
+                                        </button>
+                                    @endif
+                                    
+                                    @if($booking->status !== 'cancelled')
+                                        <div class="border-t border-gray-100 my-1"></div>
+                                        <button type="button" 
+                                            onclick="cancelReservation({{ $booking->id }}, '{{ addslashes($booking->display_customer_name) }}')"
+                                            class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-xs font-medium flex items-center gap-2">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6l-1.41 1.41L8.18 7H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-1.18l.59-.59L14 6"/></svg>
+                                            Cancel
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                        <td colspan="9" class="px-6 py-12 text-center text-gray-500">
                             <div class="flex flex-col items-center gap-2">
                                 <i class="fas fa-inbox text-4xl"></i>
                                 <p class="text-sm">No bookings found for the selected filters.</p>
@@ -231,4 +284,205 @@
         @endif
     </div>
 </div>
+
+<!-- Payment Recording Modal -->
+<div id="paymentModal" class="flex fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Record Payment</h2>
+            <button type="button" onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="px-6 py-4 space-y-4">
+            <div>
+                <p class="text-sm text-gray-600">Customer</p>
+                <p id="paymentCustomerName" class="text-lg font-semibold text-gray-900">-</p>
+            </div>
+            
+            <div>
+                <p class="text-sm text-gray-600">Amount Due</p>
+                <p id="paymentAmount" class="text-2xl font-bold text-gray-900">₱0.00</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                <select id="paymentMethod" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Select Payment Method</option>
+                    <option value="cash">Cash</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="credit_card">Credit Card</option>
+                    <option value="paymongo">PayMongo</option>
+                    <option value="check">Check</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Reference/Note</label>
+                <input type="text" id="paymentReference" placeholder="e.g., Transaction ID, Check #, etc." 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+        </div>
+        
+        <div class="flex gap-3 px-6 py-4 border-t border-gray-200">
+            <button type="button" onclick="closePaymentModal()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
+                Cancel
+            </button>
+            <button type="button" onclick="submitPayment()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium">
+                Record Payment
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    let currentPaymentBookingId = null;
+    let currentPaymentAmount = 0;
+    
+    const statusLabels = {
+        'completed': 'Completed',
+        'confirmed': 'Confirmed',
+        'cancelled': 'Cancelled',
+        'pending': 'Pending'
+    };
+    
+    // Dropdown menu functions
+    function toggleActionMenu(button) {
+        event.stopPropagation();
+        const menu = button.nextElementSibling;
+        document.querySelectorAll('.action-menu').forEach(m => {
+            if (m !== menu) m.classList.add('hidden');
+        });
+        menu.classList.toggle('hidden');
+    }
+    
+    function closeAllMenus() {
+        document.querySelectorAll('.action-menu').forEach(m => {
+            m.classList.add('hidden');
+        });
+    }
+    
+    // Close menus on outside click
+    document.addEventListener('click', function(event) {
+        const isActionButton = event.target.closest('button[onclick*="toggleActionMenu"]');
+        if (!isActionButton) {
+            closeAllMenus();
+        }
+    });
+    
+    // Payment Modal Functions
+    function openPaymentModal(bookingId, customerName, amount) {
+        currentPaymentBookingId = bookingId;
+        currentPaymentAmount = amount;
+        document.getElementById('paymentCustomerName').textContent = customerName;
+        document.getElementById('paymentAmount').textContent = '₱' + amount.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        document.getElementById('paymentModal').classList.remove('hidden');
+        document.getElementById('paymentMethod').value = '';
+        document.getElementById('paymentReference').value = '';
+    }
+    
+    function closePaymentModal() {
+        document.getElementById('paymentModal').classList.add('hidden');
+        currentPaymentBookingId = null;
+    }
+    
+    async function submitPayment() {
+        const method = document.getElementById('paymentMethod').value;
+        const reference = document.getElementById('paymentReference').value;
+        
+        if (!method) {
+            toastr.error('Please select a payment method');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/admin/reservations/record-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token
+                },
+                body: JSON.stringify({
+                    booking_id: currentPaymentBookingId,
+                    method: method,
+                    amount: currentPaymentAmount,
+                    reference: reference
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                toastr.success('Payment recorded successfully!');
+                closePaymentModal();
+                location.reload();
+            } else {
+                toastr.error(data.message || 'Failed to record payment');
+            }
+        } catch (error) {
+            console.error('Payment submission error:', error);
+            toastr.error('An error occurred while recording payment');
+        }
+    }
+    
+    // Status Management Functions
+    async function updateReservationStatus(bookingId, newStatus) {
+        closeAllMenus();
+        
+        try {
+            const response = await fetch(`/admin/reservations/${bookingId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                toastr.success(`Booking marked as ${statusLabels[newStatus]}!`);
+                location.reload();
+            } else {
+                toastr.error(data.message || 'Failed to update status');
+            }
+        } catch (error) {
+            console.error('Status update error:', error);
+            toastr.error('An error occurred while updating status');
+        }
+    }
+    
+    async function cancelReservation(bookingId, customerName) {
+        if (!confirm(`Are you sure you want to cancel the booking for ${customerName}? Inventory will be restored.`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/admin/reservations/${bookingId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                toastr.success('Booking cancelled and inventory restored!');
+                location.reload();
+            } else {
+                toastr.error(data.message || 'Failed to cancel booking');
+            }
+        } catch (error) {
+            console.error('Cancellation error:', error);
+            toastr.error('An error occurred while cancelling the booking');
+        }
+    }
+</script>
 @endsection

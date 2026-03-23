@@ -391,11 +391,26 @@
                   updateAvailabilityText(dateStr);
               },
               onReady: function(selectedDates, dateStr, instance) {
-                  // Add id to month dropdown and year input for accessibility
-                  const monthSelect = instance.calendarContainer.querySelector('.flatpickr-monthDropdown-months');
-                  if (monthSelect) monthSelect.id = 'flatpickr-month';
-                  const yearInput = instance.calendarContainer.querySelector('.numInput.cur-year');
-                  if (yearInput) yearInput.id = 'flatpickr-year';
+                  const ensureFlatpickrAttrs = () => {
+                      document.querySelectorAll('input.numInput.cur-year:not([name])').forEach((input, idx) => {
+                          if (!input.id) input.id = `fp-year-input-${Date.now()}-${idx}`;
+                          if (!input.name) input.name = 'flatpickr_year';
+                      });
+                      document.querySelectorAll('input.numInput.cur-month:not([name])').forEach((input, idx) => {
+                          if (!input.id) input.id = `fp-month-input-${Date.now()}-${idx}`;
+                          if (!input.name) input.name = 'flatpickr_month';
+                      });
+                      document.querySelectorAll('select.flatpickr-monthDropdown-months:not([name])').forEach((select, idx) => {
+                          if (!select.id) select.id = `fp-month-select-${Date.now()}-${idx}`;
+                          if (!select.name) select.name = 'flatpickr_month_select';
+                      });
+                  };
+                  ensureFlatpickrAttrs();
+                  setTimeout(ensureFlatpickrAttrs, 50);
+                  setTimeout(ensureFlatpickrAttrs, 200);
+                  const observer = new MutationObserver(() => ensureFlatpickrAttrs());
+                  const calendarContainer = instance.calendarContainer;
+                  if (calendarContainer) observer.observe(calendarContainer, { childList: true, subtree: true });
               }
           });
 

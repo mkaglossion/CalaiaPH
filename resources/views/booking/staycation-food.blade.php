@@ -297,7 +297,7 @@
                                     {{-- Category badge --}}
                                     <div class="absolute bottom-4 left-4 z-10">
                                         <span class="px-3 py-1 bg-[#8f5d54] text-white text-sm font-semibold rounded-full">
-                                            {{ ucfirst($category) }}
+                                            {{ ucfirst(str_replace('_', ' ', $category)) }}
                                         </span>
                                     </div>
 

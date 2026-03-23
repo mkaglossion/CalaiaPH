@@ -314,12 +314,93 @@ class Booking extends Model
     }
 
     /**
+     * Relationship: Booking has many timelines
+     */
+    public function timelines()
+    {
+        return $this->hasMany(BookingTimeline::class);
+    }
+
+    /**
+     * Log a status change in the timeline
+     */
+    public function logStatusChange($oldStatus, $newStatus, $triggeredBy = 'system', $adminId = null)
+    {
+        BookingTimeline::log(
+            $this->id,
+            'status_changed',
+            "Status changed from " . ucfirst($oldStatus) . " to " . ucfirst($newStatus),
+            $triggeredBy,
+            $adminId,
+            $oldStatus,
+            $newStatus,
+            'status'
+        );
+    }
+
+    /**
+     * Log a payment event
+     */
+    public function logPaymentEvent($eventType, $amount, $method, $metadata = null)
+    {
+        BookingTimeline::log(
+            $this->id,
+            $eventType,
+            "Payment of ₱" . number_format($amount, 2) . " via " . ucfirst($method),
+            'system',
+            null,
+            null,
+            $method,
+            'payment_method',
+            $metadata
+        );
+    }
+
+    /**
+     * Log check-in event
+     */
+    public function logCheckIn()
+    {
+        BookingTimeline::log(
+            $this->id,
+            'checkin_completed',
+            'Guest checked in',
+            'system',
+            null,
+            null,
+            self::CHECKIN_STATUS_CHECKED_IN,
+            'checkin_status'
+        );
+    }
+
+    /**
+     * Log check-out event
+     */
+    public function logCheckOut()
+    {
+        BookingTimeline::log(
+            $this->id,
+            'checkout_completed',
+            'Guest checked out',
+            'system',
+            null,
+            null,
+            self::CHECKIN_STATUS_CHECKED_OUT,
+            'checkin_status'
+        );
+    }
+
+    /**
      * Cancel this booking and restore inventory
      */
     public function cancel()
     {
+        $oldStatus = $this->status;
         $this->status = 'cancelled';
         $this->save();
+        
+        // Log the cancellation
+        $this->logStatusChange($oldStatus, 'cancelled', 'system');
         
         $this->restoreInventory();
     }

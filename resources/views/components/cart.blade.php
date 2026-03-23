@@ -224,25 +224,6 @@
                 });
             },
 
-            async fetchCart() {
-                this.loading = true;
-                try {
-                    const res = await fetch('/cart', {
-                        method: 'GET',
-                        headers: { 'Accept': 'application/json' },
-                        credentials: 'same-origin'
-                    });
-
-                    if (res.ok) {
-                        this.cart = await res.json();
-                    }
-                } catch (err) {
-                    console.error('Failed to load cart:', err);
-                } finally {
-                    this.loading = false;
-                }
-            },
-
             async removeItem(id) {
                 const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                 if (!csrf) return;
@@ -258,7 +239,7 @@
                     });
 
                     if (res.ok) {
-                        await this.fetchCart();
+                        // Item removed from cart
                     }
                 } catch (err) {
                     console.error('Failed to remove item:', err);
@@ -267,17 +248,10 @@
 
             toggle() {
                 this.open = !this.open;
-                if (this.open) {
-                    this.fetchCart();
-                }
             },
 
             init() {
-                this.fetchCart();
-                // Listen for cart-updated event from other pages
-                document.addEventListener('cart-updated', () => {
-                    this.fetchCart();
-                });
+                // Cart component initialized
             }
         }
     }

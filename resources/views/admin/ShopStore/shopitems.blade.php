@@ -33,40 +33,43 @@
 
 <div
     x-data="productCrud()"
-    class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
+    class="p-3 sm:p-6 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
 >
 
-    <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
+    <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-2 sm:mb-3 tracking-tight text-gray-900">
         Store Management
     </h1>
-    <p class="text-gray-600 mb-10">Manage store products, categories, prices, and inventory.</p>
+    <p class="text-xs sm:text-sm md:text-base text-gray-600 mb-6 sm:mb-8 md:mb-10">Manage store products, categories, prices, and inventory.</p>
 
     {{-- ============================================================= --}}
     {{-- PRODUCTS SECTION --}}
     {{-- ============================================================= --}}
-    <div class="flex justify-between items-end mb-6">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Store Products</h2>
-            <p class="text-gray-500 text-sm">Manage all products available for purchase.</p>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Store Products</h2>
+            <p class="text-xs sm:text-sm text-gray-500">Manage all products available for purchase.</p>
         </div>
 
         <button 
             type="button" 
             @click="openCreate()" 
-            class="px-6 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition inline-flex items-center gap-2">
+            class="w-full sm:w-auto px-3 sm:px-6 py-2 sm:py-2 rounded-lg sm:rounded-xl bg-blue-600 text-white text-xs sm:text-sm font-medium shadow hover:bg-blue-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
             <i data-lucide="plus" class="w-4 h-4"></i>
-            Add New Product
+            <span class="sm:inline">Add New Product</span>
         </button>
     </div>
 
     {{-- Search Box --}}
-    <div class="mb-6">
+    <div class="mb-4 sm:mb-6">
         <input 
+            id="search_products"
+            name="search"
             x-model="searchQuery"
             @input="filterProducts()"
-            type="text" 
+            type="text"
+            autocomplete="off"
             placeholder="🔍 Search by name, category, or description..." 
-            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
+            class="w-full px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm border-2 border-gray-200 rounded-lg sm:rounded-xl focus:border-blue-500 focus:outline-none transition"
         >
     </div>
 
@@ -83,19 +86,19 @@
     @endif
 
     {{-- Products Table --}}
-    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+    <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
         <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead class="bg-gray-100/70 backdrop-blur">
                     <tr>
-                        <th class="w-12 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">#</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-gray-700">Title</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Category</th>
-                        <th class="w-32 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Price</th>
-                        <th class="w-32 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Stock</th>
-                        <th class="w-24 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Image</th>
-                        <th class="w-32 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap">Status</th>
-                        <th class="w-36 px-6 py-4 text-sm font-semibold text-gray-700 whitespace-nowrap text-right">Actions</th>
+                        <th class="w-8 sm:w-12 px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs sm:text-sm font-semibold text-gray-700 whitespace-nowrap">#</th>
+                        <th class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs sm:text-sm font-semibold text-gray-700">Title</th>
+                        <th class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs sm:text-sm font-semibold text-gray-700 whitespace-nowrap">Category</th>
+                        <th class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs sm:text-sm font-semibold text-gray-700 whitespace-nowrap">Price</th>
+                        <th class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs sm:text-sm font-semibold text-gray-700 whitespace-nowrap">Stock</th>
+                        <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs sm:text-sm font-semibold text-gray-700 whitespace-nowrap">Image</th>
+                        <th class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs sm:text-sm font-semibold text-gray-700 whitespace-nowrap">Status</th>
+                        <th class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs sm:text-sm font-semibold text-gray-700 whitespace-nowrap text-right">Actions</th>
                     </tr>
                 </thead>
             <tbody class="divide-y divide-gray-200">
@@ -107,33 +110,33 @@
                             '{{ ($product->category ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             '{{ ($product->description ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase())"
                     >
-                        <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ $products->firstItem() ? $products->firstItem() + $index : $index + 1 }}</td>
-                        <td class="px-6 py-4">
+                        <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 font-medium text-gray-900 whitespace-nowrap text-xs sm:text-sm">{{ $products->firstItem() ? $products->firstItem() + $index : $index + 1 }}</td>
+                        <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             <div class="min-w-0">
-                                <div class="text-sm font-medium text-gray-900 wrap-break-word">{{ $product->title }}</div>
+                                <div class="text-xs sm:text-sm font-medium text-gray-900 wrap-break-word">{{ $product->title }}</div>
                                 @if($product->description)
-                                    <div class="text-gray-600 text-sm wrap-break-word">{{ $product->description }}</div>
+                                    <div class="text-gray-600 text-xs sm:text-sm wrap-break-word">{{ $product->description }}</div>
                                 @endif
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                        <td class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4 whitespace-nowrap">
+                            <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
                                 {{ ucfirst($product->category) }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 font-medium text-gray-900">₱{{ number_format($product->price, 2) }}</td>
-                        <td class="px-6 py-4">
+                        <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 font-medium text-gray-900 text-xs sm:text-sm">₱{{ number_format($product->price, 2) }}</td>
+                        <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             @if($product->is_inventory_managed)
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                                     {{ $product->stock_quantity }} left
                                 </span>
                             @else
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                                <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
                                     Not tracked
                                 </span>
                             @endif
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             @if ($product->image)
                                 @php
                                     $imageSrc = $product->image;
@@ -141,26 +144,26 @@
                                         $imageSrc = asset('storage/' . $imageSrc);
                                     }
                                 @endphp
-                                <img src="{{ $imageSrc }}" alt="{{ $product->title }}" class="h-10 w-10 rounded object-cover" loading="lazy">
+                                <img src="{{ $imageSrc }}" alt="{{ $product->title }}" class="h-8 sm:h-10 w-8 sm:w-10 rounded object-cover" loading="lazy">
                             @else
                                 <span class="text-gray-400 text-xs">No image</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             @if ($product->is_active)
-                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                    <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> Active
+                                <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> <span class="hidden sm:inline">Active</span><span class="sm:hidden">✓</span>
                                 </span>
                             @else
-                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                    <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i> Inactive
+                                <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                    <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i> <span class="hidden sm:inline">Inactive</span><span class="sm:hidden">✕</span>
                                 </span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-right whitespace-nowrap">
-                            <div class="flex justify-end gap-4">
+                        <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-right whitespace-nowrap">
+                            <div class="flex flex-nowrap gap-1 sm:gap-2 md:gap-4 justify-end">
                                 <button type="button"
-                                        class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                                        class="text-xs sm:text-sm text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
                                         @click="openEdit({
                                             id: {{ $product->id }},
                                             title: @js($product->title),
@@ -172,23 +175,23 @@
                                             stock_quantity: {{ $product->stock_quantity ?? '' }},
                                             is_inventory_managed: {{ $product->is_inventory_managed ? 'true' : 'false' }}
                                         })">
-                                    Edit
+                                    <span class="hidden sm:inline">Edit</span><span class="sm:hidden">✎</span>
                                 </button>
                                 <button type="button"
-                                        class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                                        class="text-xs sm:text-sm text-red-600 font-semibold hover:text-red-700 hover:underline transition"
                                         onclick="deleteProductItem({{ $product->id }}, '{{ addslashes($product->title) }}')">
-                                    Delete
+                                    <span class="hidden sm:inline">Delete</span><span class="sm:hidden">✕</span>
                                 </button>
                             </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-6 py-6 text-center text-gray-500">
-                            <div class="flex flex-col items-center justify-center gap-3">
-                                <i data-lucide="inbox" class="w-8 h-8 text-gray-400"></i>
-                                <p>No products found.</p>
-                                <button type="button" @click="openCreate()" class="text-blue-600 hover:underline font-medium text-sm">Create your first product →</button>
+                        <td colspan="8" class="px-2 sm:px-3 md:px-6 py-4 sm:py-6 text-center text-gray-500">
+                            <div class="flex flex-col items-center justify-center gap-2 sm:gap-3">
+                                <i data-lucide="inbox" class="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"></i>
+                                <p class="text-xs sm:text-sm">No products found.</p>
+                                <button type="button" @click="openCreate()" class="text-blue-600 hover:underline font-medium text-xs sm:text-sm">Create your first product →</button>
                             </div>
                         </td>
                     </tr>
@@ -198,7 +201,7 @@
         </div>
 
         @if ($products->hasPages())
-            <div class="px-6 py-4 border-t border-gray-200">
+            <div class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 border-t border-gray-200">
                 {{ $products->links('pagination::tailwind') }}
             </div>
         @endif
@@ -211,29 +214,29 @@
         class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
         x-transition.opacity
     >
-        <div @click.away="showModal = false" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-3xl md:max-w-4xl max-h-[90vh] overflow-y-auto p-7 border border-gray-200">
+        <div @click.away="showModal = false" class="bg-white/90 backdrop-blur-lg rounded-lg sm:rounded-2xl shadow-xl w-full max-w-2xl sm:max-w-3xl md:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 md:p-8 border border-gray-200">
             <button 
                 @click="showModal = false"
-                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+                class="absolute top-2 sm:top-3 right-3 sm:right-4 text-gray-400 hover:text-gray-600 text-2xl sm:text-3xl leading-none"
             >&times;</button>
 
-            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editMode ? 'Edit Product' : 'Create Product'"></h3>
+            <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-900" x-text="editMode ? 'Edit Product' : 'Create Product'"></h3>
 
-            <form class="p-4 sm:p-6 space-y-6" @submit.prevent="submitForm">
+            <form class="p-0 space-y-4 sm:space-y-6" @submit.prevent="submitForm">
                 <div>
-                    <label for="product_title" class="block text-sm font-semibold text-gray-700 mb-2">Product Title *</label>
+                    <label for="product_title" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Product Title *</label>
                     <input type="text" x-model="form.title" id="product_title" name="title" required
                            autocomplete="name"
-                           class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                           class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                            placeholder="e.g., Fresh Organic Vegetables">
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                     <div>
-                        <label for="product_category" class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+                        <label for="product_category" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Category *</label>
                         <select x-model="form.category" id="product_category" name="category" required
                                 autocomplete="category"
-                                class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
                             <option value="">Select Category</option>
                             <option value="frozen">Frozen</option>
                             <option value="fresh">Fresh</option>
@@ -241,30 +244,30 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                     <div>
-                        <label for="product_price" class="block text-sm font-semibold text-gray-700 mb-2">Price (₱) *</label>
+                        <label for="product_price" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Price (₱) *</label>
                         <input type="number" step="0.01" min="0" x-model="form.price" id="product_price" name="price" required
                                autocomplete="price"
-                               class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                               class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                placeholder="1500">
                     </div>
 
                     <div>
-                        <label for="product_stock_quantity" class="block text-sm font-semibold text-gray-700 mb-2">Stock Quantity</label>
+                        <label for="product_stock_quantity" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Stock Quantity</label>
                         <input type="number" min="0" x-model="form.stock_quantity" id="product_stock_quantity" name="stock_quantity"
                                autocomplete="off"
-                               class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                               class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                placeholder="50">
                     </div>
 
                     <div class="flex items-end">
-                        <label for="product_is_inventory_managed" class="flex items-center gap-3 cursor-pointer">
+                        <label for="product_is_inventory_managed" class="flex items-center gap-2 sm:gap-3 cursor-pointer">
                             <input type="checkbox" x-model="form.is_inventory_managed" id="product_is_inventory_managed" name="is_inventory_managed"
                                    autocomplete="off"
                                    class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
                             <div>
-                                <p class="font-semibold text-gray-900">Manage Inventory</p>
+                                <p class="text-xs sm:text-sm font-semibold text-gray-900">Manage Inventory</p>
                                 <p class="text-xs text-gray-600">Track stock levels</p>
                             </div>
                         </label>
@@ -272,21 +275,21 @@
                 </div>
 
                 <div>
-                    <label for="product_description" class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                    <label for="product_description" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Description</label>
                     <textarea rows="4" x-model="form.description" id="product_description" name="description"
                               autocomplete="off"
-                              class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                              class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                               placeholder="Describe your product..."></textarea>
                 </div>
 
                 <div>
-                    <label for="product_image" class="block text-sm font-semibold text-gray-700 mb-2">Image</label>
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
+                    <label for="product_image" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Image</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
                          @click="$refs.imageInput.click()">
                         <template x-if="form.image_preview">
-                            <div class="mb-4 flex flex-col items-center gap-2">
-                                <img :src="form.image_preview" alt="Preview" class="max-h-40 rounded-lg shadow">
-                                <label class="inline-flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                            <div class="mb-3 sm:mb-4 flex flex-col items-center gap-2">
+                                <img :src="form.image_preview" alt="Preview" class="max-h-32 sm:max-h-40 rounded-lg shadow">
+                                <label class="inline-flex items-center gap-2 text-xs sm:text-sm text-gray-600 cursor-pointer">
                                     <input type="checkbox" x-model="form.remove_image" id="product_remove_image" name="remove_image" class="rounded">
                                     <span>Remove current image</span>
                                 </label>
@@ -294,9 +297,9 @@
                         </template>
 
                         <template x-if="!form.image_preview">
-                            <div class="flex flex-col items-center gap-2 text-center">
-                                <i data-lucide="cloud-upload" class="w-8 h-8 text-gray-400"></i>
-                                <p class="text-gray-600 font-medium">Click to upload or drag and drop</p>
+                            <div class="flex flex-col items-center gap-1 sm:gap-2 text-center">
+                                <i data-lucide="cloud-upload" class="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"></i>
+                                <p class="text-sm sm:text-base text-gray-600 font-medium">Click to upload or drag and drop</p>
                                 <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
                             </div>
                         </template>
@@ -305,25 +308,25 @@
                     </div>
                 </div>
 
-                <div class="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <label class="flex items-center gap-3 cursor-pointer">
+                <div class="space-y-2 sm:space-y-3 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <label class="flex items-center gap-2 sm:gap-3 cursor-pointer">
                         <input type="checkbox" x-model="form.is_active" id="product_is_active" name="is_active"
                                autocomplete="off"
                                class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <div>
-                            <p class="font-semibold text-gray-900">Active Status</p>
+                            <p class="text-xs sm:text-sm font-semibold text-gray-900">Active Status</p>
                             <p class="text-xs text-gray-600">When checked, this item will be visible on the store page</p>
                         </div>
                     </label>
                 </div>
 
-                <div class="flex justify-end space-x-3 pt-2">
-                    <button type="button" @click="showModal = false" class="px-6 py-2 border rounded-xl hover:bg-gray-100 transition">
+                <div class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 justify-end pt-2 sm:pt-4">
+                    <button type="button" @click="showModal = false" class="px-3 sm:px-6 py-2 text-xs sm:text-sm border rounded-lg sm:rounded-xl hover:bg-gray-100 transition">
                         Cancel
                     </button>
 
                     <button type="submit" :disabled="loading"
-                            class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition disabled:opacity-60"
+                            class="px-4 sm:px-6 py-2 text-xs sm:text-sm rounded-lg sm:rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition disabled:opacity-60"
                             x-text="loading ? 'Saving...' : (editMode ? 'Update Product' : 'Create Product')">
                     </button>
                 </div>

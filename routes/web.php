@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PagesController;
+use App\Http\Controllers\DiningReservationController;
 use App\Http\Controllers\WeatherController;
 
 // Admin Controllers
@@ -104,6 +105,7 @@ Route::get('/day-tour-swiper-images/daytour/{id}', [App\Http\Controllers\Admin\D
 Route::get('/staycation', [PagesController::class, 'staycation'])->name('staycation');
 Route::get('/activities', [PagesController::class, 'activities'])->name('activities');
 Route::get('/dining', [PagesController::class, 'dining'])->name('dining');
+Route::post('/dining/reserve', [DiningReservationController::class, 'store'])->name('dining.reserve');
 Route::get('/groups', [PagesController::class, 'groups'])->name('groups');
 Route::get('/special-events', [PagesController::class, 'specialEvents'])->name('special-events');
 Route::get('/farm', [PagesController::class, 'farm'])->name('farm');
@@ -140,6 +142,10 @@ Route::middleware(['api.throttle:api', 'api.security'])->group(function () {
     Route::get('api/pricing/holidays', [PricingConfigController::class, 'getHolidays'])->name('api.pricing.holidays');
     Route::get('api/pricing/weekend-config', [PricingConfigController::class, 'getWeekendConfig'])->name('api.pricing.weekendConfig');
 
+    // Real-time pricing endpoints for calendar
+    Route::post('api/pricing/day-tour', [BookingController::class, 'calculateDayTourPrice'])->name('api.pricing.dayTour');
+    Route::post('api/pricing/staycation', [BookingController::class, 'calculateStaycationPriceCalendar'])->name('api.pricing.staycationCalendar');
+
     // VAT rate configuration (public access for pricing calculations)
     Route::get('/api/vat-rate', function() {
         $vatService = app(\App\Services\VatService::class);
@@ -168,6 +174,7 @@ Route::get('/booking/staycation/activities', [BookingController::class, 'staycat
 Route::post('/booking/staycation/activities', [BookingController::class, 'storeStaycationActivities'])->name('booking.storeStaycationActivities');
 Route::get('/booking/staycation/payment', [BookingController::class, 'staycationPayment'])->name('booking.staycationPayment');
 Route::match(['GET', 'POST'], '/booking/staycation', [BookingController::class, 'staycation'])->name('booking.staycation');
+Route::post('/booking/save-session', [BookingController::class, 'saveBookingSession'])->name('booking.saveSession');
 Route::get('/booking/staycation/availability', [BookingController::class, 'staycationAvailability'])->name('booking.staycationAvailability');
 Route::get('/booking/staycation/food', [BookingController::class, 'staycationFood'])->name('booking.staycationFood');
 Route::post('/booking/staycation/food/save', [BookingController::class, 'saveFoodSelection'])->name('booking.saveFoodSelection');
@@ -408,6 +415,19 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::post('/{id}/cancel', [AdminBookingsController::class, 'cancel'])->name('admin.bookings.cancel');
     });
 
+    // Reservation Monitor
+    Route::prefix('reservations')->group(function () {
+        Route::get('/monitor', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'index'])->name('admin.reservations.monitor');
+        Route::get('/api/recent', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'getRecent'])->name('admin.reservations.recent');
+        Route::get('/booking/{id}', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'getBookingDetails'])->name('admin.reservations.booking-details');
+        Route::get('/{id}/timeline', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'timeline'])->name('admin.reservations.timeline');
+        Route::post('/record-payment', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'recordPayment'])->name('admin.reservations.record-payment');
+        Route::post('/bulk-update', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'bulkUpdate'])->name('admin.reservations.bulk-update');
+        Route::post('/export', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'export'])->name('admin.reservations.export');
+        Route::put('/{id}/status', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'updateStatus'])->name('admin.reservations.update-status');
+        Route::post('/{id}/cancel', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'cancelBooking'])->name('admin.reservations.cancel');
+    });
+
     // adminRoute('/staycations', AdminController::class, 'admin.staycations', 'staycations');
     // adminRoute('/activities', AdminController::class, 'admin.activities', 'activity');
     Route::prefix('/home')->group(function () {
@@ -437,6 +457,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
                 'index' => 'admin.foods.index',
                 'create' => 'admin.foods.create',
                 'store' => 'admin.foods.store',
+                'show' => 'admin.foods.show',
                 'edit' => 'admin.foods.edit',
                 'update' => 'admin.foods.update',
                 'destroy' => 'admin.foods.destroy'
@@ -606,6 +627,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::prefix('/settings')->group(function () {
         Route::get('/profile', [AdminSettingsController::class, 'edit'])->name('admin.settings.profile');
         Route::put('/profile', [AdminSettingsController::class, 'updateProfile'])->name('admin.settings.profile.update');
+        Route::get('/password', [AdminSettingsController::class, 'edit'])->name('admin.settings.password');
         Route::put('/password', [AdminSettingsController::class, 'updatePassword'])->name('admin.settings.password.update');
         Route::put('/preferences', [AdminSettingsController::class, 'updatePreferences'])->name('admin.settings.preferences.update');
         Route::get('/activity-log', [AdminSettingsController::class, 'showActivityLog'])->name('admin.settings.activity-log');
@@ -655,6 +677,10 @@ Route::middleware(['api.throttle:booking', 'api.security'])->group(function () {
     Route::get('/api/booking/dayvisit/availability', [DayVisitController::class, 'getAvailabilityApi'])->name('api.dayvisit.availability');
     Route::get('/api/booking/dayvisit/activities', [DayVisitController::class, 'getActivitiesApi'])->name('api.booking.dayvisit.activities');
 });
+
+// PayMongo Webhook Route (excluded from CSRF & rate limiting for webhook security)
+use App\Http\Controllers\Api\PaymongoWebhookController;
+Route::post('/api/webhooks/paymongo', [PaymongoWebhookController::class, 'handle'])->name('api.webhooks.paymongo')->withoutMiddleware('VerifyCsrfToken');
 
 // Upload API Routes (5 requests per minute - very strict for file uploads)
 Route::group(['middleware' => ['api.throttle:upload', 'api.security', 'xss']], function () {

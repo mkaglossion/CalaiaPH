@@ -54,39 +54,43 @@
 <div
     x-data="foodCrud()"
     x-init="setupKeyboardShortcuts()"
-    class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
+    class="p-3 sm:p-6 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-lg sm:rounded-xl"
 >
 
-    <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
+    <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-2 sm:mb-3 tracking-tight text-gray-900">
         Food Management
     </h1>
-    <p class="text-gray-600 mb-10">Manage food & beverage items, categories, prices, and inventory.</p>
+    <p class="text-gray-600 text-sm sm:text-base mb-6 sm:mb-10">Manage food & beverage items, categories, prices, and inventory.</p>
 
     {{-- ============================================================= --}}
     {{-- FOOD ITEMS SECTION --}}
     {{-- ============================================================= --}}
-    <div class="flex justify-between items-end mb-6">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sm:gap-0 mb-4 sm:mb-6">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Food & Beverage Items</h2>
-            <p class="text-gray-500 text-sm">Manage all food and beverage items available for booking.</p>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Food & Beverage Items</h2>
+            <p class="text-gray-500 text-xs sm:text-sm">Manage all food and beverage items available for booking.</p>
         </div>
 
         <button 
             type="button" 
             @click="openCreate()" 
-            class="px-6 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition inline-flex items-center gap-2">
+            class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-blue-600 text-white text-sm sm:text-base font-medium shadow hover:bg-blue-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
             <i data-lucide="plus" class="w-4 h-4"></i>
-            Add New Food Item
+            <span class="hidden sm:inline">Add New Food Item</span>
+            <span class="sm:hidden">Add Item</span>
         </button>
     </div>
     
-    <div class="mb-6">
+    <div class="mb-4 sm:mb-6">
         <input 
+            id="search_foods"
+            name="search"
             x-model="searchQuery"
             @input="filterFoods()"
-            type="text" 
+            type="text"
+            autocomplete="off"
             placeholder="🔍 Search by name or category..." 
-            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
+            class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:border-blue-500 focus:outline-none transition"
         >
     </div>
 
@@ -100,102 +104,104 @@
     @endif
 
     {{-- Food Items Table --}}
-    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
-        <div class="overflow-x-auto lg:overflow-visible">
-            <table class="w-full text-left table-fixed lg:table-auto">
+    <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+        <div class="overflow-x-auto md:overflow-visible">
+            <table class="w-full text-left text-xs sm:text-sm">
                 <thead class="bg-gray-100/70 backdrop-blur">
                     <tr>
-                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700 w-12">#</th>
-                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700 min-w-37.5">Name</th>
-                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700">Category</th>
-                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700">Price</th>
-                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700">Stock</th>
-                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700 w-20">Image</th>
-                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700">Status</th>
-                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700">Special</th>
-                        <th class="px-2 lg:px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
+                        <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 w-8 sm:w-12">#</th>
+                        <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 min-w-32 sm:min-w-40">Name</th>
+                        <th class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Category</th>
+                        <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-center">Price</th>
+                        <th class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Stock</th>
+                        <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 w-16 sm:w-20">Image</th>
+                        <th class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Status</th>
+                        <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Special</th>
+                        <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-right">Actions</th>
                     </tr>
                 </thead>
             <tbody class="divide-y divide-gray-200">
                 @forelse ($foods as $index => $food)
                     <tr 
-                        class="hover:bg-gray-50/70 transition"
+                        class="hover:bg-gray-50/70 transition border-b border-gray-200 last:border-b-0"
                         x-show="!searchQuery || '{{ ($food->name ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase()) || '{{ ($food->category ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase())"
                         x-cloak
                     >
-                        <td class="px-2 lg:px-6 py-4 font-medium text-gray-900">{{ $foods->firstItem() ? $foods->firstItem() + $index : $index + 1 }}</td>
-                        <td class="px-2 lg:px-6 py-4">
-                            <div class="min-w-0">
-                                <div class="text-sm font-medium text-gray-900 wrap-break-word">{{ $food->name }}</div>
+                        <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 font-medium text-gray-900">{{ $foods->firstItem() ? $foods->firstItem() + $index : $index + 1 }}</td>
+                        <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4">
+                            <div class="min-w-0 max-w-xs sm:max-w-sm md:max-w-none">
+                                <div class="text-xs sm:text-sm font-medium text-gray-900 truncate">{{ $food->name }}</div>
                                 @if($food->description)
-                                    <div class="text-gray-600 text-sm wrap-break-word line-clamp-2">{{ $food->description }}</div>
+                                    <div class="text-gray-500 text-xs line-clamp-2 sm:line-clamp-1">{{ $food->description }}</div>
                                 @endif
                             </div>
                         </td>
-                        <td class="px-2 lg:px-6 py-4">
+                        <td class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             <div class="flex flex-wrap gap-1">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 truncate">
                                     {{ ucfirst($food->category) }}
                                 </span>
                                 @if($food->subcategory)
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    <span class="hidden sm:inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 truncate">
                                         {{ ucfirst($food->subcategory) }}
                                     </span>
                                 @endif
                             </div>
                         </td>
-                        <td class="px-2 lg:px-6 py-4 font-medium text-gray-900">₱{{ number_format($food->price, 2) }}</td>
-                        <td class="px-2 lg:px-6 py-4">
+                        <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 font-medium text-gray-900 text-center">₱{{ number_format($food->price, 2) }}</td>
+                        <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             @if($food->is_inventory_managed)
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                                     {{ $food->stock_quantity }} left
                                 </span>
                             @else
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                                <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
                                     Not tracked
                                 </span>
                             @endif
                         </td>
-                        <td class="px-2 lg:px-6 py-4">
+                        <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             @if ($food->image)
-                                <img src="{{ $food->image }}" alt="{{ $food->name }}" class="h-10 w-10 rounded object-cover" loading="lazy">
+                                <img src="{{ $food->image }}" alt="{{ $food->name }}" class="h-8 sm:h-10 w-8 sm:w-10 rounded object-cover" loading="lazy">
                             @else
                                 <span class="text-gray-400 text-xs">No image</span>
                             @endif
                         </td>
-                        <td class="px-2 lg:px-6 py-4">
+                        <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             @if ($food->is_active)
-                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                    <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> Active
+                                <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> <span class="hidden sm:inline">Active</span><span class="sm:hidden">✓</span>
                                 </span>
                             @else
-                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                    <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i> Inactive
+                                <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                    <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i> <span class="hidden sm:inline">Inactive</span><span class="sm:hidden">✕</span>
                                 </span>
                             @endif
                         </td>
-                        <td class="px-2 lg:px-6 py-4">
+                        <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             @if ($food->is_special_option)
-                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                     <i data-lucide="star" class="w-3 h-3 mr-1"></i> Special
                                 </span>
                             @else
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                                <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
                                     Regular
                                 </span>
                             @endif
                         </td>
-                        <td class="px-2 lg:px-6 py-4 text-right">
-                            <div class="flex justify-end gap-2 lg:gap-4 flex-wrap">
+                        <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-right sticky right-0 bg-white/60 md:bg-transparent z-10 md:z-auto">
+                            <div class="flex justify-end gap-2 sm:gap-3 md:gap-4 flex-nowrap">
                                 <button type="button"
-                                        class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition text-sm"
-                                        @click="openEdit({{ $food->id }})">
-                                    Edit
+                                        class="text-blue-600 font-semibold hover:text-blue-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline"
+                                        @click="openEdit({{ $food->id }})"
+                                        title="Edit">
+                                    <span class="hidden sm:inline">Edit</span><span class="sm:hidden">✎</span>
                                 </button>
                                 <button type="button"
-                                        class="text-red-600 font-semibold hover:text-red-700 hover:underline transition text-sm"
-                                        @click="deleteFood({{ $food->id }}, '{{ $food->name }}')">
-                                    Delete
+                                        class="text-red-600 font-semibold hover:text-red-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline"
+                                        @click="deleteFood({{ $food->id }}, '{{ $food->name }}')"
+                                        title="Delete">
+                                    <span class="hidden sm:inline">Delete</span><span class="sm:hidden">✕</span>
                                 </button>
                             </div>
                         </td>
@@ -227,32 +233,32 @@
     {{-- Modal --}}
     <div 
         x-show="showModal"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4"
         x-transition.opacity
     >
-        <div @click.away="showModal = false" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-3xl md:max-w-4xl max-h-[90vh] overflow-y-auto p-7 border border-gray-200">
+        <div @click.away="showModal = false" class="bg-white/90 backdrop-blur-lg rounded-lg sm:rounded-2xl shadow-xl w-full max-w-2xl sm:max-w-3xl md:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 md:p-7 border border-gray-200 my-4">
             <button 
                 @click="showModal = false"
-                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+                class="absolute top-2 right-3 sm:top-3 sm:right-4 text-gray-400 hover:text-gray-600 text-2xl sm:text-3xl leading-none"
             >&times;</button>
 
-            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editMode ? 'Edit Food Item' : 'Create Food Item'"></h3>
+            <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-900 pr-8" x-text="editMode ? 'Edit Food Item' : 'Create Food Item'"></h3>
 
-            <form class="p-4 sm:p-6 space-y-6" @submit.prevent="submitForm">
+            <form class="space-y-4 sm:space-y-6" @submit.prevent="submitForm">
                 <div>
-                    <label for="food_name" class="block text-sm font-semibold text-gray-700 mb-2">Food Name *</label>
+                    <label for="food_name" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Food Name *</label>
                     <input type="text" x-model="form.name" id="food_name" name="name" required
                            autocomplete="name"
-                           class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                           class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                            placeholder="e.g., Breakfast Buffet">
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
                     <div>
-                        <label for="food_category" class="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+                        <label for="food_category" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Category *</label>
                         <select x-model="form.category" id="food_category" name="category" required
                                 autocomplete="category"
-                                class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
                             <option value="">Select Category</option>
                             <option value="messhall">Messhall</option>
                             <option value="cook_your_own">Cook Your Own</option>
@@ -260,38 +266,38 @@
                     </div>
 
                     <div>
-                        <label for="food_subcategory" class="block text-sm font-semibold text-gray-700 mb-2">Subcategory</label>
+                        <label for="food_subcategory" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Subcategory</label>
                         <input type="text" x-model="form.subcategory" id="food_subcategory" name="subcategory"
                                autocomplete="off"
-                               class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                               class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                placeholder="e.g., beef, pork, vegetables">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                     <div>
-                        <label for="food_price" class="block text-sm font-semibold text-gray-700 mb-2">Price (₱) *</label>
+                        <label for="food_price" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Price (₱) *</label>
                         <input type="number" step="0.01" min="0" x-model="form.price" id="food_price" name="price" required
                                autocomplete="price"
-                               class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                               class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                placeholder="1500">
                     </div>
 
                     <div>
-                        <label for="food_stock_quantity" class="block text-sm font-semibold text-gray-700 mb-2">Stock Quantity</label>
+                        <label for="food_stock_quantity" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Stock Quantity</label>
                         <input type="number" min="0" x-model="form.stock_quantity" id="food_stock_quantity" name="stock_quantity"
                                autocomplete="off"
-                               class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                               class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                placeholder="50">
                     </div>
 
                     <div class="flex items-end">
-                        <label for="food_is_inventory_managed" class="flex items-center gap-3 cursor-pointer">
+                        <label for="food_is_inventory_managed" class="flex items-center gap-2 sm:gap-3 cursor-pointer">
                             <input type="checkbox" x-model="form.is_inventory_managed" id="food_is_inventory_managed" name="is_inventory_managed"
                                    autocomplete="off"
                                    class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
                             <div>
-                                <p class="font-semibold text-gray-900">Manage Inventory</p>
+                                <p class="font-semibold text-xs sm:text-sm text-gray-900">Manage Inventory</p>
                                 <p class="text-xs text-gray-600">Track stock levels</p>
                             </div>
                         </label>
@@ -299,21 +305,21 @@
                 </div>
 
                 <div>
-                    <label for="food_description" class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                    <label for="food_description" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Description</label>
                     <textarea rows="4" x-model="form.description" id="food_description" name="description"
                               autocomplete="off"
-                              class="w-full px-6 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                              class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                               placeholder="Describe your food item..."></textarea>
                 </div>
 
                 <div>
-                    <label for="food_image" class="block text-sm font-semibold text-gray-700 mb-2">Image</label>
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
+                    <label for="food_image" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Image</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
                          @click="$refs.imageInput.click()">
                         <template x-if="form.image_preview">
-                            <div class="mb-4 flex flex-col items-center gap-2">
-                                <img :src="form.image_preview" alt="Preview" class="max-h-40 rounded-lg shadow">
-                                <label class="inline-flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                            <div class="mb-3 sm:mb-4 flex flex-col items-center gap-2">
+                                <img :src="form.image_preview" alt="Preview" class="max-h-32 sm:max-h-40 rounded-lg shadow">
+                                <label class="inline-flex items-center gap-2 text-xs sm:text-sm text-gray-600 cursor-pointer">
                                     <input type="checkbox" x-model="form.remove_image" id="food_remove_image" name="remove_image" class="rounded">
                                     <span>Remove current image</span>
                                 </label>
@@ -321,9 +327,9 @@
                         </template>
 
                         <template x-if="!form.image_preview">
-                            <div class="flex flex-col items-center gap-2 text-center">
-                                <i data-lucide="cloud-upload" class="w-8 h-8 text-gray-400"></i>
-                                <p class="text-gray-600 font-medium">Click to upload or drag and drop</p>
+                            <div class="flex flex-col items-center gap-1 sm:gap-2 text-center">
+                                <i data-lucide="cloud-upload" class="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"></i>
+                                <p class="text-sm sm:text-base text-gray-600 font-medium">Click to upload or drag and drop</p>
                                 <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
                             </div>
                         </template>
@@ -332,34 +338,34 @@
                     </div>
                 </div>
 
-                <div class="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <label class="flex items-center gap-3 cursor-pointer">
+                <div class="space-y-3 p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <label class="flex items-center gap-2 sm:gap-3 cursor-pointer">
                         <input type="checkbox" x-model="form.is_active" id="food_is_active" name="is_active"
                                autocomplete="off"
                                class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <div>
-                            <p class="font-semibold text-gray-900">Active Status</p>
+                            <p class="font-semibold text-xs sm:text-sm text-gray-900">Active Status</p>
                             <p class="text-xs text-gray-600">When checked, this item will be visible on the booking page</p>
                         </div>
                     </label>
-                    <label class="flex items-center gap-3 cursor-pointer">
+                    <label class="flex items-center gap-2 sm:gap-3 cursor-pointer">
                         <input type="checkbox" x-model="form.is_special_option" id="food_is_special_option" name="is_special_option"
                                autocomplete="off"
                                class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
                         <div>
-                            <p class="font-semibold text-gray-900">Special Option</p>
+                            <p class="font-semibold text-xs sm:text-sm text-gray-900">Special Option</p>
                             <p class="text-xs text-gray-600">Mark this as a special option (e.g., Cook Your Own)</p>
                         </div>
                     </label>
                 </div>
 
-                <div class="flex justify-end space-x-3 pt-2">
-                    <button type="button" @click="showModal = false" class="px-6 py-2 border rounded-xl hover:bg-gray-100 transition">
+                <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-2">
+                    <button type="button" @click="showModal = false" class="px-4 sm:px-6 py-2 text-sm sm:text-base border rounded-lg sm:rounded-xl hover:bg-gray-100 transition">
                         Cancel
                     </button>
 
                     <button type="submit" :disabled="loading"
-                            class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition disabled:opacity-60"
+                            class="px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg sm:rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition disabled:opacity-60"
                             x-text="loading ? 'Saving...' : (editMode ? 'Update Food Item' : 'Create Food Item')">
                     </button>
                 </div>
@@ -492,7 +498,7 @@
                     this.resetForm();
                     this.loading = true;
                     
-                    fetch(`/admin/foods/${foodId}`, {
+                    fetch(`{{ route('admin.foods.show', ':id') }}`.replace(':id', foodId), {
                         headers: { 'Accept': 'application/json' },
                         credentials: 'same-origin'
                     })

@@ -590,8 +590,12 @@ class PagesController extends Controller
     {
         $messHallFoods = Food::with('swiperImages')
             ->where('category', 'messhall')
+            ->where('is_active', true)
             ->get();
-        $cookYourOwnFoods = Food::with('swiperImages')->where('category', 'cook_your_own')->get();
+        $cookYourOwnFoods = Food::with('swiperImages')
+            ->where('category', 'cook_your_own')
+            ->where('is_active', true)
+            ->get();
         $diningCategoryImages = DiningCategoryImage::all()->keyBy('category');
         $diningDetails = [
             'Harvest Your Own – Pick and cook farm-fresh ingredients',
@@ -650,7 +654,24 @@ class PagesController extends Controller
 
     public function shop()
     {
-        return $this->renderPage(FarmSwiperImage::class, FarmText::class, 'shop', 'shop');
+        $swiperImages = \App\Models\FarmSwiperImage::all();
+        $texts = \App\Models\FarmText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
+            return [strtolower($field) => $content];
+        })->toArray();
+
+        // Fetch active products by category
+        $allProducts = \App\Models\Product::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('created_at')
+            ->get();
+
+        $frozenProducts = $allProducts->where('category', 'frozen');
+        $freshProducts = $allProducts->where('category', 'fresh');
+
+        $data = compact('swiperImages', 'texts', 'frozenProducts', 'freshProducts');
+        $data['active'] = 'shop';
+
+        return view('shop', $data);
     }
 
     public function stay()

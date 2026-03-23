@@ -121,6 +121,17 @@ class CartController extends Controller
             'image'    => 'nullable|string',
             'quantity' => 'required|integer|min:1',
             'isDining' => 'nullable',
+            'meal_period' => 'nullable|string',
+            'reservation_date' => 'nullable|string',
+            'reservation_time' => 'nullable|string',
+            'adults' => 'nullable|integer',
+            'children' => 'nullable|integer',
+            'salutation' => 'nullable|string',
+            'first_name' => 'nullable|string',
+            'last_name' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'email' => 'nullable|string',
+            'special_requests' => 'nullable|string',
         ]);
 
         // Check inventory for products
@@ -154,6 +165,20 @@ class CartController extends Controller
                 $cart[$id]['image'] = $data['image'];
             }
             $cart[$id]['isDining'] = ($data['isDining'] ?? '0') == '1';
+            // Store dining reservation details
+            if ($cart[$id]['isDining']) {
+                $cart[$id]['meal_period'] = $data['meal_period'] ?? '';
+                $cart[$id]['reservation_date'] = $data['reservation_date'] ?? '';
+                $cart[$id]['reservation_time'] = $data['reservation_time'] ?? '';
+                $cart[$id]['adults'] = $data['adults'] ?? 0;
+                $cart[$id]['children'] = $data['children'] ?? 0;
+                $cart[$id]['salutation'] = $data['salutation'] ?? '';
+                $cart[$id]['first_name'] = $data['first_name'] ?? '';
+                $cart[$id]['last_name'] = $data['last_name'] ?? '';
+                $cart[$id]['phone'] = $data['phone'] ?? '';
+                $cart[$id]['email'] = $data['email'] ?? '';
+                $cart[$id]['special_requests'] = $data['special_requests'] ?? '';
+            }
         } else {
             // new item
             $cart[$id] = [
@@ -164,6 +189,20 @@ class CartController extends Controller
                 'quantity' => $data['quantity'],
                 'isDining' => ($data['isDining'] ?? '0') == '1',
             ];
+            // Store dining reservation details for new items
+            if (($data['isDining'] ?? '0') == '1') {
+                $cart[$id]['meal_period'] = $data['meal_period'] ?? '';
+                $cart[$id]['reservation_date'] = $data['reservation_date'] ?? '';
+                $cart[$id]['reservation_time'] = $data['reservation_time'] ?? '';
+                $cart[$id]['adults'] = $data['adults'] ?? 0;
+                $cart[$id]['children'] = $data['children'] ?? 0;
+                $cart[$id]['salutation'] = $data['salutation'] ?? '';
+                $cart[$id]['first_name'] = $data['first_name'] ?? '';
+                $cart[$id]['last_name'] = $data['last_name'] ?? '';
+                $cart[$id]['phone'] = $data['phone'] ?? '';
+                $cart[$id]['email'] = $data['email'] ?? '';
+                $cart[$id]['special_requests'] = $data['special_requests'] ?? '';
+            }
         }
 
         session()->put('cart', $cart);

@@ -10,24 +10,7 @@
         <p class="text-gray-500 mt-1">Manage your admin account and preferences</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Left Column - Navigation -->
-        <div class="space-y-2">
-            <nav class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 space-y-1">
-                <a href="{{ route('admin.settings.profile') }}" class="block px-4 py-2 rounded-lg bg-blue-50 text-blue-600 font-medium">
-                    Profile Information
-                </a>
-                <a href="#password" class="block px-4 py-2 rounded-lg hover:bg-gray-50 text-gray-700 transition">
-                    Change Password
-                </a>
-                <a href="{{ route('admin.settings.activity-log') }}" class="block px-4 py-2 rounded-lg hover:bg-gray-50 text-gray-700 transition">
-                    Activity Log
-                </a>
-            </nav>
-        </div>
-
-        <!-- Right Column - Forms -->
-        <div class="lg:col-span-2 space-y-6">
+    <div class="space-y-6">
             <!-- Profile Information Form -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
                 <h2 class="text-xl font-semibold text-gray-900 mb-6">Profile Information</h2>
@@ -186,7 +169,6 @@
                     </div>
                 </form>
             </div>
-        </div>
     </div>
 </div>
 
