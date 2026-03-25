@@ -12,6 +12,7 @@
 
   $nav = [
     ['key' => 'home',          'label' => 'Home',          'href' => url('/')],
+    ['key' => 'packages',      'label' => 'Packages',      'href' => url('/packages')],
     ['key' => 'daytour',       'label' => 'Day Tour',      'href' => url('/daytour')],
     ['key' => 'staycation',    'label' => 'Where to Stay', 'href' => url('/staycation')],
     ['key' => 'activities',    'label' => 'What to Do',    'href' => url('/activities')],
@@ -93,24 +94,24 @@
     </div>
 
     <!-- ✅ NAV + ACTIONS ROW (DESKTOP) -->
-    <div class="hidden md:flex items-center justify-between pb-4">
+    <div class="hidden md:flex items-center justify-between pb-4 gap-4">
 
       <!-- left spacer (for balance) -->
-      <div class="w-16"></div>
+      <div class="w-24"></div>
 
-      <!-- NAV centered -->
-      <nav class="flex-1 flex justify-center gap-5">
+      <!-- NAV centered with shrink -->
+      <nav class="flex justify-center gap-5 shrink-0">
         @foreach ($nav as $item)
           <a
             href="{{ $item['href'] }}"
             @class([
-              'relative uppercase font-medium tracking-wide transition',
+              'relative uppercase font-medium text-base tracking-wide transition',
               'text-white hover:text-white/80',
             ])
             aria-current="{{ $active === $item['key'] ? 'page' : 'false' }}"
           >
             <span @class([
-              'inline-block py-1',
+              'inline-block py-1 whitespace-nowrap',
               // underline without layout shift
               'after:absolute after:left-0 after:-bottom-1 after:h-[1px] after:w-full after:bg-white after:content-[\'\'] after:transition after:opacity-0',
               $active === $item['key'] ? 'border-b-2 border-white' : 'hover:after:opacity-100'
@@ -122,7 +123,7 @@
       </nav>
 
       <!-- Actions right -->
-      <div class="flex items-center gap-6">
+      <div class="flex items-center justify-end gap-5 shrink-0">
         @auth
           <!-- User dropdown -->
           <div class="relative" x-data="{ userOpen: false }">
@@ -188,16 +189,16 @@
 
           <x-cart />
         @else
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-4">
             <button
               @click="$store.modals.showLogin = true"
-              class="text-white hover:text-white/80 font-medium transition"
+              class="text-white hover:text-white/80 font-medium text-base transition px-4 py-2 whitespace-nowrap"
             >
               Log In
             </button>
             <button
               @click="$store.modals.showSignup = true"
-              class="bg-white text-brand px-5 py-2 rounded-lg font-semibold hover:bg-gray-100 transition shadow-md"
+              class="bg-white text-brand px-6 py-2 rounded-lg font-semibold text-base hover:bg-gray-100 transition shadow-md whitespace-nowrap"
             >
               Sign Up
             </button>

@@ -15,6 +15,7 @@ class Product extends Model
         'is_active',
         'stock_quantity',
         'is_inventory_managed',
+        'sort_order',
     ];
 
     protected $casts = [

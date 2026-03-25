@@ -489,7 +489,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span>₱${grandTotal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                     </div>
-                    <p class="text-sm text-gray-500">You will be taken to payment next.</p>
                 </div>`,
                 showCancelButton: true,
                 confirmButtonText: 'Yes, proceed',

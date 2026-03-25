@@ -15,6 +15,11 @@ class DayTour extends Model
         'price_configs' => 'array',
     ];
 
+    public function texts()
+    {
+        return $this->hasMany(DayTourText::class, 'daytour_id');
+    }
+
     public function activities()
     {
         return $this->belongsToMany(Activity::class, 'day_tour_activity');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DayTour;
 use App\Models\DayTourInventory;
+use App\Models\PackageInventory;
 use App\Services\DayTourInventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -367,6 +368,115 @@ class DayTourInventoryController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to store inventory: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Create new inventory record
+     */
+    public function storeInventory(Request $request)
+    {
+        $validated = $request->validate([
+            'package_id' => 'required|integer|exists:packages,id',
+            'date' => 'required|date|after_or_equal:today',
+            'max_groups' => 'required|integer|min:1|max:20',
+            'booked_groups' => 'nullable|integer|min:0',
+            'is_blocked' => 'nullable|boolean',
+            'block_reason' => 'nullable|string|max:255'
+        ]);
+
+        try {
+            $packageId = $validated['package_id'];
+            $date = $validated['date'];
+
+            // Check if inventory already exists for this date
+            $existing = \App\Models\PackageInventory::where('package_id', $packageId)
+                ->whereDate('date', $date)
+                ->first();
+
+            if ($existing) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Inventory already exists for this date',
+                    'errors' => ['date' => ['Inventory already exists for this date']]
+                ], 422);
+            }
+
+            // Create new inventory
+            $inventory = \App\Models\PackageInventory::create([
+                'package_id' => $packageId,
+                'date' => $date,
+                'max_groups' => $validated['max_groups'],
+                'booked_groups' => $validated['booked_groups'] ?? 0,
+                'is_blocked' => $validated['is_blocked'] ?? false
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inventory created successfully',
+                'data' => $inventory
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Error creating inventory: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create inventory: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update inventory record
+     */
+    public function updateInventoryRecord(Request $request, PackageInventory $inventory)
+    {
+        $validated = $request->validate([
+            'max_groups' => 'required|integer|min:1|max:20',
+            'booked_groups' => 'nullable|integer|min:0',
+            'is_blocked' => 'nullable|boolean',
+            'block_reason' => 'nullable|string|max:255'
+        ]);
+
+        try {
+            $inventory->update([
+                'max_groups' => $validated['max_groups'],
+                'booked_groups' => $validated['booked_groups'] ?? $inventory->booked_groups,
+                'is_blocked' => $validated['is_blocked'] ?? $inventory->is_blocked,
+                'block_reason' => $validated['block_reason'] ?? $inventory->block_reason
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inventory updated successfully',
+                'data' => $inventory
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating inventory: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update inventory: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete inventory record
+     */
+    public function destroyInventory(PackageInventory $inventory)
+    {
+        try {
+            $inventory->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inventory deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error deleting inventory: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete inventory: ' . $e->getMessage()
             ], 500);
         }
     }

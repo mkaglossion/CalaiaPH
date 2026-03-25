@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\AdminPagesController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\BookingSettingsController;
 use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\DayTourInventoryController;
 
 use App\Http\Controllers\Admin\HomeSwiperImageController;
 use App\Http\Controllers\Admin\DayTourSwiperImageController;
@@ -35,13 +36,16 @@ use App\Http\Controllers\Admin\StaycationSwiperImageController;
 use App\Http\Controllers\Admin\MenuSwiperImageController;
 use App\Http\Controllers\Admin\EventSwiperImageController;
 use App\Http\Controllers\Admin\FarmInfoSwiperImageController;
-
+use App\Http\Controllers\Admin\PackageImageController;
+use App\Http\Controllers\Admin\PackageSwiperImageController;
+use App\Http\Controllers\Admin\PackageController;use App\Http\Controllers\Admin\PackageInventoryController;
 use App\Http\Controllers\Admin\HomeTextController;
 use App\Http\Controllers\Admin\DayTourTextController;
 use App\Http\Controllers\Admin\StayTextController;
 use App\Http\Controllers\Admin\DoTextController;
 use App\Http\Controllers\Admin\FoodTextController;
 use App\Http\Controllers\Admin\SpecialTextController;
+use App\Http\Controllers\Admin\PackageTextController;
 use App\Http\Controllers\Admin\FarmTextController;
 use App\Http\Controllers\Admin\ActivityTextController;
 use App\Http\Controllers\Admin\StaycationTextController;
@@ -78,6 +82,7 @@ use App\Http\Controllers\BookingCalendarController;
 use App\Http\Controllers\CheckInOutController;
 use Illuminate\Support\Facades\Session;
 use App\Http\Controllers\DayVisitController;
+use App\Http\Controllers\PaymentController;
 // ========== Root Route ==========
 
 // Debug route to check maintenance mode cache
@@ -102,6 +107,7 @@ Route::get('/sustainability', [PagesController::class, 'sustainability'])->name(
 Route::get('/our-services', [PagesController::class, 'ourServices'])->name('our-services');
 Route::get('/daytour', [DayTourController::class, 'index'])->name('daytour');
 Route::get('/day-tour-swiper-images/daytour/{id}', [App\Http\Controllers\Admin\DayTourSwiperImageController::class, 'getImages'])->name('public.day-tour-swiper-images.get');
+Route::get('/packages', [PagesController::class, 'packages'])->name('packages');
 Route::get('/staycation', [PagesController::class, 'staycation'])->name('staycation');
 Route::get('/activities', [PagesController::class, 'activities'])->name('activities');
 Route::get('/dining', [PagesController::class, 'dining'])->name('dining');
@@ -439,6 +445,34 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/day-tour/days', [AdminController::class, 'dayTourDays'])->name('admin.day-tour.days');
         Route::get('/day-tour/inventory', [AdminController::class, 'dayTourInventory'])->name('admin.day-tour.inventory');
     });
+    Route::prefix('/packages')->group(function () {
+        // Explicit routes for package CRUD
+        Route::get('/', [PackageController::class, 'index'])->name('admin.packages.index');
+        Route::get('/create', [PackageController::class, 'create'])->name('admin.packages.create');
+        Route::post('/', [PackageController::class, 'store'])->name('admin.packages.store');
+        Route::get('/{package}/edit', [PackageController::class, 'edit'])->name('admin.packages.edit');
+        Route::put('/{package}', [PackageController::class, 'update'])->name('admin.packages.update');
+        Route::delete('/{package}', [PackageController::class, 'destroy'])->name('admin.packages.destroy');
+        
+        Route::post('{package}/toggle-status', [PackageController::class, 'toggleStatus'])->name('admin.packages.toggle-status');
+        
+        // Inventory Routes (must come after other routes)
+        Route::get('/inventory', [PackageInventoryController::class, 'index'])->name('admin.packages.inventory');
+        Route::post('/inventory', [PackageInventoryController::class, 'storeInventory'])->name('admin.packages.inventory.store');
+        Route::put('/inventory/{inventory}', [PackageInventoryController::class, 'updateInventoryRecord'])->name('admin.packages.inventory.update');
+        Route::delete('/inventory/{inventory}', [PackageInventoryController::class, 'destroyInventory'])->name('admin.packages.inventory.destroy');
+        Route::get('/information', [AdminPagesController::class, 'packages'])->name('admin.packages.packagesInfos');
+        Route::resource('swiper-images', PackageSwiperImageController::class, ['names' => [
+            'store' => 'package-swiper-images.store',
+            'update' => 'package-swiper-images.update',
+            'destroy' => 'package-swiper-images.destroy'
+        ]]);
+        Route::resource('texts', PackageTextController::class, ['names' => [
+            'store' => 'package-texts.store',
+            'update' => 'package-texts.update',
+            'destroy' => 'package-texts.destroy'
+        ]]);
+    });
     Route::prefix('/stay')->group(function () {
         Route::get('/where-to-stay', [AdminPagesController::class, 'whereToStay'])->name('admin.stay.wheretostay');
         Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.stay.staycations');
@@ -568,6 +602,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::resource('do-swiper-images', DoSwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('food-swiper-images', FoodSwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('special-swiper-images', SpecialSwiperImageController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('package-images', PackageImageController::class)->only(['store', 'update', 'destroy']);
+    Route::get('package-images/package/{id}', [PackageImageController::class, 'getImages'])->name('package-images.get');
     Route::resource('farm-swiper-images', FarmSwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('activity-image', ActivitySwiperImageController::class)->only(['store', 'update', 'destroy']);
     Route::resource('staycation-image', StaycationSwiperImageController::class, [
@@ -703,3 +739,8 @@ Route::group(['middleware' => ['api.throttle:api_strict', 'api.security', 'xss']
     Route::put('/api/special-events/{event}', [EventApiController::class, 'update']);
     Route::delete('/api/special-events/{event}', [EventApiController::class, 'destroy']);
 });
+
+// ========== Payment Callback Routes ==========
+Route::get('/booking/payment-confirmation/{booking}', [PaymentController::class, 'showConfirmation'])->name('booking.payment-confirmation');
+Route::get('/booking/payment-success', [PaymentController::class, 'paymentSuccess'])->name('booking.payment-success');
+Route::get('/booking/payment-cancelled', [PaymentController::class, 'paymentCancelled'])->name('booking.payment-cancelled');

@@ -1,11 +1,11 @@
 {
   "resources/js/app.js": {
-    "file": "assets/app-BhT7N0Ai.js",
+    "file": "assets/app-DQkCqAzw.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "css": [
-      "assets/app-CnmOdVFh.css"
+      "assets/app-1kimBXHR.css"
     ]
   },
   "resources/js/booking/staycation.js": {

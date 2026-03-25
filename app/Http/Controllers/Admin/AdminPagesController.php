@@ -17,13 +17,18 @@ use App\Models\FarmSwiperImage;
 use App\Models\FarmText;
 use App\Models\HomeSwiperImage;
 use App\Models\HomeText;
+use App\Models\PackageSwiperImage;
+use App\Models\PackageText;
 use App\Models\EventSection;
+use App\Models\PackageImage;
+use App\Models\PackageContent;
 
 class AdminPagesController extends Controller
 {
     private $pageConfigs = [
         'home' => [HomeSwiperImage::class, HomeText::class, 'admin.home.home'],
         'dayTour' => [DayTourSwiperImage::class, DayTourText::class, 'admin.dayTour.daytour'],
+        'packages' => [PackageSwiperImage::class, PackageText::class, 'admin.packages.packagesInfos'],
         'whereToStay' => [StaySwiperImage::class, StayText::class, 'admin.whereToStay.wheretostay'],
         'whatToDo' => [DoSwiperImage::class, DoText::class, 'admin.whatToDo.whattodo'],
         'foodAndBeverage' => [FoodSwiperImage::class, FoodText::class, 'admin.foodBeverages.foodandbeverage'],
@@ -49,6 +54,8 @@ class AdminPagesController extends Controller
         [$imageModel, $textModel, $view] = $this->pageConfigs[$page];
         if ($page === 'dayTour') {
             $images = $imageModel::whereNull('daytour_id')->get();
+        } elseif ($page === 'packages') {
+            $images = $imageModel::all();
         } elseif ($page === 'foodAndBeverage') {
             // Only show hero swiper images (food_id is null), not Learn More modal images
             $images = $imageModel::whereNull('food_id')->get();
@@ -66,3 +73,4 @@ class AdminPagesController extends Controller
         return view('admin.home.items', compact('sections'));
     }
 }
+

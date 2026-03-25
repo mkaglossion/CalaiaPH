@@ -401,4 +401,10 @@ class AdminController extends Controller
         $events = Event::all();
         return view('admin.specialEvents.manager', compact('events'));
     }
+
+    public function packages()
+    {
+        $packages = DayTour::with(['texts', 'swiperImages', 'activities'])->get();
+        return view('admin.packages.index', compact('packages'));
+    }
 }

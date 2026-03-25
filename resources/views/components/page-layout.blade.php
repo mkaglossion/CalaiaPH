@@ -123,28 +123,21 @@
     @stack('scripts')
 
     <script>
-    // Fix for flushLogs fetch error - aggressive override
+    // Fix for flushLogs fetch error - provide safe defaults
     (function() {
-      // Override flushLogs before any other scripts can define it
-      Object.defineProperty(window, 'flushLogs', {
-        value: function() {
-          console.log('flushLogs called - disabled to prevent fetch errors');
+      // Provide safe defaults if not already defined
+      if (typeof window.flushLogs === 'undefined') {
+        window.flushLogs = function() {
+          console.log('flushLogs called');
           return Promise.resolve();
-        },
-        writable: false,
-        enumerable: true,
-        configurable: true
-      });
+        };
+      }
 
-      // Also override any scheduleFlush function that might be calling flushLogs
-      Object.defineProperty(window, 'scheduleFlush', {
-        value: function() {
-          console.log('scheduleFlush called - disabled');
-        },
-        writable: false,
-        enumerable: true,
-        configurable: true
-      });
+      if (typeof window.scheduleFlush === 'undefined') {
+        window.scheduleFlush = function() {
+          console.log('scheduleFlush called');
+        };
+      }
     })();
 
     // Fallback: warn if Vite JS fails to load (e.g., broken build, bad cache)

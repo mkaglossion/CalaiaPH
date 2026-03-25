@@ -22,6 +22,8 @@ use App\Models\Menu;
 use App\Models\MenuText;
 use App\Models\Event;
 use App\Models\DayTour;
+use App\Models\Package;
+use App\Models\PackageSwiperImage;
 use App\Models\Product;
 use App\Models\Activity;
 use App\Models\Staycation;
@@ -712,5 +714,20 @@ class PagesController extends Controller
     public function termsService()
     {
         return view('pages.terms-service', ['active' => 'terms-service']);
+    }
+
+    public function packages()
+    {
+        $packages = Package::with(['contents', 'images', 'inventory'])
+            ->where('is_active', true)
+            ->get();
+        
+        $swiperImages = PackageSwiperImage::all();
+        $texts = [];
+        
+        $data = compact('packages', 'swiperImages', 'texts');
+        $data['active'] = 'packages';
+        
+        return view('packages', $data);
     }
 }
