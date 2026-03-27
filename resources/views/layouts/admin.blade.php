@@ -90,8 +90,7 @@
           ]],
           ['title'=>'Bookings','icon'=>'calendar-check','route'=>'admin.bookings.*','sub'=>[
             ['label'=>'All Bookings','route'=>'admin.bookings.index'],
-            ['label'=>'Staycation Inventory','route'=>'admin.bookings.inventory'],
-            ['label'=>'Daytour Inventory','route'=>'admin.day-tour.inventory'],
+            ['label'=>'Unified Inventory','route'=>'admin.bookings.inventory'],
           ]],
           ['title'=>'Reservation Monitor','icon'=>'bell-ring','route'=>'admin.reservations.*','sub'=>[
             ['label'=>'Monitor','route'=>'admin.reservations.monitor'],
@@ -103,7 +102,6 @@
           ['title'=>'Packages','icon'=>'package','route'=>'admin.packages.*','sub'=>[
             ['label'=>'All Packages','route'=>'admin.packages.index'],
             ['label'=>'Page Information','route'=>'admin.packages.packagesInfos'],
-            ['label'=>'Inventory','route'=>'admin.packages.inventory'],
           ]],
           ['title'=>'Where to Stay','icon'=>'building','route'=>'admin.stay.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.stay.wheretostay'],
@@ -117,6 +115,10 @@
             ['label'=>'Pages Information','route'=>'admin.food.foodandbeverage'],
             ['label'=>'Category Images','route'=>'admin.dining.category-images.index'],
             ['label'=>'Food Management','route'=>'admin.foods.index'],
+          ]],
+          ['title'=>'Special Events','icon'=>'star','route'=>'admin.specialEvents.*','sub'=>[
+            ['label'=>'Pages Information','route'=>'admin.specialEvents.specialevents'],
+            ['label'=>'Manager','route'=>'admin.specialEvents.manager'],
           ]],
           ['title'=>'Our Farm','icon'=>'leaf','route'=>'admin.farm.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.farm.ourfarm'],
@@ -566,6 +568,7 @@
   </div>
 
   {{-- Vendor JS --}}
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>

@@ -411,7 +411,7 @@
 
                 <div class="pricing-row total">
                     <span class="pricing-label">Total</span>
-                    <span class="pricing-value">₱{{ number_format($subtotal, 2) }}</span>
+                    <span class="pricing-value">₱{{ number_format($subtotal + $vatAmount, 2) }}</span>
                 </div>
 
                 <div class="vat-note">

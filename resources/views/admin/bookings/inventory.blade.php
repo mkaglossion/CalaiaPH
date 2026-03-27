@@ -140,10 +140,11 @@
 
     <!-- Inventory per Staycation -->
     @foreach($inventoryData as $data)
+    @if(in_array($data['staycation']->name, ['BYOT', 'Car Camping']))
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="bg-linear-to-r from-[#8f5d54] to-[#7a4d45] px-6 py-4">
             <h2 class="text-xl font-semibold text-white">{{ $data['staycation']->name }}</h2>
-            <p class="text-sm text-white/80 mt-1">Available slots for this staycation</p>
+            <p class="text-sm text-white/80 mt-1">Quantity: {{ $data['staycation']->quantity }} room{{ $data['staycation']->quantity > 1 ? 's' : '' }}</p>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -220,11 +221,11 @@
                     <p class="text-lg font-semibold text-gray-900">{{ $data['inventories']->count() }}</p>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-500">Total Booked</p>
+                    <p class="text-xs text-gray-500">Total Booked Slots</p>
                     <p class="text-lg font-semibold text-red-600">{{ $data['inventories']->sum('booked_quantity') }}</p>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-500">Total Available</p>
+                    <p class="text-xs text-gray-500">Total Available Slots</p>
                     <p class="text-lg font-semibold text-green-600">{{ $data['inventories']->sum('available_quantity') }}</p>
                 </div>
                 <div>

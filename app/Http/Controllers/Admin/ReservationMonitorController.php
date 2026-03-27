@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\BookingTimeline;
 use App\Models\DiningReservation;
+use App\Models\AdminActivityLog;
 use App\Services\BookingStatusService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -23,42 +24,7 @@ class ReservationMonitorController extends Controller
         $perPage = 25; // Items per page - increased to show more
         $page = $request->input('page', 1);
 
-        // Get recent bookings
-        $bookingsQuery = Booking::query();
-        
-        if ($statusFilter !== 'all') {
-            $bookingsQuery->where('status', $statusFilter);
-        }
-
-        $bookings = $bookingsQuery
-            ->select('id', 'transaction_id', 'customer_name', 'customer_email', 'customer_phone', 
-                     'booking_type', 'checkin_date', 'checkout_date', 'total_amount', 'status', 'payment_status', 'payment_method', 'created_at')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Transform bookings to arrays
-        $bookingsArray = $bookings->map(function ($booking) {
-            return [
-                'id' => $booking->id,
-                'type' => 'Booking',
-                'booking_type_display' => ucfirst(str_replace('_', ' ', $booking->booking_type)),
-                'name' => $booking->customer_name,
-                'email' => $booking->customer_email,
-                'phone' => $booking->customer_phone,
-                'reference' => $booking->transaction_id,
-                'date' => $booking->checkin_date,
-                'checkout_date' => $booking->checkout_date,
-                'amount' => $booking->total_amount,
-                'status' => $booking->status,
-                'payment_status' => $booking->payment_status,
-                'payment_method' => $booking->payment_method,
-                'created_at' => $booking->created_at,
-                'route' => route('admin.bookings.show', $booking->id),
-            ];
-        })->toArray();
-
-        // Get recent dining reservations
-        $diningArray = [];
+        // Get ONLY dining reservations (no bookings)
         $diningQuery = DiningReservation::query();
         
         if ($statusFilter !== 'all') {
@@ -68,13 +34,13 @@ class ReservationMonitorController extends Controller
         $dining = $diningQuery
                 ->select('id', 'first_name', 'last_name', 'email', 'phone', 
                         'reservation_date', 'reservation_time', 'adults', 'status', 'created_at')
-                ->orderBy('created_at', 'desc')
+                ->orderBy('created_at', 'asc')
                 ->get();
 
         // Transform dining to arrays
-        $diningArray = $dining->map(function ($res) {
+        $allReservations = $dining->map(function ($res) {
             return [
-                'id' => $res->id,
+                'id' => 'dining_' . $res->id,
                 'type' => 'Dining',
                 'booking_type_display' => 'Dining Reservation',
                 'name' => $res->first_name . ' ' . $res->last_name,
@@ -89,12 +55,6 @@ class ReservationMonitorController extends Controller
                 'route' => '#', // Link to dining if available
             ];
         })->toArray();
-
-        // Merge arrays and sort by created_at
-        $allReservations = array_merge($bookingsArray, $diningArray);
-        usort($allReservations, function ($a, $b) {
-            return $b['created_at']->timestamp <=> $a['created_at']->timestamp;
-        });
 
         // Create manual pagination
         $total = count($allReservations);
@@ -114,7 +74,7 @@ class ReservationMonitorController extends Controller
         // Statistics
         $stats = [
             'total_bookings' => Booking::count(),
-            'pending_bookings' => Booking::where('status', 'confirmed')->count(),
+            'pending_bookings' => Booking::where('status', 'pending')->count(),
             'completed_bookings' => Booking::where('status', 'completed')->count(),
             'cancelled_bookings' => Booking::where('status', 'cancelled')->count(),
             'total_dining' => DiningReservation::count(),
@@ -169,6 +129,35 @@ class ReservationMonitorController extends Controller
     }
 
     /**
+     * Get fresh statistics (used for real-time updates)
+     */
+    public function getStats()
+    {
+        // Show ONLY dining reservation stats
+        $stats = [
+            'total_bookings' => 0, // Hidden - dining only
+            'pending_bookings' => 0, // Hidden - dining only
+            'completed_bookings' => 0, // Hidden - dining only
+            'cancelled_bookings' => 0, // Hidden - dining only
+            'total_dining' => DiningReservation::count(),
+            'pending_dining' => DiningReservation::where('status', 'pending')->count(),
+            'confirmed_dining' => DiningReservation::where('status', 'confirmed')->count(),
+            'cancelled_dining' => DiningReservation::where('status', 'cancelled')->count(),
+        ];
+
+        $revenueStats = [
+            'today' => 0, // No revenue for dining
+            'this_month' => 0, // No revenue for dining
+            'total' => 0, // No revenue for dining
+        ];
+
+        return response()->json([
+            'stats' => $stats,
+            'revenueStats' => $revenueStats,
+        ]);
+    }
+
+    /**
      * Record a payment for a booking
      */
     public function recordPayment(Request $request)
@@ -183,11 +172,24 @@ class ReservationMonitorController extends Controller
 
             $booking = Booking::findOrFail($validated['booking_id']);
 
-            // Update payment status
-            $booking->update([
-                'payment_status' => 'paid',
-                'payment_method' => $validated['payment_method'],
-            ]);
+            // Use BookingStatusService to record payment with timeline logging
+            $success = BookingStatusService::updatePaymentStatus(
+                $booking,
+                'paid',
+                $validated['amount'],
+                $validated['payment_method'],
+                $validated['notes'] ?? null,
+                'admin',
+                Auth::id(),
+                $validated['notes'] ? ['notes' => $validated['notes']] : []
+            );
+
+            if (!$success) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to record payment. Please try again.'
+                ], 400);
+            }
 
             return response()->json([
                 'success' => true,
@@ -199,6 +201,10 @@ class ReservationMonitorController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
+            Log::error('Error recording payment', [
+                'booking_id' => $request->booking_id ?? null,
+                'error' => $e->getMessage(),
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Error recording payment: ' . $e->getMessage()
@@ -211,7 +217,14 @@ class ReservationMonitorController extends Controller
      */
     public function getBookingDetails($id)
     {
-        $booking = Booking::findOrFail($id);
+        $booking = Booking::find($id);
+        
+        if (!$booking) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking not found. It may have been deleted.',
+            ], 404);
+        }
         
         return response()->json([
             'id' => $booking->id,
@@ -235,12 +248,30 @@ class ReservationMonitorController extends Controller
                 'notes' => 'nullable|string|max:500',
             ]);
 
-            $booking = Booking::findOrFail($id);
+            $booking = Booking::find($id);
+            
+            if (!$booking) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Booking not found. It may have been deleted.',
+                ], 404);
+            }
 
-            // Update status
-            $booking->update([
-                'status' => $validated['status'],
-            ]);
+            // Use BookingStatusService to update status with timeline logging
+$success = BookingStatusService::updateStatus(
+                $booking,
+                $validated['status'],
+                'admin',
+                Auth::id(),
+                $validated['notes'] ? ['notes' => $validated['notes']] : []
+            );
+
+            if (!$success) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid status transition for current booking status.',
+                ], 400);
+            }
 
             return response()->json([
                 'success' => true,
@@ -248,6 +279,74 @@ class ReservationMonitorController extends Controller
                 'status' => $booking->status,
             ]);
         } catch (\Exception $e) {
+            Log::error('Error updating booking status', [
+                'booking_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update dining reservation status
+     */
+    public function updateDiningStatus(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'status' => 'required|in:pending,confirmed,completed,cancelled',
+                'notes' => 'nullable|string|max:500',
+            ]);
+
+            $dining = DiningReservation::find($id);
+            
+            if (!$dining) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dining reservation not found. It may have been deleted.',
+                ], 404);
+            }
+
+            // Store old status for activity log
+            $oldStatus = $dining->status;
+
+            // Update status
+            $dining->update([
+                'status' => $validated['status'],
+            ]);
+
+            // Log the action - with proper error handling
+            try {
+                AdminActivityLog::create([
+                    'user_id' => Auth::id(),
+                    'action' => 'dining_reservation_status_update',
+                    'description' => "Updated dining reservation #{$id} status from {$oldStatus} to {$validated['status']}",
+                    'model_type' => 'DiningReservation',
+                    'model_id' => $id,
+                    'changes' => ['old_status' => $oldStatus, 'new_status' => $validated['status']],
+                    'ip_address' => $request->ip(),
+                ]);
+            } catch (\Exception $logError) {
+                Log::warning('Could not create activity log for dining status update', [
+                    'dining_id' => $id,
+                    'log_error' => $logError->getMessage(),
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Dining reservation marked as " . ucfirst($validated['status']),
+                'status' => $dining->status,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating dining status', [
+                'dining_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating status: ' . $e->getMessage()
@@ -265,7 +364,13 @@ class ReservationMonitorController extends Controller
                 'reason' => 'nullable|string|max:500',
             ]);
 
-            $booking = Booking::findOrFail($id);
+            $booking = Booking::find($id);
+            if (!$booking) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Booking not found. It may have been deleted.',
+                ], 404);
+            }
 
             if ($booking->status === 'cancelled') {
                 return response()->json([
@@ -297,7 +402,13 @@ class ReservationMonitorController extends Controller
     public function timeline($bookingId)
     {
         try {
-            $booking = Booking::findOrFail($bookingId);
+            $booking = Booking::find($bookingId);
+            if (!$booking) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Booking not found. It may have been deleted.',
+                ], 404);
+            }
             $timeline = BookingTimeline::where('booking_id', $bookingId)
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -336,8 +447,10 @@ class ReservationMonitorController extends Controller
     public function bulkUpdate(Request $request)
     {
         $validated = $request->validate([
-            'ids' => 'required|array|min:1',
-            'ids.*' => 'integer|exists:bookings,id',
+            'booking_ids' => 'nullable|array',
+            'booking_ids.*' => 'integer|exists:bookings,id',
+            'dining_ids' => 'nullable|array',
+            'dining_ids.*' => 'integer|exists:dining_reservations,id',
             'status' => 'required|in:confirmed,completed,cancelled',
         ]);
 
@@ -345,8 +458,11 @@ class ReservationMonitorController extends Controller
             $updated = 0;
             $failed = [];
             $adminId = Auth::id();
+            $bookingIds = $validated['booking_ids'] ?? [];
+            $diningIds = $validated['dining_ids'] ?? [];
 
-            foreach ($validated['ids'] as $bookingId) {
+            // Update bookings
+            foreach ($bookingIds as $bookingId) {
                 $booking = Booking::find($bookingId);
                 if ($booking) {
                     if (BookingStatusService::updateStatus(
@@ -357,13 +473,33 @@ class ReservationMonitorController extends Controller
                     )) {
                         $updated++;
                     } else {
-                        $failed[] = $bookingId;
+                        $failed[] = 'booking_' . $bookingId;
                     }
                 }
             }
 
+            // Update dining reservations
+            foreach ($diningIds as $diningId) {
+                $dining = DiningReservation::find($diningId);
+                if ($dining) {
+                    $dining->update(['status' => $validated['status']]);
+                    $updated++;
+                    
+                    // Log the action
+                    AdminActivityLog::create([
+                        'user_id' => $adminId,
+                        'action' => 'dining_reservation_status_update',
+                        'description' => "Updated dining reservation #{$diningId} status to {$validated['status']}",
+                        'model_type' => 'DiningReservation',
+                        'model_id' => $diningId,
+                        'changes' => ['status' => $validated['status']],
+                    ]);
+                }
+            }
+
             Log::info("Bulk status update completed", [
-                'total' => count($validated['ids']),
+                'bookings_total' => count($bookingIds),
+                'dining_total' => count($diningIds),
                 'updated' => $updated,
                 'failed' => count($failed),
                 'status' => $validated['status'],
@@ -372,7 +508,7 @@ class ReservationMonitorController extends Controller
 
             return response()->json([
                 'success' => count($failed) === 0,
-                'message' => $updated . ' booking(s) updated successfully' . (count($failed) > 0 ? ', ' . count($failed) . ' failed' : ''),
+                'message' => $updated . ' reservation(s) updated successfully' . (count($failed) > 0 ? ', ' . count($failed) . ' failed' : ''),
                 'updated' => $updated,
                 'failed' => $failed,
             ]);
@@ -380,7 +516,7 @@ class ReservationMonitorController extends Controller
             Log::error('Bulk update failed', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update bookings',
+                'message' => 'Failed to update reservations',
             ], 500);
         }
     }
@@ -390,66 +526,137 @@ class ReservationMonitorController extends Controller
      */
     public function export(Request $request)
     {
-        $validated = $request->validate([
-            'ids' => 'required|array|min:1',
-            'ids.*' => 'integer|exists:bookings,id',
-        ]);
-
         try {
-            $bookings = Booking::whereIn('id', $validated['ids'])->get();
-
-            // Create CSV
-            $filename = 'reservations-' . now()->format('Y-m-d-His') . '.csv';
-            $handle = fopen('php://memory', 'r+');
-
-            // Write headers
-            fputcsv($handle, [
-                'ID',
-                'Reference',
-                'Customer Name',
-                'Email',
-                'Phone',
-                'Check-In Date',
-                'Check-Out Date',
-                'Booking Type',
-                'Total Amount',
-                'Payment Status',
-                'Booking Status',
-                'Created At',
+            $validated = $request->validate([
+                'ids' => 'required|array|min:1',
+                'ids.*' => 'string',
             ]);
 
-            // Write data
-            foreach ($bookings as $booking) {
-                fputcsv($handle, [
-                    $booking->id,
-                    $booking->transaction_id,
-                    $booking->customer_name,
-                    $booking->customer_email,
-                    $booking->customer_phone,
-                    $booking->checkin_date,
-                    $booking->checkout_date,
-                    ucfirst(str_replace('_', ' ', $booking->booking_type)),
-                    $booking->total_amount,
-                    ucfirst($booking->payment_status),
-                    ucfirst($booking->status),
-                    $booking->created_at->toDateTimeString(),
+            $bookingIds = [];
+            $diningIds = [];
+
+            // Parse prefixed IDs
+            foreach ($validated['ids'] as $prefixedId) {
+                [$type, $id] = explode('_', $prefixedId, 2);
+                if ($type === 'booking') {
+                    $bookingIds[] = (int)$id;
+                } elseif ($type === 'dining') {
+                    $diningIds[] = (int)$id;
+                }
+            }
+
+            // Fetch bookings
+            $bookings = [];
+            if (!empty($bookingIds)) {
+                $bookings = Booking::whereIn('id', $bookingIds)
+                    ->select('id', 'transaction_id', 'customer_name', 'customer_email', 'customer_phone', 
+                             'checkin_date', 'checkout_date', 'booking_type', 'total_amount', 
+                             'payment_status', 'status', 'created_at')
+                    ->orderBy('id', 'desc')
+                    ->get()
+                    ->map(fn($b) => [
+                        'type' => 'Booking',
+                        'name' => $b->customer_name,
+                        'contact' => $b->customer_email . ' / ' . $b->customer_phone,
+                        'reference' => $b->transaction_id,
+                        'date' => $b->checkin_date ? \Carbon\Carbon::parse($b->checkin_date)->format('M d, Y') : '',
+                        'status' => ucfirst($b->status),
+                        'payment' => ucfirst($b->payment_status) . ' - ₱' . number_format($b->total_amount, 2),
+                        'time' => $b->checkout_date ? 'to ' . \Carbon\Carbon::parse($b->checkout_date)->format('M d, Y') : '',
+                    ])->toArray();
+            }
+
+            // Fetch dining reservations
+            $dining = [];
+            if (!empty($diningIds)) {
+                $dining = DiningReservation::whereIn('id', $diningIds)
+                    ->select('id', 'first_name', 'last_name', 'email', 'phone', 
+                             'reservation_date', 'reservation_time', 'adults', 'status', 'created_at')
+                    ->orderBy('id', 'desc')
+                    ->get()
+                    ->map(fn($d) => [
+                        'type' => 'Dining',
+                        'name' => $d->first_name . ' ' . $d->last_name,
+                        'contact' => $d->email . ' / ' . $d->phone,
+                        'reference' => 'DR-' . str_pad($d->id, 6, '0', STR_PAD_LEFT),
+                        'date' => $d->reservation_date ? \Carbon\Carbon::parse($d->reservation_date)->format('M d, Y') : '',
+                        'status' => ucfirst($d->status),
+                        'payment' => $d->adults . ' guest' . ($d->adults > 1 ? 's' : ''),
+                        'time' => $d->reservation_time ? date('H:i', strtotime($d->reservation_time)) : '',
+                    ])->toArray();
+            }
+
+            // Merge both arrays
+            $allReservations = array_merge($bookings, $dining);
+
+            if (empty($allReservations)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No reservations found for export',
                 ]);
             }
 
-            rewind($handle);
-            $csv = stream_get_contents($handle);
-            fclose($handle);
+            $filename = 'reservations-' . now()->format('Y-m-d-His') . '.csv';
 
-            return response($csv, 200, [
-                'Content-Type' => 'text/csv',
-                'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Export failed', ['error' => $e->getMessage()]);
-            return response()->json([
+            // Clear any buffered output
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+
+            // Set headers
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Cache-Control: no-cache, no-store, must-revalidate');
+            header('Pragma: no-cache');
+            header('Expires: 0');
+
+            // Open output stream
+            $output = fopen('php://output', 'w');
+
+            // Write CSV headers
+            $csvHeaders = ['Type', 'Name', 'Contact', 'Reference', 'Date', 'Status', 'Payment', 'Time'];
+            fputcsv($output, $csvHeaders);
+
+            // Write data rows
+            foreach ($allReservations as $row) {
+                fputcsv($output, [
+                    $row['type'],
+                    $row['name'],
+                    $row['contact'],
+                    $row['reference'],
+                    $row['date'],
+                    $row['status'],
+                    $row['payment'],
+                    $row['time'],
+                ]);
+            }
+
+            fclose($output);
+            exit();
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            $errors = \Illuminate\Support\Arr::flatten($e->errors());
+            header('Content-Type: application/json');
+            echo json_encode([
                 'success' => false,
-                'message' => 'Failed to export reservations',
-            ], 500);
+                'message' => 'Validation error: ' . implode(', ', $errors),
+            ]);
+            exit();
+        } catch (\Exception $e) {
+            Log::error('Export failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Failed to export reservations: ' . $e->getMessage(),
+            ]);
+            exit();
         }
     }
 }

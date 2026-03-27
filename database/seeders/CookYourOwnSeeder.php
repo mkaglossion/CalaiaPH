@@ -19,7 +19,7 @@ class CookYourOwnSeeder extends Seeder
         if (!$exists) {
             Food::create([
                 'name' => 'Cook Your Own',
-                'category' => 'package',
+                'category' => 'cook_your_own',
                 'price' => 0,
                 'description' => 'We provide a fully equipped kitchen. Bring your own ingredients or use our kitchen facilities to prepare your own meals.',
                 'is_active' => true,

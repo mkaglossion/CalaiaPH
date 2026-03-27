@@ -201,7 +201,10 @@
                                 </span>
                                 @if($paymentStatus !== 'paid')
                                     <button type="button" 
-                                        onclick="openPaymentModal({{ $booking->id }}, '{{ addslashes($booking->display_customer_name) }}', {{ $booking->total_amount }})"
+                                        data-booking-id="{{ (int)$booking->id }}"
+                                        data-booking-amount="{{ (float)$booking->total_amount }}"
+                                        data-booking-name="{{ addslashes($booking->display_customer_name ?? $booking->customer_name) }}"
+                                        onclick="handlePaymentClick(this)"
                                         class="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded-lg transition text-xs font-medium">
                                         <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h10M5 21h14M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
                                         Pay
@@ -286,8 +289,9 @@
 </div>
 
 <!-- Payment Recording Modal -->
-<div id="paymentModal" class="flex fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+<div id="paymentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
+    <div class="flex items-center justify-center h-full">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-900">Record Payment</h2>
             <button type="button" onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600">
@@ -309,7 +313,7 @@
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                <label for="paymentMethod" class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
                 <select id="paymentMethod" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="">Select Payment Method</option>
                     <option value="cash">Cash</option>
@@ -321,7 +325,7 @@
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Reference/Note</label>
+                <label for="paymentReference" class="block text-sm font-medium text-gray-700 mb-2">Reference/Note</label>
                 <input type="text" id="paymentReference" placeholder="e.g., Transaction ID, Check #, etc." 
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             </div>
@@ -336,12 +340,21 @@
             </button>
         </div>
     </div>
+    </div>
 </div>
 
 <script>
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-    let currentPaymentBookingId = null;
-    let currentPaymentAmount = 0;
+    
+    // Single source of truth for payment context
+    let paymentContext = {
+        bookingId: null,
+        amount: null,
+        customerName: null,
+        isValid: function() {
+            return this.bookingId && this.amount;
+        }
+    };
     
     const statusLabels = {
         'completed': 'Completed',
@@ -375,29 +388,105 @@
     });
     
     // Payment Modal Functions
+    function handlePaymentClick(button) {
+        const bookingId = button.getAttribute('data-booking-id');
+        const amount = button.getAttribute('data-booking-amount');
+        const customerName = button.getAttribute('data-booking-name');
+        
+        console.log('Button clicked - Raw attributes:', { bookingId, amount, customerName });
+        console.log('Button HTML:', button.outerHTML.substring(0, 200));
+        
+        openPaymentModal(bookingId, customerName, amount);
+    }
+    
     function openPaymentModal(bookingId, customerName, amount) {
-        currentPaymentBookingId = bookingId;
-        currentPaymentAmount = amount;
-        document.getElementById('paymentCustomerName').textContent = customerName;
-        document.getElementById('paymentAmount').textContent = '₱' + amount.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        console.log('Opening payment modal with raw values:', { bookingId, customerName, amount });
+        console.log('Raw types:', { bookingIdType: typeof bookingId, amountType: typeof amount });
+        
+        // Parse values properly
+        const parsedId = parseInt(bookingId, 10);
+        const parsedAmount = parseFloat(amount);
+        
+        console.log('Parsed values:', { parsedId, parsedAmount });
+        console.log('Valid numbers?', { idValid: !isNaN(parsedId), amountValid: !isNaN(parsedAmount) });
+        
+        // Validate before setting
+        if (isNaN(parsedId) || isNaN(parsedAmount) || parsedId <= 0 || parsedAmount <= 0) {
+            console.error('Invalid parsed values:', { parsedId, parsedAmount });
+            Swal.fire({
+                title: 'Error',
+                text: `Invalid booking data. ID: ${bookingId}, Amount: ${amount}`,
+                icon: 'error',
+                confirmButtonColor: '#3085d6'
+            });
+            return;
+        }
+        
+        // Set the payment context
+        paymentContext.bookingId = parsedId;
+        paymentContext.amount = parsedAmount;
+        paymentContext.customerName = customerName;
+        
+        console.log('✓ Payment context successfully set:', paymentContext);
+        console.log('✓ Is valid?', paymentContext.isValid());
+        
+        // Update UI
+        document.getElementById('paymentCustomerName').textContent = customerName || '-';
+        document.getElementById('paymentAmount').textContent = '₱' + parsedAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('paymentModal').classList.remove('hidden');
+        
+        // Reset form fields
         document.getElementById('paymentMethod').value = '';
         document.getElementById('paymentReference').value = '';
+        
+        // Focus on first input
+        document.getElementById('paymentMethod').focus();
     }
     
     function closePaymentModal() {
         document.getElementById('paymentModal').classList.add('hidden');
-        currentPaymentBookingId = null;
+        // Clear the payment context values (keep the isValid method)
+        paymentContext.bookingId = null;
+        paymentContext.amount = null;
+        paymentContext.customerName = null;
     }
     
     async function submitPayment() {
-        const method = document.getElementById('paymentMethod').value;
-        const reference = document.getElementById('paymentReference').value;
+        console.log('Submit payment called. Context:', paymentContext);
+        console.log('Is valid?', paymentContext.isValid());
         
-        if (!method) {
-            toastr.error('Please select a payment method');
+        // Validate payment context
+        if (!paymentContext.isValid()) {
+            console.error('Invalid payment context:', paymentContext);
+            Swal.fire({
+                title: 'Error',
+                text: `Payment information is incomplete. BookingID: ${paymentContext.bookingId}, Amount: ${paymentContext.amount}`,
+                icon: 'error',
+                confirmButtonColor: '#3085d6'
+            });
             return;
         }
+        
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        const paymentNotes = document.getElementById('paymentReference').value;
+        
+        // Validate form inputs
+        if (!paymentMethod) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Please select a payment method',
+                icon: 'error',
+                confirmButtonColor: '#3085d6'
+            });
+            return;
+        }
+        
+        console.log('Submitting payment with data:', {
+            booking_id: parseInt(paymentContext.bookingId),
+            payment_method: paymentMethod,
+            amount: parseFloat(paymentContext.amount),
+            notes: paymentNotes
+        });
         
         try {
             const response = await fetch('/admin/reservations/record-payment', {
@@ -407,25 +496,41 @@
                     'X-CSRF-TOKEN': token
                 },
                 body: JSON.stringify({
-                    booking_id: currentPaymentBookingId,
-                    method: method,
-                    amount: currentPaymentAmount,
-                    reference: reference
+                    booking_id: parseInt(paymentContext.bookingId),
+                    payment_method: paymentMethod,
+                    amount: parseFloat(paymentContext.amount),
+                    notes: paymentNotes
                 })
             });
             
             const data = await response.json();
             
             if (data.success) {
-                toastr.success('Payment recorded successfully!');
-                closePaymentModal();
-                location.reload();
+                Swal.fire({
+                    title: 'Success',
+                    text: 'Payment recorded successfully!',
+                    icon: 'success',
+                    confirmButtonColor: '#3085d6'
+                }).then(() => {
+                    closePaymentModal();
+                    location.reload();
+                });
             } else {
-                toastr.error(data.message || 'Failed to record payment');
+                Swal.fire({
+                    title: 'Error',
+                    text: data.message || 'Failed to record payment',
+                    icon: 'error',
+                    confirmButtonColor: '#3085d6'
+                });
             }
         } catch (error) {
             console.error('Payment submission error:', error);
-            toastr.error('An error occurred while recording payment');
+            Swal.fire({
+                title: 'Error',
+                text: 'An error occurred while recording payment',
+                icon: 'error',
+                confirmButtonColor: '#3085d6'
+            });
         }
     }
     

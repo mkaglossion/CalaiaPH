@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use App\Models\Activity;
 use App\Models\ActivitySwiperImage;
 use App\Models\ActivityText;
@@ -33,9 +34,9 @@ use App\Models\PricingConfig;
 use App\Models\FarmSwiperImage;
 use App\Models\FarmText;
 use App\Models\Product;
+use App\Models\ShopSwiperImage;
 use App\Models\DayTourSwiperImage;
 use App\Models\DayTourInventory;
-use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Log;
 
@@ -69,6 +70,12 @@ class AdminController extends Controller
         $images = StaycationSwiperImage::with('staycation')->latest()->get();
         $texts = StaycationText::all();
         return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts', 'currentSeason'));
+    }
+
+    public function staycationInventory()
+    {
+        $staycations = Staycation::with('inventories')->get();
+        return view('admin.whereToStay.inventory', compact('staycations'));
     }
 
     public function activity()
@@ -171,7 +178,7 @@ class AdminController extends Controller
 
     public function shopstore()
     {
-        $images = FarmSwiperImage::all();
+        $images = ShopSwiperImage::all();
         $texts = FarmText::all();
         return view('admin.ShopStore.shopstore', compact('images', 'texts'));
     }
@@ -394,6 +401,14 @@ class AdminController extends Controller
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
         ]);
+    }
+
+    public function dayTourInventoryManagement()
+    {
+        $dayTours = DayTour::with(['inventory' => function ($query) {
+            $query->where('date', '>=', Carbon::today())->orderBy('date');
+        }])->where('is_active', true)->get();
+        return view('admin.dayTour.inventory', compact('dayTours'));
     }
 
     public function specialEventsManager()

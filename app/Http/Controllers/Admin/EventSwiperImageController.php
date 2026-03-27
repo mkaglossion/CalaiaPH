@@ -22,7 +22,7 @@ class EventSwiperImageController extends Controller
     {
         $request->validate([
             'event_id' => 'required|exists:events,id',
-            'image' => 'required|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
+            'image' => 'required|file|mimetypes:image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/x-msvideo,video/x-ms-wmv|max:102400',
         ]);
 
         $file = $request->file('image');

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\PendingUser;
 
@@ -41,8 +42,22 @@ class LoginController extends Controller
             return redirect('/home')->with('error', 'No account found with that email or username.');
         }
 
-        // Check password
-        if (!Hash::check($credentials['password'], $user->password)) {
+        // Check password - cast to string to handle SensitiveParameterValue objects
+        $plainPassword = (string) $credentials['password'];
+        
+        try {
+            $passwordIsValid = Hash::check($plainPassword, $user->password);
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            Log::error('Password check failed', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id,
+                'password_hash_start' => substr($user->password, 0, 30),
+            ]);
+            return redirect('/home')->with('error', 'An error occurred during login. Please try again.');
+        }
+        
+        if (!$passwordIsValid) {
             return redirect('/home')->with('error', 'Incorrect password.');
         }
 

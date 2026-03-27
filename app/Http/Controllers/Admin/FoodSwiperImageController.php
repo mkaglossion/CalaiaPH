@@ -20,7 +20,7 @@ class FoodSwiperImageController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'image' => 'required|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
+            'image' => 'required|file|mimetypes:image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/x-msvideo,video/x-ms-wmv|max:102400',
             'title' => 'nullable|string|max:255',
             'food_id' => 'nullable|exists:foods,id',
         ]);

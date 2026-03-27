@@ -278,9 +278,26 @@
                             x-ref="imageFile"
                             name="image"
                             accept="image/*"
+                            @change="
+                                const file = $el.files[0];
+                                if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = (e) => form.imagePreview = e.target.result;
+                                    reader.readAsDataURL(file);
+                                }
+                            "
                             autocomplete="off"
                             class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-brand focus:ring-2 focus:ring-brand/20 transition">
                         <p class="text-xs text-gray-500 mt-2">Upload a package image (JPG, PNG, GIF, WebP)</p>
+                        
+                        <template x-if="form.imagePreview">
+                            <div class="relative inline-block mt-3">
+                                <img :src="form.imagePreview" alt="Preview" class="h-32 rounded-lg border">
+                                <button type="button" @click="form.imagePreview = null; $refs.imageFile.value = ''" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700">
+                                    ×
+                                </button>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- Inclusions -->
@@ -427,6 +444,7 @@ function packageManager() {
             max_groups_per_day: '',
             pricing_type: 'per_pax',
             image: null,
+            imagePreview: null,
             inclusionsList: [],
             sessions: [
                 { name: 'Morning', start: '8:00 AM', end: '11:00 AM', enabled: true },
@@ -447,6 +465,7 @@ function packageManager() {
                 max_groups_per_day: '',
                 pricing_type: 'per_pax',
                 image: null,
+                imagePreview: null,
                 inclusionsList: [],
                 sessions: [
                     { name: 'Morning', start: '8:00 AM', end: '11:00 AM', enabled: true },
@@ -506,6 +525,7 @@ function packageManager() {
                 this.form.max_groups_per_day = String(parseInt(data.max_groups_per_day) || 1);
                 this.form.pricing_type = data.pricing_type || 'per_pax';
                 this.form.image = data.image || '';
+                this.form.imagePreview = data.image || null;
                 // Parse inclusions JSON into array for the UI
                 this.form.inclusionsList = Array.isArray(data.inclusions) ? data.inclusions : [];
                 // Parse sessions - add enabled property based on whether session exists in database

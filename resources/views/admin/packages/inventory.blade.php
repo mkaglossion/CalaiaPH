@@ -4,15 +4,61 @@
 
 @section('content')
 
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-semibold text-gray-800">Package Inventory</h1>
+        <div class="flex gap-3">
+            <button onclick="window.location.reload()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+            <a href="{{ route('admin.packages.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Packages
+            </a>
+        </div>
+    </div>
+
+    <!-- Sync Info -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-center">
+            <i class="fas fa-info-circle text-blue-600 text-xl mr-3"></i>
+            <div>
+                <p class="font-semibold text-blue-900">Inventory Management</p>
+                <p class="text-sm text-blue-700 mt-1">Use the filters below to view and manage package availability by date</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <form method="GET" action="{{ route('admin.packages.inventory') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div>
+                <label for="date_from" class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+                <input type="date" id="date_from" name="date_from" value="{{ request('date_from', now()->format('Y-m-d')) }}" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent">
+            </div>
+            <div>
+                <label for="date_to" class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
+                <input type="date" id="date_to" name="date_to" value="{{ request('date_to', now()->addDays(30)->format('Y-m-d')) }}" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent">
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="px-6 py-2 bg-[#8f5d54] text-white rounded-lg hover:bg-[#7a4d45]">
+                    <i class="fas fa-filter mr-2"></i>Apply Filter
+                </button>
+                <a href="{{ route('admin.packages.inventory') }}" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                    <i class="fas fa-redo mr-2"></i>Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
 <div 
     x-data="inventoryManager()"
-    class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
+    class="space-y-6"
 >
-    <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">Package Inventory</h1>
-    <p class="text-gray-600 mb-10">Manage availability and daily inventory for all packages</p>
-
     {{-- Section Header --}}
-    <div class="flex justify-between items-end mb-8">
+    <div class="flex justify-between items-end">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Inventory Management</h2>
             <p class="text-gray-500 text-sm mt-1">View and manage package availability by date</p>
@@ -22,6 +68,26 @@
             class="px-5 py-2.5 rounded-xl bg-brand text-white font-medium shadow hover:bg-[#a0675a] hover:shadow-lg transition flex items-center gap-2">
             <i class="fas fa-plus"></i> Add Inventory
         </button>
+    </div>
+
+    {{-- Bulk Actions Toolbar --}}
+    <div x-show="selectedItems.length > 0" x-transition class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-check-circle text-blue-600 text-lg"></i>
+            <span class="text-blue-900 font-medium" x-text="`${selectedItems.length} selected`"></span>
+        </div>
+        <div class="flex gap-3">
+            <button 
+                @click="bulkDeleteInventory()"
+                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition text-sm font-medium flex items-center gap-2">
+                <i class="fas fa-trash"></i> Delete Selected
+            </button>
+            <button 
+                @click="clearSelection()"
+                class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 rounded-lg transition text-sm font-medium">
+                Clear Selection
+            </button>
+        </div>
     </div>
 
     {{-- Packages with Inventory --}}
@@ -52,6 +118,13 @@
                             <table class="w-full">
                                 <thead class="bg-gray-50 border-b border-gray-200">
                                     <tr>
+                                        <th class="px-4 py-3 w-12">
+                                            <input 
+                                                type="checkbox"
+                                                @change="toggleSelectAll($event, {{ $package->id }})"
+                                                :checked="isAllSelected($package)"
+                                                class="w-5 h-5 rounded border-gray-300 text-brand focus:ring-brand/20">
+                                        </th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Date</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Max Groups</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Booked</th>
@@ -62,7 +135,14 @@
                                 </thead>
                                 <tbody class="divide-y divide-gray-200">
                                     @forelse($package->inventory->sortBy('date') as $inv)
-                                        <tr class="hover:bg-gray-50 transition">
+                                        <tr class="hover:bg-gray-50 transition" :class="isSelected({{ $inv->id }}) ? 'bg-blue-50' : ''">
+                                            <td class="px-4 py-3">
+                                                <input 
+                                                    type="checkbox"
+                                                    @change="toggleSelect({{ $inv->id }})"
+                                                    :checked="isSelected({{ $inv->id }})"
+                                                    class="w-5 h-5 rounded border-gray-300 text-brand focus:ring-brand/20">
+                                            </td>
                                             <td class="px-6 py-4">
                                                 <span class="font-medium text-gray-900">{{ $inv->date->format('M d, Y') }}</span>
                                                 <span class="text-xs text-gray-500 ml-2">({{ $inv->date->format('D') }})</span>
@@ -285,8 +365,14 @@
                 <button
                     type="button"
                     @click="saveInventory()"
-                    class="px-6 py-2.5 rounded-xl bg-brand text-white hover:bg-[#a0675a] shadow transition font-medium"
-                    x-text="editMode ? 'Update' : 'Add Inventory'"></button>
+                    :disabled="isLoading"
+                    class="px-6 py-2.5 rounded-xl bg-brand text-white shadow transition font-medium flex items-center gap-2"
+                    :class="isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-[#a0675a]'">
+                    <span x-show="isLoading" class="inline-block animate-spin">
+                        <i class="fas fa-spinner"></i>
+                    </span>
+                    <span x-text="isLoading ? 'Processing...' : (editMode ? 'Update' : 'Add Inventory')"></span>
+                </button>
             </div>
         </div>
     </div>
@@ -299,6 +385,7 @@ function inventoryManager() {
         showModal: false,
         editMode: false,
         errors: [],
+        selectedItems: [],
         packages: @js($packages->all()),
         form: {
             id: null,
@@ -392,6 +479,107 @@ function inventoryManager() {
             });
         },
 
+        // Bulk Select Methods
+        toggleSelect(id) {
+            const index = this.selectedItems.indexOf(id);
+            if (index > -1) {
+                this.selectedItems.splice(index, 1);
+            } else {
+                this.selectedItems.push(id);
+            }
+        },
+
+        isSelected(id) {
+            return this.selectedItems.includes(id);
+        },
+
+        toggleSelectAll(event, packageId) {
+            if (event.target.checked) {
+                // Select all items for this package
+                const packageData = this.packages.find(p => p.id === packageId);
+                if (packageData && packageData.inventory) {
+                    packageData.inventory.forEach(inv => {
+                        if (!this.selectedItems.includes(inv.id)) {
+                            this.selectedItems.push(inv.id);
+                        }
+                    });
+                }
+            } else {
+                // Deselect all items for this package
+                const packageData = this.packages.find(p => p.id === packageId);
+                if (packageData && packageData.inventory) {
+                    packageData.inventory.forEach(inv => {
+                        const index = this.selectedItems.indexOf(inv.id);
+                        if (index > -1) {
+                            this.selectedItems.splice(index, 1);
+                        }
+                    });
+                }
+            }
+        },
+
+        isAllSelected(packageData) {
+            if (!packageData.inventory || packageData.inventory.length === 0) return false;
+            return packageData.inventory.every(inv => this.selectedItems.includes(inv.id));
+        },
+
+        clearSelection() {
+            this.selectedItems = [];
+        },
+
+        async bulkDeleteInventory() {
+            if (this.selectedItems.length === 0) return;
+
+            const result = await Swal.fire({
+                title: 'Delete Multiple Inventory Items?',
+                text: `Are you sure you want to delete ${this.selectedItems.length} selected inventory item(s)? This action cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete All',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (!result.isConfirmed) return;
+
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+            this.isLoading = true;
+            let successCount = 0;
+            let failureCount = 0;
+
+            for (const id of this.selectedItems) {
+                try {
+                    const res = await fetch(`/admin/packages/inventory/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (res.ok) {
+                        successCount++;
+                    } else {
+                        failureCount++;
+                    }
+                } catch (err) {
+                    failureCount++;
+                }
+            }
+
+            this.isLoading = false;
+
+            Swal.fire({
+                icon: failureCount === 0 ? 'success' : 'warning',
+                title: failureCount === 0 ? 'Deleted!' : 'Partially Deleted',
+                text: `Successfully deleted ${successCount} item(s)${failureCount > 0 ? ` (${failureCount} failed)` : ''}`,
+                confirmButtonColor: '#2563eb'
+            }).then(() => {
+                this.refreshPage();
+            });
+        },
+
         async saveInventory() {
             this.isLoading = true;
             this.errors = [];
@@ -441,7 +629,7 @@ function inventoryManager() {
                             date: dateStr,
                             max_groups: this.form.maxGroups,
                             is_blocked: this.form.isBlocked,
-                            block_reason: this.form.blockReason
+                            block_reason: this.form.blockReason || null
                         };
 
                         try {
@@ -495,7 +683,7 @@ function inventoryManager() {
                         date: this.form.date,
                         max_groups: this.form.maxGroups,
                         is_blocked: this.form.isBlocked,
-                        block_reason: this.form.blockReason
+                        block_reason: this.form.blockReason || null
                     };
 
                     let url = '/admin/packages/inventory';
@@ -540,5 +728,19 @@ function inventoryManager() {
     };
 }
 </script>
+
+<style>
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+</style>
 
 @endsection

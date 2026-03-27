@@ -14,6 +14,39 @@ class InventoryController extends Controller
 {
     public function store(Request $request)
     {
+        // Handle both old API format and new inventory management form format
+        if ($request->has('staycation_id')) {
+            // New inventory management form format
+            $validated = $request->validate([
+                'staycation_id' => 'required|exists:staycations,id',
+                'date' => 'required|date_format:Y-m-d',
+                'total_quantity' => 'required|integer|min:1',
+                'is_blocked' => 'boolean',
+                'block_reason' => 'nullable|string'
+            ]);
+
+            $inventory = StaycationInventory::updateOrCreate(
+                [
+                    'staycation_id' => $validated['staycation_id'],
+                    'date' => $validated['date']
+                ],
+                [
+                    'total_quantity' => $validated['total_quantity'],
+                    'booked_quantity' => 0,
+                    'available_quantity' => $validated['total_quantity'],
+                    'is_blocked' => $validated['is_blocked'] ?? false,
+                    'block_reason' => $validated['block_reason'] ?? null
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inventory saved successfully',
+                'data' => $inventory
+            ], 201);
+        }
+
+        // Old API format (for backward compatibility)
         $validated = $request->validate([
             'room_id' => 'required|exists:staycations,id',
             'start_date' => 'required|date',
@@ -36,7 +69,7 @@ class InventoryController extends Controller
         }
 
         $current = $startDate->clone();
-        while ($current <= $endDate) {
+        while ($current < $endDate) {
             $qty = (isset($validated['is_available']) && $validated['is_available'] === false)
                 ? 0
                 : $validated['quantity']; // Allow setting any quantity
@@ -97,7 +130,7 @@ class InventoryController extends Controller
 
         $current = $startDate->clone();
         $count = 0;
-        while ($current <= $endDate) {
+        while ($current < $endDate) {
             $qty = $validated['quantity'];
 
             // Get existing
@@ -153,7 +186,7 @@ class InventoryController extends Controller
 
         $current = $startDate->clone();
         $count = 0;
-        while ($current <= $endDate) {
+        while ($current < $endDate) {
             $qty = $validated['quantity'];
 
             // Get existing
@@ -187,8 +220,55 @@ class InventoryController extends Controller
         return response()->json(['success' => true, 'message' => "Inventory set for $count days"]);
     }
 
-    public function delete(Request $request)
+    public function update(Request $request, $id)
     {
+        $inventory = StaycationInventory::find($id);
+        
+        if (!$inventory) {
+            return response()->json(['message' => 'Inventory not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'staycation_id' => 'required|exists:staycations,id',
+            'date' => 'required|date_format:Y-m-d',
+            'total_quantity' => 'required|integer|min:1',
+            'is_blocked' => 'boolean',
+            'block_reason' => 'nullable|string'
+        ]);
+
+        $inventory->update([
+            'total_quantity' => $validated['total_quantity'],
+            'available_quantity' => $validated['is_blocked'] ? 0 : $validated['total_quantity'],
+            'is_blocked' => $validated['is_blocked'] ?? false,
+            'block_reason' => $validated['block_reason'] ?? null
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Inventory updated successfully',
+            'data' => $inventory
+        ]);
+    }
+
+    public function delete(Request $request, $id = null)
+    {
+        // Handle inventory management form API (delete by ID)
+        if ($id) {
+            $inventory = StaycationInventory::find($id);
+            
+            if (!$inventory) {
+                return response()->json(['message' => 'Inventory not found'], 404);
+            }
+
+            $inventory->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inventory deleted successfully'
+            ]);
+        }
+
+        // Handle old API format (delete by room_id and date)
         $validated = $request->validate([
             'room_id' => 'required|exists:staycations,id',
             'date' => 'required|date'
@@ -214,33 +294,42 @@ class InventoryController extends Controller
         $staycation = Staycation::find($roomId);
         $fallbackQuantity = $staycation ? ($staycation->quantity ?? 0) : 0;
 
-        // Get existing inventory records
+        // Get existing inventory records starting from today, ordered by date
         $inventoryRecords = StaycationInventory::where('staycation_id', $roomId)
-            ->whereDate('date', '>=', Carbon::now())
+            ->whereDate('date', '>=', Carbon::today())
             ->orderBy('date')
-            ->get(['date', 'available_quantity'])
-            ->keyBy(function ($item) {
-                return $item->date->format('Y-m-d');
-            });
+            ->get(['date', 'available_quantity']);
 
-        // Generate next 30 days
+        // Convert to array with date string as key
+        $recordsByDate = $inventoryRecords->keyBy(function ($item) {
+            return $item->date->format('Y-m-d');
+        });
+
+        // Build items ONLY from configured inventory dates (not continuous)
         $items = [];
-        $current = Carbon::now();
-        for ($i = 0; $i < 30; $i++) {
-            $dateStr = $current->format('Y-m-d');
-
-            // Use inventory record if exists, otherwise fallback to base quantity
-            $quantity = isset($inventoryRecords[$dateStr])
-                ? (int) $inventoryRecords[$dateStr]->available_quantity
-                : $fallbackQuantity;
+        foreach ($inventoryRecords as $record) {
+            $dateStr = $record->date->format('Y-m-d');
+            $quantity = (int) $record->available_quantity;
 
             $items[] = [
                 'date' => $dateStr,
                 'min_quantity' => $quantity,
                 'is_available' => $quantity > 0,
             ];
+        }
 
-            $current->addDay();
+        // If no inventory configured, show up to 30 days with fallback quantity for reference
+        if (empty($items)) {
+            $current = Carbon::today();
+            for ($i = 0; $i < 30; $i++) {
+                $dateStr = $current->format('Y-m-d');
+                $items[] = [
+                    'date' => $dateStr,
+                    'min_quantity' => $fallbackQuantity,
+                    'is_available' => $fallbackQuantity > 0,
+                ];
+                $current->addDay();
+            }
         }
 
         return response()->json(['items' => $items]);

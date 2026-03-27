@@ -20,7 +20,7 @@ return new class extends Migration
             $table->boolean('email_user_signups')->default(false);
             $table->string('theme_preference')->default('light');
             $table->string('language')->default('en');
-            $table->json('dashboard_widgets')->default('[]');
+            $table->json('dashboard_widgets')->nullable();
             $table->timestamps();
 
             $table->unique('user_id');

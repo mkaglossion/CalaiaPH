@@ -20,7 +20,7 @@
     <div class="flex justify-between items-end mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Swiper Images</h2>
-            <p class="text-gray-500 text-sm">Photos that appear inside the homepage carousel.</p>
+            <p class="text-gray-500 text-sm">Photos that appear in the shop page hero carousel.</p>
         </div>
 
         <button 
@@ -57,7 +57,7 @@
                     <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
                         @click="editImage({{ $img->id }}, '{{ $img->title }}')">Edit</button>
                     <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
-                        @click="deleteImage({{ $img->id }}, '{{ route('farm-swiper-images.destroy', $img->id) }}')">
+                        @click="deleteImage({{ $img->id }}, '{{ route('admin.shop-swiper-images.destroy', $img->id) }}')">
                         Delete
                     </button>
                 </div>
@@ -388,7 +388,7 @@ function shopstoreManager() {
 
             try {
                 const promises = this.selectedImages.map(id =>
-                    fetch(`/admin/farm-swiper-images/${id}`, {
+                    fetch(`/admin/shop/shop-swiper-images/${id}`, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': csrf,
@@ -505,7 +505,7 @@ function shopstoreManager() {
                 formData.append('_method', 'PUT');
             }
 
-            const url = this.editImageMode ? '/admin/farm-swiper-images/' + this.currentImageId : '{{ route('farm-swiper-images.store') }}';
+            const url = this.editImageMode ? '/admin/shop/shop-swiper-images/' + this.currentImageId : '{{ route('admin.shop-swiper-images.store') }}';
 
             try {
                 const res = await fetch(url, {

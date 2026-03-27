@@ -100,12 +100,33 @@ class AdminBookingsController extends Controller
         
         $dateTo = $request->filled('date_to') 
             ? Carbon::parse($request->date_to) 
-            : Carbon::today()->addDays(30);
+            : Carbon::today()->addDays(365);
         
-        // Build full date list in range for pagination
-        $dateRange = collect(CarbonPeriod::create($dateFrom, $dateTo))
-            ->map(fn(Carbon $d): string => $d->toDateString())
+        // Get only dates that have inventory configured (like the booking calendar does)
+        $dateRange = StaycationInventory::whereBetween('date', [$dateFrom, $dateTo])
+            ->distinct()
+            ->pluck('date')
+            ->map(fn($date) => Carbon::parse($date)->toDateString())
+            ->unique()
+            ->sort()
             ->values();
+        
+        // If no inventory exists, return empty view
+        if ($dateRange->isEmpty()) {
+            $inventoryData = [];
+            $dailyTotals = [];
+            $pagination = new LengthAwarePaginator(
+                [],
+                0,
+                15,
+                1,
+                ['path' => $request->url(), 'query' => $request->query()]
+            );
+            $staycations = Staycation::all();
+            $perPage = 15;
+            $totalDays = 0;
+            return view('admin.bookings.inventory', compact('inventoryData', 'dailyTotals', 'dateFrom', 'dateTo', 'staycations', 'pagination', 'perPage', 'totalDays'));
+        }
         
         $perPage = 15;
         $page = max(1, (int) $request->query('page', 1));

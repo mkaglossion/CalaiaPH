@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\AdminPagesController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\BookingSettingsController;
 use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\InventoryManagementController;
 use App\Http\Controllers\Admin\DayTourInventoryController;
 
 use App\Http\Controllers\Admin\HomeSwiperImageController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\Admin\EventSwiperImageController;
 use App\Http\Controllers\Admin\FarmInfoSwiperImageController;
 use App\Http\Controllers\Admin\PackageImageController;
 use App\Http\Controllers\Admin\PackageSwiperImageController;
+use App\Http\Controllers\Admin\ShopSwiperImageController;
 use App\Http\Controllers\Admin\PackageController;use App\Http\Controllers\Admin\PackageInventoryController;
 use App\Http\Controllers\Admin\HomeTextController;
 use App\Http\Controllers\Admin\DayTourTextController;
@@ -411,7 +413,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Bookings Management
     Route::prefix('bookings')->group(function () {
         Route::get('/', [AdminBookingsController::class, 'index'])->name('admin.bookings.index');
-        Route::get('/inventory', [AdminBookingsController::class, 'inventory'])->name('admin.bookings.inventory');
+        Route::get('/inventory', [InventoryManagementController::class, 'index'])->name('admin.bookings.inventory');
 
         // Booking Extra Fees (mattress, pet fees) - must come before {id} route
         Route::get('/extra-fees', [BookingSettingsController::class, 'index'])->name('admin.booking-settings.index');
@@ -425,12 +427,17 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::prefix('reservations')->group(function () {
         Route::get('/monitor', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'index'])->name('admin.reservations.monitor');
         Route::get('/api/recent', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'getRecent'])->name('admin.reservations.recent');
+        Route::get('/api/stats', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'getStats'])->name('admin.reservations.stats');
         Route::get('/booking/{id}', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'getBookingDetails'])->name('admin.reservations.booking-details');
         Route::get('/{id}/timeline', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'timeline'])->name('admin.reservations.timeline');
         Route::post('/record-payment', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'recordPayment'])->name('admin.reservations.record-payment');
         Route::post('/bulk-update', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'bulkUpdate'])->name('admin.reservations.bulk-update');
         Route::post('/export', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'export'])->name('admin.reservations.export');
+        
+        // More specific routes MUST come before generic {id} routes
+        Route::put('/dining/{id}/status', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'updateDiningStatus'])->name('admin.reservations.update-dining-status');
         Route::put('/{id}/status', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'updateStatus'])->name('admin.reservations.update-status');
+        
         Route::post('/{id}/cancel', [\App\Http\Controllers\Admin\ReservationMonitorController::class, 'cancelBooking'])->name('admin.reservations.cancel');
     });
 
@@ -443,7 +450,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/day', [AdminController::class, 'dayTour'])->name('admin.day.day');
         Route::get('/day-tour', [AdminPagesController::class, 'dayTour'])->name('admin.day.daytour');
         Route::get('/day-tour/days', [AdminController::class, 'dayTourDays'])->name('admin.day-tour.days');
-        Route::get('/day-tour/inventory', [AdminController::class, 'dayTourInventory'])->name('admin.day-tour.inventory');
+        Route::get('/day-tour/inventory', function () { return redirect('/admin/bookings/inventory'); })->name('admin.day-tour.inventory');
+        Route::post('/day-tour/inventory', [DayTourInventoryController::class, 'store'])->name('admin.day-tour.inventory.store');
+        Route::put('/day-tour/inventory/{inventory}', [DayTourInventoryController::class, 'update'])->name('admin.day-tour.inventory.update');
+        Route::delete('/day-tour/inventory/{inventory}', [DayTourInventoryController::class, 'delete'])->name('admin.day-tour.inventory.delete');
     });
     Route::prefix('/packages')->group(function () {
         // Explicit routes for package CRUD
@@ -457,7 +467,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::post('{package}/toggle-status', [PackageController::class, 'toggleStatus'])->name('admin.packages.toggle-status');
         
         // Inventory Routes (must come after other routes)
-        Route::get('/inventory', [PackageInventoryController::class, 'index'])->name('admin.packages.inventory');
+        Route::get('/inventory', function () { return redirect('/admin/bookings/inventory'); })->name('admin.packages.inventory');
         Route::post('/inventory', [PackageInventoryController::class, 'storeInventory'])->name('admin.packages.inventory.store');
         Route::put('/inventory/{inventory}', [PackageInventoryController::class, 'updateInventoryRecord'])->name('admin.packages.inventory.update');
         Route::delete('/inventory/{inventory}', [PackageInventoryController::class, 'destroyInventory'])->name('admin.packages.inventory.destroy');
@@ -478,6 +488,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.stay.staycations');
         Route::get('/accommodations', [AdminController::class, 'staycationAccommodation'])->name('admin.stay.accommodations');
         Route::get('/settings', [AdminController::class, 'staySettings'])->name('admin.stay.settings');
+        Route::get('/inventory', function () { return redirect('/admin/bookings/inventory'); })->name('admin.stay.inventory');
+        Route::post('/inventory', [InventoryController::class, 'store'])->name('admin.stay.inventory.store');
+        Route::put('/inventory/{inventory}', [InventoryController::class, 'update'])->name('admin.stay.inventory.update');
+        Route::delete('/inventory/{inventory}', [InventoryController::class, 'delete'])->name('admin.stay.inventory.delete');
         // Removed redundant booking settings - now using centralized PricingConfig system
     });
     Route::prefix('/do')->group(function () {
@@ -529,6 +543,12 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
      Route::prefix('/shop')->group(function () {
          Route::get('/shopstore', [AdminController::class, 'shopstore'])->name('admin.shop.shopstore');
          Route::get('/shopitems', [AdminController::class, 'shopitems'])->name('admin.shop.shopitems');
+         Route::resource('shop-swiper-images', ShopSwiperImageController::class, ['names' => [
+             'store' => 'admin.shop-swiper-images.store',
+             'update' => 'admin.shop-swiper-images.update',
+             'destroy' => 'admin.shop-swiper-images.destroy'
+         ]]);
+         Route::post('shop-swiper-images/bulk-delete', [ShopSwiperImageController::class, 'bulkDelete'])->name('admin.shop-swiper-images.bulk-delete');
      });
 
      // ========== Pricing Configuration Routes ==========
@@ -650,6 +670,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::prefix('/day-tour-inventory')->group(function () {
         Route::post('/quickset', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'quickset'])->name('admin.day-tour-inventory.quickset');
         Route::post('/store', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'store'])->name('admin.day-tour-inventory.store');
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'delete'])->name('admin.day-tour-inventory.delete');
         Route::get('/{dayTourId}/calendar', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getCalendar'])->name('admin.day-tour-inventory.calendar');
         Route::post('/{dayTourId}/update', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'updateInventory'])->name('admin.day-tour-inventory.update');
         Route::post('/{dayTourId}/block', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'blockDate'])->name('admin.day-tour-inventory.block');

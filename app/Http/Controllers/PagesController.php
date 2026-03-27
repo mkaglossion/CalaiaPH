@@ -484,7 +484,12 @@ class PagesController extends Controller
      */
     private function formatActivitiesForSlides($activities, $originalActivities)
     {
-        $activitiesByCategory = [];
+        $activitiesByCategory = [
+            'adventure' => [],
+            'sports' => [],
+            'rrcamp' => [],
+            'farm' => [],
+        ];
 
         foreach ($activities as $activity) {
             $category = $activity->category;
@@ -656,7 +661,7 @@ class PagesController extends Controller
 
     public function shop()
     {
-        $swiperImages = \App\Models\FarmSwiperImage::all();
+        $swiperImages = \App\Models\ShopSwiperImage::all();
         $texts = \App\Models\FarmText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();

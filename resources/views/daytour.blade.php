@@ -137,7 +137,7 @@
                             class="text-white text-[12px] tracking-[.12em] uppercase cursor-pointer transition no-underline hover:underline"
                             onclick="window.openPackageModal(this)"
                             data-title="{{ $package->name }}"
-                            data-price="{{ $package->price ? 'PHP ' . number_format($package->price, 2) . ' per person' : 'Price not set' }}"
+                            data-price="{{ $package->price ? 'PHP ' . number_format($package->price, 2) . ($package->pricing_type === 'total' ? ' total for ' . $package->max_guests . ' persons' : ' per person') : 'Price not set' }}"
                             data-details='@json($package->activities->pluck("name")->toArray())'
                             data-daytour-id="{{ $package->id }}"
                             data-description="{{ $package->description ?? '' }}"

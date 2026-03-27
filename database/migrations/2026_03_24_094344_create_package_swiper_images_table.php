@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('package_swiper_images', function (Blueprint $table) {
             $table->id();
-            $table->string('image_path')->nullable();
             $table->string('title')->nullable();
-            $table->string('public_id')->nullable();
+            $table->text('image_path');
+            $table->string('public_id');
             $table->timestamps();
         });
     }

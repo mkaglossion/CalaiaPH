@@ -5,9 +5,26 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 // Block browser-logs and monitoring requests before they start
 (function() {
-  // Disable flushLogs immediately
-  window.flushLogs = () => Promise.resolve();
-  window.scheduleFlush = () => {};
+  // Safely disable flushLogs without causing errors if it's read-only
+  try {
+    Object.defineProperty(window, 'flushLogs', {
+      value: () => Promise.resolve(),
+      writable: false,
+      configurable: true
+    });
+  } catch (e) {
+    // If flushLogs is read-only, just skip it
+  }
+  
+  try {
+    Object.defineProperty(window, 'scheduleFlush', {
+      value: () => {},
+      writable: false,
+      configurable: true
+    });
+  } catch (e) {
+    // If scheduleFlush is read-only, just skip it
+  }
   
   // Intercept fetch globally
   const originalFetch = window.fetch;

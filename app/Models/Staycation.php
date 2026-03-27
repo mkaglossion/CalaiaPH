@@ -39,6 +39,11 @@ class Staycation extends Model
         return $this->hasMany(StaycationSwiperImage::class);
     }
 
+    public function inventories()
+    {
+        return $this->hasMany(StaycationInventory::class);
+    }
+
     // Accommodations via variants
     public function staycationAccommodations()
     {

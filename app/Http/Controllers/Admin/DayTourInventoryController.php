@@ -179,7 +179,7 @@ class DayTourInventoryController extends Controller
             $updatedCount = 0;
             $weekdays = $request->apply_to_weekdays;
 
-            while ($currentDate <= $endDate) {
+            while ($currentDate < $endDate) {
                 if (empty($weekdays) || in_array($currentDate->dayOfWeek, $weekdays)) {
                     $this->inventoryService->updateMaxGroups(
                         $dayTourId,
@@ -254,7 +254,7 @@ class DayTourInventoryController extends Controller
             $currentDate = $startDate->copy();
             $updatedCount = 0;
 
-            while ($currentDate <= $endDate) {
+            while ($currentDate < $endDate) {
                 $this->inventoryService->updateMaxGroups(
                     $request->day_tour_id,
                     $currentDate->format('Y-m-d'),
@@ -287,37 +287,43 @@ class DayTourInventoryController extends Controller
         $dayTour = DayTour::find($dayTourId);
         $fallbackQuantity = $dayTour ? ($dayTour->max_groups_per_day ?? 3) : 0;
 
-        // Get existing inventory records
+        // Get existing inventory records starting from today, ordered by date
         $inventoryRecords = DayTourInventory::where('day_tour_id', $dayTourId)
-            ->whereDate('date', '>=', Carbon::now())
+            ->whereDate('date', '>=', Carbon::today())
             ->orderBy('date')
-            ->get(['date', 'max_groups', 'is_blocked'])
-            ->keyBy(function ($item) {
-                return $item->date->format('Y-m-d');
-            });
+            ->get(['date', 'max_groups', 'is_blocked']);
 
-        // Generate next 30 days
+        // Convert to array with date string as key
+        $recordsByDate = $inventoryRecords->keyBy(function ($item) {
+            return $item->date->format('Y-m-d');
+        });
+
+        // Build items ONLY from configured inventory dates (not continuous)
         $items = [];
-        $current = Carbon::now();
-        for ($i = 0; $i < 30; $i++) {
-            $dateStr = $current->format('Y-m-d');
-
-            // Use inventory record if exists, otherwise fallback to base quantity
-            $quantity = isset($inventoryRecords[$dateStr])
-                ? (int) $inventoryRecords[$dateStr]->max_groups
-                : $fallbackQuantity;
-
-            $isAvailable = isset($inventoryRecords[$dateStr])
-                ? !$inventoryRecords[$dateStr]->is_blocked
-                : true;
+        foreach ($inventoryRecords as $record) {
+            $dateStr = $record->date->format('Y-m-d');
+            $quantity = (int) $record->max_groups;
+            $isAvailable = !$record->is_blocked;
 
             $items[] = [
                 'date' => $dateStr,
                 'min_quantity' => $quantity,
                 'is_available' => $isAvailable,
             ];
+        }
 
-            $current->addDay();
+        // If no inventory configured, show up to 30 days with fallback quantity for reference
+        if (empty($items)) {
+            $current = Carbon::today();
+            for ($i = 0; $i < 30; $i++) {
+                $dateStr = $current->format('Y-m-d');
+                $items[] = [
+                    'date' => $dateStr,
+                    'min_quantity' => $fallbackQuantity,
+                    'is_available' => true,
+                ];
+                $current->addDay();
+            }
         }
 
         return response()->json(['items' => $items]);
@@ -328,6 +334,46 @@ class DayTourInventoryController extends Controller
      */
     public function store(Request $request)
     {
+        // Handle new inventory management form format
+        if ($request->has('day_tour_id') && $request->has('date')) {
+            $validated = $request->validate([
+                'day_tour_id' => 'required|integer|exists:day_tours,id',
+                'date' => 'required|date_format:Y-m-d',
+                'max_groups' => 'required|integer|min:1',
+                'is_blocked' => 'boolean',
+                'block_reason' => 'nullable|string'
+            ]);
+
+            try {
+                $inventory = DayTourInventory::updateOrCreate(
+                    [
+                        'day_tour_id' => $validated['day_tour_id'],
+                        'date' => $validated['date']
+                    ],
+                    [
+                        'max_groups' => $validated['max_groups'],
+                        'booked_groups' => 0,
+                        'available_groups' => $validated['max_groups'],
+                        'is_blocked' => $validated['is_blocked'] ?? false,
+                        'block_reason' => $validated['block_reason'] ?? null
+                    ]
+                );
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Inventory saved successfully',
+                    'data' => $inventory
+                ], 201);
+            } catch (\Exception $e) {
+                Log::error('Error storing inventory: ' . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to store inventory: ' . $e->getMessage()
+                ], 500);
+            }
+        }
+
+        // Handle old API format
         $request->validate([
             'day_tour_id' => 'required|integer|exists:day_tours,id',
             'start_date' => 'required|date',
@@ -341,7 +387,7 @@ class DayTourInventoryController extends Controller
             $endDate = Carbon::parse($request->end_date);
             $updatedCount = 0;
 
-            while ($currentDate <= $endDate) {
+            while ($currentDate < $endDate) {
                 $this->inventoryService->updateMaxGroups(
                     $request->day_tour_id,
                     $currentDate->format('Y-m-d'),
@@ -372,9 +418,67 @@ class DayTourInventoryController extends Controller
         }
     }
 
-    /**
-     * Create new inventory record
-     */
+    public function update(Request $request, $id)
+    {
+        $inventory = DayTourInventory::find($id);
+        
+        if (!$inventory) {
+            return response()->json(['message' => 'Inventory not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'day_tour_id' => 'required|exists:day_tours,id',
+            'date' => 'required|date_format:Y-m-d',
+            'max_groups' => 'required|integer|min:1',
+            'is_blocked' => 'boolean',
+            'block_reason' => 'nullable|string'
+        ]);
+
+        try {
+            $inventory->update([
+                'max_groups' => $validated['max_groups'],
+                'available_groups' => $validated['is_blocked'] ? 0 : $validated['max_groups'],
+                'is_blocked' => $validated['is_blocked'] ?? false,
+                'block_reason' => $validated['block_reason'] ?? null
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inventory updated successfully',
+                'data' => $inventory
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating inventory: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update inventory: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function delete(Request $request, $id = null)
+    {
+        $inventory = DayTourInventory::find($id);
+        
+        if (!$inventory) {
+            return response()->json(['message' => 'Inventory not found'], 404);
+        }
+
+        try {
+            $inventory->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inventory deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error deleting inventory: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete inventory: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     public function storeInventory(Request $request)
     {
         $validated = $request->validate([

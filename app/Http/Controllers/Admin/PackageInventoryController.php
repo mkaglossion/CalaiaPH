@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Package;
 use App\Models\PackageInventory;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -15,7 +16,9 @@ class PackageInventoryController extends Controller
      */
     public function index()
     {
-        $packages = Package::with(['inventory'])->get();
+        $packages = Package::with(['inventory' => function ($query) {
+            $query->where('date', '>=', Carbon::today())->orderBy('date');
+        }])->get();
         return view('admin.packages.inventory', compact('packages'));
     }
 

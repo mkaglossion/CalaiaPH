@@ -12,11 +12,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip for MariaDB - use direct ALTER instead
+        if (in_array(DB::getDriverName(), ['mariadb', 'mysql'])) {
+            return;
+        }
+        
         // Get all columns in bookings table
         if (DB::getDriverName() === 'sqlite') {
             $columns = DB::select("PRAGMA table_info(bookings)");
         } else {
-            $columns = Schema::getConnection()->getDoctrineSchemaManager()->listTableColumns('bookings');
+            return;
+            // $columns = Schema::getConnection()->getDoctrineSchemaManager()->listTableColumns('bookings');
         }
         
         Schema::table('bookings', function (Blueprint $table) use ($columns) {

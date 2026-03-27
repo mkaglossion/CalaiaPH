@@ -1,18 +1,19 @@
 @extends('layouts.admin')
 
-@section('title', 'Day Tour Inventory Monitoring')
+@section('title', 'Day Tour Inventory')
 
 @section('content')
+
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex justify-between items-center">
-        <h1 class="text-3xl font-semibold text-gray-800">Day Tour Inventory Monitoring</h1>
+        <h1 class="text-3xl font-semibold text-gray-800">Day Tour Inventory</h1>
         <div class="flex gap-3">
             <button onclick="window.location.reload()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                 <i class="fas fa-sync-alt mr-2"></i>Refresh
             </button>
-            <a href="{{ route('admin.bookings.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
-                <i class="fas fa-arrow-left mr-2"></i>Back to Bookings
+            <a href="{{ route('admin.whatToDo.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Day Tours
             </a>
         </div>
     </div>
@@ -22,239 +23,716 @@
         <div class="flex items-center">
             <i class="fas fa-info-circle text-blue-600 text-xl mr-3"></i>
             <div>
-                <p class="font-semibold text-blue-900">Inventory Sync Command</p>
-                <p class="text-sm text-blue-700 mt-1">Run <code class="bg-blue-100 px-2 py-1 rounded">php artisan daytour:sync-inventory --days=90</code> to sync inventory for the next 90 days</p>
+                <p class="font-semibold text-blue-900">Inventory Management</p>
+                <p class="text-sm text-blue-700 mt-1">Use the filters below to view and manage day tour availability by date</p>
             </div>
         </div>
     </div>
 
     <!-- Date Range Filter -->
     <div class="bg-white p-6 rounded-lg shadow">
-        <form method="GET" action="{{ route('admin.day-tour.inventory') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <form method="GET" action="{{ route('admin.dayTour.inventory') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
             <div>
                 <label for="date_from" class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
-                <input type="date" id="date_from" name="date_from" value="{{ $dateFrom->format('Y-m-d') }}" 
+                <input type="date" id="date_from" name="date_from" value="{{ request('date_from', now()->format('Y-m-d')) }}" 
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent">
             </div>
             <div>
                 <label for="date_to" class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
-                <input type="date" id="date_to" name="date_to" value="{{ $dateTo->format('Y-m-d') }}" 
+                <input type="date" id="date_to" name="date_to" value="{{ request('date_to', now()->addDays(30)->format('Y-m-d')) }}" 
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent">
             </div>
             <div class="flex gap-2">
                 <button type="submit" class="px-6 py-2 bg-[#8f5d54] text-white rounded-lg hover:bg-[#7a4d45]">
                     <i class="fas fa-filter mr-2"></i>Apply Filter
                 </button>
-                <a href="{{ route('admin.day-tour.inventory') }}" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                <a href="{{ route('admin.dayTour.inventory') }}" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
                     <i class="fas fa-redo mr-2"></i>Reset
                 </a>
             </div>
         </form>
     </div>
 
-    <!-- Pagination Controls -->
-    @if(isset($pagination))
-    <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between bg-white border border-gray-200 rounded-lg px-4 py-3 shadow">
-        <div class="text-sm text-gray-700">
-            Showing <span class="font-semibold">{{ $pagination->firstItem() }}</span> to <span class="font-semibold">{{ $pagination->lastItem() }}</span> of <span class="font-semibold">{{ $pagination->total() }}</span> days
-        </div>
+<div 
+    x-data="dayTourInventoryManager()"
+    class="space-y-6"
+>
+    {{-- Section Header --}}
+    <div class="flex justify-between items-end">
         <div>
-            {{ $pagination->appends(request()->except('page'))->links('pagination::tailwind') }}
+            <h2 class="text-2xl font-bold text-gray-800">Inventory Management</h2>
+            <p class="text-gray-500 text-sm mt-1">View and manage day tour availability by date</p>
         </div>
+        <button 
+            @click="showModal = true; resetForm()" 
+            class="px-5 py-2.5 rounded-xl bg-brand text-white font-medium shadow hover:bg-[#a0675a] hover:shadow-lg transition flex items-center gap-2">
+            <i class="fas fa-plus"></i> Add Inventory
+        </button>
     </div>
-    @endif
 
-    <!-- Overall Total Available Groups per Day -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="bg-linear-to-r from-[#8f5d54] to-[#7a4d45] px-6 py-4">
-            <h2 class="text-xl font-semibold text-white">Overall Total Available Groups per Day</h2>
-            <p class="text-sm text-white/80 mt-1">Sum of available groups across all day tour packages for each date</p>
+    {{-- Bulk Actions Toolbar --}}
+    <div x-show="selectedItems.length > 0" x-transition class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-check-circle text-blue-600 text-lg"></i>
+            <span class="text-blue-900 font-medium" x-text="`${selectedItems.length} selected`"></span>
         </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Available Groups</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilization</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($dailyTotals as $daily)
-                        @php
-                            $date = \Carbon\Carbon::parse($daily['date']);
-                            $utilization = $daily['total_max_groups'] > 0
-                                ? (($daily['total_max_groups'] - $daily['total_available']) / $daily['total_max_groups']) * 100
-                                : 0;
-                            $isToday = $date->isToday();
-                            $isPast = $date->isPast() && !$isToday;
-                        @endphp
-                        <tr class="hover:bg-gray-50 {{ $isToday ? 'bg-yellow-50' : ($isPast ? 'bg-gray-50' : '') }}">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ $date->format('M d, Y') }}</div>
-                                @if($isToday)
-                                    <span class="text-xs text-yellow-600 font-semibold">Today</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {{ $date->format('l') }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm font-semibold {{ $daily['total_available'] == 0 ? 'text-red-600' : ($daily['total_available'] <= 2 ? 'text-yellow-600' : 'text-green-600') }}">
-                                    {{ $daily['total_available'] }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @if($daily['total_available'] == 0)
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Fully Booked</span>
-                                @elseif($daily['total_available'] <= 2)
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Limited</span>
-                                @else
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Available</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
-                                        <div class="h-2 rounded-full {{ $utilization >= 100 ? 'bg-red-600' : ($utilization >= 70 ? 'bg-yellow-500' : 'bg-green-500') }}"
-                                            style="width: {{ min($utilization, 100) }}%"></div>
-                                    </div>
-                                    <span class="text-sm text-gray-600">{{ number_format($utilization, 0) }}%</span>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">
-                                <i class="fas fa-calendar-times text-3xl mb-2"></i>
-                                <p>No inventory data for this date range</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+        <div class="flex gap-3">
+            <button 
+                @click="bulkDeleteInventory()"
+                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition text-sm font-medium flex items-center gap-2">
+                <i class="fas fa-trash"></i> Delete Selected
+            </button>
+            <button 
+                @click="clearSelection()"
+                class="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 rounded-lg transition text-sm font-medium">
+                Clear Selection
+            </button>
         </div>
     </div>
 
-    <!-- Inventory per Day Tour Package -->
-    @foreach($inventoryData as $data)
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="bg-linear-to-r from-[#8f5d54] to-[#7a4d45] px-6 py-4">
-            <h2 class="text-xl font-semibold text-white">{{ $data['package']->name }}</h2>
-            <p class="text-sm text-white/80 mt-1">Max groups per day: {{ $data['package']->max_groups_per_day ?? 3 }}</p>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available Groups</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booked</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilization</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($data['inventories'] as $inventory)
-                    @php
-                        $date = \Carbon\Carbon::parse($inventory->date);
-                        $utilization = $inventory->max_groups > 0
-                            ? ($inventory->booked_groups / $inventory->max_groups) * 100
-                            : 0;
-                        $isToday = $date->isToday();
-                        $isPast = $date->isPast() && !$isToday;
-                    @endphp
-                    <tr class="hover:bg-gray-50 {{ $isToday ? 'bg-yellow-50' : ($isPast ? 'bg-gray-50' : '') }}">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">{{ $date->format('M d, Y') }}</div>
-                            @if($isToday)
-                            <span class="text-xs text-yellow-600 font-semibold">Today</span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {{ $date->format('l') }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm font-semibold {{ $inventory->available_groups == 0 || $inventory->is_blocked ? 'text-red-600' : ($inventory->available_groups == 1 ? 'text-yellow-600' : 'text-green-600') }}">
-                                {{ $inventory->is_blocked ? 'Blocked' : $inventory->available_groups }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {{ $inventory->booked_groups }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            @if($inventory->is_blocked)
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Blocked</span>
-                            @elseif($inventory->available_groups == 0)
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Fully Booked</span>
-                            @elseif($inventory->available_groups == 1)
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Limited</span>
-                            @else
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Available</span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
-                                    <div class="h-2 rounded-full {{ $utilization >= 100 ? 'bg-red-600' : ($utilization >= 70 ? 'bg-yellow-500' : 'bg-green-500') }}"
-                                        style="width: {{ min($utilization, 100) }}%"></div>
-                                </div>
-                                <span class="text-sm text-gray-600">{{ number_format($utilization, 0) }}%</span>
+
+    {{-- Day Tours with Inventory --}}
+    @if($dayTours->count() > 0)
+        <div class="space-y-8">
+            @foreach($dayTours as $dayTour)
+                <div class="bg-white/70 backdrop-blur-lg border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                    <!-- Day Tour Header -->
+                    <div class="bg-linear-to-r from-brand/10 to-blue-50 px-6 py-4 border-b border-gray-200">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900">{{ $dayTour->name }}</h3>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    Max Groups: <span class="font-semibold">{{ $dayTour->max_groups_per_day ?? 3 }} group{{ ($dayTour->max_groups_per_day ?? 3) > 1 ? 's' : '' }}</span>
+                                </p>
                             </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
-                            <i class="fas fa-calendar-times text-3xl mb-2"></i>
-                            <p>No inventory data for this date range</p>
-                        </td>
-                    </tr>
-                @endforelse
-            </table>
-        </div>
+                            <button 
+                                @click="editDayTour({{ $dayTour->id }})"
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition text-sm font-medium flex items-center gap-2">
+                                <i class="fas fa-edit"></i> Manage Inventory
+                            </button>
+                        </div>
+                    </div>
 
-        <!-- Summary Stats -->
-        @if($data['inventories']->count() > 0)
-        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <p class="text-xs text-gray-500">Total Days</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ $data['inventories']->count() }}</p>
+                    <!-- Inventory Table -->
+                    @if($dayTour->inventory && count($dayTour->inventory) > 0)
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-4 py-3 w-12">
+                                            <input 
+                                                type="checkbox"
+                                                @change="toggleSelectAll($event, {{ $dayTour->id }})"
+                                                :checked="isAllSelected($dayTour)"
+                                                class="w-5 h-5 rounded border-gray-300 text-brand focus:ring-brand/20">
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Max Groups</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Booked</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Available</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    @forelse($dayTour->inventory->sortBy('date') as $inv)
+                                        <tr class="hover:bg-gray-50 transition" :class="isSelected({{ $inv->id }}) ? 'bg-blue-50' : ''">
+                                            <td class="px-4 py-3">
+                                                <input 
+                                                    type="checkbox"
+                                                    @change="toggleSelect({{ $inv->id }})"
+                                                    :checked="isSelected({{ $inv->id }})"
+                                                    class="w-5 h-5 rounded border-gray-300 text-brand focus:ring-brand/20">
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="font-medium text-gray-900">{{ Carbon\Carbon::parse($inv->date)->format('M d, Y') }}</span>
+                                                <span class="text-xs text-gray-500 ml-2">({{ Carbon\Carbon::parse($inv->date)->format('D') }})</span>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="text-sm font-semibold text-gray-900">{{ $inv->max_groups ?? 3 }}</span>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="text-sm font-semibold text-orange-600">{{ $inv->booked_groups ?? 0 }}</span>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="text-sm font-semibold {{ ($inv->available_groups ?? 0) > 0 ? 'text-green-600' : 'text-red-600' }}">
+                                                    {{ $inv->available_groups ?? 0 }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                @if($inv->is_blocked)
+                                                    <span class="inline-block px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
+                                                        <i class="fas fa-lock"></i> Blocked
+                                                    </span>
+                                                @else
+                                                    <span class="inline-block px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                                                        <i class="fas fa-unlock"></i> Open
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex gap-2">
+                                                    <button 
+                                                        @click="editInventory({{ $dayTour->id }}, {{ $inv->id }})"
+                                                        class="text-blue-600 hover:text-blue-700 text-sm font-medium hover:underline">
+                                                        Edit
+                                                    </button>
+                                                    <button 
+                                                        @click="deleteInventory({{ $inv->id }})"
+                                                        class="text-red-600 hover:text-red-700 text-sm font-medium hover:underline">
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                                <i class="fas fa-inbox text-3xl mb-3 block text-gray-300"></i>
+                                                No inventory slots configured for this day tour yet.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="px-6 py-12 text-center">
+                            <i class="fas fa-calendar text-4xl text-gray-300 mb-4 block"></i>
+                            <p class="text-gray-500 mb-4">No inventory slots configured for this day tour</p>
+                            <button 
+                                @click="editDayTour({{ $dayTour->id }})"
+                                class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition text-sm font-medium">
+                                Add Inventory
+                            </button>
+                        </div>
+                    @endif
                 </div>
-                <div>
-                    <p class="text-xs text-gray-500">Total Booked Groups</p>
-                    <p class="text-lg font-semibold text-red-600">{{ $data['inventories']->sum('booked_groups') }}</p>
-                </div>
-                <div>
-                    <p class="text-xs text-gray-500">Total Available</p>
-                    <p class="text-lg font-semibold text-green-600">{{ $data['inventories']->sum('available_groups') }}</p>
-                </div>
-                <div>
-                    <p class="text-xs text-gray-500">Avg. Utilization</p>
-                    @php
-                        $totalMax = $data['inventories']->sum('max_groups');
-                        $totalBooked = $data['inventories']->sum('booked_groups');
-                        $avgUtilization = $totalMax > 0 ? ($totalBooked / $totalMax) * 100 : 0;
-                    @endphp
-                    <p class="text-lg font-semibold text-gray-900">{{ number_format($avgUtilization, 1) }}%</p>
+            @endforeach
+        </div>
+    @else
+        <!-- Empty State -->
+        <div class="text-center py-24">
+            <div class="mb-6 inline-block">
+                <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
+                    <i class="fas fa-inbox text-gray-400 text-5xl"></i>
                 </div>
             </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">No Day Tours Available</h3>
+            <p class="text-gray-600">Create day tours first before managing inventory</p>
         </div>
-        @endif
-    </div>
-    @endforeach
-
-    @if(count($inventoryData) == 0)
-    <div class="bg-white rounded-lg shadow p-12 text-center">
-        <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
-        <h3 class="text-xl font-semibold text-gray-600 mb-2">No Inventory Data</h3>
-        <p class="text-gray-500">Run the sync command to populate inventory data</p>
-        <code class="block mt-4 bg-gray-100 p-3 rounded text-sm">php artisan daytour:sync-inventory --days=90</code>
-    </div>
     @endif
+
+    {{-- Inventory Modal --}}
+    <div 
+        x-show="showModal"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        x-transition.opacity
+        @click.away="showModal = false"
+    >
+        <div class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-md border border-gray-200">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                <h3 class="text-2xl font-bold text-gray-900" x-text="editMode ? 'Edit Inventory' : 'Add Inventory'"></h3>
+                <button 
+                    @click="showModal = false"
+                    class="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                >&times;</button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-6">
+                <form @submit.prevent="saveInventory" class="space-y-5">
+                    @csrf
+                    <input type="hidden" x-model="form.id" />
+                    <input type="hidden" x-model="form.dayTourId" />
+
+                    <!-- Day Tour Selection (only on create) -->
+                    <div x-show="!editMode">
+                        <label for="dayTour" class="block font-semibold mb-2 text-gray-700">Select Day Tour *</label>
+                        <select 
+                            id="dayTour"
+                            x-model="form.dayTourId"
+                            class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-brand focus:ring-2 focus:ring-brand/20 transition">
+                            <option value="">-- Choose Day Tour --</option>
+                            @foreach($dayTours as $tour)
+                                <option value="{{ $tour->id }}">{{ $tour->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Date Selection Mode Toggle -->
+                    <div x-show="!editMode" class="flex gap-3">
+                        <label class="flex items-center cursor-pointer">
+                            <input 
+                                type="radio" 
+                                x-model="form.dateMode" 
+                                value="specific"
+                                class="w-4 h-4 text-brand cursor-pointer">
+                            <span class="ml-2 font-medium text-gray-700">Specific Date</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input 
+                                type="radio" 
+                                x-model="form.dateMode" 
+                                value="range"
+                                class="w-4 h-4 text-brand cursor-pointer">
+                            <span class="ml-2 font-medium text-gray-700">Date Range</span>
+                        </label>
+                    </div>
+
+                    <!-- Specific Date -->
+                    <div x-show="editMode || form.dateMode === 'specific'">
+                        <label for="date" class="block font-semibold mb-2 text-gray-700">Date *</label>
+                        <input 
+                            type="date" 
+                            id="date" 
+                            x-model="form.date"
+                            class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-brand focus:ring-2 focus:ring-brand/20 transition">
+                    </div>
+
+                    <!-- Date Range -->
+                    <div x-show="!editMode && form.dateMode === 'range'" class="space-y-3">
+                        <div>
+                            <label for="dateFrom" class="block font-semibold mb-2 text-gray-700">From Date *</label>
+                            <input 
+                                type="date" 
+                                id="dateFrom" 
+                                x-model="form.dateFrom"
+                                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-brand focus:ring-2 focus:ring-brand/20 transition">
+                        </div>
+                        <div>
+                            <label for="dateTo" class="block font-semibold mb-2 text-gray-700">To Date *</label>
+                            <input 
+                                type="date" 
+                                id="dateTo" 
+                                x-model="form.dateTo"
+                                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-brand focus:ring-2 focus:ring-brand/20 transition">
+                        </div>
+                    </div>
+
+                    <!-- Max Groups -->
+                    <div>
+                        <label for="maxGroups" class="block font-semibold mb-2 text-gray-700">Max Groups *</label>
+                        <input 
+                            type="number" 
+                            id="maxGroups" 
+                            x-model.number="form.maxGroups"
+                            min="1"
+                            class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-brand focus:ring-2 focus:ring-brand/20 transition">
+                    </div>
+
+                    <!-- Block Status -->
+                    <div class="flex items-center gap-3">
+                        <input 
+                            type="checkbox" 
+                            id="isBlocked" 
+                            x-model="form.isBlocked"
+                            class="w-5 h-5 rounded border-gray-300 text-brand focus:ring-brand/20">
+                        <label for="isBlocked" class="font-medium text-gray-700">Block this date</label>
+                    </div>
+
+                    <!-- Block Reason -->
+                    <div x-show="form.isBlocked">
+                        <label for="blockReason" class="block font-semibold mb-2 text-gray-700">Block Reason</label>
+                        <input 
+                            type="text" 
+                            id="blockReason" 
+                            x-model="form.blockReason"
+                            placeholder="e.g., Maintenance, Staff Training..."
+                            class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-brand focus:ring-2 focus:ring-brand/20 transition">
+                    </div>
+
+                    <!-- Error Messages -->
+                    <div x-show="errors.length > 0" class="p-3 bg-red-50 border border-red-200 rounded-xl">
+                        <div class="text-red-800 text-sm space-y-1">
+                            <template x-for="error in errors" :key="error">
+                                <div x-text="error"></div>
+                            </template>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex justify-end space-x-3 p-6 border-t border-gray-200">
+                <button
+                    type="button"
+                    @click="showModal = false"
+                    class="px-6 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-100 transition font-medium text-gray-700">
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    @click="saveInventory()"
+                    :disabled="isLoading"
+                    class="px-6 py-2.5 rounded-xl bg-brand text-white shadow transition font-medium flex items-center gap-2"
+                    :class="isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-[#a0675a]'">
+                    <span x-show="isLoading" class="inline-block animate-spin">
+                        <i class="fas fa-spinner"></i>
+                    </span>
+                    <span x-text="isLoading ? 'Processing...' : (editMode ? 'Update' : 'Add Inventory')"></span>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+function dayTourInventoryManager() {
+    return {
+        isLoading: false,
+        showModal: false,
+        editMode: false,
+        errors: [],
+        selectedItems: [],
+        dayTours: @js($dayTours->all()),
+        form: {
+            id: null,
+            dayTourId: null,
+            dateMode: 'specific',
+            date: new Date().toISOString().split('T')[0],
+            dateFrom: new Date().toISOString().split('T')[0],
+            dateTo: new Date().toISOString().split('T')[0],
+            maxGroups: 3,
+            isBlocked: false,
+            blockReason: ''
+        },
+
+        resetForm() {
+            this.form = {
+                id: null,
+                dayTourId: null,
+                dateMode: 'specific',
+                date: new Date().toISOString().split('T')[0],
+                dateFrom: new Date().toISOString().split('T')[0],
+                dateTo: new Date().toISOString().split('T')[0],
+                maxGroups: 3,
+                isBlocked: false,
+                blockReason: ''
+            };
+            this.editMode = false;
+            this.errors = [];
+        },
+
+        refreshPage() {
+            window.location.reload();
+        },
+
+        editDayTour(dayTourId) {
+            this.resetForm();
+            this.form.dayTourId = dayTourId;
+            this.form.dateMode = 'specific';
+            this.showModal = true;
+        },
+
+        editInventory(dayTourId, inventoryId) {
+            this.editMode = true;
+            this.form.dayTourId = dayTourId;
+            this.form.id = inventoryId;
+            this.form.dateMode = 'specific';
+            this.showModal = true;
+        },
+
+        deleteInventory(id) {
+            Swal.fire({
+                title: 'Delete Inventory?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const csrf = document.querySelector('meta[name=csrf-token]').content;
+                    this.isLoading = true;
+                    
+                    fetch(`/admin/day-tour/inventory/${id}`, {
+                        method: 'DELETE',
+                        headers: { 
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            confirmButtonColor: '#2563eb'
+                        }).then(() => {
+                            this.refreshPage();
+                        });
+                    })
+                    .catch(err => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed',
+                            text: err.message || 'Failed to delete'
+                        });
+                    })
+                    .finally(() => { this.isLoading = false; });
+                }
+            });
+        },
+
+        // Bulk Select Methods
+        toggleSelect(id) {
+            const index = this.selectedItems.indexOf(id);
+            if (index > -1) {
+                this.selectedItems.splice(index, 1);
+            } else {
+                this.selectedItems.push(id);
+            }
+        },
+
+        isSelected(id) {
+            return this.selectedItems.includes(id);
+        },
+
+        toggleSelectAll(event, dayTourId) {
+            if (event.target.checked) {
+                const dayTourData = this.dayTours.find(d => d.id === dayTourId);
+                if (dayTourData && dayTourData.inventory) {
+                    dayTourData.inventory.forEach(inv => {
+                        if (!this.selectedItems.includes(inv.id)) {
+                            this.selectedItems.push(inv.id);
+                        }
+                    });
+                }
+            } else {
+                const dayTourData = this.dayTours.find(d => d.id === dayTourId);
+                if (dayTourData && dayTourData.inventory) {
+                    dayTourData.inventory.forEach(inv => {
+                        const index = this.selectedItems.indexOf(inv.id);
+                        if (index > -1) {
+                            this.selectedItems.splice(index, 1);
+                        }
+                    });
+                }
+            }
+        },
+
+        isAllSelected(dayTourData) {
+            if (!dayTourData.inventory || dayTourData.inventory.length === 0) return false;
+            return dayTourData.inventory.every(inv => this.selectedItems.includes(inv.id));
+        },
+
+        clearSelection() {
+            this.selectedItems = [];
+        },
+
+        async bulkDeleteInventory() {
+            if (this.selectedItems.length === 0) return;
+
+            const result = await Swal.fire({
+                title: 'Delete Multiple Inventory Items?',
+                text: `Are you sure you want to delete ${this.selectedItems.length} selected inventory item(s)? This action cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete All',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (!result.isConfirmed) return;
+
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+            this.isLoading = true;
+            let successCount = 0;
+            let failureCount = 0;
+
+            for (const id of this.selectedItems) {
+                try {
+                    const res = await fetch(`/admin/day-tour/inventory/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (res.ok) {
+                        successCount++;
+                    } else {
+                        failureCount++;
+                    }
+                } catch (err) {
+                    failureCount++;
+                }
+            }
+
+            this.isLoading = false;
+
+            Swal.fire({
+                icon: failureCount === 0 ? 'success' : 'warning',
+                title: failureCount === 0 ? 'Deleted!' : 'Partially Deleted',
+                text: `Successfully deleted ${successCount} item(s)${failureCount > 0 ? ` (${failureCount} failed)` : ''}`,
+                confirmButtonColor: '#2563eb'
+            }).then(() => {
+                this.refreshPage();
+            });
+        },
+
+        async saveInventory() {
+            this.isLoading = true;
+            this.errors = [];
+
+            if (!this.form.dayTourId) {
+                this.errors.push('Please select a day tour');
+                this.isLoading = false;
+                return;
+            }
+
+            if (this.form.dateMode === 'specific' && !this.form.date) {
+                this.errors.push('Please select a date');
+                this.isLoading = false;
+                return;
+            }
+
+            if (this.form.dateMode === 'range') {
+                if (!this.form.dateFrom || !this.form.dateTo) {
+                    this.errors.push('Please select both start and end dates');
+                    this.isLoading = false;
+                    return;
+                }
+                if (new Date(this.form.dateFrom) > new Date(this.form.dateTo)) {
+                    this.errors.push('Start date must be before end date');
+                    this.isLoading = false;
+                    return;
+                }
+            }
+
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+
+            try {
+                if (this.form.dateMode === 'range') {
+                    const startDate = new Date(this.form.dateFrom);
+                    const endDate = new Date(this.form.dateTo);
+                    let currentDate = new Date(startDate);
+                    let successCount = 0;
+                    let failureCount = 0;
+
+                    while (currentDate <= endDate) {
+                        const dateStr = currentDate.toISOString().split('T')[0];
+                        
+                        const payload = {
+                            day_tour_id: this.form.dayTourId,
+                            date: dateStr,
+                            max_groups: this.form.maxGroups,
+                            is_blocked: this.form.isBlocked,
+                            block_reason: this.form.blockReason || null
+                        };
+
+                        try {
+                            const res = await fetch('/admin/day-tour/inventory', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': csrf,
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify(payload)
+                            });
+
+                            if (res.ok) {
+                                successCount++;
+                            } else {
+                                const errData = await res.json();
+                                if (errData.message && errData.message.includes('already exists')) {
+                                    successCount++;
+                                } else {
+                                    failureCount++;
+                                }
+                            }
+                        } catch (err) {
+                            failureCount++;
+                        }
+
+                        currentDate.setDate(currentDate.getDate() + 1);
+                    }
+
+                    let message = `Created inventory for ${successCount} days`;
+                    if (failureCount > 0) {
+                        message += ` (${failureCount} failed)`;
+                    }
+
+                    Swal.fire({
+                        icon: failureCount === 0 ? "success" : "warning",
+                        title: failureCount === 0 ? "Completed!" : "Partially Completed",
+                        text: message,
+                        confirmButtonColor: "#2563eb"
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    const payload = {
+                        day_tour_id: this.form.dayTourId,
+                        date: this.form.date,
+                        max_groups: this.form.maxGroups,
+                        is_blocked: this.form.isBlocked,
+                        block_reason: this.form.blockReason || null
+                    };
+
+                    let url = '/admin/day-tour/inventory';
+                    let method = 'POST';
+
+                    if (this.editMode && this.form.id) {
+                        url = `/admin/day-tour/inventory/${this.form.id}`;
+                        method = 'PUT';
+                    }
+
+                    const res = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        Swal.fire({
+                            icon: "success",
+                            title: this.editMode ? "Updated!" : "Created!",
+                            text: data.message || "Inventory saved successfully!",
+                            confirmButtonColor: "#2563eb"
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        this.errors = data.errors ? Object.values(data.errors).flat() : [data.message || 'Failed to save'];
+                    }
+                }
+            } catch (err) {
+                this.errors.push("An unexpected error occurred. Please try again.");
+            } finally {
+                this.isLoading = false;
+            }
+        }
+    };
+}
+</script>
+
+<style>
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+</style>
+
 @endsection

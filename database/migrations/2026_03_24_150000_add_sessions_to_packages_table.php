@@ -14,13 +14,7 @@ return new class extends Migration
     {
         Schema::table('packages', function (Blueprint $table) {
             if (! Schema::hasColumn('packages', 'sessions')) {
-                $table->json('sessions')->default(
-                    json_encode([
-                        ['name' => 'Morning', 'start' => '8:00 AM', 'end' => '11:00 AM'],
-                        ['name' => 'Afternoon', 'start' => '12:00 PM', 'end' => '3:00 PM'],
-                        ['name' => 'Late Session', 'start' => '3:30 PM', 'end' => '6:30 PM']
-                    ])
-                )->after('inclusions');
+                $table->json('sessions')->nullable()->after('inclusions');
             }
         });
 

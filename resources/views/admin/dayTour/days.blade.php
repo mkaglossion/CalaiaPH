@@ -90,9 +90,9 @@
                     <p class="text-gray-600 mt-2 font-medium">
                         @php
                             $priceWhole = fmod($tour->price, 1) == 0;
-                            $perPerson = $tour->price / $tour->max_guests;
+                            $perPerson = ($tour->max_guests && $tour->max_guests > 0) ? $tour->price / $tour->max_guests : 0;
                             $perPersonWhole = fmod($perPerson, 1) == 0;
-                            $totalPrice = $tour->price * $tour->max_guests;
+                            $totalPrice = $tour->price * ($tour->max_guests ?? 1);
                             $totalWhole = fmod($totalPrice, 1) == 0;
                         @endphp
                         @if($tour->pricing_type === 'total')
@@ -563,90 +563,29 @@
                     </div>
                 </div>
 
-                {{-- Inventory --}}
-                <div class="border-t pt-5 mt-5">
-                    <h4 class="text-lg font-semibold mb-4 text-gray-900">📅 Inventory Management</h4>
-
-                    <div x-show="!form.id" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                        <p class="text-sm text-yellow-800">💡 <strong>Tip:</strong> Save the package first, then return to this section to set inventory for specific dates.</p>
-                    </div>
-
-                    <div x-show="form.id">
-                        <div class="flex flex-wrap gap-2 mb-4 border-b">
-                            <button type="button" @click="inventoryTab = 'quick'"
-                                :class="inventoryTab === 'quick' ? 'border-b-2 border-green-600 text-green-600 font-semibold' : 'text-gray-600'"
-                                class="pb-2 px-4">
-                                ⚡ Quick Set (30 days)
-                            </button>
-                            <button type="button" @click="inventoryTab = 'custom'"
-                                :class="inventoryTab === 'custom' ? 'border-b-2 border-blue-600 text-blue-600 font-semibold' : 'text-gray-600'"
-                                class="pb-2 px-4">
-                                📆 Custom Date Range
-                            </button>
-                        </div>
-
-                        <div x-show="inventoryTab === 'quick'" class="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 mb-4">
-                            <p class="text-xs sm:text-sm text-green-900 mb-3">Set the same quantity for the next 30 days</p>
-                            <div class="flex flex-col sm:flex-row gap-2 items-end">
-                                <div class="flex-1 w-full">
-                                    <label for="inventory_qty" class="block text-xs sm:text-sm font-medium mb-1">Max Groups per day</label>
-                                    <input type="number" id="inventory_qty" name="inventory_qty" x-model.number="inventoryQty" min="1" class="w-full border rounded px-3 py-2 text-sm">
-                                </div>
-                                <button type="button" @click="quickSetInventory()"
-                                    class="w-full sm:w-auto px-3 sm:px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-semibold text-sm">
-                                    Apply Quick Set
-                                </button>
-                            </div>
-                        </div>
-
-                        <div x-show="inventoryTab === 'custom'" class="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4">
-                            <p class="text-xs sm:text-sm text-blue-900 mb-3">Set inventory for a specific date range</p>
-                            <div class="space-y-3">
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-                                    <div>
-                                        <label for="inventory_start_date" class="block text-xs sm:text-sm font-medium mb-1">Start Date</label>
-                                        <input type="date" id="inventory_start_date" name="inventory_start_date" x-model="inventoryStartDate" class="w-full border rounded px-3 py-2 text-sm">
-                                    </div>
-                                    <div>
-                                        <label for="inventory_end_date" class="block text-xs sm:text-sm font-medium mb-1">End Date</label>
-                                        <input type="date" id="inventory_end_date" name="inventory_end_date" x-model="inventoryEndDate" class="w-full border rounded px-3 py-2 text-sm">
-                                    </div>
-                                    <div>
-                                        <label for="inventory_qty_range" class="block text-xs sm:text-sm font-medium mb-1">Max Groups</label>
-                                        <input type="number" id="inventory_qty_range" name="inventory_qty_range" x-model.number="inventoryQtyRange" min="1" class="w-full border rounded px-3 py-2 text-sm">
-                                    </div>
-                                </div>
-                                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                                    <label class="flex items-center gap-2">
-                                        <input type="checkbox" name="inventory_available" x-model="inventoryAvailable" checked>
-                                        <span class="text-xs sm:text-sm font-medium">Available for booking</span>
-                                    </label>
-                                    <button type="button" @click="addDateRangeInventory()"
-                                        class="w-full sm:w-auto px-3 sm:px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold text-sm">
-                                        Add Range
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 border rounded-lg p-4 max-h-64 overflow-y-auto">
-                            <h5 class="font-semibold text-gray-800 mb-3">📋 Upcoming Inventory (Next 30 Days)</h5>
-                            <div id="dayTourInventoryPreview" class="text-sm text-gray-700">
-                                <span class="text-gray-500">Click "Load Preview" to see inventory</span>
-                            </div>
-                            <button type="button" @click="loadInventoryPreview()"
-                                class="mt-3 px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm">
-                                🔄 Load Preview
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <label for="package_image" class="block font-medium mb-1 text-gray-700">Package Image</label>
-                    <input type="file" id="package_image" x-ref="image" accept="image/*" class="w-full border rounded-xl px-3 py-2">
+                <div class="space-y-3">
+                    <label for="package_image" class="block text-sm font-medium">Upload Image (optional)</label>
+                    <input type="file" id="package_image" x-ref="image" accept="image/*" 
+                        @change="
+                            const file = $el.files[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (e) => form.imagePreview = e.target.result;
+                                reader.readAsDataURL(file);
+                            }
+                        "
+                        class="w-full border rounded-xl px-3 py-2">
 
                     <p class="text-sm text-gray-500 mt-1">Upload a new image (optional)</p>
+                    
+                    <template x-if="form.imagePreview">
+                        <div class="relative inline-block">
+                            <img :src="form.imagePreview" alt="Preview" class="h-32 rounded-lg border">
+                            <button type="button" @click="form.imagePreview = null; $refs.image.value = ''" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700">
+                                ×
+                            </button>
+                        </div>
+                    </template>
                 </div>
 
                 <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-2">
@@ -837,7 +776,8 @@ function dayTourManager() {
         package_id: '',
         label: '',
         text: '',
-        priceConfigs: []
+        priceConfigs: [],
+        imagePreview: null
       };
       this.currentImage = null;
     },
@@ -867,7 +807,8 @@ function dayTourManager() {
         activity_ids: tour.activities ? tour.activities.map(a => a.id) : [],
         package_id: '',
         label: '',
-        text: ''
+        text: '',
+        imagePreview: null
       };
       this.currentImage = tour.image || null;
       this.showDayTourModal = true;
