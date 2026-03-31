@@ -208,7 +208,6 @@
                             <div class="flex items-center justify-between border border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3.5">
                                 <div>
                                     <p class="text-xs sm:text-sm font-medium text-gray-800">Adults</p>
-                                    <p class="text-xs text-gray-500">Age 18+</p>
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <button type="button"
@@ -265,7 +264,6 @@
                                         <div class="flex items-center justify-between border border-gray-200 rounded-lg p-2 sm:p-2.5">
                                             <div class="pr-1 sm:pr-2 flex-1">
                                                 <p class="text-xs sm:text-sm font-medium text-gray-800">Adults</p>
-                                                <p class="text-xs text-gray-500">18+</p>
                                             </div>
                                             <div class="flex items-center gap-0.5 sm:gap-1 shrink-0">
                                                 <button type="button"
@@ -309,7 +307,6 @@
                                         <div class="flex items-center justify-between border border-gray-200 rounded-lg p-2 sm:p-2.5">
                                             <div class="pr-1 sm:pr-2 flex-1">
                                                 <p class="text-xs sm:text-sm font-medium text-gray-800">Pets</p>
-                                                <p class="text-xs text-gray-500">Max 2</p>
                                             </div>
                                             <div class="flex items-center gap-0.5 sm:gap-1 shrink-0">
                                                 <button type="button"

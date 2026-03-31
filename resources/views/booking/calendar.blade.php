@@ -1288,7 +1288,6 @@
                 <div class="flex items-center justify-between border border-gray-200 rounded-xl p-2 sm:p-3">
                   <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-800">Adults</p>
-                    <p class="text-xs text-gray-500">Age 18+</p>
                   </div>
                   <div class="flex items-center gap-1 sm:gap-2">
                     <button type="button" class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg border border-gray-300 hover:border-brand/70 disabled:opacity-40 text-xs flex items-center justify-center"
@@ -1394,7 +1393,6 @@
                       <div class="flex items-center justify-between border border-gray-200 rounded-lg p-1.5 sm:p-2.5">
                         <div class="pr-1 flex-1 min-w-0">
                           <p class="text-xs sm:text-sm font-medium text-gray-800 truncate">Pets</p>
-                          <p class="text-xs text-gray-500">Max 2</p>
                         </div>
                         <div class="flex items-center gap-0.5 shrink-0">
                           <button type="button" class="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-lg border border-gray-300 hover:border-brand/70 disabled:opacity-40 text-xs flex items-center justify-center"

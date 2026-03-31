@@ -1320,6 +1320,25 @@
                     return this.getSelectedRoomInstances(roomId).length;
                 },
 
+                getSelectedCount(roomId) {
+                    // For BYOT / Car Camping rooms we sum the extra_mattress quantities,
+                    // otherwise return the number of instances selected for this room.
+                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[roomId] ? this.roomDetailsMap[roomId] : null;
+                    const roomNameLower = (roomDetail?.name || '').toLowerCase();
+                    const isBYOTorCar = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent') || roomNameLower.includes('car camping');
+
+                    if (isBYOTorCar) {
+                        const instances = this.getSelectedRoomInstances(roomId);
+                        let total = 0;
+                        for (const key of instances) {
+                            total += parseInt(this.selectedRooms[key]?.extra_mattress || 1, 10);
+                        }
+                        return total;
+                    }
+
+                    return this.countRoomInstances(roomId);
+                },
+
                 getRemainingSlots(roomId) {
                     const availableQty = this.getRoomAvailableQty(roomId);
                     const roomDetail = this.roomDetailsMap && this.roomDetailsMap[roomId] ? this.roomDetailsMap[roomId] : null;
