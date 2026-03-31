@@ -18,15 +18,25 @@
                 $glampingStaycation = $staycations->firstWhere('name', 'Standard Glamping');
                 $glampingImage = null;
                 if ($glampingStaycation) {
-                  if ($glampingStaycation->swiperImages && $glampingStaycation->swiperImages->count() > 0) {
-                    $glampingImage = $glampingStaycation->swiperImages->first()->image_path;
-                  } elseif ($glampingStaycation->image) {
+                  // Prefer explicit image field set from admin panel
+                  if (!empty($glampingStaycation->image)) {
                     $glampingImage = $glampingStaycation->image;
+                  } elseif ($glampingStaycation->swiperImages && $glampingStaycation->swiperImages->count() > 0) {
+                    $firstImg = $glampingStaycation->swiperImages->first();
+                    $glampingImage = $firstImg->image_url ?? $firstImg->image_path ?? null;
                   }
                 }
-                $glampingImage = $glampingImage ?? asset('assets/images/carousel/Glamping-1.jpg');
+                // Normalize to absolute URL in blade (if stored as relative)
+                if ($glampingImage) {
+                  if (strpos($glampingImage, '//') === 0) $glampingImage = 'https:' . $glampingImage;
+                  elseif (!preg_match('#^https?://#', $glampingImage)) $glampingImage = url($glampingImage);
+                }
               @endphp
-              <img src="{{ $glampingImage }}" alt="Glamping Tent" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
+              @if($glampingImage)
+                <img src="{{ $glampingImage }}" alt="Glamping Tent" data-initial-src="{{ $glampingImage }}" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" onerror="this.onerror=null; this.style.display='none'; console.warn('Glamping image failed to load:', this.dataset && this.dataset.initialSrc);">
+              @else
+                <div class="h-56 sm:h-64 w-full bg-gray-100 flex items-center justify-center text-gray-400">No image uploaded</div>
+              @endif
             </div>
             <div class="px-4 py-7 text-center">
               <h3 class="mb-4 font-extrabold uppercase tracking-wide staycation-heading">Glamping Tent</h3>
@@ -48,22 +58,31 @@
           <article class="relative mx-auto w-full max-w-md rounded-[22px] bg-white p-5 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2" style="box-shadow:0 10px 16px rgba(0,0,0,0.08);">
             <div class="rounded-xl ring-1 ring-black/5 shadow-sm bg-white overflow-hidden">
               @php
-                // Prefer 'Car Camping' first, then any camping/byot staycation
-                $campingStaycation = $staycations->firstWhere('name', 'Car Camping') 
+                // Prefer explicit image field from admin for Camping (Car Camping / BYOT), then swiperImages
+                $campingStaycation = $staycations->firstWhere('name', 'Car Camping')
                   ?? $staycations->first(function($s) {
                     return str_contains(strtolower($s->name), 'byot') || str_contains(strtolower($s->name), 'camping');
                   });
                 $campingImage = null;
                 if ($campingStaycation) {
-                  if ($campingStaycation->swiperImages && $campingStaycation->swiperImages->count() > 0) {
-                    $campingImage = $campingStaycation->swiperImages->first()->image_path;
-                  } elseif ($campingStaycation->image) {
+                  if (!empty($campingStaycation->image)) {
                     $campingImage = $campingStaycation->image;
+                  } elseif ($campingStaycation->swiperImages && $campingStaycation->swiperImages->count() > 0) {
+                    $first = $campingStaycation->swiperImages->first();
+                    $campingImage = $first->image_url ?? $first->image_path ?? null;
                   }
                 }
-                $campingImage = $campingImage ?? asset('assets/images/carousel/BYOT-2.jpg');
+                // Normalize absolute URL
+                if ($campingImage) {
+                  if (strpos($campingImage, '//') === 0) $campingImage = 'https:' . $campingImage;
+                  elseif (!preg_match('#^https?://#', $campingImage)) $campingImage = url($campingImage);
+                }
               @endphp
-              <img src="{{ $campingImage }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
+              @if($campingImage)
+                <img src="{{ $campingImage }}" data-initial-src="{{ $campingImage }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" onerror="this.onerror=null; this.style.display='none'; console.warn('Camping image failed to load:', this.dataset && this.dataset.initialSrc);">
+              @else
+                <div class="h-56 sm:h-64 w-full bg-gray-100 flex items-center justify-center text-gray-400">No image uploaded</div>
+              @endif
             </div>
             <div class="px-4 py-7 text-center">
               <h3 class="mb-4 font-extrabold uppercase tracking-wide staycation-heading">Camping</h3>
@@ -656,6 +675,46 @@
           });
         });
       });
+    </script>
+    <script>
+      // Periodically fetch the latest Glamping image from live booking site
+      (function(){
+        const endpoints = [
+          { selector: 'img[alt="Glamping Tent"]', internal: '/api/internal/glamping-image', external: '/api/external/glamping-image' },
+          { selector: 'img[alt="Camping"]', internal: '/api/internal/camping-image' }
+        ];
+
+        async function fetchJson(path){
+          try{
+            const url = window.location.origin + path;
+            const res = await fetch(url, {cache: 'no-store'});
+            if (!res.ok) return null;
+            return await res.json();
+          } catch(e){ return null; }
+        }
+
+        async function updateImageFor(entry){
+          try{
+            let json = await fetchJson(entry.internal);
+            if ((!json || !json.image) && entry.external) {
+              json = await fetchJson(entry.external);
+            }
+            if (!json || !json.image) return;
+            const img = document.querySelector(entry.selector);
+            if (!img) return;
+            const newSrc = json.image + '?_=' + Date.now();
+            if (img.getAttribute('data-initial-src') === newSrc) return;
+            img.src = newSrc;
+            img.setAttribute('data-initial-src', newSrc);
+          }catch(e){ console.warn('Image update failed for', entry.selector, e); }
+        }
+
+        function refreshAllImages(){
+          endpoints.forEach(e => updateImageFor(e));
+        }
+        // Initial fetch shortly after DOM ready
+        window.addEventListener('load', function(){ updateGlampingImage(); setInterval(updateGlampingImage, 30000); });
+      })();
     </script>
   </body>
 </html>

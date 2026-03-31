@@ -82,6 +82,7 @@ use App\Http\Controllers\PricingConfigController;
 use App\Http\Controllers\BookingCalendarController;
 use App\Http\Controllers\CheckInOutController;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\DayVisitController;
 use App\Http\Controllers\PaymentController;
 // ========== Root Route ==========
@@ -183,6 +184,88 @@ Route::get('/booking/staycation/payment', [BookingController::class, 'staycation
 Route::match(['GET', 'POST'], '/booking/staycation', [BookingController::class, 'staycation'])->name('booking.staycation');
 Route::post('/booking/save-session', [BookingController::class, 'saveBookingSession'])->name('booking.saveSession');
 Route::get('/booking/staycation/availability', [BookingController::class, 'staycationAvailability'])->name('booking.staycationAvailability');
+// Endpoint: fetch external live site and return current glamping image
+Route::get('/api/external/glamping-image', function() {
+    $cacheKey = 'external.glamping_image';
+    $image = cache()->remember($cacheKey, 30, function() {
+        try {
+            $resp = Http::timeout(10)->get('https://calaia.ph/booking/staycation/availability');
+            if (!$resp->ok()) return null;
+            $html = $resp->body();
+            libxml_use_internal_errors(true);
+            $doc = new \DOMDocument();
+            $doc->loadHTML('<?xml encoding="utf-8" ?>' . $html);
+            $xpath = new \DOMXPath($doc);
+            // Prefer exact alt, fallback to any image with 'glamping' in alt
+            $node = $xpath->query("//img[@alt='Standard Glamping']")->item(0);
+            if (!$node) {
+                $nodes = $xpath->query("//img[contains(translate(@alt,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'glamping')]");
+                $node = $nodes->item(0);
+            }
+            if ($node instanceof \DOMElement) {
+                $src = $node->getAttribute('src');
+                if (strpos($src, '//') === 0) $src = 'https:' . $src;
+                elseif (!preg_match('#^https?://#', $src)) $src = 'https://calaia.ph' . (strpos($src, '/') === 0 ? '' : '/') . $src;
+                return $src;
+            }
+        } catch (\Exception $e) {
+            // ignore and return null
+        }
+        return null;
+    });
+    return response()->json(['image' => $image]);
+});
+
+// Internal endpoint: return current Glamping image from DB (swiperImages first, then image)
+Route::get('/api/internal/glamping-image', function() {
+    try {
+        $staycation = \App\Models\Staycation::where('name', 'Standard Glamping')->first();
+        $img = null;
+        if ($staycation) {
+            // Prefer explicit staycation.image (admin-set image) first
+            if (!empty($staycation->image)) {
+                $img = $staycation->image;
+            } elseif ($staycation->swiperImages && $staycation->swiperImages->count() > 0) {
+                $first = $staycation->swiperImages->first();
+                $img = $first->image_url ?? $first->image_path ?? null;
+            }
+        }
+        if ($img) {
+            if (strpos($img, '//') === 0) $img = 'https:' . $img;
+            elseif (!preg_match('#^https?://#', $img)) $img = url($img);
+        }
+        return response()->json(['image' => $img]);
+    } catch (\Exception $e) {
+        return response()->json(['image' => null], 500);
+    }
+});
+
+// Internal endpoint: return current Camping image from DB (prefer staycation.image then swiperImages)
+Route::get('/api/internal/camping-image', function() {
+    try {
+        // Prefer exact 'Car Camping', otherwise any staycation with 'camping' or 'byot' in name
+        $staycation = \App\Models\Staycation::where('name', 'Car Camping')->first()
+            ?? \App\Models\Staycation::whereRaw("LOWER(name) LIKE '%camping%'")->first()
+            ?? \App\Models\Staycation::whereRaw("LOWER(name) LIKE '%byot%'")->first();
+
+        $img = null;
+        if ($staycation) {
+            if (!empty($staycation->image)) {
+                $img = $staycation->image;
+            } elseif ($staycation->swiperImages && $staycation->swiperImages->count() > 0) {
+                $first = $staycation->swiperImages->first();
+                $img = $first->image_url ?? $first->image_path ?? null;
+            }
+        }
+        if ($img) {
+            if (strpos($img, '//') === 0) $img = 'https:' . $img;
+            elseif (!preg_match('#^https?://#', $img)) $img = url($img);
+        }
+        return response()->json(['image' => $img]);
+    } catch (\Exception $e) {
+        return response()->json(['image' => null], 500);
+    }
+});
 Route::get('/booking/staycation/food', [BookingController::class, 'staycationFood'])->name('booking.staycationFood');
 Route::post('/booking/staycation/food/save', [BookingController::class, 'saveFoodSelection'])->name('booking.saveFoodSelection');
 Route::get('/api/booking/staycation/availability', [BookingController::class, 'getStaycationAvailabilityApi'])->name('api.booking.staycationAvailability');
