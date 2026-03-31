@@ -1125,7 +1125,7 @@
                             <button 
                                 type="button" 
                                 class="flex-1 px-4 sm:px-6 py-3 bg-[#8f5d54] text-white hover:bg-[#7a4e48] rounded-xl font-semibold transition flex items-center justify-center gap-2 text-sm sm:text-base min-h-12"
-                                @click="roomDetailsModal = false; $dispatch('click')"
+                                @click="selectRoomFromModal()"
                             >
                                 <i class="bi bi-calendar-check"></i>
                                 <span>Select This Room</span>
@@ -1424,7 +1424,9 @@
                 imageGallerySwiperInstance: null,
                 roomDetailsModal: false,
                 roomDetailsName: '',
+                roomDetailsId: null,
                 roomDetailsDescription: '',
+                roomDetailsTypeRaw: '',
                 roomDetailsFeatures: [],
                 roomDetailsType: '',
                 roomDetailsStatus: 'available',
@@ -1926,6 +1928,7 @@
                 },
 
                 showRoomDetailsModal(roomId, name, description, features, images = []) {
+                    this.roomDetailsId = roomId;
                     if (this.roomDetailsModal) {
                         console.warn('Modal already open, preventing recursive call.');
                         return;
@@ -1939,6 +1942,7 @@
                     
                     // Set room type
                     this.roomDetailsType = roomDetail ? (roomDetail.type ? roomDetail.type.charAt(0).toUpperCase() + roomDetail.type.slice(1) : 'Room') : 'Room';
+                    this.roomDetailsTypeRaw = roomDetail?.type || '';
                     
                     // Set status
                     this.roomDetailsStatus = roomDetail ? roomDetail.status : 'available';
@@ -2030,6 +2034,26 @@
                             }
                         }, 100);
                     });
+                },
+
+                selectRoomFromModal() {
+                    const roomId = this.roomDetailsId;
+                    if (!roomId) return;
+                    const type = (this.roomDetailsTypeRaw || '').toLowerCase();
+
+                    // Use existing toggleRoom to add/select the room
+                    try {
+                        this.toggleRoom(roomId, type);
+                    } catch (e) {
+                        console.error('Failed to select room from modal', e);
+                    }
+
+                    // Close modal after selection
+                    this.roomDetailsModal = false;
+
+                    // Clear temporary modal id
+                    this.roomDetailsId = null;
+                    this.roomDetailsTypeRaw = '';
                 },
 
                 initCalendar() {
