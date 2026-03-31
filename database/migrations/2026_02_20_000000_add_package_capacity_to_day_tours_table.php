@@ -39,8 +39,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('day_tours', function (Blueprint $table) {
-            $table->dropColumn(['max_guests', 'pricing_type', 'is_active']);
-        });
+        // Don't drop columns in down() since they're managed by earlier migration
+        // This migration only sets defaults, it doesn't add columns
     }
 };

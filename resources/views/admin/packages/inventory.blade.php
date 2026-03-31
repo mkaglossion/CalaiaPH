@@ -101,7 +101,7 @@
                             <div>
                                 <h3 class="text-xl font-bold text-gray-900">{{ $package->name }}</h3>
                                 <p class="text-sm text-gray-600 mt-1">
-                                    Max Capacity: <span class="font-semibold">{{ $package->max_guests }} person{{ $package->max_guests > 1 ? 's' : '' }}</span>
+                                    <!-- Removed Max Capacity -->
                                 </p>
                             </div>
                             <button 

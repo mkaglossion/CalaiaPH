@@ -55,7 +55,7 @@ class AdminController extends Controller
                 ->first();
 
             // Use inventory available_quantity if exists, otherwise use base quantity
-            $staycation->today_available = $inventory ? $inventory->available_quantity : ($staycation->quantity ?? 0);
+            $staycation->today_available = $inventory ? $inventory->available_quantity : ($staycation->base_quantity ?? 0);
         }
 
         // Get current season

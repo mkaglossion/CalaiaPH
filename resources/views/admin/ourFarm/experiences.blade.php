@@ -46,7 +46,6 @@
                 {{-- Details --}}
                 <div class="mb-4 text-xs text-gray-500 space-y-1">
                     <div><span class="font-medium">Time:</span> <span x-text="experience.time"></span></div>
-                    <div><span class="font-medium">Capacity:</span> <span x-text="experience.capacity"></span></div>
                     <div><span class="font-medium">Button:</span> <span x-text="experience.cta"></span></div>
                 </div>
 
@@ -132,18 +131,6 @@
                         x-model="currentExperience.time" 
                         required 
                         placeholder="e.g., Weekends 9AM–2PM"
-                        class="w-full text-sm sm:text-base border border-gray-300 rounded-xl px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                </div>
-
-                {{-- Capacity --}}
-                <div>
-                    <label for="experience_capacity" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Capacity/Info *</label>
-                    <input 
-                        id="experience_capacity"
-                        type="text" 
-                        x-model="currentExperience.capacity" 
-                        required 
-                        placeholder="e.g., Groups up to 20 people"
                         class="w-full text-sm sm:text-base border border-gray-300 rounded-xl px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
                 </div>
 

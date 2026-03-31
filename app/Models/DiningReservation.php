@@ -8,6 +8,7 @@ class DiningReservation extends Model
 {
     protected $fillable = [
         'food_id',
+        'food_name',
         'meal_period',
         'reservation_date',
         'reservation_time',
@@ -17,7 +18,11 @@ class DiningReservation extends Model
         'phone',
         'email',
         'special_requests',
-        'status'
+        'status',
+        'payment_status',
+        'payment_method',
+        'payment_notes',
+        'total_amount'
     ];
 
     public function food()

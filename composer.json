@@ -15,7 +15,8 @@
         "laravel/framework": "^12.0",
         "laravel/telescope": "^5.15",
         "laravel/tinker": "^2.10.1",
-        "paymongo/paymongo-php": "*"
+        "paymongo/paymongo-php": "*",
+        "symfony/process": "^7.4.5"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

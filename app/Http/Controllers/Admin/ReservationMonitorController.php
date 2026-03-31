@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Services\VatService;
 
 class ReservationMonitorController extends Controller
 {
@@ -32,13 +33,16 @@ class ReservationMonitorController extends Controller
         }
 
         $dining = $diningQuery
-                ->select('id', 'first_name', 'last_name', 'email', 'phone', 
-                        'reservation_date', 'reservation_time', 'adults', 'status', 'created_at')
+                ->with('food') // Eager load food relationship
+                ->select('id', 'food_id', 'first_name', 'last_name', 'email', 'phone', 
+                        'reservation_date', 'reservation_time', 'adults', 'status', 'payment_status', 'total_amount', 'created_at')
                 ->orderBy('created_at', 'asc')
                 ->get();
 
         // Transform dining to arrays
-        $allReservations = $dining->map(function ($res) {
+        $vatService = app(VatService::class);
+
+        $allReservations = $dining->map(function ($res) use ($vatService) {
             return [
                 'id' => 'dining_' . $res->id,
                 'type' => 'Dining',
@@ -51,6 +55,11 @@ class ReservationMonitorController extends Controller
                 'time' => $res->reservation_time,
                 'guests' => $res->adults,
                 'status' => $res->status,
+                'payment_status' => $res->payment_status ?? 'pending',
+                'amount' => (float)($res->total_amount ?? 0),
+                'vat_amount' => $vatService->extractVatFromInclusive((float)($res->total_amount ?? 0)),
+                'food_name' => $res->food ? $res->food->name : 'N/A',
+                'food_id' => $res->food_id,
                 'created_at' => $res->created_at,
                 'route' => '#', // Link to dining if available
             ];
@@ -162,47 +171,95 @@ class ReservationMonitorController extends Controller
      */
     public function recordPayment(Request $request)
     {
+        // Log incoming payload to aid debugging payment issues
+        Log::info('recordPayment payload', ['payload' => $request->all(), 'ip' => $request->ip(), 'user_id' => Auth::id()]);
+
         try {
             $validated = $request->validate([
-                'booking_id' => 'required|exists:bookings,id',
+                'booking_id' => 'nullable|exists:bookings,id',
+                'dining_id' => 'nullable|exists:dining_reservations,id',
                 'amount' => 'required|numeric|min:0.01',
-                'payment_method' => 'required|in:online,cash,check,transfer,other',
+                'payment_method' => 'required|in:online,cash,check,transfer,other,bank_transfer,credit_card,paymongo',
                 'notes' => 'nullable|string|max:500',
             ]);
 
-            $booking = Booking::findOrFail($validated['booking_id']);
+            // Handle booking payment
+            if ($validated['booking_id']) {
+                $booking = Booking::findOrFail($validated['booking_id']);
 
-            // Use BookingStatusService to record payment with timeline logging
-            $success = BookingStatusService::updatePaymentStatus(
-                $booking,
-                'paid',
-                $validated['amount'],
-                $validated['payment_method'],
-                $validated['notes'] ?? null,
-                'admin',
-                Auth::id(),
-                $validated['notes'] ? ['notes' => $validated['notes']] : []
-            );
+                // Use BookingStatusService to record payment with timeline logging
+                Log::info('Recording booking payment via admin', ['booking_id' => $booking->id, 'amount' => $validated['amount'], 'method' => $validated['payment_method']]);
 
-            if (!$success) {
+                // Call service with expected signature (booking, newPaymentStatus, amount, method, reference=null, triggeredBy='system', adminId=null)
+                $success = BookingStatusService::updatePaymentStatus(
+                    $booking,
+                    'paid',
+                    (float) $validated['amount'],
+                    $validated['payment_method'],
+                    $validated['notes'] ?? null,
+                    'admin',
+                    Auth::id()
+                );
+
+                // Refresh booking to ensure we return updated attributes
+                $booking->refresh();
+
+                Log::info('Booking after payment update', ['booking_id' => $booking->id, 'payment_status' => $booking->payment_status, 'payment_method' => $booking->payment_method]);
+
+                if (!$success) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to record payment. Please try again.'
+                    ], 400);
+                }
+
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to record payment. Please try again.'
-                ], 400);
+                    'success' => true,
+                    'message' => 'Payment recorded successfully',
+                    'booking' => [
+                        'id' => $booking->id,
+                        'payment_status' => $booking->payment_status,
+                        'payment_method' => $booking->payment_method,
+                    ]
+                ]);
+            }
+            
+            // Handle dining reservation payment
+            if ($validated['dining_id']) {
+                $dining = DiningReservation::findOrFail($validated['dining_id']);
+
+                Log::info('Recording dining payment via admin - before update', ['dining_id' => $dining->id, 'current_payment_status' => $dining->payment_status, 'current_total' => $dining->total_amount]);
+
+                $dining->update([
+                    'payment_status' => 'paid',
+                    'payment_method' => $validated['payment_method'],
+                    'payment_notes' => $validated['notes'] ?? null,
+                    'total_amount' => (float) $validated['amount'],
+                ]);
+
+                // Refresh and log after update to ensure persistence
+                $dining->refresh();
+                Log::info('Recording dining payment via admin - after update', ['dining_id' => $dining->id, 'payment_status' => $dining->payment_status, 'total_amount' => $dining->total_amount]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment recorded successfully',
+                    'dining' => [
+                        'id' => $dining->id,
+                        'payment_status' => $dining->payment_status,
+                        'payment_method' => $dining->payment_method,
+                    ]
+                ]);
             }
 
             return response()->json([
-                'success' => true,
-                'message' => 'Payment recorded successfully',
-                'booking' => [
-                    'id' => $booking->id,
-                    'payment_status' => $booking->payment_status,
-                    'payment_method' => $booking->payment_method,
-                ]
-            ]);
+                'success' => false,
+                'message' => 'Invalid reservation type'
+            ], 400);
         } catch (\Exception $e) {
             Log::error('Error recording payment', [
                 'booking_id' => $request->booking_id ?? null,
+                'dining_id' => $request->dining_id ?? null,
                 'error' => $e->getMessage(),
             ]);
             return response()->json([
@@ -258,12 +315,12 @@ class ReservationMonitorController extends Controller
             }
 
             // Use BookingStatusService to update status with timeline logging
-$success = BookingStatusService::updateStatus(
+            $success = BookingStatusService::updateStatus(
                 $booking,
                 $validated['status'],
                 'admin',
                 Auth::id(),
-                $validated['notes'] ? ['notes' => $validated['notes']] : []
+                ($validated['notes'] ?? null) ? ['notes' => $validated['notes']] : []
             );
 
             if (!$success) {
@@ -461,10 +518,45 @@ $success = BookingStatusService::updateStatus(
             $bookingIds = $validated['booking_ids'] ?? [];
             $diningIds = $validated['dining_ids'] ?? [];
 
+            // If attempting to mark completed, first validate none of the selected
+            // reservations are unpaid. Return a 422 with details so frontend can
+            // display a clear error instead of silently skipping items.
+            if ($validated['status'] === 'completed') {
+                $unpaid = [];
+
+                foreach ($bookingIds as $bookingId) {
+                    $booking = Booking::find($bookingId);
+                    if ($booking && ($booking->payment_status ?? 'pending') !== 'paid') {
+                        $unpaid[] = 'booking_' . $bookingId;
+                    }
+                }
+
+                foreach ($diningIds as $diningId) {
+                    $dining = DiningReservation::find($diningId);
+                    if ($dining && ($dining->payment_status ?? 'pending') !== 'paid') {
+                        $unpaid[] = 'dining_' . $diningId;
+                    }
+                }
+
+                if (!empty($unpaid)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Some selected reservations are unpaid and cannot be marked completed.',
+                        'unpaid' => $unpaid,
+                    ], 422);
+                }
+            }
+
             // Update bookings
             foreach ($bookingIds as $bookingId) {
                 $booking = Booking::find($bookingId);
                 if ($booking) {
+                    // If attempting to mark completed, ensure booking is paid
+                    if ($validated['status'] === 'completed' && ($booking->payment_status ?? 'pending') !== 'paid') {
+                        $failed[] = 'booking_' . $bookingId . ':unpaid';
+                        continue;
+                    }
+
                     if (BookingStatusService::updateStatus(
                         $booking,
                         $validated['status'],
@@ -482,17 +574,24 @@ $success = BookingStatusService::updateStatus(
             foreach ($diningIds as $diningId) {
                 $dining = DiningReservation::find($diningId);
                 if ($dining) {
+                    // If attempting to mark completed, ensure dining reservation is paid
+                    if ($validated['status'] === 'completed' && ($dining->payment_status ?? 'pending') !== 'paid') {
+                        $failed[] = 'dining_' . $diningId . ':unpaid';
+                        continue;
+                    }
+
+                    $oldStatus = $dining->status;
                     $dining->update(['status' => $validated['status']]);
                     $updated++;
-                    
+
                     // Log the action
                     AdminActivityLog::create([
                         'user_id' => $adminId,
                         'action' => 'dining_reservation_status_update',
-                        'description' => "Updated dining reservation #{$diningId} status to {$validated['status']}",
+                        'description' => "Updated dining reservation #{$diningId} status from {$oldStatus} to {$validated['status']}",
                         'model_type' => 'DiningReservation',
                         'model_id' => $diningId,
-                        'changes' => ['status' => $validated['status']],
+                        'changes' => ['old_status' => $oldStatus, 'new_status' => $validated['status']],
                     ]);
                 }
             }

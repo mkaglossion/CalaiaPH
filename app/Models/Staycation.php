@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Artisan;
 
 class Staycation extends Model
 {
-    protected $fillable = ['name', 'days', 'type', 'quantity', 'capacity', 'adults', 'children', 'image', 'price_configs', 'price'];
+    protected $fillable = ['name', 'days', 'type', 'base_quantity', 'capacity', 'adults', 'children', 'image', 'price_configs', 'price'];
 
     protected $casts = [
         'price_configs' => 'array',
@@ -19,7 +19,7 @@ class Staycation extends Model
 
         static::updated(function ($staycation) {
             // If quantity changed, sync inventory
-            if ($staycation->wasChanged('quantity')) {
+            if ($staycation->wasChanged('base_quantity')) {
                 // Run sync for this staycation
                 Artisan::call('staycation:sync-inventory', [
                     '--days' => 90,

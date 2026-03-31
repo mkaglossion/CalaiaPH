@@ -25,15 +25,29 @@ class InventoryController extends Controller
                 'block_reason' => 'nullable|string'
             ]);
 
+            // Check if inventory already exists to preserve booked_quantity
+            $existing = StaycationInventory::where('staycation_id', $validated['staycation_id'])
+                ->where('date', $validated['date'])
+                ->first();
+
+            $bookedQty = $existing ? $existing->booked_quantity : 0;
+            $totalQty = $validated['total_quantity'];
+            $availableQty = max(0, $totalQty - $bookedQty);
+
+            // If blocked, set available to 0
+            if ($validated['is_blocked'] ?? false) {
+                $availableQty = 0;
+            }
+
             $inventory = StaycationInventory::updateOrCreate(
                 [
                     'staycation_id' => $validated['staycation_id'],
                     'date' => $validated['date']
                 ],
                 [
-                    'total_quantity' => $validated['total_quantity'],
-                    'booked_quantity' => 0,
-                    'available_quantity' => $validated['total_quantity'],
+                    'total_quantity' => $totalQty,
+                    'booked_quantity' => $bookedQty,
+                    'available_quantity' => $availableQty,
                     'is_blocked' => $validated['is_blocked'] ?? false,
                     'block_reason' => $validated['block_reason'] ?? null
                 ]
@@ -59,12 +73,12 @@ class InventoryController extends Controller
         $endDate = Carbon::parse($validated['end_date']);
 
         $staycation = Staycation::find($validated['room_id']);
-        $baseQuantity = $staycation ? $staycation->quantity : 0;
+        $baseQuantity = $staycation ? $staycation->base_quantity : 0;
 
         // If setting higher than base, update staycation quantity
         $newBase = max($baseQuantity, $validated['quantity']);
         if ($newBase > $baseQuantity) {
-            $staycation->update(['quantity' => $newBase]);
+            $staycation->update(['base_quantity' => $newBase]);
             $baseQuantity = $newBase;
         }
 
@@ -116,12 +130,12 @@ class InventoryController extends Controller
         ]);
 
         $staycation = Staycation::find($validated['room_id']);
-        $baseQuantity = $staycation ? $staycation->quantity : 0;
+        $baseQuantity = $staycation ? $staycation->base_quantity : 0;
 
         // Update base if higher
         $newBase = max($baseQuantity, $validated['quantity']);
         if ($newBase > $baseQuantity) {
-            $staycation->update(['quantity' => $newBase]);
+            $staycation->update(['base_quantity' => $newBase]);
             $baseQuantity = $newBase;
         }
 
@@ -172,12 +186,12 @@ class InventoryController extends Controller
         ]);
 
         $staycation = Staycation::find($validated['room_id']);
-        $baseQuantity = $staycation ? $staycation->quantity : 0;
+        $baseQuantity = $staycation ? $staycation->base_quantity : 0;
 
         // Update base if higher
         $newBase = max($baseQuantity, $validated['quantity']);
         if ($newBase > $baseQuantity) {
-            $staycation->update(['quantity' => $newBase]);
+            $staycation->update(['base_quantity' => $newBase]);
             $baseQuantity = $newBase;
         }
 
@@ -220,46 +234,61 @@ class InventoryController extends Controller
         return response()->json(['success' => true, 'message' => "Inventory set for $count days"]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, StaycationInventory $inventory)
     {
-        $inventory = StaycationInventory::find($id);
-        
-        if (!$inventory) {
-            return response()->json(['message' => 'Inventory not found'], 404);
-        }
-
-        $validated = $request->validate([
-            'staycation_id' => 'required|exists:staycations,id',
-            'date' => 'required|date_format:Y-m-d',
-            'total_quantity' => 'required|integer|min:1',
-            'is_blocked' => 'boolean',
-            'block_reason' => 'nullable|string'
-        ]);
-
-        $inventory->update([
-            'total_quantity' => $validated['total_quantity'],
-            'available_quantity' => $validated['is_blocked'] ? 0 : $validated['total_quantity'],
-            'is_blocked' => $validated['is_blocked'] ?? false,
-            'block_reason' => $validated['block_reason'] ?? null
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Inventory updated successfully',
-            'data' => $inventory
-        ]);
-    }
-
-    public function delete(Request $request, $id = null)
-    {
-        // Handle inventory management form API (delete by ID)
-        if ($id) {
-            $inventory = StaycationInventory::find($id);
-            
+        try {
             if (!$inventory) {
-                return response()->json(['message' => 'Inventory not found'], 404);
+                return response()->json(['success' => false, 'message' => 'Inventory not found'], 404);
             }
 
+            $validated = $request->validate([
+                'staycation_id' => 'required|exists:staycations,id',
+                'date' => 'required|date_format:Y-m-d',
+                'total_quantity' => 'required|integer|min:1',
+                'is_blocked' => 'boolean',
+                'block_reason' => 'nullable|string'
+            ]);
+
+            // Calculate available_quantity based on total and booked
+            $bookedQty = $inventory->booked_quantity ?? 0;
+            $totalQty = $validated['total_quantity'];
+            $availableQty = max(0, $totalQty - $bookedQty);
+
+            // If blocked, set available to 0
+            if ($validated['is_blocked'] ?? false) {
+                $availableQty = 0;
+            }
+
+            $inventory->update([
+                'total_quantity' => $totalQty,
+                'available_quantity' => $availableQty,
+                'is_blocked' => $validated['is_blocked'] ?? false,
+                'block_reason' => $validated['block_reason'] ?? null
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inventory updated successfully',
+                'data' => $inventory
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating inventory: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function delete(Request $request, ?StaycationInventory $inventory = null)
+    {
+        // Handle inventory management form API (delete by ID/model)
+        if ($inventory) {
             $inventory->delete();
 
             return response()->json([
@@ -280,7 +309,7 @@ class InventoryController extends Controller
 
         // Get fallback quantity for broadcasting
         $staycation = Staycation::find($validated['room_id']);
-        $fallbackQuantity = $staycation ? ($staycation->quantity ?? 0) : 0;
+        $fallbackQuantity = $staycation ? ($staycation->base_quantity ?? 0) : 0;
 
         // Broadcast inventory update (back to fallback quantity)
         broadcast(new \App\Events\InventoryUpdated($validated['room_id'], $validated['date'], $fallbackQuantity));
@@ -292,7 +321,7 @@ class InventoryController extends Controller
     {
         // Get staycation for fallback quantity
         $staycation = Staycation::find($roomId);
-        $fallbackQuantity = $staycation ? ($staycation->quantity ?? 0) : 0;
+        $fallbackQuantity = $staycation ? ($staycation->base_quantity ?? 0) : 0;
 
         // Get existing inventory records starting from today, ordered by date
         $inventoryRecords = StaycationInventory::where('staycation_id', $roomId)

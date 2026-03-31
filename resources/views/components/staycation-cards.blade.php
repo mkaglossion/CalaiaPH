@@ -11,9 +11,13 @@
         {{-- Inset image --}}
         <div class="px-4 pt-4">
           <div class="position-relative overflow-hidden shadow-sm">
-            <img src="{{ $accommodation['image'] }}"
-                 alt="{{ $accommodation['alt'] }}"
-                 class="w-100" style="height:260px; object-fit:cover;">
+            <img 
+              :src="'{{ $accommodation['image'] }}'"
+              class="w-full h-full object-cover transition hover:scale-105"
+              alt="staycation"
+              style="height:260px;"
+              onerror="console.error('Image load failed:', this.src)"
+            >
           </div>
         </div>
 

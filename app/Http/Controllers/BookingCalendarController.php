@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\Staycation;
@@ -34,112 +35,58 @@ class BookingCalendarController extends Controller
     {
         $today = Carbon::today();
 
-        // Get inventory dates - only dates that have explicit inventory records
-        // No future limit - shows whatever dates admin configured
-        $earliestDate = StaycationInventory::where('date', '>=', $today)
-            ->min('date');
-        $latestDate = StaycationInventory::where('date', '>=', $today)
-            ->max('date');
-
-        // If no inventory configured at all
-        if (!$earliestDate || !$latestDate) {
-            $bookingStartDate = null;
-            $bookingEndDate = null;
-            $availability = [];
-            $maxQty = 0;
-            $totalQuantity = Staycation::sum('quantity');
-
-            $season = $this->determineSeasonForCalendar();
-            $checkin = $request->query('checkin');
-            $checkout = $request->query('checkout');
-            $bookingType = 'staycation';
-            $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);
-
-            return view('booking.calendar', compact(
-                'availability', 'checkin', 'checkout', 'totalQuantity',
-                'maxQty', 'season', 'bookingType', 'bookingStartDate', 'bookingEndDate', 'maxPetsPerRoom'
-            ));
-        }
-
-        // Get all unique dates that have inventory configured
-        $inventoryDates = StaycationInventory::whereBetween('date', [$earliestDate, $latestDate])
-            ->distinct()
-            ->pluck('date')
-            ->map(function ($date) {
-                return Carbon::parse($date)->format('Y-m-d');
-            })
-            ->toArray();
-
-        // If no inventory configured, show message or fallback to empty range
-        if (empty($inventoryDates)) {
-            $bookingStartDate = null;
-            $bookingEndDate = null;
-            $availability = [];
-            $maxQty = 0;
-            $totalQuantity = Staycation::sum('quantity');
-
-            $season = $this->determineSeasonForCalendar();
-            $checkin = $request->query('checkin');
-            $checkout = $request->query('checkout');
-            $bookingType = 'staycation';
-            $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);
-
-            return view('booking.calendar', compact(
-                'availability', 'checkin', 'checkout', 'totalQuantity',
-                'maxQty', 'season', 'bookingType', 'bookingStartDate', 'bookingEndDate', 'maxPetsPerRoom'
-            ));
-        }
-
-        // Get min and max dates for calendar navigation
-        $bookingStartDate = min($inventoryDates);
-        $bookingEndDate = max($inventoryDates);
-
-        // Build availability ONLY for dates that have inventory records
+        // Initialize defaults
+        $bookingStartDate = null;
+        $bookingEndDate = null;
         $availability = [];
         $maxQty = 0;
+        $totalQuantity = 0;
 
-        foreach ($inventoryDates as $dateStr) {
-            $d = Carbon::parse($dateStr);
+        // Only query inventory if table exists
+        if (Schema::hasTable('staycation_inventories')) {
+            // Get inventory dates - only dates that have explicit inventory records
+            // No future limit - shows whatever dates admin configured
+            $earliestDate = StaycationInventory::where('date', '>=', $today)
+                ->min('date');
+            $latestDate = StaycationInventory::where('date', '>=', $today)
+                ->max('date');
 
-            // Skip past dates
-            if ($d->lt(Carbon::today())) {
-                $availability[$dateStr] = [
-                    'is_available' => false,
-                    'min_quantity' => 0
-                ];
-                continue;
-            }
+            // If no inventory configured at all
+            if ($earliestDate && $latestDate) {
+                // Get all unique dates that have inventory configured
+                $inventoryDates = StaycationInventory::whereBetween('date', [$earliestDate, $latestDate])
+                    ->distinct()
+                    ->pluck('date')
+                    ->map(function ($date) {
+                        return Carbon::parse($date)->format('Y-m-d');
+                    })
+                    ->toArray();
 
-            // Get total available quantity for this date from inventory table
-            $totalAvailable = StaycationInventory::where('date', $dateStr)
-                ->sum('available_quantity');
+                if (!empty($inventoryDates)) {
+                    $bookingStartDate = $earliestDate;
+                    $bookingEndDate = $latestDate;
 
-            $availability[$dateStr] = [
-                'is_available' => $totalAvailable > 0,
-                'min_quantity' => $totalAvailable
-            ];
-
-            // Track max for threshold calculation
-            if ($totalAvailable > $maxQty) {
-                $maxQty = $totalAvailable;
+                    // Build availability for each date
+                    foreach ($inventoryDates as $dateStr) {
+                        $totalAvailable = StaycationInventory::where('date', $dateStr)
+                            ->sum('available_quantity');
+                        
+                        $availability[$dateStr] = [
+                            'is_available' => $totalAvailable > 0,
+                            'available_quantity' => $totalAvailable,
+                        ];
+                        
+                        if ($totalAvailable > $maxQty) {
+                            $maxQty = $totalAvailable;
+                        }
+                    }
+                }
             }
         }
 
-        // Get total quantity from staycations for fallback legend
-        $totalQuantity = Staycation::sum('quantity');
-
-        // Use max from inventory if available, otherwise use base total
-        if ($maxQty === 0) {
-            $maxQty = $totalQuantity;
-        }
-
-        // Determine season for pricing
         $season = $this->determineSeasonForCalendar();
-
-        // You can pass initial selected dates if you want:
         $checkin = $request->query('checkin');
         $checkout = $request->query('checkout');
-
         $bookingType = 'staycation';
         $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);
 

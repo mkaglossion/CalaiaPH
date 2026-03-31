@@ -38,9 +38,13 @@ class StaycationSwiperImageController extends Controller
         $uploadedFileUrl = $uploadResult['secure_url']; // Cloudinary secure URL
         $publicId = $uploadResult['public_id']; // Store this if you want to delete later
 
+        // Get staycation for default title
+        $staycation = Staycation::find($request->staycation_id);
+        $title = $request->title ?? $staycation->name;
+
         StaycationSwiperImage::create([
             'staycation_id' => $request->staycation_id,
-            'title' => $request->title ?? null,
+            'title' => $title,
             'image_path' => $uploadedFileUrl,
             'public_id' => $publicId,
         ]);
@@ -68,9 +72,13 @@ class StaycationSwiperImageController extends Controller
             'image' => 'nullable|file|mimes:mp4,avi,mov,wmv,jpeg,png,jpg,gif,webp|max:102400',
         ]);
 
+        // Get staycation for default title
+        $staycation = Staycation::find($request->staycation_id);
+        $title = $request->title ?? $staycation->name;
+
         $data = [
             'staycation_id' => $request->staycation_id,
-            'title' => $request->title ?? null,
+            'title' => $title,
         ];
 
         if ($request->hasFile('image')) {

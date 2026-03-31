@@ -10,45 +10,46 @@
         <p class="text-sm md:text-base text-gray-500 mt-1">Manage all dining reservations in real-time</p>
     </div>
 
-    <!-- Statistics Cards -->
+    <!-- Statistics Cards - Dining Only -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 px-4 md:px-0">
-        <!-- Bookings Stats -->
+        <!-- Total Dining Reservations -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3 md:p-4">
             <div class="flex items-center justify-between mb-2">
-                <h3 class="text-xs md:text-sm font-medium text-gray-600">Total Bookings</h3>
+                <h3 class="text-xs md:text-sm font-medium text-gray-600">Total Reservations</h3>
                 <i data-lucide="calendar" class="w-4 h-4 md:w-5 md:h-5 text-blue-500"></i>
             </div>
-            <p class="text-xl md:text-2xl font-bold text-gray-900" id="total-bookings">{{ $stats['total_bookings'] }}</p>
-            <p class="text-xs text-gray-500 mt-1">Pending: <span id="pending-bookings">{{ $stats['pending_bookings'] }}</span></p>
+            <p class="text-xl md:text-2xl font-bold text-gray-900" id="total-dining">{{ $stats['total_dining'] }}</p>
+            <p class="text-xs text-gray-500 mt-1">Pending: <span id="pending-dining">{{ $stats['pending_dining'] }}</span></p>
         </div>
 
+        <!-- Confirmed Reservations -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3 md:p-4">
             <div class="flex items-center justify-between mb-2">
-                <h3 class="text-xs md:text-sm font-medium text-gray-600">Completed Bookings</h3>
+                <h3 class="text-xs md:text-sm font-medium text-gray-600">Confirmed</h3>
                 <i data-lucide="check-circle" class="w-4 h-4 md:w-5 md:h-5 text-green-500"></i>
             </div>
-            <p class="text-xl md:text-2xl font-bold text-gray-900" id="completed-bookings">{{ $stats['completed_bookings'] }}</p>
-            <p class="text-xs text-gray-500 mt-1">Cancelled: <span id="cancelled-bookings">{{ $stats['cancelled_bookings'] }}</span></p>
+            <p class="text-xl md:text-2xl font-bold text-gray-900" id="confirmed-dining">{{ $stats['confirmed_dining'] }}</p>
+            <p class="text-xs text-gray-500 mt-1">Out of {{ $stats['total_dining'] }} total</p>
         </div>
 
-        <!-- Dining Stats -->
+        <!-- Cancelled Reservations -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3 md:p-4">
             <div class="flex items-center justify-between mb-2">
-                <h3 class="text-xs md:text-sm font-medium text-gray-600">Dining Reservations</h3>
-                <i data-lucide="utensils" class="w-4 h-4 md:w-5 md:h-5 text-orange-500"></i>
+                <h3 class="text-xs md:text-sm font-medium text-gray-600">Cancelled</h3>
+                <i data-lucide="x-circle" class="w-4 h-4 md:w-5 md:h-5 text-red-500"></i>
             </div>
-            <p class="text-xl md:text-2xl font-bold text-gray-900" id="total-dining">{{ $stats['total_dining'] }}</p>
-            <p class="text-xs text-gray-500 mt-1">Confirmed: <span id="confirmed-dining">{{ $stats['confirmed_dining'] }}</span></p>
+            <p class="text-xl md:text-2xl font-bold text-gray-900" id="cancelled-dining">{{ $stats['cancelled_dining'] }}</p>
+            <p class="text-xs text-gray-500 mt-1">Cancelled reservations</p>
         </div>
 
-        <!-- Revenue Stats -->
+        <!-- Coming Up Today -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3 md:p-4">
             <div class="flex items-center justify-between mb-2">
-                <h3 class="text-xs md:text-sm font-medium text-gray-600">Revenue (Today)</h3>
-                <i data-lucide="trending-up" class="w-4 h-4 md:w-5 md:h-5 text-yellow-500"></i>
+                <h3 class="text-xs md:text-sm font-medium text-gray-600">Today's Reservations</h3>
+                <i data-lucide="clock" class="w-4 h-4 md:w-5 md:h-5 text-orange-500"></i>
             </div>
-            <p class="text-xl md:text-2xl font-bold text-gray-900" id="revenue-today">₱{{ number_format($revenueStats['today'], 2) }}</p>
-            <p class="text-xs text-gray-500 mt-1 truncate">Month: ₱<span id="revenue-month">{{ number_format($revenueStats['this_month'], 2) }}</span></p>
+            <p class="text-xl md:text-2xl font-bold text-gray-900" id="todays-count">0</p>
+            <p class="text-xs text-gray-500 mt-1">Scheduled for today</p>
         </div>
     </div>
 
@@ -128,8 +129,8 @@
                             <th class="hidden md:table-cell px-3 md:px-6 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-900">Contact</th>
                             <th class="px-2 md:px-6 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-900">Reference</th>
                             <th class="hidden sm:table-cell px-3 md:px-6 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-900">Date</th>
-                            <th class="px-2 md:px-6 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-900">Status</th>
-                            <th class="hidden md:table-cell px-3 md:px-6 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-900">Payment</th>
+                            <th class="px-2 md:px-6 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-900">Amount</th>
+                            <th class="hidden md:table-cell px-3 md:px-6 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-900">Status</th>
                             <th class="px-3 md:px-6 py-3 text-left text-xs md:text-sm font-semibold text-gray-900">Action</th>
                         </tr>
                     </thead>
@@ -158,19 +159,9 @@
                                     <div>{{ \Carbon\Carbon::parse($reservation['date'])->format('M d, Y') }}</div>
                                 @endif
                             </td>
-                            <td class="px-2 md:px-6 py-2 md:py-4">
-                                @php
-                                    $statusColors = [
-                                        'confirmed' => 'bg-green-100 text-green-800',
-                                        'completed' => 'bg-blue-100 text-blue-800',
-                                        'cancelled' => 'bg-red-100 text-red-800',
-                                        'pending' => 'bg-yellow-100 text-yellow-800',
-                                    ];
-                                    $color = $statusColors[$reservation['status']] ?? 'bg-gray-100 text-gray-800';
-                                @endphp
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold {{ $color }}">
-                                    {{ ucfirst($reservation['status']) }}
-                                </span>
+                            <td class="px-2 md:px-6 py-2 md:py-4 text-xs md:text-sm font-semibold text-gray-900">
+                                <div>₱{{ number_format($reservation['amount'] ?? 0, 2) }}</div>
+                                <div class="text-xs text-gray-500 mt-0.5">VAT: ₱{{ number_format($reservation['vat_amount'] ?? 0, 2) }}</div>
                             </td>
                             <td class="hidden md:table-cell px-3 md:px-6 py-2 md:py-4 text-xs md:text-sm">
                                 @if($reservation['type'] === 'Booking')
@@ -183,24 +174,56 @@
                                         ];
                                         $pColor = $paymentColors[$paymentStatus] ?? 'bg-gray-100 text-gray-800';
                                     @endphp
-                                    <div class="flex flex-col gap-2">
-                                        <div class="font-semibold text-gray-900 text-xs md:text-sm">₱{{ number_format($reservation['amount'], 2) }}</div>
-                                        <div class="flex items-center gap-2">
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold {{ $pColor }} w-fit">
-                                                {{ ucfirst($paymentStatus) }}
-                                            </span>
-                                            @if($paymentStatus !== 'paid')
-                                                <button type="button" 
-                                                    onclick="openPaymentModal('{{ $reservation['id'] }}', '{{ addslashes($reservation['name']) }}', {{ $reservation['amount'] }})"
-                                                    class="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded-lg transition text-xs font-medium">
-                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h10M5 21h14M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
-                                                    Pay
-                                                </button>
-                                            @endif
-                                        </div>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold {{ $pColor }}">
+                                            {{ ucfirst($paymentStatus) }}
+                                        </span>
+                                        @if($paymentStatus !== 'paid')
+                                            <button type="button" 
+                                                onclick="openPaymentModal('{{ $reservation['id'] }}', '{{ addslashes($reservation['name']) }}', {{ $reservation['amount'] }})"
+                                                class="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded-lg transition text-xs font-medium">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h10M5 21h14M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+                                                Pay
+                                            </button>
+                                        @endif
                                     </div>
                                 @else
-                                    <span class="text-gray-400">-</span>
+                                    {{-- For Dining: Show both reservation status and payment status --}}
+                                    @php
+                                        $diningStatus = $reservation['status'] ?? 'pending';
+                                        $diningPaymentStatus = $reservation['payment_status'] ?? 'pending';
+                                        
+                                        $statusColors = [
+                                            'pending' => 'bg-yellow-100 text-yellow-800',
+                                            'confirmed' => 'bg-blue-100 text-blue-800',
+                                            'completed' => 'bg-green-100 text-green-800',
+                                            'cancelled' => 'bg-red-100 text-red-800',
+                                        ];
+                                        $paymentColors = [
+                                            'paid' => 'bg-green-100 text-green-800',
+                                            'pending' => 'bg-yellow-100 text-yellow-800',
+                                            'partial' => 'bg-orange-100 text-orange-800',
+                                            'refunded' => 'bg-red-100 text-red-800',
+                                        ];
+                                        $sColor = $statusColors[$diningStatus] ?? 'bg-gray-100 text-gray-800';
+                                        $pColor = $paymentColors[$diningPaymentStatus] ?? 'bg-gray-100 text-gray-800';
+                                    @endphp
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold {{ $sColor }}" title="Reservation status">
+                                            {{ ucfirst($diningStatus) }}
+                                        </span>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold {{ $pColor }}" title="Payment status">
+                                            {{ ucfirst($diningPaymentStatus) }}
+                                        </span>
+                                        @if($diningPaymentStatus !== 'paid' && $diningStatus !== 'cancelled')
+                                            <button type="button" 
+                                                onclick="openDiningPaymentModal('{{ $reservation['id'] }}', '{{ addslashes($reservation['name']) }}', {{ $reservation['amount'] ?? 0 }})"
+                                                class="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded-lg transition text-xs font-medium">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h10M5 21h14M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+                                                Pay
+                                            </button>
+                                        @endif
+                                    </div>
                                 @endif
                             </td>
                             <td class="px-2 md:px-6 py-2 md:py-4 text-xs md:text-sm">
@@ -234,7 +257,10 @@
                                                     </button>
                                                     <div class="border-t border-gray-100 my-1"></div>
                                                 @endif
-                                                @if($reservation['status'] !== 'completed')
+                                                @php
+                                                    $canMarkCompleted = $reservation['status'] !== 'completed' && ($reservation['type'] === 'Booking' || ($reservation['type'] === 'Dining' && ($reservation['payment_status'] ?? 'pending') === 'paid'));
+                                                @endphp
+                                                @if($canMarkCompleted)
                                                     <button type="button" 
                                                         onclick="showConfirmDialog('mark-completed', '{{ $reservation['id'] }}', '{{ $reservation['name'] }}')"
                                                         class="w-full text-left px-4 py-2 text-green-600 hover:bg-green-50 text-xs font-medium flex items-center gap-2">
@@ -266,7 +292,7 @@
                                     </div>
                                 @else
                                     <div class="flex items-center gap-0.5">
-                                        <button type="button" onclick="showDiningDetails('{{ $reservation['name'] }}', '{{ $reservation['reference'] }}', '{{ \Carbon\Carbon::parse($reservation['date'])->format('M d, Y') }}', '{{ isset($reservation['time']) ? date('H:i', strtotime($reservation['time'])) : 'N/A' }}', {{ $reservation['guests'] ?? 1 }}, '{{ $reservation['email'] }}', '{{ $reservation['phone'] }}')" class="inline-flex items-center px-1.5 py-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded text-xs font-medium" title="View details">
+                                        <button type="button" onclick="showDiningDetails('{{ $reservation['name'] }}', '{{ $reservation['reference'] }}', '{{ \Carbon\Carbon::parse($reservation['date'])->format('M d, Y') }}', '{{ isset($reservation['time']) ? date('H:i', strtotime($reservation['time'])) : 'N/A' }}', {{ $reservation['guests'] ?? 1 }}, '{{ $reservation['email'] }}', '{{ $reservation['phone'] }}', '{{ $reservation['food_name'] ?? 'N/A' }}', {{ $reservation['amount'] ?? 0 }})" class="inline-flex items-center px-1.5 py-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded text-xs font-medium" title="View details">
                                             <i data-lucide="info" class="w-3 h-3"></i>
                                         </button>
                                         
@@ -279,7 +305,11 @@
                                             </button>
                                             
                                             <div class="action-menu hidden absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-2xl border border-gray-200 py-1 z-30">
-                                                @if($reservation['status'] !== 'completed')
+                                                @php
+                                                    $isDiningPaid = $reservation['type'] === 'Dining' && ($reservation['payment_status'] ?? 'pending') === 'paid';
+                                                    $canMarkCompleted = $reservation['status'] !== 'completed' && (($reservation['type'] === 'Booking') || $isDiningPaid);
+                                                @endphp
+                                                @if($canMarkCompleted)
                                                     <button type="button" 
                                                         onclick="showConfirmDialog('mark-completed', '{{ $reservation['id'] }}', '{{ $reservation['name'] }}')"
                                                         class="w-full text-left px-4 py-2 text-green-600 hover:bg-green-50 text-xs font-medium flex items-center gap-2">
@@ -288,7 +318,7 @@
                                                     </button>
                                                 @endif
                                                 
-                                                @if($reservation['status'] !== 'confirmed')
+                                                @if($reservation['status'] !== 'confirmed' && !$isDiningPaid)
                                                     <button type="button" 
                                                         onclick="showConfirmDialog('confirm', '{{ $reservation['id'] }}', '{{ $reservation['name'] }}')"
                                                         class="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-xs font-medium flex items-center gap-2">
@@ -433,12 +463,25 @@
                                     @endif
                                 </div>
 
-                                <!-- Payment Status for Bookings -->
+                                <!-- Amount for Bookings -->
                                 @if($reservation['type'] === 'Booking')
                                     <div class="mb-3 text-xs">
-                                        <p class="text-gray-500 mb-1">Payment</p>
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <span class="text-sm font-semibold text-gray-900">₱{{ number_format($reservation['amount'], 2) }}</span>
+                                        <p class="text-gray-500 mb-1">Amount</p>
+                                        <span class="text-sm font-semibold text-gray-900">₱{{ number_format($reservation['amount'], 2) }}</span>
+                                    </div>
+                                @else
+                                    <!-- Amount for Dining -->
+                                    <div class="mb-3 text-xs">
+                                        <p class="text-gray-500 mb-1">Amount</p>
+                                        <span class="text-sm font-semibold text-gray-900">₱{{ number_format($reservation['amount'] ?? 0, 2) }}</span>
+                                    </div>
+                                @endif
+
+                                <!-- Status Badge -->
+                                <div class="mb-3 text-xs">
+                                    <p class="text-gray-500 mb-1">Status</p>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        @if($reservation['type'] === 'Booking')
                                             @php
                                                 $paymentStatus = $reservation['payment_status'] ?? 'pending';
                                                 $paymentColors = [
@@ -459,9 +502,53 @@
                                                     Pay
                                                 </button>
                                             @endif
-                                        </div>
+                                        @else
+                                            {{-- For Dining: Show both reservation status and payment status --}}
+                                            @php
+                                                $diningStatus = $reservation['status'] ?? 'pending';
+                                                $diningPaymentStatus = $reservation['payment_status'] ?? 'pending';
+                                                $statusColors = [
+                                                    'pending' => 'bg-yellow-100 text-yellow-800',
+                                                    'confirmed' => 'bg-blue-100 text-blue-800',
+                                                    'completed' => 'bg-green-100 text-green-800',
+                                                    'cancelled' => 'bg-red-100 text-red-800',
+                                                ];
+                                                $paymentColors = [
+                                                    'paid' => 'bg-green-100 text-green-800',
+                                                    'pending' => 'bg-yellow-100 text-yellow-800',
+                                                    'partial' => 'bg-orange-100 text-orange-800',
+                                                    'refunded' => 'bg-red-100 text-red-800',
+                                                ];
+                                                $sColor = $statusColors[$diningStatus] ?? 'bg-gray-100 text-gray-800';
+                                                $pColor = $paymentColors[$diningPaymentStatus] ?? 'bg-gray-100 text-gray-800';
+                                            @endphp
+                                            <!-- Reservation Status -->
+                                            <div class="mb-2">
+                                                <p class="text-xs text-gray-500 mb-1">Reservation Status</p>
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold {{ $sColor }}">
+                                                    {{ ucfirst($diningStatus) }}
+                                                </span>
+                                            </div>
+                                            <!-- Payment Status -->
+                                            <div>
+                                                <p class="text-xs text-gray-500 mb-1">Payment Status</p>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold {{ $pColor }}">
+                                                        {{ ucfirst($diningPaymentStatus) }}
+                                                    </span>
+                                                    @if($diningPaymentStatus !== 'paid' && $diningStatus !== 'cancelled')
+                                                        <button type="button" 
+                                                            onclick="openDiningPaymentModal('{{ $reservation['id'] }}', '{{ addslashes($reservation['name']) }}', {{ $reservation['amount'] ?? 0 }})"
+                                                            class="inline-flex items-center px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-xs font-medium transition">
+                                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h10M5 21h14M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+                                                            Pay
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
-                                @endif
+                                </div>
 
                                 <!-- Action Buttons -->
                                 <div class="flex items-center gap-1 flex-wrap pt-2 border-t border-gray-100">
@@ -475,7 +562,7 @@
                                             <i data-lucide="history" class="w-3 h-3"></i>
                                         </button>
                                     @else
-                                        <button type="button" onclick="showDiningDetails('{{ $reservation['name'] }}', '{{ $reservation['reference'] }}', '{{ \Carbon\Carbon::parse($reservation['date'])->format('M d, Y') }}', '{{ isset($reservation['time']) ? date('H:i', strtotime($reservation['time'])) : 'N/A' }}', {{ $reservation['guests'] ?? 1 }}, '{{ $reservation['email'] }}', '{{ $reservation['phone'] }}')" class="inline-flex items-center justify-center px-2 py-1.5 text-blue-600 hover:bg-blue-50 rounded text-xs font-medium transition" title="View details">
+                                        <button type="button" onclick="showDiningDetails('{{ $reservation['name'] }}', '{{ $reservation['reference'] }}', '{{ \Carbon\Carbon::parse($reservation['date'])->format('M d, Y') }}', '{{ isset($reservation['time']) ? date('H:i', strtotime($reservation['time'])) : 'N/A' }}', {{ $reservation['guests'] ?? 1 }}, '{{ $reservation['email'] }}', '{{ $reservation['phone'] }}', '{{ $reservation['food_name'] ?? 'N/A' }}', {{ $reservation['amount'] ?? 0 }})" class="inline-flex items-center justify-center px-2 py-1.5 text-blue-600 hover:bg-blue-50 rounded text-xs font-medium transition" title="View details">
                                             <i data-lucide="info" class="w-3 h-3"></i>
                                         </button>
                                     @endif
@@ -490,7 +577,11 @@
                                         </button>
                                         
                                         <div class="action-menu-mobile hidden absolute -right-12 sm:right-0 mt-2 w-44 sm:w-48 bg-white rounded-lg shadow-2xl border border-gray-200 py-1 z-50">
-                                            @if($reservation['status'] !== 'completed')
+                                            @php
+                                                $isDiningPaid = $reservation['type'] === 'Dining' && ($reservation['payment_status'] ?? 'pending') === 'paid';
+                                                $canMarkCompleted = $reservation['status'] !== 'completed' && (($reservation['type'] === 'Booking') || $isDiningPaid);
+                                            @endphp
+                                            @if($canMarkCompleted)
                                                 <button type="button" 
                                                     onclick="showConfirmDialog('mark-completed', '{{ $reservation['id'] }}', '{{ $reservation['name'] }}')"
                                                     class="w-full text-left px-3 py-2 text-green-600 hover:bg-green-50 text-xs font-medium flex items-center gap-2">
@@ -499,7 +590,7 @@
                                                 </button>
                                             @endif
                                             
-                                            @if($reservation['status'] !== 'confirmed')
+                                            @if($reservation['status'] !== 'confirmed' && !$isDiningPaid)
                                                 <button type="button" 
                                                     onclick="showConfirmDialog('confirm', '{{ $reservation['id'] }}', '{{ $reservation['name'] }}')"
                                                     class="w-full text-left px-3 py-2 text-blue-600 hover:bg-blue-50 text-xs font-medium flex items-center gap-2">
@@ -583,26 +674,29 @@
             const data = await response.json();
             
             if (data.stats) {
-                // Update booking stats
-                document.getElementById('total-bookings').textContent = data.stats.total_bookings;
-                document.getElementById('pending-bookings').textContent = data.stats.pending_bookings;
-                document.getElementById('completed-bookings').textContent = data.stats.completed_bookings;
-                document.getElementById('cancelled-bookings').textContent = data.stats.cancelled_bookings;
-                
-                // Update dining stats
+                // Update dining stats only
                 document.getElementById('total-dining').textContent = data.stats.total_dining;
+                document.getElementById('pending-dining').textContent = data.stats.pending_dining;
                 document.getElementById('confirmed-dining').textContent = data.stats.confirmed_dining;
+                document.getElementById('cancelled-dining').textContent = data.stats.cancelled_dining;
                 
-                // Update revenue stats
-                const today = parseFloat(data.revenueStats.today).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                const month = parseFloat(data.revenueStats.this_month).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                
-                document.getElementById('revenue-today').textContent = '₱' + today;
-                document.getElementById('revenue-month').textContent = month;
+                // Calculate today's reservations
+                calculateTodaysReservations();
             }
         } catch (error) {
             console.error('Error refreshing stats:', error);
         }
+    }
+
+    function calculateTodaysReservations() {
+        // Count reservations with date = today
+        const today = new Date().toISOString().split('T')[0];
+        const count = Array.from(document.querySelectorAll('tbody tr'))
+            .filter(row => {
+                const dateCell = row.querySelector('td:nth-child(4)'); // Date column
+                return dateCell && dateCell.textContent.includes(today.split('-')[2]);
+            }).length;
+        document.getElementById('todays-count').textContent = count;
     }
 
     // ========== BULK SELECTION MANAGEMENT ==========
@@ -667,7 +761,7 @@
 
         if (!result.isConfirmed) return;
 
-        try {
+            try {
             const response = await fetch('/admin/reservations/bulk-update', {
                 method: 'POST',
                 headers: {
@@ -680,9 +774,56 @@
                     status: 'completed'
                 })
             });
+            // If backend responds with 422 it will include unpaid items list
+            if (response.status === 422) {
+                const data = await response.json();
+                const unpaid = data.unpaid || data.unpaid_ids || data.unpaidIds || [];
+
+                // Try to map unpaid ids to readable names/references from the DOM
+                const unpaidDetails = unpaid.map(id => {
+                    // match checkbox values that may be prefixed or raw
+                    const selectors = [
+                        `.reservation-checkbox[value="${id}"]`,
+                        `.reservation-checkbox[value="booking_${id}"]`,
+                        `.reservation-checkbox[value="dining_${id}"]`
+                    ];
+                    for (const sel of selectors) {
+                        const el = document.querySelector(sel);
+                        if (el) {
+                            const row = el.closest('tr') || el.closest('div');
+                            if (row) {
+                                const name = row.querySelector('td:nth-child(2)')?.textContent?.trim() || row.querySelector('h3')?.textContent?.trim() || id;
+                                const ref = row.querySelector('td:nth-child(4)')?.textContent?.trim() || '';
+                                return `${name}${ref ? ' ('+ref+')' : ''}`;
+                            }
+                        }
+                    }
+                    return id;
+                });
+
+                // Uncheck unpaid items so user can retry with only paid items selected
+                unpaid.forEach(id => {
+                    const els = [
+                        document.querySelector(`.reservation-checkbox[value="${id}"]`),
+                        document.querySelector(`.reservation-checkbox[value="booking_${id}"]`),
+                        document.querySelector(`.reservation-checkbox[value="dining_${id}"]`)
+                    ];
+                    els.forEach(el => { if (el) el.checked = false; });
+                });
+                updateBulkSelection();
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Some reservations are unpaid',
+                    html: `The following reservations cannot be marked as completed because they are not fully paid:<br><ul style="text-align:left;margin-top:8px">${unpaidDetails.map(u=>`<li>${u}</li>`).join('')}</ul>`,
+                    confirmButtonText: 'OK',
+                    width: '600px'
+                });
+                return;
+            }
 
             const data = await response.json();
-            
+
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
@@ -1059,6 +1200,48 @@
                 body: JSON.stringify({ booking_ids: bookingIds, dining_ids: diningIds, status: 'completed' })
             });
 
+            if (response.status === 422) {
+                const data = await response.json();
+                const unpaid = data.unpaid || data.unpaid_ids || data.unpaidIds || [];
+
+                const unpaidDetails = unpaid.map(id => {
+                    const selectors = [
+                        `.reservation-checkbox-mobile[value="${id}"]`,
+                        `.reservation-checkbox-mobile[value="booking_${id}"]`,
+                        `.reservation-checkbox-mobile[value="dining_${id}"]`
+                    ];
+                    for (const sel of selectors) {
+                        const el = document.querySelector(sel);
+                        if (el) {
+                            const card = el.closest('div');
+                            const name = card?.querySelector('h3')?.textContent?.trim() || id;
+                            const ref = card?.querySelector('.font-mono')?.textContent?.trim() || '';
+                            return `${name}${ref ? ' ('+ref+')' : ''}`;
+                        }
+                    }
+                    return id;
+                });
+
+                unpaid.forEach(id => {
+                    const els = [
+                        document.querySelector(`.reservation-checkbox-mobile[value="${id}"]`),
+                        document.querySelector(`.reservation-checkbox-mobile[value="booking_${id}"]`),
+                        document.querySelector(`.reservation-checkbox-mobile[value="dining_${id}"]`)
+                    ];
+                    els.forEach(el => { if (el) el.checked = false; });
+                });
+                updateBulkSelectionMobile();
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Some reservations are unpaid',
+                    html: `The following reservations cannot be marked as completed because they are not fully paid:<br><ul style="text-align:left;margin-top:8px">${unpaidDetails.map(u=>`<li>${u}</li>`).join('')}</ul>`,
+                    confirmButtonText: 'OK',
+                    width: '600px'
+                });
+                return;
+            }
+
             const data = await response.json();
             if (data.success) {
                 Swal.fire({ icon: 'success', title: 'Success', text: `${ids.length} reservation(s) marked as completed`, timer: 1500, timerProgressBar: true, didClose: () => { refreshStats(); location.reload(); } });
@@ -1188,16 +1371,18 @@
     });
 
     // ========== DINING DETAILS ==========
-    function showDiningDetails(name, reference, date, time, guests, email, phone) {
+    function showDiningDetails(name, reference, date, time, guests, email, phone, foodName, amount) {
         Swal.fire({
             title: 'Dining Reservation Details',
             html: `
                 <div class="text-left space-y-2 text-sm">
                     <div><strong>Name:</strong> ${name}</div>
+                    <div><strong>Food Item:</strong> <span class="font-semibold text-blue-600">${foodName}</span></div>
                     <div><strong>Reference:</strong> <code class="bg-gray-100 px-2 py-1 rounded">${reference}</code></div>
                     <div><strong>Date:</strong> ${date}</div>
                     <div><strong>Time:</strong> ${time}</div>
                     <div><strong>Guests:</strong> ${guests}</div>
+                    <div><strong>Total Amount:</strong> <span class="font-semibold text-green-600">₱${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
                     <div><strong>Email:</strong> ${email}</div>
                     <div><strong>Phone:</strong> ${phone}</div>
                 </div>
@@ -1298,11 +1483,15 @@
     // Payment context for monitor page
     let monitorPaymentContext = {
         bookingId: null,
+        diningId: null,
         amount: null,
         customerName: null,
         isCheckoutComplete: false,
         isValid: function() {
-            return this.bookingId && this.amount;
+            return (this.bookingId || this.diningId) && this.amount !== null;
+        },
+        isDining: function() {
+            return this.diningId !== null;
         }
     };
 
@@ -1354,16 +1543,66 @@
         openPaymentModal(bookingId, customerName, amount, true);
     }
 
+    function openDiningPaymentModal(prefixedId, customerName, amount) {
+        console.log('Opening dining payment modal with:', { prefixedId, customerName, amount });
+        
+        const { type, id } = parseReservationId(prefixedId);
+        console.log('Parsed reservation:', { type, id });
+        
+        // Only handle dining reservations
+        if (type !== 'dining') {
+            Swal.fire('Error', 'Invalid reservation type for dining payment', 'error');
+            return;
+        }
+        
+        // Ensure proper types - handle trailing spaces and validate number
+        const trimmedId = id ? id.trim() : '';
+        const actualId = parseInt(trimmedId);
+        
+        console.log('Validation check:', { trimmedId, actualId, isValidNumber: !isNaN(actualId) && trimmedId !== '' });
+        
+        if (isNaN(actualId) || !trimmedId) {
+            console.error('Invalid dining payment data:', { id, trimmedId, actualId });
+            Swal.fire('Error', 'Invalid dining reservation - ID not found', 'error');
+            return;
+        }
+        
+        // Set payment context for dining
+        monitorPaymentContext.diningId = actualId;
+        monitorPaymentContext.bookingId = null; // Clear booking context
+        monitorPaymentContext.amount = amount;
+        monitorPaymentContext.customerName = customerName;
+        
+        console.log('Dining payment context set:', monitorPaymentContext);
+        
+        // Update UI
+        document.getElementById('customerName').textContent = customerName || '-';
+        document.getElementById('amountDue').textContent = '₱' + parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        
+        // Reset form and set payment amount
+        document.getElementById('paymentMethod').value = '';
+        document.getElementById('paymentNotes').value = '';
+        document.getElementById('paymentAmount').value = amount > 0 ? amount : '';
+        
+        // Show modal
+        document.getElementById('paymentModal').classList.remove('hidden');
+        document.getElementById('paymentAmount').focus();
+    }
+
     function closePaymentModal() {
         document.getElementById('paymentModal').classList.add('hidden');
         document.getElementById('paymentForm').reset();
         monitorPaymentContext = {
             bookingId: null,
+            diningId: null,
             amount: null,
             customerName: null,
             isCheckoutComplete: false,
             isValid: function() {
-                return this.bookingId && this.amount;
+                return (this.bookingId || this.diningId) && this.amount !== null;
+            },
+            isDining: function() {
+                return this.diningId !== null;
             }
         };
     }
@@ -1389,19 +1628,38 @@
             
             const method = document.getElementById('paymentMethod').value;
             const notes = document.getElementById('paymentNotes').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
             
             if (!method) {
                 Swal.fire('Error', 'Please select a payment method', 'error');
                 return;
             }
 
+            if (isNaN(amount) || amount <= 0) {
+                Swal.fire('Error', 'Please enter a valid payment amount', 'error');
+                return;
+            }
+
             try {
-                const payload = {
-                    booking_id: monitorPaymentContext.bookingId,
-                    amount: monitorPaymentContext.amount,
-                    payment_method: method,
-                    notes: notes
-                };
+                let payload;
+                
+                if (monitorPaymentContext.isDining()) {
+                    // Dining reservation payment
+                    payload = {
+                        dining_id: monitorPaymentContext.diningId,
+                        amount: parseFloat(amount),
+                        payment_method: method,
+                        notes: notes
+                    };
+                } else {
+                    // Booking payment
+                    payload = {
+                        booking_id: monitorPaymentContext.bookingId,
+                        amount: amount,
+                        payment_method: method,
+                        notes: notes
+                    };
+                }
                 
                 console.log('Sending payment request:', payload);
                 
@@ -1409,22 +1667,33 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
                     },
                     body: JSON.stringify(payload)
                 });
 
-                const data = await response.json();
+                // Try to parse JSON; if response isn't JSON show raw text and status
+                let data = null;
+                try {
+                    data = await response.json();
+                } catch (err) {
+                    const text = await response.text().catch(() => '(no body)');
+                    console.error('Payment request failed; non-JSON response', { status: response.status, text });
+                    Swal.fire('Error', `Payment request failed (status ${response.status}):<br><pre style="text-align:left;white-space:pre-wrap">${text}</pre>`, 'error');
+                    return;
+                }
                 console.log('Payment response:', data);
-                
-                if (data.success) {
-                    if (monitorPaymentContext.isCheckoutComplete) {
+
+                if (data && data.success) {
+                    if (monitorPaymentContext.isCheckoutComplete && monitorPaymentContext.bookingId) {
                         try {
                             const completeResponse = await fetch(`/admin/reservations/${monitorPaymentContext.bookingId}/status`, {
                                 method: 'PUT',
                                 headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
                                 },
                                 body: JSON.stringify({
                                     status: 'completed'
@@ -1436,7 +1705,7 @@
                                     icon: 'success',
                                     title: 'Checkout Complete!',
                                     html: `<div class="text-left space-y-2">
-                                        <p><strong>Payment:</strong> ₱${parseFloat(monitorPaymentContext.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                                        <p><strong>Payment:</strong> ₱${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                                         <p><strong>Method:</strong> ${method}</p>
                                         <p class="pt-2 border-t"><strong>Status:</strong> <span class="text-emerald-600">Completed</span></p>
                                     </div>`,
@@ -1452,11 +1721,30 @@
                         } catch (error) {
                             console.error('Error completing booking:', error);
                         }
-                    } else {
+                    } else if (monitorPaymentContext.isDining()) {
+                        // Dining payment success
                         Swal.fire({
                             icon: 'success',
                             title: 'Payment Recorded!',
-                            text: `₱${parseFloat(monitorPaymentContext.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })} payment received`,
+                            html: `<div class="text-left space-y-2">
+                                <p><strong>Customer:</strong> ${monitorPaymentContext.customerName}</p>
+                                <p><strong>Payment:</strong> ₱${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                                <p><strong>Method:</strong> ${method}</p>
+                            </div>`,
+                            timer: 1500,
+                            timerProgressBar: true,
+                            didClose: () => {
+                                refreshStats();
+                                location.reload();
+                            }
+                        });
+                        closePaymentModal();
+                    } else {
+                        // Booking payment success
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Payment Recorded!',
+                            text: `₱${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })} payment received`,
                             timer: 1500,
                             timerProgressBar: true,
                             didClose: () => {
@@ -1483,6 +1771,11 @@
             }
         });
     }
+
+    // ========== PAGE INITIALIZATION ==========
+    document.addEventListener('DOMContentLoaded', () => {
+        calculateTodaysReservations();
+    });
 </script>
 
 <!-- Payment Modal -->

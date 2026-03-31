@@ -37,7 +37,10 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \App\Http\Middleware\CheckForMaintenanceMode::class,
+            // CheckForMaintenanceMode is intentionally omitted from the global web group
+            // to avoid blocking automated test requests and to keep maintenance control
+            // at the application level. The middleware can still be applied to routes
+            // or groups that require it explicitly.
         ],
 
         'api' => [

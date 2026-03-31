@@ -7,6 +7,7 @@ use App\Models\AdminSystemAlert;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\Process\Process;
 use Illuminate\Support\Facades\Auth;
 
 class AdminSystemSettingsController extends Controller
@@ -87,9 +88,5 @@ class AdminSystemSettingsController extends Controller
         return back()->with('success', 'Cleared old resolved alerts.');
     }
 
-    public function backup()
-    {
-        Artisan::call('backup:run');
-        return back()->with('success', 'Backup started. Check your notification for completion.');
-    }
+    
 }

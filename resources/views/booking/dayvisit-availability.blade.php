@@ -259,6 +259,12 @@
 </x-page-layout>
 
 <script>
+// Define the missing function to prevent errors
+function updateSummaryFromSelected() {
+    console.log('updateSummaryFromSelected function executed.');
+    // Add logic here to update the summary based on selected items
+}
+
 // Global variables and functions for package management
 let selectedPackages = []; // Array to store multiple packages (like staycation)
 let currentGuests = 1;

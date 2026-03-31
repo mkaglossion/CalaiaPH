@@ -234,7 +234,7 @@
                     <!-- Specific Date -->
                     <div x-show="editMode || form.dateMode === 'specific'">
                         <label for="tour_date" class="block font-semibold mb-2 text-gray-700 text-sm">Date *</label>
-                        <input type="date" id="tour_date" name="date" x-model="form.date" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 transition">
+                        <input type="date" id="tour_date" name="date" x-model="form.date" @focus="$el.select()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 transition" autocomplete="off">
                     </div>
 
                     <!-- Date Range -->
@@ -348,7 +348,11 @@ function dayTourInventoryManager() {
             if (dayTour && dayTour.inventory) {
                 const inventory = dayTour.inventory.find(inv => inv.id === inventoryId);
                 if (inventory) {
-                    this.form.date = inventory.date;
+                    // Ensure date is in YYYY-MM-DD format for HTML5 date input
+                    const dateStr = inventory.date.includes('T') 
+                        ? inventory.date.split('T')[0] 
+                        : inventory.date;
+                    this.form.date = dateStr;
                     this.form.maxGroups = inventory.max_groups;
                     this.form.isBlocked = inventory.is_blocked;
                     this.form.blockReason = inventory.block_reason || '';
@@ -356,6 +360,17 @@ function dayTourInventoryManager() {
             }
             
             this.showModal = true;
+            
+            // Auto-focus and select date field after modal renders
+            this.$nextTick(() => {
+                setTimeout(() => {
+                    const dateInput = document.getElementById('tour_date');
+                    if (dateInput) {
+                        dateInput.focus();
+                        dateInput.select();
+                    }
+                }, 50);
+            });
         },
 
         deleteInventory(id) {

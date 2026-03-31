@@ -44,7 +44,7 @@
                             <div>
                                 <h3 class="text-lg font-bold text-gray-900">{{ $staycation->name }}</h3>
                                 <p class="text-sm text-gray-600 mt-1">
-                                    Quantity: <span class="font-semibold">{{ $staycation->quantity }} {{ in_array($staycation->name, ['BYOT', 'Car Camping']) ? 'slot' : 'room' }}{{ $staycation->quantity > 1 ? 's' : '' }}</span>
+                                    Quantity: <span class="font-semibold">{{ $staycation->base_quantity }} {{ in_array($staycation->name, ['BYOT', 'Car Camping']) ? 'slot' : 'room' }}{{ $staycation->base_quantity > 1 ? 's' : '' }}</span>
                                 </p>
                             </div>
                             <button 
@@ -232,7 +232,7 @@
                     <!-- Specific Date -->
                     <div x-show="editMode || form.dateMode === 'specific'">
                         <label for="stay_date" class="block font-semibold mb-2 text-gray-700 text-sm">Date *</label>
-                        <input type="date" id="stay_date" name="date" x-model="form.date" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 transition">
+                        <input type="date" id="stay_date" name="date" x-model="form.date" @focus="$el.select()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 transition" autocomplete="off">
                     </div>
 
                     <!-- Date Range -->
@@ -348,7 +348,11 @@ function staycationInventoryManager() {
             if (staycation && staycation.inventories) {
                 const inventory = staycation.inventories.find(inv => inv.id === inventoryId);
                 if (inventory) {
-                    this.form.date = inventory.date;
+                    // Ensure date is in YYYY-MM-DD format for HTML5 date input
+                    const dateStr = inventory.date.includes('T') 
+                        ? inventory.date.split('T')[0] 
+                        : inventory.date;
+                    this.form.date = dateStr;
                     this.form.totalQuantity = inventory.total_quantity;
                     this.form.isBlocked = inventory.is_blocked;
                     this.form.blockReason = inventory.block_reason || '';
@@ -356,6 +360,17 @@ function staycationInventoryManager() {
             }
             
             this.showModal = true;
+            
+            // Auto-focus and select date field after modal renders
+            this.$nextTick(() => {
+                setTimeout(() => {
+                    const dateInput = document.getElementById('stay_date');
+                    if (dateInput) {
+                        dateInput.focus();
+                        dateInput.select();
+                    }
+                }, 50);
+            });
         },
 
         deleteInventory(id) {

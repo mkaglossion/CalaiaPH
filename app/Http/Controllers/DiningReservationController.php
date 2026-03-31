@@ -48,6 +48,11 @@ class DiningReservationController extends Controller
             }
 
             $totalGuests = $validated['adults'];
+            // Calculate total amount based on selected food price and number of guests
+            $exclusiveTotal = (float) $food->price * (int) $totalGuests;
+            // Use VatService to add VAT to exclusive price (store gross amount)
+            $vatService = app(\App\Services\VatService::class);
+            $grossTotal = $vatService->addVat($exclusiveTotal);
             
             if ($food->is_inventory_managed && $food->stock_quantity < $totalGuests) {
                 return response()->json([
@@ -56,8 +61,14 @@ class DiningReservationController extends Controller
                 ], 422);
             }
 
-            // Create reservation
-            $reservation = DiningReservation::create(array_merge($validated, ['status' => 'confirmed']));
+            // Create reservation (persist denormalized food name and total amount)
+            $reservation = DiningReservation::create(array_merge($validated, [
+                'status' => 'confirmed',
+                'food_name' => $food->name,
+                'total_amount' => $grossTotal,
+                // use enum-compatible default
+                'payment_status' => 'pending'
+            ]));
             
             // Reload reservation with food relationship
             $reservation->refresh();

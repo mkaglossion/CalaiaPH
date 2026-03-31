@@ -22,8 +22,11 @@ class DatabaseSeeder extends Seeder
             DurationSetSeeder::class,
             DayTypeDaySeeder::class,
             PricingConfigSeeder::class,
+            StaycationSeeder::class,
             FoodSeeder::class,
             CookYourOwnSeeder::class,
+            DiningReservationSeeder::class,
+            BookingSeeder::class,
         ]);
 
         // --- Users Seeder ---

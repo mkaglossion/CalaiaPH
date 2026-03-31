@@ -49,7 +49,14 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-500 font-mono">
-                                {{ $activity->ip_address ?? '—' }}
+                                @if($activity->ip_address)
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono text-sm text-gray-700">{{ $activity->ip_address }}</span>
+                                        <button type="button" onclick="navigator.clipboard.writeText('{{ $activity->ip_address }}').then(()=>{this.innerText='Copied'}).catch(()=>{})" class="text-xs text-gray-500 hover:text-gray-700">Copy</button>
+                                    </div>
+                                @else
+                                    <span class="text-gray-400">—</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-500">
                                 <span title="{{ $activity->created_at }}">
@@ -70,7 +77,7 @@
 
         @if($activities->hasPages())
             <div class="px-6 py-4 border-t border-gray-100">
-                {{ $activities->links() }}
+                {{ $activities->links('pagination::tailwind') }}
             </div>
         @endif
     </div>

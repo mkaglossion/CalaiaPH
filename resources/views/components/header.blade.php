@@ -94,13 +94,13 @@
     </div>
 
     <!-- ✅ NAV + ACTIONS ROW (DESKTOP) -->
-    <div class="hidden md:flex items-center justify-between pb-4 gap-4">
+    <div class="hidden md:flex items-center justify-between pb-4 gap-2">
 
       <!-- left spacer (for balance) -->
-      <div class="w-24"></div>
+      <div class="w-16"></div>
 
       <!-- NAV centered with shrink -->
-      <nav class="flex justify-center gap-5 shrink-0">
+      <nav class="flex justify-center gap-4 shrink-0">
         @foreach ($nav as $item)
           <a
             href="{{ $item['href'] }}"
@@ -123,7 +123,7 @@
       </nav>
 
       <!-- Actions right -->
-      <div class="flex items-center justify-end gap-5 shrink-0">
+      <div class="flex items-center justify-end gap-3 shrink-0">
         @auth
           <!-- User dropdown -->
           <div class="relative" x-data="{ userOpen: false }">
@@ -189,7 +189,7 @@
 
           <x-cart />
         @else
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2">
             <button
               @click="$store.modals.showLogin = true"
               class="text-white hover:text-white/80 font-medium text-base transition px-4 py-2 whitespace-nowrap"
@@ -198,7 +198,7 @@
             </button>
             <button
               @click="$store.modals.showSignup = true"
-              class="bg-white text-brand px-6 py-2 rounded-lg font-semibold text-base hover:bg-gray-100 transition shadow-md whitespace-nowrap"
+              class="bg-white text-brand px-4 py-2 rounded-lg font-semibold text-base hover:bg-gray-100 transition shadow-md whitespace-nowrap"
             >
               Sign Up
             </button>

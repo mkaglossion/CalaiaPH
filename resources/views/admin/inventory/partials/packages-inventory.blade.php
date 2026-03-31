@@ -43,9 +43,6 @@
                         <div class="flex justify-between items-start">
                             <div>
                                 <h3 class="text-lg font-bold text-gray-900">{{ $package->name }}</h3>
-                                <p class="text-sm text-gray-600 mt-1">
-                                    Max Capacity: <span class="font-semibold">{{ $package->max_guests }} person{{ $package->max_guests > 1 ? 's' : '' }}</span>
-                                </p>
                             </div>
                             <button 
                                 @click="editPackage({{ $package->id }})"
@@ -234,7 +231,7 @@
                     <!-- Specific Date -->
                     <div x-show="editMode || form.dateMode === 'specific'">
                         <label for="pkg_date" class="block font-semibold mb-2 text-gray-700 text-sm">Date *</label>
-                        <input type="date" id="pkg_date" name="date" x-model="form.date" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 transition">
+                        <input type="date" id="pkg_date" name="date" x-model="form.date" @focus="$el.select()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 transition" autocomplete="off">
                     </div>
 
                     <!-- Date Range -->
@@ -348,7 +345,11 @@ function packageInventoryManager() {
             if (pkg && pkg.inventory) {
                 const inventory = pkg.inventory.find(inv => inv.id === inventoryId);
                 if (inventory) {
-                    this.form.date = inventory.date;
+                    // Ensure date is in YYYY-MM-DD format for HTML5 date input
+                    const dateStr = inventory.date.includes('T') 
+                        ? inventory.date.split('T')[0] 
+                        : inventory.date;
+                    this.form.date = dateStr;
                     this.form.maxGroups = inventory.max_groups;
                     this.form.isBlocked = inventory.is_blocked;
                     this.form.blockReason = inventory.block_reason || '';
@@ -356,6 +357,17 @@ function packageInventoryManager() {
             }
             
             this.showModal = true;
+            
+            // Auto-focus and select date field after modal renders
+            this.$nextTick(() => {
+                setTimeout(() => {
+                    const dateInput = document.getElementById('pkg_date');
+                    if (dateInput) {
+                        dateInput.focus();
+                        dateInput.select();
+                    }
+                }, 50);
+            });
         },
 
         deleteInventory(id) {

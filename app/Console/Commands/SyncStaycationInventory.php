@@ -62,23 +62,23 @@ class SyncStaycationInventory extends Command
                 
                 if ($inventory) {
                     // Update total_quantity if it changed, but preserve booked_quantity
-                    if ($inventory->total_quantity != $staycation->quantity) {
+                    if ($inventory->total_quantity != $staycation->base_quantity) {
                         $oldTotal = $inventory->total_quantity;
-                        $inventory->total_quantity = $staycation->quantity;
+                        $inventory->total_quantity = $staycation->base_quantity;
                         // Recalculate available based on new total
-                        $inventory->available_quantity = max(0, $staycation->quantity - $inventory->booked_quantity);
+                        $inventory->available_quantity = max(0, $staycation->base_quantity - $inventory->booked_quantity);
                         $inventory->save();
                         $updatedRecords++;
-                        $this->line("  Updated {$dateStr}: Total {$oldTotal} → {$staycation->quantity}");
+                        $this->line("  Updated {$dateStr}: Total {$oldTotal} → {$staycation->base_quantity}");
                     }
                 } else {
                     // Create new inventory record
                     StaycationInventory::create([
                         'staycation_id' => $staycation->id,
                         'date' => $dateStr,
-                        'total_quantity' => $staycation->quantity ?? 0,
+                        'total_quantity' => $staycation->base_quantity ?? 0,
                         'booked_quantity' => 0,
-                        'available_quantity' => $staycation->quantity ?? 0,
+                        'available_quantity' => $staycation->base_quantity ?? 0,
                     ]);
                     $createdRecords++;
                 }

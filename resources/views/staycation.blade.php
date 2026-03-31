@@ -48,9 +48,11 @@
           <article class="relative mx-auto w-full max-w-md rounded-[22px] bg-white p-5 group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2" style="box-shadow:0 10px 16px rgba(0,0,0,0.08);">
             <div class="rounded-xl ring-1 ring-black/5 shadow-sm bg-white overflow-hidden">
               @php
-                $campingStaycation = $staycations->firstWhere(function($s) {
-                  return str_contains(strtolower($s->name), 'byot') || str_contains(strtolower($s->name), 'camping');
-                });
+                // Prefer 'Car Camping' first, then any camping/byot staycation
+                $campingStaycation = $staycations->firstWhere('name', 'Car Camping') 
+                  ?? $staycations->first(function($s) {
+                    return str_contains(strtolower($s->name), 'byot') || str_contains(strtolower($s->name), 'camping');
+                  });
                 $campingImage = null;
                 if ($campingStaycation) {
                   if ($campingStaycation->swiperImages && $campingStaycation->swiperImages->count() > 0) {

@@ -451,7 +451,7 @@
     <div class="py-4 md:py-8">
       <div class="w-full mx-auto max-w-screen-2xl px-3 sm:px-4 md:px-6 lg:px-8 2xl:px-10">
         @if (session('error'))
-          <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative hidden" role="alert">
             <span class="block sm:inline">{{ session('error') }}</span>
             <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.style.display='none'">
               <i data-lucide="x" class="w-4 h-4"></i>

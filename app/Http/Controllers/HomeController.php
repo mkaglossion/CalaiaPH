@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Schema;
 use App\Models\HomeSwiperImage;
 use App\Models\HomeText;
 use Illuminate\Http\Request;
@@ -37,13 +38,11 @@ class HomeController extends Controller
                 continue;
             }
 
-            // Get total available quantity for this date from inventory table
-            $totalAvailable = StaycationInventory::where('date', $key)
-                ->sum('available_quantity');
-
-            // If no inventory records exist for this date, fall back to staycation quantity
-            if ($totalAvailable == 0) {
-                $totalAvailable = Staycation::sum('quantity');
+            // Get total available quantity for this date from inventory table (if table exists)
+            $totalAvailable = 0;
+            if (Schema::hasTable('staycation_inventories')) {
+                $totalAvailable = StaycationInventory::where('date', $key)
+                    ->sum('available_quantity');
             }
 
             $availability[$key] = [
@@ -52,8 +51,8 @@ class HomeController extends Controller
             ];
         }
 
-        // Get total quantity from staycations for legend
-        $totalQuantity = Staycation::sum('quantity');
+        // Get total quantity from staycations (default to 0 if quantity column doesn't exist)
+        $totalQuantity = 0;
 
         // Build day tour availability data
         $dayTourAvailability = [];

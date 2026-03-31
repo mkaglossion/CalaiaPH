@@ -10,24 +10,9 @@
         <p class="text-gray-500 mt-1">Configure system-wide settings and features</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Left Column - Navigation -->
-        <div class="space-y-2">
-            <nav class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 space-y-1">
-                <a href="#general" class="block px-4 py-2 rounded-lg bg-blue-50 text-blue-600 font-medium">
-                    General Settings
-                </a>
-                <a href="{{ route('admin.settings.alerts') }}" class="block px-4 py-2 rounded-lg hover:bg-gray-50 text-gray-700 transition">
-                    System Alerts
-                </a>
-                <a href="#maintenance" class="block px-4 py-2 rounded-lg hover:bg-gray-50 text-gray-700 transition">
-                    Maintenance
-                </a>
-            </nav>
-        </div>
-
-        <!-- Right Column - Forms -->
-        <div class="lg:col-span-2 space-y-6">
+    <div class="space-y-6">
+        <!-- Right Column - Forms (full width for responsive layout) -->
+        <div class="space-y-6">
             <!-- General Settings -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6" id="general">
                 <h2 class="text-xl font-semibold text-gray-900 mb-6">General Settings</h2>
@@ -183,24 +168,6 @@
                             Quick Toggle
                         </a>
                     </div>
-                </form>
-            </div>
-
-            <!-- Backup Section -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-6">Data Backup</h2>
-
-                <form method="POST" action="{{ route('admin.settings.backup') }}" class="space-y-4">
-                    @csrf
-
-                    <p class="text-gray-600 mb-4">
-                        Create a backup of your database and important files. Backups are automatically stored securely.
-                    </p>
-
-                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
-                        <i data-lucide="download" class="w-4 h-4 mr-2"></i>
-                        Start Backup Now
-                    </button>
                 </form>
             </div>
         </div>

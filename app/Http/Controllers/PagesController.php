@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Schema;
 use App\Models\HomeSwiperImage;
 use App\Models\DayTourSwiperImage;
 use App\Models\DoSwiperImage;
@@ -73,20 +74,23 @@ class PagesController extends Controller
                 continue;
             }
 
-            // Compute total availability by summing per staycation:
-            // - if an inventory record exists for the date, use its available_quantity
-            // - otherwise, fall back to the staycation's base quantity
-            $staycations = Staycation::select('id', 'quantity')->get();
-            $inventoryForDate = StaycationInventory::where('date', $key)
-                ->select('staycation_id', 'available_quantity')
-                ->get()
-                ->keyBy('staycation_id');
-
+            // Check if staycation_inventories table exists
             $totalAvailable = 0;
-            foreach ($staycations as $s) {
-                $inv = $inventoryForDate->get($s->id);
-                $qty = $inv ? (int) $inv->available_quantity : (int) $s->quantity;
-                $totalAvailable += max(0, $qty);
+            if (Schema::hasTable('staycation_inventories')) {
+                // Compute total availability by summing per staycation:
+                // - if an inventory record exists for the date, use its available_quantity
+                // - otherwise, fall back to 0 (no availability without inventory record)
+                $staycations = Staycation::select('id')->get();
+                $inventoryForDate = StaycationInventory::where('date', $key)
+                    ->select('staycation_id', 'available_quantity')
+                    ->get()
+                    ->keyBy('staycation_id');
+
+                foreach ($staycations as $s) {
+                    $inv = $inventoryForDate->get($s->id);
+                    $qty = $inv ? (int) $inv->available_quantity : 0;
+                    $totalAvailable += max(0, $qty);
+                }
             }
 
             $availability[$key] = [
@@ -95,8 +99,8 @@ class PagesController extends Controller
             ];
         }
 
-        // Get total quantity from staycations for legend
-        $totalQuantity = Staycation::sum('quantity');
+        // Total quantity is no longer tracked at staycation level - use 0
+        $totalQuantity = 0;
 
         // Build day tour availability data
         $dayTourAvailability = [];
@@ -202,7 +206,7 @@ class PagesController extends Controller
             while ($current->lt($checkoutCarbon)) {
                 $dateStr = $current->format('Y-m-d');
                 // Get from inventory table, if not exists use base quantity
-                $qty = isset($inventories[$dateStr]) ? (int) $inventories[$dateStr]->available_quantity : (int) $staycation->quantity;
+                $qty = isset($inventories[$dateStr]) ? (int) $inventories[$dateStr]->available_quantity : (int) $staycation->base_quantity;
                 $inventoryDetails[$dateStr] = [
                     'min_quantity' => $qty,
                     'is_available' => $qty > 0,
@@ -216,7 +220,7 @@ class PagesController extends Controller
             $isAvailable = $minOverRange > 0;
 
             // Dynamic status based on threshold (30% of base quantity)
-            $baseQty = max(0, (int)$staycation->quantity);
+            $baseQty = max(0, (int)$staycation->base_quantity);
             $threshold = max(1, (int) floor($baseQty * 0.3));
             $status = 'unavailable';
             if ($minOverRange === 0) {

@@ -100,7 +100,7 @@
                             <div>
                                 <h3 class="text-xl font-bold text-gray-900">{{ $staycation->name }}</h3>
                                 <p class="text-sm text-gray-600 mt-1">
-                                    Quantity: <span class="font-semibold">{{ $staycation->quantity }} room{{ $staycation->quantity > 1 ? 's' : '' }}</span>
+                                    Quantity: <span class="font-semibold">{{ $staycation->base_quantity }} room{{ $staycation->base_quantity > 1 ? 's' : '' }}</span>
                                 </p>
                             </div>
                             <button 

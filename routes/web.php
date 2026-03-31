@@ -1,4 +1,3 @@
-
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -694,7 +693,6 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/alerts', [AdminSystemSettingsController::class, 'showAlerts'])->name('admin.settings.alerts');
         Route::post('/alerts/{id}/resolve', [AdminSystemSettingsController::class, 'resolveAlert'])->name('admin.settings.alerts.resolve');
         Route::post('/alerts/clear-resolved', [AdminSystemSettingsController::class, 'clearResolvedAlerts'])->name('admin.settings.alerts.clear');
-        Route::post('/backup', [AdminSystemSettingsController::class, 'backup'])->name('admin.settings.backup');
     });
 
     // ========== Admin Help & Documentation Routes ==========

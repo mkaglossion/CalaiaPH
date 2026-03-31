@@ -17,6 +17,8 @@ class StaycationInventory extends Model
         'total_quantity',
         'booked_quantity',
         'available_quantity',
+        'is_blocked',
+        'block_reason',
     ];
 
     protected static function boot()
@@ -37,6 +39,7 @@ class StaycationInventory extends Model
         'total_quantity' => 'integer',
         'booked_quantity' => 'integer',
         'available_quantity' => 'integer',
+        'is_blocked' => 'boolean',
     ];
 
     public function staycation()
@@ -62,7 +65,7 @@ class StaycationInventory extends Model
             // Ensure total_quantity is set (fallback to staycation quantity)
             if (!$inventory->total_quantity) {
                 $staycation = \App\Models\Staycation::find($staycationId);
-                $inventory->total_quantity = $staycation ? $staycation->quantity : 0;
+                $inventory->total_quantity = $staycation ? $staycation->base_quantity : 0;
             }
 
             if ($inventory->available_quantity < $quantity) {
@@ -98,7 +101,7 @@ class StaycationInventory extends Model
             // Ensure total_quantity is set
             if (!$inventory->total_quantity) {
                 $staycation = \App\Models\Staycation::find($staycationId);
-                $inventory->total_quantity = $staycation ? $staycation->quantity : 0;
+                $inventory->total_quantity = $staycation ? $staycation->base_quantity : 0;
             }
 
             $inventory->booked_quantity = max(0, $inventory->booked_quantity - $quantity);
@@ -128,6 +131,6 @@ class StaycationInventory extends Model
 
         // If no inventory set for this date, fallback to staycation's base quantity
         $staycation = \App\Models\Staycation::find($staycationId);
-        return $staycation ? ($staycation->quantity ?? 0) : 0;
+        return $staycation ? ($staycation->base_quantity ?? 0) : 0;
     }
 }

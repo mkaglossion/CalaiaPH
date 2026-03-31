@@ -1,4 +1,4 @@
- {{-- resources/views/booking/staycation-availability.blade.php --}}
+{{-- resources/views/booking/staycation-availability.blade.php --}}
 <x-app-layout active-header="booking">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -47,6 +47,129 @@
         .swiper-button-next::after, .swiper-button-prev::after { font-size: 16px !important; }
         .swiper-pagination { bottom: 10px !important; }
         .swiper-pagination-bullet-active { background: #8f5d54 !important; }
+
+        /* Room Details Swiper */
+        .room-details-swiper {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .room-details-swiper .swiper-wrapper {
+            align-items: stretch;
+        }
+
+        .room-details-swiper .swiper-slide {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+        }
+
+        .room-details-swiper .swiper-slide img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 1 !important;
+            filter: none !important;
+            mix-blend-mode: normal !important;
+            transform: translateZ(0);
+        }
+
+        .room-details-swiper .swiper-button-next,
+        .room-details-swiper .swiper-button-prev {
+            width: 38px !important;
+            height: 38px !important;
+            border-radius: 9999px;
+            background: rgba(0,0,0,0.45) !important;
+            color: #fff !important;
+        }
+
+        .room-details-swiper .swiper-button-next::after,
+        .room-details-swiper .swiper-button-prev::after {
+            font-size: 13px !important;
+            font-weight: 700 !important;
+        }
+
+        @media (min-width: 768px) {
+            .room-details-swiper .swiper-button-next,
+            .room-details-swiper .swiper-button-prev {
+                width: 44px !important;
+                height: 44px !important;
+            }
+
+            .room-details-swiper .swiper-button-next::after,
+            .room-details-swiper .swiper-button-prev::after {
+                font-size: 15px !important;
+            }
+        }
+
+        .room-details-swiper-pagination {
+            position: absolute !important;
+            bottom: 12px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: auto !important;
+            z-index: 20 !important;
+            display: flex !important;
+            justify-content: center !important;
+        }
+
+        .room-details-swiper-pagination .swiper-pagination-bullet {
+            width: 7px !important;
+            height: 7px !important;
+            background: rgba(255,255,255,0.55) !important;
+            opacity: 1 !important;
+            margin: 0 4px !important;
+        }
+
+        .room-details-swiper-pagination .swiper-pagination-bullet-active {
+            width: 18px !important;
+            border-radius: 9999px !important;
+            background: #fff !important;
+        }
+
+        .room-details-swiper .swiper-slide-shadow-left,
+        .room-details-swiper .swiper-slide-shadow-right,
+        .room-details-swiper .swiper-slide-shadow-top,
+        .room-details-swiper .swiper-slide-shadow-bottom {
+            display: none !important;
+        }
+        
+        /* Wrapper for carousel */
+        div[x-show*="roomDetailsImages"] {
+            background: transparent !important;
+        }
+        
+        /* Image Gallery Swiper */
+        .image-gallery-swiper {
+            width: 100% !important;
+            height: auto !important;
+        }
+        .image-gallery-swiper .swiper-slide {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+        }
+        .image-gallery-swiper .swiper-button-next,
+        .image-gallery-swiper .swiper-button-prev {
+            width: 50px !important;
+            height: 50px !important;
+            background: rgba(255,255,255,0.2) !important;
+        }
+        .image-gallery-swiper .swiper-button-next:hover,
+        .image-gallery-swiper .swiper-button-prev:hover {
+            background: rgba(255,255,255,0.3) !important;
+        }
+        .image-gallery-swiper .swiper-pagination-bullet {
+            background: rgba(255,255,255,0.5) !important;
+        }
+        .image-gallery-swiper .swiper-pagination-bullet-active {
+            background: white !important;
+        }
     </style>
 
     <div class="bg-[#f5efe7] min-h-screen">
@@ -188,25 +311,12 @@
                                     </div>
                                 </div>
 
-                                {{-- Image --}}
+                                {{-- Image (First image only - carousel now in modal) --}}
                                 <div class="relative">
-                                    @if($staycation->swiperImages && $staycation->swiperImages->count() > 1)
-                                        <div class="swiper staycation-swiper-{{ $staycation->id }}">
-                                            <div class="swiper-wrapper">
-                                                @foreach($staycation->swiperImages as $image)
-                                                    <div class="swiper-slide">
-                                                        <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $roomDetail['name'] }}" class="w-full h-96 object-cover">
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                            <div class="swiper-pagination swiper-pagination-{{ $staycation->id }}"></div>
-                                            <div class="swiper-button-next swiper-button-next-{{ $staycation->id }}" @click.stop></div>
-                                            <div class="swiper-button-prev swiper-button-prev-{{ $staycation->id }}" @click.stop></div>
-                                        </div>
+                                    @if($staycation->image)
+                                        <img src="{{ $staycation->image }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
                                     @elseif($staycation->swiperImages && $staycation->swiperImages->count() > 0)
                                         <img src="{{ $staycation->swiperImages->first()->image_path }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
-                                    @elseif($staycation->image)
-                                        <img src="{{ $staycation->image }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
                                     @else
                                         <div class="w-full h-96 bg-linear-to-br from-blue-200 to-purple-200 flex items-center justify-center cursor-pointer hover:from-blue-300 hover:to-purple-300">
                                             <div class="text-center">
@@ -292,7 +402,13 @@
                                     {{-- View Room Details Button --}}
                                     <button
                                         type="button"
-                                        @click.stop="showRoomDetailsModal({{ $staycation->id }}, '{{ addslashes($roomDetail['name']) }}', '{{ addslashes($roomDetail['description']) }}', '{{ addslashes(json_encode($features)) }}')"
+                                        @click.stop="showRoomDetailsModal(
+                                            {{ $staycation->id }},
+                                            '{{ addslashes($roomDetail['name']) }}',
+                                            '{{ addslashes($roomDetail['description']) }}',
+                                            {{ json_encode(array_values(array_filter(array_map('trim', $features)))) }},
+                                            {{ json_encode($staycation->swiperImages ? $staycation->swiperImages->map(function($img) { return $img->image_url; })->toArray() : []) }}
+                                        )"
                                         class="w-full bg-gray-50 text-gray-700 py-2 px-4 rounded-lg font-semibold hover:bg-gray-100 transition text-sm mb-4 border border-gray-200"
                                     >
                                         <i class="bi bi-info-circle mr-1"></i> View Room Details
@@ -334,15 +450,10 @@
                                             :disabled="{{ $status !== 'available' ? 'true' : 'false' }} || (!isSelected({{ $staycation->id }}) && getRemainingSlots({{ $staycation->id }}) === 0)"
                                             :class="isSelected({{ $staycation->id }})
                                                 ? 'bg-green-600 text-white hover:bg-green-700'
-                                                : (getRemainingSlots({{ $staycation->id }}) === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : '{{ $status === 'available' ? 'bg-[#8f5d54] text-white hover:bg-[#7a4e48]' : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}')
-                                            "
-                                        >
+                                                : (getRemainingSlots({{ $staycation->id }}) === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : '{{ $status === 'available' ? 'bg-[#8f5d54] text-white hover:bg-[#7a4e48]' : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}')"
+>
                                             <template x-if="isSelected({{ $staycation->id }})">
-                                                @if($isSpecialRoomButton)
-                                                    <span><i class="bi bi-plus-circle mr-1"></i>Add More</span>
-                                                @else
-                                                    <span><i class="bi bi-check2-circle mr-1"></i>Selected</span>
-                                                @endif
+                                                <span><i class="bi bi-check mr-1"></i> Added (<span x-text="getSelectedCount({{ $staycation->id }})"></span>) - <span x-text="getRemainingSlots({{ $staycation->id }})"></span> left</span>
                                             </template>
                                             <template x-if="!isSelected({{ $staycation->id }})">
                                                 <span x-text="getRemainingSlots({{ $staycation->id }}) === 0 ? 'Fully Booked' : 'Select'"></span>
@@ -770,6 +881,78 @@
                     </div>
                 </div>
 
+                {{-- Image Gallery Modal --}}
+                <div 
+                    x-show="imageGalleryModal" 
+                    x-cloak 
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+                    @click.self="imageGalleryModal = false"
+                    @keydown.escape.window="imageGalleryModal = false"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                >
+                    <div class="w-full max-w-3xl" @click.stop>
+                        {{-- Close Button --}}
+                        <button
+                            type="button"
+                            class="absolute top-4 right-4 w-12 h-12 backdrop-blur rounded-full flex items-center justify-center text-white transition z-10"
+                            @click="imageGalleryModal = false"
+                        >
+                            <i class="bi bi-x-lg text-xl"></i>
+                        </button>
+
+                        {{-- Image Carousel --}}
+                        <div x-show="imageGalleryImages && imageGalleryImages.length > 0" class="relative">
+                            <div class="swiper image-gallery-swiper" x-ref="imageGallerySwiper">
+                                <div class="swiper-wrapper">
+                                    <template x-for="(img, index) in imageGalleryImages" :key="index">
+                                        <div class="swiper-slide">
+                                            <img :src="img" :alt="imageGalleryTitle" class="w-full h-auto object-contain rounded-xl" style="max-height: 80vh;">
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="swiper-pagination image-gallery-swiper-pagination"></div>
+                                <div class="swiper-button-next image-gallery-swiper-next"></div>
+                                <div class="swiper-button-prev image-gallery-swiper-prev"></div>
+                            </div>
+
+                            {{-- Image Counter --}}
+                            <div class="absolute bottom-6 left-6 bg-black/50 backdrop-blur text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                <span class="swiper-pagination-current"></span> / <span class="swiper-pagination-total"></span>
+                            </div>
+
+                            {{-- Room Title --}}
+                            <div class="absolute top-6 left-6 z-10">
+                                <h3 class="text-2xl font-bold text-white drop-shadow-lg" x-text="imageGalleryTitle"></h3>
+                            </div>
+                        </div>
+
+                        {{-- Action Buttons --}}
+                        <div class="flex gap-3 justify-center mt-6">
+                            <button 
+                                type="button" 
+                                class="px-8 py-3 bg-white text-gray-900 hover:bg-gray-100 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg"
+                                @click="imageGalleryModal = false"
+                            >
+                                <i class="bi bi-x-lg"></i>
+                                Close
+                            </button>
+                            <button 
+                                type="button" 
+                                class="px-8 py-3 bg-[#8f5d54] text-white hover:bg-[#7a4e48] rounded-xl font-semibold transition flex items-center gap-2 shadow-lg"
+                                @click="closeGalleryAndShowDetails()"
+                            >
+                                <i class="bi bi-info-circle"></i>
+                                View Full Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Room Details Modal --}}
                 <div 
                     x-show="roomDetailsModal" 
@@ -784,9 +967,9 @@
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
                 >
-                    <div 
-                        class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden"
-                        style="max-height: 100vh;"
+                    <div
+                        class="bg-white w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+                        style="max-height: 92vh;"
                         @click.stop
                         x-transition:enter="transition ease-out duration-300"
                         x-transition:enter-start="opacity-0 scale-95 translate-y-4"
@@ -803,7 +986,7 @@
                                     <div class="swiper-wrapper">
                                         <template x-for="(img, index) in roomDetailsImages" :key="index">
                                             <div class="swiper-slide">
-                                                <img :src="img" alt="Room Image" class="w-full h-64 md:h-80 object-cover">
+                                                <img :src="img" alt="Room Image" class="w-full h-45 sm:h-55 md:h-65 object-cover">
                                             </div>
                                         </template>
                                     </div>
@@ -814,9 +997,9 @@
                             </div>
 
                             {{-- Close Button --}}
-                            <button 
-                                type="button" 
-                                class="absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-gray-700 hover:bg-white hover:text-gray-900 transition shadow-lg z-10"
+                            <button
+                                type="button"
+                                class="absolute top-4 right-4 w-10 h-10 backdrop-blur rounded-full flex items-center justify-center text-gray-700 hover:bg-white hover:text-gray-900 transition shadow-lg z-10"
                                 @click="roomDetailsModal = false"
                             >
                                 <i class="bi bi-x-lg text-lg"></i>
@@ -847,98 +1030,105 @@
                         </div>
 
                         {{-- Content --}}
-                        <div class="p-10 overflow-y-auto" style="max-height: calc(100vh - 20rem);">
+                        <div class="px-4 sm:px-5 py-4 sm:py-5 overflow-y-auto flex-1">
                             {{-- Room Name & Price --}}
-                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
-                                <div>
-                                    <h3 class="text-2xl font-bold text-gray-900" x-text="roomDetailsName"></h3>
-                                    <div class="flex items-center gap-3 mt-2">
-                                        <span class="flex items-center gap-1 text-sm text-gray-600">
-                                        </span>
-                                        <span class="flex items-center gap-1 text-sm text-gray-600" x-show="roomDetailsSize">
+                            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                                <div class="min-w-0">
+                                    <h3 class="text-lg sm:text-xl font-bold text-gray-900 leading-tight" x-text="roomDetailsName"></h3>
+
+                                    <div class="flex flex-wrap items-center gap-2 mt-2">
+                                        <span x-show="roomDetailsSize" class="inline-flex items-center gap-1 text-xs sm:text-sm text-gray-600 bg-gray-100 rounded-full px-3 py-1">
                                             <i class="bi bi-arrows-angle-expand text-[#8f5d54]"></i>
                                             <span x-text="roomDetailsSize"></span>
                                         </span>
+
+                                        <span x-show="roomDetailsCapacity" class="inline-flex items-center gap-1 text-xs sm:text-sm text-gray-600 bg-gray-100 rounded-full px-3 py-1">
+                                            <i class="bi bi-people text-[#8f5d54]"></i>
+                                            <span x-text="roomDetailsCapacity"></span>
+                                        </span>
                                     </div>
                                 </div>
-                                <div class="text-right">
-                                    <div class="text-3xl font-bold text-[#8f5d54]" x-text="roomDetailsPrice"></div>
-                                    <div class="text-sm text-gray-500" x-text="roomDetailsPriceLabel"></div>
+
+                                <div class="sm:text-right shrink-0">
+                                    <div class="text-xl sm:text-2xl font-bold text-[#8f5d54]" x-text="roomDetailsPrice"></div>
+                                    <div class="text-xs text-gray-500" x-text="roomDetailsPriceLabel"></div>
                                 </div>
                             </div>
 
                             {{-- Quick Stats --}}
-                            <div class="grid grid-cols-3 gap-3 mb-6">
-                                <div class="bg-gray-50 rounded-xl p-4 text-center">
-                                    <div class="text-2xl font-bold text-gray-900" x-text="roomDetailsAvailable"></div>
-                                    <div class="text-xs text-gray-500 uppercase tracking-wide">Available</div>
+                            <div class="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+                                <div class="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
+                                    <div class="text-base sm:text-lg font-bold text-gray-900" x-text="roomDetailsAvailable"></div>
+                                    <div class="text-[9px] sm:text-xs text-gray-500 uppercase tracking-wide mt-1">Available</div>
                                 </div>
-                                <div class="bg-gray-50 rounded-xl p-4 text-center">
-                                    <div class="text-2xl font-bold text-gray-900" x-text="roomDetailsNights"></div>
-                                    <div class="text-xs text-gray-500 uppercase tracking-wide">Nights</div>
+                                <div class="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
+                                    <div class="text-base sm:text-lg font-bold text-gray-900" x-text="roomDetailsNights"></div>
+                                    <div class="text-[9px] sm:text-xs text-gray-500 uppercase tracking-wide mt-1">Nights</div>
                                 </div>
-                                <div class="bg-gray-50 rounded-xl p-4 text-center">
-                                    <div class="text-2xl font-bold text-gray-900" x-text="roomDetailsGuests"></div>
-                                    <div class="text-xs text-gray-500 uppercase tracking-wide">Guests</div>
+                                <div class="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
+                                    <div class="text-base sm:text-lg font-bold text-gray-900" x-text="roomDetailsGuests"></div>
+                                    <div class="text-[9px] sm:text-xs text-gray-500 uppercase tracking-wide mt-1">Guests</div>
                                 </div>
                             </div>
 
                             {{-- Description --}}
-                            <div class="mb-6">
-                                <h4 class="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                            <div class="mb-5">
+                                <h4 class="font-semibold text-sm text-gray-800 mb-2 flex items-center gap-2">
                                     <i class="bi bi-card-text text-[#8f5d54]"></i>
                                     Description
                                 </h4>
-                                <p class="text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-xl p-4" x-text="roomDetailsDescription"></p>
+                                <p class="text-xs sm:text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-lg p-3 border border-gray-100" x-text="roomDetailsDescription"></p>
                             </div>
 
                             {{-- Amenities / Features --}}
-                            <div x-show="roomDetailsFeatures && roomDetailsFeatures.length > 0">
-                                <h4 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                                    <i class="bi bi-grid text-[#8f5d54]"></i>
-                                    Room Amenities
-                                </h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    <template x-for="feature in roomDetailsFeatures" :key="feature">
-                                        <div class="flex items-center gap-3 px-4 py-3 bg-linear-to-r from-gray-50 to-white rounded-xl border border-gray-100 hover:border-[#8f5d54]/30 transition">
-                                            <div class="w-8 h-8 bg-[#8f5d54]/10 rounded-full flex items-center justify-center shrink-0">
-                                                <i class="bi bi-check-lg text-[#8f5d54]"></i>
+                            <template x-if="roomDetailsFeatures && roomDetailsFeatures.length > 0">
+                                <div>
+                                    <h4 class="font-semibold text-sm text-gray-800 mb-3 flex items-center gap-2">
+                                        <i class="bi bi-grid text-[#8f5d54]"></i>
+                                        Room Amenities
+                                    </h4>
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                                        <template x-for="feature in roomDetailsFeatures" :key="feature">
+                                            <div class="flex items-start gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 hover:border-[#8f5d54]/30 transition">
+                                                <div class="w-5 h-5 bg-[#8f5d54]/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                                                    <i class="bi bi-check-lg text-[#8f5d54] text-xs"></i>
+                                                </div>
+                                                <span class="text-xs text-gray-700 leading-snug" x-text="feature"></span>
                                             </div>
-                                            <span class="text-sm text-gray-700" x-text="feature"></span>
-                                        </div>
-                                    </template>
+                                        </template>
+                                    </div>
                                 </div>
-                            </div>
+                            </template>
 
                             {{-- Additional Info --}}
-                            <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                                <div class="flex items-start gap-3">
-                                    <i class="bi bi-info-circle text-blue-500 mt-0.5"></i>
-                                    <div class="text-sm text-blue-700">
-                                        <p class="font-semibold">Booking Information</p>
-                                        <p class="mt-1">Prices may vary based on season and day of the week. Select this room to see final pricing.</p>
+                            <div class="mt-5 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                <div class="flex items-start gap-2">
+                                    <i class="bi bi-info-circle text-blue-500 mt-0.5 text-sm shrink-0"></i>
+                                    <div class="text-xs text-blue-700">
+                                        <p class="font-semibold">Booking Info</p>
+                                        <p class="mt-1">Prices vary by season and day. Select to see final pricing.</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {{-- Footer Actions --}}
-                        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
+                        <div class="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row gap-2 sm:gap-3">
                             <button 
                                 type="button" 
-                                class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-xl font-semibold transition flex items-center justify-center gap-2"
+                                class="flex-1 px-4 sm:px-6 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-xl font-semibold transition flex items-center justify-center gap-2 text-sm sm:text-base min-h-12"
                                 @click="roomDetailsModal = false"
                             >
                                 <i class="bi bi-x-lg"></i>
-                                Close
+                                <span>Close</span>
                             </button>
                             <button 
                                 type="button" 
-                                class="flex-1 px-6 py-3 bg-[#8f5d54] text-white hover:bg-[#7a4e48] rounded-xl font-semibold transition flex items-center justify-center gap-2"
+                                class="flex-1 px-4 sm:px-6 py-3 bg-[#8f5d54] text-white hover:bg-[#7a4e48] rounded-xl font-semibold transition flex items-center justify-center gap-2 text-sm sm:text-base min-h-12"
                                 @click="roomDetailsModal = false; $dispatch('click')"
                             >
                                 <i class="bi bi-calendar-check"></i>
-                                Select This Room
+                                <span>Select This Room</span>
                             </button>
                         </div>
                     </div>
@@ -955,7 +1145,7 @@
                             </button>
                         </div>
                         <div class="mb-4">
-                            <p class="text-gray-600 mb-2" x-text="quantityModalRoomName"></p>
+                           
                             <p class="text-sm text-gray-500">Available: <span x-text="quantityModalAvailable" class="font-semibold text-[#8f5d54]"></span></p>
                         </div>
                         <div class="mb-6">
@@ -1208,6 +1398,11 @@
 
                 calendarModal: false,
                 petPolicyModal: false,
+                imageGalleryModal: false,
+                imageGalleryImages: [],
+                imageGalleryTitle: '',
+                imageGalleryRoomId: null,
+                imageGallerySwiperInstance: null,
                 roomDetailsModal: false,
                 roomDetailsName: '',
                 roomDetailsDescription: '',
@@ -1315,7 +1510,7 @@
                         if (this.selectedCount() >= this.maxSlots) {
                             Swal.fire({
                                 title: 'Slots Full',
-                                text: `All ${this.maxSlots} slot(s) are filled. Add more slots to add another ${room.name}.`,
+                                text: `All ${this.maxSlots} slot(s) are filled. Add more slots if needed.`,
                                 icon: 'warning',
                                 confirmButtonColor: '#8f5d54'
                             });
@@ -1665,7 +1860,58 @@
                     this.$nextTick(() => this.initCalendar());
                 },
 
-                showRoomDetailsModal(roomId, name, description, features) {
+                showImageGalleryModal(roomId, name, images) {
+                    if (!images || images.length === 0) {
+                        this.showRoomDetailsModal(roomId, name, '', []);
+                        return;
+                    }
+                    
+                    this.imageGalleryRoomId = roomId;
+                    this.imageGalleryTitle = name;
+                    this.imageGalleryImages = images;
+                    this.imageGalleryModal = true;
+                    
+                    this.$nextTick(() => {
+                        setTimeout(() => {
+                            const swiperEl = this.$refs.imageGallerySwiper;
+                            if (swiperEl) {
+                                if (swiperEl.swiper) {
+                                    swiperEl.swiper.destroy(true, true);
+                                }
+                                this.imageGallerySwiperInstance = new Swiper(swiperEl, {
+                                    loop: this.imageGalleryImages.length > 1,
+                                    pagination: { 
+                                        el: '.image-gallery-swiper-pagination', 
+                                        clickable: true,
+                                        dynamicBullets: true
+                                    },
+                                    navigation: { 
+                                        nextEl: '.image-gallery-swiper-next', 
+                                        prevEl: '.image-gallery-swiper-prev' 
+                                    },
+                                    keyboard: true,
+                                    speed: 500
+                                });
+                            }
+                        }, 100);
+                    });
+                },
+                
+                closeGalleryAndShowDetails() {
+                    this.imageGalleryModal = false;
+                    const roomId = this.imageGalleryRoomId;
+                    const room = this.roomDetailsMap && this.roomDetailsMap[roomId];
+                    if (room) {
+                        this.showRoomDetailsModal(roomId, room.name || this.imageGalleryTitle, room.description || '', []);
+                    }
+                },
+
+                showRoomDetailsModal(roomId, name, description, features, images = []) {
+                    if (this.roomDetailsModal) {
+                        console.warn('Modal already open, preventing recursive call.');
+                        return;
+                    }
+
                     this.roomDetailsName = name;
                     this.roomDetailsDescription = description;
                     
@@ -1677,11 +1923,6 @@
                     
                     // Set status
                     this.roomDetailsStatus = roomDetail ? roomDetail.status : 'available';
-                    
-                    // Set capacity
-                    const maxAdults = roomDetail?.max_adults || roomDetail?.capacity || 2;
-                    const maxChildren = roomDetail?.max_children || 0;
-                    this.roomDetailsCapacity = `${maxAdults} Adults${maxChildren > 0 ? ', ' + maxChildren + ' Children' : ''}`;
                     
                     // Set size if available
                     this.roomDetailsSize = roomDetail?.size || '';
@@ -1735,12 +1976,17 @@
                         this.roomDetailsFeatures = [];
                     }
                     
-                    // Set images
-                    this.roomDetailsImages = [];
+                    // Set images from passed images parameter or imageGalleryImages if available
+                    if (images && images.length > 0) {
+                        this.roomDetailsImages = images;
+                    } else if (this.imageGalleryImages && this.imageGalleryImages.length > 0) {
+                        this.roomDetailsImages = this.imageGalleryImages;
+                    } else {
+                        this.roomDetailsImages = [];
+                    }
                     
                     this.roomDetailsModal = true;
-                    
-                    // Initialize Swiper after modal is shown
+
                     this.$nextTick(() => {
                         setTimeout(() => {
                             const swiperEl = this.$refs.roomDetailsSwiper;
@@ -1749,7 +1995,7 @@
                                     swiperEl.swiper.destroy(true, true);
                                 }
                                 new Swiper(swiperEl, {
-                                    loop: true,
+                                    loop: this.roomDetailsImages.length > 1,
                                     pagination: { 
                                         el: '.room-details-swiper-pagination', 
                                         clickable: true,
@@ -1759,9 +2005,8 @@
                                         nextEl: '.room-details-swiper-next', 
                                         prevEl: '.room-details-swiper-prev' 
                                     },
-                                    autoplay: { delay: 4000, disableOnInteraction: false },
-                                    effect: 'fade',
-                                    fadeEffect: { crossFade: true }
+                                    autoplay: this.roomDetailsImages.length > 1 ? { delay: 4000, disableOnInteraction: false } : false,
+                                    speed: 500
                                 });
                             }
                         }, 100);
@@ -1936,7 +2181,7 @@
                     const roomDetail = this.roomDetailsMap && this.roomDetailsMap[lookupId] ? this.roomDetailsMap[lookupId] : null;
                     const dayTypePricing = (roomDetail && roomDetail.day_type_pricing) ? roomDetail.day_type_pricing : {};
                     const peakPeriods = (roomDetail && roomDetail.peak_periods) ? roomDetail.peak_periods : [];
-                    const roomBasePrice = (roomDetail && roomDetail.price) ? roomDetail.price : (room.price || (room.type === 'glamping' ? 5500 : 3000));
+                    const roomBasePrice = (roomDetail && roomDetail.price) ? roomDetail.price : (room.type === 'glamping' ? 5500 : 3000);
 
                     let totalPrice = 0;
                     const checkinDate = new Date(this.checkin);
@@ -2187,6 +2432,7 @@
                     const roomNameLower = (room.name || '').toLowerCase();
                     const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
                     const isCarCamping = roomNameLower.includes('car camping');
+                    const isSpecialRoom = isBYOT || isCarCamping;
 
                     // Get dynamic pricing info from roomDetail
                     const dayTypePricing = (roomDetail && roomDetail.day_type_pricing) ? roomDetail.day_type_pricing : {};
@@ -2297,7 +2543,7 @@
                                 dayLong: r.day_of_week,
                                 season: r.season,
                                 seasonType: isSuperPeak ? 'Super-Peak' : (isPeak ? 'Peak' : 'Non-Peak'),
-                                dayType: r.day_type,
+                                dayType: r.dayType,
                                 rate: r.rate
                             };
                         });
@@ -2506,19 +2752,6 @@
 
                     this.fetchBookingSettings();
                     this.fetchVatRate();
-
-                    this.$nextTick(() => {
-                        @foreach($staycations as $staycation)
-                            @if($staycation->swiperImages && $staycation->swiperImages->count() > 1)
-                                new Swiper('.staycation-swiper-{{ $staycation->id }}', {
-                                    loop: true,
-                                    pagination: { el: '.swiper-pagination-{{ $staycation->id }}', clickable: true },
-                                    navigation: { nextEl: '.swiper-button-next-{{ $staycation->id }}', prevEl: '.swiper-button-prev-{{ $staycation->id }}' },
-                                    autoplay: { delay: 3000, disableOnInteraction: false },
-                                });
-                            @endif
-                        @endforeach
-                    });
                 },
 
                 fetchUpdatedPricingData() {

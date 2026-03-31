@@ -52,19 +52,32 @@ class AdminSettingsController extends Controller
 
     public function updatePreferences(Request $request)
     {
+        // Handle checkbox values - unchecked checkboxes don't send data, so we need to set them to false
+        $data = [
+            'email_low_inventory_alerts' => $request->has('email_low_inventory_alerts') ? true : false,
+            'email_pending_payments' => $request->has('email_pending_payments') ? true : false,
+            'email_bookings' => $request->has('email_bookings') ? true : false,
+            'email_user_signups' => $request->has('email_user_signups') ? true : false,
+        ];
+
+        // Add optional fields if provided
+        if ($request->has('theme_preference')) {
+            $data['theme_preference'] = $request->input('theme_preference');
+        }
+        if ($request->has('language')) {
+            $data['language'] = $request->input('language');
+        }
+
+        // Validate the data
         $validated = $request->validate([
-            'email_low_inventory_alerts' => 'boolean',
-            'email_pending_payments' => 'boolean',
-            'email_bookings' => 'boolean',
-            'email_user_signups' => 'boolean',
-            'theme_preference' => 'in:light,dark',
-            'language' => 'in:en,es,fr,tl',
+            'theme_preference' => 'nullable|in:light,dark',
+            'language' => 'nullable|in:en,es,fr,tl',
         ]);
 
         /** @var User $user */
         $user = Auth::user();
-        $preferences = $user->adminPreference ?? new AdminPreference(['user_id' => $user->id]);
-        $preferences->update($validated);
+        $preferences = $user->adminPreference ?? AdminPreference::create(['user_id' => $user->id]);
+        $preferences->update($data);
 
         return back()->with('success', 'Preferences updated successfully.');
     }
@@ -75,7 +88,7 @@ class AdminSettingsController extends Controller
         $user = Auth::user();
         $activities = $user->adminActivityLogs()
             ->latest()
-            ->paginate(20);
+            ->paginate(10);
 
         return view('admin.settings.activity-log', compact('activities'));
     }

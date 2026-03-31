@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('food_id');
             $table->foreign('food_id')->references('id')->on('foods')->onDelete('cascade');
+            // Store the food name at time of reservation for history/denormalization
+            $table->string('food_name')->nullable();
             $table->enum('meal_period', ['breakfast', 'lunch', 'snack', 'dinner', 'supper']);
             $table->date('reservation_date');
             $table->time('reservation_time');
@@ -26,7 +28,11 @@ return new class extends Migration
             $table->string('phone');
             $table->string('email');
             $table->text('special_requests')->nullable();
-            $table->enum('status', ['pending', 'confirmed', 'cancelled'])->default('pending');
+            $table->decimal('total_amount', 10, 2)->nullable()->default(0.00);
+            $table->enum('payment_status', ['pending', 'paid', 'partial', 'refunded'])->default('pending');
+            $table->string('payment_method')->nullable();
+            $table->text('payment_notes')->nullable();
+            $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed'])->default('pending');
             $table->timestamps();
         });
     }

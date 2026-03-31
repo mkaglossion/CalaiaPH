@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('staycations', function (Blueprint $table) {
-            $table->integer('days')->default(1)->after('name');
+            if (!Schema::hasColumn('staycations', 'days')) {
+                $table->integer('days')->default(1)->after('name');
+            }
         });
     }
 

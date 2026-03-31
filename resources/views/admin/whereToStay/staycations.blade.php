@@ -68,7 +68,6 @@
 
                 <div>
                     <h3 class="font-semibold text-lg text-gray-900" x-text="staycation.name || 'Untitled'"></h3>
-                    <p class="text-gray-500 text-sm" x-text="`Capacity: ${staycation.quantity} | Days: ${staycation.days}`"></p>
                 </div>
 
                 <div class="mt-3 text-sm text-gray-600 space-y-1">
@@ -205,7 +204,7 @@
             <form id="staycationForm" @submit.prevent="saveStaycation()" class="space-y-5">
                 @csrf
 
-                <!-- Staycation Name, Days, Max Capacity, Adults & Children -->
+                <!-- Staycation Name, Days, Adults & Children -->
                 <div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5" :class="isSpecialStaycation ? 'lg:grid-cols-3' : ''">
                     <div>
                         <label for="staycation_name" class="block text-sm font-medium mb-1">Staycation Name</label>
@@ -213,22 +212,11 @@
                         <p x-show="isSpecialStaycation" class="text-xs text-blue-600 mt-1">BYOT/Car Camping - No adults/children required</p>
                     </div>
                     <div>
-                        <label for="staycation_days" class="block text-sm font-medium mb-1">Days</label>
+                        <label for="staycation_days" class="block text-sm font-medium mb-1">Duration (Days)</label>
                         <input type="number" id="staycation_days" name="days" x-model.number="form.days" min="1" class="w-full border rounded px-3 py-2 h-10" placeholder="1" required>
-                        <p class="text-xs text-gray-500 mt-1">Duration of staycation</p>
+                        <p class="text-xs text-gray-500 mt-1">Specify the number of days for the staycation.</p>
                     </div>
-                    <div>
-                        <label for="staycation_quantity" class="block text-sm font-medium mb-1">Max Capacity</label>
-                        <div class="flex items-center gap-2">
-                            <input type="number" id="staycation_quantity" name="quantity" x-model.number="form.quantity" min="1" class="w-full border rounded px-3 py-2 h-10" placeholder="1" @input="updateThresholdFromQuantity()">
-                            <button type="button" class="shrink-0 text-xs px-3 py-2 h-10 rounded border bg-white hover:bg-gray-50" @click="computeAutoCapacity()">
-                                Suggest
-                            </button>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">
-                            Base capacity; per-date inventory can be lower. Threshold (30%): <span class="font-semibold" x-text="computedThreshold"></span>
-                        </p>
-                    </div>
+
                     <div x-show="!isSpecialStaycation">
                         <label for="staycation_adults" class="block text-sm font-medium mb-1">Adults</label>
                         <input type="number" id="staycation_adults" name="adults" x-model.number="form.adults" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
@@ -377,12 +365,22 @@
                     const staycationId = $refs.staycation.value;
 
                     if (!editImageMode && !fileInput) {
-                        alert('Please select an image before uploading.');
+                        Swal.fire({
+                            title: 'Missing Image',
+                            text: 'Please select an image before uploading.',
+                            icon: 'warning',
+                            confirmButtonColor: '#3b82f6'
+                        });
                         return;
                     }
 
                     if (!staycationId) {
-                        alert('Please select an staycation.');
+                        Swal.fire({
+                            title: 'Missing Staycation',
+                            text: 'Please select a staycation.',
+                            icon: 'warning',
+                            confirmButtonColor: '#3b82f6'
+                        });
                         return;
                     }
 
@@ -412,7 +410,14 @@
                         try { data = await res.json(); } catch { throw new Error('Invalid JSON'); }
 
                         if (res.ok) {
-                            alert(data.message || (editImageMode ? 'Image updated successfully!' : 'Image uploaded successfully!'));
+                            Swal.fire({
+                                title: 'Success!',
+                                text: data.message || (editImageMode ? 'Image updated successfully!' : 'Image uploaded successfully!'),
+                                icon: 'success',
+                                confirmButtonColor: '#10b981',
+                                timer: 2000,
+                                timerProgressBar: true
+                            });
                             $refs.image.value = '';
                             $refs.title.value = '';
                             $refs.staycation.value = '';
@@ -420,15 +425,30 @@
                             resetImageForm();
                             window.location.reload();
                         } else if (data.errors) {
-                            const errorMessages = Object.values(data.errors).flat().join('\\n');
-                            alert(errorMessages);
+                            const errorMessages = Object.values(data.errors).flat().join('\n');
+                            Swal.fire({
+                                title: 'Validation Error',
+                                text: errorMessages,
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444'
+                            });
                         } else {
-                            alert(data.message || 'Operation failed.');
+                            Swal.fire({
+                                title: 'Error',
+                                text: data.message || 'Operation failed.',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444'
+                            });
                         }
                     })
                     .catch(err => {
                         console.error(err);
-                        alert('Error ' + (editImageMode ? 'updating' : 'uploading') + ' image.');
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Error ' + (editImageMode ? 'updating' : 'uploading') + ' image.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
                     })
                     .finally(() => {
                         btn.innerText = editImageMode ? 'Update' : 'Upload';
@@ -729,12 +749,12 @@ function staycationManager() {
                 this.form.name = staycation.name;
                 this.form.days = staycation.days || 1;
                 this.updateSpecialRoomStatus();
-                this.form.quantity = staycation.quantity;
+                this.form.quantity = staycation.capacity;
                 this.form.adults = staycation.adults;
                 this.form.children = staycation.children;
                 // Align inventory inputs with base capacity
-                this.inventoryQty = Number(staycation.quantity || 1);
-                this.inventoryQtyRange = Number(staycation.quantity || 1);
+                this.inventoryQty = Number(staycation.base_quantity || 1);
+                this.inventoryQtyRange = Number(staycation.base_quantity || 1);
                 this.inventoryTab = 'quick';
                 // Compute initial threshold and optionally auto capacity
                 this.updateThresholdFromQuantity();

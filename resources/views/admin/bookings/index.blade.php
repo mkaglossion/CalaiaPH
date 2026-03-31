@@ -229,7 +229,7 @@
                                 
                                 <!-- Dropdown Menu -->
                                 <div class="action-menu hidden absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-40">
-                                    @if($booking->status !== 'completed')
+                                    @if($booking->status !== 'completed' && ($booking->payment_status ?? 'pending') === 'paid')
                                         <button type="button" 
                                             onclick="updateReservationStatus({{ $booking->id }}, 'completed')"
                                             class="w-full text-left px-4 py-2 text-green-600 hover:bg-green-50 text-xs font-medium flex items-center gap-2">

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Schema;
 use App\Mail\BookingConfirmation;
 use DateTime;
 use App\Services\BookingService;
@@ -69,7 +70,8 @@ class BookingController extends Controller
         Staycation $staycation,
         string $checkinDate,
         string $checkoutDate,
-        int $quantity = 1,
+        int $adults = 1,
+        int $children = 0,
         int $extraMattresses = 0,
         int $numPets = 0,
         bool $hasPets = false
@@ -88,17 +90,18 @@ class BookingController extends Controller
         $breakdown = [];
 
         if ($isSpecialRoom) {
-            // Always 1 night, just quantity × base price (no night multiplier)
+            // Always 1 night, just (adults + children) × base price (no night multiplier)
             $seasonType = $this->getSeasonTypeForDate($checkin);
             $seasonKey = $this->mapSeasonToKey($seasonType);
             $baseRate = $this->getStaycationNightlyRate($staycation, $checkin, $seasonKey);
-            $accommodationPrice = $baseRate * $quantity;
+            $totalGuests = $adults + $children;
+            $accommodationPrice = $baseRate * $totalGuests;
             $breakdown[] = [
                 'date' => $checkin->format('Y-m-d'),
                 'day_of_week' => $checkin->format('l'),
                 'season' => $seasonType,
                 'rate' => $baseRate,
-                'total_for_night' => $baseRate * $quantity
+                'total_for_night' => $baseRate * $totalGuests
             ];
             $nights = 1; // force 1 night for display
         } else {
@@ -154,7 +157,9 @@ class BookingController extends Controller
             'breakdown' => $breakdown,
             'is_special_room' => $isSpecialRoom,
             'nights' => $nights,
-            'quantity' => $quantity
+            'adults' => $adults,
+            'children' => $children,
+            'total_guests' => $adults + $children
         ];
     }
 
@@ -394,7 +399,8 @@ class BookingController extends Controller
                 $staycation,
                 $checkin,
                 $checkout,
-                $request->rooms,
+                $request->adults,
+                $request->children,
                 0, // extra_mattresses - not needed for calendar preview
                 $request->pets,
                 $request->pets > 0
@@ -424,7 +430,8 @@ class BookingController extends Controller
             'staycation_id' => 'required|integer',
             'checkin_date' => 'required|date',
             'checkout_date' => 'required|date|after:checkin_date',
-            'quantity' => 'required|integer|min:1',
+            'adults' => 'required|integer|min:1',
+            'children' => 'required|integer|min:0',
             'extra_mattresses' => 'required|integer|min:0',
             'num_pets' => 'required|integer|min:0',
             'has_pets' => 'required|boolean',
@@ -439,7 +446,8 @@ class BookingController extends Controller
             $staycation,
             $request->checkin_date,
             $request->checkout_date,
-            $request->quantity,
+            $request->adults,
+            $request->children,
             $request->extra_mattresses,
             $request->num_pets,
             $request->has_pets
@@ -742,7 +750,7 @@ class BookingController extends Controller
             'food_total' => $foodTotal,
             'grand_total' => $accommodationTotal + $activitiesTotal + $foodTotal
         ];
-
+        
         $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [3]));
         $booking['current_step'] = 4;
         session(['booking' => $booking]);
@@ -765,7 +773,8 @@ class BookingController extends Controller
             if (!$staycation) continue;
 
             // Use CENTRALIZED pricing method
-            $quantity = (int)($acc['extra_mattress'] ?? ($acc['quantity'] ?? 1));
+            $adults = (int)($acc['adults'] ?? 1);
+            $children = (int)($acc['children'] ?? 0);
             $hasPets = ($acc['pets'] ?? 'no') === 'yes' && ($acc['pet_agreement'] ?? false);
             $numPets = (int)($acc['num_pets'] ?? 0);
             
@@ -773,7 +782,8 @@ class BookingController extends Controller
                 $staycation,
                 $checkinDate,
                 $checkoutDate,
-                $quantity,
+                $adults,
+                $children,
                 (int)($acc['extra_mattress'] ?? 0),
                 $numPets,
                 $hasPets
@@ -1258,12 +1268,10 @@ class BookingController extends Controller
             }
 
             // Get total available quantity for this date from inventory table
-            $totalAvailable = \App\Models\StaycationInventory::where('date', $key)
-                ->sum('available_quantity');
-
-            // If no inventory records exist for this date, fall back to staycation quantity
-            if ($totalAvailable == 0) {
-                $totalAvailable = \App\Models\Staycation::sum('quantity');
+            $totalAvailable = 0;
+            if (Schema::hasTable('staycation_inventories')) {
+                $totalAvailable = \App\Models\StaycationInventory::where('date', $key)
+                    ->sum('available_quantity');
             }
 
             $inventory[$key] = [
@@ -1273,7 +1281,7 @@ class BookingController extends Controller
         }
 
         // Get total quantity for fallback
-        $totalQuantity = \App\Models\Staycation::sum('quantity');
+        $totalQuantity = 0;
 
         // Build day tour availability data
         $dayTourInventory = [];
@@ -1718,9 +1726,23 @@ class BookingController extends Controller
                 ]);
             }
 
-            $request->validate(ValidationService::staycationPostRules());
 
+            $validated = $request->validate(ValidationService::staycationPostRules());
             $booking = session('booking', []);
+
+            // Validate that adults+children <= staycation.capacity for each accommodation
+            if (isset($validated['accommodations']) && is_array($validated['accommodations'])) {
+                foreach ($validated['accommodations'] as $acc) {
+                    $staycation = isset($acc['staycation']['id'])
+                        ? \App\Models\Staycation::find($acc['staycation']['id'])
+                        : null;
+                    $adults = $acc['adults'] ?? 0;
+                    $children = $acc['children'] ?? 0;
+                    if ($staycation && ($adults + $children > $staycation->capacity)) {
+                        return back()->withErrors(["The total guests for {$staycation->name} exceed its capacity."])->withInput();
+                    }
+                }
+            }
 
             if ($request->has('check_in') && $request->has('check_out')) {
                 $booking['checkin'] = $request->check_in;
@@ -1863,14 +1885,6 @@ class BookingController extends Controller
             'Super-Peak' => 'superPeak'
         ];
         $seasonKey = $seasonKeyMap[$currentSeason] ?? 'nonPeak';
-
-        // Map season to rate key
-        $seasonKeyMap = [
-            'Non-Peak' => 'nonPeak',
-            'Peak' => 'peak',
-            'Super-Peak' => 'superPeak'
-        ];
-        $seasonKey = $seasonKeyMap[$currentSeason] ?? 'nonPeak';
         // Get weekend day IDs
         $weekendDayIds = DayTypeDay::whereHas('dayType', fn($q) => $q->where('name', 'Weekend'))
             ->pluck('weekday')
@@ -1948,7 +1962,7 @@ class BookingController extends Controller
             $isAvailable = $minOverRange > 0;
 
             // Dynamic status based on threshold (30% of base quantity)
-            $baseQty = max(0, (int)$staycation->quantity);
+            $baseQty = max(0, (int)$staycation->base_quantity);
             $threshold = max(1, (int) floor($baseQty * 0.3));
             $status = 'unavailable';
             if ($minOverRange === 0) {
@@ -2301,7 +2315,7 @@ class BookingController extends Controller
         $availability = [];
         foreach ($staycations as $staycation) {
             $totalNights = \Carbon\Carbon::parse($checkin)->diffInDays(\Carbon\Carbon::parse($checkout));
-            $isAvailable = $staycation->quantity > 0;
+            $isAvailable = $staycation->base_quantity > 0;
 
             $availability[$staycation->id] = [
                 'available' => $isAvailable,
@@ -2449,7 +2463,7 @@ class BookingController extends Controller
                     $rates = $config['rates'] ?? [];
                     $baseRate = $rates[$rateKey] ?? 0;
 
-                    // For staycations, price is fixed regardless of guests (up to max capacity)
+                    // For staycations, price is fixed regardless of guests.
                     if ($baseRate > 0) {
                         return $baseRate;
                     }
