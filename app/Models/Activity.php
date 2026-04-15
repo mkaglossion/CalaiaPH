@@ -15,8 +15,7 @@ class Activity extends Model
         'image',
         'category',
         'is_active',
-        'sort_order',
-        'active'
+        'sort_order'
     ];
 
     public function swiperImages()

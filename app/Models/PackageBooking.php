@@ -11,6 +11,7 @@ class PackageBooking extends Model
         'booking_reference',
         'package_id',
         'booking_date',
+        'groups_booked',
         'session',
         'total_guests',
         'first_name',
@@ -24,10 +25,17 @@ class PackageBooking extends Model
         'paymongo_reference',
         'payment_reference'
     ];
+    
+    protected $attributes = [
+        'groups_booked' => 1,
+        'inventory_booked' => false,
+    ];
 
     protected $casts = [
         'booking_date' => 'date',
-        'total_amount' => 'decimal:2'
+        'total_amount' => 'decimal:2',
+        'groups_booked' => 'integer',
+        'inventory_booked' => 'boolean',
     ];
 
     /**

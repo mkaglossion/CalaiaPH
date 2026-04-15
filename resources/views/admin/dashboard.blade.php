@@ -353,7 +353,7 @@
 
   {{-- Key Metrics --}}
   <section aria-label="Key metrics">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-6 min-w-0">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-4 gap-4 lg:gap-6 min-w-0">
       @foreach($statCards as $c)
         <x-admin.stat-card
           :label="$c['label']"

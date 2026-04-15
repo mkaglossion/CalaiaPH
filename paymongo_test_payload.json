@@ -1,0 +1,20 @@
+{
+  "type": "checkout_session.payment_success",
+  "data": {
+    "id": "cs_test_simulation_001",
+    "attributes": {
+      "reference": "TXN-69D2203488B42",
+      "payments": [
+        {
+          "id": "pay_test_sim_001",
+          "attributes": {
+            "amount": 10000
+          }
+        }
+      ],
+      "metadata": {
+        "booking_reference": "TXN-69D2203488B42"
+      }
+    }
+  }
+}

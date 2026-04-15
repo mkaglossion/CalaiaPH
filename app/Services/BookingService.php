@@ -10,7 +10,6 @@ class BookingService
     {
         // Fetch activities dynamically from database where is_active = true with their images
         $activities = Activity::where('is_active', true)
-            ->orWhere('active', true)
             ->orderBy('sort_order', 'asc')
             ->orderBy('id', 'asc')
             ->get()

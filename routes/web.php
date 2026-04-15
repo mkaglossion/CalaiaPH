@@ -12,6 +12,7 @@ use App\Http\Controllers\WeatherController;
 
 // Admin Controllers
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminUsersController;
 use App\Http\Controllers\Admin\AdminBookingsController;
 use App\Http\Controllers\Admin\AdminStaycationsController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Admin\AdminActivitiesController;
 use App\Http\Controllers\Admin\AdminReportsController;
 use App\Http\Controllers\Admin\AdminPagesController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminPackageBookingsController;
 use App\Http\Controllers\Admin\BookingSettingsController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\InventoryManagementController;
@@ -96,6 +98,10 @@ Route::get('/debug/maintenance', function () {
         'cache_exists' => cache()->has('admin.settings'),
     ]);
 });
+
+// Admin login (separate page) - allowed during maintenance via middleware except rules
+Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
+Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.post');
 
 Route::get('/', function () {
     return redirect('/home');
@@ -501,6 +507,12 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/extra-fees', [BookingSettingsController::class, 'index'])->name('admin.booking-settings.index');
         Route::post('/extra-fees', [BookingSettingsController::class, 'update'])->name('admin.booking-settings.update');
 
+        // Package bookings (admin)
+        Route::get('/package/{id}', [AdminPackageBookingsController::class, 'show'])->name('admin.package_bookings.show');
+        Route::post('/package/{id}/confirm', [AdminPackageBookingsController::class, 'confirm'])->name('admin.package_bookings.confirm');
+        Route::post('/package/{id}/cancel', [AdminPackageBookingsController::class, 'cancel'])->name('admin.package_bookings.cancel');
+        Route::post('/package/record-payment', [AdminPackageBookingsController::class, 'recordPayment'])->name('admin.package_bookings.record-payment');
+
         Route::get('/{id}', [AdminBookingsController::class, 'show'])->name('admin.bookings.show');
         Route::post('/{id}/cancel', [AdminBookingsController::class, 'cancel'])->name('admin.bookings.cancel');
     });
@@ -816,9 +828,7 @@ Route::middleware(['api.throttle:booking', 'api.security'])->group(function () {
     Route::get('/api/booking/dayvisit/activities', [DayVisitController::class, 'getActivitiesApi'])->name('api.booking.dayvisit.activities');
 });
 
-// PayMongo Webhook Route (excluded from CSRF & rate limiting for webhook security)
-use App\Http\Controllers\Api\PaymongoWebhookController;
-Route::post('/api/webhooks/paymongo', [PaymongoWebhookController::class, 'handle'])->name('api.webhooks.paymongo')->withoutMiddleware('VerifyCsrfToken');
+// PayMongo Webhook Route moved to routes/api.php for stateless handling
 
 // Upload API Routes (5 requests per minute - very strict for file uploads)
 Route::group(['middleware' => ['api.throttle:upload', 'api.security', 'xss']], function () {

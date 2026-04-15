@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PackageBookingController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Api\PaymongoWebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,4 +27,8 @@ Route::middleware('api')->group(function () {
     Route::post('/payment/create-checkout', [PaymentController::class, 'createCheckout']);
     Route::get('/payment/confirm', [PaymentController::class, 'confirmCheckout']);
     Route::post('/payment/webhook', [PaymentController::class, 'webhook']);
+    // PayMongo webhook (stateless API route)
+    Route::post('/webhooks/paymongo', [PaymongoWebhookController::class, 'handle']);
+    // Backwards-compatible route for production domain registration
+    Route::post('/paymongo/webhook', [PaymongoWebhookController::class, 'handle']);
 });

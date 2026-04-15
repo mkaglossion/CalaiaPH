@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\PackageBooking;
 use App\Models\Staycation;
 use App\Models\StaycationInventory;
 use Illuminate\Http\Request;
@@ -15,37 +16,105 @@ class AdminBookingsController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Booking::query();
-        
-        // Filter by status
+        // Build Booking query with filters
+        $bookingQuery = Booking::query();
+
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $bookingQuery->where('status', $request->status);
         }
-        
-        // Filter by booking type
+
         if ($request->filled('booking_type')) {
-            $query->where('booking_type', $request->booking_type);
+            $bookingQuery->where('booking_type', $request->booking_type);
         }
-        
-        // Search by customer name or email
+
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $bookingQuery->where(function($q) use ($search) {
                 $q->where('customer_name', 'like', "%{$search}%")
                   ->orWhere('customer_email', 'like', "%{$search}%")
                   ->orWhere('transaction_id', 'like', "%{$search}%");
             });
         }
-        
-        // Filter by date range
+
         if ($request->filled('date_from')) {
-            $query->where('checkin_date', '>=', $request->date_from);
+            $bookingQuery->where('checkin_date', '>=', $request->date_from);
         }
         if ($request->filled('date_to')) {
-            $query->where('checkin_date', '<=', $request->date_to);
+            $bookingQuery->where('checkin_date', '<=', $request->date_to);
         }
-        
-        $bookings = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+
+        $bookingsCollection = $bookingQuery->orderBy('created_at', 'desc')->get()->map(function($b) {
+            $b->resource_type = 'booking';
+            $b->resource_id = $b->id;
+            $b->display_type_label = ucfirst($b->booking_type ?? 'staycation');
+            $b->display_customer_name = $b->customer_name;
+            return $b;
+        });
+
+        // Build PackageBooking query with equivalent filters
+        $packageQuery = PackageBooking::query();
+
+        if ($request->filled('status')) {
+            $packageQuery->where('status', $request->status);
+        }
+
+        // Map booking_type filter to package if requested
+        if ($request->filled('booking_type') && $request->booking_type !== 'package') {
+            // no-op, package bookings only match when booking_type is 'package'
+            if ($request->booking_type !== 'package') {
+                $packageQuery->whereRaw('1 = 0');
+            }
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $packageQuery->where(function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('booking_reference', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('date_from')) {
+            $packageQuery->where('booking_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $packageQuery->where('booking_date', '<=', $request->date_to);
+        }
+
+        $packageCollection = $packageQuery->orderBy('created_at', 'desc')->get()->map(function($pb) {
+            $obj = new \stdClass();
+            $obj->id = $pb->id; // preserve for direct use if needed
+            $obj->resource_type = 'package';
+            $obj->resource_id = $pb->id;
+            $obj->transaction_id = $pb->booking_reference;
+            $obj->created_at = $pb->created_at;
+            $obj->display_customer_name = $pb->full_name;
+            $obj->customer_email = $pb->email;
+            $obj->customer_phone = $pb->phone ?? null;
+            $obj->booking_type = 'package';
+            $obj->display_type_label = 'Package';
+            $obj->checkin_date = $pb->booking_date;
+            $obj->checkout_date = null;
+            $obj->total_amount = $pb->total_amount;
+            $obj->status = $pb->status;
+            $obj->payment_status = $pb->payment_status ?? 'pending';
+            $obj->id_for_routes = $pb->id; // id specifically for package routes
+            return $obj;
+        });
+
+        // Merge both collections and sort by created_at desc
+        $merged = $bookingsCollection->concat($packageCollection)->sortByDesc(function($item) {
+            return $item->created_at;
+        })->values();
+
+        // Manual pagination
+        $perPage = 10;
+        $page = max(1, (int) $request->query('page', 1));
+        $total = $merged->count();
+        $slice = $merged->slice(($page - 1) * $perPage, $perPage)->values();
+        $bookings = new LengthAwarePaginator($slice, $total, $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]);
         
         // Get stats
         $confirmed = Booking::where('status', 'confirmed')->count();

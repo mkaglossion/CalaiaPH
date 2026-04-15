@@ -55,7 +55,6 @@ class ActivityController extends Controller
             'category' => $request->category ?? '',
             'is_active' => $request->is_active ?? 1,
             'sort_order' => $request->sort_order ?? 0,
-            'active' => $request->active ?? 1,
         ]);
 
         return response()->json(['message' => 'Activity added successfully.']);
@@ -80,7 +79,6 @@ class ActivityController extends Controller
             'category' => $request->category ?? $activity_list->category,
             'is_active' => $request->is_active ?? $activity_list->is_active,
             'sort_order' => $request->sort_order ?? $activity_list->sort_order,
-            'active' => $request->active ?? $activity_list->active,
         ];
 
         if ($request->hasFile('image')) {

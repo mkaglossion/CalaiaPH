@@ -47,6 +47,7 @@ class PackageBookingController extends Controller
                 'package_id' => $validated['package_id'],
                 'booking_date' => $validated['booking_date'],
                 'total_guests' => $validated['total_guests'],
+                'groups_booked' => 1, // default 1 group per booking
                 'session' => $validated['session'],
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],

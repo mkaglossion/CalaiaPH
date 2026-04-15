@@ -213,12 +213,17 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex items-center gap-3">
+                            @if(isset($booking->resource_type) && $booking->resource_type === 'package')
+                            <a href="{{ route('admin.package_bookings.show', $booking->resource_id) }}" class="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1">
+                            @else
                             <a href="{{ route('admin.bookings.show', $booking->id) }}" class="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1">
+                            @endif
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.522 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7s-8.268-2.943-9.542-7z"/></svg>
                                 <span>View</span>
                             </a>
                             
                             <!-- Status Menu Button -->
+                            @if(!isset($booking->resource_type) || $booking->resource_type !== 'package')
                             <div class="relative">
                                 <button type="button" 
                                     onclick="toggleActionMenu(this)" 
@@ -229,35 +234,49 @@
                                 
                                 <!-- Dropdown Menu -->
                                 <div class="action-menu hidden absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-40">
-                                    @if($booking->status !== 'completed' && ($booking->payment_status ?? 'pending') === 'paid')
-                                        <button type="button" 
-                                            onclick="updateReservationStatus({{ $booking->id }}, 'completed')"
-                                            class="w-full text-left px-4 py-2 text-green-600 hover:bg-green-50 text-xs font-medium flex items-center gap-2">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                            Mark as Completed
-                                        </button>
-                                    @endif
+                                    @if(($booking->resource_type ?? 'booking') === 'booking')
+                                        @if($booking->status !== 'completed' && ($booking->payment_status ?? 'pending') === 'paid')
+                                            <button type="button" 
+                                                onclick="updateReservationStatus({{ $booking->id }}, 'completed')"
+                                                class="w-full text-left px-4 py-2 text-green-600 hover:bg-green-50 text-xs font-medium flex items-center gap-2">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                                Mark as Completed
+                                            </button>
+                                        @endif
                                     
-                                    @if($booking->status !== 'confirmed')
-                                        <button type="button" 
-                                            onclick="updateReservationStatus({{ $booking->id }}, 'confirmed')"
-                                            class="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-xs font-medium flex items-center gap-2">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                            Confirm
-                                        </button>
-                                    @endif
+                                        @if($booking->status !== 'confirmed')
+                                            <button type="button" 
+                                                onclick="updateReservationStatus({{ $booking->id }}, 'confirmed')"
+                                                class="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-xs font-medium flex items-center gap-2">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                Confirm
+                                            </button>
+                                        @endif
                                     
-                                    @if($booking->status !== 'cancelled')
+                                        @if($booking->status !== 'cancelled')
+                                            <div class="border-t border-gray-100 my-1"></div>
+                                            <button type="button" 
+                                                onclick="cancelReservation({{ $booking->id }}, '{{ addslashes($booking->display_customer_name) }}')"
+                                                class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-xs font-medium flex items-center gap-2">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6l-1.41 1.41L8.18 7H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-1.18l.59-.59L14 6"/></svg>
+                                                Cancel
+                                            </button>
+                                        @endif
+                                    @else
+                                        <!-- Package-specific actions -->
+                                        @if($booking->status !== 'confirmed')
+                                            <button type="button" onclick="updatePackageStatus({{ $booking->resource_id }}, 'confirmed')" class="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-xs font-medium flex items-center gap-2">Confirm</button>
+                                        @endif
+                                        @if($booking->status !== 'cancelled')
+                                            <div class="border-t border-gray-100 my-1"></div>
+                                            <button type="button" onclick="cancelPackage({{ $booking->resource_id }}, '{{ addslashes($booking->display_customer_name) }}')" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-xs font-medium flex items-center gap-2">Cancel</button>
+                                        @endif
                                         <div class="border-t border-gray-100 my-1"></div>
-                                        <button type="button" 
-                                            onclick="cancelReservation({{ $booking->id }}, '{{ addslashes($booking->display_customer_name) }}')"
-                                            class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-xs font-medium flex items-center gap-2">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6l-1.41 1.41L8.18 7H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2h-1.18l.59-.59L14 6"/></svg>
-                                            Cancel
-                                        </button>
+                                        <button type="button" data-booking-id="{{ (int)$booking->resource_id }}" data-booking-amount="{{ (float)$booking->total_amount }}" data-booking-name="{{ addslashes($booking->display_customer_name ?? $booking->customer_name) }}" data-resource-type="package" onclick="handlePaymentClick(this)" class="w-full text-left px-4 py-2 text-green-600 hover:bg-green-50 text-xs font-medium flex items-center gap-2">Record Payment</button>
                                     @endif
                                 </div>
                             </div>
+                            @endif
                         </td>
                     </tr>
                     @empty
@@ -392,11 +411,13 @@
         const bookingId = button.getAttribute('data-booking-id');
         const amount = button.getAttribute('data-booking-amount');
         const customerName = button.getAttribute('data-booking-name');
+        const resourceType = button.getAttribute('data-resource-type') || 'booking';
         
         console.log('Button clicked - Raw attributes:', { bookingId, amount, customerName });
         console.log('Button HTML:', button.outerHTML.substring(0, 200));
         
         openPaymentModal(bookingId, customerName, amount);
+        paymentContext.resourceType = resourceType;
     }
     
     function openPaymentModal(bookingId, customerName, amount) {
@@ -425,6 +446,7 @@
         // Set the payment context
         paymentContext.bookingId = parsedId;
         paymentContext.amount = parsedAmount;
+        paymentContext.resourceType = 'booking';
         paymentContext.customerName = customerName;
         
         console.log('✓ Payment context successfully set:', paymentContext);
@@ -489,7 +511,9 @@
         });
         
         try {
-            const response = await fetch('/admin/reservations/record-payment', {
+            const endpoint = paymentContext.resourceType === 'package' ? '/admin/bookings/package/record-payment' : '/admin/reservations/record-payment';
+            console.log('Posting payment to endpoint:', endpoint, paymentContext);
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -587,6 +611,59 @@
         } catch (error) {
             console.error('Cancellation error:', error);
             toastr.error('An error occurred while cancelling the booking');
+        }
+    }
+
+    // Package-specific actions
+    async function updatePackageStatus(bookingId, newStatus) {
+        closeAllMenus();
+
+        try {
+            const response = await fetch(`/admin/bookings/package/${bookingId}/confirm`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toastr.success('Package booking updated!');
+                location.reload();
+            } else {
+                toastr.error(data.message || 'Failed to update package booking');
+            }
+        } catch (error) {
+            console.error('Package status update error:', error);
+            toastr.error('An error occurred while updating package booking status');
+        }
+    }
+
+    async function cancelPackage(bookingId, customerName) {
+        if (!confirm(`Are you sure you want to cancel the package booking for ${customerName}?`)) return;
+
+        try {
+            const response = await fetch(`/admin/bookings/package/${bookingId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toastr.success('Package booking cancelled!');
+                location.reload();
+            } else {
+                toastr.error(data.message || 'Failed to cancel package booking');
+            }
+        } catch (error) {
+            console.error('Package cancellation error:', error);
+            toastr.error('An error occurred while cancelling the package booking');
         }
     }
 </script>
