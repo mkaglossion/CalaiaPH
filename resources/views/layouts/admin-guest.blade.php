@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>@yield('title', 'Admin Login')</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  {{-- Tailwind loaded via Vite/PostCSS; avoid CDN in templates for production safety. --}}
   @vite(['resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-gray-100 font-sans">

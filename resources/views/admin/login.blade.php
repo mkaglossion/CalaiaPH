@@ -1,8 +1,8 @@
 @extends('layouts.admin-guest')
 
 @section('content')
-<div class="min-h-screen flex items-center justify-center bg-gray-100">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-gray-800 relative">
+<div class="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-12 sm:py-16">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md sm:max-w-sm p-6 sm:p-8 text-gray-800 relative mx-auto">
     @if(session('error'))
       <div class="mb-4 text-sm text-red-600">{{ session('error') }}</div>
     @endif
@@ -10,7 +10,7 @@
       <div class="mb-4 text-sm text-green-600">{{ session('success') }}</div>
     @endif
 
-    <h2 class="text-2xl font-semibold mb-4 text-center text-blue-600">Admin Log In</h2>
+    <h2 class="text-2xl sm:text-3xl font-semibold mb-4 text-center text-blue-600">Admin Log In</h2>
     <form method="POST" action="{{ route('admin.login.post') }}" class="space-y-4">
       @csrf
       <div>
