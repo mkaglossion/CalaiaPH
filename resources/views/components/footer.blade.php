@@ -1,6 +1,6 @@
-<footer class="bg-[#8a4825] text-white mt-0">
+<footer class="bg-brand-dark text-white mt-0">
   <!-- Social Media Banner -->
-  <div class="bg-[#593e2d] py-4">
+  <div class="bg-brand-light py-4">
     <div class="max-w-7xl mx-auto px-6">
       <div class="flex flex-col justify-center items-center">
         <div class="text-center mb-3">
