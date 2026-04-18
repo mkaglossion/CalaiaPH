@@ -18,41 +18,11 @@
         x-init="initDatepickers()"
         x-cloak
     >
-        <!-- Tabs -->
-        <div class="flex bg-gray-100 rounded-lg p-1 mb-4">
-            <button
-                type="button"
-                @click="setTab('room')"
-                :class="activeTab === 'room' ? 'bg-brand text-white shadow-sm' : 'text-gray-600 hover:text-brand'"
-                class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
-            >
-                <i class="bi bi-house-door"></i>
-                <span>Check Room Availability</span>
-            </button>
-            <button
-                type="button"
-                @click="setTab('day-visit')"
-                :class="activeTab === 'day-visit' ? 'bg-brand text-white shadow-sm' : 'text-gray-600 hover:text-brand'"
-                class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
-            >
-                <i class="bi bi-sun"></i>
-                <span>Day Visit</span>
-            </button>
-            <button
-                type="button"
-                @click="setTab('special-event')"
-                :class="activeTab === 'special-event' ? 'bg-brand text-white shadow-sm' : 'text-gray-600 hover:text-brand'"
-                class="flex-1 px-3 py-3 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
-            >
-                <i class="bi bi-moon"></i>
-                <span>Special Events</span>
-            </button>
-        </div>
+        <!-- Spacing -->
+        <div class="mb-6"></div>
 
-        <hr class="mb-6 border-gray-300">
-
-        <!-- Booking Form for Room and Day Visit -->
-        <form id="booking-form" method="POST" :action="formAction" novalidate x-show="activeTab !== 'special-event'">
+        <!-- Booking Form for Room -->
+        <form id="booking-form" method="POST" :action="formAction" novalidate>
             @csrf
             <input type="hidden" name="type" x-ref="type" value="room">
 
@@ -61,7 +31,7 @@
             <input type="hidden" name="adults_total" :value="totalAdults">
             <input type="hidden" name="children_total" :value="totalChildren">
             <input type="hidden" name="pets_total" :value="totalPets">
-            <!-- Total guests for day-visit -->
+
             <input type="hidden" name="guests" :value="totalAdults + totalChildren">
 
             <!-- Promo code (hidden, still submitted) -->
@@ -77,8 +47,8 @@
             </template>
 
             <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                {{-- COL 1: CHECK-IN / VISIT DATE --}}
-                <div :class="activeTab === 'day-visit' ? 'md:col-span-2' : ''" class="flex flex-col">
+                {{-- COL 1: CHECK-IN --}}
+                <div class="flex flex-col">
                     <div class="relative">
                         <input
                             type="text"
@@ -97,9 +67,8 @@
                     </div>
 
                     <div class="min-h-10px mt-1">
-                        <p class="text-xs text-gray-500"
-                           x-text="activeTab === 'day-visit' ? 'Visit Time (1:00 PM)' : 'Check-in Time (1:00 PM)'"
-                           style="font-size: 13px;">
+                        <p class="text-xs text-gray-500" style="font-size: 13px;">
+                            Check-in Time
                         </p>
 
                         <p class="text-xs text-gray-500"
@@ -110,8 +79,8 @@
                     </div>
                 </div>
 
-                {{-- COL 2: CHECK-OUT (ROOM ONLY) --}}
-                <div x-show="activeTab === 'room'" x-cloak class="flex flex-col">
+                {{-- COL 2: CHECK-OUT --}}
+                <div class="flex flex-col">
                     <div class="relative">
                         <input
                             type="text"
@@ -131,7 +100,7 @@
 
                     <div class="min-h-10px mt-1">
                         <p class="text-xs text-gray-500" style="font-size: 13px;">
-                            Check-out Time (11:00 PM)
+                            Check-out Time
                         </p>
                     </div>
                 </div>
@@ -153,7 +122,8 @@
                     </button>
 
                     <div class="min-h-10px mt-1">
-                        <p class="text-xs text-gray-500" style="font-size: 13px;" x-text="activeTab === 'day-visit' ? 'Add guests (Adults/Children)' : 'Add rooms and guests (Adults/Children/Pets)'">
+                        <p class="text-xs text-gray-500" style="font-size: 13px;">
+                            Add rooms and guests (Adults/Children/Pets)
                         </p>
                     </div>
 
@@ -173,16 +143,16 @@
                     >
                         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4">
                             <div class="flex-1">
-                                <h3 class="text-base font-semibold text-gray-800" x-text="activeTab === 'day-visit' ? 'Guests' : 'Rooms & Guests'"></h3>
-                                <p class="text-xs text-gray-500 leading-snug" x-text="activeTab === 'day-visit' ? 'Set adults and children' : 'Add up to 4 rooms. Set adults/children/pets per room.'"></p>
+                                <h3 class="text-base font-semibold text-gray-800">Rooms & Guests</h3>
+                                <p class="text-xs text-gray-500 leading-snug">Add up to 4 rooms. Set adults/children/pets per room.</p>
                             </div>
                             <button type="button" class="text-gray-400 hover:text-gray-600 shrink-0 self-start mt-0.5" @click="closeGuestsPanel()">
                                 <i class="bi bi-x-lg"></i>
                             </button>
                         </div>
 
-                        <!-- Rooms count - HIDDEN for day-visit -->
-                        <div x-show="activeTab !== 'day-visit'" class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between border border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 gap-2 sm:gap-0">
+                        <!-- Rooms count -->
+                        <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between border border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 gap-2 sm:gap-0">
                             <div>
                                 <p class="text-sm font-medium text-gray-800">Rooms</p>
                                 <p class="text-xs text-gray-500">Choose 1 to 4 rooms</p>
@@ -202,54 +172,8 @@
                             </div>
                         </div>
 
-                        <!-- Simplified Guests Controls for Day Visit -->
-                        <div x-show="activeTab === 'day-visit'" class="mt-3 space-y-2 sm:space-y-3">
-                            <!-- Adults (Day Visit) -->
-                            <div class="flex items-center justify-between border border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3.5">
-                                <div>
-                                    <p class="text-xs sm:text-sm font-medium text-gray-800">Adults</p>
-                                </div>
-                                <div class="flex items-center gap-1.5">
-                                    <button type="button"
-                                            class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-gray-300 hover:border-brand/70 disabled:opacity-40 text-sm"
-                                            @click="decAdults(0)"
-                                            :disabled="rooms[0].adults <= 1">
-                                        <i class="bi bi-dash-lg"></i>
-                                    </button>
-                                    <span class="min-w-6 sm:min-w-8 text-center font-semibold text-sm" x-text="rooms[0].adults"></span>
-                                    <button type="button"
-                                            class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-gray-300 hover:border-brand/70 text-sm"
-                                            @click="incAdults(0)">
-                                        <i class="bi bi-plus-lg"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Children (Day Visit) -->
-                            <div class="flex items-center justify-between border border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3.5">
-                                <div>
-                                    <p class="text-xs sm:text-sm font-medium text-gray-800">Children</p>
-                                    <p class="text-xs text-gray-500">Age 0–12</p>
-                                </div>
-                                <div class="flex items-center gap-1.5">
-                                    <button type="button"
-                                            class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-gray-300 hover:border-brand/70 disabled:opacity-40 text-sm"
-                                            @click="decChildren(0)"
-                                            :disabled="rooms[0].children <= 0">
-                                        <i class="bi bi-dash-lg"></i>
-                                    </button>
-                                    <span class="min-w-6 sm:min-w-8 text-center font-semibold text-sm" x-text="rooms[0].children"></span>
-                                    <button type="button"
-                                            class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg border border-gray-300 hover:border-brand/70 text-sm"
-                                            @click="incChildren(0)">
-                                        <i class="bi bi-plus-lg"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Per-room controls - Room tab only -->
-                        <div x-show="activeTab !== 'day-visit'" class="mt-3 space-y-2 sm:space-y-3 max-h-80 md:max-h-96 overflow-y-auto pr-1 scrollbar-thin">
+                        <!-- Per-room controls -->
+                        <div class="mt-3 space-y-2 sm:space-y-3 max-h-80 md:max-h-96 overflow-y-auto pr-1 scrollbar-thin">
                             <template x-for="(room, idx) in rooms" :key="idx">
                                 <div class="border border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3">
                                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
@@ -384,19 +308,18 @@
                     >
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <h3 class="text-base font-semibold text-gray-800">Promo Code</h3>
-                                <p class="text-xs text-gray-500">Enter your promo code to get discounts</p>
+                                <h3 class="text-base font-semibold text-gray-800">Promo Code:</h3>
                             </div>
                             <button type="button" class="text-gray-400 hover:text-gray-600 shrink-0" @click="closePromoPanel()">
                                 <i class="bi bi-x-lg"></i>
                             </button>
                         </div>
 
-                        <div class="mt-3">
+                        <div class="mt-1">
                             <input
                                 type="text" id="promo_code" name="promo_code" autocomplete="off"
                                 x-model.trim="promoCode"
-                                placeholder="Add promo code (Optional)"
+                                placeholder="Enter your promo code to get discounts"
                                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand focus:border-brand outline-none text-sm"
                             >
                         </div>
@@ -421,61 +344,21 @@
                     <button
                         type="button"
                         @click="checkAvailability()"
-                        class="w-full h-12 bg-brand text-white hover:bg-brand/90 transition-colors font-medium rounded-lg text-sm flex items-center justify-center"
+                        :disabled="isLoading"
+                        class="w-full h-12 bg-brand text-white hover:bg-brand/90 transition-colors font-medium rounded-lg text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                         id="check-availability-btn"
                     >
-                        Check Availability
+                        <span x-show="isLoading" class="inline-block">
+                            <i class="bi bi-hourglass-split animate-spin"></i>
+                        </span>
+                        <span x-text="isLoading ? 'Checking...' : 'Check Availability'"></span>
                     </button>
                     <div class="min-h-10px mt-1"></div>
                 </div>
             </div>
 
-            {{-- Stay summary row --}}
-            <div class="mt-2 text-xs md:text-sm text-gray-700"
-                 x-show="staySummary || activeTab === 'room' || activeTab === 'day-visit' || activeTab === 'special-event'">
-                <div class="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-3">
-                    <span x-show="staySummary" x-text="staySummary"></span>
 
-                    <span x-show="activeTab === 'room'" class="text-[11px] md:text-xs text-gray-500" style="font-size: 13px;">
-                        Select the date range for your room booking.
-                    </span>
-
-                    <span x-show="activeTab === 'day-visit'" class="text-[11px] md:text-xs text-gray-500" style="font-size: 13px;">
-                        Select the date for your day visit.
-                    </span>
-
-                    <span x-show="activeTab === 'special-event'" class="text-[11px] md:text-xs text-gray-500" style="font-size: 13px;">
-                        Contact us for special event arrangements.
-                    </span>
-                </div>
-            </div>
         </form>
-
-        <!-- Special Event Contact Section -->
-        <div x-show="activeTab === 'special-event'" class="space-y-4">
-            <div class="text-center">
-                <p class="text-sm text-gray-600 mb-4">
-                    Message us here for special event arrangements
-                </p>
-                <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                    <a
-                        href="https://m.me/410774518796277"
-                        target="_blank"
-                        class="inline-flex items-center gap-2 bg-[#0084ff] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#0084ff]/90 transition-colors"
-                    >
-                        <i class="bi bi-messenger"></i>
-                        Message on Messenger
-                    </a>
-                    <a
-                        href="mailto:calaia.ph@gmail.com?subject=Special Event Inquiry"
-                        class="inline-flex items-center gap-2 bg-brand text-white px-6 py-3 rounded-lg font-medium hover:bg-brand/90 transition-colors"
-                    >
-                        <i class="bi bi-envelope"></i>
-                        Send Email
-                    </a>
-                </div>
-            </div>
-        </div>
 
     </div>
 </div>
@@ -485,19 +368,28 @@
 <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
 <style>
-    .flatpickr-day.flatpickr-disabled { opacity: 0.35; cursor: not-allowed; }
-    .flatpickr-day.today { border-color: #a75e3e; }
-    .flatpickr-day.selected,
-    .flatpickr-day.startRange,
-    .flatpickr-day.endRange { background: #a75e3e; border-color: #a75e3e; color: #ffffff; }
-    .flatpickr-day.inRange { background: rgba(167, 94, 62, 0.12); }
-    .flatpickr-day.weekend {
-        background-color: #a75e3e;
-        border-color: #a75e3e;
-        color: #ffffff;
-        border-radius: 9999px;
-    }
-    [x-cloak] { display: none !important; }
+    <style>
+        .flatpickr-day.flatpickr-disabled { opacity: 0.35; cursor: not-allowed; }
+        .flatpickr-day.today { border-color: #a75e3e; }
+        .flatpickr-day.selected,
+        .flatpickr-day.startRange,
+        .flatpickr-day.endRange { background: #a75e3e; border-color: #a75e3e; color: #ffffff; }
+        .flatpickr-day.inRange { background: rgba(167, 94, 62, 0.12); }
+        .flatpickr-day.weekend {
+            background-color: #a75e3e;
+            border-color: #a75e3e;
+            color: #ffffff;
+            border-radius: 9999px;
+        }
+        [x-cloak] { display: none !important; }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -510,6 +402,7 @@
             fpRange: null,
             availabilityText: '',
             staySummary: '',
+            isLoading: false,
 
             // inventory
             inventory: config.inventory ?? {},
@@ -528,7 +421,7 @@
             hasDateSelection: false,
 
             roomsCount: 1,
-            rooms: [{ adults: 2, children: 0, pets: 0 }],
+            rooms: [{ adults: 1, children: 0, pets: 0 }],
 
             get totalAdults() {
                 return this.rooms.reduce((sum, r) => sum + Number(r.adults || 0), 0);
@@ -547,13 +440,6 @@
                 const adultLabel = a === 1 ? 'Adult' : 'Adults';
                 const childLabel = c === 1 ? 'Child' : 'Children';
                 const petLabel = p === 1 ? 'Pet' : 'Pets';
-
-                // For day-visit, show only guests (no pets)
-                if (this.activeTab === 'day-visit') {
-                    let summary = `${a} ${adultLabel}`;
-                    if (c > 0) summary += `, ${c} ${childLabel}`;
-                    return summary;
-                }
 
                 // For room booking, show rooms and guests including pets
                 const roomLabel = rooms === 1 ? 'Room' : 'Rooms';
@@ -588,7 +474,7 @@
                 this.roomsCount = next;
 
                 if (this.rooms.length < next) {
-                    while (this.rooms.length < next) this.rooms.push({ adults: 2, children: 0, pets: 0 });
+                    while (this.rooms.length < next) this.rooms.push({ adults: 1, children: 0, pets: 0 });
                 } else if (this.rooms.length > next) {
                     this.rooms = this.rooms.slice(0, next);
                 }
@@ -616,7 +502,7 @@
 
             resetGuests() {
                 this.roomsCount = 1;
-                this.rooms = [{ adults: 2, children: 0, pets: 0 }];
+                this.rooms = [{ adults: 1, children: 0, pets: 0 }];
             },
 
             clearDates() {
@@ -644,54 +530,83 @@
             },
 
             checkAvailability() {
-                if (this.activeTab === 'room') {
-                    if (!this.$refs.checkIn?.value || !this.$refs.checkOut?.value) {
-                        Swal.fire({
-                            title: 'Please Select Dates',
-                            text: 'You need to select both check-in and check-out dates.',
-                            icon: 'warning',
-                            confirmButtonText: 'OK',
-                            confirmButtonColor: '#a75e3e'
-                        });
-                        return;
-                    }
-                } else if (this.activeTab === 'day-visit') {
-                    if (!this.$refs.checkIn?.value) {
-                        Swal.fire({
-                            title: 'Please Select Date',
-                            text: 'You need to select a visit date.',
-                            icon: 'warning',
-                            confirmButtonText: 'OK',
-                            confirmButtonColor: '#a75e3e'
-                        });
-                        return;
-                    }
+                if (!this.$refs.checkIn?.value || !this.$refs.checkOut?.value) {
+                    Swal.fire({
+                        title: 'Please Select Dates',
+                        text: 'You need to select both check-in and check-out dates.',
+                        icon: 'warning',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#a75e3e'
+                    });
+                    return;
                 }
-                document.getElementById('booking-form').submit();
+
+                // Show confirmation modal with booking summary
+                const checkIn = this.$refs.checkIn.value;
+                const checkOut = this.$refs.checkOut.value;
+                const roomsLabel = this.roomsCount === 1 ? 'Room' : 'Rooms';
+                const adultsLabel = this.totalAdults === 1 ? 'Adult' : 'Adults';
+                const childrenLabel = this.totalChildren === 1 ? 'Child' : 'Children';
+                const petsLabel = this.totalPets === 1 ? 'Pet' : 'Pets';
+
+                let guestDetails = `${this.totalAdults} ${adultsLabel}`;
+                if (this.totalChildren > 0) guestDetails += `, ${this.totalChildren} ${childrenLabel}`;
+                if (this.totalPets > 0) guestDetails += `, ${this.totalPets} ${petsLabel}`;
+
+                const summaryHtml = `
+                    <div class="text-left space-y-3">
+                        <div class="border-b pb-3">
+                            <p class="text-xs text-gray-500 uppercase font-semibold">Room Details</p>
+                            <p class="text-sm font-medium text-gray-800 mt-1">${this.roomsCount} ${roomsLabel}</p>
+                        </div>
+                        <div class="border-b pb-3">
+                            <p class="text-xs text-gray-500 uppercase font-semibold">Guests</p>
+                            <p class="text-sm font-medium text-gray-800 mt-1">${guestDetails}</p>
+                        </div>
+                        <div class="border-b pb-3">
+                            <p class="text-xs text-gray-500 uppercase font-semibold">Check-in</p>
+                            <p class="text-sm font-medium text-gray-800 mt-1">${checkIn}</p>
+                        </div>
+                        <div class="pb-3">
+                            <p class="text-xs text-gray-500 uppercase font-semibold">Check-out</p>
+                            <p class="text-sm font-medium text-gray-800 mt-1">${checkOut}</p>
+                        </div>
+                        ${this.staySummary ? `<div class="bg-brand/10 border border-brand/30 rounded p-2"><p class="text-xs text-brand font-medium">${this.staySummary}</p></div>` : ''}
+                    </div>
+                `;
+
+                Swal.fire({
+                    title: 'Confirm Your Booking',
+                    html: summaryHtml,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Proceed to Booking',
+                    confirmButtonColor: '#a75e3e',
+                    cancelButtonText: 'Back',
+                    cancelButtonColor: '#6b7280'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.submitBooking();
+                    }
+                });
+            },
+
+            submitBooking() {
+                this.isLoading = true;
+                // Small delay to show loading state visually
+                setTimeout(() => {
+                    document.getElementById('booking-form').submit();
+                }, 500);
             },
 
             setTab(type) {
-                this.activeTab = type;
-                this.$refs.type.value = type;
-
-                // close dropdown/promo when switching tabs
-                this.isGuestsPanelOpen = false;
-                this.isPromoPanelOpen = false;
-
-                if (type === 'room') {
-                    this.formAction = '{{ url("/booking/staycation") }}';
-                } else if (type === 'day-visit') {
-                    this.formAction = '{{ url("/booking/dayvisit/availability") }}';
-                } else {
-                    this.formAction = '{{ url("/booking") }}';
-                }
-
-                if (type === 'day-visit') {
-                    if (this.$refs.checkOut) this.$refs.checkOut.value = '';
-                }
+                // Since there's only room availability now, this is simplified
+                this.activeTab = 'room';
+                this.$refs.type.value = 'room';
+                this.formAction = '{{ url("/booking/staycation") }}';
 
                 if (this.fpRange) {
-                    this.fpRange.set('mode', type === 'day-visit' ? 'single' : 'range');
+                    this.fpRange.set('mode', 'range');
                 }
 
                 this.updateAvailabilityText();
@@ -711,21 +626,9 @@
                         self.markWeekends(dayElem);
                     },
                     onOpen(selectedDates, dateStr, instance) {
-                        instance.set('mode', self.activeTab === 'day-visit' ? 'single' : 'range');
+                        instance.set('mode', 'range');
                     },
                     onChange(selectedDates, dateStr, instance) {
-                        if (self.activeTab === 'day-visit') {
-                            if (selectedDates.length > 0) {
-                                const inStr = instance.formatDate(selectedDates[0], 'Y-m-d');
-                                self.$refs.checkIn.value = inStr;
-                                self.hasDateSelection = true;
-                            }
-                            if (self.$refs.checkOut) self.$refs.checkOut.value = '';
-                            self.updateAvailabilityText();
-                            self.updateStaySummary();
-                            return;
-                        }
-
                         if (selectedDates.length > 0) {
                             const inStr = instance.formatDate(selectedDates[0], 'Y-m-d');
                             self.$refs.checkIn.value = inStr;
@@ -766,7 +669,7 @@
                     }
                 });
 
-                this.fpRange.set('mode', this.activeTab === 'day-visit' ? 'single' : 'range');
+                this.fpRange.set('mode', 'range');
             },
 
             markWeekends(dayElem) {
@@ -780,21 +683,6 @@
                 const checkOutVal = this.$refs.checkOut ? this.$refs.checkOut.value : '';
 
                 if (!checkInVal) { this.availabilityText = ''; return; }
-
-                if (this.activeTab === 'day-visit') {
-                    const dateData = this.dayTourInventory[checkInVal];
-                    if (!dateData) {
-                        this.availabilityText = `Up to ${this.totalDayTourQuantity} slot(s) available for day visits.`;
-                        return;
-                    }
-                    const quantity = dateData.available_quantity ?? dateData.min_quantity ?? 0;
-                    const isAvailable = dateData.is_available ?? (quantity > 0);
-
-                    this.availabilityText = (!isAvailable || quantity <= 0)
-                        ? 'Fully booked for this date.'
-                        : `${quantity} slot(s) available for day visits.`;
-                    return;
-                }
 
                 if (!checkOutVal) {
                     const dateData = this.inventory[checkInVal];
@@ -849,7 +737,6 @@
                 const checkOutVal = this.$refs.checkOut ? this.$refs.checkOut.value : '';
 
                 if (!checkInVal) { this.staySummary = ''; return; }
-                if (this.activeTab === 'day-visit') { this.staySummary = 'Day visit only'; return; }
                 if (!checkOutVal) { this.staySummary = ''; return; }
 
                 const start = new Date(checkInVal + 'T00:00:00');
