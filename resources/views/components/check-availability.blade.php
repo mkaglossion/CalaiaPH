@@ -6,7 +6,7 @@
     'totalDayTourQuantity' => null,
 ])
 
-<div class="bg-white rounded-2xl shadow-2xl p-6 border border-gray-100 max-w-7xl mx-auto relative z-10 -mt-20"
+<div class="bg-white rounded-2xl shadow-2xl p-4 md:p-6 border border-gray-100 mx-4 md:mx-auto max-w-7xl relative z-10 -mt-12 md:-mt-16"
         x-data='bookingWidget({
             inventory: @json($inventory ?? (object)[]),
             totalQuantity: @json($totalQuantity ?? 0),
@@ -17,7 +17,7 @@
         x-cloak
     >
         <!-- Spacing -->
-        <div class="mb-6"></div>
+        <div class="mb-4 md:mb-6"></div>
 
         <!-- Booking Form for Room -->
         <form id="booking-form" method="POST" :action="formAction" novalidate>
@@ -44,7 +44,7 @@
                 </div>
             </template>
 
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4">
                 {{-- COL 1: CHECK-IN --}}
                 <div class="flex flex-col">
                     <div class="relative group">
@@ -54,13 +54,13 @@
                             id="check_in"
                             autocomplete="off"
                             x-ref="checkIn"
-                            class="w-full h-12 pl-10 pr-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all text-sm hover:border-brand/70 hover:bg-gray-50"
+                            class="w-full h-12 md:h-12 pl-10 pr-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all text-sm hover:border-brand/70 hover:bg-gray-50"
                             placeholder="Check-in date"
                             required
                             readonly
                         >
                         <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400 group-hover:text-brand transition">
-                            <i class="bi bi-calendar-event text-base"></i>
+                            <i class="bi bi-calendar-event text-base md:text-lg"></i>
                         </div>
                     </div>
 
@@ -86,13 +86,13 @@
                             id="check_out"
                             autocomplete="off"
                             x-ref="checkOut"
-                            class="w-full h-12 pl-10 pr-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all text-sm hover:border-brand/70 hover:bg-gray-50"
+                            class="w-full h-12 md:h-12 pl-10 pr-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all text-sm hover:border-brand/70 hover:bg-gray-50"
                             placeholder="Check-out date"
                             required
                             readonly
                         >
                         <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400 group-hover:text-brand transition">
-                            <i class="bi bi-calendar-check text-base"></i>
+                            <i class="bi bi-calendar-check text-base md:text-lg"></i>
                         </div>
                     </div>
 
@@ -108,15 +108,15 @@
                     <button
                         type="button"
                         @click.stop="toggleGuestsPanel()"
-                        class="w-full h-12 border-2 border-gray-300 rounded-lg text-left px-4 hover:border-brand/70 hover:bg-brand/5 transition-all flex items-center justify-between group"
+                        class="w-full h-12 md:h-12 border-2 border-gray-300 rounded-lg text-left px-3 md:px-4 hover:border-brand/70 hover:bg-brand/5 transition-all flex items-center justify-between group"
                         :aria-expanded="isGuestsPanelOpen.toString()"
                         aria-controls="guests-panel"
                     >
                         <div class="flex items-center gap-2 text-gray-700 group-hover:text-brand transition">
-                            <i class="bi bi-people text-base"></i>
-                            <span class="text-sm font-medium" x-text="guestsSummary"></span>
+                            <i class="bi bi-people text-base md:text-lg"></i>
+                            <span class="text-xs sm:text-sm font-medium" x-text="guestsSummary"></span>
                         </div>
-                        <i class="bi transition-transform" :class="isGuestsPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                        <i class="bi transition-transform text-base md:text-lg" :class="isGuestsPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
                     </button>
 
                     <div class="min-h-10px mt-1">
@@ -141,7 +141,7 @@
                     >
                         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4">
                             <div class="flex-1">
-                                <h3 class="text-base font-semibold text-gray-800">Rooms & Guests</h3>
+                            <h3 class="text-sm md:text-base font-semibold text-gray-800">Rooms & Guests</h3>
                                 <p class="text-xs text-gray-500 leading-snug">Add up to 4 rooms. Set adults/children/pets per room.</p>
                             </div>
                             <button type="button" class="text-gray-400 hover:text-gray-600 shrink-0 self-start mt-0.5" @click="closeGuestsPanel()">
@@ -152,7 +152,7 @@
                         <!-- Rooms count -->
                         <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between border border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 gap-2 sm:gap-0">
                             <div>
-                                <p class="text-sm font-medium text-gray-800">Rooms</p>
+                                <p class="text-xs md:text-sm font-medium text-gray-800">Rooms</p>
                                 <p class="text-xs text-gray-500">Choose 1 to 4 rooms</p>
                             </div>
                             <div class="flex items-center gap-1.5 sm:gap-2">
@@ -276,15 +276,15 @@
                     <button
                         type="button"
                         @click="togglePromoPanel()"
-                        class="w-full h-12 border-2 border-gray-300 rounded-lg text-left px-4 hover:border-brand/70 hover:bg-brand/5 transition-all flex items-center justify-between group"
+                        class="w-full h-12 md:h-12 border-2 border-gray-300 rounded-lg text-left px-3 md:px-4 hover:border-brand/70 hover:bg-brand/5 transition-all flex items-center justify-between group"
                         :aria-expanded="isPromoPanelOpen.toString()"
                         aria-controls="promo-panel"
                     >
                         <div class="flex items-center gap-2 text-gray-700 group-hover:text-brand transition">
-                            <i class="bi bi-ticket-perforated text-base"></i>
-                            <span class="text-sm font-medium" x-text="promoCode ? 'Promo Applied ✓' : 'Add Promo Code'"></span>
+                            <i class="bi bi-ticket-perforated text-sm md:text-base"></i>
+                            <span class="text-xs md:text-sm font-medium" x-text="promoCode ? 'Promo Applied ✓' : 'Add Promo Code'"></span>
                         </div>
-                        <i class="bi transition-transform" :class="isPromoPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                        <i class="bi transition-transform text-base md:text-lg" :class="isPromoPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
                     </button>
 
                     <div class="min-h-10px mt-1">
@@ -301,8 +301,8 @@
                         x-transition.origin.top
                         class="absolute top-full mt-2 z-9999
                                left-1/2 -translate-x-1/2
-                               w-[min(400px,calc(100vw-2rem))]
-                               bg-white border border-gray-200 rounded-2xl shadow-xl p-4"
+                               w-[min(380px,calc(100vw-2rem))]
+                               bg-white border border-gray-200 rounded-lg sm:rounded-xl shadow-xl p-3 sm:p-4"
                     >
                         <div class="flex items-start justify-between gap-4">
                             <div>
@@ -313,23 +313,23 @@
                             </button>
                         </div>
 
-                        <div class="mt-1">
+                        <div class="mt-3 sm:mt-4">
                             <input
                                 type="text" id="promo_code" name="promo_code" autocomplete="off"
                                 x-model.trim="promoCode"
                                 placeholder="Enter your promo code to get discounts"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand focus:border-brand outline-none text-sm"
+                                class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 focus:ring-2 focus:ring-brand focus:border-brand outline-none text-xs md:text-sm"
                             >
                         </div>
 
-                        <div class="mt-4 flex gap-2 justify-end">
+                        <div class="mt-3 sm:mt-4 flex flex-col-reverse sm:flex-row gap-2 justify-end">
                             <button type="button"
-                                    class="px-4 py-2 rounded-lg border border-gray-300 hover:border-brand/70 text-sm"
+                                    class="px-3 sm:px-4 py-2 rounded-lg border border-gray-300 hover:border-brand/70 text-xs sm:text-sm"
                                     @click="cancelPromo()">
                                 Cancel
                             </button>
                             <button type="button"
-                                    class="px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 text-sm"
+                                    class="px-3 sm:px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 text-xs sm:text-sm"
                                     @click="applyPromo()">
                                 Apply
                             </button>
@@ -343,7 +343,7 @@
                         type="button"
                         @click="checkAvailability()"
                         :disabled="isLoading || !hasAvailability()"
-                        class="w-full h-12 bg-brand text-white hover:bg-brand/90 active:scale-95 transition-all font-semibold rounded-lg text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                        class="w-full h-12 md:h-12 bg-brand text-white hover:bg-brand/90 active:scale-95 transition-all font-semibold rounded-lg text-xs md:text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                         id="check-availability-btn"
                     >
                         <span x-show="isLoading" class="inline-block">
@@ -465,7 +465,10 @@
 
             // Guests/Rooms dropdown panel
             isGuestsPanelOpen: false,
-            toggleGuestsPanel() { this.isGuestsPanelOpen = !this.isGuestsPanelOpen; },
+            toggleGuestsPanel() { 
+                this.isGuestsPanelOpen = !this.isGuestsPanelOpen;
+                if (this.isGuestsPanelOpen) this.isPromoPanelOpen = false;
+            },
             closeGuestsPanel() { this.isGuestsPanelOpen = false; },
 
             // Track date selection for Clear button visibility
@@ -574,7 +577,10 @@
             isPromoPanelOpen: false,
             promoCode: '',
 
-            togglePromoPanel() { this.isPromoPanelOpen = !this.isPromoPanelOpen; },
+            togglePromoPanel() { 
+                this.isPromoPanelOpen = !this.isPromoPanelOpen;
+                if (this.isPromoPanelOpen) this.isGuestsPanelOpen = false;
+            },
             closePromoPanel() { this.isPromoPanelOpen = false; },
             cancelPromo() {
                 this.promoCode = '';
