@@ -88,6 +88,7 @@
                 @click="activeTab = 'dayTours'"
                 :class="activeTab === 'dayTours' ? 'border-b-2 border-brand text-brand' : 'text-gray-600 hover:text-gray-900'"
                 class="py-4 font-semibold transition relative"
+                x-show="false"
                 role="tab">
                 <i class="fas fa-map-marker-alt mr-2"></i>Day Tours
                 @if($dayTours->count() > 0)
@@ -112,9 +113,9 @@
         </div>
 
         <!-- DAY TOURS TAB -->
-        <div x-show="activeTab === 'dayTours'" x-transition class="p-6">
+        {{-- <div x-show="activeTab === 'dayTours'" x-transition class="p-6">
             @include('admin.inventory.partials.daytours-inventory')
-        </div>
+        </div> --}}
     </div>
 </div>
 

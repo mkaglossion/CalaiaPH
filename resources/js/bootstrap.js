@@ -59,16 +59,15 @@ if (token) {
   };
 })();
 
-// Pusher/Laravel Echo removed to prevent unload event permission violations
-// To re-enable, add VITE_PUSHER_APP_KEY and VITE_PUSHER_APP_CLUSTER to .env
-// and uncomment the following code:
-
-// import Echo from 'laravel-echo';
-// import Pusher from 'pusher-js';
-// window.Pusher = Pusher;
-// window.Echo = new Echo({
-//     broadcaster: 'pusher',
-//     key: import.meta.env.VITE_PUSHER_APP_KEY,
-//     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
-//     forceTLS: true
-// });
+// ========== PUSHER/LARAVEL ECHO - REAL-TIME BROADCASTING ==========
+// Configured for real-time inventory updates and event broadcasting
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+window.Pusher = Pusher;
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_PUSHER_APP_KEY,
+    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    forceTLS: true,
+    enabledTransports: ['ws', 'wss']
+});

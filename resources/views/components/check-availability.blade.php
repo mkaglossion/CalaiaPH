@@ -6,9 +6,7 @@
     'totalDayTourQuantity' => null,
 ])
 
-<div class="max-w-7xl mx-auto p-4 relative z-10 -mt-20">
-    <div
-        class="bg-white rounded-xl shadow-lg p-6"
+<div class="bg-white rounded-2xl shadow-2xl p-6 border border-gray-100 max-w-7xl mx-auto relative z-10 -mt-20"
         x-data='bookingWidget({
             inventory: @json($inventory ?? (object)[]),
             totalQuantity: @json($totalQuantity ?? 0),
@@ -49,57 +47,57 @@
             <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                 {{-- COL 1: CHECK-IN --}}
                 <div class="flex flex-col">
-                    <div class="relative">
+                    <div class="relative group">
                         <input
                             type="text"
                             name="check_in"
                             id="check_in"
                             autocomplete="off"
                             x-ref="checkIn"
-                            class="w-full h-12 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-colors text-sm hover:border-brand/70 hover:bg-gray-50"
-                            placeholder="Select dates"
+                            class="w-full h-12 pl-10 pr-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all text-sm hover:border-brand/70 hover:bg-gray-50"
+                            placeholder="Check-in date"
                             required
                             readonly
                         >
-                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
-                            <i class="bi bi-calendar3"></i>
+                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400 group-hover:text-brand transition">
+                            <i class="bi bi-calendar-event text-base"></i>
                         </div>
                     </div>
 
                     <div class="min-h-10px mt-1">
-                        <p class="text-xs text-gray-500" style="font-size: 13px;">
+                        <p class="text-xs text-gray-500 font-medium">
                             Check-in Time
                         </p>
 
-                        <p class="text-xs text-gray-500"
+                        <p class="text-xs font-medium"
                            x-show="availabilityText"
                            x-text="availabilityText"
-                           style="font-size: 13px;">
+                           :class="hasAvailability() ? 'text-green-600' : 'text-red-600'">
                         </p>
                     </div>
                 </div>
 
                 {{-- COL 2: CHECK-OUT --}}
                 <div class="flex flex-col">
-                    <div class="relative">
+                    <div class="relative group">
                         <input
                             type="text"
                             name="check_out"
                             id="check_out"
                             autocomplete="off"
                             x-ref="checkOut"
-                            class="w-full h-12 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-colors text-sm hover:border-brand/70 hover:bg-gray-50"
-                            placeholder="Select dates"
+                            class="w-full h-12 pl-10 pr-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none transition-all text-sm hover:border-brand/70 hover:bg-gray-50"
+                            placeholder="Check-out date"
                             required
                             readonly
                         >
-                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
-                            <i class="bi bi-calendar3"></i>
+                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400 group-hover:text-brand transition">
+                            <i class="bi bi-calendar-check text-base"></i>
                         </div>
                     </div>
 
                     <div class="min-h-10px mt-1">
-                        <p class="text-xs text-gray-500" style="font-size: 13px;">
+                        <p class="text-xs text-gray-500 font-medium">
                             Check-out Time
                         </p>
                     </div>
@@ -110,20 +108,20 @@
                     <button
                         type="button"
                         @click.stop="toggleGuestsPanel()"
-                        class="w-full h-12 border border-gray-300 rounded-lg text-left px-4 hover:border-brand/70 hover:bg-gray-50 transition-colors flex items-center justify-between"
+                        class="w-full h-12 border-2 border-gray-300 rounded-lg text-left px-4 hover:border-brand/70 hover:bg-brand/5 transition-all flex items-center justify-between group"
                         :aria-expanded="isGuestsPanelOpen.toString()"
                         aria-controls="guests-panel"
                     >
-                        <div class="flex items-center gap-2 text-gray-700">
-                            <i class="bi bi-people"></i>
-                            <span class="text-sm" x-text="guestsSummary"></span>
+                        <div class="flex items-center gap-2 text-gray-700 group-hover:text-brand transition">
+                            <i class="bi bi-people text-base"></i>
+                            <span class="text-sm font-medium" x-text="guestsSummary"></span>
                         </div>
-                        <i class="bi" :class="isGuestsPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                        <i class="bi transition-transform" :class="isGuestsPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
                     </button>
 
                     <div class="min-h-10px mt-1">
-                        <p class="text-xs text-gray-500" style="font-size: 13px;">
-                            Add rooms and guests (Adults/Children/Pets)
+                        <p class="text-xs text-gray-500 font-medium">
+                            Rooms, Adults, Children & Pets
                         </p>
                     </div>
 
@@ -278,20 +276,20 @@
                     <button
                         type="button"
                         @click="togglePromoPanel()"
-                        class="w-full h-12 border border-gray-300 rounded-lg text-left px-4 hover:border-brand/70 hover:bg-gray-50 transition-colors flex items-center justify-between"
+                        class="w-full h-12 border-2 border-gray-300 rounded-lg text-left px-4 hover:border-brand/70 hover:bg-brand/5 transition-all flex items-center justify-between group"
                         :aria-expanded="isPromoPanelOpen.toString()"
                         aria-controls="promo-panel"
                     >
-                        <div class="flex items-center gap-2 text-gray-700">
-                            <i class="bi bi-ticket-perforated"></i>
-                            <span class="text-sm" x-text="promoCode ? 'Promo Applied' : 'Add Promo Code'"></span>
+                        <div class="flex items-center gap-2 text-gray-700 group-hover:text-brand transition">
+                            <i class="bi bi-ticket-perforated text-base"></i>
+                            <span class="text-sm font-medium" x-text="promoCode ? 'Promo Applied ✓' : 'Add Promo Code'"></span>
                         </div>
-                        <i class="bi" :class="isPromoPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                        <i class="bi transition-transform" :class="isPromoPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
                     </button>
 
                     <div class="min-h-10px mt-1">
-                        <p class="text-xs text-gray-500" style="font-size: 13px;">
-                            Enter promo code for discounts
+                        <p class="text-xs text-gray-500 font-medium">
+                            Save with promo codes
                         </p>
                     </div>
 
@@ -344,8 +342,8 @@
                     <button
                         type="button"
                         @click="checkAvailability()"
-                        :disabled="isLoading"
-                        class="w-full h-12 bg-brand text-white hover:bg-brand/90 transition-colors font-medium rounded-lg text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                        :disabled="isLoading || !hasAvailability()"
+                        class="w-full h-12 bg-brand text-white hover:bg-brand/90 active:scale-95 transition-all font-semibold rounded-lg text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                         id="check-availability-btn"
                     >
                         <span x-show="isLoading" class="inline-block">
@@ -353,7 +351,13 @@
                         </span>
                         <span x-text="isLoading ? 'Checking...' : 'Check Availability'"></span>
                     </button>
-                    <div class="min-h-10px mt-1"></div>
+                    <div class="min-h-10px mt-1">
+                        <p class="text-xs text-red-600 font-medium transition-opacity" 
+                           x-show="availabilityText && !hasAvailability()"
+                           x-cloak>
+                            <i class="bi bi-exclamation-circle mr-1"></i>Please select different dates
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -361,7 +365,6 @@
         </form>
 
     </div>
-</div>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -370,16 +373,48 @@
 <style>
     <style>
         .flatpickr-day.flatpickr-disabled { opacity: 0.35; cursor: not-allowed; }
-        .flatpickr-day.today { border-color: #a75e3e; }
+        .flatpickr-day.today { border-color: #a75e3e; font-weight: bold; }
         .flatpickr-day.selected,
         .flatpickr-day.startRange,
-        .flatpickr-day.endRange { background: #a75e3e; border-color: #a75e3e; color: #ffffff; }
-        .flatpickr-day.inRange { background: rgba(167, 94, 62, 0.12); }
+        .flatpickr-day.endRange { 
+            background: #a75e3e; 
+            border-color: #a75e3e; 
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .flatpickr-day.inRange { 
+            background: rgba(167, 94, 62, 0.15); 
+            color: #a75e3e;
+        }
         .flatpickr-day.weekend {
             background-color: #a75e3e;
             border-color: #a75e3e;
             color: #ffffff;
-            border-radius: 9999px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        /* Availability indicators */
+        .flatpickr-day.fp-avail-high {
+            background-color: #22c55e !important;
+            border-color: #22c55e !important;
+            color: #ffffff !important;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .flatpickr-day.fp-avail-low {
+            background-color: #eab308 !important;
+            border-color: #eab308 !important;
+            color: #ffffff !important;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .flatpickr-day.fp-not-avail {
+            background-color: #d1d5db !important;
+            border-color: #d1d5db !important;
+            color: #6b7280 !important;
+            border-radius: 6px;
+            font-weight: 600;
+            opacity: 0.6;
         }
         [x-cloak] { display: none !important; }
         @keyframes spin {
@@ -388,6 +423,22 @@
         }
         .animate-spin {
             animation: spin 1s linear infinite;
+        }
+        .swal-booking-confirm .swal2-icon { 
+            width: 4rem !important; 
+            height: 4rem !important;
+            margin-bottom: 1rem !important;
+        }
+        .swal-booking-confirm .swal2-confirm {
+            box-shadow: 0 4px 12px rgba(167, 94, 62, 0.2) !important;
+        }
+        .swal-booking-confirm .swal2-confirm:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 16px rgba(167, 94, 62, 0.3) !important;
+        }
+        /* Ensure solid white background */
+        #booking-form {
+            background: #ffffff;
         }
     </style>
 </style>
@@ -447,6 +498,11 @@
                 if (c > 0) summary += `, ${c} ${childLabel}`;
                 if (p > 0) summary += `, ${p} ${petLabel}`;
                 return summary;
+            },
+
+            hasAvailability() {
+                if (!this.availabilityText) return true;
+                return !this.availabilityText.toLowerCase().includes('no available');
             },
 
             setRoomsCount(val) {
@@ -554,24 +610,53 @@
                 if (this.totalPets > 0) guestDetails += `, ${this.totalPets} ${petsLabel}`;
 
                 const summaryHtml = `
-                    <div class="text-left space-y-3">
-                        <div class="border-b pb-3">
-                            <p class="text-xs text-gray-500 uppercase font-semibold">Room Details</p>
-                            <p class="text-sm font-medium text-gray-800 mt-1">${this.roomsCount} ${roomsLabel}</p>
+                    <div class="text-left space-y-0">
+                        <div class="flex items-center gap-3 pb-4 border-b border-gray-200">
+                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="bi bi-house text-gray-600 text-lg"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 font-semibold mb-0.5">ROOM DETAILS</p>
+                                <p class="text-base font-bold text-gray-900">${this.roomsCount} ${roomsLabel}</p>
+                            </div>
                         </div>
-                        <div class="border-b pb-3">
-                            <p class="text-xs text-gray-500 uppercase font-semibold">Guests</p>
-                            <p class="text-sm font-medium text-gray-800 mt-1">${guestDetails}</p>
+
+                        <div class="flex items-center gap-3 py-4 border-b border-gray-200">
+                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="bi bi-people text-gray-600 text-lg"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 font-semibold mb-0.5">GUESTS</p>
+                                <p class="text-base font-bold text-gray-900">${guestDetails}</p>
+                            </div>
                         </div>
-                        <div class="border-b pb-3">
-                            <p class="text-xs text-gray-500 uppercase font-semibold">Check-in</p>
-                            <p class="text-sm font-medium text-gray-800 mt-1">${checkIn}</p>
+
+                        <div class="flex items-start gap-3 py-4 border-b border-gray-200">
+                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="bi bi-calendar-range text-gray-600 text-lg"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs text-gray-500 font-semibold mb-2">CHECK-IN & CHECK-OUT</p>
+                                <div class="flex gap-2">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 border border-gray-300 rounded-lg">
+                                        <i class="bi bi-arrow-right text-gray-600 text-sm"></i>
+                                        <span class="text-sm font-medium text-gray-800">${checkIn}</span>
+                                    </span>
+                                    <span class="inline-flex items-center px-2 text-gray-400">→</span>
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 border border-gray-300 rounded-lg">
+                                        <i class="bi bi-arrow-left text-gray-600 text-sm"></i>
+                                        <span class="text-sm font-medium text-gray-800">${checkOut}</span>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="pb-3">
-                            <p class="text-xs text-gray-500 uppercase font-semibold">Check-out</p>
-                            <p class="text-sm font-medium text-gray-800 mt-1">${checkOut}</p>
+
+                        <div class="pt-4">
+                            <div class="inline-flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg w-full justify-center">
+                                <i class="bi bi-moon-stars text-gray-600 text-base"></i>
+                                <span class="font-semibold text-gray-900">${this.staySummary || 'Duration pending'}</span>
+                            </div>
                         </div>
-                        ${this.staySummary ? `<div class="bg-brand/10 border border-brand/30 rounded p-2"><p class="text-xs text-brand font-medium">${this.staySummary}</p></div>` : ''}
                     </div>
                 `;
 
@@ -579,11 +664,22 @@
                     title: 'Confirm Your Booking',
                     html: summaryHtml,
                     icon: 'info',
+                    iconColor: '#3b82f6',
                     showCancelButton: true,
-                    confirmButtonText: 'Proceed to Booking',
+                    confirmButtonText: '✓ Proceed to Booking',
                     confirmButtonColor: '#a75e3e',
                     cancelButtonText: 'Back',
-                    cancelButtonColor: '#6b7280'
+                    cancelButtonColor: '#6b7280',
+                    customClass: {
+                        container: 'swal-booking-confirm',
+                        popup: 'rounded-xl shadow-2xl',
+                        title: 'font-bold text-xl text-gray-900',
+                        htmlContainer: 'text-left',
+                        confirmButton: 'font-semibold px-6 py-2.5 rounded-lg transition-all hover:shadow-lg',
+                        cancelButton: 'font-semibold px-6 py-2.5 rounded-lg transition-all'
+                    },
+                    allowOutsideClick: false,
+                    allowEscapeKey: true
                 }).then((result) => {
                     if (result.isConfirmed) {
                         this.submitBooking();
@@ -624,6 +720,7 @@
                     disableMobile: true,
                     onDayCreate(selectedDates, dateStr, instance, dayElem) {
                         self.markWeekends(dayElem);
+                        self.markAvailability(dayElem);
                     },
                     onOpen(selectedDates, dateStr, instance) {
                         instance.set('mode', 'range');
@@ -678,6 +775,35 @@
                 if (day === 0 || day === 6) dayElem.classList.add('weekend');
             },
 
+            markAvailability(dayElem) {
+                if (!dayElem || !dayElem.dateObj) return;
+                
+                const fmtLocal = (d) => {
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${day}`;
+                };
+                
+                const dateString = fmtLocal(dayElem.dateObj);
+                const dateData = this.inventory[dateString];
+                const quantity = dateData?.available_quantity ?? dateData?.min_quantity ?? 0;
+                const isAvailable = dateData?.is_available ?? (quantity > 0);
+                
+                // Don't mark past dates or outside month dates
+                if (dayElem.classList.contains('prevMonthDay') || dayElem.classList.contains('nextMonthDay')) {
+                    return;
+                }
+                
+                if (!isAvailable || quantity <= 0) {
+                    dayElem.classList.add('fp-not-avail');
+                } else if (quantity <= 2) {
+                    dayElem.classList.add('fp-avail-low');
+                } else {
+                    dayElem.classList.add('fp-avail-high');
+                }
+            },
+
             updateAvailabilityText() {
                 const checkInVal = this.$refs.checkIn.value;
                 const checkOutVal = this.$refs.checkOut ? this.$refs.checkOut.value : '';
@@ -694,7 +820,7 @@
                     const isAvailable = dateData.is_available ?? (quantity > 0);
 
                     this.availabilityText = (!isAvailable || quantity <= 0)
-                        ? 'Fully booked for this date.'
+                        ? 'No available for this date.'
                         : `${quantity} slot(s) available for this date (total across all staycations).`;
                     return;
                 }
@@ -720,7 +846,7 @@
                     const isAvailable = (dateData?.is_available ?? (effectiveQty > 0));
 
                     if (!isAvailable || effectiveQty <= 0) {
-                        this.availabilityText = `Fully booked for ${dateString}.`;
+                        this.availabilityText = `No available for ${dateString}.`;
                         return;
                     }
 

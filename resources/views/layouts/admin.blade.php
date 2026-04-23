@@ -95,10 +95,10 @@
           ['title'=>'Reservation Monitor','icon'=>'bell-ring','route'=>'admin.reservations.*','sub'=>[
             ['label'=>'Monitor','route'=>'admin.reservations.monitor'],
           ]],
-          ['title'=>'Day Tour','icon'=>'sun','route'=>'admin.day.*','sub'=>[
-            ['label'=>'Pages Information','route'=>'admin.day.daytour'],
-            ['label'=>'Items','route'=>'admin.day.day'],
-          ]],
+          // ['title'=>'Day Tour','icon'=>'sun','route'=>'admin.day.*','sub'=>[
+          //   ['label'=>'Pages Information','route'=>'admin.day.daytour'],
+          //   ['label'=>'Items','route'=>'admin.day.day'],
+          // ]],
           ['title'=>'Packages','icon'=>'package','route'=>'admin.packages.*','sub'=>[
             ['label'=>'All Packages','route'=>'admin.packages.index'],
             ['label'=>'Page Information','route'=>'admin.packages.packagesInfos'],

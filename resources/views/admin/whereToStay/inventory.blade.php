@@ -725,6 +725,25 @@ function staycationInventoryManager() {
         }
     };
 }
+
+// ========== BROADCAST LISTENER FOR REAL-TIME INVENTORY UPDATES ==========
+@if(config('broadcasting.default') !== 'null')
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof window.Echo !== 'undefined') {
+            window.Echo.channel('inventory')
+                .listen('.inventory.updated', (event) => {
+                    console.log('📡 Inventory updated (real-time):', event);
+                    // Auto-refresh the page when inventory is updated
+                    window.location.reload();
+                });
+            console.log('✅ Broadcasting listener active: Listening to inventory updates');
+        } else {
+            console.warn('⚠️ Broadcasting not available - Echo/Pusher not initialized');
+        }
+    });
+@else
+    console.log('ℹ️ Broadcasting disabled - set BROADCAST_CONNECTION=pusher to enable real-time updates');
+@endif
 </script>
 
 <style>

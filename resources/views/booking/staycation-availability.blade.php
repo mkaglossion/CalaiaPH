@@ -1238,7 +1238,7 @@
     </div>
 
     <script>
-        function staycationAvailabilityMerged(targetRooms = 1, targetAdults = 2, targetChildren = 0) {
+        function staycationAvailabilityMerged(targetRooms = 1, targetAdults = 1, targetChildren = 0) {
             return {
                 roomType: 'all',
 
@@ -1536,7 +1536,7 @@
                         timerProgressBar: true
                     });
 
-                    const defaultAdults = 2;
+                    const defaultAdults = 1;
                     // roomNameLower, isBYOT, isCarCamping already declared at the top of the function
 
                     const selectedRoomData = {
@@ -1578,7 +1578,7 @@
                         instanceNum: instanceNum,
                         name: room.name || 'Room',
                         type: (type || '').toLowerCase(),
-                        adults: 2,
+                        adults: 1,
                         children: 0,
                         extra_mattress: (isBYOT || isCarCamping) ? 1 : 0,
                         pets: 'no',

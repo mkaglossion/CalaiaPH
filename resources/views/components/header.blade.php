@@ -13,7 +13,7 @@
   $nav = [
     ['key' => 'home',          'label' => 'Home',          'href' => url('/')],
     ['key' => 'packages',      'label' => 'Packages',      'href' => url('/packages')],
-    ['key' => 'daytour',       'label' => 'Day Tour',      'href' => url('/daytour')],
+    //['key' => 'daytour',       'label' => 'Day Tour',      'href' => url('/daytour')],
     ['key' => 'staycation',    'label' => 'Where to Stay', 'href' => url('/staycation')],
     ['key' => 'activities',    'label' => 'What to Do',    'href' => url('/activities')],
     ['key' => 'dining',        'label' => 'Dining',        'href' => url('/dining')],

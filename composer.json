@@ -16,6 +16,7 @@
         "laravel/telescope": "^5.15",
         "laravel/tinker": "^2.10.1",
         "paymongo/paymongo-php": "*",
+        "pusher/pusher-php-server": "^7.2",
         "symfony/process": "^7.4.5"
     },
     "require-dev": {

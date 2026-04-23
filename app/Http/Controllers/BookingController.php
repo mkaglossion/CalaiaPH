@@ -1753,9 +1753,9 @@ class BookingController extends Controller
                 $booking['timestamp'] = now()->timestamp;
                 // Store rooms and guests data
                 $booking['rooms_count'] = $request->input('rooms_count', 1);
-                $booking['adults_total'] = $request->input('adults_total', 2);
+                $booking['adults_total'] = $request->input('adults_total', 1);
                 $booking['children_total'] = $request->input('children_total', 0);
-                $booking['rooms'] = $request->input('rooms', [['adults' => 2, 'children' => 0]]);
+                $booking['rooms'] = $request->input('rooms', [['adults' => 1, 'children' => 0]]);
                 session(['booking' => $booking]);
                 return redirect()->route('booking.staycationAvailability');
             }
@@ -2044,9 +2044,9 @@ class BookingController extends Controller
         // Get rooms/guests data from session (preserved from check-availability POST)
         $booking = session('booking', []);
         $roomsCount = $booking['rooms_count'] ?? 1;
-        $adultsTotal = $booking['adults_total'] ?? 2;
+        $adultsTotal = $booking['adults_total'] ?? 1;
         $childrenTotal = $booking['children_total'] ?? 0;
-        $rooms = $booking['rooms'] ?? [['adults' => 2, 'children' => 0]];
+        $rooms = $booking['rooms'] ?? [['adults' => 1, 'children' => 0]];
 
         // Get dynamic max pets per room setting
         $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);

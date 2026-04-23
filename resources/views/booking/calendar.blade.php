@@ -51,7 +51,7 @@
         toggleGuestsPanel() { this.isGuestsPanelOpen = !this.isGuestsPanelOpen; },
         closeGuestsPanel() { this.isGuestsPanelOpen = false; },
         roomsCount: 1,
-        rooms: [{ adults: 2, children: 0 }],
+        rooms: [{ adults: 1, children: 0 }],
         get totalAdults() { return this.rooms.reduce((sum, r) => sum + Number(r.adults || 0), 0); },
         get totalChildren() { return this.rooms.reduce((sum, r) => sum + Number(r.children || 0), 0); },
         get guestsSummary() {
@@ -73,7 +73,7 @@
           if (next > 4) { fireSwalOverModal({ title:'Maximum Rooms Reached', text:'You can only add up to 4 rooms.', icon:'warning', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' }); return; }
           if (next < 1) { fireSwalOverModal({ title:'Minimum Rooms Required', text:'You need at least 1 room.', icon:'warning', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' }); return; }
           this.roomsCount = next;
-          if (this.rooms.length < next) { while (this.rooms.length < next) this.rooms.push({ adults: 2, children: 0 }); }
+          if (this.rooms.length < next) { while (this.rooms.length < next) this.rooms.push({ adults: 1, children: 0 }); }
           else if (this.rooms.length > next) { this.rooms = this.rooms.slice(0, next); }
           this.calculatePrice();
         },
@@ -81,7 +81,7 @@
         decAdults(idx) { this.rooms[idx].adults = Math.max(1, Number(this.rooms[idx].adults || 1) - 1); this.calculatePrice(); },
         incChildren(idx) { this.rooms[idx].children = Number(this.rooms[idx].children || 0) + 1; this.calculatePrice(); },
         decChildren(idx) { this.rooms[idx].children = Math.max(0, Number(this.rooms[idx].children || 0) - 1); this.calculatePrice(); },
-        resetGuests() { this.roomsCount = 1; this.rooms = [{ adults: 2, children: 0 }]; this.calculatePrice(); },
+        resetGuests() { this.roomsCount = 1; this.rooms = [{ adults: 1, children: 0 }]; this.calculatePrice(); },
         isPromoPanelOpen: false,
         promoCode: '',
         togglePromoPanel() { this.isPromoPanelOpen = !this.isPromoPanelOpen; },
@@ -320,7 +320,7 @@
           return `${monthNames[this.currentMonth]} ${this.currentYear}`;
         },
         roomsCount: 1,
-        rooms: [{ adults: 2, children: 0, pets: 0 }],
+        rooms: [{ adults: 1, children: 0, pets: 0 }],
         get totalAdults() { return this.rooms.reduce((sum, r) => sum + Number(r.adults || 0), 0); },
         get totalChildren() { return this.rooms.reduce((sum, r) => sum + Number(r.children || 0), 0); },
         get totalPets() { return this.rooms.reduce((sum, r) => sum + Number(r.pets || 0), 0); },
@@ -358,7 +358,7 @@
           if (next > 4) { fireSwalOverModal({ title:'Maximum Rooms Reached', text:'You can only add up to 4 rooms.', icon:'warning', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' }); return; }
           if (next < 1) { fireSwalOverModal({ title:'Minimum Rooms Required', text:'You need at least 1 room.', icon:'warning', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' }); return; }
           this.roomsCount = next;
-          if (this.rooms.length < next) { while (this.rooms.length < next) this.rooms.push({ adults: 2, children: 0 }); }
+          if (this.rooms.length < next) { while (this.rooms.length < next) this.rooms.push({ adults: 1, children: 0 }); }
           else if (this.rooms.length > next) { this.rooms = this.rooms.slice(0, next); }
           this.calculatePrice();
         },
@@ -373,7 +373,7 @@
           this.calculatePrice();
         },
         decPets(idx) { this.rooms[idx].pets = Math.max(0, Number(this.rooms[idx].pets || 0) - 1); this.calculatePrice(); },
-        resetGuests() { this.roomsCount = 1; this.rooms = [{ adults: 2, children: 0, pets: 0 }]; this.calculatePrice(); },
+        resetGuests() { this.roomsCount = 1; this.rooms = [{ adults: 1, children: 0, pets: 0 }]; this.calculatePrice(); },
         isPromoPanelOpen: false,
         promoCode: '',
         togglePromoPanel() { this.isPromoPanelOpen = !this.isPromoPanelOpen; },
