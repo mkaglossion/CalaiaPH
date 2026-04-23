@@ -79,6 +79,11 @@ class BookingCalendarController extends Controller
                         if ($totalAvailable > $maxQty) {
                             $maxQty = $totalAvailable;
                         }
+                        
+                        // Calculate overall total (maximum across all dates)
+                        if ($totalAvailable > $totalQuantity) {
+                            $totalQuantity = $totalAvailable;
+                        }
                     }
                 }
             }

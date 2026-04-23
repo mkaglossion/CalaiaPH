@@ -2,8 +2,8 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    {{-- Real-time inventory updates via Pusher --}}
-    @if(config('broadcasting.default') !== 'null')
+    {{-- Real-time inventory updates via Pusher (disabled if not configured) --}}
+    @if(config('broadcasting.default') === 'pusher')
         <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
         <script>
@@ -34,6 +34,27 @@
                 cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
                 encrypted: true
             });
+        </script>
+    @else
+        <script>
+        // Broadcasting disabled - initialize VAT rate without Echo
+        let dynamicVatRate = 0.12;
+        let dynamicVatRatePercentage = 12;
+
+        function fetchVatRateForDayVisit() {
+            fetch('/api/vat-rate')
+                .then(response => response.json())
+                .then(data => {
+                    dynamicVatRate = data.rate || 0.12;
+                    dynamicVatRatePercentage = data.rate_percentage || 12;
+                    document.getElementById('vat-label').textContent = `${dynamicVatRatePercentage}% VAT`;
+                    updateSummaryFromSelected();
+                })
+                .catch(error => console.error('Failed to fetch VAT rate:', error));
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchVatRateForDayVisit);
+        window.Echo = null; // Explicitly disabled
         </script>
     @endif
     {{-- Progress Indicator --}}
@@ -324,7 +345,8 @@ document.addEventListener('DOMContentLoaded', function() {
     loadAllPackages();
 
     // Listen for real-time inventory updates via Pusher
-    if (window.Echo && window.Echo.channel) {
+    if (window.Echo && typeof window.Echo.channel === 'function') {
+        console.log('Broadcasting enabled - listening for inventory updates');
         window.Echo.channel('daytour-inventory')
             .listen('.daytour.inventory.updated', (e) => {
                 console.log('Day tour inventory updated:', e);
@@ -351,6 +373,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             });
+    } else {
+        console.log('Broadcasting disabled - real-time updates unavailable');
     }
 
     // Continue to Activities button in Booking Summary

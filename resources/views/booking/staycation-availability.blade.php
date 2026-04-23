@@ -798,48 +798,6 @@
                         <div class="mx-auto" style="max-width:400px;">
                             <input x-ref="calendar" id="availability-calendar" type="text" class="w-full border rounded-lg px-3 py-2" readonly />
                         </div>
-
-                        <div class="mt-4 text-sm text-gray-600">
-                            <div x-show="legendLowThreshold === 0" class="text-center text-gray-500">
-                                Loading availability...
-                            </div>
-                            <div x-show="legendLowThreshold > 0" class="grid grid-cols-2 gap-2">
-                                <div class="flex items-center gap-2">
-                                    <span class="inline-block w-4 h-4 rounded" style="background:#d4edda;"></span>
-                                    <span x-text="'Available (' + (legendLowThreshold + 1) + '+ slots)'"></span>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <span class="inline-block w-4 h-4 rounded" style="background:#fff3cd;"></span>
-                                    <span x-text="'Limited (1–' + legendLowThreshold + ' slots)'"></span>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <span class="inline-block w-4 h-4 rounded" style="background:#f8d7da;"></span>
-                                    <span>Fully Booked (0)</span>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <span class="inline-block w-4 h-4 rounded bg-blue-500"></span>
-                                    <span>Check-in Date</span>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <span class="inline-block w-4 h-4 rounded bg-blue-600"></span>
-                                    <span>Check-out Date</span>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <span class="inline-block w-4 h-4 rounded bg-blue-400"></span>
-                                    <span>Period of Stay</span>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <span class="inline-block w-4 h-4 rounded bg-gray-400"></span>
-                                    <span>Invalid Date</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 

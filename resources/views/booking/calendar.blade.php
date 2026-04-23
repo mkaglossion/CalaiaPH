@@ -38,7 +38,7 @@
     };
 
     // Alpine.js component functions - MUST be defined before Alpine.js initializes
-    function dayTourPicker({ availability, initialDate, lowThreshold, totalQuantity, maxQty, dayTours, bookingStartDate, bookingEndDate, maxPetsPerRoom }) {
+    function dayTourPicker({ availability, initialDate, lowThreshold, totalQuantity, maxQty, dayTours, bookingStartDate, bookingEndDate, maxPetsPerRoom, bookingType }) {
       return {
         availability: availability || {},
         selectedDate: initialDate || null,
@@ -46,6 +46,7 @@
         dayTours: dayTours || [],
         bookingStartDate: bookingStartDate || null,
         bookingEndDate: bookingEndDate || null,
+        bookingType: bookingType || 'daytour',
         isGuestsPanelOpen: false,
         toggleGuestsPanel() { this.isGuestsPanelOpen = !this.isGuestsPanelOpen; },
         closeGuestsPanel() { this.isGuestsPanelOpen = false; },
@@ -100,10 +101,32 @@
           } catch (e) { console.error('Price fetch error:', e); this.estimatedPrice = null; } finally { this.isCalculatingPrice = false; }
         },
         clearSelection() { this.selectedDate = null; this.estimatedPrice = null; this.initCalendar(false); },
+        currentMonth: new Date().getMonth(),
+        currentYear: new Date().getFullYear(),
+        nextMonth() {
+          if (this.calendarInstance) {
+            const next = new Date(this.currentYear, this.currentMonth + 1, 1);
+            this.calendarInstance.jumpToDate(next, true);
+            this.currentMonth = next.getMonth();
+            this.currentYear = next.getFullYear();
+          }
+        },
+        prevMonth() {
+          if (this.calendarInstance) {
+            const prev = new Date(this.currentYear, this.currentMonth - 1, 1);
+            this.calendarInstance.jumpToDate(prev, true);
+            this.currentMonth = prev.getMonth();
+            this.currentYear = prev.getFullYear();
+          }
+        },
+        getMonthYearDisplay() {
+          const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+          return `${monthNames[this.currentMonth]} ${this.currentYear}`;
+        },
         legendMaxQty: maxQty || 0,
         legendLowThreshold: 2,
         totalQuantity: totalQuantity || 0,
-        _months: 4,
+        _months: 1,
         _resizeTimer: null,
         init() {
           if (initialDate) this.selectedDate = initialDate;
@@ -118,7 +141,7 @@
             }, 200);
           });
         },
-        getResponsiveMonths() { return 4; },
+        getResponsiveMonths() { return 1; },
         get selectedDateDisplay() { return this.selectedDate ? this.formatDisplay(this.selectedDate) : ''; },
         availableThresholdText: 'Loading...',
         limitedThresholdText: 'Loading...',
@@ -141,6 +164,9 @@
           const disabledDates = [];
           for (const [dateString, details] of Object.entries(this.availability)) {
             if (details && details.is_available === false) disabledDates.push(dateString);
+            // Also disable dates with 0 quantity
+            const qty = this.getQty(details);
+            if (qty === 0 || (qty === null && !details)) disabledDates.push(dateString);
           }
           if (!this.$refs.calendar) return;
           const today = new Date();
@@ -149,7 +175,7 @@
           const maxDate = this.parseDate(this.bookingEndDate);
           const months = this._months;
           this.calendarInstance = flatpickr(this.$refs.calendar, {
-            mode: 'single', dateFormat: 'Y-m-d', inline: true, disableMobile: true, monthSelectorType: 'static', showMonths: months, minDate, maxDate,
+            mode: 'single', dateFormat: 'Y-m-d', inline: true, disableMobile: true, monthSelectorType: 'dropdown', showMonths: months, minDate, maxDate,
             defaultDate: selected || this.selectedDate,
             disable: [(date) => {
               const checkDate = new Date(date);
@@ -200,6 +226,8 @@
               this.selectedDate = (selectedDates.length === 1) ? fp.formatDate(selectedDates[0], 'Y-m-d') : null;
               if (this.selectedDate) this.calculatePrice();
               else this.estimatedPrice = null;
+              this.currentMonth = fp.currentMonth;
+              this.currentYear = fp.currentYear;
               this.initCalendar(true);
             },
             onReady: () => {
@@ -223,6 +251,10 @@
               const observer = new MutationObserver(() => ensureFlatpickrAttrs());
               const calendarContainer = this.$refs.calendar?.closest('.flatpickr-calendar') || document.querySelector('.flatpickr-calendar');
               if (calendarContainer) observer.observe(calendarContainer, { childList: true, subtree: true });
+              if (this.calendarInstance) {
+                this.currentMonth = this.calendarInstance.currentMonth;
+                this.currentYear = this.calendarInstance.currentYear;
+              }
               this.$watch('selectedDate', () => {
                 setTimeout(ensureFlatpickrAttrs, 50);
               });
@@ -232,6 +264,14 @@
         continueBooking() {
           if (!this.selectedDate) {
             fireSwalOverModal({ title:'Please Select a Date', text:'You need to select a date for your day tour.', icon:'warning', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' });
+            return;
+          }
+          // Validate that selected date has availability
+          const dateData = this.availability[this.selectedDate];
+          const qty = this.getQty(dateData);
+          const availableQty = (qty === null ? 0 : qty);
+          if (availableQty <= 0) {
+            fireSwalOverModal({ title:'No Availability', text:'This date is fully booked. Please select another date.', icon:'error', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' });
             return;
           }
           const url = new URL(window.location.origin + '/booking/dayvisit/availability');
@@ -244,18 +284,41 @@
       }
     }
 
-    function dateRangePicker({ availability, initialCheckin, initialCheckout, lowThreshold, totalQuantity, maxQty, bookingStartDate, bookingEndDate, maxPetsPerRoom }) {
+    function dateRangePicker({ availability, initialCheckin, initialCheckout, lowThreshold, totalQuantity, maxQty, bookingStartDate, bookingEndDate, maxPetsPerRoom, bookingType }) {
       return {
         availability: availability || {},
         checkin: null,
         checkout: null,
         calendarInstance: null,
+        currentMonth: new Date().getMonth(),
+        currentYear: new Date().getFullYear(),
         bookingStartDate: bookingStartDate || null,
         bookingEndDate: bookingEndDate || null,
         maxPetsPerRoom: maxPetsPerRoom || 2,
+        bookingType: bookingType || 'staycation',
         isGuestsPanelOpen: false,
         toggleGuestsPanel() { this.isGuestsPanelOpen = !this.isGuestsPanelOpen; },
         closeGuestsPanel() { this.isGuestsPanelOpen = false; },
+        nextMonth() {
+          if (this.calendarInstance) {
+            const next = new Date(this.currentYear, this.currentMonth + 1, 1);
+            this.calendarInstance.jumpToDate(next, true);
+            this.currentMonth = next.getMonth();
+            this.currentYear = next.getFullYear();
+          }
+        },
+        prevMonth() {
+          if (this.calendarInstance) {
+            const prev = new Date(this.currentYear, this.currentMonth - 1, 1);
+            this.calendarInstance.jumpToDate(prev, true);
+            this.currentMonth = prev.getMonth();
+            this.currentYear = prev.getFullYear();
+          }
+        },
+        getMonthYearDisplay() {
+          const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+          return `${monthNames[this.currentMonth]} ${this.currentYear}`;
+        },
         roomsCount: 1,
         rooms: [{ adults: 2, children: 0, pets: 0 }],
         get totalAdults() { return this.rooms.reduce((sum, r) => sum + Number(r.adults || 0), 0); },
@@ -333,7 +396,7 @@
         legendMaxQty: maxQty || 0,
         legendLowThreshold: 2,
         totalQuantity: totalQuantity || 0,
-        _months: 4,
+        _months: 1,
         _resizeTimer: null,
         init() {
           if (initialCheckin) this.checkin = initialCheckin;
@@ -349,7 +412,7 @@
             }, 200);
           });
         },
-        getResponsiveMonths() { return 4; },
+        getResponsiveMonths() { return 1; },
         get checkinDisplay() { return this.checkin ? this.formatDisplay(this.checkin) : ''; },
         get checkoutDisplay() { return this.checkout ? this.formatDisplay(this.checkout) : ''; },
         get nights() {
@@ -369,7 +432,7 @@
         },
         getQty(details){
           if (!details) return null;
-          const raw = details.min_quantity ?? details.quantity ?? details.slots ?? details.available ?? details.remaining ?? details.qty ?? null;
+          const raw = details.available_quantity ?? details.min_quantity ?? details.quantity ?? details.slots ?? details.available ?? details.remaining ?? details.qty ?? null;
           const n = Number(raw);
           return Number.isFinite(n) ? n : null;
         },
@@ -381,6 +444,9 @@
           const disabledDates = [];
           for (const [dateString, details] of Object.entries(this.availability)) {
             if (details && details.is_available === false) disabledDates.push(dateString);
+            // Also disable dates with 0 quantity
+            const qty = this.getQty(details);
+            if (qty === 0 || (qty === null && !details)) disabledDates.push(dateString);
           }
           if (!this.$refs.calendar) return;
           const today = new Date();
@@ -389,7 +455,7 @@
           const maxDate = this.parseDate(this.bookingEndDate);
           const months = this._months;
           this.calendarInstance = flatpickr(this.$refs.calendar, {
-            mode: 'range', dateFormat: 'Y-m-d', inline: true, disableMobile: true, monthSelectorType: 'static', showMonths: months, minDate, maxDate,
+            mode: 'range', dateFormat: 'Y-m-d', inline: true, disableMobile: true, monthSelectorType: 'dropdown', showMonths: months, minDate, maxDate,
             defaultDate: selected ? selected.filter(Boolean) : [this.checkin, this.checkout].filter(Boolean),
             disable: [(date) => {
               const checkDate = new Date(date);
@@ -457,6 +523,8 @@
               }
               if (this.checkin && this.checkout) this.calculatePrice();
               else this.estimatedPrice = null;
+              this.currentMonth = fp.currentMonth;
+              this.currentYear = fp.currentYear;
               this.initCalendar(true);
             },
             onReady: () => {
@@ -480,6 +548,10 @@
               const observer = new MutationObserver(() => ensureFlatpickrAttrs());
               const calendarContainer = this.$refs.calendar?.closest('.flatpickr-calendar') || document.querySelector('.flatpickr-calendar');
               if (calendarContainer) observer.observe(calendarContainer, { childList: true, subtree: true });
+              if (this.calendarInstance) {
+                this.currentMonth = this.calendarInstance.currentMonth;
+                this.currentYear = this.calendarInstance.currentYear;
+              }
               this.$watch('checkin', () => {
                 setTimeout(ensureFlatpickrAttrs, 50);
               });
@@ -492,6 +564,37 @@
         continueBooking() {
           if (!this.checkin || !this.checkout) {
             fireSwalOverModal({ title:'Please Select Dates', text:'You need to select both check-in and check-out dates.', icon:'warning', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' });
+            return;
+          }
+          
+          // Validate that all dates in range have availability
+          const start = new Date(this.checkin + 'T00:00:00');
+          const end = new Date(this.checkout + 'T00:00:00');
+          let hasUnavailableDates = false;
+          
+          const fmtLocal = (d) => {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+          };
+          
+          let currentDate = new Date(start);
+          while (currentDate < end) {
+            const dateString = fmtLocal(currentDate);
+            const dateData = this.availability[dateString];
+            const qty = this.getQty(dateData);
+            const availableQty = (qty === null ? 0 : qty);
+            
+            if (availableQty <= 0) {
+              hasUnavailableDates = true;
+              break;
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+          
+          if (hasUnavailableDates) {
+            fireSwalOverModal({ title:'Unavailable Dates', text:'Some dates in your selected range are fully booked. Please select different dates.', icon:'error', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' });
             return;
           }
           
@@ -549,22 +652,23 @@
 
     /* ===== Responsive flatpickr centered ===== */
     .booking-calendar{
-      display:flex;
-      justify-content:center;
-      width:100%;
-      margin:0;
-      padding:0;
-      overflow-x:auto !important;
+      display:flex !important;
+      justify-content:center !important;
+      align-items:center !important;
+      width:100% !important;
+      margin:0 auto !important;
+      padding:0 !important;
+      overflow-x:visible !important;
       overflow-y:visible !important;
-      -webkit-overflow-scrolling:touch !important;
     }
 
     .booking-calendar .flatpickr-calendar{
+      display:block !important;
       position:relative !important;
       margin:0 auto !important;
       padding:0 !important;
-      width:100% !important;
-      max-width:100% !important;
+      width:fit-content !important;
+      max-width:none !important;
       box-shadow:none !important;
       border:none !important;
       left:auto !important;
@@ -572,54 +676,41 @@
       transform:none !important;
       background:transparent !important;
       font-family:inherit !important;
-      overflow-x:auto !important;
+      overflow-x:visible !important;
       overflow-y:visible !important;
-      -webkit-overflow-scrolling:touch !important;
     }
 
     .booking-calendar .flatpickr-calendar.inline{
       display:flex !important;
-      justify-content:flex-start !important;
-      width:100% !important;
+      justify-content:center !important;
+      width:auto !important;
     }
 
     .booking-calendar .flatpickr-rContainer{
-      display:flex !important;
-      justify-content:flex-start !important;
-      align-items:flex-start !important;
-      width:100% !important;
-      max-width:100% !important;
-      margin:0 !important;
-      overflow-x:auto !important;
+      display:block !important;
+      margin:0 auto !important;
+      overflow-x:visible !important;
       overflow-y:visible !important;
-      -webkit-overflow-scrolling:touch !important;
+      width:fit-content !important;
     }
 
     .booking-calendar .flatpickr-innerContainer{
-      display:flex !important;
-      justify-content:flex-start !important;
-      align-items:flex-start !important;
-      gap:32px !important;
-      width:100% !important;
-      overflow-x:auto !important;
+      display:block !important;
+      margin:0 auto !important;
+      padding:0 !important;
+      overflow-x:visible !important;
       overflow-y:visible !important;
-      margin:0 !important;
-      padding:20px !important;
-      flex-wrap:nowrap !important;
-      -webkit-overflow-scrolling:touch !important;
-      scroll-behavior:smooth !important;
+      width:fit-content !important;
     }
 
     .booking-calendar .flatpickr-months{
-      width:auto !important;
-      flex:0 0 calc(50% - 16px) !important;
-      max-width:420px !important;
-      min-width:380px !important;
-      margin:0 !important;
-      padding:20px !important;
-      background:rgba(255,255,255,0.5) !important;
-      border-radius:16px !important;
-      border:1px solid rgba(0,0,0,0.05) !important;
+      width:fit-content !important;
+      display:block !important;
+      margin:0 auto !important;
+      padding:0 !important;
+      background:transparent !important;
+      border-radius:0 !important;
+      border:none !important;
     }
 
     .booking-calendar .flatpickr-month{ width:100% !important; margin:0 !important; }
@@ -707,47 +798,97 @@
 }
 
 /* --- Badge: top-right number (your style, tuned to screenshot) --- */
-    /* make day container reference for absolute badge */
-    .booking-calendar .flatpickr-day{
-        position: relative !important;
+    /* Flat picker day styling */
+    .booking-calendar .flatpickr-day {
+      border-radius: 8px !important;
+      padding: 6px !important;
+      margin: 3px !important;
+      width: calc(14.2857% - 8px) !important;
+      height: 50px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-weight: 600 !important;
+      font-size: 14px !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+      background: #f3f4f6 !important;
+      color: #6b7280 !important;
+      border: 1px solid transparent !important;
     }
 
-    /* badge position - top right, above date number */
-    .booking-calendar .flatpickr-day .avail-badge{
-        position: absolute !important;
-        top: -4px !important;
-        right: -4px !important;
-
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-
-        font-size: 11px !important;
-        font-weight: 600 !important;
-
-        width: 20px !important;
-        height: 20px !important;
-
-        border-radius: 999px !important;
-        background: #16a34a !important;
-        color: #fff !important;
-
-        line-height: 1 !important;
-        z-index: 10000 !important;
-        pointer-events: none !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+    /* Available dates - high availability (green) */
+    .booking-calendar .fp-avail-high {
+      background: #dcfce7 !important;
+      color: #166534 !important;
+      border: 1px solid #bbf7d0 !important;
+      font-weight: 700 !important;
     }
-    /* badge colors per tier - matching legend colors */
-    .booking-calendar .fp-avail-high .avail-badge{ background:#10b981 !important; color:#fff !important; border-color:#059669 !important; }
-    .booking-calendar .fp-avail-low  .avail-badge{ background:#f59e0b !important; color:#fff !important; border-color:#d97706 !important; }
-    .booking-calendar .fp-not-avail  .avail-badge{ background:#ef4444 !important; color:#fff !important; border-color:#dc2626 !important; }
-    .booking-calendar .fp-invalid    .avail-badge{ background:#9ca3af !important; color:#fff !important; border-color:#6b7280 !important; }
 
-    .booking-calendar .flatpickr-days{ width:100% !important; margin:0 !important; }
+    .booking-calendar .fp-avail-high:hover {
+      background: #bbf7d0 !important;
+      box-shadow: 0 4px 8px rgba(16, 185, 129, 0.2) !important;
+      transform: translateY(-2px) !important;
+    }
+
+    /* Limited availability (amber) */
+    .booking-calendar .fp-avail-low {
+      background: #fef3c7 !important;
+      color: #92400e !important;
+      border: 1px solid #fcd34d !important;
+      font-weight: 700 !important;
+    }
+
+    .booking-calendar .fp-avail-low:hover {
+      background: #fcd34d !important;
+      box-shadow: 0 4px 8px rgba(245, 158, 11, 0.2) !important;
+      transform: translateY(-2px) !important;
+    }
+
+    /* Not available (gray) */
+    .booking-calendar .fp-not-avail {
+      background: #e5e7eb !important;
+      color: #9ca3af !important;
+      cursor: not-allowed !important;
+    }
+
+    /* Invalid dates (past, etc) */
+    .booking-calendar .fp-invalid {
+      background: #f3f4f6 !important;
+      color: #d1d5db !important;
+      cursor: not-allowed !important;
+    }
+
+    /* Selected date - highlight with brand color */
+    .booking-calendar .flatpickr-day.selected,
+    .booking-calendar .flatpickr-day.startRange,
+    .booking-calendar .flatpickr-day.endRange {
+      background: #8f5d54 !important;
+      color: #ffffff !important;
+      border: 1px solid #7a4e48 !important;
+      font-weight: 700 !important;
+      box-shadow: 0 4px 12px rgba(143, 93, 84, 0.3) !important;
+    }
+
+    .booking-calendar .flatpickr-day.selected:hover,
+    .booking-calendar .flatpickr-day.startRange:hover,
+    .booking-calendar .flatpickr-day.endRange:hover {
+      box-shadow: 0 6px 16px rgba(143, 93, 84, 0.4) !important;
+      transform: translateY(-2px) !important;
+    }
+
+    /* Range days - light highlight */
+    .booking-calendar .flatpickr-day.inRange {
+      background: #fef3c7 !important;
+      color: #92400e !important;
+      border: none !important;
+    }
+
+    .booking-calendar .flatpickr-days{ width:fit-content !important; display:block !important; margin:0 auto !important; }
     .booking-calendar .dayContainer{
-      width:100% !important;
-      min-width:100% !important;
-      max-width:100% !important;
+      width:auto !important;
+      min-width:auto !important;
+      max-width:none !important;
       margin:0 !important;
       display:flex !important;
       flex-wrap:wrap !important;
@@ -782,53 +923,23 @@
       font-size:12px !important;
     }
 
-     /* MOBILE: 2 months with horizontal scroll */
+
      @media (max-width: 767px){
-       .booking-calendar {
-         display:block !important;
-         overflow-x:auto !important;
-         overflow-y:visible !important;
-         width:100% !important;
-         max-width:100vw !important;
-         -webkit-overflow-scrolling:touch !important;
-         scroll-behavior:smooth !important;
-       }
-       .booking-calendar .flatpickr-calendar {
-         display:flex !important;
-         overflow-x:auto !important;
-         overflow-y:visible !important;
-         width:auto !important;
-         max-width:none !important;
-         -webkit-overflow-scrolling:touch !important;
-       }
-       .booking-calendar .flatpickr-rContainer {
-         display:flex !important;
-         overflow-x:auto !important;
-         overflow-y:visible !important;
-         width:auto !important;
-         max-width:none !important;
-         -webkit-overflow-scrolling:touch !important;
-       }
-       .booking-calendar .flatpickr-innerContainer{ 
-         display:flex !important; 
-         flex-direction:row !important; 
-         flex-wrap:nowrap !important;
-         gap:20px !important; 
-         width:auto !important;
-         min-width:min-content !important;
-         overflow-x:auto !important;
-         overflow-y:visible !important;
+       .booking-calendar .flatpickr-months{ 
+         width:auto !important; 
+         flex:0 0 auto !important;
+         min-width:320px !important;
+         max-width:360px !important; 
          padding:12px !important; 
-         -webkit-overflow-scrolling:touch !important;
-         scroll-behavior:smooth !important;
-         align-items:flex-start !important;
-         justify-content:flex-start !important;
+         background:rgba(255,255,255,0.6) !important; 
+         border-radius:12px !important; 
+         border:1px solid rgba(0,0,0,0.05) !important; 
        }
        .booking-calendar .flatpickr-months{ 
          width:auto !important; 
-         flex:0 0 280px !important;
-         min-width:280px !important;
-         max-width:280px !important; 
+         flex:0 0 auto !important;
+         min-width:320px !important;
+         max-width:360px !important; 
          padding:12px !important; 
          background:rgba(255,255,255,0.6) !important; 
          border-radius:12px !important; 
@@ -889,39 +1000,37 @@
        }
      }
 
-     /* TABLET: 768px to 1024px - 2 columns */
+     /* TABLET: 768px to 1024px - centered single */
      @media (min-width: 768px) and (max-width: 1024px){
        .booking-calendar .flatpickr-innerContainer{ 
-         flex-wrap:wrap !important;
          justify-content:center !important;
-         gap:28px !important; 
-         padding:16px !important; 
+         gap:0 !important; 
+         padding:20px !important; 
          overflow-x:visible !important;
          width:100% !important;
        }
        .booking-calendar .flatpickr-months{
-         flex:0 1 calc(50% - 14px) !important;
-         max-width:380px !important;
-         min-width:340px !important;
+         flex:0 0 auto !important;
+         max-width:420px !important;
+         min-width:400px !important;
        }
        .booking-calendar .flatpickr-day{ 
-         min-height:70px !important; 
-         font-size:18px !important;
+         min-height:75px !important; 
+         font-size:20px !important;
        }
      }
 
-     /* DESKTOP: 1025px and up - 4 columns (2x2 grid) */
+     /* DESKTOP: 1025px and up - centered single */
      @media (min-width: 1025px){
        .booking-calendar .flatpickr-innerContainer{ 
-         flex-wrap:wrap !important;
          justify-content:center !important;
          overflow-x:visible !important;
          width:100% !important;
        }
        .booking-calendar .flatpickr-months{
-         flex:0 1 calc(50% - 16px) !important;
-         max-width:420px !important;
-         min-width:380px !important;
+         flex:0 0 auto !important;
+         max-width:450px !important;
+         min-width:420px !important;
        }
        .booking-calendar .flatpickr-day{ 
          min-height:80px !important; 
@@ -942,30 +1051,6 @@
     }
     .booking-calendar .flatpickr-innerContainer::-webkit-scrollbar-thumb:hover {
       background:rgba(0,0,0,0.3) !important;
-    }
-
-    /* ===== Legend cards ===== */
-    .legend-card{
-      border:1px solid #e5e7eb;
-      background:#f9fafb;
-      border-radius:14px;
-      padding:12px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      transition: all .15s ease;
-    }
-    .legend-card:hover{ transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0,0,0,.06); }
-    .legend-left{ display:flex; align-items:center; gap:10px; }
-    .legend-dot{ width:10px; height:10px; border-radius:999px; }
-    .legend-pill{
-      font-size:12px;
-      font-weight:800;
-      padding:4px 10px;
-      border-radius:999px;
-      border:1px solid rgba(0,0,0,.08);
-      white-space:nowrap;
     }
 
     /* ===== Mobile sticky CTA ===== */
@@ -1055,7 +1140,8 @@
               dayTours: @js($dayToursList),
               bookingStartDate: @js($bookingStartDate),
               bookingEndDate: @js($bookingEndDate),
-              maxPetsPerRoom: @js($maxPetsPerRoom)
+              maxPetsPerRoom: @js($maxPetsPerRoom),
+              bookingType: 'daytour'
            })"
            x-init="init()">
     @else
@@ -1069,13 +1155,14 @@
               maxQty: @js($maxQty),
               bookingStartDate: @js($bookingStartDate),
               bookingEndDate: @js($bookingEndDate),
-              maxPetsPerRoom: @js($maxPetsPerRoom)
+              maxPetsPerRoom: @js($maxPetsPerRoom),
+              bookingType: 'staycation'
            })"
            x-init="init()">
     @endif
 
       {{-- GUESTS & PROMO --}}
-      <section class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-6">
+      <section class="bg-white rounded-2xl shadow-lg p-5 sm:p-6 mb-6 border border-gray-100 hover:shadow-xl transition">
         @if($bookingType === 'daytour')
           {{-- DAY TOUR: Single-line horizontal layout --}}
           <div class="grid grid-cols-1 md:grid-cols-4 gap-2 sm:gap-4 items-end">
@@ -1287,7 +1374,7 @@
                 {{-- Adults (Day Tour) --}}
                 <div class="flex items-center justify-between border border-gray-200 rounded-xl p-2 sm:p-3">
                   <div>
-                    <p class="text-xs sm:text-sm font-medium text-gray-800">Adults</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-800" x-text="rooms[0].adults === 1 ? 'Adult' : 'Adult(s)'"></p>
                   </div>
                   <div class="flex items-center gap-1 sm:gap-2">
                     <button type="button" class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg border border-gray-300 hover:border-brand/70 disabled:opacity-40 text-xs flex items-center justify-center"
@@ -1356,8 +1443,7 @@
                     <div class="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                       <div class="flex items-center justify-between border border-gray-200 rounded-lg p-1.5 sm:p-2.5">
                         <div class="pr-1 flex-1 min-w-0">
-                          <p class="text-xs sm:text-sm font-medium text-gray-800 truncate">Adults</p>
-                          <p class="text-xs text-gray-500">18+</p>
+                          <p class="text-xs sm:text-sm font-medium text-gray-800 truncate" x-text="room.adults === 1 ? 'Adult' : 'Adult(s)'"></p>
                         </div>
                         <div class="flex items-center gap-0.5 shrink-0">
                           <button type="button" class="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-lg border border-gray-300 hover:border-brand/70 disabled:opacity-40 text-xs flex items-center justify-center"
@@ -1392,7 +1478,7 @@
 
                       <div class="flex items-center justify-between border border-gray-200 rounded-lg p-1.5 sm:p-2.5">
                         <div class="pr-1 flex-1 min-w-0">
-                          <p class="text-xs sm:text-sm font-medium text-gray-800 truncate">Pets</p>
+                          <p class="text-xs sm:text-sm font-medium text-gray-800 truncate" x-text="room.pets === 1 ? 'Pet' : 'Pet(s)'"></p>
                         </div>
                         <div class="flex items-center gap-0.5 shrink-0">
                           <button type="button" class="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-lg border border-gray-300 hover:border-brand/70 disabled:opacity-40 text-xs flex items-center justify-center"
@@ -1468,27 +1554,27 @@
 
         {{-- CENTERED CONTINUE BUTTON (Desktop - Staycation only) --}}
         @if($bookingType !== 'daytour')
-        <div class="mt-6 hidden md:flex justify-center">
+        <div class="mt-8 hidden md:flex justify-center">
           <button
-            class="px-8 py-3 bg-[#8f5d54] text-white rounded-lg font-semibold hover:bg-[#7a4e48] transition flex items-center justify-center gap-2"
+            class="px-10 py-4 bg-[#8f5d54] text-white rounded-xl font-bold text-lg hover:bg-[#7a4e48] transition flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
             @click="continueBooking()"
           >
-            Continue to Rooms <i class="bi bi-arrow-right"></i>
+            Continue to Rooms <i class="bi bi-arrow-right text-xl"></i>
           </button>
         </div>
         @endif
       </section>
 
       {{-- CONTINUE BUTTON (mobile sticky) --}}
-      <div class="md:hidden fixed left-0 right-0 bottom-0 p-3 bg-white border-t border-gray-200 z-40">
+      <div class="md:hidden fixed left-0 right-0 bottom-0 p-4 bg-white border-t border-gray-200 z-40 shadow-lg">
         <button
-          class="w-full h-11 bg-[#8f5d54] text-white rounded-lg font-semibold hover:bg-[#7a4e48] transition flex items-center justify-center gap-2 text-sm"
+          class="w-full h-12 bg-[#8f5d54] text-white rounded-lg font-bold hover:bg-[#7a4e48] transition flex items-center justify-center gap-2 text-base shadow-md"
           @click="continueBooking()"
         >
           @if($bookingType === 'daytour')
-            Continue to Packages <i class="bi bi-arrow-right" style="font-size: 0.875rem;"></i>
+            Continue to Packages <i class="bi bi-arrow-right"></i>
           @else
-            Continue to Rooms <i class="bi bi-arrow-right" style="font-size: 0.875rem;"></i>
+            Continue to Rooms <i class="bi bi-arrow-right"></i>
           @endif
         </button>
       </div>
@@ -1561,144 +1647,95 @@
         </section>
       </template>
 
-      {{-- CALENDAR WRAP --}}
-      <section class="bg-white rounded-2xl shadow-lg calendar-section mb-6">
-        <div class="p-4 sm:p-6 calendar-wrapper">
-          <div x-show="!bookingStartDate || !bookingEndDate" class="text-center py-12">
-            <i class="bi bi-calendar-x text-6xl text-gray-300 mb-4"></i>
-            <h3 class="text-xl font-semibold text-gray-700 mb-2">Booking Not Available</h3>
-            <p class="text-gray-500">No booking dates are currently configured. Please check back later or contact us for assistance.</p>
-          </div>
+      {{-- CALENDAR WRAP - CENTERED CARD LAYOUT --}}
+      <section class="mx-auto mb-6 px-3 sm:px-4" style="max-width: 700px;">
+        <div class="bg-white rounded-2xl shadow-lg calendar-section overflow-hidden hover:shadow-xl transition-shadow duration-300">
+          <div class="p-5 sm:p-6 md:p-8 calendar-wrapper">
+            <div x-show="!bookingStartDate || !bookingEndDate" class="text-center py-12">
+              <i class="bi bi-calendar-x text-6xl text-gray-300 mb-4"></i>
+              <h3 class="text-xl font-semibold text-gray-700 mb-2">Booking Not Available</h3>
+              <p class="text-gray-500">No booking dates are currently configured. Please check back later or contact us for assistance.</p>
+            </div>
 
-          <div x-show="bookingStartDate && bookingEndDate" x-ref="calendar" class="booking-calendar"></div>
+            <!-- Month/Year Navigation - Centered -->
+            <div x-show="bookingStartDate && bookingEndDate" class="flex items-center justify-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+              <button @click="prevMonth()" class="p-2 hover:bg-gray-100 rounded-lg transition duration-200 hover:scale-110" title="Previous Month">
+                <i class="bi bi-chevron-left text-xl sm:text-2xl text-gray-700"></i>
+              </button>
+              <div class="text-center min-w-40">
+                <span x-text="getMonthYearDisplay()" class="text-lg sm:text-xl font-bold text-gray-900"></span>
+              </div>
+              <button @click="nextMonth()" class="p-2 hover:bg-gray-100 rounded-lg transition duration-200 hover:scale-110" title="Next Month">
+                <i class="bi bi-chevron-right text-xl sm:text-2xl text-gray-700"></i>
+              </button>
+            </div>
+
+            <!-- Calendar - Perfectly Centered -->
+            <div x-show="bookingStartDate && bookingEndDate" class="flex justify-center w-full mb-8">
+              <div x-ref="calendar" class="booking-calendar"></div>
+            </div>
+
+            <!-- Availability Legend -->
+            <div x-show="bookingStartDate && bookingEndDate" class="flex justify-center gap-4 sm:gap-6 mb-8 pb-6 sm:pb-8 border-b border-gray-100">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md bg-green-100 border-2 border-green-500"></div>
+                <span class="text-xs sm:text-sm text-gray-600">Available</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md bg-yellow-100 border-2 border-yellow-500"></div>
+                <span class="text-xs sm:text-sm text-gray-600">Limited</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md bg-gray-200"></div>
+                <span class="text-xs sm:text-sm text-gray-600">Booked</span>
+              </div>
+            </div>
+
+            <!-- Estimated Price - Enhanced & Responsive -->
+            <div x-show="estimatedPrice" class="text-center">
+              <p class="text-xs sm:text-sm text-gray-500 mb-2 uppercase tracking-wide font-semibold">Total Price</p>
+              <div class="flex items-center justify-center gap-2 sm:gap-3 mb-3">
+                <p class="text-3xl sm:text-4xl md:text-5xl font-black text-[#8f5d54]" x-show="!isCalculatingPrice" x-text="estimatedPrice ? '₱' + estimatedPrice.toLocaleString() : '—'"></p>
+              </div>
+              <p class="text-xs sm:text-sm text-gray-500">Rates are subject to change</p>
+              <div x-show="isCalculatingPrice" class="mt-4">
+                <div class="flex justify-center items-center gap-2">
+                  <div class="w-2 h-2 bg-[#8f5d54] rounded-full animate-bounce" style="animation-delay: 0s;"></div>
+                  <div class="w-2 h-2 bg-[#8f5d54] rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
+                  <div class="w-2 h-2 bg-[#8f5d54] rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Calculating price...</p>
+              </div>
+            </div>
+          </div>
         </div>
 
+        <!-- Info Bar -->
         @if($bookingType === 'daytour')
-          <div class=" flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 sm:px-6 py-3 sm:py-4 text-white" style="background:#91b474;">
-            <div class="text-xs sm:text-sm font-semibold">Operating Hours: <span class="font-normal">8:00 AM - 5:00 PM</span></div>
-            <div class="text-xs sm:text-sm italic">* Select a date to see available packages and group slots.</div>
+          <div class="mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 sm:px-6 py-4 sm:py-5 text-white rounded-b-2xl text-center md:text-left" style="background:#91b474; max-width: 700px;">
+            <div class="text-xs sm:text-sm font-semibold">⏰ Operating Hours: <span class="font-normal">8:00 AM - 5:00 PM</span></div>
+            <div class="text-xs sm:text-sm italic hidden sm:block">Select a date to see available packages</div>
           </div>
         @else
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 sm:px-6 py-3 sm:py-4 text-white" style="background:#91b474;">
+          <div class="mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-4 sm:px-6 py-4 sm:py-5 text-white rounded-b-2xl text-center md:text-left" style="background:#91b474; max-width: 700px;">
             <div class="text-xs sm:text-sm font-semibold">
-              Check-in: <span class="font-normal">01:00 PM</span> &nbsp;|&nbsp; Check-out: <span class="font-normal">11:00 PM</span>
+              🕐 Check-in: <span class="font-normal">1:00 PM</span> | Check-out: <span class="font-normal">11:00 AM</span>
             </div>
-            <div class="text-xs sm:text-sm italic">* Rates are subject to change without prior notice and indicative only.</div>
+            <div class="text-xs sm:text-sm italic">Rates may vary</div>
           </div>
         @endif
-      </section>
-
-      {{-- LEGEND --}}
-      <section class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-6">
-        <h4 class="font-semibold text-gray-800 mb-4 flex items-center">
-          <i class="bi bi-info-circle mr-2 text-[#8f5d54]"></i> Legend
-        </h4>
-
-        <div x-show="!bookingStartDate || !bookingEndDate" class="text-center text-gray-500 py-6">
-          <p class="mb-2">📅 Select your dates to see availability</p>
-          <p class="text-xs">Dates appear here once you've chosen them</p>
-        </div>
-
-        <div x-show="bookingStartDate && bookingEndDate && (!availability || Object.keys(availability).length === 0)" class="text-center text-gray-500 py-4">
-          Loading availability data...
-        </div>
-
-        <div x-show="availability && Object.keys(availability).length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <div class="legend-card">
-            <div class="legend-left">
-              <span class="legend-dot" style="background:#10b981;"></span>
-              <div>
-                <p class="text-sm font-semibold text-gray-800">Available</p>
-                <p class="text-xs text-gray-500">Good slots</p>
-              </div>
-            </div>
-            <span class="legend-pill" style="background:#d1fae5;color:#047857;border-color:#a7f3d0;">
-              <span x-text="availableThresholdText"></span>
-            </span>
-          </div>
-
-          <div class="legend-card">
-            <div class="legend-left">
-              <span class="legend-dot" style="background:#f59e0b;"></span>
-              <div>
-                <p class="text-sm font-semibold text-gray-800">Limited</p>
-                <p class="text-xs text-gray-500">Few slots left</p>
-              </div>
-            </div>
-            <span class="legend-pill" style="background:#fef3c7;color:#b45309;border-color:#fde68a;">
-              <span x-text="limitedThresholdText"></span>
-            </span>
-          </div>
-
-          <div class="legend-card">
-            <div class="legend-left">
-              <span class="legend-dot" style="background:#ef4444;"></span>
-              <div>
-                <p class="text-sm font-semibold text-gray-800">Fully Booked</p>
-                <p class="text-xs text-gray-500">No slots</p>
-              </div>
-            </div>
-            <span class="legend-pill" style="background:#fee2e2;color:#b91c1c;border-color:#fecaca;">0</span>
-          </div>
-
-          @if($bookingType !== 'daytour')
-            <div class="legend-card">
-              <div class="legend-left">
-                <span class="legend-dot" style="background:#3b82f6;"></span>
-                <div>
-                  <p class="text-sm font-semibold text-gray-800">Check-in</p>
-                  <p class="text-xs text-gray-500">Start</p>
-                </div>
-              </div>
-              <span class="legend-pill" style="background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe;">Start</span>
-            </div>
-
-            <div class="legend-card">
-              <div class="legend-left">
-                <span class="legend-dot" style="background:#2563eb;"></span>
-                <div>
-                  <p class="text-sm font-semibold text-gray-800">Check-out</p>
-                  <p class="text-xs text-gray-500">End</p>
-                </div>
-              </div>
-              <span class="legend-pill" style="background:#dbeafe;color:#1e40af;border-color:#bfdbfe;">End</span>
-            </div>
-
-            <div class="legend-card">
-              <div class="legend-left">
-                <span class="legend-dot" style="background:#93c5fd;"></span>
-                <div>
-                  <p class="text-sm font-semibold text-gray-800">Stay Range</p>
-                  <p class="text-xs text-gray-500">Between</p>
-                </div>
-              </div>
-              <span class="legend-pill" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;">Range</span>
-            </div>
-          @endif
-
-          <div class="legend-card">
-            <div class="legend-left">
-              <span class="legend-dot" style="background:#9ca3af;"></span>
-              <div>
-                <p class="text-sm font-semibold text-gray-800">Invalid</p>
-                <p class="text-xs text-gray-500">No inventory / disabled</p>
-              </div>
-            </div>
-            <span class="legend-pill" style="background:#e5e7eb;color:#6b7280;border-color:#d1d5db;">—</span>
-          </div>
-        </div>
       </section>
 
       {{-- MOBILE STICKY CTA (always visible) --}}
       <div class="mobile-cta-wrap md:hidden">
         <button
-          class="w-full h-12 bg-[#8f5d54] text-white rounded-xl font-extrabold shadow-lg hover:bg-[#7a4e48] transition flex items-center justify-center gap-2"
+          class="w-full h-13 bg-[#8f5d54] text-white rounded-xl font-extrabold shadow-xl hover:bg-[#7a4e48] transition flex items-center justify-center gap-2 text-base hover:scale-105"
           @click="continueBooking()"
         >
           @if($bookingType === 'daytour')
-            Continue to Packages <i class="bi bi-arrow-right"></i>
+            Continue to Packages <i class="bi bi-arrow-right text-lg"></i>
           @else
-            Continue to Rooms <i class="bi bi-arrow-right"></i>
+            Continue to Rooms <i class="bi bi-arrow-right text-lg"></i>
           @endif
         </button>
       </div>
