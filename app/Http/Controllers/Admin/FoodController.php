@@ -11,8 +11,13 @@ use Illuminate\Validation\ValidationException;
 
 class FoodController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // Handle API requests
+        if ($request->query('api') === '1') {
+            return $this->apiIndex($request);
+        }
+
         $foods = Food::latest()->paginate(10);
         return view('admin.foods.index', compact('foods'));
     }
@@ -158,6 +163,24 @@ class FoodController extends Controller
     {
         $food->delete();
         return redirect()->route('admin.foods.index')
-                        ->with('success', 'Food item deleted successfully!');
+                         ->with('success', 'Food item deleted successfully!');
+    }
+
+    /**
+     * API endpoint for foods list (used in package creation)
+     */
+    public function apiIndex(Request $request)
+    {
+        if ($request->query('api') !== '1' && ! $request->expectsJson()) {
+            return $this->index($request);
+        }
+
+        $foods = Food::query()
+            ->select('id', 'name', 'category', 'price', 'is_active')
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json(['foods' => $foods]);
     }
 }

@@ -53,7 +53,7 @@
 </style>
 <div
     x-data="foodCrud()"
-    x-init="setupKeyboardShortcuts()"
+    x-init="window.foodCrudInstance = $data; $data.setupKeyboardShortcuts(); $data.loadPackages(); $data.loadAvailableFoods()"
     class="p-3 sm:p-6 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-lg sm:rounded-xl"
 >
 
@@ -71,14 +71,25 @@
             <p class="text-gray-500 text-xs sm:text-sm">Manage all food and beverage items available for booking.</p>
         </div>
 
-        <button 
-            type="button" 
-            @click="openCreate()" 
-            class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-blue-600 text-white text-sm sm:text-base font-medium shadow hover:bg-blue-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            <span class="hidden sm:inline">Add New Food Item</span>
-            <span class="sm:hidden">Add Item</span>
-        </button>
+        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <button
+                type="button"
+                @click="openCreatePackage()"
+                class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-green-600 text-white text-sm sm:text-base font-medium shadow hover:bg-green-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
+                <i data-lucide="package" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Create Package</span>
+                <span class="sm:hidden">New Package</span>
+            </button>
+
+            <button
+                type="button"
+                @click="openCreate()"
+                class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-blue-600 text-white text-sm sm:text-base font-medium shadow hover:bg-blue-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Add New Food Item</span>
+                <span class="sm:hidden">Add Item</span>
+            </button>
+        </div>
     </div>
     
     <div class="mb-4 sm:mb-6">
@@ -228,23 +239,58 @@
         @endif
     </div>
 
+    {{-- ============================================================= --}}
+    {{-- FOOD PACKAGES SECTION --}}
+    {{-- ============================================================= --}}
+    <div class="mt-8 sm:mt-12">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sm:gap-0 mb-4 sm:mb-6">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Food Packages</h2>
+                <p class="text-gray-500 text-xs sm:text-sm">Create and manage bundled food packages for customers.</p>
+            </div>
+        </div>
 
+        <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+            <div class="overflow-x-auto md:overflow-visible">
+                <table class="w-full text-left text-xs sm:text-sm">
+                    <thead class="bg-gray-100/70 backdrop-blur">
+                        <tr>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 w-8 sm:w-12">#</th>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 min-w-32 sm:min-w-40">Package Name</th>
+                            <th class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Category</th>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-center">Price</th>
+                            <th class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Items</th>
+                            <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Status</th>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                <tbody class="divide-y divide-gray-200" x-html="packagesHtml"></tbody>
+                </table>
+            </div>
+
+            <div class="px-6 py-4 border-t border-gray-200 text-center text-gray-500" x-show="!packagesHtml || packagesHtml === ''">
+                <p>Loading packages...</p>
+            </div>
+        </div>
+    </div>
 
     {{-- Modal --}}
     <div 
         x-show="showModal"
+        x-cloak
+        style="display: none;"
         class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4"
         x-transition.opacity
     >
         <div @click.away="showModal = false" class="bg-white/90 backdrop-blur-lg rounded-lg sm:rounded-2xl shadow-xl w-full max-w-2xl sm:max-w-3xl md:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 md:p-7 border border-gray-200 my-4">
             <button 
-                @click="showModal = false"
+                @click="showModal = false; isPackageMode = false"
                 class="absolute top-2 right-3 sm:top-3 sm:right-4 text-gray-400 hover:text-gray-600 text-2xl sm:text-3xl leading-none"
             >&times;</button>
 
-            <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-900 pr-8" x-text="editMode ? 'Edit Food Item' : 'Create Food Item'"></h3>
+            <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-900 pr-8" x-text="getModalTitle()"></h3>
 
-            <form class="space-y-4 sm:space-y-6" @submit.prevent="submitForm">
+            <form class="space-y-4 sm:space-y-6" @submit.prevent="submitForm" x-show="!isPackageMode">
                 <div>
                     <label for="food_name" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Food Name *</label>
                     <input type="text" x-model="form.name" id="food_name" name="name" required
@@ -360,13 +406,146 @@
                 </div>
 
                 <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-2">
-                    <button type="button" @click="showModal = false" class="px-4 sm:px-6 py-2 text-sm sm:text-base border rounded-lg sm:rounded-xl hover:bg-gray-100 transition">
+                    <button type="button" @click="closeModal()" class="px-4 sm:px-6 py-2 text-sm sm:text-base border rounded-lg sm:rounded-xl hover:bg-gray-100 transition">
                         Cancel
                     </button>
 
                     <button type="submit" :disabled="loading"
                             class="px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg sm:rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition disabled:opacity-60"
                             x-text="loading ? 'Saving...' : (editMode ? 'Update Food Item' : 'Create Food Item')">
+                    </button>
+                </div>
+            </form>
+
+            {{-- Package Creation Form --}}
+            <form class="space-y-4 sm:space-y-6" @submit.prevent="submitPackageForm" x-show="isPackageMode">
+                <div>
+                    <label for="package_name" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Package Name *</label>
+                    <input type="text" x-model="packageForm.name" id="package_name" name="name" required
+                           autocomplete="name"
+                           class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                           placeholder="e.g., Breakfast Bundle, Romantic Dinner for 2">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+                    <div>
+                        <label for="package_category" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Category *</label>
+                        <select x-model="packageForm.category" id="package_category" name="category" required
+                                autocomplete="category"
+                                class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
+                            <option value="">Select Category</option>
+                            <option value="messhall">Messhall</option>
+                            <option value="cook_your_own">Cook Your Own</option>
+                            <option value="special">Special</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <h3 class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Package Price (₱)</h3>
+                        <div class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg bg-gray-50 text-gray-900">
+                            ₱<span x-text="getPackageTotal()"></span>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Automatically computed from selected items.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="package_description" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Description</label>
+                    <textarea rows="3" x-model="packageForm.description" id="package_description" name="description"
+                              autocomplete="off"
+                              class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                              placeholder="Describe what's included in this package..."></textarea>
+                </div>
+
+                {{-- Package Items --}}
+                <div>
+                    <h3 class="block text-xs sm:text-sm font-semibold text-gray-700 mb-3">Package Items *</h3>
+                    <div class="space-y-3">
+                        <template x-for="(item, index) in packageForm.items" :key="index">
+                            <div class="flex gap-3 items-end bg-gray-50 p-3 rounded-lg">
+                                <div class="flex-1">
+                                    <select :name="`foods[${index}]`" x-model="item.food_id" required
+                                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
+                                        <option value="">Select Food Item</option>
+                                        <template x-for="food in availableFoods" :key="food.id">
+                                            <option :value="food.id" x-text="food.name + ' (₱' + food.price + ')'"></option>
+                                        </template>
+                                    </select>
+                                </div>
+
+                                <div class="w-20">
+                                    <input type="number" :name="`quantities[${index}]`" x-model.number="item.quantity"
+                                           required min="1" max="20"
+                                           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
+                                </div>
+
+                                <div class="w-24 text-sm text-gray-600 px-2 py-2 bg-white border border-gray-300 rounded-lg">
+                                    ₱<span x-text="getItemSubtotal(item)"></span>
+                                </div>
+
+                                <button type="button" @click="removePackageItem(index)"
+                                        class="px-3 py-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </template>
+
+                        <button type="button" @click="addPackageItem()"
+                                class="w-full py-2 px-4 border-2 border-dashed border-green-300 text-green-600 rounded-lg hover:bg-green-50 transition font-medium">
+                            <i data-lucide="plus" class="w-4 h-4 mr-2 inline"></i>Add Another Item
+                        </button>
+                    </div>
+
+                    <div class="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="font-medium text-gray-900">Total Items Value:</span>
+                            <span class="text-lg font-bold text-green-600">₱<span x-text="getPackageTotal()"></span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+                    <div>
+                        <label for="package_stock_quantity" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Stock Quantity</label>
+                        <input type="number" min="0" x-model="packageForm.stock_quantity" id="package_stock_quantity" name="stock_quantity"
+                               autocomplete="off"
+                               class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                               placeholder="0">
+                    </div>
+
+                    <div class="flex items-end">
+                        <label for="package_is_inventory_managed" class="flex items-center gap-2 sm:gap-3 cursor-pointer">
+                            <input type="checkbox" x-model="packageForm.is_inventory_managed" id="package_is_inventory_managed" name="is_inventory_managed"
+                                   autocomplete="off"
+                                   class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                            <div>
+                                <p class="font-semibold text-xs sm:text-sm text-gray-900">Manage Inventory</p>
+                                <p class="text-xs text-gray-600">Track stock levels</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-3 p-3 sm:p-4 bg-green-50 rounded-lg border border-green-200">
+                    <label class="flex items-center gap-2 sm:gap-3 cursor-pointer">
+                        <input type="checkbox" x-model="packageForm.is_active" id="package_is_active" name="is_active"
+                               autocomplete="off"
+                               class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        <div>
+                            <p class="font-semibold text-xs sm:text-sm text-gray-900">Active Status</p>
+                            <p class="text-xs text-gray-600">When checked, this package will be visible on the booking page</p>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-2">
+                    <button type="button" @click="showModal = false" class="px-4 sm:px-6 py-2 text-sm sm:text-base border rounded-lg sm:rounded-xl hover:bg-gray-100 transition">
+                        Cancel
+                    </button>
+
+                    <button type="submit" :disabled="loading"
+                            class="px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg sm:rounded-xl bg-green-600 text-white hover:bg-green-700 shadow transition disabled:opacity-60"
+                            x-text="loading ? (packageEditMode ? 'Updating...' : 'Creating...') : (packageEditMode ? 'Update Package' : 'Create Package')">
                     </button>
                 </div>
             </form>
@@ -380,6 +559,10 @@
                 editMode: false,
                 loading: false,
                 searchQuery: '',
+                isPackageMode: false,
+                packageEditMode: false,
+                availableFoods: [],
+                packagesHtml: '',
                 form: {
                     id: null,
                     name: '',
@@ -394,6 +577,17 @@
                     image: null,
                     image_preview: null,
                     remove_image: false
+                },
+                packageForm: {
+                    id: null,
+                    name: '',
+                    category: '',
+                    price: '',
+                    description: '',
+                    is_active: true,
+                    stock_quantity: 0,
+                    is_inventory_managed: false,
+                    items: [{ food_id: '', quantity: 1 }]
                 },
                 
                 // Toast notifications
@@ -410,7 +604,34 @@
                         setTimeout(() => toast.remove(), 300);
                     }, 3000);
                 },
+
+                // Alert helper for Swal.fire
+                showAlert(config) {
+                    return Swal.fire({
+                        confirmButtonText: 'OK',
+                        title: config.title || 'Alert',
+                        text: config.text || '',
+                        icon: config.icon || 'info',
+                        ...config
+                    });
+                },
                 
+                // Modal title
+                getModalTitle() {
+                    if (this.isPackageMode) {
+                        return this.packageEditMode ? 'Edit Food Package' : 'Create Food Package';
+                    }
+                    return this.editMode ? 'Edit Food Item' : 'Create Food Item';
+                },
+
+                closeModal() {
+                    this.showModal = false;
+                    this.isPackageMode = false;
+                    this.packageEditMode = false;
+                    this.resetForm();
+                    this.resetPackageForm();
+                },
+
                 // Keyboard shortcuts
                 setupKeyboardShortcuts() {
                     document.addEventListener('keydown', (e) => {
@@ -424,6 +645,20 @@
                     });
                 },
                 
+                // Helper: Get CSRF token
+                getCsrfToken() {
+                    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                },
+
+                // Helper: Get fetch headers
+                getFetchHeaders() {
+                    return {
+                        'X-CSRF-TOKEN': this.getCsrfToken(),
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    };
+                },
+                
                 // Search/Filter
                 filterFoods() {
                     // Filtering handled by x-show directives on table rows
@@ -431,27 +666,28 @@
                 
                 // Delete with undo
                 deleteFood(id, name) {
-                    this.scheduleDeleteFood(id, name);
+                    this.scheduleDelete(id, name, 'food');
                 },
                 
-                scheduleDeleteFood(id, name) {
+                scheduleDelete(id, name, type) {
                     const banner = document.createElement('div');
                     banner.className = 'undo-banner';
                     let secondsLeft = 5;
+                    const itemType = type === 'food' ? 'Food item' : 'Package';
                     banner.innerHTML = `
-                        <span>Food item "${name}" marked for deletion</span>
-                        <button id="undo_food_${id}">Undo (${secondsLeft}s)</button>
+                        <span>${itemType} "${name}" marked for deletion</span>
+                        <button id="undo_${type}_${id}">Undo (${secondsLeft}s)</button>
                     `;
                     document.body.appendChild(banner);
                     
-                    const btn = banner.querySelector(`#undo_food_${id}`);
+                    const btn = banner.querySelector(`#undo_${type}_${id}`);
                     let timer = setInterval(() => {
                         secondsLeft--;
                         btn.textContent = `Undo (${secondsLeft}s)`;
                         if (secondsLeft <= 0) {
                             clearInterval(timer);
                             banner.remove();
-                            this.confirmDeleteFood(id);
+                            this.confirmDelete(id, type);
                         }
                     }, 1000);
 
@@ -461,32 +697,36 @@
                     });
                 },
                 
-                confirmDeleteFood(id) {
-                    const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
-                    fetch(`{{ route('admin.foods.destroy', ':id') }}`.replace(':id', id), {
+                confirmDelete(id, type) {
+                    const routes = {
+                        food: `{{ route('admin.foods.destroy', ':id') }}`.replace(':id', id),
+                        package: `{{ route('admin.food.packages.destroy', ':id') }}`.replace(':id', id)
+                    };
+                    
+                    const url = routes[type];
+                    fetch(url, {
                         method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrf,
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
-                        },
-                        body: new URLSearchParams({
-                            '_method': 'DELETE'
-                        })
+                        headers: this.getFetchHeaders(),
+                        body: new URLSearchParams({ '_method': 'DELETE' })
                     })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            this.showToast('Food item deleted successfully!', 'success');
+                            const msg = type === 'food' ? 'Food item deleted successfully!' : 'Package deleted successfully!';
+                            this.showToast(msg, 'success');
                             setTimeout(() => window.location.reload(), 1000);
                         } else {
-                            this.showToast(data.message || 'Failed to delete food item.', 'error');
+                            this.showToast(data.message || `Failed to delete ${type}.`, 'error');
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        this.showToast('An error occurred while deleting the food item.', 'error');
+                        this.showToast(`An error occurred while deleting the ${type}.`, 'error');
                     });
+                },
+                
+                scheduleDeleteFood(id, name) {
+                    this.scheduleDelete(id, name, 'food');
                 },
 
                 openCreate() {
@@ -545,6 +785,171 @@
                     }
                 },
 
+                // Package methods
+                async loadPackages() {
+                    try {
+                        const response = await fetch('{{ route('admin.food.packages.api.index') }}', {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        const data = await response.json();
+                        this.renderPackages(data.packages || []);
+                    } catch (error) {
+                        console.error('Failed to load packages:', error);
+                        this.packagesHtml = '<tr><td colspan="7" class="px-6 py-6 text-center text-gray-500">Failed to load packages</td></tr>';
+                    }
+                },
+
+                renderPackages(packages) {
+                    if (packages.length === 0) {
+                        this.packagesHtml = '<tr><td colspan="7" class="px-6 py-6 text-center text-gray-500"><div class="flex flex-col items-center justify-center gap-3"><i data-lucide="package" class="w-8 h-8 text-gray-400"></i><p>No packages found.</p><button type="button" @click="openCreatePackage()" class="text-green-600 hover:underline font-medium text-sm">Create your first package →</button></div></td></tr>';
+                        return;
+                    }
+
+                    this.packagesHtml = packages.map((pkg, index) => `
+                        <tr class="hover:bg-gray-50/70 transition border-b border-gray-200 last:border-b-0">
+                            <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 font-medium text-gray-900 w-8 sm:w-12">${index + 1}</td>
+                            <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 min-w-32 sm:min-w-40">
+                                <div class="min-w-0 max-w-xs sm:max-w-sm md:max-w-none">
+                                    <div class="text-xs sm:text-sm font-medium text-gray-900 truncate">${pkg.name}</div>
+                                    ${pkg.description ? `<div class="text-gray-500 text-xs line-clamp-2 sm:line-clamp-1">${pkg.description}</div>` : ''}
+                                </div>
+                            </td>
+                            <td class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
+                                <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 truncate">
+                                    ${pkg.category.charAt(0).toUpperCase() + pkg.category.slice(1).replace('_', ' ')}
+                                </span>
+                            </td>
+                            <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 font-medium text-gray-900 text-center">₱${pkg.effective_price ? pkg.effective_price.toLocaleString() : '0'}</td>
+                            <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
+                                <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    ${pkg.foods_count || 0} items
+                                </span>
+                            </td>
+                            <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
+                                ${pkg.is_active ? '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i data-lucide="check-circle" class="w-3 h-3 mr-1"></i><span class="hidden sm:inline">Active</span><span class="sm:hidden">✓</span></span>' : '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i data-lucide="x-circle" class="w-3 h-3 mr-1"></i><span class="hidden sm:inline">Inactive</span><span class="sm:hidden">✕</span></span>'}
+                            </td>
+                            <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-right sticky right-0 bg-white/60 md:bg-transparent z-10 md:z-auto">
+                                <div class="flex justify-end gap-2 sm:gap-3 md:gap-4 flex-nowrap">
+                                    <button type="button" class="text-blue-600 font-semibold hover:text-blue-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline" @click="openEditPackage(${pkg.id})">
+                                        <span class="hidden sm:inline">Edit</span><span class="sm:hidden">✎</span>
+                                    </button>
+                                    <button type="button" class="text-red-600 font-semibold hover:text-red-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline" @click="deletePackage(${pkg.id}, '${pkg.name.replace(/'/g, '\\u0027')}')" title="Delete">
+                                        <span class="hidden sm:inline">Delete</span><span class="sm:hidden">✕</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('');
+                },
+
+                async openCreatePackage() {
+                    this.isPackageMode = true;
+                    this.packageEditMode = false;
+                    this.resetPackageForm();
+                    await this.loadAvailableFoods();
+                    this.showModal = true;
+                },
+
+                async openEditPackage(packageId) {
+                    this.isPackageMode = true;
+                    this.packageEditMode = true;
+                    this.resetPackageForm();
+                    this.loading = true;
+                    
+                    try {
+                        await this.loadAvailableFoods();
+                        const response = await fetch(`{{ route('admin.food.packages.details', ':id') }}`.replace(':id', packageId), {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        const pkg = await response.json();
+                        
+                        if (pkg && pkg.id) {
+                            this.packageForm.id = pkg.id;
+                            this.packageForm.name = pkg.name || '';
+                            this.packageForm.category = pkg.category || '';
+                            this.packageForm.description = pkg.description || '';
+                            this.packageForm.is_active = !!pkg.is_active;
+                            this.packageForm.stock_quantity = pkg.stock_quantity ?? 0;
+                            this.packageForm.is_inventory_managed = !!pkg.is_inventory_managed;
+                            
+                            // Load foods for this package
+                            if (pkg.foods && pkg.foods.length > 0) {
+                                this.packageForm.items = pkg.foods.map(f => ({
+                                    food_id: f.id,
+                                    quantity: f.quantity || 1
+                                }));
+                            }
+                            
+                            this.showModal = true;
+                        } else {
+                            this.showToast('Package not found', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error loading package:', error);
+                        this.showToast('Failed to load package data', 'error');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                resetPackageForm() {
+                    this.packageForm = {
+                        id: null,
+                        name: '',
+                        category: '',
+                        price: '',
+                        description: '',
+                        is_active: true,
+                        stock_quantity: 0,
+                        is_inventory_managed: false,
+                        items: [{ food_id: '', quantity: 1 }]
+                    };
+                },
+                
+                deletePackage(id, name) {
+                    this.scheduleDelete(id, name, 'package');
+                },
+                
+                scheduleDeletePackage(id, name) {
+                    this.scheduleDelete(id, name, 'package');
+                },
+
+                async loadAvailableFoods() {
+                    try {
+                        const response = await fetch('{{ route('admin.foods.api.index') }}', {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        const data = await response.json();
+                        this.availableFoods = data.foods || [];
+                    } catch (error) {
+                        console.error('Failed to load foods:', error);
+                        this.availableFoods = [];
+                    }
+                },
+
+                addPackageItem() {
+                    this.packageForm.items.push({ food_id: '', quantity: 1 });
+                },
+
+                removePackageItem(index) {
+                    this.packageForm.items.splice(index, 1);
+                    if (this.packageForm.items.length === 0) {
+                        this.addPackageItem();
+                    }
+                },
+
+                getItemSubtotal(item) {
+                    const food = this.availableFoods.find(f => f.id == item.food_id);
+                    return food ? (food.price * item.quantity).toFixed(2) : '0.00';
+                },
+
+                getPackageTotal() {
+                    return this.packageForm.items.reduce((total, item) => {
+                        const food = this.availableFoods.find(f => f.id == item.food_id);
+                        return total + (food ? food.price * item.quantity : 0);
+                    }, 0).toFixed(2);
+                },
+
                 handleFile(event) {
                     const file = event.target.files[0];
                     if (!file) return;
@@ -568,7 +973,6 @@
                     formData.append('stock_quantity', this.form.stock_quantity ?? '');
                     formData.append('is_inventory_managed', this.form.is_inventory_managed ? 1 : 0);
                     if (this.form.image) {
-                        console.log('Image file being added:', this.form.image);
                         formData.append('image', this.form.image);
                     }
                     if (this.form.remove_image) formData.append('remove_image', 1);
@@ -583,42 +987,108 @@
                         const res = await fetch(url, {
                             method: 'POST',
                             headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'X-CSRF-TOKEN': this.getCsrfToken(),
                                 'Accept': 'application/json'
                             },
                             body: formData
                         });
 
                         const data = await res.json();
-                        console.log('Response:', data);
 
                         if (res.ok) {
-                            Swal.fire({
+                            this.showAlert({
                                 title: 'Success!',
                                 text: data.message || 'Food item saved successfully!',
-                                icon: 'success',
-                                confirmButtonText: 'OK'
+                                icon: 'success'
                             }).then(() => {
                                 this.showModal = false;
                                 window.location.reload();
                             });
                         } else {
                             const errorMsg = data.message || data.errors?.name?.[0] || 'Failed to save food item.';
-                            console.error('Server error:', data.errors);
-                            Swal.fire({
+                            this.showAlert({
                                 title: 'Error!',
                                 text: errorMsg,
-                                icon: 'error',
-                                confirmButtonText: 'OK'
+                                icon: 'error'
                             });
                         }
                     } catch (error) {
                         console.error('Error:', error);
-                        Swal.fire({
+                        this.showAlert({
                             title: 'Error!',
                             text: 'An error occurred while saving the food item. Check the browser console for details.',
-                            icon: 'error',
-                            confirmButtonText: 'OK'
+                            icon: 'error'
+                        });
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async submitPackageForm() {
+                    if (this.loading) return;
+                    this.loading = true;
+
+                    const formData = new FormData();
+                    formData.append('name', this.packageForm.name);
+                    formData.append('category', this.packageForm.category);
+                    formData.append('price', this.getPackageTotal());
+                    formData.append('description', this.packageForm.description || '');
+                    formData.append('is_active', this.packageForm.is_active ? 1 : 0);
+                    formData.append('stock_quantity', this.packageForm.stock_quantity ?? 0);
+                    formData.append('is_inventory_managed', this.packageForm.is_inventory_managed ? 1 : 0);
+
+                    // Add foods and quantities
+                    this.packageForm.items.forEach((item, index) => {
+                        if (item.food_id) {
+                            formData.append(`foods[${index}]`, item.food_id);
+                            formData.append(`quantities[${index}]`, item.quantity);
+                        }
+                    });
+
+                    let url = '{{ route('admin.food.packages.store') }}';
+                    if (this.packageEditMode && this.packageForm.id) {
+                        url = `{{ route('admin.food.packages.update', ':id') }}`.replace(':id', this.packageForm.id);
+                        formData.append('_method', 'PUT');
+                    }
+
+                    try {
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': this.getCsrfToken(),
+                                'Accept': 'application/json'
+                            },
+                            body: formData
+                        });
+
+                        const data = await res.json();
+
+                        if (res.ok) {
+                            const successMsg = this.packageEditMode ? 'Package updated successfully!' : 'Package created successfully!';
+                            this.showAlert({
+                                title: 'Success!',
+                                text: data.message || successMsg,
+                                icon: 'success'
+                            }).then(() => {
+                                this.showModal = false;
+                                this.loadPackages();
+                                this.resetPackageForm();
+                                this.packageEditMode = false;
+                            });
+                        } else {
+                            const errorMsg = data.message || (this.packageEditMode ? 'Failed to update package.' : 'Failed to create package.');
+                            this.showAlert({
+                                title: 'Error!',
+                                text: errorMsg,
+                                icon: 'error'
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        this.showAlert({
+                            title: 'Error!',
+                            text: `An error occurred while ${this.packageEditMode ? 'updating' : 'creating'} the package.`,
+                            icon: 'error'
                         });
                     } finally {
                         this.loading = false;

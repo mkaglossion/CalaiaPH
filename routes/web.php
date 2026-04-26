@@ -74,6 +74,7 @@ use App\Http\Controllers\Api\EventApiController;
 use App\Http\Controllers\Api\IdVerificationController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\FoodController;
+use App\Http\Controllers\Admin\FoodPackageController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\FarmInfoController;
 use App\Http\Controllers\Admin\FarmExperiencesController;
@@ -604,6 +605,17 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
                 'update' => 'admin.foods.update',
                 'destroy' => 'admin.foods.destroy'
             ]]);
+            Route::get('/api/foods', [FoodController::class, 'apiIndex'])->name('admin.foods.api.index');
+            Route::resource('packages', \App\Http\Controllers\Admin\FoodPackageController::class, ['except' => ['show'], 'names' => [
+                'index' => 'admin.food.packages.index',
+                'create' => 'admin.food.packages.create',
+                'store' => 'admin.food.packages.store',
+                'edit' => 'admin.food.packages.edit',
+                'update' => 'admin.food.packages.update',
+                'destroy' => 'admin.food.packages.destroy'
+            ]]);
+            Route::get('/api/packages', [\App\Http\Controllers\Admin\FoodPackageController::class, 'apiIndex'])->name('admin.food.packages.api.index');
+            Route::get('/api/packages/{package}/details', [\App\Http\Controllers\Admin\FoodPackageController::class, 'getPackageDetails'])->name('admin.food.packages.details');
             Route::resource('category-images', DiningCategoryImageController::class, ['names' => [
                 'index' => 'admin.dining.category-images.index',
                 'store' => 'admin.dining.category-images.store',

@@ -27,4 +27,11 @@ class Food extends Model
         // Order by created_at ascending (1, 2, 3 - oldest first) to match admin panel
         return $this->hasMany(FoodSwiperImage::class)->orderBy('created_at', 'asc');
     }
+
+    public function packages()
+    {
+        return $this->belongsToMany(FoodPackage::class, 'food_package_items')
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
 }

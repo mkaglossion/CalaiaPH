@@ -17,6 +17,7 @@ use App\Services\ValidationService;
 use App\Models\StaycationAccommodation;
 use App\Models\Staycation;
 use App\Models\Food;
+use App\Models\FoodPackage;
 use App\Models\DayTour;
 use App\Models\Holiday;
 use App\Models\DayType;
@@ -28,6 +29,7 @@ use App\Models\StaycationInventory;
 use Carbon\Carbon;
 use App\Services\PricingService;
 use App\Models\BookingSetting;
+use App\Models\FoodPackageSetting;
 
 
 class BookingController extends Controller
@@ -2199,83 +2201,121 @@ class BookingController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Fetch food packages for staycation
+        $foodPackages = FoodPackage::with(['foods' => function($q) {
+            $q->select('foods.id', 'foods.name', 'foods.price', 'foods.category');
+        }])
+            ->where('is_active', true)
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get();
+
+        // Fetch food packages section settings from admin
+        $packagesSettings = [
+            'show' => (bool)FoodPackageSetting::getValue('show', 1),
+            'title' => FoodPackageSetting::getValue('title') ?? 'Meal Packages (Special Bundles)',
+            'description' => FoodPackageSetting::getValue('description') ?? 'Curated meal bundles with special pricing',
+            'icon' => FoodPackageSetting::getValue('icon') ?? 'bi-bag-heart'
+        ];
+
         // Fetch staycation data for display in summary (array keys are room IDs)
         $accommodationIds = array_keys($booking['accommodations'] ?? []);
         $staycations = Staycation::whereIn('id', $accommodationIds)->get();
 
-        return view('booking.staycation-food', compact('booking', 'foodMenus', 'staycations'));
+        return view('booking.staycation-food', compact('booking', 'foodMenus', 'foodPackages', 'staycations', 'packagesSettings'));
     }
 
     public function saveFoodSelection(Request $request)
     {
-        $validated = $request->validate([
-            'selected_foods' => 'required|array',
-            'selected_foods.*.id' => 'required|integer',
-            'selected_foods.*.name' => 'required|string',
-            'selected_foods.*.category' => 'required|string',
-            'selected_foods.*.price' => 'required|numeric',
-            'selected_foods.*.quantity' => 'required|integer|min:1',
-            'selected_foods.*.notes' => 'nullable|string'
-        ]);
+        try {
+            // Simple validation - just ensure selected_foods is an array
+            $validated = $request->validate([
+                'selected_foods' => 'required|array|min:1',
+            ]);
 
-        // Store selected foods in session (legacy key)
-        session(['selected_foods' => $validated['selected_foods']]);
-
-        // Also persist inside booking session so next steps have rooms + foods together
-        $booking = session('booking', [
-            'checkin' => null,
-            'checkout' => null,
-            'accommodations' => [],
-            'booking_type' => 'staycation',
-            'timestamp' => now()->timestamp,
-            'completed_steps' => [],
-            'current_step' => 1,
-        ]);
-
-        $booking['booking_type'] = 'staycation';
-        $booking['selected_foods'] = $validated['selected_foods'];
-
-        // Calculate food total from selected foods
-        $foodTotal = 0;
-        foreach ($validated['selected_foods'] as $foodData) {
-            $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
-        }
-        
-        // Calculate accommodation total from current accommodations if available
-        $accommodationTotal = 0;
-        if (!empty($booking['accommodations'])) {
-            foreach ($booking['accommodations'] as $acc) {
-                if (!empty($acc)) {
-                    $accommodationTotal += $acc['total_price'] ?? 0;
+            // Get the actual data without strict field validation
+            $selectedFoods = $request->input('selected_foods', []);
+            
+            // Validate each food item has required fields
+            foreach ($selectedFoods as $index => $food) {
+                if (empty($food['id']) || empty($food['name']) || empty($food['category']) || !isset($food['price']) || !isset($food['quantity'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid food item data at index ' . $index
+                    ], 422);
                 }
             }
-        }
-        
-        // Update final_totals to include food cost
-        if (!isset($booking['final_totals'])) {
-            $booking['final_totals'] = [
-                'accommodation_total' => $accommodationTotal,
-                'activities_total' => 0,
-                'food_total' => $foodTotal,
-                'grand_total' => $accommodationTotal + $foodTotal
-            ];
-        } else {
-            $booking['final_totals']['food_total'] = $foodTotal;
-            $booking['final_totals']['grand_total'] = 
-                ($booking['final_totals']['accommodation_total'] ?? 0) + 
-                ($booking['final_totals']['activities_total'] ?? 0) + 
-                $foodTotal;
-        }
-        
-        $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [2]));
-        $booking['current_step'] = 3;
 
-        session(['booking' => $booking]);
+            // Store selected foods in session (legacy key)
+            session(['selected_foods' => $selectedFoods]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Food selection saved successfully'
-        ]);
+            // Also persist inside booking session so next steps have rooms + foods together
+            $booking = session('booking', [
+                'checkin' => null,
+                'checkout' => null,
+                'accommodations' => [],
+                'booking_type' => 'staycation',
+                'timestamp' => now()->timestamp,
+                'completed_steps' => [],
+                'current_step' => 1,
+            ]);
+
+            $booking['booking_type'] = 'staycation';
+            $booking['selected_foods'] = $selectedFoods;
+
+            // Calculate food total from selected foods
+            $foodTotal = 0;
+            foreach ($selectedFoods as $foodData) {
+                $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
+            }
+            
+            // Calculate accommodation total from current accommodations if available
+            $accommodationTotal = 0;
+            if (!empty($booking['accommodations'])) {
+                foreach ($booking['accommodations'] as $acc) {
+                    if (!empty($acc)) {
+                        $accommodationTotal += $acc['total_price'] ?? 0;
+                    }
+                }
+            }
+            
+            // Update final_totals to include food cost
+            if (!isset($booking['final_totals'])) {
+                $booking['final_totals'] = [
+                    'accommodation_total' => $accommodationTotal,
+                    'activities_total' => 0,
+                    'food_total' => $foodTotal,
+                    'grand_total' => $accommodationTotal + $foodTotal
+                ];
+            } else {
+                $booking['final_totals']['food_total'] = $foodTotal;
+                $booking['final_totals']['grand_total'] = 
+                    ($booking['final_totals']['accommodation_total'] ?? 0) + 
+                    ($booking['final_totals']['activities_total'] ?? 0) + 
+                    $foodTotal;
+            }
+            
+            $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [2]));
+            $booking['current_step'] = 3;
+
+            session(['booking' => $booking]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Food selection saved successfully'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function getStaycationAvailabilityApi(Request $request)
