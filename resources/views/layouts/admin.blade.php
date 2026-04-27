@@ -109,7 +109,7 @@
           ]],
           ['title'=>'What to Do','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.do.whattodo'],
-            ['label'=>'Items','route'=>'admin.do.activities']
+            ['label'=>'Activities Management','route'=>'admin.do.activities']
           ]],
           ['title'=>'Food & Beverage','icon'=>'utensils-crossed','route'=>'admin.food.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.food.foodandbeverage'],

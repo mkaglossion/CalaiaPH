@@ -7,6 +7,7 @@
     'selectedFoods' => [],
     'foods' => collect(),
     'selectedActivities' => null,
+    'selectedActivityPackages' => [],
     'showActivities' => true,
     'showPricing' => true,
     'showDynamicFood' => false,
@@ -247,51 +248,23 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
     @endif
 
     {{-- Selected Activities Section --}}
-    @if($showDynamicActivities && !empty($selectedActivities))
+    @if($showDynamicActivities)
     <div>
         <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
             <i class="bi bi-ticket-detailed mr-2 text-[#8f5d54]"></i> Selected Activities
         </h4>
-        <div id="selected-activities" class="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
-            @foreach($selectedActivities as $activity)
-            <div class="bg-white rounded border border-gray-100 p-2">
-                <div class="flex justify-between items-start">
-                    <span class="font-semibold text-gray-900">{{ $activity['name'] }}</span>
-                    <span class="font-bold text-[#8f5d54]">₱{{ number_format(($activity['price'] ?? 0) * ($activity['guests'] ?? 1), 0) }}</span>
-                </div>
-                <div class="flex items-center gap-2 mt-2">
-                    <button type="button" class="w-6 h-6 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 text-xs">-</button>
-                    <span class="text-xs font-semibold">{{ $activity['guests'] ?? 1 }} guest{{ ($activity['guests'] ?? 1) > 1 ? 's' : '' }}</span>
-                    <button type="button" class="w-6 h-6 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 text-xs">+</button>
-                </div>
-            </div>
-            @endforeach
-        </div>
+        
+        @include('components.partials._selected-activities-dynamic')
     </div>
 
     <hr class="border-gray-100">
-    @elseif($showActivities && (!empty($selectedActivities) || $showEmptyActivities))
+    @elseif($showActivities && (!empty($selectedActivities) || !empty($selectedActivityPackages) || $showEmptyActivities))
     <div>
         <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
             <i class="bi bi-ticket-detailed mr-2 text-[#8f5d54]"></i> Selected Activities
         </h4>
-        <div id="selected-activities" class="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
-            @if(!empty($selectedActivities))
-                @foreach($selectedActivities as $activity)
-                <div class="bg-white rounded border border-gray-100 p-2">
-                    <div class="flex justify-between items-start">
-                        <span class="font-semibold text-gray-900">{{ $activity['name'] }}</span>
-                        <span class="font-bold text-[#8f5d54]">₱{{ number_format(($activity['price'] ?? 0) * ($activity['guests'] ?? 1), 0) }}</span>
-                    </div>
-                    <div class="text-gray-600 mt-1">
-                        {{ $activity['guests'] }} guest{{ ($activity['guests'] ?? 1) > 1 ? 's' : '' }}
-                    </div>
-                </div>
-                @endforeach
-            @else
-                <p class="text-gray-500">No activities selected</p>
-            @endif
-        </div>
+
+        @include('components.partials._selected-activities-static', ['selectedActivityPackages' => $selectedActivityPackages])
     </div>
 
     <hr class="border-gray-300">
@@ -400,29 +373,31 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
     <div class="flex flex-col gap-3">
         @if($actionButtonType === 'food')
             <button type="button"
-                    class="w-full py-3 rounded-xl font-semibold text-white bg-[#8f5d54] hover:bg-[#7a4e48] transition"
+                    class="w-full py-3 rounded-xl font-semibold text-white bg-[#8f5d54] hover:bg-[#7a4e48] transition flex items-center justify-center shadow-md"
                     @click="submitAndProceed('{{ route('booking.staycationActivities') }}')">
                 <i class="bi bi-arrow-right mr-2"></i>
                 Proceed to Activities
             </button>
             <button type="button"
-                    class="w-full py-3 rounded-xl font-semibold text-white bg-green-600 hover:bg-green-700 transition"
+                    class="w-full py-3 rounded-xl font-semibold text-white bg-green-700 hover:bg-green-800 transition flex items-center justify-center shadow-md"
                     @click="submitAndProceed('{{ route('booking.staycationPayment') }}')">
-                <i class="bi bi-credit-card mr-2"></i>
+                <i class="bi bi-check2 mr-2 text-lg"></i>
                 Proceed to Payment
             </button>
         @elseif($actionButtonType === 'activities')
             <button type="button"
-                    id="skip-btn"
-                    class="w-full py-3 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition">
-                <i class="bi bi-credit-card mr-2"></i>
-                Proceed to Payment Without Activities
+                    class="w-full py-3 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 flex items-center justify-center gap-3 border border-gray-300 transition"
+                    @click="submitAndProceed('{{ route('booking.staycationPayment') }}')">
+                <i class="bi bi-credit-card text-lg text-gray-500"></i>
+                <span>Proceed to Payment Without Activities</span>
             </button>
             <button type="button"
                     id="confirm-btn"
-                    class="w-full py-3 rounded-xl font-semibold text-white bg-green-600 hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled>
-                <i class="bi bi-check-circle mr-2"></i>
+                    class="w-full py-3 rounded-xl font-semibold text-white bg-green-700 hover:bg-green-800 flex items-center justify-center shadow-md transition"
+                    :class="(selectedActivities.length + selectedActivityPackages.length) === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'"
+                    :disabled="(selectedActivities.length + selectedActivityPackages.length) === 0"
+                    @click="submitAndProceed('{{ route('booking.staycationPayment') }}')">
+                <i class="bi bi-check2 mr-2 text-lg"></i>
                 Confirm and Proceed
             </button>
         @endif

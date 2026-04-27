@@ -75,6 +75,7 @@ use App\Http\Controllers\Api\IdVerificationController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\FoodController;
 use App\Http\Controllers\Admin\FoodPackageController;
+use App\Http\Controllers\Admin\ActivityPackageController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\FarmInfoController;
 use App\Http\Controllers\Admin\FarmExperiencesController;
@@ -591,6 +592,14 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     });
     Route::prefix('/do')->group(function () {
             Route::get('/activities', [AdminController::class, 'activity'])->name('admin.do.activities');
+            Route::get('/api/activity-packages', [ActivityPackageController::class, 'apiIndex'])->name('admin.activity-packages.api.index');
+            Route::resource('activity-packages', ActivityPackageController::class, ['except' => ['create', 'index'], 'names' => [
+                'edit' => 'admin.activity-packages.edit',
+                'store' => 'admin.activity-packages.store',
+                'show' => 'admin.activity-packages.show',
+                'update' => 'admin.activity-packages.update',
+                'destroy' => 'admin.activity-packages.destroy'
+            ]]);
             Route::get('/what-to-do', [AdminPagesController::class, 'whatToDo'])->name('admin.do.whattodo');
     });
     Route::prefix('/food')->group(function () {

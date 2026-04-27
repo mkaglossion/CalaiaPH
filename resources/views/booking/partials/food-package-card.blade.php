@@ -20,10 +20,10 @@
 @endphp
 
 <div class="relative bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-200 hover:border-[#8f5d54] hover:shadow-xl transition cursor-pointer"
-     @click="addPackageToCart({{ $package->id }}, @js($package->name), {{ $package->getEffectivePrice() }}, @js($packageFoods))">
+     @click="togglePackage({{ $package->id }}, @js($package->name), {{ $package->getEffectivePrice() }}, @js($packageFoods))">
     
     {{-- Checkmark Badge --}}
-    @include('booking.partials._checkmark-badge', ['condition' => '[' . implode(',', $packageFoods->pluck('id')->toArray()) . '].some(foodId => isSelected(foodId))'])
+    @include('booking.partials._checkmark-badge', ['condition' => 'isPackageSelected(' . $package->id . ')'])
     <div class="relative bg-gray-200 overflow-hidden h-80 md:h-96">
         @if(!empty($package->image))
             <img src="{{ $package->image }}" alt="{{ $package->name }}" class="w-full h-full object-cover">
@@ -76,11 +76,12 @@
 
         <button
             type="button"
-            class="w-full py-3 rounded-xl font-semibold transition bg-gray-100 text-gray-700 hover:bg-gray-200 flex items-center justify-center gap-2"
-            @click.stop="addPackageToCart({{ $package->id }}, @js($package->name), {{ $package->getEffectivePrice() }}, @js($packageFoods))"
+            class="w-full py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2"
+            :class="isPackageSelected({{ $package->id }}) ? 'bg-[#8f5d54] text-white hover:bg-[#7a4e48]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+            @click.stop="togglePackage({{ $package->id }}, @js($package->name), {{ $package->getEffectivePrice() }}, @js($packageFoods))"
         >
-            <i class="bi bi-plus"></i>
-            Add to Cart
+            <i :class="isPackageSelected({{ $package->id }}) ? 'bi bi-check' : 'bi bi-plus'"></i>
+            <span x-text="isPackageSelected({{ $package->id }}) ? 'Added to Cart' : 'Add to Cart'"></span>
         </button>
     </div>
 </div>

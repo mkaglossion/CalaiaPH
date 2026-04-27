@@ -64,6 +64,7 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
 
 // Get selected activities from session
 $selectedActivities = $booking['selected_activities'] ?? [];
+$selectedActivityPackages = $booking['selected_activity_packages'] ?? [];
 @endphp
 
 <body class="bg-[#f5efe7]">
@@ -139,6 +140,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                     <input type="hidden" name="accommodations" value="{{ json_encode($booking['accommodations'] ?? []) }}">
                     <input type="hidden" name="selected_foods" value="{{ json_encode($booking['selected_foods'] ?? []) }}">
                     <input type="hidden" name="selected_activities" value="{{ json_encode($booking['selected_activities'] ?? []) }}">
+                    <input type="hidden" name="selected_activity_packages" value="{{ json_encode($booking['selected_activity_packages'] ?? []) }}">
                     <input type="hidden" name="booking_type" value="{{ $booking['booking_type'] ?? 'general' }}">
                     <input type="hidden" name="total_guests" value="{{ $totalGuests }}">
                     
@@ -313,22 +315,6 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                         policy: @js($defaultPolicy),
                         expanded: null,
                         policies: {
-                          standard: {
-                            label: 'Standard (Free cancellation window)',
-                            badge: 'STANDARD',
-                            icon: '📅',
-                            highlight: 'border-emerald-200 bg-emerald-50/60',
-                            ring: 'ring-emerald-200',
-                            bullets: [
-                              '≥ 7 days before check-in: 100% refund',
-                              '3–6 days before check-in: 50% refund',
-                              '< 3 days before check-in: No refund'
-                            ],
-                            fine: [
-                              'Refunds are returned to the original payment method when possible.',
-                              'Processing time: 3–5 business days after approval.'
-                            ]
-                          },
                           flexible: {
                             label: 'Flexible (Best value)',
                             badge: 'RECOMMENDED',
@@ -398,90 +384,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                       <fieldset class="space-y-3">
                         <legend class="sr-only">Select cancellation policy</legend>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {{-- Standard --}}
-                          <label
-                            class="group relative cursor-pointer rounded-2xl border-2 p-5 transition-all hover:shadow-lg"
-                            :class="policy === 'standard' ? policies.standard.highlight + ' ring-2 ' + policies.standard.ring : 'border-gray-200 bg-white hover:border-[#8f5d54]/30'"
-                          >
-                            <input
-                              type="radio"
-                              name="cancellation_policy"
-                              value="standard"
-                              class="sr-only"
-                              x-model="policy"
-                              required
-                            >
-
-                            <div class="flex items-start justify-between gap-3">
-                              <div class="flex items-start gap-3">
-                                <div class="text-3xl leading-none" aria-hidden="true" x-text="policies.standard.icon"></div>
-                                <div>
-                                  <div class="flex items-center gap-2">
-                                    <p class="text-sm font-semibold text-gray-900">Standard</p>
-                                    <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                                      <span x-text="policies.standard.badge"></span>
-                                    </span>
-                                  </div>
-                                  <p class="text-xs text-gray-600 mt-1">Good balance of savings + protection.</p>
-                                </div>
-                              </div>
-
-                              <div class="flex items-center gap-2">
-                                <span
-                                  class="inline-flex h-6 w-6 items-center justify-center rounded-full border transition"
-                                  :class="policy === 'standard' ? 'border-emerald-400 bg-emerald-100 text-emerald-700' : 'border-gray-200 bg-white text-gray-400'"
-                                  aria-hidden="true"
-                                >
-                                  <i class="bi bi-check-lg"></i>
-                                </span>
-                              </div>
-                            </div>
-
-                            <div class="mt-4 space-y-2 text-xs text-gray-700">
-                              <div class="rounded-xl border border-emerald-200/60 bg-white/60 p-3">
-                                <ul class="space-y-1.5">
-                                  <li class="flex items-start gap-2">
-                                    <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                                      <i class="bi bi-check"></i>
-                                    </span>
-                                    <span><span class="font-semibold">≥ 7 days</span> — 100% refund</span>
-                                  </li>
-                                  <li class="flex items-start gap-2">
-                                    <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                                      <i class="bi bi-dash"></i>
-                                    </span>
-                                    <span><span class="font-semibold">3–6 days</span> — 50% refund</span>
-                                  </li>
-                                  <li class="flex items-start gap-2">
-                                    <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-rose-100 text-rose-700">
-                                      <i class="bi bi-x"></i>
-                                    </span>
-                                    <span><span class="font-semibold">< 3 days</span> — No refund</span>
-                                  </li>
-                                </ul>
-                              </div>
-
-                              <button
-                                type="button"
-                                class="inline-flex items-center gap-2 text-xs font-semibold text-gray-700 hover:text-gray-900"
-                                @click.stop="expanded = expanded === 'standard' ? null : 'standard'"
-                                :aria-expanded="expanded === 'standard'"
-                              >
-                                <i class="bi" :class="expanded === 'standard' ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-                                View full terms
-                              </button>
-
-                              <div x-show="expanded === 'standard'" x-transition class="rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600">
-                                <ul class="list-disc pl-5 space-y-1">
-                                  <li>Refunds are computed based on the time the cancellation request is submitted.</li>
-                                  <li>Processing time: 3–5 business days after approval (banks may take longer).</li>
-                                  <li>No-show or early departure is non-refundable.</li>
-                                </ul>
-                              </div>
-                            </div>
-                          </label>
-
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {{-- Flexible (Recommended) --}}
                           <label
                             class="group relative cursor-pointer rounded-2xl border-2 p-5 transition-all hover:shadow-lg"
@@ -772,6 +675,7 @@ $selectedActivities = $booking['selected_activities'] ?? [];
                 :selectedFoods="$selectedFoods"
                 :foods="$foods"
                 :selectedActivities="$selectedActivities"
+                :selectedActivityPackages="$selectedActivityPackages"
                 :showActivities="true"
                 :showTrustElements="true"
             />

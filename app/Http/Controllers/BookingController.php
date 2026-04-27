@@ -18,6 +18,8 @@ use App\Models\StaycationAccommodation;
 use App\Models\Staycation;
 use App\Models\Food;
 use App\Models\FoodPackage;
+use App\Models\Activity;
+use App\Models\ActivityPackage;
 use App\Models\DayTour;
 use App\Models\Holiday;
 use App\Models\DayType;
@@ -671,7 +673,20 @@ class BookingController extends Controller
             return redirect()->route('booking.staycation')->with('error', 'Please complete accommodation selection first.');
         }
 
-        $activities = $this->bookingService->getActivitiesData();
+        // Fetch activities
+        $activities = Activity::where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+        
+        // Fetch activity packages with their activities
+        $activityPackages = ActivityPackage::where('is_active', true)
+            ->with(['activities' => function($q) {
+                $q->select('activities.id', 'activities.name', 'activities.price')
+                  ->orderBy('activities.name');
+            }])
+            ->latest()
+            ->get();
         
         // Get selected foods from session
         $selectedFoods = $booking['selected_foods'] ?? session('selected_foods', []);
@@ -685,8 +700,9 @@ class BookingController extends Controller
 
             // Get selected activities from session
         $selectedActivities = $booking['selected_activities'] ?? session('selected_activities', []);
+        $selectedActivityPackages = $booking['selected_activity_packages'] ?? session('selected_activity_packages', []);
         
-        return view('booking.staycation-activities', compact('booking', 'activities', 'staycations', 'selectedFoods', 'foods', 'selectedActivities'));
+        return view('booking.staycation-activities', compact('booking', 'activities', 'activityPackages', 'staycations', 'selectedFoods', 'foods', 'selectedActivities', 'selectedActivityPackages'));
     }
 
     public function storeStaycationActivities(Request $request)
@@ -697,29 +713,46 @@ class BookingController extends Controller
             return response()->json(['success' => false, 'message' => 'No booking data found.'], 400);
         }
 
-        // For staycations, activities are optional - allow empty array
-        $staycationValidationRules = [
-            'activities' => 'array', // Allow empty array for "proceed without activities"
-            'activities.*.id' => 'required|string',
-            'activities.*.name' => 'required|string',
-            'activities.*.price' => 'required|numeric',
-            'activities.*.guests' => 'required|integer|min:1',
-            'activities.*.type' => 'required|string|in:predefined,custom',
-        ];
-
+        // Accept both individual activities and activity packages
+        // Data structure from frontend: {selected_activities: [{id, name, price, ...}, {package_id, is_package, ...}]}
         try {
-            $request->validate(ValidationService::staycationActivitiesRules());
-            $this->bookingService->saveActivities($request->activities ?? [], 'booking.selected_activities');
+            $validated = $request->validate([
+                'selected_activities' => 'nullable|array',
+                'selected_activities.*.id' => 'required_unless:selected_activities.*.is_package,true|string|max:50',
+                'selected_activities.*.package_id' => 'required_if:selected_activities.*.is_package,true|integer',
+                'selected_activities.*.name' => 'required|string|max:255',
+                'selected_activities.*.category' => 'required|string|max:50',
+                'selected_activities.*.price' => 'required|numeric|min:0',
+                'selected_activities.*.quantity' => 'sometimes|integer|min:1',
+                'selected_activities.*.is_package' => 'boolean',
+                'selected_activities.*.included_activities' => 'nullable|array',
+            ]);
+
+            $selectedActivities = $validated['selected_activities'] ?? [];
+
+            // Process and separate individual activities and packages
+            $activities = [];
+            $activityPackages = [];
+
+            foreach ($selectedActivities as $item) {
+                if ($item['is_package'] ?? false) {
+                    $activityPackages[] = $item;
+                } else {
+                    $activities[] = $item;
+                }
+            }
+
+            // Store in booking session
+            $booking['selected_activities'] = $activities;
+            $booking['selected_activity_packages'] = $activityPackages;
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error saving. Please try again.',
+                'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
         }
-
-        // Note: We need to update the session booking array, so handle differently
-        $booking['selected_activities'] = $request->activities ?? [];
 
         // Calculate final totals using dynamic pricing
         $checkinDate = $booking['checkin'] ?? null;
@@ -733,8 +766,14 @@ class BookingController extends Controller
             $booking['accommodations'] = $accommodations;
         }
 
-        $activitiesTotal = collect($request->activities)->sum(function($activity) {
-            return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+        // Calculate activities total (individual items)
+        $activitiesTotal = collect($booking['selected_activities'] ?? [])->sum(function($activity) {
+            return ($activity['price'] ?? 0) * ($activity['quantity'] ?? 1);
+        });
+
+        // Calculate activity packages total
+        $packagesTotal = collect($booking['selected_activity_packages'] ?? [])->sum(function($package) {
+            return ($package['price'] ?? 0) * ($package['quantity'] ?? 1);
         });
 
         // Calculate food total if foods were selected
@@ -748,9 +787,9 @@ class BookingController extends Controller
         // Store final totals in session
         $booking['final_totals'] = [
             'accommodation_total' => $accommodationTotal,
-            'activities_total' => $activitiesTotal,
+            'activities_total' => $activitiesTotal + $packagesTotal,
             'food_total' => $foodTotal,
-            'grand_total' => $accommodationTotal + $activitiesTotal + $foodTotal
+            'grand_total' => $accommodationTotal + $activitiesTotal + $packagesTotal + $foodTotal
         ];
         
         $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [3]));
@@ -844,9 +883,14 @@ class BookingController extends Controller
             return $acc['total_price'] ?? 0;
         });
         
-        // Calculate activities total
+        // Calculate activities total (including both individual activities and packages)
         $activitiesTotal = collect($booking['selected_activities'] ?? [])->sum(function($activity) {
             return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
+        });
+        
+        // Add activity packages to activities total
+        $activitiesTotal += collect($booking['selected_activity_packages'] ?? [])->sum(function($package) {
+            return ($package['price'] ?? 0) * ($package['quantity'] ?? 1);
         });
         
         // Calculate nights
@@ -886,10 +930,11 @@ class BookingController extends Controller
         // Fetch staycations for room names
         $staycations = \App\Models\Staycation::all()->keyBy('id');
 
-        // Get selected activities from session
+        // Get selected activities and activity packages from session
         $selectedActivities = $booking['selected_activities'] ?? [];
+        $selectedActivityPackages = $booking['selected_activity_packages'] ?? [];
         
-        return view('booking.staycation-payment', compact('booking', 'selectedFoods', 'foods', 'staycations', 'selectedActivities'));
+        return view('booking.staycation-payment', compact('booking', 'selectedFoods', 'foods', 'staycations', 'selectedActivities', 'selectedActivityPackages'));
     }
 
     public function payment()
@@ -968,6 +1013,13 @@ class BookingController extends Controller
             $postedActivities = json_decode($request->input('selected_activities', '[]'), true);
             if (!empty($postedActivities)) {
                 $staycationBooking['selected_activities'] = $postedActivities;
+            }
+        }
+        
+        if ($request->has('selected_activity_packages')) {
+            $postedActivityPackages = json_decode($request->input('selected_activity_packages', '[]'), true);
+            if (!empty($postedActivityPackages)) {
+                $staycationBooking['selected_activity_packages'] = $postedActivityPackages;
             }
         }
         
@@ -1074,7 +1126,7 @@ class BookingController extends Controller
             }
         }
 
-        // 3. Add activities line items last
+        // 3. Add activities line items
         if (!empty($booking['selected_activities'])) {
             foreach ($booking['selected_activities'] as $activity) {
                 if (!empty($activity) && !empty($activity['name']) && isset($activity['price'])) {
@@ -1085,6 +1137,22 @@ class BookingController extends Controller
                         'name' => $activity['name'],
                         'unit_price' => $unit,
                         'quantity' => $guestCount,
+                    ];
+                }
+            }
+        }
+
+        // 4. Add activity packages line items
+        if (!empty($booking['selected_activity_packages'])) {
+            foreach ($booking['selected_activity_packages'] as $package) {
+                if (!empty($package) && !empty($package['name']) && isset($package['price'])) {
+                    $packageQty = $package['quantity'] ?? 1;
+                    $unit = (float)$package['price'];
+                    $grandTotal += $unit * $packageQty;
+                    $lineItems[] = [
+                        'name' => $package['name'],
+                        'unit_price' => $unit,
+                        'quantity' => $packageQty,
                     ];
                 }
             }

@@ -3,7 +3,7 @@
     $food = $foods->get($selectedFood['id']);
 @endphp
 @if($food)
-<div class="bg-white rounded-lg border border-gray-100 p-3">
+<div class="bg-white rounded-lg border border-gray-200 p-3">
     <div class="flex justify-between items-start mb-1">
         <span class="font-semibold text-gray-900">{{ $food->name }}</span>
         <span class="font-bold text-[#8f5d54]">₱{{ number_format($itemTotal, 0) }}</span>

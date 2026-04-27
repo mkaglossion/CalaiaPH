@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Activity;
+use App\Models\ActivityPackage;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class ActivityController extends Controller
@@ -12,7 +13,9 @@ class ActivityController extends Controller
     public function index()
     {
         $activities = Activity::latest()->paginate(10);
-        return view('admin.whatToDo.activities', compact('activities'));
+        $allActivities = Activity::all(['id', 'name', 'description', 'price']);  // For the package modal
+        $activityPackages = ActivityPackage::with('activities')->latest()->get();
+        return view('admin.whatToDo.activities', compact('activities', 'allActivities', 'activityPackages'));
     }
 
     public function show(Activity $activity_list)

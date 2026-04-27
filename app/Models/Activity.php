@@ -33,4 +33,12 @@ class Activity extends Model
     {
         return $this->belongsToMany(DayTour::class, 'day_tour_activity');
     }
+
+    // 🔥 Relation for Activity Packages
+    public function activityPackages()
+    {
+        return $this->belongsToMany(ActivityPackage::class, 'activity_package_items')
+                    ->withPivot('quantity')
+                    ->withTimestamps();
+    }
 }

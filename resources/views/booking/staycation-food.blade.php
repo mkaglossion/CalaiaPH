@@ -206,7 +206,7 @@
                         <div class="mb-8 text-center flex flex-col items-center justify-center">
                             <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">Messhall</h2>
                             <p class="mt-3 text-base md:text-lg text-gray-500 max-w-2xl">
-                                Choose from Messhall alacart below.
+                                Choose from Messhall à la carte below.
                             </p>
                         </div>
 
@@ -298,7 +298,11 @@
 
                                             <button type="button"
                                                     class="w-full py-2 rounded-lg font-semibold transition"
-                                                    :class="isSelected({{ $food->id }}) ? 'bg-[#8f5d54] text-white hover:bg-[#7a4e48]' : '{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}'"
+                                                    :class="{
+                                                        'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
+                                                        'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
+                                                        'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
+                                                    }"
                                                     :disabled="{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'true' : 'false' }}"
                                                     @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
                                                 <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
@@ -337,7 +341,7 @@
                     <div class="mb-8 mt-12" x-show="selectedCategory === 'all' || selectedCategory === 'cook_your_own'">
                         <div class="mb-6 text-center">
                             <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Cook Your Own</h2>
-                            <p class="mt-2 text-sm text-gray-500">Choose from Cook Your Own alacart below.</p>
+                            <p class="mt-2 text-sm text-gray-500">Choose from Cook Your Own à la carte below.</p>
                         </div>
 
                         @if($cookYourOwnFoods->count() > 0)
@@ -428,7 +432,11 @@
 
                                             <button type="button"
                                                     class="w-full py-2 rounded-lg font-semibold transition"
-                                                    :class="isSelected({{ $food->id }}) ? 'bg-[#8f5d54] text-white hover:bg-[#7a4e48]' : '{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}'"
+                                                    :class="{
+                                                        'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
+                                                        'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
+                                                        'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
+                                                    }"
                                                     :disabled="{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'true' : 'false' }}"
                                                     @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
                                                 <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
@@ -541,7 +549,7 @@
                                             <button type="button"
                                                     class="w-full py-2 rounded-lg font-semibold transition text-white"
                                                     :class="isSelected({{ $special->id }}) ? '{{ $specialColor['btn'] }}' : 'bg-gray-400 hover:bg-gray-500'"
-                                                    @click.stop="toggleFood({{ $special->id }}, '{{ $special->name }}', '{{ $category }}', {{ $special->price }})">
+                                                    @click.stop="toggleFood({{ $special->id }}, '{{ $special->name }}', '{{ $category }}', {{ $special->price }})">">
                                                 <i :class="isSelected({{ $special->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
                                                 <span x-text="isSelected({{ $special->id }}) ? 'Selected' : 'Select Option'"></span>
                                             </button>
@@ -556,6 +564,13 @@
 
                 {{-- RIGHT SIDEBAR --}}
                 <div class="lg:col-span-1">
+                    @php
+                        // Calculate food total for display in summary
+                        $displayFoodTotal = 0;
+                        foreach ($selectedFoods as $food) {
+                            $displayFoodTotal += ($food['price'] ?? 0) * ($food['quantity'] ?? 1);
+                        }
+                    @endphp
                     <x-booking-summary
                         :booking="$booking"
                         :staycations="$staycations"
@@ -567,6 +582,7 @@
                         :showActivities="false"
                         :accommodationTotal="$accommodationTotal"
                         :activitiesTotal="$activitiesTotal"
+                        :foodTotal="$displayFoodTotal"
                     />
                 </div>
             </div>
@@ -671,8 +687,54 @@
                     });
                 },
 
+                togglePackage(packageId, packageName, packagePrice, packageFoods) {
+                    const existingPackageIndex = this.selectedFoods.findIndex(f => f.is_package && f.package_id === packageId);
+                    
+                    if (existingPackageIndex > -1) {
+                        // Package exists, remove it
+                        this.selectedFoods.splice(existingPackageIndex, 1);
+                        Swal.fire({
+                            icon: 'info',
+                            title: `${packageName} removed`,
+                            toast: true,
+                            position: 'bottom-end',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        });
+                    } else {
+                        // Package doesn't exist, add it
+                        this.selectedFoods.push({
+                            id: `package-${packageId}`,
+                            package_id: packageId,
+                            name: packageName,
+                            category: 'package',
+                            price: Number(packagePrice) || 0,
+                            quantity: 1,
+                            is_package: true,
+                            included_foods: packageFoods,
+                            notes: ''
+                        });
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: `${packageName} package added!`,
+                            html: `<p class="text-sm">Total: <strong>₱${packagePrice.toLocaleString()}</strong></p>`,
+                            toast: true,
+                            position: 'bottom-end',
+                            showConfirmButton: false,
+                            timer: 2500,
+                            timerProgressBar: true
+                        });
+                    }
+                },
+
                 isSelected(foodId) {
                     return this.selectedFoods.some(f => f.id === foodId);
+                },
+
+                isPackageSelected(packageId) {
+                    return this.selectedFoods.some(f => f.is_package && f.package_id === packageId);
                 },
 
                 setField(foodId, field, value) {

@@ -4,6 +4,237 @@
 
 @section('content')
 
+<div x-data="activityManager()" x-init="window.__alpineApp = $data; $data.setupKeyboardShortcuts(); $data.loadPackages(); $data.loadAvailableActivities()" x-cloak class="p-3 sm:p-6 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-lg sm:rounded-xl w-full">
+
+    <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-2 sm:mb-3 tracking-tight text-gray-900">
+        Activities Management
+    </h1>
+    <p class="text-gray-600 text-sm sm:text-base mb-6 sm:mb-10">Manage activities & experience packages available for booking.</p>
+
+    {{-- Search Box - Full width at top --}}
+    <div class="mb-8 sm:mb-10">
+        <input 
+            x-model="searchQuery"
+            @input="filterActivities()"
+            type="text" 
+            placeholder="🔍 Search by name, category, or description..." 
+            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
+        >
+    </div>
+
+    @if(session('success'))
+        <script>
+            toastr.success("{{ session('success') }}", 'Success');
+        </script>
+    @endif
+
+    @if(session('error'))
+        <script>
+            toastr.error("{{ session('error') }}", 'Error');
+        </script>
+    @endif
+
+    {{-- ============================================================= --}}
+    {{-- ACTIVITY PACKAGES SECTION --}}
+    {{-- ============================================================= --}}
+    <div class="mt-8 sm:mt-12">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sm:gap-0 mb-4 sm:mb-6">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Activity Packages</h2>
+                <p class="text-gray-500 text-xs sm:text-sm">Create and manage bundled activity packages.</p>
+            </div>
+
+            <button type="button" @click="openCreatePackage()"
+                    class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-green-600 text-white text-sm sm:text-base font-medium shadow hover:bg-green-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
+                <i class="bi bi-plus-lg"></i>
+                <span class="hidden sm:inline">Create Package</span>
+                <span class="sm:hidden">New Package</span>
+            </button>
+        </div>
+
+        {{-- Activity Packages Table --}}
+        <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+            <div class="overflow-x-auto md:overflow-visible">
+                <table class="w-full text-left text-xs sm:text-sm">
+                    <thead class="bg-gray-100/70 backdrop-blur">
+                        <tr>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 w-8 sm:w-12">#</th>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 min-w-32 sm:min-w-40">Name</th>
+                            <th class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Category</th>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-center">Price</th>
+                            <th class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Activities</th>
+                            <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Status</th>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200" x-html="packagesHtml"></tbody>
+                </table>
+            </div>
+
+            <div class="px-6 py-4 border-t border-gray-200 text-center text-gray-500 bg-white rounded-lg" x-show="!packagesHtml || packagesHtml === ''">
+                <p>Loading packages...</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Add/Edit Activity Package Modal --}}
+    <div
+        x-cloak
+        x-show="showPackageModal"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4"
+        x-transition.opacity
+    >
+        <div @click.away="showPackageModal = false" class="bg-white/90 backdrop-blur-lg rounded-lg sm:rounded-2xl shadow-xl w-full max-w-2xl sm:max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 border border-gray-200">
+            <button
+                @click="showPackageModal = false"
+                class="absolute top-2 right-3 sm:top-3 sm:right-4 text-gray-400 hover:text-gray-600 text-2xl sm:text-3xl leading-none"
+            >&times;</button>
+
+            <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-900 pr-8" x-text="editPackageMode ? 'Edit Activity Package' : 'Create Activity Package'"></h3>
+
+            <form class="space-y-4 sm:space-y-6" @submit.prevent="saveActivityPackage">
+                @csrf
+
+                <!-- Package Name -->
+                <div>
+                    <label for="package_name" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Package Name *</label>
+                    <input type="text" x-model="packageForm.name" id="package_name" name="name" required
+                           autocomplete="name"
+                           class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                           placeholder="e.g., Adventure Bundle, Team Building Pack">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+                    <div>
+                        <label for="package_category" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Category *</label>
+                        <select x-model="packageForm.category" id="package_category" name="category" required
+                                autocomplete="category"
+                                class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
+                            <option value="">Select Category</option>
+                            <option value="adventure">Adventure</option>
+                            <option value="sports">Sports & Games</option>
+                            <option value="rrcamp">R & R & Camp</option>
+                            <option value="farm">Farm</option>
+                            <option value="special">Special</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <h3 class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Package Price (₱)</h3>
+                        <div class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-semibold">
+                            ₱<span x-text="getPackageActivityTotal()"></span>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Automatically computed from selected activities.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="package_description" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Description</label>
+                    <textarea rows="3" x-model="packageForm.description" id="package_description" name="description"
+                              autocomplete="off"
+                              class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                              placeholder="Describe what's included in this package..."></textarea>
+                </div>
+
+                {{-- Package Activities --}}
+                <div>
+                    <h3 class="block text-xs sm:text-sm font-semibold text-gray-700 mb-3">Include Activities *</h3>
+                    <div class="space-y-3">
+                        <template x-for="(item, index) in packageForm.items" :key="index">
+                            <div class="flex gap-3 items-end bg-gray-50 p-3 rounded-lg">
+                                <div class="flex-1">
+                                    <select :name="`activities[${index}]`" x-model="item.activity_id" required
+                                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
+                                        <option value="">Select Activity</option>
+                                        <template x-for="activity in availableActivities" :key="activity.id">
+                                            <option :value="activity.id" x-text="activity.name + ' (₱' + activity.price + ')'"></option>
+                                        </template>
+                                    </select>
+                                </div>
+
+                                <div class="w-20">
+                                    <input type="number" :name="`quantities[${index}]`" x-model.number="item.quantity"
+                                           required min="1" max="20"
+                                           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
+                                </div>
+
+                                <div class="w-24 text-sm text-gray-600 px-2 py-2 bg-white border border-gray-300 rounded-lg">
+                                    ₱<span x-text="getActivityItemSubtotal(item)"></span>
+                                </div>
+
+                                <button type="button" @click="removePackageActivityItem(index)"
+                                        class="px-3 py-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </div>
+                        </template>
+
+                        <button type="button" @click="addPackageActivityItem()"
+                                class="w-full py-2 px-4 border-2 border-dashed border-green-300 text-green-600 rounded-lg hover:bg-green-50 transition font-medium text-sm">
+                            <i class="bi bi-plus mr-2"></i>Add Another Activity
+                        </button>
+                    </div>
+
+                    <div class="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="font-medium text-gray-900">Total Activities Value:</span>
+                            <span class="text-lg font-bold text-green-600">₱<span x-text="getPackageActivityTotal()"></span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+                    <div>
+                        <label for="package_stock_quantity" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Stock Quantity</label>
+                        <input type="number" min="0" x-model="packageForm.stock_quantity" id="package_stock_quantity" name="stock_quantity"
+                               autocomplete="off"
+                               class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                               placeholder="0">
+                    </div>
+
+                    <div class="flex items-end">
+                        <label for="package_is_inventory_managed" class="flex items-center gap-2 sm:gap-3 cursor-pointer">
+                            <input type="checkbox" x-model="packageForm.is_inventory_managed" id="package_is_inventory_managed" name="is_inventory_managed"
+                                   autocomplete="off"
+                                   class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                            <div>
+                                <p class="font-semibold text-xs sm:text-sm text-gray-900">Manage Inventory</p>
+                                <p class="text-xs text-gray-600">Track stock levels</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-3 p-3 sm:p-4 bg-green-50 rounded-lg border border-green-200">
+                    <label class="flex items-center gap-2 sm:gap-3 cursor-pointer">
+                        <input type="checkbox" x-model="packageForm.is_active" id="package_is_active" name="is_active"
+                               autocomplete="off"
+                               class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        <div>
+                            <p class="font-semibold text-xs sm:text-sm text-gray-900">Active Status</p>
+                            <p class="text-xs text-gray-600">When checked, this package will be visible on the booking page</p>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-2 border-t border-gray-200">
+                    <button type="button" @click="showPackageModal = false" class="px-4 sm:px-6 py-2 text-sm sm:text-base border rounded-lg sm:rounded-xl hover:bg-gray-100 transition">
+                        Cancel
+                    </button>
+
+                    <button type="submit" :disabled="isLoading"
+                            class="px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg sm:rounded-xl bg-green-600 text-white hover:bg-green-700 shadow transition disabled:opacity-60"
+                            x-text="isLoading ? (editPackageMode ? 'Updating...' : 'Creating...') : (editPackageMode ? 'Update Package' : 'Create Package')">
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- ORIGINAL ACTIVITIES SECTION CONTINUES BELOW --}}
+
+    <div class="py-12"></div>
+
 <style>
     .swiper-button-next, .swiper-button-prev {
         background-color: rgba(255, 255, 255, 0.8);
@@ -73,22 +304,6 @@
   };
 </script>
 
-<div
-    x-data="activityManager()"
-    x-init="
-        isLoading = false;
-        setupKeyboardShortcuts();
-        // Safety timeout: auto-hide loading after 60 seconds
-        setInterval(() => {
-            if (isLoading) {
-                console.warn('Loading stuck for too long, resetting...');
-                isLoading = false;
-            }
-        }, 60000);
-    "
-    class="p-4 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 rounded-xl"
->
-
     <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
         Activities Management
     </h1>
@@ -108,29 +323,6 @@
             + Add Activity
         </button>
     </div>
-
-    {{-- Search Box --}}
-    <div class="mb-6">
-        <input 
-            x-model="searchQuery"
-            @input="filterActivities()"
-            type="text" 
-            placeholder="🔍 Search by name, category, or description..." 
-            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
-        >
-    </div>
-
-    @if(session('success'))
-        <script>
-            toastr.success("{{ session('success') }}", 'Success');
-        </script>
-    @endif
-
-    @if(session('error'))
-        <script>
-            toastr.error("{{ session('error') }}", 'Error');
-        </script>
-    @endif
 
     {{-- Activities Table --}}
     <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
@@ -443,6 +635,8 @@
         </div>
     </div>
 
+
+
     {{-- GLOBAL LOADING OVERLAY --}}
     <div
         x-cloak
@@ -469,14 +663,34 @@ function activityManager() {
         showModal: false,
         showActivityModal: false,
         showTextModal: false,
+        showPackageModal: false,
         editMode: false,
         editModeActivity: false,
+        editPackageMode: false,
         editImageMode: false,
         currentImageId: null,
         searchQuery: '',
 
+        // Load packages on initialization
+        loadPackages() {
+            this.packages = @js($activityPackages ?? []);
+        },
+
+        // Load available activities on initialization
+        loadAvailableActivities() {
+            this.availableActivities = @js(($allActivities ?? $activities)->map(function($a) { 
+                return [
+                    'id' => $a->id, 
+                    'name' => $a->name, 
+                    'price' => (float)($a->price ?? 0)
+                ]; 
+            })->toArray());
+        },
+
         // Data
         texts: [],
+        packages: @js($activityPackages ?? []),
+        availableActivities: [],
 
         // Form data
         form: {
@@ -492,6 +706,18 @@ function activityManager() {
             title: '',
             image: null,
             imagePreview: null,
+        },
+
+        // Package form data
+        packageForm: {
+            id: null,
+            name: '',
+            category: '',
+            description: '',
+            is_active: true,
+            stock_quantity: 0,
+            is_inventory_managed: false,
+            items: [{ activity_id: '', quantity: 1 }]
         },
 
         // Toast notifications
@@ -986,6 +1212,203 @@ function activityManager() {
                 if (activitySelect) activitySelect.value = activityId || '';
                 if (titleInput) titleInput.value = title || '';
             });
+        },
+
+        // Package management functions
+        openCreatePackage() {
+            this.editPackageMode = false;
+            this.packageForm = {
+                id: null,
+                name: '',
+                category: '',
+                description: '',
+                is_active: true,
+                stock_quantity: 0,
+                is_inventory_managed: false,
+                items: [{ activity_id: '', quantity: 1 }]
+            };
+            this.loadAvailableActivities();
+            this.showPackageModal = true;
+        },
+
+        async editActivityPackage(id) {
+            this.isLoading = true;
+            this.editPackageMode = true;
+            
+            try {
+                this.loadAvailableActivities();
+                const res = await fetch(`/admin/activity-packages/${id}/edit`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                
+                this.packageForm = {
+                    id: data.id,
+                    name: data.name || '',
+                    category: data.category || '',
+                    description: data.description || '',
+                    is_active: !!data.is_active,
+                    stock_quantity: data.stock_quantity ?? 0,
+                    is_inventory_managed: !!data.is_inventory_managed,
+                    items: data.activities && data.activities.length > 0 
+                        ? data.activities.map(a => ({
+                            activity_id: a.id,
+                            quantity: a.pivot?.quantity || 1
+                          }))
+                        : [{ activity_id: '', quantity: 1 }]
+                };
+                
+                this.isLoading = false;
+                this.showPackageModal = true;
+            } catch (err) {
+                console.error('Error:', err);
+                this.isLoading = false;
+                this.showToast('Failed to load package', 'error');
+            }
+        },
+
+        addPackageActivityItem() {
+            this.packageForm.items.push({ activity_id: '', quantity: 1 });
+        },
+
+        removePackageActivityItem(index) {
+            this.packageForm.items.splice(index, 1);
+            if (this.packageForm.items.length === 0) {
+                this.addPackageActivityItem();
+            }
+        },
+
+        getActivityItemSubtotal(item) {
+            const activity = this.availableActivities.find(a => a.id == item.activity_id);
+            return activity ? (activity.price * item.quantity).toFixed(2) : '0.00';
+        },
+
+        getPackageActivityTotal() {
+            return this.packageForm.items.reduce((total, item) => {
+                const activity = this.availableActivities.find(a => a.id == item.activity_id);
+                return total + (activity ? activity.price * item.quantity : 0);
+            }, 0).toFixed(2);
+        },
+
+        async saveActivityPackage() {
+            if (this.isLoading) return;
+            this.isLoading = true;
+
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+            const formData = new FormData();
+
+            formData.append('name', this.packageForm.name);
+            formData.append('category', this.packageForm.category);
+            formData.append('description', this.packageForm.description || '');
+            formData.append('price', this.getPackageActivityTotal());
+            formData.append('is_active', this.packageForm.is_active ? 1 : 0);
+            formData.append('stock_quantity', this.packageForm.stock_quantity ?? 0);
+            formData.append('is_inventory_managed', this.packageForm.is_inventory_managed ? 1 : 0);
+
+            // Add activities and quantities
+            this.packageForm.items.forEach((item, index) => {
+                if (item.activity_id) {
+                    formData.append(`activities[${index}]`, item.activity_id);
+                    formData.append(`quantities[${index}]`, item.quantity);
+                }
+            });
+
+            let url = '{{ route("admin.activity-packages.store") }}';
+            if (this.editPackageMode && this.packageForm.id) {
+                url = `/admin/activity-packages/${this.packageForm.id}`;
+                formData.append('_method', 'PUT');
+            }
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    const successMsg = this.editPackageMode ? 'Package updated successfully!' : 'Package created successfully!';
+                    this.showToast(data.message || successMsg, 'success');
+                    this.showPackageModal = false;
+                    setTimeout(() => window.location.reload(), 500);
+                } else {
+                    this.showToast(data.message || 'Failed to save package', 'error');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                this.showToast('An unexpected error occurred', 'error');
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        deleteActivityPackage(id) {
+            Swal.fire({
+                title: 'Delete Package?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const csrf = document.querySelector('meta[name=csrf-token]').content;
+                    this.isLoading = true;
+
+                    fetch(`/admin/activity-packages/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json',
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.showToast('Package deleted successfully!', 'success');
+                            setTimeout(() => window.location.reload(), 500);
+                        } else {
+                            this.showToast(data.message || 'Failed to delete package', 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error:', err);
+                        this.showToast('Failed to delete package', 'error');
+                    })
+                    .finally(() => { this.isLoading = false; });
+                }
+            });
+        },
+
+        get packagesHtml() {
+            // Compute the HTML for packages table
+            if (!this.packages || this.packages.length === 0) {
+                return '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500"><div class="flex flex-col items-center justify-center gap-3"><i class="bi bi-package text-gray-400 text-3xl"></i><p>No packages yet. Click "Create Package" to add one.</p></div></td></tr>';
+            }
+
+            return this.packages.map((pkg, idx) => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">${idx + 1}</td>
+                    <td class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm font-medium text-gray-900">${pkg.name || ''}</td>
+                    <td class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm text-gray-600">${pkg.category ? pkg.category.charAt(0).toUpperCase() + pkg.category.slice(1).replace(/_/g, ' ') : 'special'}</td>
+                    <td class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 text-center">₱${pkg.price ? parseFloat(pkg.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</td>
+                    <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm text-gray-600">${pkg.activities?.length || 0}</td>
+                    <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm"><span class="px-2 py-1 text-gray-700 rounded text-xs font-semibold">${pkg.is_active ? 'Active' : 'Inactive'}</span></td>
+                    <td class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm space-x-2">
+                        <button onclick="window.__alpineApp.editActivityPackage(${pkg.id})" class="text-blue-600 hover:text-blue-700 font-semibold">Edit</button>
+                        <button onclick="window.__alpineApp.deleteActivityPackage(${pkg.id})" class="text-red-600 hover:text-red-700 font-semibold">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
         },
     };
 }

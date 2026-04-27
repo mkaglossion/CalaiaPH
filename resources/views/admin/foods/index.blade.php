@@ -62,37 +62,8 @@
     </h1>
     <p class="text-gray-600 text-sm sm:text-base mb-6 sm:mb-10">Manage food & beverage items, categories, prices, and inventory.</p>
 
-    {{-- ============================================================= --}}
-    {{-- FOOD ITEMS SECTION --}}
-    {{-- ============================================================= --}}
-    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sm:gap-0 mb-4 sm:mb-6">
-        <div>
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Food & Beverage Items</h2>
-            <p class="text-gray-500 text-xs sm:text-sm">Manage all food and beverage items available for booking.</p>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <button
-                type="button"
-                @click="openCreatePackage()"
-                class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-green-600 text-white text-sm sm:text-base font-medium shadow hover:bg-green-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
-                <i data-lucide="package" class="w-4 h-4"></i>
-                <span class="hidden sm:inline">Create Package</span>
-                <span class="sm:hidden">New Package</span>
-            </button>
-
-            <button
-                type="button"
-                @click="openCreate()"
-                class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-blue-600 text-white text-sm sm:text-base font-medium shadow hover:bg-blue-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-                <span class="hidden sm:inline">Add New Food Item</span>
-                <span class="sm:hidden">Add Item</span>
-            </button>
-        </div>
-    </div>
-    
-    <div class="mb-4 sm:mb-6">
+    {{-- Search Box - Full width at top --}}
+    <div class="mb-8 sm:mb-10">
         <input 
             id="search_foods"
             name="search"
@@ -113,6 +84,69 @@
             </button>
         </div>
     @endif
+
+    {{-- ============================================================= --}}
+    {{-- FOOD PACKAGES SECTION --}}
+    {{-- ============================================================= --}}
+    <div class="mt-8 sm:mt-12">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sm:gap-0 mb-4 sm:mb-6">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Food Packages</h2>
+                <p class="text-gray-500 text-xs sm:text-sm">Create and manage bundled food packages for customers.</p>
+            </div>
+
+            <button
+                type="button"
+                @click="openCreatePackage()"
+                class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-green-600 text-white text-sm sm:text-base font-medium shadow hover:bg-green-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
+                <i data-lucide="package" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Create Package</span>
+                <span class="sm:hidden">New Package</span>
+            </button>
+        </div>
+
+        <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+            <div class="overflow-x-auto md:overflow-visible">
+                <table class="w-full text-left text-xs sm:text-sm">
+                    <thead class="bg-gray-100/70 backdrop-blur">
+                        <tr>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 w-8 sm:w-12">#</th>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 min-w-32 sm:min-w-40">Package Name</th>
+                            <th class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Category</th>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-center">Price</th>
+                            <th class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Items</th>
+                            <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Status</th>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                <tbody class="divide-y divide-gray-200" x-html="packagesHtml"></tbody>
+                </table>
+            </div>
+
+            <div class="px-6 py-4 border-t border-gray-200 text-center text-gray-500" x-show="!packagesHtml || packagesHtml === ''">
+                <p>Loading packages...</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- ============================================================= --}}
+    {{-- FOOD ITEMS SECTION --}}
+    {{-- ============================================================= --}}
+    <div class="mt-12 sm:mt-16 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sm:gap-0 mb-4 sm:mb-6">
+        <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Food & Beverage Items</h2>
+            <p class="text-gray-500 text-xs sm:text-sm">Manage all food and beverage items available for booking.</p>
+        </div>
+
+        <button
+            type="button"
+            @click="openCreate()"
+            class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-blue-600 text-white text-sm sm:text-base font-medium shadow hover:bg-blue-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Add New Food Item</span>
+            <span class="sm:hidden">Add Item</span>
+        </button>
+    </div>
 
     {{-- Food Items Table --}}
     <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
@@ -237,41 +271,6 @@
                 {{ $foods->links('pagination::tailwind') }}
             </div>
         @endif
-    </div>
-
-    {{-- ============================================================= --}}
-    {{-- FOOD PACKAGES SECTION --}}
-    {{-- ============================================================= --}}
-    <div class="mt-8 sm:mt-12">
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sm:gap-0 mb-4 sm:mb-6">
-            <div>
-                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Food Packages</h2>
-                <p class="text-gray-500 text-xs sm:text-sm">Create and manage bundled food packages for customers.</p>
-            </div>
-        </div>
-
-        <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
-            <div class="overflow-x-auto md:overflow-visible">
-                <table class="w-full text-left text-xs sm:text-sm">
-                    <thead class="bg-gray-100/70 backdrop-blur">
-                        <tr>
-                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 w-8 sm:w-12">#</th>
-                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 min-w-32 sm:min-w-40">Package Name</th>
-                            <th class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Category</th>
-                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-center">Price</th>
-                            <th class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Items</th>
-                            <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Status</th>
-                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                <tbody class="divide-y divide-gray-200" x-html="packagesHtml"></tbody>
-                </table>
-            </div>
-
-            <div class="px-6 py-4 border-t border-gray-200 text-center text-gray-500" x-show="!packagesHtml || packagesHtml === ''">
-                <p>Loading packages...</p>
-            </div>
-        </div>
     </div>
 
     {{-- Modal --}}

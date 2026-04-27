@@ -93,7 +93,7 @@ class PaymentService
                 'currency' => 'PHP',
                 'description' => $description,
                 'line_items' => $formattedLineItems,
-                'payment_method_types' => ['card', 'gcash', 'paymaya', 'qrph', 'grab_pay', 'billease'],
+                'payment_method_types' => ['card', 'gcash', 'paymaya', 'qrph', 'grab_pay'],
                 'success_url' => $successUrl,
                 'cancel_url' => $failedUrl,
             ];

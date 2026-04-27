@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\Activity;
+use App\Models\ActivityPackage;
 use App\Models\ActivitySwiperImage;
 use App\Models\ActivityText;
 use App\Models\Staycation;
@@ -97,7 +98,13 @@ class AdminController extends Controller
             ->limit(50)
             ->get();
         
-        return view('admin.whatToDo.activities', compact('activities', 'images', 'texts'));
+        // Load activity packages
+        $activityPackages = ActivityPackage::with('activities')->latest()->get();
+        
+        // Load all activities for the activity selector in the modal
+        $allActivities = Activity::all(['id', 'name', 'description', 'price']);
+        
+        return view('admin.whatToDo.activities', compact('activities', 'images', 'texts', 'activityPackages', 'allActivities'));
     }
 
     public function menu()
