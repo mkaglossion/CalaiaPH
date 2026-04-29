@@ -122,6 +122,9 @@ Route::get('/staycation', [PagesController::class, 'staycation'])->name('staycat
 Route::get('/activities', [PagesController::class, 'activities'])->name('activities');
 Route::get('/dining', [PagesController::class, 'dining'])->name('dining');
 Route::post('/dining/reserve', [DiningReservationController::class, 'store'])->name('dining.reserve');
+Route::post('/dining/prefill', [DiningReservationController::class, 'prefillBooking'])->name('dining.prefill');
+Route::get('/dining-reservation', [DiningReservationController::class, 'dayVisitForm'])->name('dining-reservation.form');
+Route::post('/dining-reservation/store', [DiningReservationController::class, 'storeDayVisit'])->name('dining-reservation.store');
 Route::get('/groups', [PagesController::class, 'groups'])->name('groups');
 Route::get('/special-events', [PagesController::class, 'specialEvents'])->name('special-events');
 Route::get('/farm', [PagesController::class, 'farm'])->name('farm');

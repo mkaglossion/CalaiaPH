@@ -148,7 +148,7 @@ class AdminController extends Controller
 
     public function dayTour()
     {
-        $tours  = DayTour::with('activities', 'swiperImages')->get(); // get all packages with activities
+        $tours  = DayTour::with(['activities', 'swiperImages'])->get(); // get all packages with activities
         $texts = DayPackageText::all();
         $activities = Activity::all(); // list of all activities for selection
         $images = DayTourSwiperImage::latest()->get();

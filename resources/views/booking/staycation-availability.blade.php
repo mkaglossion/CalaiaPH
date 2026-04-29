@@ -2824,4 +2824,21 @@
         // NOTE: your original realtime listeners used "this" outside Alpine scope.
         // I left them out to avoid runtime errors; if you want, paste them inside init() where "this" is valid.
     </script>
+
+    @if(session('booking_prefill_saved'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'success',
+                title: 'Saved',
+                text: {!! json_encode(session('booking_prefill_saved')) !!},
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2500,
+                timerProgressBar: true
+            });
+        });
+    </script>
+    @endif
 </x-app-layout>

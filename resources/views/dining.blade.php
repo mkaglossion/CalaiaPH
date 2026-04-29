@@ -108,6 +108,7 @@
                 <button
                   data-title="{{ $food->name }}"
                   data-food-id="{{ $food->id }}"
+                  data-reservation-mode="day"
                   data-max-stock="{{ $food->stock_quantity ?? 100 }}"
                   data-price="{{ $food->price ?? 0 }}"
                   onclick="window.openDiningReservationModal(this)"
@@ -224,6 +225,7 @@
                     <button
                       data-title="{{ $food->name }}"
                       data-food-id="{{ $food->id }}"
+                        data-reservation-mode="day"
                       data-max-stock="{{ $food->stock_quantity ?? 100 }}"
                       data-price="{{ $food->price ?? 0 }}"
                       onclick="window.openDiningReservationModal(this)"
@@ -265,6 +267,49 @@
       {{-- Dining Reservation Modal --}}
       <x-dining-reservation-modal />
 
+      {{-- Dining CTA Modal (feature-flagged) --}}
+      {{-- Feature flag: Hide/show day-visit CTA/modal easily. To enable, set config('features.day_visit_enabled') = true in config/features.php or .env. This keeps the code ready for future use without exposing to users. --}}
+        {{--
+          Feature flag: Hide/show day-visit CTA/modal easily.
+          To enable, set config('features.day_visit_enabled') = true in config/features.php or .env.
+          This keeps the code ready for future use without exposing to users.
+        --}}
+        @if(config('features.day_visit_enabled', false))
+        <div id="diningCtaModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-data="{ show: false }" x-show="show" x-transition>
+          <div class="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl transform transition-all relative" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <!-- Close Button -->
+            <button @click="show = false; document.getElementById('diningCtaModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">×</button>
+
+            <!-- Modal Content -->
+            <div class="text-center">
+              <div class="mb-4">
+                <div class="text-5xl">🍽️</div>
+              </div>
+              <h2 class="text-2xl font-bold text-gray-800 mb-2">Make a Reservation</h2>
+              <p class="text-gray-600 mb-6">Are you planning to book your stay or a day visit?</p>
+
+              <!-- Buttons -->
+              <div class="space-y-3">
+                <!-- Day Visit via Messenger -->
+                <a href="https://m.me/calaiaph" target="_blank" rel="noopener" class="w-full flex py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors items-center justify-center gap-2">
+                  Chat on Messenger
+                </a>
+
+                <!-- Overnight Stay with Meals -->
+                <a href="/booking/staycation?intent=dining_included" class="w-full flex py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg transition-colors items-center justify-center gap-2">
+                  <span class="text-xl">🌙</span> <span>Overnight Stay (Book Now)</span>
+                </a>
+
+                <!-- Continue Browsing -->
+                <button @click="show = false; document.getElementById('diningCtaModal').classList.add('hidden')" class="w-full py-3 px-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-colors">
+                  Continue Browsing
+                </button>
+              </div>
+              <div class="mt-6 text-xs text-gray-400">You can always chat us on Messenger for day visit reservations.</div>
+            </div>
+          </div>
+        </div>
+        @endif
     </div>
 
     {{-- Floating Buttons --}}
@@ -291,6 +336,36 @@
               prevSlideMessage: 'Previous slide',
               nextSlideMessage: 'Next slide',
             },
+          });
+
+          // Trigger dining CTA modal on scroll or after delay
+          let ctaShown = localStorage.getItem('diningCtaShown');
+          let scrollTriggered = false;
+          
+          const showDiningCta = () => {
+            const modal = document.getElementById('diningCtaModal');
+            if (modal && !modal.classList.contains('hidden')) {
+              const alpine = modal.__x ? modal.__x.getUnobservedData() : { show: false };
+              alpine.show = true;
+              modal.classList.remove('hidden');
+              localStorage.setItem('diningCtaShown', 'true');
+            }
+          };
+
+          // Show after 5 seconds if not shown before
+          if (!ctaShown) {
+            setTimeout(showDiningCta, 5000);
+          }
+
+          // Also show on scroll down 50%
+          window.addEventListener('scroll', () => {
+            if (!scrollTriggered && !ctaShown) {
+              const scrollPercentage = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+              if (scrollPercentage > 50) {
+                showDiningCta();
+                scrollTriggered = true;
+              }
+            }
           });
         });
         </script>

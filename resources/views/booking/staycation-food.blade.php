@@ -82,6 +82,14 @@
 
     // Create foods collection keyed by ID for the component
     $foods = $foodMenus->keyBy('id');
+    // Create a lightweight lookup for JS prefill (id => name, price, category)
+    $foodLookup = $foodMenus->mapWithKeys(function($f) {
+        return [$f->id => [
+            'name' => $f->name,
+            'price' => $f->price ?? 0,
+            'category' => $f->category ?? 'messhall'
+        ]];
+    });
 
     // Key staycations by ID for the component
     $staycations = $staycations->keyBy('id');
@@ -110,6 +118,15 @@
                 </p>
             </div>
 
+            {{-- Dining Intent Banner --}}
+            @if(isset($booking['intent']) && $booking['intent'] === 'dining_included')
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p class="text-blue-800 text-center">
+                        <strong>🍽️ Dining Included:</strong> You can now browse and select meals for your stay
+                    </p>
+                </div>
+            @endif
+
             {{-- Progress --}}
             <div class="mb-6">
                 <x-booking.progress-indicator :stepNumber="3" :totalSteps="5" :bookingType="'staycation'" />
@@ -131,8 +148,14 @@
                 @endif
             </div>
 
+            {{-- Pass prefill data into safe globals to avoid Alpine parsing errors --}}
+            <script>
+                window.__initialSelected = {!! json_encode($booking['selected_foods'] ?? []) !!};
+                window.__foodLookup = {!! json_encode($foodLookup) !!};
+            </script>
+
             <div
-                x-data="staycationFoodSelection({{ $accommodationTotal }}, {{ $activitiesTotal }}, {{ $nights }})"
+                x-data="staycationFoodSelection({{ $accommodationTotal }}, {{ $activitiesTotal }}, {{ $nights }}, window.__initialSelected, window.__foodLookup)"
                 class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10"
             >
                 {{-- LEFT --}}
@@ -223,7 +246,7 @@
                                         data-food-id="{{ $food->id }}"
                                         @click="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})"
                                     >
-                                        @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $food->id . ')'])
+                                        @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $food->id . ')', 'qty' => 'getSelectedQuantity(' . $food->id . ')'])
 
                                         <div class="relative bg-gray-200 overflow-hidden">
                                             @php
@@ -357,7 +380,7 @@
                                         data-food-id="{{ $food->id }}"
                                         @click="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})"
                                     >
-                                        @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $food->id . ')'])
+                                        @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $food->id . ')', 'qty' => 'getSelectedQuantity(' . $food->id . ')'])
 
                                         <div class="relative bg-gray-200 overflow-hidden">
                                             @php
@@ -494,7 +517,7 @@
                                         :class="'{{ $specialColor['bg'] }} {{ $specialColor['ring'] }} {{ $specialColor['border'] }}'"
                                         @click="toggleFood({{ $special->id }}, '{{ $special->name }}', '{{ $category }}', {{ $special->price }})"
                                     >
-                                        @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $special->id . ')'])
+                                        @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $special->id . ')', 'qty' => 'getSelectedQuantity(' . $special->id . ')'])
 
                                         <div class="relative overflow-hidden h-96 flex items-center justify-center bg-gray-100">
                                             @php
@@ -589,10 +612,50 @@
         </div>
     </div>
 
+    @if(session('booking_prefill_saved'))
     <script>
-        function staycationFoodSelection(accommodationTotal = 0, activitiesTotal = 0, nights = 1) {
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                icon: 'success',
+                title: 'Saved',
+                text: {!! json_encode(session('booking_prefill_saved')) !!},
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2500,
+                timerProgressBar: true
+            });
+        });
+    </script>
+    @endif
+
+    <script>
+        function staycationFoodSelection(accommodationTotal = 0, activitiesTotal = 0, nights = 1, initialSelected = [], foodLookup = {}) {
             return {
-                selectedFoods: [],
+                selectedFoods: initialSelected && initialSelected.length ? initialSelected.map(item => {
+                    // Normalize server-side prefills to client format
+                    if (item.food_id) {
+                        const id = parseInt(item.food_id, 10);
+                        const meta = foodLookup[id] || {};
+                        return {
+                            id: id,
+                            name: meta.name || (item.name || 'Selected Food'),
+                            category: meta.category || (item.category || 'messhall'),
+                            price: Number(meta.price ?? item.price ?? 0),
+                            quantity: Number(item.quantity ?? item.adults ?? 1),
+                            notes: item.notes ?? ''
+                        };
+                    }
+                    // If already in expected shape, return as-is (ensure number types)
+                    return {
+                        id: item.id,
+                        name: item.name || 'Food',
+                        category: item.category || 'messhall',
+                        price: Number(item.price || 0),
+                        quantity: Number(item.quantity || 1),
+                        notes: item.notes || ''
+                    };
+                }) : [],
                 selectedCategory: 'all',
                 accommodationTotal: accommodationTotal,
                 activitiesTotal: activitiesTotal,
@@ -632,6 +695,11 @@
                         timer: 2000,
                         timerProgressBar: true
                     });
+                },
+
+                getSelectedQuantity(foodId) {
+                    const f = this.selectedFoods.find(s => parseInt(s.id || s.food_id) === parseInt(foodId));
+                    return f ? (f.quantity || 1) : 0;
                 },
 
                 removeFood(foodId) {

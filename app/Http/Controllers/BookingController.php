@@ -9,9 +9,9 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
 use App\Mail\BookingConfirmation;
 use DateTime;
-use App\Services\BookingService;
-use App\Services\PaymentService;
-use App\Services\InventoryService;
+// use App\Services\BookingService; // Removed duplicate
+// use App\Services\PaymentService; // Removed duplicate
+// use App\Services\InventoryService; // Removed duplicate
 use App\Services\ValidationService;
 
 use App\Models\StaycationAccommodation;
@@ -34,13 +34,20 @@ use App\Models\BookingSetting;
 use App\Models\FoodPackageSetting;
 
 
+
+use App\Services\BookingService;
+use App\Services\PaymentService;
+use App\Services\InventoryService;
+// use App\Services\PricingService; // Removed duplicate
+// use Illuminate\Http\Request; // Removed duplicate
+
 class BookingController extends Controller
 {
-    protected $bookingService;
-    protected $paymentService;
-    protected $inventoryService;
-    protected $pricingService;
-    protected $paymongo;
+    protected BookingService $bookingService;
+    protected PaymentService $paymentService;
+    protected InventoryService $inventoryService;
+    protected PricingService $pricingService;
+    protected \Paymongo\PaymongoClient $paymongo;
 
     public function __construct(
         BookingService $bookingService,
@@ -69,6 +76,17 @@ class BookingController extends Controller
      * @param int $numPets Number of pets
      * @param bool $hasPets Whether pets are included
      * @return array With keys: accommodation_price, mattress_price, pet_price, total_price, breakdown
+     */
+    /**
+     * @param Staycation $staycation
+     * @param string $checkinDate
+     * @param string $checkoutDate
+     * @param int $adults
+     * @param int $children
+     * @param int $extraMattresses
+     * @param int $numPets
+     * @param bool $hasPets
+     * @return array
      */
     private function calculateCentralizedStaycationPrice(
         Staycation $staycation,
@@ -275,7 +293,7 @@ class BookingController extends Controller
     /**
      * Get base rate for accommodation display
      */
-    private function getAccommodationBaseRate($accommodation)
+    private function getAccommodationBaseRate(array $accommodation)
     {
         $name = strtolower($accommodation['staycation']['name']);
         $isBYOT = str_contains($name, 'byot');
@@ -463,7 +481,7 @@ class BookingController extends Controller
         ]);
     }
 
-    private function getBookingActivities($type)
+    private function getBookingActivities(string $type)
     {
         $config = self::BOOKING_CONFIG[$type];
         $data = session($config['session_key']);
@@ -474,7 +492,7 @@ class BookingController extends Controller
         return view($config['activities_view'], [$config['var_name'] => $data, 'activities' => $activities]);
     }
 
-    private function storeBookingActivities(Request $request, $type, $validationRules, $saveKey)
+    private function storeBookingActivities(Request $request, string $type, array $validationRules, string $saveKey)
     {
         $config = self::BOOKING_CONFIG[$type];
         $data = session($config['session_key']);
@@ -486,7 +504,7 @@ class BookingController extends Controller
         return response()->json(['success' => true, 'message' => 'Activities saved successfully.']);
     }
 
-    private function getBookingPayment($type)
+    private function getBookingPayment(string $type)
     {
         $config = self::BOOKING_CONFIG[$type];
         $data = session($config['session_key']);
@@ -1865,6 +1883,22 @@ class BookingController extends Controller
             }
         }
 
+        // Handle intent parameter for dining inclusions
+        if ($request->has('intent')) {
+            $booking = session('booking', [
+                'checkin'         => null,
+                'checkout'        => null,
+                'accommodations'  => [],
+                'booking_type'    => 'staycation',
+                'timestamp'       => now()->timestamp,
+                'completed_steps' => [],
+                'current_step'    => 1,
+            ]);
+            
+            $booking['intent'] = $request->input('intent');
+            session(['booking' => $booking]);
+        }
+
         // For GET requests, delegate to the availability page builder
         return $this->staycationAvailability($request);
     }
@@ -1917,6 +1951,26 @@ class BookingController extends Controller
         $booking = session('booking', []);
         $booking['checkin'] = $checkin;
         $booking['checkout'] = $checkout;
+        // Preserve dining intent & prefill when provided via query params (from dining modal)
+        if ($request->has('intent')) {
+            $booking['intent'] = $request->query('intent');
+            // Prefill selected food info if provided
+            if ($request->has('food_id')) {
+                $selected = [
+                    'food_id' => (int) $request->query('food_id'),
+                    'meal_period' => $request->query('meal_period'),
+                    'date' => $request->query('date'),
+                    'time' => $request->query('time'),
+                    'adults' => (int) ($request->query('adults') ?? ($booking['adults_total'] ?? 1)),
+                    'first_name' => $request->query('first_name') ?? null,
+                    'last_name' => $request->query('last_name') ?? null,
+                    'email' => $request->query('email') ?? null,
+                ];
+                // Store both in booking array and session key used by food step
+                $booking['selected_foods'] = [$selected];
+                session(['selected_foods' => [$selected]]);
+            }
+        }
         session(['booking' => $booking]);
 
         // Determine season for the booking date range
@@ -2246,16 +2300,31 @@ class BookingController extends Controller
     public function staycationFood()
     {
         $booking = session('booking', []);
-
         // Ensure rooms were selected first
         if (empty($booking['accommodations'])) {
             return redirect()->route('booking.staycationAvailability')
                 ->with('error', 'Please select your room(s) first.');
         }
 
-        // Clear any previous food selections to start fresh
-        session()->forget('selected_foods');
-        $booking['selected_foods'] = [];
+        // Preserve intent from session or request
+        if (!isset($booking['intent']) && request()->has('intent')) {
+            $booking['intent'] = request()->input('intent');
+        }
+
+        // Prefer any selected_foods already saved in session (e.g. from dining prefill).
+        // If none in session, fall back to booking['selected_foods'] if present.
+        $sessionSelected = session('selected_foods', []);
+        if (!empty($sessionSelected)) {
+            $booking['selected_foods'] = $sessionSelected;
+        } elseif (isset($booking['selected_foods']) && !empty($booking['selected_foods'])) {
+            // ensure session has a copy as well
+            session(['selected_foods' => $booking['selected_foods']]);
+        } else {
+            // No selected foods present — keep any existing session value untouched (don't forcibly clear)
+            $booking['selected_foods'] = $sessionSelected ?: [];
+        }
+
+        session(['booking' => $booking]);
 
         // Pull food items from database with images and texts
         // Filter for staycation: only messhall, cook_your_own, and special options
@@ -2482,7 +2551,7 @@ class BookingController extends Controller
         ]);
     }
 
-    private function checkAvailabilityInternal($checkin, $checkout, $staycationIds)
+    private function checkAvailabilityInternal(string $checkin, string $checkout, array $staycationIds)
     {
         // For now, assume all staycations are available since no booking system yet
         $available = [];
@@ -2529,7 +2598,9 @@ class BookingController extends Controller
 
 
 
-    private function calculatePrice($staycation, $date, $guests = 2)
+    private function calculatePrice(\App\Models\Staycation $staycation, string $date, int $guests = 2)
+    // If $staycation is always a model, add the correct type hint. Assuming Staycation model:
+    // private function calculatePrice(Staycation $staycation, string $date, int $guests = 2)
     {
         // Use staycation's price_configs from admin panel
         $priceConfigs = $staycation->price_configs ?? [];
@@ -2604,7 +2675,7 @@ class BookingController extends Controller
     /**
      * Determine day type for a specific date (Holiday > Weekend > Weekday)
      */
-    private function determineDayTypeForDate($date)
+    private function determineDayTypeForDate(string $date)
     {
         $carbonDate = \Carbon\Carbon::parse($date);
         $dateStr = $carbonDate->format('Y-m-d');
@@ -2631,7 +2702,7 @@ class BookingController extends Controller
     /**
      * Determine season type for a specific date (Super-Peak > Peak > Non-Peak)
      */
-    private function determineSeasonTypeForDate($date)
+    private function determineSeasonTypeForDate(string $date)
     {
         $dateStr = \Carbon\Carbon::parse($date)->format('Y-m-d');
 
@@ -2676,7 +2747,7 @@ class BookingController extends Controller
      * Calculate mattress fee for a given quantity and number of nights
      * Centralized method to avoid repeating the calculation
      */
-    protected function calculateMattressFee($mattressCount, $nights)
+    protected function calculateMattressFee(int $mattressCount, int $nights)
     {
         $pricePerNight = BookingSetting::getValue('mattress_price_per_night', 0);
         return (int)$mattressCount * (int)$pricePerNight * max(1, $nights);
@@ -2686,7 +2757,7 @@ class BookingController extends Controller
      * Calculate pet fee for a given pet count
      * Centralized method to avoid repeating the calculation
      */
-    protected function calculatePetFee($petCount)
+    protected function calculatePetFee(int $petCount)
     {
         $petPrice = BookingSetting::getValue('pet_price', 0);
         return (int)$petCount * (int)$petPrice;

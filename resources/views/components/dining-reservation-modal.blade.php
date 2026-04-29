@@ -1,7 +1,7 @@
 {{-- Dining Reservation Modal --}}
 <div
   id="diningReservationModal"
-  x-data="diningReservationModal()"
+  x-data="diningReservationModal"
   x-cloak
   x-show="modalOpen"
   :hidden="!modalOpen"
@@ -50,6 +50,11 @@
       <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-[#97655A] mb-6 sm:mb-8 pr-8" x-text="foodName"></h2>
 
       <form @submit.prevent="submitReservation()" class="space-y-5 sm:space-y-6">
+        {{-- Reservation Mode Toggle: Day Visit vs Overnight Stay --}}
+        <div class="flex items-center justify-center gap-3 mb-2">
+          <button type="button" @click="reservationMode = 'day'" :class="reservationMode === 'day' ? 'bg-[#97655A] text-white' : 'bg-gray-100 text-gray-700'" class="px-4 py-2 rounded-full font-semibold transition">Day Visit</button>
+          <button type="button" @click="reservationMode = 'stay'" :class="reservationMode === 'stay' ? 'bg-[#97655A] text-white' : 'bg-gray-100 text-gray-700'" class="px-4 py-2 rounded-full font-semibold transition">Overnight Stay</button>
+        </div>
         {{-- Reservation Details Section --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {{-- Meal Period --}}
@@ -212,6 +217,32 @@
           ></textarea>
         </div>
 
+        {{-- Prefill cart preview --}}
+        <div x-show="prefillItems.length > 0" class="pt-4 border-t mt-4">
+          <h4 class="text-sm font-semibold text-gray-700 mb-2">Selected Items</h4>
+          <ul class="space-y-2">
+            <template x-for="(item, idx) in prefillItems" :key="idx">
+              <li class="flex items-center justify-between bg-gray-50 p-2 rounded">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-700">x</div>
+                  <div>
+                    <div class="text-sm font-semibold" x-text="item.name || (window.__foodLookup && window.__foodLookup[item.food_id] ? window.__foodLookup[item.food_id].name : ('Item ' + item.food_id))"></div>
+                    <div class="text-xs text-gray-500">Meal: <span x-text="item.meal_period || '-'"></span></div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center border rounded overflow-hidden">
+                    <button type="button" @click="changePrefillQty(item.food_id, -1)" class="px-2 py-1 text-sm">−</button>
+                    <input type="number" min="1" class="w-12 text-center text-sm py-1" x-model.number="item.quantity" @change="updatePrefillQuantity(item.food_id, item.quantity)" />
+                    <button type="button" @click="changePrefillQty(item.food_id, 1)" class="px-2 py-1 text-sm">+</button>
+                  </div>
+                  <button type="button" @click="removeFromPrefill(item.food_id)" class="text-sm text-red-600 hover:underline">Remove</button>
+                </div>
+              </li>
+            </template>
+          </ul>
+        </div>
+
         {{-- Action Buttons --}}
         <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-6 sm:pt-8">
           <button 
@@ -222,12 +253,26 @@
           >
             Cancel
           </button>
+          <button
+            type="button"
+            x-show="reservationMode === 'stay'"
+            @click="addToPrefill()"
+            :disabled="isSubmitting"
+            class="flex-1 px-4 sm:px-6 py-3 sm:py-3 text-sm sm:text-base border-2 border-gray-300 text-gray-700 rounded-full font-semibold hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+          >
+            Add to Selection
+          </button>
           <button 
             type="submit"
-            :disabled="isSubmitting || !isFormValid()"
+            :disabled="isSubmitting || (reservationMode === 'day' && !isFormValid())"
             class="flex-1 px-4 sm:px-6 py-3 sm:py-3 text-sm sm:text-base bg-[#97655A] text-white rounded-full font-semibold hover:bg-[#7a4d45] disabled:bg-gray-400 transition-all disabled:cursor-not-allowed active:scale-95"
           >
-            <span x-show="!isSubmitting">✓ Confirm Reservation</span>
+            <template x-if="reservationMode === 'day'">
+              <span x-show="!isSubmitting">✓ Confirm Reservation</span>
+            </template>
+            <template x-if="reservationMode === 'stay'">
+              <span x-show="!isSubmitting">Proceed to Booking</span>
+            </template>
             <span x-show="isSubmitting" class="inline-flex items-center justify-center gap-2 w-full">
               <span class="inline-block w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
               <span>Processing...</span>
@@ -235,6 +280,14 @@
           </button>
         </div>
       </form>
+      <div class="mt-4 text-center">
+        <div x-show="reservationMode === 'day'" class="text-sm">
+          <p class="text-gray-600 mb-2">Prefer to chat with us for day visits?</p>
+          <a href="https://m.me/calaiaph" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700">
+            Chat on Messenger
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -256,8 +309,8 @@
 </style>
 
 <script>
-function diningReservationModal() {
-  return {
+document.addEventListener('alpine:init', () => {
+  Alpine.data('diningReservationModal', () => ({
     modalOpen: false,
     isSubmitting: false,
     foodName: '',
@@ -271,7 +324,9 @@ function diningReservationModal() {
     toastType: 'error',
     toastTimeout: null,
     today: new Date().toISOString().split('T')[0],
-    
+
+    reservationMode: 'day',
+    prefillItems: [],
     form: {
       meal_period: '',
       reservation_date: '',
@@ -290,12 +345,35 @@ function diningReservationModal() {
       this.foodId = button.dataset.foodId || null;
       this.foodPrice = parseFloat(button.dataset.price) || 0;
       this.maxStock = parseInt(button.dataset.maxStock) || 100;
-      
-      // Set max guests based on stock
+      this.reservationMode = button.dataset.reservationMode || 'day';
+
       this.maxAdults = Math.min(this.maxStock, 10);
       this.maxChildren = Math.min(Math.floor(this.maxStock / 2), 5);
-      
-      this.resetForm();
+
+      // restore any client-side stored prefill and ensure each item has a name
+      if (window.__diningPrefill && Array.isArray(window.__diningPrefill)) {
+        this.prefillItems = window.__diningPrefill.map(i => {
+          const name = i.name || (window.__foodLookup && window.__foodLookup[i.food_id] ? window.__foodLookup[i.food_id].name : null) || null;
+          return Object.assign({}, i, { name });
+        });
+      }
+
+      const existing = this.prefillItems.find(i => parseInt(i.food_id) === parseInt(this.foodId));
+      if (existing) {
+        this.form.meal_period = existing.meal_period || '';
+        this.form.reservation_date = existing.date || '';
+        this.form.reservation_time = existing.time || '';
+        this.form.adults = existing.quantity || 1;
+        this.form.first_name = existing.first_name || '';
+        this.form.last_name = existing.last_name || '';
+        this.form.phone = existing.phone || '';
+        this.form.email = existing.email || '';
+        this.form.special_requests = existing.notes || '';
+        this.reservationMode = 'stay';
+        } else {
+        this.resetForm();
+      }
+
       this.modalOpen = true;
     },
 
@@ -307,14 +385,8 @@ function diningReservationModal() {
     showToast(message, type = 'error') {
       this.toastMessage = message;
       this.toastType = type;
-      
-      if (this.toastTimeout) {
-        clearTimeout(this.toastTimeout);
-      }
-      
-      this.toastTimeout = setTimeout(() => {
-        this.toastMessage = '';
-      }, 4000);
+      if (this.toastTimeout) clearTimeout(this.toastTimeout);
+      this.toastTimeout = setTimeout(() => { this.toastMessage = ''; }, 4000);
     },
 
     resetForm() {
@@ -329,12 +401,140 @@ function diningReservationModal() {
         email: '',
         special_requests: ''
       };
+      this.reservationMode = 'day';
       this.emailError = '';
     },
 
-    checkInventory() {
-      // Inventory check removed - not needed for simplified form
+    checkInventory() {},
+
+    validateEmail() {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      this.emailError = (this.form.email && !emailRegex.test(this.form.email)) ? 'Please enter a valid email address' : '';
     },
+
+    getAvailableTimes() {
+      const timeRanges = {
+        breakfast: [
+          { value: '06:00', label: '06:00 am' },
+          { value: '06:30', label: '06:30 am' },
+          { value: '07:00', label: '07:00 am' },
+        ],
+        lunch: [ { value: '11:00', label: '11:00 am' }, { value: '12:00', label: '12:00 pm' } ],
+        snack: [ { value: '15:00', label: '03:00 pm' } ],
+        dinner: [ { value: '18:00', label: '06:00 pm' } ],
+        supper: [ { value: '20:00', label: '08:00 pm' } ]
+      };
+      return timeRanges[this.form.meal_period] || [];
+    },
+
+    onMealPeriodChange() { this.form.reservation_time = ''; this.checkInventory(); },
+
+    isFormValid() {
+      return this.form.first_name && this.form.last_name && this.form.phone && this.form.email && this.form.meal_period && this.form.reservation_date && this.form.reservation_time && this.form.adults >= 1 && !this.emailError;
+    },
+
+    addToPrefill() {
+      if (!this.foodId) { this.showToast('No food item selected to add', 'error'); return; }
+      if (!this.form.meal_period || !this.form.reservation_date || !this.form.reservation_time) { this.showToast('Please select meal period, date and time before adding', 'error'); return; }
+
+      const existing = this.prefillItems.find(i => parseInt(i.food_id) === parseInt(this.foodId));
+      if (existing) {
+        existing.quantity = (existing.quantity || 1) + (this.form.adults || 1);
+        } else {
+        this.prefillItems.push({
+          food_id: parseInt(this.foodId),
+          name: this.foodName || (window.__foodLookup && window.__foodLookup[this.foodId] ? window.__foodLookup[this.foodId].name : null),
+          price: this.foodPrice || (window.__foodLookup && window.__foodLookup[this.foodId] ? window.__foodLookup[this.foodId].price : null),
+          quantity: this.form.adults || 1,
+          meal_period: this.form.meal_period || null,
+          date: this.form.reservation_date || null,
+          time: this.form.reservation_time || null,
+          first_name: this.form.first_name || null,
+          last_name: this.form.last_name || null,
+          email: this.form.email || null,
+          phone: this.form.phone || null,
+          notes: this.form.special_requests || ''
+        });
+      }
+
+      window.__diningPrefill = this.prefillItems;
+
+      const item = this.prefillItems[this.prefillItems.length - 1];
+      fetch('{{ route("dining.prefill") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ selected_foods: [item], replace: false })
+      }).then(async (resp) => {
+        const data = await resp.json().catch(() => ({}));
+        if (resp.ok && data.success) this.showToast('Added to selection', 'success'); else this.showToast(data.message || 'Failed to save selection', 'error');
+      }).catch(() => { this.showToast('Failed to save selection', 'error'); });
+    },
+
+    removeFromPrefill(foodId) {
+      const idx = this.prefillItems.findIndex(i => parseInt(i.food_id || i.food_id) === parseInt(foodId));
+      if (idx === -1) return;
+      this.prefillItems.splice(idx, 1);
+      window.__diningPrefill = this.prefillItems;
+      const payload = { selected_foods: this.prefillItems, replace: true };
+      fetch('{{ route("dining.prefill") }}', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }, body: JSON.stringify(payload)
+      }).then(async (resp) => { const data = await resp.json().catch(() => ({})); if (resp.ok && data.success) this.showToast('Removed from selection', 'success'); else this.showToast(data.message || 'Failed to update selection', 'error'); }).catch(() => { this.showToast('Failed to update selection', 'error'); });
+    },
+
+    changePrefillQty(foodId, delta) {
+      const idx = this.prefillItems.findIndex(i => parseInt(i.food_id) === parseInt(foodId)); if (idx === -1) return; const item = this.prefillItems[idx]; let qty = parseInt(item.quantity || 1, 10) + delta; if (isNaN(qty) || qty < 1) qty = 1; item.quantity = qty; window.__diningPrefill = this.prefillItems; this._postPrefillReplace();
+    },
+
+    updatePrefillQuantity(foodId, qty) { const idx = this.prefillItems.findIndex(i => parseInt(i.food_id) === parseInt(foodId)); if (idx === -1) return; let q = parseInt(qty || 1, 10); if (isNaN(q) || q < 1) q = 1; this.prefillItems[idx].quantity = q; window.__diningPrefill = this.prefillItems; this._postPrefillReplace(); },
+
+    _postPrefillReplace() { const payload = { selected_foods: this.prefillItems, replace: true }; fetch('{{ route("dining.prefill") }}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }, body: JSON.stringify(payload) }).then(async (resp) => { const data = await resp.json().catch(() => ({})); if (resp.ok && data.success) this.showToast('Selection updated', 'success'); else this.showToast(data.message || 'Failed to update selection', 'error'); }).catch(() => { this.showToast('Failed to update selection', 'error'); }); },
+
+    async submitReservation() {
+      if (this.isSubmitting) return;
+      if (this.reservationMode === 'stay') {
+        let payload = {};
+        if (this.prefillItems && this.prefillItems.length > 0) {
+          payload.selected_foods = this.prefillItems.map(i => ({ food_id: parseInt(i.food_id), quantity: parseInt(i.quantity || 1), meal_period: i.meal_period || null, date: i.date || null, time: i.time || null, first_name: i.first_name || null, last_name: i.last_name || null, email: i.email || null, phone: i.phone || null, notes: i.notes || '' }));
+        } else {
+          payload = { food_id: this.foodId ? parseInt(this.foodId) : null, meal_period: this.form.meal_period || null, date: this.form.reservation_date || null, time: this.form.reservation_time || null, adults: this.form.adults || 1, first_name: this.form.first_name || null, last_name: this.form.last_name || null, email: this.form.email || null, phone: this.form.phone || null };
+        }
+        try {
+          const resp = await fetch('{{ route("dining.prefill") }}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }, body: JSON.stringify(payload) });
+          const data = await resp.json(); if (resp.ok && data.success) { window.__diningPrefill = []; window.location.href = '{{ route("booking.staycation") }}'; return; }
+          Swal.fire({ title: 'Error', text: data.message || 'Failed to prefill booking', icon: 'error', confirmButtonColor: '#97655A' }); return;
+        } catch (err) { console.error('Prefill error', err); Swal.fire({ title: 'Error', text: 'Failed to save prefilled selection. Please try again.', icon: 'error', confirmButtonColor: '#97655A' }); return; }
+      }
+
+      if (!this.isFormValid()) { Swal.fire({ title: 'Incomplete Form', text: 'Please fill in all required fields correctly.', icon: 'warning', confirmButtonColor: '#97655A' }); return; }
+      if (!this.foodId) { Swal.fire({ title: 'Error', text: 'No food item selected', icon: 'error', confirmButtonColor: '#97655A' }); return; }
+
+      this.isSubmitting = true;
+      const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 15000);
+      try {
+        const response = await fetch('{{ route("dining.reserve") }}', { method: 'POST', signal: controller.signal, headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }, body: JSON.stringify({ food_id: parseInt(this.foodId), meal_period: this.form.meal_period, reservation_date: this.form.reservation_date, reservation_time: this.form.reservation_time, adults: parseInt(this.form.adults), first_name: this.form.first_name, last_name: this.form.last_name, phone: this.form.phone, email: this.form.email, special_requests: this.form.special_requests }) });
+        clearTimeout(timeoutId); const data = await response.json();
+        if (response.ok && data.success) {
+          const confirmationNumber = 'DR' + String(data.reservation_id).padStart(5, '0');
+          const dateObj = new Date(this.form.reservation_date + 'T00:00:00'); const options = { year: 'numeric', month: 'long', day: 'numeric' }; const formattedDate = dateObj.toLocaleDateString('en-US', options);
+          Swal.fire({ title: '✓ Reservation Confirmed!', html: `<div style="text-align: left; line-height: 1.8;">...` , icon: 'success', confirmButtonColor: '#97655A', confirmButtonText: 'Close', allowOutsideClick: false, allowEscapeKey: false });
+          this.closeModal(); this.resetForm(); this.isSubmitting = false;
+        } else {
+          clearTimeout(timeoutId);
+          if (data.errors) {
+            let errorHtml = '<div style="text-align: left; padding-left: 10px;"><ul>'; for (const [field, errors] of Object.entries(data.errors)) { errorHtml += `<li><strong>${field}:</strong> ${errors.join(', ')}</li>`; } errorHtml += '</ul></div>'; Swal.fire({ title: 'Validation Error', html: errorHtml, icon: 'error', confirmButtonColor: '#97655A' });
+          } else { Swal.fire({ title: 'Error', text: data.message || 'Error submitting reservation', icon: 'error', confirmButtonColor: '#97655A' }); }
+          this.isSubmitting = false;
+        }
+      } catch (error) { clearTimeout(timeoutId); if (error.name === 'AbortError') { Swal.fire({ title: 'Request Timeout', text: 'The request took too long. Please try again.', icon: 'error', confirmButtonColor: '#97655A' }); } else { Swal.fire({ title: 'Error', text: 'Error submitting reservation: ' + error.message, icon: 'error', confirmButtonColor: '#97655A' }); } this.isSubmitting = false; }
+    }
+  }));
+});
+
+// Global function to open modal (keeps existing behavior)
+window.openDiningReservationModal = function(button) {
+  window.dispatchEvent(new CustomEvent('open-dining-modal', { detail: button, bubbles: true }));
+};
+</script>
 
     validateEmail() {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -411,9 +611,200 @@ function diningReservationModal() {
              this.form.adults >= 1 && !this.emailError;
     },
 
+    addToPrefill() {
+      if (!this.foodId) {
+        this.showToast('No food item selected to add', 'error');
+        return;
+      }
+      if (!this.form.meal_period || !this.form.reservation_date || !this.form.reservation_time) {
+        this.showToast('Please select meal period, date and time before adding', 'error');
+        return;
+      }
+
+      const existing = this.prefillItems.find(i => parseInt(i.food_id) === parseInt(this.foodId));
+      if (existing) {
+        // increase quantity
+        existing.quantity = (existing.quantity || 1) + (this.form.adults || 1);
+      } else {
+        this.prefillItems.push({
+          food_id: parseInt(this.foodId),
+          quantity: this.form.adults || 1,
+          meal_period: this.form.meal_period || null,
+          date: this.form.reservation_date || null,
+          time: this.form.reservation_time || null,
+          first_name: this.form.first_name || null,
+          last_name: this.form.last_name || null,
+          email: this.form.email || null,
+          phone: this.form.phone || null,
+          notes: this.form.special_requests || ''
+        });
+      }
+
+      // persist to window so multiple modal openings keep items
+      window.__diningPrefill = this.prefillItems;
+
+      // POST the single added item to server to persist immediately
+      const item = this.prefillItems[this.prefillItems.length - 1];
+      fetch('{{ route("dining.prefill") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ selected_foods: [item], replace: false })
+      }).then(async (resp) => {
+        const data = await resp.json().catch(() => ({}));
+        if (resp.ok && data.success) {
+          this.showToast('Added to selection', 'success');
+        } else {
+          this.showToast(data.message || 'Failed to save selection', 'error');
+        }
+      }).catch(() => {
+        this.showToast('Failed to save selection', 'error');
+      });
+    },
+
+    removeFromPrefill(foodId) {
+      const idx = this.prefillItems.findIndex(i => parseInt(i.food_id || i.food_id) === parseInt(foodId));
+      if (idx === -1) return;
+      this.prefillItems.splice(idx, 1);
+      window.__diningPrefill = this.prefillItems;
+
+      // send replace=true to update session to exact remaining list
+      const payload = { selected_foods: this.prefillItems, replace: true };
+      fetch('{{ route("dining.prefill") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(payload)
+      }).then(async (resp) => {
+        const data = await resp.json().catch(() => ({}));
+        if (resp.ok && data.success) {
+          this.showToast('Removed from selection', 'success');
+        } else {
+          this.showToast(data.message || 'Failed to update selection', 'error');
+        }
+      }).catch(() => {
+        this.showToast('Failed to update selection', 'error');
+      });
+    },
+    changePrefillQty(foodId, delta) {
+      const idx = this.prefillItems.findIndex(i => parseInt(i.food_id) === parseInt(foodId));
+      if (idx === -1) return;
+      const item = this.prefillItems[idx];
+      let qty = parseInt(item.quantity || 1, 10) + delta;
+      if (isNaN(qty) || qty < 1) qty = 1;
+      item.quantity = qty;
+      window.__diningPrefill = this.prefillItems;
+      // send replace update
+      this._postPrefillReplace();
+    },
+
+    updatePrefillQuantity(foodId, qty) {
+      const idx = this.prefillItems.findIndex(i => parseInt(i.food_id) === parseInt(foodId));
+      if (idx === -1) return;
+      let q = parseInt(qty || 1, 10);
+      if (isNaN(q) || q < 1) q = 1;
+      this.prefillItems[idx].quantity = q;
+      window.__diningPrefill = this.prefillItems;
+      this._postPrefillReplace();
+    },
+
+    _postPrefillReplace() {
+      // send replace=true to update session to exact current list
+      const payload = { selected_foods: this.prefillItems, replace: true };
+      fetch('{{ route("dining.prefill") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(payload)
+      }).then(async (resp) => {
+        const data = await resp.json().catch(() => ({}));
+        if (resp.ok && data.success) {
+          this.showToast('Selection updated', 'success');
+        } else {
+          this.showToast(data.message || 'Failed to update selection', 'error');
+        }
+      }).catch(() => {
+        this.showToast('Failed to update selection', 'error');
+      });
+    },
+
     async submitReservation() {
       if (this.isSubmitting) {
         return;
+      }
+      // If user selected overnight stay, redirect to booking flow with prefilled params
+      if (this.reservationMode === 'stay') {
+        // Build payload: prefer multiple selected items if available
+        let payload = {};
+        if (this.prefillItems && this.prefillItems.length > 0) {
+          payload.selected_foods = this.prefillItems.map(i => ({
+            food_id: parseInt(i.food_id),
+            quantity: parseInt(i.quantity || 1),
+            meal_period: i.meal_period || null,
+            date: i.date || null,
+            time: i.time || null,
+            first_name: i.first_name || null,
+            last_name: i.last_name || null,
+            email: i.email || null,
+            phone: i.phone || null,
+            notes: i.notes || ''
+          }));
+        } else {
+          payload = {
+            food_id: this.foodId ? parseInt(this.foodId) : null,
+            meal_period: this.form.meal_period || null,
+            date: this.form.reservation_date || null,
+            time: this.form.reservation_time || null,
+            adults: this.form.adults || 1,
+            first_name: this.form.first_name || null,
+            last_name: this.form.last_name || null,
+            email: this.form.email || null,
+            phone: this.form.phone || null
+          };
+        }
+
+        try {
+          const resp = await fetch('{{ route("dining.prefill") }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await resp.json();
+          if (resp.ok && data.success) {
+            // clear client-side prefill store
+            window.__diningPrefill = [];
+            // Redirect to the staycation booking entry (rooms) which will read session prefill
+            window.location.href = '{{ route("booking.staycation") }}';
+            return;
+          }
+
+          Swal.fire({
+            title: 'Error',
+            text: data.message || 'Failed to prefill booking',
+            icon: 'error',
+            confirmButtonColor: '#97655A'
+          });
+          return;
+        } catch (err) {
+          console.error('Prefill error', err);
+          Swal.fire({
+            title: 'Error',
+            text: 'Failed to save prefilled selection. Please try again.',
+            icon: 'error',
+            confirmButtonColor: '#97655A'
+          });
+          return;
+        }
       }
 
       if (!this.isFormValid()) {

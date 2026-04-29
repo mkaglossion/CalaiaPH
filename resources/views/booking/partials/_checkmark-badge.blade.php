@@ -3,7 +3,10 @@
      x-show="{{ $condition }}" 
      x-transition
      style="display: none;">
-    <div class="w-6 h-6 bg-[#8f5d54] rounded-full flex items-center justify-center shadow">
-        <i class="bi bi-check text-white text-sm font-bold"></i>
+    <div class="relative">
+        <div class="w-6 h-6 bg-[#8f5d54] rounded-full flex items-center justify-center shadow">
+            <i class="bi bi-check text-white text-sm font-bold"></i>
+        </div>
+        {{-- Quantity badge removed per design feedback --}}
     </div>
 </div>
