@@ -82,12 +82,7 @@
         incChildren(idx) { this.rooms[idx].children = Number(this.rooms[idx].children || 0) + 1; this.calculatePrice(); },
         decChildren(idx) { this.rooms[idx].children = Math.max(0, Number(this.rooms[idx].children || 0) - 1); this.calculatePrice(); },
         resetGuests() { this.roomsCount = 1; this.rooms = [{ adults: 1, children: 0 }]; this.calculatePrice(); },
-        isPromoPanelOpen: false,
-        promoCode: '',
-        togglePromoPanel() { this.isPromoPanelOpen = !this.isPromoPanelOpen; },
-        closePromoPanel() { this.isPromoPanelOpen = false; },
-        cancelPromo() { this.promoCode = ''; this.isPromoPanelOpen = false; },
-        applyPromo() { this.isPromoPanelOpen = false; },
+
         estimatedPrice: null,
         isCalculatingPrice: false,
         async calculatePrice() {
@@ -374,12 +369,7 @@
         },
         decPets(idx) { this.rooms[idx].pets = Math.max(0, Number(this.rooms[idx].pets || 0) - 1); this.calculatePrice(); },
         resetGuests() { this.roomsCount = 1; this.rooms = [{ adults: 1, children: 0, pets: 0 }]; this.calculatePrice(); },
-        isPromoPanelOpen: false,
-        promoCode: '',
-        togglePromoPanel() { this.isPromoPanelOpen = !this.isPromoPanelOpen; },
-        closePromoPanel() { this.isPromoPanelOpen = false; },
-        cancelPromo() { this.promoCode = ''; this.isPromoPanelOpen = false; },
-        applyPromo() { this.isPromoPanelOpen = false; },
+
         estimatedPrice: null,
         isCalculatingPrice: false,
         async calculatePrice() {
@@ -1162,10 +1152,10 @@
     @endif
 
       {{-- GUESTS & PROMO --}}
-      <section class="bg-white rounded-2xl shadow-lg p-5 sm:p-6 mb-6 border border-gray-100 hover:shadow-xl transition">
+      <section class="bg-white rounded-2xl shadow-lg p-4 sm:p-5 md:p-6 mb-6 border border-gray-100 hover:shadow-xl transition">
         @if($bookingType === 'daytour')
           {{-- DAY TOUR: Single-line horizontal layout --}}
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-2 sm:gap-4 items-end">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 items-end">
             {{-- DATE FIELD --}}
             <div class="flex flex-col">
               <div class="relative">
@@ -1173,7 +1163,7 @@
                 <input type="text" id="selected-date" name="selected_date" readonly autocomplete="off"
                        class="w-full border border-gray-300 bg-gray-100 rounded-lg pl-10 pr-3 py-2 sm:py-3 text-xs sm:text-sm"
                        x-model="selectedDateDisplay" placeholder="Select date">              </div>
-              <div class="mt-1"><p class="text-xs text-gray-500" style="font-size:13px;">Selected Date</p></div>
+              <div class="mt-1"><p class="text-xs text-gray-500 font-medium">Selected Date</p></div>
             </div>
 
             {{-- GUESTS BUTTON --}}
@@ -1188,7 +1178,7 @@
                 <i class="bi shrink-0" :class="isGuestsPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
               </button>
               <div class="mt-1 block">
-                <p class="text-xs text-gray-500" style="font-size:13px;">Add guests (Adults/Children)</p>
+                <p class="text-xs text-gray-500 font-medium">Add guests (Adults/Children)</p>
               </div>
 
               <div id="guests-panel-daytour" x-show="isGuestsPanelOpen" x-cloak x-transition.origin.top
@@ -1257,44 +1247,7 @@
               </div>
             </div>
 
-            {{-- PROMO CODE --}}
-            <div class="flex flex-col relative" @click.away="closePromoPanel()">
-              <button type="button" @click.stop="togglePromoPanel()"
-                      class="w-full h-10 sm:h-12 border border-gray-300 rounded-lg text-left px-3 sm:px-4 hover:bg-gray-50 transition-colors flex items-center justify-between text-xs sm:text-sm"
-                      :aria-expanded="isPromoPanelOpen.toString()" aria-controls="promo-panel">
-                <div class="flex items-center gap-2 text-gray-700">
-                  <i class="bi bi-ticket-perforated"></i>
-                  <span class="text-sm" x-text="promoCode ? 'Promo Applied' : 'Add Promo Code'"></span>
-                </div>
-                <i class="bi" :class="isPromoPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-              </button>
-              <div class="mt-1"><p class="text-xs text-gray-500" style="font-size:13px;">Enter promo code for discounts</p></div>
 
-              <div id="promo-panel" x-show="isPromoPanelOpen" x-cloak x-transition.origin.top
-                   class="absolute top-full mt-2 z-9999 left-1/2 -translate-x-1/2 w-[min(400px,calc(100vw-1.5rem))] bg-white border border-gray-200 rounded-2xl shadow-xl p-3 sm:p-4">
-                <div class="flex items-start justify-between gap-3 sm:gap-4">
-                  <div>
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-800">Promo Code</h3>
-                    <p class="text-xs text-gray-500">Enter your promo code to get discounts</p>
-                  </div>
-                  <button type="button" class="text-gray-400 hover:text-gray-600 shrink-0" @click="closePromoPanel()">
-                    <i class="bi bi-x-lg"></i>
-                  </button>
-                </div>
-
-                <div class="mt-3">
-                  <input type="text" id="promo-code" name="promo_code" autocomplete="off" x-model.trim="promoCode" placeholder="Add promo code"
-                         class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none text-xs sm:text-sm">
-                </div>
-
-                <div class="mt-3 sm:mt-4 flex gap-2 justify-end">
-                  <button type="button" class="px-3 sm:px-4 py-2 rounded-lg border border-gray-300 hover:border-brand/70 text-xs sm:text-sm"
-                          @click="cancelPromo()">Cancel</button>
-                  <button type="button" class="px-3 sm:px-4 py-2 rounded-lg bg-[#8f5d54] text-white hover:bg-[#7a4e48] text-xs sm:text-sm"
-                          @click="applyPromo()">Apply</button>
-                </div>
-              </div>
-            </div>
 
             {{-- CONTINUE BUTTON (inline for day tour) --}}
             <div class="flex flex-col items-end justify-end">
@@ -1308,8 +1261,9 @@
             </div>
           </div>
         @else
-          {{-- STAYCATION: Different layout --}}
-          <div class="grid grid-cols-1 md:grid-cols-5 gap-2 sm:gap-4">
+          {{-- STAYCATION: Responsive layout --}}
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 items-end">
+            {{-- Check-in Date --}}
             <div class="flex flex-col">
               <div class="relative">
                 <i class="bi bi-calendar3 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
@@ -1317,9 +1271,10 @@
                        class="w-full border border-gray-300 bg-gray-100 rounded-lg pl-10 pr-3 py-2 sm:py-3 text-xs sm:text-sm"
                        x-model="checkinDisplay" placeholder="Select check-in date">
               </div>
-              <div class="mt-1"><p class="text-xs text-gray-500" style="font-size:13px;">Check-in Date</p></div>
+              <div class="mt-1"><p class="text-xs text-gray-500 font-medium">Check-in Date</p></div>
             </div>
 
+            {{-- Check-out Date --}}
             <div class="flex flex-col">
               <div class="relative">
                 <i class="bi bi-calendar3 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
@@ -1327,23 +1282,24 @@
                        class="w-full border border-gray-300 bg-gray-100 rounded-lg pl-10 pr-3 py-2 sm:py-3 text-xs sm:text-sm"
                        x-model="checkoutDisplay" placeholder="Select check-out date">
               </div>
-              <div class="mt-1"><p class="text-xs text-gray-500" style="font-size:13px;">Check-out Date</p></div>
+              <div class="mt-1"><p class="text-xs text-gray-500 font-medium">Check-out Date</p></div>
             </div>
 
-            <div class="flex flex-col">
+            {{-- Number of Nights --}}
+            <div class="flex flex-col sm:col-span-2 lg:col-span-1">
               <div class="relative">
                 <i class="bi bi-clock absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
                 <input type="text" id="nights-count" name="nights_count" readonly autocomplete="off"
                        class="w-full border border-gray-300 bg-gray-100 rounded-lg pl-10 pr-3 py-2 sm:py-3 text-xs sm:text-sm"
                        x-model="nightsText" placeholder="0 nights">
               </div>
-              <div class="mt-1"><p class="text-xs text-gray-500" style="font-size:13px;">Number of Nights</p></div>
+              <div class="mt-1"><p class="text-xs text-gray-500 font-medium">Number of Nights</p></div>
             </div>
 
             {{-- ROOMS & GUESTS (Staycation only) --}}
-            <div class="flex flex-col relative" @click.away="closeGuestsPanel()">
+            <div class="flex flex-col relative sm:col-span-2 lg:col-span-1" @click.away="closeGuestsPanel()">
               <button type="button" @click.stop="toggleGuestsPanel()"
-                      class="w-full h-10 sm:h-12 border border-gray-300 rounded-lg text-left px-3 sm:px-4 hover:bg-gray-50 transition-colors flex items-center justify-between text-xs sm:text-sm"
+                      class="w-full h-10 sm:h-12 md:h-12 border border-gray-300 rounded-lg text-left px-3 sm:px-4 hover:bg-gray-50 transition-colors flex items-center justify-between text-xs sm:text-sm"
                       :aria-expanded="isGuestsPanelOpen.toString()" aria-controls="guests-panel-staycation">
                 <div class="flex items-center gap-2 text-gray-700 min-w-0">
                   <i class="bi bi-people shrink-0"></i>
@@ -1353,7 +1309,7 @@
                 <i class="bi shrink-0" :class="isGuestsPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
               </button>
               <div class="mt-1 block">
-                <p class="text-xs text-gray-500" style="font-size:13px;">Add rooms and guests (Adults/Children)</p>
+                <p class="text-xs text-gray-500 font-medium">Rooms, Adults, Children & Pets</p>
               </div>
 
               <div id="guests-panel-staycation" x-show="isGuestsPanelOpen" x-cloak x-transition.origin.top
@@ -1509,66 +1465,29 @@
               </div>
             </div>
             </div>
+
+            {{-- CONTINUE BUTTON (Staycation) --}}
+            <div class="flex flex-col sm:col-span-2 lg:col-span-1">
+              <button type="button"
+                      class="w-full h-10 sm:h-12 md:h-12 bg-[#8f5d54] text-white rounded-lg font-semibold hover:bg-[#7a4e48] transition flex items-center justify-center gap-2 text-xs sm:text-sm shadow-lg hover:shadow-xl"
+                      @click="continueBooking()">
+                Continue to Rooms <i class="bi bi-arrow-right"></i>
+              </button>
+              <div class="mt-1"><p class="text-xs text-gray-500 font-medium">Proceed to room selection</p></div>
+            </div>
             @endif
 
-            {{-- PROMO CODE (Staycation only) --}}
-            <div class="flex flex-col relative" @click.away="closePromoPanel()">
-              <button type="button" @click.stop="togglePromoPanel()"
-                      class="w-full h-10 sm:h-12 border border-gray-300 rounded-lg text-left px-3 sm:px-4 hover:bg-gray-50 transition-colors flex items-center justify-between text-xs sm:text-sm"
-                      :aria-expanded="isPromoPanelOpen.toString()" aria-controls="promo-panel">
-                <div class="flex items-center gap-2 text-gray-700">
-                  <i class="bi bi-ticket-perforated"></i>
-                  <span class="text-sm" x-text="promoCode ? 'Promo Applied' : 'Add Promo Code'"></span>
-                </div>
-                <i class="bi" :class="isPromoPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-              </button>
-              <div class="mt-1"><p class="text-xs text-gray-500" style="font-size:13px;">Enter promo code for discounts</p></div>
 
-              <div id="promo-panel" x-show="isPromoPanelOpen" x-cloak x-transition.origin.top
-                   class="absolute top-full mt-2 z-9999 left-1/2 -translate-x-1/2 w-[min(400px,calc(100vw-1.5rem))] bg-white border border-gray-200 rounded-2xl shadow-xl p-3 sm:p-4">
-                <div class="flex items-start justify-between gap-3 sm:gap-4">
-                  <div>
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-800">Promo Code</h3>
-                    <p class="text-xs text-gray-500">Enter your promo code to get discounts</p>
-                  </div>
-                <button type="button" class="text-gray-400 hover:text-gray-600 shrink-0" @click="closePromoPanel()">
-                  <i class="bi bi-x-lg"></i>
-                </button>
-              </div>
-
-              <div class="mt-3">
-                <input type="text" id="promo-code" name="promo_code" autocomplete="off" x-model.trim="promoCode" placeholder="Add promo code"
-                       class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none text-xs sm:text-sm">
-              </div>
-
-              <div class="mt-3 sm:mt-4 flex gap-2 justify-end">
-                <button type="button" class="px-3 sm:px-4 py-2 rounded-lg border border-gray-300 hover:border-brand/70 text-xs sm:text-sm"
-                        @click="cancelPromo()">Cancel</button>
-                <button type="button" class="px-3 sm:px-4 py-2 rounded-lg bg-[#8f5d54] text-white hover:bg-[#7a4e48] text-xs sm:text-sm"
-                        @click="applyPromo()">Apply</button>
-              </div>
-            </div>
-            </div>
           </div>
         @endif
 
-        {{-- CENTERED CONTINUE BUTTON (Desktop - Staycation only) --}}
-        @if($bookingType !== 'daytour')
-        <div class="mt-8 hidden md:flex justify-center">
-          <button
-            class="px-10 py-4 bg-[#8f5d54] text-white rounded-xl font-bold text-lg hover:bg-[#7a4e48] transition flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
-            @click="continueBooking()"
-          >
-            Continue to Rooms <i class="bi bi-arrow-right text-xl"></i>
-          </button>
-        </div>
-        @endif
+
       </section>
 
-      {{-- CONTINUE BUTTON (mobile sticky) --}}
-      <div class="md:hidden fixed left-0 right-0 bottom-0 p-4 bg-white border-t border-gray-200 z-40 shadow-lg">
+      {{-- CONTINUE BUTTON (extra small screens sticky) --}}
+      <div class="sm:hidden fixed left-0 right-0 bottom-0 p-3 sm:p-4 bg-white border-t border-gray-200 z-40 shadow-lg">
         <button
-          class="w-full h-12 bg-[#8f5d54] text-white rounded-lg font-bold hover:bg-[#7a4e48] transition flex items-center justify-center gap-2 text-base shadow-md"
+          class="w-full h-12 bg-[#8f5d54] text-white rounded-lg font-bold hover:bg-[#7a4e48] transition flex items-center justify-center gap-2 text-sm sm:text-base shadow-md"
           @click="continueBooking()"
         >
           @if($bookingType === 'daytour')

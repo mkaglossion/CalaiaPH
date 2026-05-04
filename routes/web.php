@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\AdminStaycationsController;
 use App\Http\Controllers\Admin\AdminActivitiesController;
 use App\Http\Controllers\Admin\AdminReportsController;
 use App\Http\Controllers\Admin\AdminPagesController;
+use App\Http\Controllers\PromoCodesController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminPackageBookingsController;
 use App\Http\Controllers\Admin\BookingSettingsController;
@@ -819,9 +820,24 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         return view('admin.help.index');
     })->name('admin.help');
 
+    // ========== Promo Code Management ==========
+    Route::resource('promo-codes', PromoCodesController::class, [
+        'names' => [
+            'index' => 'admin.promo-codes.index',
+            'store' => 'admin.promo-codes.store',
+            'show' => 'admin.promo-codes.show',
+            'update' => 'admin.promo-codes.update',
+            'destroy' => 'admin.promo-codes.destroy',
+        ]
+    ]);
+    Route::patch('promo-codes/{promo_code}/toggle-status', [PromoCodesController::class, 'toggleStatus'])->name('admin.promo-codes.toggle-status');
+
     // ========== Admin Search API ==========
     Route::get('/api/search', [AdminDashboardController::class, 'search'])->name('admin.api.search');
 });
+
+// ========== Public Promo Code Routes ==========
+Route::post('/api/promo-codes/apply', [PromoCodesController::class, 'applyPromoCode'])->name('api.promo-codes.apply');
 
 // ========== API Routes with Rate Limiting ==========
 

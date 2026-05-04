@@ -32,8 +32,7 @@
 
             <input type="hidden" name="guests" :value="totalAdults + totalChildren">
 
-            <!-- Promo code (hidden, still submitted) -->
-            <input type="hidden" name="promo_code" :value="promoCode">
+
 
             <!-- Per-room hidden fields -->
             <template x-for="(room, idx) in rooms" :key="idx">
@@ -44,7 +43,7 @@
                 </div>
             </template>
 
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
                 {{-- COL 1: CHECK-IN --}}
                 <div class="flex flex-col">
                     <div class="relative group">
@@ -271,71 +270,7 @@
                     </div>
                 </div>
 
-                {{-- COL 4: PROMO CODE (DROPDOWN PANEL) --}}
-                <div class="flex flex-col relative" @click.outside="closePromoPanel()">
-                    <button
-                        type="button"
-                        @click="togglePromoPanel()"
-                        class="w-full h-12 md:h-12 border-2 border-gray-300 rounded-lg text-left px-3 md:px-4 hover:border-brand/70 hover:bg-brand/5 transition-all flex items-center justify-between group"
-                        :aria-expanded="isPromoPanelOpen.toString()"
-                        aria-controls="promo-panel"
-                    >
-                        <div class="flex items-center gap-2 text-gray-700 group-hover:text-brand transition">
-                            <i class="bi bi-ticket-perforated text-sm md:text-base"></i>
-                            <span class="text-xs md:text-sm font-medium" x-text="promoCode ? 'Promo Applied ✓' : 'Add Promo Code'"></span>
-                        </div>
-                        <i class="bi transition-transform text-base md:text-lg" :class="isPromoPanelOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-                    </button>
 
-                    <div class="min-h-10px mt-1">
-                        <p class="text-xs text-gray-500 font-medium">
-                            Save with promo codes
-                        </p>
-                    </div>
-
-                    <!-- Promo code dropdown panel -->
-                    <div
-                        id="promo-panel"
-                        x-show="isPromoPanelOpen"
-                        x-cloak
-                        x-transition.origin.top
-                        class="absolute top-full mt-2 z-9999
-                               left-1/2 -translate-x-1/2
-                               w-[min(380px,calc(100vw-2rem))]
-                               bg-white border border-gray-200 rounded-lg sm:rounded-xl shadow-xl p-3 sm:p-4"
-                    >
-                        <div class="flex items-start justify-between gap-4">
-                            <div>
-                                <h3 class="text-base font-semibold text-gray-800">Promo Code:</h3>
-                            </div>
-                            <button type="button" class="text-gray-400 hover:text-gray-600 shrink-0" @click="closePromoPanel()">
-                                <i class="bi bi-x-lg"></i>
-                            </button>
-                        </div>
-
-                        <div class="mt-3 sm:mt-4">
-                            <input
-                                type="text" id="promo_code" name="promo_code" autocomplete="off"
-                                x-model.trim="promoCode"
-                                placeholder="Enter your promo code to get discounts"
-                                class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 focus:ring-2 focus:ring-brand focus:border-brand outline-none text-xs md:text-sm"
-                            >
-                        </div>
-
-                        <div class="mt-3 sm:mt-4 flex flex-col-reverse sm:flex-row gap-2 justify-end">
-                            <button type="button"
-                                    class="px-3 sm:px-4 py-2 rounded-lg border border-gray-300 hover:border-brand/70 text-xs sm:text-sm"
-                                    @click="cancelPromo()">
-                                Cancel
-                            </button>
-                            <button type="button"
-                                    class="px-3 sm:px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 text-xs sm:text-sm"
-                                    @click="applyPromo()">
-                                Apply
-                            </button>
-                        </div>
-                    </div>
-                </div>
 
                 {{-- COL 5: SUBMIT --}}
                 <div class="flex flex-col">
@@ -465,9 +400,8 @@
 
             // Guests/Rooms dropdown panel
             isGuestsPanelOpen: false,
-            toggleGuestsPanel() { 
+            toggleGuestsPanel() {
                 this.isGuestsPanelOpen = !this.isGuestsPanelOpen;
-                if (this.isGuestsPanelOpen) this.isPromoPanelOpen = false;
             },
             closeGuestsPanel() { this.isGuestsPanelOpen = false; },
 
@@ -573,23 +507,7 @@
                 this.isGuestsPanelOpen = false;
             },
 
-            // Promo code
-            isPromoPanelOpen: false,
-            promoCode: '',
 
-            togglePromoPanel() { 
-                this.isPromoPanelOpen = !this.isPromoPanelOpen;
-                if (this.isPromoPanelOpen) this.isGuestsPanelOpen = false;
-            },
-            closePromoPanel() { this.isPromoPanelOpen = false; },
-            cancelPromo() {
-                this.promoCode = '';
-                this.isPromoPanelOpen = false;
-            },
-            applyPromo() {
-                // keep promoCode value for form submit (hidden input)
-                this.isPromoPanelOpen = false;
-            },
 
             checkAvailability() {
                 if (!this.$refs.checkIn?.value || !this.$refs.checkOut?.value) {

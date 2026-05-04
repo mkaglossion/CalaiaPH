@@ -1111,6 +1111,9 @@ class BookingController extends Controller
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
             'payment_method' => 'required|string|in:paymongo,qr,gcash,paymaya,bank,qrph,grab_pay,billease',
+            'applied_promo_id' => 'nullable|exists:promo_codes,id',
+            'applied_promo_code' => 'nullable|string',
+            'applied_discount_amount' => 'nullable|numeric|min:0',
         ]);
 
         $lineItems = [];
@@ -1183,6 +1186,33 @@ class BookingController extends Controller
         Log::info('Line items being sent to PayMongo (in order):', $lineItems);
         Log::info('Calculated grand total (from line items):', ['total' => $grandTotal]);
 
+        // Apply promo code discount if present
+        $promoDiscount = 0;
+        $appliedPromo = null;
+        if ($request->filled('applied_promo_id') && $request->filled('applied_discount_amount')) {
+            $promoDiscount = (float) $request->applied_discount_amount;
+            $grandTotal = max(0, $grandTotal - $promoDiscount);
+
+            // Get promo details and increment usage
+            $appliedPromo = \App\Models\PromoCode::find($request->applied_promo_id);
+            if ($appliedPromo) {
+                $appliedPromo->increment('usage_count');
+            }
+
+            // Add discount line item
+            $lineItems[] = [
+                'name' => 'Promo Code: ' . $request->applied_promo_code,
+                'unit_price' => -$promoDiscount,
+                'quantity' => 1,
+            ];
+
+            Log::info('Promo code applied:', [
+                'code' => $request->applied_promo_code,
+                'discount' => $promoDiscount,
+                'new_total' => $grandTotal
+            ]);
+        }
+
         // Add 12% VAT to the grand total (PHP and PayMongo expect VAT-inclusive amounts)
         $vatService = app(\App\Services\VatService::class);
         $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // false = VAT exclusive (we add VAT)
@@ -1210,6 +1240,9 @@ class BookingController extends Controller
                 'special_requests' => $request->special_requests,
                 'cancellation_policy' => $request->cancellation_policy,
                 'payment_method' => $request->payment_method,
+                'promo_code' => $request->applied_promo_code,
+                'promo_discount' => $promoDiscount,
+                'promo_id' => $request->applied_promo_id,
             ]
         ]);
 

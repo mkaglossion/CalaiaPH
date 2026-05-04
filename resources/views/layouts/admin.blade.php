@@ -132,6 +132,7 @@
           ['title'=>'Pricing','icon'=>'coins','route'=>'admin.pricing.*','sub'=>[
             ['label'=>'Rate Matrix','route'=>'admin.pricingConfig.index'],
           ]],
+          ['title'=>'Promo Codes','icon'=>'ticket','route'=>'admin.promo-codes.index'],
           ['title'=>'Settings','icon'=>'settings','route'=>'admin.settings.*','sub'=>[
             ['label'=>'Profile','route'=>'admin.settings.profile'],
             ['label'=>'Change Password','route'=>'admin.settings.password'],

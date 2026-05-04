@@ -13,8 +13,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
+        <script>
+document.addEventListener('DOMContentLoaded', function() {
 
     });
   </script>
@@ -66,6 +66,11 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
 $selectedActivities = $booking['selected_activities'] ?? [];
 $selectedActivityPackages = $booking['selected_activity_packages'] ?? [];
 @endphp
+
+<script>
+let appliedPromo = null;
+let originalTotal = {{ $vatBreakdown['gross_amount'] }};
+</script>
 
 <body class="bg-[#f5efe7]">
     @if(isset($_GET['activities']))
@@ -251,10 +256,67 @@ $selectedActivityPackages = $booking['selected_activity_packages'] ?? [];
                           Example: "Vegan meal options", "Birthday surprise setup", or accessibility needs.
                         </p>
                       </div>
-                    </div>
+                     </div>
 
-                    {{-- Payment Method --}}
-                    <div class="space-y-3">
+                     {{-- Promo Code --}}
+                     <div class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
+                       <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                         <i class="bi bi-ticket-perforated mr-2 text-blue-600"></i>
+                         Promo Code (Optional)
+                       </h3>
+
+                       <div class="space-y-4">
+                         <div class="flex gap-3">
+                           <div class="flex-1">
+                             <label for="promo_code" class="block text-sm font-medium text-gray-700 mb-2">
+                               Enter Promo Code
+                             </label>
+                             <input
+                               type="text"
+                               id="promo_code"
+                               name="promo_code"
+                               autocomplete="off"
+                               class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors lowercase"
+                               placeholder="Enter your promo code to get discounts"
+                             >
+                           </div>
+                           <div class="flex items-end">
+                             <button
+                               type="button"
+                               id="apply_promo_btn"
+                               onclick="applyPromoCode()"
+                               class="px-4 py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                             >
+                               <i class="bi bi-check-circle"></i>
+                               Apply
+                             </button>
+                           </div>
+                         </div>
+
+                         <div id="promo_status" class="hidden text-sm"></div>
+
+                         <div id="promo_details" class="hidden bg-white border border-gray-200 rounded-lg p-3">
+                           <div class="flex items-center justify-between">
+                             <div>
+                               <p class="font-semibold text-gray-900" id="promo_name"></p>
+                               <p class="text-sm text-gray-600" id="promo_description"></p>
+                             </div>
+                             <div class="text-right">
+                               <p class="text-sm text-gray-500">Discount</p>
+                               <p class="font-semibold text-green-600" id="promo_discount"></p>
+                             </div>
+                           </div>
+                         </div>
+
+                         {{-- Hidden inputs for promo data --}}
+                         <input type="hidden" id="applied_promo_id" name="applied_promo_id">
+                         <input type="hidden" id="applied_promo_code" name="applied_promo_code">
+                         <input type="hidden" id="applied_discount_amount" name="applied_discount_amount">
+                       </div>
+                     </div>
+
+                     {{-- Payment Method --}}
+                     <div class="space-y-3">
                       <h3 class="block text-sm sm:text-base font-medium text-gray-800 mb-1">
                         Payment Method
                       </h3>
@@ -690,215 +752,144 @@ $selectedActivityPackages = $booking['selected_activity_packages'] ?? [];
       <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
       <script>
-document.addEventListener('DOMContentLoaded', function() {
-          // ID Capture state
-          let capturedImage = null;
+function applyPromoCode() {
+    const code = document.getElementById('promo_code').value.trim().toUpperCase();
+    const btn = document.getElementById('apply_promo_btn');
+    const statusEl = document.getElementById('promo_status');
 
-          function isMobileDevice() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-          }
+    if (!code) {
+        showPromoStatus('error', 'Please enter a promo code.');
+        return;
+    }
 
-          function openCamera() {
-            if (isMobileDevice()) {
-              document.getElementById('id-camera-input').click();
-            } else {
-              if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                startCameraStream();
-              } else {
-                document.getElementById('id-file-input').click();
-              }
-            }
-          }
+    // Disable button and show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin"></i> Applying...';
 
-          async function startCameraStream() {
-            try {
-              const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' } 
-              });
-              showCameraModal(stream);
-            } catch (err) {
-              console.error('Camera access denied:', err);
-              document.getElementById('id-file-input').click();
-            }
-          }
+    // Clear previous status
+    statusEl.classList.add('hidden');
 
-          function showCameraModal(stream) {
-            let modal = document.getElementById('camera-modal');
-            if (!modal) {
-              modal = document.createElement('div');
-              modal.id = 'camera-modal';
-              modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
-              modal.innerHTML = `
-                <div class="bg-white rounded-lg p-4 max-w-lg w-full mx-4">
-                  <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Capture ID</h3>
-                    <button id="close-camera" class="text-gray-500 hover:text-gray-700">
-                      <i class="bi bi-x-lg"></i>
-                    </button>
-                  </div>
-                  <div class="relative">
-                    <video id="camera-video" class="w-full rounded-lg" autoplay playsinline></video>
-                    <canvas id="camera-canvas" class="hidden"></canvas>
-                  </div>
-                  <div class="mt-4 flex justify-center">
-                    <button id="btn-snap" class="bg-[#8f5d54] text-white px-6 py-2 rounded-lg hover:bg-[#7a4a42]">
-                      <i class="bi bi-camera"></i> Take Photo
-                    </button>
-                  </div>
-                </div>
-              `;
-              document.body.appendChild(modal);
-            }
+    fetch('{{ route("api.promo-codes.apply") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            code: code,
+            booking_total: originalTotal
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.valid) {
+            appliedPromo = data.promo_code;
 
-            const video = document.getElementById('camera-video');
-            const canvas = document.getElementById('camera-canvas');
-            
-            video.srcObject = stream;
-            video.play();
+            // Update hidden inputs
+            document.getElementById('applied_promo_id').value = data.promo_code.id;
+            document.getElementById('applied_promo_code').value = data.promo_code.code;
+            document.getElementById('applied_discount_amount').value = data.discount_amount;
 
-            document.getElementById('btn-snap').onclick = () => {
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
-              canvas.getContext('2d').drawImage(video, 0, 0);
-              
-              capturedImage = canvas.toDataURL('image/jpeg', 0.9);
-              showPreview(capturedImage);
-              
-              stream.getTracks().forEach(track => track.stop());
-              modal.remove();
-            };
+            // Show promo details
+            document.getElementById('promo_name').textContent = data.promo_code.name;
+            document.getElementById('promo_description').textContent = data.promo_code.code;
+            document.getElementById('promo_discount').textContent = '₱' + data.discount_amount.toFixed(2);
+            document.getElementById('promo_details').classList.remove('hidden');
 
-            document.getElementById('close-camera').onclick = () => {
-              stream.getTracks().forEach(track => track.stop());
-              modal.remove();
-            };
-          }
+            // Update totals display
+            updateTotalsDisplay(data.new_total);
 
-          function showPreview(imageSrc) {
-            document.getElementById('id-preview').src = imageSrc;
-            document.getElementById('preview-container').classList.remove('hidden');
-            // Show success toast for ID upload
-            Swal.fire({
-              icon: 'success',
-              title: 'ID image uploaded',
-              toast: true,
-              position: 'bottom-end',
-              showConfirmButton: false,
-              timer: 2000,
-              timerProgressBar: true
-            });
-          }
+            showPromoStatus('success', data.message + ' You saved ₱' + data.discount_amount.toFixed(2) + '!');
 
-          function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+            // Change button to remove
+            btn.innerHTML = '<i class="bi bi-x-circle"></i> Remove';
+            btn.onclick = removePromoCode;
+            btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            btn.classList.add('bg-red-600', 'hover:bg-red-700');
+        } else {
+            showPromoStatus('error', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error applying promo code:', error);
+        showPromoStatus('error', 'Error applying promo code. Please try again.');
+    })
+    .finally(() => {
+        btn.disabled = false;
+    });
+}
 
-            if (!file.type.startsWith('image/')) {
-              showIdStatus('error', 'Please select an image file.');
-              return;
-            }
+function removePromoCode() {
+    appliedPromo = null;
 
-            if (file.size > 2 * 1024 * 1024) {
-              showIdStatus('error', 'File size must be less than 2MB.');
-              return;
-            }
+    // Clear hidden inputs
+    document.getElementById('applied_promo_id').value = '';
+    document.getElementById('applied_promo_code').value = '';
+    document.getElementById('applied_discount_amount').value = '';
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              capturedImage = e.target.result;
-              showPreview(capturedImage);
-            };
-            reader.readAsDataURL(file);
-          }
+    // Hide promo details
+    document.getElementById('promo_details').classList.add('hidden');
 
-          function showIdStatus(type, message) {
-            const statusEl = document.getElementById('id-status-message');
-            statusEl.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
-            
-            if (type === 'success') {
-              statusEl.classList.add('bg-green-100', 'text-green-700', 'p-3', 'rounded-lg', 'text-sm');
-            } else {
-              statusEl.classList.add('bg-red-100', 'text-red-700', 'p-3', 'rounded-lg', 'text-sm');
-            }
-            
-            statusEl.innerHTML = '<i class="bi bi-' + (type === 'success' ? 'check-circle' : 'exclamation-circle') + ' mr-2"></i>' + message;
-          }
+    // Reset totals
+    updateTotalsDisplay(originalTotal);
 
-          function resetIdCapture() {
-            const hasImage = document.getElementById('id-preview').src && 
-                           document.getElementById('id-preview').src !== window.location.href &&
-                           !document.getElementById('preview-container').classList.contains('hidden');
-            
-            if (hasImage) {
-              // Show confirmation before removing
-              Swal.fire({
-                title: 'Remove ID Image?',
-                text: 'Are you sure you want to remove the uploaded ID image?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, remove',
-                cancelButtonText: 'Cancel',
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#6b7280'
-              }).then((result) => {
-                if (result.isConfirmed) {
-                  performReset();
-                  Swal.fire({
-                    icon: 'info',
-                    title: 'ID image removed',
-                    toast: true,
-                    position: 'bottom-end',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true
-                  });
-                }
-              });
-            } else {
-              performReset();
-            }
-          }
+    // Clear input and status
+    document.getElementById('promo_code').value = '';
+    document.getElementById('promo_status').classList.add('hidden');
 
-          function performReset() {
-            document.getElementById('id-preview').src = '';
-            document.getElementById('preview-container').classList.add('hidden');
-            document.getElementById('id-file-input').value = '';
-            document.getElementById('id-camera-input').value = '';
-            
-            const idError = document.getElementById('id-format-error');
-            if (idError) idError.classList.add('hidden');
-            // ID input removed
-            if (idInput) {
-              idInput.classList.remove('border-red-500');
-              idInput.classList.add('border-gray-300');
-            }
-            if (typeof capturedImage !== 'undefined') {
-              capturedImage = null;
-            }
-          }
+    // Reset button
+    const btn = document.getElementById('apply_promo_btn');
+    btn.innerHTML = '<i class="bi bi-check-circle"></i> Apply';
+    btn.onclick = applyPromoCode;
+    btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+    btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+}
 
+function updateTotalsDisplay(newTotal) {
+    // Update the button total
+    const button = document.querySelector('button[type="submit"]');
+    const totalSpan = button.querySelector('span:last-child');
+    if (totalSpan) {
+        totalSpan.textContent = '₱' + newTotal.toFixed(2);
+    }
 
-          // Bind ID capture events
-          if (document.getElementById('btn-capture')) {
-            document.getElementById('btn-capture').addEventListener('click', openCamera);
-          }
-          if (document.getElementById('btn-upload')) {
-            document.getElementById('btn-upload').addEventListener('click', () => {
-              document.getElementById('id-file-input').click();
-            });
-          }
-          if (document.getElementById('id-file-input')) {
-            document.getElementById('id-file-input').addEventListener('change', handleFileSelect);
-          }
-          if (document.getElementById('id-camera-input')) {
-            document.getElementById('id-camera-input').addEventListener('change', handleFileSelect);
-          }
-          if (document.getElementById('btn-remove-image')) {
-            document.getElementById('btn-remove-image').addEventListener('click', resetIdCapture);
-          }
-        });
+    // Update sidebar grand total
+    const sidebarTotal = document.getElementById('grand-total');
+    if (sidebarTotal) {
+        sidebarTotal.textContent = '₱' + newTotal.toFixed(2);
+    }
 
+    // Update subtotal and VAT in sidebar
+    const subtotal = newTotal / 1.12; // Remove VAT
+    const vatAmount = newTotal - subtotal;
+
+    const sidebarSubtotal = document.getElementById('subtotal');
+    if (sidebarSubtotal) {
+        sidebarSubtotal.textContent = '₱' + subtotal.toFixed(2);
+    }
+
+    const sidebarVat = document.getElementById('vat-amount');
+    if (sidebarVat) {
+        sidebarVat.textContent = '₱' + vatAmount.toFixed(2);
+    }
+}
+
+function showPromoStatus(type, message) {
+    const statusEl = document.getElementById('promo_status');
+    statusEl.classList.remove('hidden', 'text-green-600', 'text-red-600');
+
+    if (type === 'success') {
+        statusEl.classList.add('text-green-600');
+    } else {
+        statusEl.classList.add('text-red-600');
+    }
+
+    statusEl.innerHTML = '<i class="bi bi-' + (type === 'success' ? 'check-circle' : 'exclamation-circle') + ' mr-2"></i>' + message;
+}
       </script>
+
+
 
     </div>
 </body>
