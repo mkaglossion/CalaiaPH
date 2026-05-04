@@ -585,20 +585,19 @@
                 `;
 
                 Swal.fire({
-                    title: 'Confirm Your Booking',
+                    title: 'Review Your Stay Details',
                     html: summaryHtml,
-                    icon: 'info',
-                    iconColor: '#3b82f6',
                     showCancelButton: true,
-                    confirmButtonText: '✓ Proceed to Booking',
+                    confirmButtonText: 'View Available Rooms',
                     confirmButtonColor: '#a75e3e',
                     cancelButtonText: 'Back',
                     cancelButtonColor: '#6b7280',
                     customClass: {
                         container: 'swal-booking-confirm',
                         popup: 'rounded-xl shadow-2xl',
-                        title: 'font-bold text-xl text-gray-900',
+                        title: 'font-bold text-lg md:text-xl text-gray-900',
                         htmlContainer: 'text-left',
+                        actions: 'flex flex-col sm:flex-row gap-2 sm:gap-0',
                         confirmButton: 'font-semibold px-6 py-2.5 rounded-lg transition-all hover:shadow-lg',
                         cancelButton: 'font-semibold px-6 py-2.5 rounded-lg transition-all'
                     },
