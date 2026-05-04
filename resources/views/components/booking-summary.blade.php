@@ -198,7 +198,7 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                                         <span>Accommodation:</span>
                                         <span class="font-semibold">₱{{ number_format($room['accommodation_price'] ?? 0, 0) }}</span>
                                     </div>
-                                    @if($room['pet_price'] ?? 0 > 0)
+                                    @if(($room['pets'] ?? 'no') === 'yes' && (($room['num_pets'] ?? 0) > 0))
                                         <div class="flex justify-between">
                                             <span>Pets:</span>
                                             <span class="font-semibold">₱{{ number_format($room['pet_price'] ?? 0, 0) }}</span>
@@ -208,10 +208,17 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                             </div>
                             @endif
                             
+                            @php
+                                $roomAccommodationPrice = (float)($room['accommodation_price'] ?? 0);
+                                $roomPetPrice = (($room['pets'] ?? 'no') === 'yes' && (($room['num_pets'] ?? 0) > 0))
+                                    ? (float)($room['pet_price'] ?? 0)
+                                    : 0;
+                                $roomDisplayTotal = $roomAccommodationPrice + $roomPetPrice;
+                            @endphp
                             <div class="border-t border-gray-100 pt-2">
                                 <div class="flex justify-between">
                                     <span class="font-semibold text-gray-800">Total:</span>
-                                    <span class="font-bold text-[#8f5d54]">₱{{ number_format($room['total_price'] ?? 0, 0) }}</span>
+                                    <span class="font-bold text-[#8f5d54]">₱{{ number_format($roomDisplayTotal, 0) }}</span>
                                 </div>
                             </div>
                         </div>

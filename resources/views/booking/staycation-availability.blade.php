@@ -2743,6 +2743,71 @@
                         .catch(error => console.error('Failed to fetch VAT rate:', error));
                 },
 
+                hydrateSelectedRoomsFromSession() {
+                    const bookingAccommodations = @json(session('booking.accommodations', []));
+                    const staycations = @json($staycations);
+                    const sessionCheckin = @json(session('booking.checkin'));
+                    const sessionCheckout = @json(session('booking.checkout'));
+
+                    // Always start from empty to prevent stale carry-over
+                    this.selectedRooms = {};
+                    this.editingRoom = null;
+
+                    // Only hydrate if the saved accommodations match the currently rendered date range
+                    const sameDateRange = String(sessionCheckin || '') === String(this.checkin || '')
+                        && String(sessionCheckout || '') === String(this.checkout || '');
+
+                    if (!sameDateRange || !bookingAccommodations || typeof bookingAccommodations !== 'object' || Object.keys(bookingAccommodations).length === 0) {
+                        return;
+                    }
+
+                    const hydrated = {};
+
+                    for (const [roomKey, acc] of Object.entries(bookingAccommodations)) {
+                        const originalId = parseInt(acc.room_id || acc.accommodation_id || (String(roomKey).split('_')[0]), 10);
+                        const instanceNum = parseInt(acc.instance_num || (String(roomKey).includes('_') ? String(roomKey).split('_')[1] : 1), 10);
+                        const compositeKey = instanceNum > 1 ? `${originalId}_${instanceNum}` : String(originalId);
+
+                        const staycation = staycations.find(s => String(s.id) === String(originalId));
+                        const roomName = (staycation && staycation.name) ? staycation.name : (acc.room_name || 'Room');
+
+                        const hydratedRoom = {
+                            id: compositeKey,
+                            originalId: originalId,
+                            instanceNum: instanceNum,
+                            name: roomName,
+                            type: (staycation && staycation.type) ? String(staycation.type).toLowerCase() : '',
+                            adults: parseInt(acc.adults ?? 1, 10) || 1,
+                            children: parseInt(acc.children ?? 0, 10) || 0,
+                            extra_mattress: parseInt(acc.extra_mattress ?? 0, 10) || 0,
+                            pets: (acc.pets === 'yes') ? 'yes' : 'no',
+                            pet_agreement: !!acc.pet_agreement,
+                            num_pets: parseInt(acc.num_pets ?? 0, 10) || 0,
+                            accommodation_price: parseFloat(acc.accommodation_price ?? 0) || 0,
+                        };
+
+                        if (hydratedRoom.pets !== 'yes') {
+                            hydratedRoom.pet_agreement = false;
+                            hydratedRoom.num_pets = 0;
+                        }
+                        if (hydratedRoom.pets === 'yes' && !hydratedRoom.pet_agreement) {
+                            hydratedRoom.num_pets = 0;
+                        }
+
+                        if (staycation) {
+                            hydratedRoom.accommodation_price = this.calculateBasePrice(staycation, hydratedRoom);
+                        }
+
+                        hydrated[compositeKey] = hydratedRoom;
+                    }
+
+                    // Always assign fresh object to avoid stale reactive leftovers
+                    this.selectedRooms = { ...hydrated };
+
+                    const keys = Object.keys(this.selectedRooms);
+                    this.editingRoom = keys.length > 0 ? keys[0] : null;
+                },
+
                 init() {
                     if (window.Echo && window.Echo.channel) {
                         window.Echo.channel('pricing-updates')
@@ -2753,6 +2818,7 @@
 
                     this.fetchBookingSettings();
                     this.fetchVatRate();
+                    this.hydrateSelectedRoomsFromSession();
                 },
 
                 fetchUpdatedPricingData() {

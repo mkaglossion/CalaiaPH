@@ -834,8 +834,8 @@ class BookingController extends Controller
             // Use CENTRALIZED pricing method
             $adults = (int)($acc['adults'] ?? 1);
             $children = (int)($acc['children'] ?? 0);
-            $hasPets = ($acc['pets'] ?? 'no') === 'yes' && ($acc['pet_agreement'] ?? false);
             $numPets = (int)($acc['num_pets'] ?? 0);
+            $hasPets = (($acc['pets'] ?? 'no') === 'yes') && ($numPets > 0);
             
             $pricingResult = $this->calculateCentralizedStaycationPrice(
                 $staycation,
@@ -878,14 +878,18 @@ class BookingController extends Controller
             
             if ($staycation) {
                 // Use centralized pricing method
+                $numPets = (int)($room['num_pets'] ?? 0);
+                $hasPets = (($room['pets'] ?? 'no') === 'yes') && ($numPets > 0);
+
                 $pricingResult = $this->calculateCentralizedStaycationPrice(
                     $staycation,
                     $checkinDate,
                     $checkoutDate,
-                    (int)($room['extra_mattress'] ?? 1), // quantity
-                    (int)($room['extra_mattress'] ?? 0),  // extra mattresses (for regular rooms)
-                    (int)($room['num_pets'] ?? 0),        // number of pets
-                    ($room['pet_agreement'] ?? false)      // has pets?
+                    (int)($room['adults'] ?? 1),
+                    (int)($room['children'] ?? 0),
+                    (int)($room['extra_mattress'] ?? 0),
+                    $numPets,
+                    $hasPets
                 );
                 
                 // Update room with calculated prices
@@ -1699,16 +1703,22 @@ class BookingController extends Controller
                     $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
 
                     // Use CENTRALIZED pricing method for consistency across all booking steps
-                    $quantity = (int)($room['extra_mattress'] ?? ($room['quantity'] ?? 1));
+                    // IMPORTANT: pass real adults/children so pricing + pets are computed correctly
+                    $adults = (int)($room['adults'] ?? 1);
+                    $children = (int)($room['children'] ?? 0);
                     $extraMattresses = !($isBYOT || $isCarCamping) ? (int)($room['extra_mattress'] ?? 0) : 0;
-                    $hasPets = ($room['pets'] ?? 'no') === 'yes' && ($room['pet_agreement'] ?? false);
+
+                    // pets should be charged whenever pets=yes and num_pets>0
+                    // do NOT hard-require pet_agreement for fee computation
                     $numPets = (int)($room['num_pets'] ?? 0);
+                    $hasPets = (($room['pets'] ?? 'no') === 'yes') && ($numPets > 0);
                     
                     $pricingResult = $this->calculateCentralizedStaycationPrice(
                         $staycation,
                         $checkinDate,
                         $checkoutDate,
-                        $quantity,
+                        $adults,
+                        $children,
                         $extraMattresses,
                         $numPets,
                         $hasPets
@@ -1721,7 +1731,6 @@ class BookingController extends Controller
                     $totalPrice = $pricingResult['total_price'];
 
                     // Calculate costs for display
-                    $adults = (int)($room['adults'] ?? 1);
 
                     $normalized[$originalKey] = [
                         'room_id'        => $roomId,
@@ -1731,7 +1740,7 @@ class BookingController extends Controller
                         'adults'         => $adults,
                         'children'       => (int)($room['children'] ?? 0),
                         'extra_mattress' => (int)($room['extra_mattress'] ?? 0),
-                        'quantity'       => $quantity,
+                        'quantity'       => ($isBYOT || $isCarCamping) ? max(1, (int)($room['extra_mattress'] ?? 1)) : ($adults + (int)($room['children'] ?? 0)),
                         'pets'           => ($room['pets'] ?? 'no'),
                         'pet_agreement'  => (bool)($room['pet_agreement'] ?? false),
                         'num_pets'       => $numPets,
@@ -1833,17 +1842,36 @@ class BookingController extends Controller
             }
 
             if ($request->has('check_in') && $request->has('check_out')) {
-                $booking['checkin'] = $request->check_in;
-                $booking['checkout'] = $request->check_out;
+                $newCheckin = $request->check_in;
+                $newCheckout = $request->check_out;
+
+                $oldCheckin = $booking['checkin'] ?? null;
+                $oldCheckout = $booking['checkout'] ?? null;
+                $datesChanged = ($oldCheckin !== $newCheckin) || ($oldCheckout !== $newCheckout);
+
+                $booking['checkin'] = $newCheckin;
+                $booking['checkout'] = $newCheckout;
                 $booking['booking_type'] = 'staycation';
                 $booking['completed_steps'] = [1];
                 $booking['current_step'] = 1;
                 $booking['timestamp'] = now()->timestamp;
+
                 // Store rooms and guests data
                 $booking['rooms_count'] = $request->input('rooms_count', 1);
                 $booking['adults_total'] = $request->input('adults_total', 1);
                 $booking['children_total'] = $request->input('children_total', 0);
                 $booking['rooms'] = $request->input('rooms', [['adults' => 1, 'children' => 0]]);
+
+                // Hard reset downstream selections on new date range
+                if ($datesChanged) {
+                    $booking['accommodations'] = [];
+                    $booking['selected_foods'] = [];
+                    $booking['selected_activities'] = [];
+                    $booking['selected_activity_packages'] = [];
+                    unset($booking['final_totals']);
+                    session()->forget(['selected_foods', 'selected_activities', 'selected_activity_packages']);
+                }
+
                 session(['booking' => $booking]);
                 return redirect()->route('booking.staycationAvailability');
             }
@@ -1947,8 +1975,22 @@ class BookingController extends Controller
             $checkout = $booking['checkout'] ?? now()->addDays(2)->format('Y-m-d');
         }
 
-        // Store dates in session for subsequent requests (preserve existing data)
+        // Store dates in session for subsequent requests
+        // Reset selected accommodations when date range changes to avoid stale room/pet picks across different dates
         $booking = session('booking', []);
+        $previousCheckin = $booking['checkin'] ?? null;
+        $previousCheckout = $booking['checkout'] ?? null;
+        $datesChanged = ($previousCheckin !== $checkin) || ($previousCheckout !== $checkout);
+
+        if ($datesChanged) {
+            $booking['accommodations'] = [];
+            $booking['current_step'] = 1;
+
+            // keep only step 1 as completed on new date selection
+            $completed = $booking['completed_steps'] ?? [];
+            $booking['completed_steps'] = in_array(1, $completed) ? [1] : [];
+        }
+
         $booking['checkin'] = $checkin;
         $booking['checkout'] = $checkout;
         // Preserve dining intent & prefill when provided via query params (from dining modal)
