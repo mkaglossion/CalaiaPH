@@ -210,6 +210,292 @@
             >
                 {{-- LEFT --}}
                 <div class="lg:col-span-2">
+                    {{-- Cancellation Policy (Best Practice UI) --}}
+                    @php
+                      $defaultPolicy = old('cancellation_policy', session('booking.cancellation_policy', 'flexible'));
+                    @endphp
+
+                    <div
+                      class="space-y-4 bg-white rounded-2xl shadow-lg p-6 mb-6"
+                      x-data="{
+                        policy: @js($defaultPolicy),
+                        expanded: null,
+                        policies: {
+                          flexible: {
+                            label: 'Flexible (Best value)',
+                            badge: 'RECOMMENDED',
+                            icon: 'bi-arrow-repeat',
+                            highlight: 'border-amber-300 bg-amber-50/70',
+                            ring: 'ring-amber-200',
+                            bullets: [
+                              '100% refundable - up to 7 days before stay',
+                              '50% refundable - 3-6 days before stay',
+                              'Non-refundable - 0-3 days before stay'
+                            ],
+                            fine: [
+                              'Best for unsure plans—more flexible refund options.',
+                              'Processing time: 3–5 business days after approval.',
+                              'Rebooking: 20% charge if less than 7 days before stay, no charge if more than 7 days.'
+                            ]
+                          },
+                          nonrefundable: {
+                            label: 'Economy (Non-refundable)',
+                            badge: 'LOWEST PRICE',
+                            icon: 'bi-cash',
+                            highlight: 'border-rose-200 bg-rose-50/70',
+                            ring: 'ring-rose-200',
+                            bullets: [
+                              'No cash refund after booking is confirmed',
+                              'You may rebook based on availability (date change rules may apply)'
+                            ],
+                            fine: [
+                              'Best for confirmed travel dates.',
+                              'Fees may apply when changing dates close to check-in.'
+                            ]
+                          }
+                        }
+                      }"
+                    >
+                      <div class="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            <i class="bi bi-calendar-check text-2xl text-[#8f5d54]"></i>
+                            Cancellation Policy
+                          </h3>
+                          <p class="text-sm text-gray-600 mt-1">
+                            Choose the cancellation terms that match your flexibility. Refund tiers are based on <span class="font-semibold">days before check-in</span>.
+                          </p>
+                        </div>
+
+                        <div class="hidden sm:flex items-center gap-2 text-xs text-gray-500">
+                          <span class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1">
+                            <i class="bi bi-shield-check text-green-600"></i>
+                            Clear refund tiers
+                          </span>
+                          <span class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1">
+                            <i class="bi bi-clock-history text-blue-600"></i>
+                            3–5 business days
+                          </span>
+                        </div>
+                      </div>
+
+                      {{-- Server-side error for policy --}}
+                      @error('cancellation_policy')
+                        <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                          {{ $message }}
+                        </div>
+                      @enderror
+
+                      <fieldset class="space-y-3">
+                        <legend class="sr-only">Select cancellation policy</legend>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {{-- Flexible (Recommended) --}}
+                          <label
+                            class="group relative cursor-pointer rounded-2xl border-2 p-5 transition-all hover:shadow-lg"
+                            :class="policy === 'flexible' ? policies.flexible.highlight + ' ring-2 ' + policies.flexible.ring : 'border-gray-200 bg-white hover:border-[#8f5d54]/30'"
+                          >
+                            <input
+                              type="radio"
+                              name="cancellation_policy"
+                              value="flexible"
+                              class="sr-only"
+                              x-model="policy"
+                              required
+                            >
+
+                            <div class="flex items-start justify-between gap-3">
+                              <div class="flex items-start gap-3">
+                                <i class="text-3xl bi" :class="policies.flexible.icon" aria-hidden="true"></i>
+                                <div>
+                                  <div class="flex items-center gap-2">
+                                    <p class="text-sm font-semibold text-gray-900">Flexible</p>
+                                    <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                                      <span x-text="policies.flexible.badge"></span>
+                                    </span>
+                                  </div>
+                                  <p class="text-xs text-gray-600 mt-1">Most flexible refund tiers as dates get closer.</p>
+                                </div>
+                              </div>
+
+                              <div class="flex items-center gap-2">
+                                <span
+                                  class="inline-flex h-6 w-6 items-center justify-center rounded-full border transition"
+                                  :class="policy === 'flexible' ? 'border-amber-400 bg-amber-100 text-amber-700' : 'border-gray-200 bg-white text-gray-400'"
+                                  aria-hidden="true"
+                                >
+                                  <i class="bi bi-check-lg"></i>
+                                </span>
+                              </div>
+                            </div>
+
+                            <div class="mt-4 space-y-2 text-xs text-gray-700">
+                              <div class="rounded-xl border border-amber-200/60 bg-white/60 p-3">
+                                <ul class="space-y-1.5">
+                                  <li class="flex items-start gap-2">
+                                    <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                                      <i class="bi bi-check"></i>
+                                    </span>
+                                    <span><span class="font-semibold">Up to 7 days</span> — 100% refundable</span>
+                                  </li>
+                                  <li class="flex items-start gap-2">
+                                    <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                                      <i class="bi bi-dash"></i>
+                                    </span>
+                                    <span><span class="font-semibold">3–6 days</span> — 50% refundable</span>
+                                  </li>
+                                  <li class="flex items-start gap-2">
+                                    <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-rose-100 text-rose-700">
+                                      <i class="bi bi-x"></i>
+                                    </span>
+                                    <span><span class="font-semibold">0–3 days</span> — Non-refundable</span>
+                                  </li>
+                                </ul>
+                              </div>
+
+                              <button
+                                type="button"
+                                class="inline-flex items-center gap-2 text-xs font-semibold text-gray-700 hover:text-gray-900"
+                                @click.stop="expanded = expanded === 'flexible' ? null : 'flexible'"
+                                :aria-expanded="expanded === 'flexible'"
+                              >
+                                <i class="bi" :class="expanded === 'flexible' ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                                View full terms
+                              </button>
+
+                              <div x-show="expanded === 'flexible'" x-transition class="rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600">
+                                <ul class="list-disc pl-5 space-y-1">
+                                  <li>Refund tier is based on days before check-in (server time).</li>
+                                  <li>Processing time: 3–5 business days after approval (banks may take longer).</li>
+                                  <li>No-show or early departure is non-refundable.</li>
+                                  <li><strong>Rebooking Policy:</strong> 20% charge on all fees if rebooked less than 7 days before stay. No rebooking charge if rebooked more than 7 days before stay.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </label>
+
+                          {{-- Non-refundable --}}
+                          <label
+                            class="group relative cursor-pointer rounded-2xl border-2 p-5 transition-all hover:shadow-lg"
+                            :class="policy === 'nonrefundable' ? policies.nonrefundable.highlight + ' ring-2 ' + policies.nonrefundable.ring : 'border-gray-200 bg-white hover:border-[#8f5d54]/30'"
+                          >
+                            <input
+                              type="radio"
+                              name="cancellation_policy"
+                              value="nonrefundable"
+                              class="sr-only"
+                              x-model="policy"
+                              required
+                            >
+
+                            <div class="flex items-start justify-between gap-3">
+                              <div class="flex items-start gap-3">
+                                <i class="text-3xl bi" :class="policies.nonrefundable.icon" aria-hidden="true"></i>
+                                <div>
+                                  <div class="flex items-center gap-2">
+                                    <p class="text-sm font-semibold text-gray-900">Non-Refundable</p>
+                                    <span class="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+                                      <span x-text="policies.nonrefundable.badge"></span>
+                                    </span>
+                                  </div>
+                                  <p class="text-xs text-gray-600 mt-1">Lowest price for fixed travel plans.</p>
+                                </div>
+                              </div>
+
+                              <div class="flex items-center gap-2">
+                                <span
+                                  class="inline-flex h-6 w-6 items-center justify-center rounded-full border transition"
+                                  :class="policy === 'nonrefundable' ? 'border-rose-400 bg-rose-100 text-rose-700' : 'border-gray-200 bg-white text-gray-400'"
+                                  aria-hidden="true"
+                                >
+                                  <i class="bi bi-check-lg"></i>
+                                </span>
+                              </div>
+                            </div>
+
+                            <div class="mt-4 space-y-2 text-xs text-gray-700">
+                              <div class="rounded-xl border border-rose-200/60 bg-white/60 p-3">
+                                <ul class="space-y-1.5">
+                                  <li class="flex items-start gap-2">
+                                    <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-rose-100 text-rose-700">
+                                      <i class="bi bi-x"></i>
+                                    </span>
+                                    <span class="font-semibold">No refund after booking confirmation</span>
+                                  </li>
+                                  <li class="flex items-start gap-2">
+                                    <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 text-gray-700">
+                                      <i class="bi bi-arrow-repeat"></i>
+                                    </span>
+                                    <span>Rebook options may be available (subject to rules/availability)</span>
+                                  </li>
+                                </ul>
+                              </div>
+
+                              <button
+                                type="button"
+                                class="inline-flex items-center gap-2 text-xs font-semibold text-gray-700 hover:text-gray-900"
+                                @click.stop="expanded = expanded === 'nonrefundable' ? null : 'nonrefundable'"
+                                :aria-expanded="expanded === 'nonrefundable'"
+                              >
+                                <i class="bi" :class="expanded === 'nonrefundable' ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                                View full terms
+                              </button>
+
+                              <div x-show="expanded === 'nonrefundable'" x-transition class="rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600">
+                                <ul class="list-disc pl-5 space-y-1">
+                                  <li>No cash refund for cancellations, no-shows, or early departure.</li>
+                                  <li>Date changes may be allowed depending on availability and lead time.</li>
+                                  <li>Any fare/price difference will be charged upon rebooking.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+                      </fieldset>
+
+                      {{-- Quick summary (what you selected) --}}
+                      <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                          <div>
+                            <p class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                              <i class="bi bi-check2-circle text-green-600"></i>
+                              Selected Policy:
+                              <span class="text-[#8f5d54]" x-text="policy ? (policy === 'standard' ? 'Standard' : (policy === 'flexible' ? 'Flexible' : 'Non-Refundable')) : '—'"></span>
+                            </p>
+                            <p class="text-xs text-gray-600 mt-1">
+                              Tip: Flexible is recommended if your plans might change.
+                            </p>
+                          </div>
+
+                          <div class="text-xs text-gray-600">
+                            <p class="font-semibold text-gray-800">Refund timeline</p>
+                            <p>3–5 business days after approval</p>
+                          </div>
+                        </div>
+
+                        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                          <template x-for="(b, idx) in (policy ? policies[policy].bullets : [])" :key="idx">
+                            <div class="flex items-start gap-2 rounded-xl border border-white bg-white px-3 py-2">
+                              <span class="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-gray-700">
+                                <i class="bi bi-dot"></i>
+                              </span>
+                              <p class="text-xs text-gray-700" x-text="b"></p>
+                            </div>
+                          </template>
+                        </div>
+
+                        <div class="mt-3 text-xs text-gray-600">
+                          <p class="font-semibold text-gray-800 mb-1">Important notes</p>
+                          <ul class="list-disc pl-5 space-y-1">
+                            <li>Peak season dates (e.g., Dec 15–Jan 5, Holy Week & Summer) may have stricter rules.</li>
+                            <li>No-show or early departure is typically non-refundable.</li>
+                            <li>Cancellations must be requested through the booking system.</li>
+                            <li><strong>Rebooking:</strong> 20% charge on all fees if rebooked less than 7 days before stay. No charge if rebooked more than 7 days.</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
                     {{-- Room Slots + Controls --}}
                     <div class="mb-6">
                         {{-- Horizontal Room Slots --}}
@@ -748,7 +1034,8 @@
                                     <span>Per slot pricing - no nightly breakdown</span>
                                 </div>
                             </div>
-                        </div>
+                         </div>
+
 
                         {{-- Buttons --}}
                         <div class="space-y-3">
