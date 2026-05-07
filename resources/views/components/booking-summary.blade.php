@@ -315,9 +315,9 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
         <div class="flex justify-between items-center text-sm border-t border-gray-100 pt-2">
             <span class="text-gray-600">Subtotal:</span>
             @if($showDynamicFood || $showDynamicActivities)
-                <span id="subtotal" class="font-semibold" x-text="calculateSubtotal()"></span>
+                <span class="font-semibold" x-text="calculateSubtotal()"></span>
             @else
-                <span id="subtotal" class="font-semibold">₱{{ number_format($grandTotal, 2) }}</span>
+                <span class="font-semibold">₱{{ number_format($grandTotal, 2) }}</span>
             @endif
         </div>
         
@@ -328,9 +328,9 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                 Includes 12% VAT:
             </span>
             @if($showDynamicFood || $showDynamicActivities)
-            <span id="vat-amount" x-text="calculateVAT()"></span>
+            <span x-text="calculateVAT()"></span>
             @else
-            <span id="vat-amount">₱{{ number_format($vatBreakdown['vat_amount'], 2) }}</span>
+            <span>₱{{ number_format($vatBreakdown['vat_amount'], 2) }}</span>
             @endif
         </div>
         
@@ -338,9 +338,9 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
         <div class="flex justify-between items-center text-lg font-bold border-t border-gray-200 pt-2">
             <span>Grand Total:</span>
             @if($showDynamicFood || $showDynamicActivities)
-                <span id="grand-total" class="text-[#8f5d54]" x-text="calculateTotal()" data-food-total="{{ $foodTotalProp }}"></span>
+                <span class="text-[#8f5d54]" x-text="calculateTotal()" data-food-total="{{ $foodTotalProp }}"></span>
             @else
-                <span id="grand-total" class="text-[#8f5d54]" data-food-total="{{ $foodTotal }}">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
+                <span class="text-[#8f5d54]" data-food-total="{{ $foodTotal }}">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
             @endif
         </div>
         
@@ -399,7 +399,6 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                 <span>Proceed to Payment Without Activities</span>
             </button>
             <button type="button"
-                    id="confirm-btn"
                     class="w-full py-3 rounded-xl font-semibold text-white bg-green-700 hover:bg-green-800 flex items-center justify-center shadow-md transition"
                     :class="(selectedActivities.length + selectedActivityPackages.length) === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'"
                     :disabled="(selectedActivities.length + selectedActivityPackages.length) === 0"

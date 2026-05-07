@@ -51,9 +51,10 @@
                     <!-- Date -->
                     <div>
                         <label for="booking_date" class="block font-semibold text-gray-700 mb-1.5 text-sm">Date *</label>
-                        <input 
-                            type="date" 
+                        <input
+                            type="date"
                             id="booking_date"
+                            name="booking_date"
                             x-model="form.date"
                             :min="getMinDate()"
                             required
@@ -64,9 +65,10 @@
                     <div>
                         <label for="total_guests" class="block font-semibold text-gray-700 mb-1.5 text-sm">Guests *</label>
                         <div class="flex gap-2 items-end">
-                            <input 
-                                type="number" 
+                            <input
+                                type="number"
                                 id="total_guests"
+                                name="total_guests"
                                 x-model.number="form.totalGuests"
                                 min="1"
                                 :max="package.max_guests"
@@ -80,8 +82,9 @@
                     <template x-if="package.sessions && package.sessions.length > 0">
                         <div class="sm:col-span-2">
                             <label for="session" class="block font-semibold text-gray-700 mb-1.5 text-sm">Preferred Time *</label>
-                            <select 
+                            <select
                                 id="session"
+                                name="session"
                                 x-model="form.session"
                                 required
                                 class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 transition">
@@ -103,9 +106,10 @@
                     <!-- First Name -->
                     <div>
                         <label for="first_name" class="block font-semibold text-gray-700 mb-1.5 text-sm">First Name *</label>
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             id="first_name"
+                            name="first_name"
                             x-model="form.firstName"
                             autocomplete="given-name"
                             required

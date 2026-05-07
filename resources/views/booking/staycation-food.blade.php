@@ -11,15 +11,19 @@
 
     @if(config('broadcasting.default') !== 'null')
     <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0-rc2/dist/web/pusher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.5.0/dist/web/pusher.min.js"></script>
     <script>
         window.Pusher = Pusher;
-        window.Echo = new Echo({
-            broadcaster: 'pusher',
-            key: '{{ config('broadcasting.connections.pusher.key') }}',
-            cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
-            encrypted: true
-        });
+        try {
+            window.Echo = new Echo({
+                broadcaster: 'pusher',
+                key: '{{ config('broadcasting.connections.pusher.key') }}',
+                cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
+                encrypted: true
+            });
+        } catch (e) {
+            console.log('Pusher setup failed, continuing without real-time features');
+        }
     </script>
     @endif
 
@@ -159,7 +163,7 @@
                 class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10"
             >
                 {{-- LEFT --}}
-                <div class="lg:col-span-2">
+                <div class="lg:col-span-2 order-2 lg:order-1">
                     @php
                         $packagesSettings = $packagesSettings ?? [
                             'show' => true,
@@ -173,7 +177,7 @@
                     <div class="mb-6 flex items-end gap-3 flex-wrap">
                         <div>
                             <label for="foodCategory" class="block text-sm font-medium text-gray-700 mb-2">Filter by:</label>
-                            <select id="foodCategory" x-model="selectedCategory"
+                            <select id="foodCategory" name="foodCategory" x-model="selectedCategory"
                                     class="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8f5d54] focus:border-[#8f5d54]">
                                 <option value="all">All Items</option>
                                 <option value="messhall">Messhall</option>
@@ -277,61 +281,77 @@
                                                 </div>
                                             @endif
 
-                                            <div class="absolute bottom-4 left-4 z-10">
-                                                <span class="px-3 py-1 bg-[#8f5d54] text-white text-sm font-semibold rounded-full">
-                                                    Messhall
-                                                </span>
-                                            </div>
+                                             <div class="absolute bottom-4 left-4 z-10">
+                                                 <span class="px-3 py-1 bg-[#8f5d54] text-white text-sm font-semibold rounded-full">
+                                                     Messhall
+                                                 </span>
+                                             </div>
 
-                                            @if($food->is_inventory_managed)
-                                                <div class="absolute bottom-4 right-4 z-10">
-                                                    @if($food->stock_quantity <= 0)
-                                                        <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full">
-                                                            Out of Stock
-                                                        </span>
-                                                    @elseif($food->stock_quantity <= 5)
-                                                        <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full animate-pulse">
-                                                            Only {{ $food->stock_quantity }} left
-                                                        </span>
-                                                    @elseif($food->stock_quantity <= 10)
-                                                        <span class="availability-badge px-2 py-1 bg-orange-600 text-white text-xs font-semibold rounded-full">
-                                                            {{ $food->stock_quantity }} left
-                                                        </span>
-                                                    @else
-                                                        <span class="availability-badge px-2 py-1 bg-black/70 text-white text-xs font-semibold rounded-full">
-                                                            {{ $food->stock_quantity }} available
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            @endif
-                                        </div>
+                                             @if($food->is_inventory_managed)
+                                                 <div class="absolute bottom-4 right-4 z-10">
+                                                     @if($food->stock_quantity <= 0)
+                                                         <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full">
+                                                             Out of Stock
+                                                         </span>
+                                                     @elseif($food->stock_quantity <= 5)
+                                                         <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full animate-pulse">
+                                                             Only {{ $food->stock_quantity }} left
+                                                         </span>
+                                                     @elseif($food->stock_quantity <= 10)
+                                                         <span class="availability-badge px-2 py-1 bg-orange-600 text-white text-xs font-semibold rounded-full">
+                                                             {{ $food->stock_quantity }} left
+                                                         </span>
+                                                     @else
+                                                         <span class="availability-badge px-2 py-1 bg-black/70 text-white text-xs font-semibold rounded-full">
+                                                             {{ $food->stock_quantity }} available
+                                                         </span>
+                                                     @endif
+                                                 </div>
+                                             @endif
+                                         </div>
 
-                                        <div class="p-6">
-                                            <h3 class="text-xl font-bold mb-2">{{ $food->name }}</h3>
+                                         <div class="p-6">
+                                             <h3 class="text-xl font-bold mb-2">{{ $food->name }}</h3>
 
-                                            <div class="mb-3">
-                                                <span class="text-lg font-bold text-[#8f5d54]">
-                                                    ₱{{ number_format($food->price ?? 0, 0, ',', ',') }}
-                                                </span>
-                                            </div>
+                                             <div class="mb-3">
+                                                 <span class="text-lg font-bold text-[#8f5d54]">
+                                                     ₱{{ number_format($food->price ?? 0, 0, ',', ',') }}
+                                                 </span>
+                                             </div>
 
-                                            <p class="text-gray-600 mb-4 text-sm">
-                                                {{ $food->description ?? 'No description available' }}
-                                            </p>
+                                             {{-- Quantity controls for selected food --}}
+                                             <template x-if="isSelected({{ $food->id }})">
+                                                 <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                                                     <div class="flex items-center justify-between gap-4">
+                                                         <div class="flex items-center gap-2">
+                                                             <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="decreaseQty({{ $food->id }})">−</button>
+                                                             <input type="number" min="1" max="20" :id="'food-qty-card-' + {{ $food->id }}" class="w-12 text-center border border-gray-300 rounded-lg py-1 text-sm font-semibold focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54]" :value="getSelectedQuantity({{ $food->id }})" @change.stop="setField({{ $food->id }}, 'quantity', $event.target.value)">
+                                                             <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="increaseQty({{ $food->id }})">+</button>
+                                                         </div>
+                                                         <div class="text-right">
+                                                             <div class="text-lg font-bold text-[#8f5d54]" x-text="'₱' + ({{ $food->price ?? 0 }} * getSelectedQuantity({{ $food->id }})).toLocaleString()"></div>
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                             </template>
 
-                                            <button type="button"
-                                                    class="w-full py-2 rounded-lg font-semibold transition"
-                                                    :class="{
-                                                        'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
-                                                        'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
-                                                        'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
-                                                    }"
-                                                    :disabled="{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'true' : 'false' }}"
-                                                    @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
-                                                <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
-                                                <span x-text="isSelected({{ $food->id }}) ? 'Added to Cart' : '{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'Out of Stock' : 'Add to Cart' }}'"></span>
-                                            </button>
-                                        </div>
+                                             <p class="text-gray-600 mb-4 text-sm">
+                                                 {{ $food->description ?? 'No description available' }}
+                                             </p>
+
+                                             <button type="button"
+                                                     class="w-full py-2 rounded-lg font-semibold transition"
+                                                     :class="{
+                                                         'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
+                                                         'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
+                                                         'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
+                                                     }"
+                                                     :disabled="{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'true' : 'false' }}"
+                                                     @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
+                                                 <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
+                                                 <span x-text="isSelected({{ $food->id }}) ? 'Added to Cart' : '{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'Out of Stock' : 'Add to Cart' }}'"></span>
+                                             </button>
+                                         </div>
                                     </div>
                                 @endforeach
                             </div>
@@ -440,32 +460,48 @@
                                             @endif
                                         </div>
 
-                                        <div class="p-6">
-                                            <h3 class="text-xl font-bold mb-2">{{ $food->name }}</h3>
+                                         <div class="p-6">
+                                             <h3 class="text-xl font-bold mb-2">{{ $food->name }}</h3>
 
-                                            <div class="mb-3">
-                                                <span class="text-lg font-bold text-[#8f5d54]">
-                                                    ₱{{ number_format($food->price ?? 0, 0, ',', ',') }}
-                                                </span>
-                                            </div>
+                                             <div class="mb-3">
+                                                 <span class="text-lg font-bold text-[#8f5d54]">
+                                                     ₱{{ number_format($food->price ?? 0, 0, ',', ',') }}
+                                                 </span>
+                                             </div>
 
-                                            <p class="text-gray-600 mb-4 text-sm">
-                                                {{ $food->description ?? 'No description available' }}
-                                            </p>
+                                             {{-- Quantity controls for selected food --}}
+                                             <template x-if="isSelected({{ $food->id }}) && '{{ $category }}' !== 'special'">
+                                                 <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                                                     <div class="flex items-center justify-between gap-4">
+                                                         <div class="flex items-center gap-2">
+                                                             <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="decreaseQty({{ $food->id }})">−</button>
+                                                             <input type="number" min="1" max="20" :id="'food-qty-card-' + {{ $food->id }}" class="w-12 text-center border border-gray-300 rounded-lg py-1 text-sm font-semibold focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54]" :value="getSelectedQuantity({{ $food->id }})" @change.stop="setField({{ $food->id }}, 'quantity', $event.target.value)">
+                                                             <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="increaseQty({{ $food->id }})">+</button>
+                                                         </div>
+                                                         <div class="text-right">
+                                                             <div class="text-lg font-bold text-[#8f5d54]" x-text="'₱' + ({{ $food->price ?? 0 }} * getSelectedQuantity({{ $food->id }})).toLocaleString()"></div>
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                             </template>
 
-                                            <button type="button"
-                                                    class="w-full py-2 rounded-lg font-semibold transition"
-                                                    :class="{
-                                                        'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
-                                                        'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
-                                                        'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
-                                                    }"
-                                                    :disabled="{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'true' : 'false' }}"
-                                                    @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
-                                                <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
-                                                <span x-text="isSelected({{ $food->id }}) ? 'Added to Cart' : '{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'Out of Stock' : 'Add to Cart' }}'"></span>
-                                            </button>
-                                        </div>
+                                             <p class="text-gray-600 mb-4 text-sm">
+                                                 {{ $food->description ?? 'No description available' }}
+                                             </p>
+
+                                             <button type="button"
+                                                     class="w-full py-2 rounded-lg font-semibold transition"
+                                                     :class="{
+                                                         'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
+                                                         'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
+                                                         'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
+                                                     }"
+                                                     :disabled="{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'true' : 'false' }}"
+                                                     @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
+                                                 <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
+                                                 <span x-text="isSelected({{ $food->id }}) ? 'Added to Cart' : '{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'Out of Stock' : 'Add to Cart' }}'"></span>
+                                             </button>
+                                         </div>
                                     </div>
                                 @endforeach
                             </div>
@@ -586,7 +622,7 @@
                 </div>
 
                 {{-- RIGHT SIDEBAR --}}
-                <div class="lg:col-span-1">
+                <div class="lg:col-span-1 order-1 lg:order-2">
                     @php
                         // Calculate food total for display in summary
                         $displayFoodTotal = 0;
@@ -890,6 +926,35 @@
 
                 formatCurrency(amount) {
                     return '₱' + Number(amount).toLocaleString();
+                },
+
+                decreasePackageQty(packageId) {
+                    const pkg = this.selectedFoods.find(f => f.is_package && f.package_id === packageId);
+                    if (pkg && pkg.quantity > 1) pkg.quantity--;
+                },
+
+                increasePackageQty(packageId) {
+                    const pkg = this.selectedFoods.find(f => f.is_package && f.package_id === packageId);
+                    if (pkg && pkg.quantity < 20) pkg.quantity++;
+                },
+
+                getPackageQuantity(packageId) {
+                    const pkg = this.selectedFoods.find(f => f.is_package && f.package_id === packageId);
+                    return pkg ? pkg.quantity || 1 : 1;
+                },
+
+                setPackageField(packageId, field, value) {
+                    const pkg = this.selectedFoods.find(f => f.is_package && f.package_id === packageId);
+                    if (!pkg) return;
+
+                    if (field === 'quantity') {
+                        let val = parseInt(value || 1, 10);
+                        if (isNaN(val) || val < 1) val = 1;
+                        if (val > 20) val = 20;
+                        pkg.quantity = val;
+                        return;
+                    }
+                    pkg[field] = value;
                 },
 
                 submitAndProceed(nextUrl = '{{ route("booking.staycationActivities") }}') {

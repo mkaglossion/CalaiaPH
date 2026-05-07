@@ -839,6 +839,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 // ========== Public Promo Code Routes ==========
 Route::post('/api/promo-codes/apply', [PromoCodesController::class, 'applyPromoCode'])->name('api.promo-codes.apply');
 
+
 // ========== API Routes with Rate Limiting ==========
 
 // General API Routes (60 requests per minute)

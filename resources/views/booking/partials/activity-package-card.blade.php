@@ -61,6 +61,22 @@
             <p class="text-gray-600 mb-5 leading-relaxed text-sm">{{ $package->description }}</p>
         @endif
 
+        {{-- Quantity controls for selected packages --}}
+        <template x-if="isActivityPackageSelected({{ $package->id }})">
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="decreaseActivityPackageQty({{ $package->id }})">−</button>
+                        <input type="number" min="1" max="20" :id="'package-qty-card-' + {{ $package->id }}" class="w-12 text-center border border-gray-300 rounded-lg py-1 text-sm font-semibold focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54]" :value="getActivityPackageQuantity({{ $package->id }})" @change.stop="setActivityPackageField({{ $package->id }}, 'quantity', $event.target.value)">
+                        <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="increaseActivityPackageQty({{ $package->id }})">+</button>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-lg font-bold text-[#8f5d54]" x-text="'₱' + ({{ $package->getEffectivePrice() }} * getActivityPackageQuantity({{ $package->id }})).toLocaleString()"></div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
         @if($packageActivities->isNotEmpty())
             <div class="mb-5">
                 <h4 class="text-xs font-semibold uppercase tracking-[0.15em] text-gray-400 mb-2">Includes</h4>

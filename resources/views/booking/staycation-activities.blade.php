@@ -80,11 +80,11 @@
                 class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10"
             >
                 {{-- LEFT --}}
-                <div class="lg:col-span-2">
+                <div class="lg:col-span-2 order-2 lg:order-1">
                     <div class="mb-6 flex items-end gap-3 flex-wrap">
                         <div>
                             <label for="activityCategory" class="block text-sm font-medium text-gray-700 mb-2">Filter by:</label>
-                            <select id="activityCategory" x-model="selectedCategory"
+                            <select id="activityCategory" name="activityCategory" x-model="selectedCategory"
                                     class="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8f5d54] focus:border-[#8f5d54]">
                                 <option value="all">All Items</option>
                                 @foreach($categories as $category)
@@ -150,7 +150,7 @@
                 </div>
 
                 {{-- RIGHT SIDEBAR --}}
-                <div class="lg:col-span-1">
+                <div class="lg:col-span-1 order-1 lg:order-2">
                     @php
                         // Calculate current activities total from selected items
                         $currentActivitiesTotal = 0;
@@ -390,12 +390,12 @@
                 },
 
                 decreaseActivityPackageQty(packageId) {
-                    const pkg = this.selectedActivityPackages.find(p => p.package_id === packageId);
+                    const pkg = this.selectedActivityPackages.find(p => p.package_id === String(packageId));
                     if (pkg && pkg.quantity > 1) pkg.quantity--;
                 },
 
                 increaseActivityPackageQty(packageId) {
-                    const pkg = this.selectedActivityPackages.find(p => p.package_id === packageId);
+                    const pkg = this.selectedActivityPackages.find(p => p.package_id === String(packageId));
                     if (pkg && pkg.quantity < 20) pkg.quantity++;
                 },
 
@@ -413,12 +413,12 @@
                 },
 
                 decreaseActivityGuests(activityId) {
-                    const activity = this.selectedActivities.find(a => a.id === activityId);
+                    const activity = this.selectedActivities.find(a => a.id === String(activityId));
                     if (activity && activity.guests > 1) activity.guests--;
                 },
 
                 increaseActivityGuests(activityId) {
-                    const activity = this.selectedActivities.find(a => a.id === activityId);
+                    const activity = this.selectedActivities.find(a => a.id === String(activityId));
                     if (activity && activity.guests < 20) activity.guests++;
                 },
 
@@ -437,6 +437,16 @@
 
                 formatCurrency(amount) {
                     return '₱' + Number(amount).toLocaleString();
+                },
+
+                getActivityGuests(activityId) {
+                    const activity = this.selectedActivities.find(a => a.id === String(activityId));
+                    return activity ? activity.guests || 1 : 1;
+                },
+
+                getActivityPackageQuantity(packageId) {
+                    const pkg = this.selectedActivityPackages.find(p => p.package_id === String(packageId));
+                    return pkg ? pkg.quantity || 1 : 1;
                 }
             }
         }

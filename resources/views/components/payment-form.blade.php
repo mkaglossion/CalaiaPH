@@ -279,6 +279,7 @@
           >
             <input
               type="radio"
+              id="cancellation_policy_standard"
               name="cancellation_policy"
               value="standard"
               class="sr-only"
@@ -362,6 +363,7 @@
           >
             <input
               type="radio"
+              id="cancellation_policy_flexible"
               name="cancellation_policy"
               value="flexible"
               class="sr-only"
@@ -457,6 +459,7 @@
           >
             <input
               type="radio"
+              id="cancellation_policy_nonrefundable"
               name="cancellation_policy"
               value="nonrefundable"
               class="sr-only"

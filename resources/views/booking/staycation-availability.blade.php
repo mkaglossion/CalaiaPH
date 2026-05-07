@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     @if(config('broadcasting.default') !== 'null')
-        <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.5.0/dist/web/pusher.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
         <script>
             window.Echo = new Echo({
@@ -209,7 +209,7 @@
                 class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10"
             >
                 {{-- LEFT --}}
-                <div class="lg:col-span-2">
+                <div class="lg:col-span-2 order-2 lg:order-1">
                     {{-- Cancellation Policy (Best Practice UI) --}}
                     @php
                       $defaultPolicy = old('cancellation_policy', session('booking.cancellation_policy', 'flexible'));
@@ -297,6 +297,7 @@
                           >
                             <input
                               type="radio"
+                              id="cancellation_policy_flexible"
                               name="cancellation_policy"
                               value="flexible"
                               class="sr-only"
@@ -381,6 +382,7 @@
                           >
                             <input
                               type="radio"
+                              id="cancellation_policy_nonrefundable"
                               name="cancellation_policy"
                               value="nonrefundable"
                               class="sr-only"
@@ -679,6 +681,128 @@
                                         {{ $roomDetail['description'] }}
                                     </p>
 
+                                    {{-- Guest controls if selected --}}
+                                    <div x-show="isSelected({{ $staycation->id }})" x-transition class="mb-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                        {{-- BYOT/Car Camping Quantity --}}
+                                        <template x-if="getSelectedRoom({{ $staycation->id }}) && (getSelectedRoom({{ $staycation->id }}).name.toLowerCase().includes('byot') || getSelectedRoom({{ $staycation->id }}).name.toLowerCase().includes('bring your own tent'))">
+                                            <div class="mb-3">
+                                                <label :for="'byot-qty-card-' + {{ $staycation->id }}" class="block text-sm font-semibold text-gray-700 mb-1">BYOT Quantity</label>
+                                                <input type="number" min="1"
+                                                       :id="'byot-qty-card-' + {{ $staycation->id }}" :name="'byot-qty-card-' + {{ $staycation->id }}"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                       x-model.number="getSelectedRoom({{ $staycation->id }}).extra_mattress"
+                                                       @change="validateQuantity({{ $staycation->id }}, 'extra_mattress', getSelectedRoom({{ $staycation->id }}).extra_mattress, roomDetailsMap[{{ $staycation->id }}]?.available_quantity || 8)"
+                                                       @click.stop
+                                                >
+                                                <span class="text-xs text-gray-500 mt-1 block" x-text="'Available: ' + (roomDetailsMap[{{ $staycation->id }}]?.available_quantity || 8)"></span>
+                                            </div>
+                                        </template>
+                                        <template x-if="getSelectedRoom({{ $staycation->id }}) && getSelectedRoom({{ $staycation->id }}).name.toLowerCase().includes('car camping')">
+                                            <div class="mb-3">
+                                                <label :for="'car-qty-card-' + {{ $staycation->id }}" class="block text-sm font-semibold text-gray-700 mb-1">Number of Vehicles</label>
+                                                <input type="number" min="1"
+                                                       :id="'car-qty-card-' + {{ $staycation->id }}" :name="'car-qty-card-' + {{ $staycation->id }}"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                       x-model.number="getSelectedRoom({{ $staycation->id }}).extra_mattress"
+                                                       @change="validateQuantity({{ $staycation->id }}, 'extra_mattress', getSelectedRoom({{ $staycation->id }}).extra_mattress, roomDetailsMap[{{ $staycation->id }}]?.available_quantity || 8)"
+                                                       @click.stop
+                                                >
+                                                <span class="text-xs text-gray-500 mt-1 block" x-text="'Available: ' + (roomDetailsMap[{{ $staycation->id }}]?.available_quantity || 8)"></span>
+                                            </div>
+                                        </template>
+
+                                        {{-- Regular Rooms: Adults/Children --}}
+                                        <template x-if="getSelectedRoom({{ $staycation->id }}) && !getSelectedRoom({{ $staycation->id }}).name.toLowerCase().includes('byot') && !getSelectedRoom({{ $staycation->id }}).name.toLowerCase().includes('bring your own tent') && !getSelectedRoom({{ $staycation->id }}).name.toLowerCase().includes('car camping')">
+                                            <div class="mb-3">
+                                                <div class="grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <label :for="'adults-card-' + {{ $staycation->id }}" class="block text-sm font-semibold text-gray-700 mb-1">Adults</label>
+                                                        <input type="number" min="1" max="20"
+                                                               :id="'adults-card-' + {{ $staycation->id }}" :name="'adults-card-' + {{ $staycation->id }}"
+                                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                               x-model.number="getSelectedRoom({{ $staycation->id }}).adults"
+                                                               @change="validateAndSetGuests({{ $staycation->id }}, 'adults', getSelectedRoom({{ $staycation->id }}).adults, getSelectedRoom({{ $staycation->id }}).name.toLowerCase())"
+                                                               @click.stop
+                                                        >
+                                                    </div>
+                                                    <div>
+                                                        <label :for="'children-card-' + {{ $staycation->id }}" class="block text-sm font-semibold text-gray-700 mb-1">Children</label>
+                                                        <input type="number" min="0" max="20"
+                                                               :id="'children-card-' + {{ $staycation->id }}" :name="'children-card-' + {{ $staycation->id }}"
+                                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                               x-model.number="getSelectedRoom({{ $staycation->id }}).children"
+                                                               @change="validateAndSetGuests({{ $staycation->id }}, 'children', getSelectedRoom({{ $staycation->id }}).children, getSelectedRoom({{ $staycation->id }}).name.toLowerCase())"
+                                                               @click.stop
+                                                        >
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        {{-- Pets (for all room types) --}}
+                                        <div class="mb-3">
+                                            <span class="block text-sm font-semibold text-gray-700 mb-2">Pets</span>
+                                            <div class="flex gap-4">
+                                                <label class="flex items-center gap-2 cursor-pointer">
+                                                    <input type="radio" :name="'pets-card-' + {{ $staycation->id }}" value="no"
+                                                           x-model="getSelectedRoom({{ $staycation->id }}).pets"
+                                                           @change="setField({{ $staycation->id }}, 'pets', 'no')"
+                                                           @click.stop
+                                                           class="text-[#8f5d54] focus:ring-[#8f5d54]">
+                                                    <span class="text-sm">No</span>
+                                                </label>
+                                                <label class="flex items-center gap-2 cursor-pointer">
+                                                    <input type="radio" :name="'pets-card-' + {{ $staycation->id }}" value="yes"
+                                                           x-model="getSelectedRoom({{ $staycation->id }}).pets"
+                                                           @change="setField({{ $staycation->id }}, 'pets', 'yes')"
+                                                           @click.stop
+                                                           class="text-[#8f5d54] focus:ring-[#8f5d54]">
+                                                    <span class="text-sm">Yes</span>
+                                                </label>
+                                            </div>
+                                            <div x-show="getSelectedRoom({{ $staycation->id }}).pets === 'yes'" class="mt-2">
+                                                <label class="flex items-start gap-2 mb-2 cursor-pointer">
+                                                    <input type="checkbox"
+                                                           :id="'pet-agreement-card-' + {{ $staycation->id }}" :name="'pet_agreement_card_' + {{ $staycation->id }}"
+                                                           x-model="getSelectedRoom({{ $staycation->id }}).pet_agreement"
+                                                           @change="setField({{ $staycation->id }}, 'pet_agreement', getSelectedRoom({{ $staycation->id }}).pet_agreement)"
+                                                           @click.stop
+                                                           class="mt-0.5 text-[#8f5d54] focus:ring-[#8f5d54]">
+                                                    <span class="text-xs text-gray-600">
+                                                        I agree to the <button type="button" @click.stop="petPolicyModal = true" class="text-[#8f5d54] underline">Pet Policy</button>
+                                                    </span>
+                                                </label>
+                                                <label :for="'pets-qty-card-' + {{ $staycation->id }}" class="sr-only">Number of pets</label>
+                                                <input type="number" min="1" placeholder="Number of pets"
+                                                       :id="'pets-qty-card-' + {{ $staycation->id }}" :name="'pets-qty-card-' + {{ $staycation->id }}"
+                                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:bg-gray-100 disabled:text-gray-400"
+                                                       x-model.number="getSelectedRoom({{ $staycation->id }}).num_pets"
+                                                       @change="setField({{ $staycation->id }}, 'num_pets', getSelectedRoom({{ $staycation->id }}).num_pets)"
+                                                       @click.stop
+                                                       :disabled="!getSelectedRoom({{ $staycation->id }}).pet_agreement">
+                                                <div x-show="!getSelectedRoom({{ $staycation->id }}).pet_agreement" class="text-xs text-amber-600 mt-1">
+                                                    <i class="bi bi-exclamation-circle mr-1"></i>Check agreement to enable pets count
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- Price Breakdown --}}
+                                        <div class="text-sm bg-white rounded p-3 border border-gray-200">
+                                            <div class="flex justify-between mb-1">
+                                                <span class="text-gray-600">Accommodation:</span>
+                                                <span class="font-semibold" x-text="getPriceRange(getSelectedRoom({{ $staycation->id }}))"></span>
+                                            </div>
+                                            <div x-show="getSelectedRoom({{ $staycation->id }}).pets === 'yes' && getSelectedRoom({{ $staycation->id }}).num_pets > 0" class="flex justify-between mb-1">
+                                                <span class="text-gray-600">Pets:</span>
+                                                <span class="font-semibold" x-text="'₱' + calculatePetPrice(getSelectedRoom({{ $staycation->id }})).toLocaleString()"></span>
+                                            </div>
+                                            <div class="border-t pt-1 flex justify-between font-semibold">
+                                                <span>Total:</span>
+                                                <span class="text-green-600" x-text="calculateRoomPrice(getSelectedRoom({{ $staycation->id }}))"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     {{-- Get features for modal --}}
                                     @php
                                         $featuresText = $staycation->texts->firstWhere('section', 'features');
@@ -771,7 +895,7 @@
                 </div>
 
                 {{-- RIGHT --}}
-                <div class="lg:col-span-1">
+                <div class="lg:col-span-1 order-1 lg:order-2">
                     <div class="bg-white rounded-2xl shadow-lg p-6">
                         <h3 class="text-xl font-bold mb-6">Booking Summary</h3>
 
@@ -844,15 +968,12 @@
                                 <template x-for="item in Object.values(selectedRooms)" :key="item.id">
                                     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
                                         {{-- Room Header --}}
-                                        <div class="p-3 cursor-pointer hover:bg-gray-50 transition"
-                                             @click="editingRoom === item.id ? editingRoom = null : editingRoom = item.id">
-                                            <div class="flex items-start justify-between gap-3">
-                                                <div class="flex-1">
-                                                    <div class="flex items-center gap-2">
-                                                        <div class="font-semibold text-gray-900 text-sm" x-text="item.name"></div>
-                                                        <i class="bi bi-chevron-down text-xs text-gray-400 transition-transform"
-                                                           :class="editingRoom === item.id ? 'rotate-180' : ''"></i>
-                                                    </div>
+                                         <div class="p-3 bg-gray-50">
+                                             <div class="flex items-start justify-between gap-3">
+                                                 <div class="flex-1">
+                                                     <div class="flex items-center gap-2">
+                                                         <div class="font-semibold text-gray-900 text-sm" x-text="item.name"></div>
+                                                     </div>
                                                     <div class="text-xs text-gray-600 mt-1">
                                                         <template x-if="item.name.toLowerCase().includes('byot') || item.name.toLowerCase().includes('bring your own tent')">
                                                             <span>BYOT Qty: <span class="font-semibold" x-text="item.extra_mattress || 1"></span></span>
@@ -875,120 +996,7 @@
                                             </div>
                                         </div>
 
-                                        {{-- Expandable Edit Section --}}
-                                        <div x-show="editingRoom === item.id" x-transition class="border-t border-gray-100 bg-gray-50 p-3">
-                                            {{-- BYOT/Car Camping Quantity --}}
-                                            <template x-if="item.name.toLowerCase().includes('byot') || item.name.toLowerCase().includes('bring your own tent')">
-                                                <div class="mb-3">
-                                                    <label :for="'byot-qty-' + item.id" class="block text-xs font-semibold text-gray-700 mb-1">BYOT Quantity</label>
-                                                    <input type="number" min="1"
-                                                           :id="'byot-qty-' + item.id" :name="'byot-qty-' + item.id"
-                                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                                           x-model.number="item.extra_mattress"
-                                                           @change="validateQuantity(item.id, 'extra_mattress', item.extra_mattress, roomDetailsMap[item.originalId || item.id]?.available_quantity || 8)"
-                                                    >
-                                                    <span class="text-xs text-gray-500 mt-1 block" x-text="'Available: ' + (roomDetailsMap[item.originalId || item.id]?.available_quantity || 8)"></span>
-                                                </div>
-                                            </template>
-                                            <template x-if="item.name.toLowerCase().includes('car camping')">
-                                                <div class="mb-3">
-                                                    <label :for="'car-qty-' + item.id" class="block text-xs font-semibold text-gray-700 mb-1">Number of Vehicles</label>
-                                                    <input type="number" min="1"
-                                                           :id="'car-qty-' + item.id" :name="'car-qty-' + item.id"
-                                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                                           x-model.number="item.extra_mattress"
-                                                           @change="validateQuantity(item.id, 'extra_mattress', item.extra_mattress, roomDetailsMap[item.originalId || item.id]?.available_quantity || 8)"
-                                                    >
-                                                    <span class="text-xs text-gray-500 mt-1 block" x-text="'Available: ' + (roomDetailsMap[item.originalId || item.id]?.available_quantity || 8)"></span>
-                                                </div>
-                                            </template>
 
-                                            {{-- Regular Rooms: Adults/Children --}}
-                                            <template x-if="!item.name.toLowerCase().includes('byot') && !item.name.toLowerCase().includes('bring your own tent') && !item.name.toLowerCase().includes('car camping')">
-                                                <div class="mb-3">
-                                                    <div class="grid grid-cols-2 gap-2">
-                                                        <div>
-                                                            <label :for="'adults-' + item.id" class="block text-xs font-semibold text-gray-700 mb-1">Adults</label>
-                                                            <input type="number" min="1" max="20"
-                                                                   :id="'adults-' + item.id" :name="'adults-' + item.id"
-                                                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                                                   x-model.number="item.adults"
-                                                                   @change="validateAndSetGuests(item.id, 'adults', item.adults, item.name.toLowerCase())"
-                                                            >
-                                                        </div>
-                                                        <div>
-                                                            <label :for="'children-' + item.id" class="block text-xs font-semibold text-gray-700 mb-1">Children</label>
-                                                            <input type="number" min="0" max="20"
-                                                                   :id="'children-' + item.id" :name="'children-' + item.id"
-                                                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                                                   x-model.number="item.children"
-                                                                   @change="validateAndSetGuests(item.id, 'children', item.children, item.name.toLowerCase())"
-                                                            >
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </template>
-
-                                            {{-- Pets (for regular rooms only) --}}
-                                            <template x-if="!item.name.toLowerCase().includes('byot') && !item.name.toLowerCase().includes('bring your own tent') && !item.name.toLowerCase().includes('car camping')">
-                                                <div class="mb-3">
-                                                    <span class="block text-xs font-semibold text-gray-700 mb-2">Pets</span>
-                                                    <div class="flex gap-4">
-                                                        <label class="flex items-center gap-2 cursor-pointer">
-                                                            <input type="radio" :name="'pets-' + item.id" value="no"
-                                                                   x-model="item.pets"
-                                                                   @change="setField(item.id, 'pets', 'no')"
-                                                                   class="text-[#8f5d54] focus:ring-[#8f5d54]">
-                                                            <span class="text-sm">No</span>
-                                                        </label>
-                                                        <label class="flex items-center gap-2 cursor-pointer">
-                                                            <input type="radio" :name="'pets-' + item.id" value="yes"
-                                                                   x-model="item.pets"
-                                                                   @change="setField(item.id, 'pets', 'yes')"
-                                                                   class="text-[#8f5d54] focus:ring-[#8f5d54]">
-                                                            <span class="text-sm">Yes</span>
-                                                        </label>
-                                                    </div>
-                                                    <div x-show="item.pets === 'yes'" class="mt-2">
-                                                        <label class="flex items-start gap-2 mb-2 cursor-pointer">
-                                                            <input type="checkbox"
-                                                                   x-model="item.pet_agreement"
-                                                                   @change="setField(item.id, 'pet_agreement', item.pet_agreement)"
-                                                                   class="mt-0.5 text-[#8f5d54] focus:ring-[#8f5d54]">
-                                                            <span class="text-xs text-gray-600">
-                                                                I agree to the <button type="button" @click.stop="petPolicyModal = true" class="text-[#8f5d54] underline">Pet Policy</button>
-                                                            </span>
-                                                        </label>
-                                                        <label :for="'pets-qty-' + item.id" class="sr-only">Number of pets</label>
-                                                        <input type="number" min="1" placeholder="Number of pets"
-                                                               :id="'pets-qty-' + item.id" :name="'pets-qty-' + item.id"
-                                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:bg-gray-100 disabled:text-gray-400"
-                                                               x-model.number="item.num_pets"
-                                                               @change="setField(item.id, 'num_pets', item.num_pets)"
-                                                               :disabled="!item.pet_agreement">
-                                                        <div x-show="!item.pet_agreement" class="text-xs text-amber-600 mt-1">
-                                                            <i class="bi bi-exclamation-circle mr-1"></i>Check agreement to enable pets count
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </template>
-
-                                            {{-- Price Breakdown --}}
-                                            <div class="text-xs bg-white rounded p-2 border border-gray-200">
-                                                <div class="flex justify-between mb-1">
-                                                    <span class="text-gray-600">Accommodation:</span>
-                                                    <span class="font-semibold" x-text="getPriceRange(item)"></span>
-                                                </div>
-                                                <div x-show="item.pets === 'yes' && item.num_pets > 0" class="flex justify-between mb-1">
-                                                    <span class="text-gray-600">Pets:</span>
-                                                    <span class="font-semibold" x-text="'₱' + calculatePetPrice(item).toLocaleString()"></span>
-                                                </div>
-                                                <div class="border-t pt-1 flex justify-between font-semibold">
-                                                    <span>Total:</span>
-                                                    <span class="text-green-600" x-text="calculateRoomPrice(item)"></span>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -1927,6 +1935,12 @@
                     });
                 },
 
+                getSelectedRoom(roomId) {
+                    const instances = this.getSelectedRoomInstances(roomId);
+                    if (instances.length === 0) return null;
+                    return this.selectedRooms[instances[0]];
+                },
+
                 selectedCount() {
                     return Object.keys(this.selectedRooms).length;
                 },
@@ -2054,13 +2068,16 @@
                     let children = field === 'children' ? normalizedValue : (currentRoom.children || 0);
                     const totalGuests = adults + children;
 
+                    // For standard/premium rooms, enforce max 6 guests
                     if ((roomName.includes('standard') || roomName.includes('premium')) && totalGuests > 6) {
-                        Swal.fire({
-                            title: 'Guest Limit Exceeded',
-                            text: 'Maximum 6 guests (adults + children) allowed for Standard and Premium rooms',
-                            icon: 'warning',
-                            confirmButtonColor: '#8f5d54'
-                        });
+                        // Adjust the changed field to fit within limit
+                        if (field === 'adults') {
+                            const maxAdults = Math.max(1, 6 - children);
+                            this.setField(roomId, field, maxAdults);
+                        } else if (field === 'children') {
+                            const maxChildren = Math.max(0, 6 - adults);
+                            this.setField(roomId, field, maxChildren);
+                        }
                         return;
                     }
 

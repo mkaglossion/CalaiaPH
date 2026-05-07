@@ -100,7 +100,7 @@ let originalTotal = {{ $vatBreakdown['gross_amount'] }};
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10 pb-12">
           {{-- Main content --}}
-          <div class="lg:col-span-2">
+          <div class="lg:col-span-2 order-2 lg:order-1">
             <div class="flex flex-col">
 
               {{-- Progress indicator --}}
@@ -413,7 +413,7 @@ let originalTotal = {{ $vatBreakdown['gross_amount'] }};
           </div>
 
           {{-- Sidebar: booking summary --}}
-          <div class="lg:col-span-1">
+          <div class="lg:col-span-1 order-1 lg:order-2">
             <x-booking-summary
                 :booking="$booking"
                 :staycations="$staycations"

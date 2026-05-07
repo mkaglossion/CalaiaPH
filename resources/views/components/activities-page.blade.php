@@ -119,7 +119,6 @@
 
                             <button
                                 type="button"
-                                id="confirm-btn"
                                 class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#8f5d54] px-4 sm:px-6 py-3 text-sm font-semibold text-white hover:bg-[#a0675a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled
                             >
@@ -269,6 +268,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="mt-2">
                       <label class="block text-xs text-gray-600 mb-1">Number of Guests</label>
                       <input type="number"
+                        id="activity-guests-${activity.id}"
+                        name="activity_guests_${activity.id}"
                         class="activity-guests w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-[#8f5d54] focus:border-transparent"
                         value="${activity.guests}"
                         min="${minGuests}"

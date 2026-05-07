@@ -233,7 +233,7 @@
                 <div class="flex items-center gap-2">
                   <div class="flex items-center border rounded overflow-hidden">
                     <button type="button" @click="changePrefillQty(item.food_id, -1)" class="px-2 py-1 text-sm">−</button>
-                    <input type="number" min="1" class="w-12 text-center text-sm py-1" x-model.number="item.quantity" @change="updatePrefillQuantity(item.food_id, item.quantity)" />
+                    <input type="number" min="1" id="prefill-qty-${item.food_id}" name="prefill_qty_${item.food_id}" class="w-12 text-center text-sm py-1" x-model.number="item.quantity" @change="updatePrefillQuantity(item.food_id, item.quantity)" />
                     <button type="button" @click="changePrefillQty(item.food_id, 1)" class="px-2 py-1 text-sm">+</button>
                   </div>
                   <button type="button" @click="removeFromPrefill(item.food_id)" class="text-sm text-red-600 hover:underline">Remove</button>

@@ -4,7 +4,7 @@
 
     {{-- Real-time inventory updates via Pusher (disabled if not configured) --}}
     @if(config('broadcasting.default') === 'pusher')
-        <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.5.0/dist/web/pusher.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
         <script>
         // Dynamic VAT rate from admin settings

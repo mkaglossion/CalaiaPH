@@ -23,16 +23,10 @@
                 </button>
             </div>
 
-            {{-- Quantity Controls and Price --}}
-            <div class="flex items-center justify-between gap-4">
-                <div class="flex items-center gap-2">
-                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click="decreaseActivityPackageQty(pkg.package_id)">−</button>
-                    <input type="number" min="1" max="20" class="w-12 text-center border border-gray-300 rounded-lg py-1 text-sm font-semibold focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54]" :value="pkg.quantity" @change="setActivityPackageField(pkg.package_id, 'quantity', $event.target.value)">
-                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click="increaseActivityPackageQty(pkg.package_id)">+</button>
-                </div>
-                <div class="text-right">
-                    <div class="text-lg font-bold text-[#8f5d54]" x-text="'₱' + (pkg.price * pkg.quantity).toLocaleString()"></div>
-                </div>
+            {{-- Display Quantity and Price --}}
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-600">Quantity: <span class="font-semibold" x-text="pkg.quantity"></span></div>
+                <div class="text-lg font-bold text-[#8f5d54]" x-text="'₱' + (pkg.price * pkg.quantity).toLocaleString()"></div>
             </div>
 
             {{-- Included Activities --}}
@@ -69,16 +63,10 @@
             {{-- Unit Price --}}
             <div class="text-sm font-bold text-gray-600" x-text="'₱' + (activity.price || 0).toLocaleString()"></div>
 
-            {{-- Guest Count Controls and Total Price --}}
-            <div class="flex items-center justify-between gap-4">
-                <div class="flex items-center gap-2">
-                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click="decreaseActivityGuests(activity.id)">−</button>
-                    <input type="number" min="1" max="20" class="w-12 text-center border border-gray-300 rounded-lg py-1 text-sm font-semibold focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54]" :value="activity.guests" @change="setActivityField(activity.id, 'guests', $event.target.value)">
-                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click="increaseActivityGuests(activity.id)">+</button>
-                </div>
-                <div class="text-right">
-                    <div class="text-lg font-bold text-[#8f5d54]" x-text="'₱' + ((activity.price || 0) * (activity.guests || 1)).toLocaleString()"></div>
-                </div>
+            {{-- Display Guest Count and Total Price --}}
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-600">Guests: <span class="font-semibold" x-text="activity.guests || 1"></span></div>
+                <div class="text-lg font-bold text-[#8f5d54]" x-text="'₱' + ((activity.price || 0) * (activity.guests || 1)).toLocaleString()"></div>
             </div>
         </div>
         </template>
