@@ -438,7 +438,9 @@ class DayVisitController extends Controller
             foreach ($selectedPackages as $package) {
                 $packageNameToShow = $package['name'] ?? 'Day Visit Package';
                 $pricePerPersonExclusive = (float) ($package['price_per_person'] ?? 0);
-                $pricePerPersonWithVat = round($pricePerPersonExclusive * (1 + 0.12), 2);
+                $vatService = app(\App\Services\VatService::class);
+                $vatRate = $vatService->getCurrentVatRate();
+                $pricePerPersonWithVat = round($pricePerPersonExclusive * (1 + $vatRate), 2);
                 $guests = (int) ($package['guests'] ?? 1);
                 $quantity = (int) ($package['quantity'] ?? 1);
                 
@@ -453,7 +455,9 @@ class DayVisitController extends Controller
             $packageName = isset($bookingData['package']) && !empty($bookingData['package']) ? (string) $bookingData['package'] : 'Day Visit Package';
             
             // Calculate package price with VAT
-            $packagePriceWithVat = round($packagePrice * (1 + 0.12), 2);
+            $vatService = app(\App\Services\VatService::class);
+            $vatRate = $vatService->getCurrentVatRate();
+            $packagePriceWithVat = round($packagePrice * (1 + $vatRate), 2);
             
             // Ensure package price is at least 1 PHP if it's the only item
             if ($packagePriceWithVat < 1 && empty($selectedActivities)) {
@@ -473,7 +477,9 @@ class DayVisitController extends Controller
             if (!empty($activity) && isset($activity['name']) && !empty($activity['name']) && isset($activity['price'])) {
                 $guestCount = (int) ($activity['guests'] ?? 1);
                 $unitPriceExclusive = (float) $activity['price'];
-                $unitPriceWithVat = round($unitPriceExclusive * (1 + 0.12), 2); // Add VAT
+                $vatService = app(\App\Services\VatService::class);
+                $vatRate = $vatService->getCurrentVatRate();
+                $unitPriceWithVat = round($unitPriceExclusive * (1 + $vatRate), 2); // Add VAT
                 $activityName = (string) $activity['name'];
                 $lineItems[] = [
                     'name' => $activityName,

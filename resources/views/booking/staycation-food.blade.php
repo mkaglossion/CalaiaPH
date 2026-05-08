@@ -159,7 +159,7 @@
             </script>
 
             <div
-                x-data="staycationFoodSelection({{ $accommodationTotal }}, {{ $activitiesTotal }}, {{ $nights }}, window.__initialSelected, window.__foodLookup)"
+                x-data="staycationFoodSelection({{ $accommodationTotal }}, {{ $activitiesTotal }}, {{ $nights }}, window.__initialSelected, window.__foodLookup, {{ $vatRate }}, {{ $vatRatePercentage }})"
                 class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10"
             >
                 {{-- LEFT --}}
@@ -666,7 +666,7 @@
     @endif
 
     <script>
-        function staycationFoodSelection(accommodationTotal = 0, activitiesTotal = 0, nights = 1, initialSelected = [], foodLookup = {}) {
+        function staycationFoodSelection(accommodationTotal = 0, activitiesTotal = 0, nights = 1, initialSelected = [], foodLookup = {}, vatRate = 0.0, vatRatePercentage = 0) {
             return {
                 selectedFoods: initialSelected && initialSelected.length ? initialSelected.map(item => {
                     // Normalize server-side prefills to client format
@@ -696,6 +696,8 @@
                 accommodationTotal: accommodationTotal,
                 activitiesTotal: activitiesTotal,
                 nights: nights,
+                vatRate: vatRate,
+                vatRatePercentage: vatRatePercentage,
 
                 toggleFood(foodId, name, category, price) {
                     const index = this.selectedFoods.findIndex(f => f.id === foodId);
@@ -888,7 +890,7 @@
                         foodTotal += food.price * food.quantity; // No nights multiplication
                     });
                     const subtotal = this.accommodationTotal + this.activitiesTotal + foodTotal;
-                    const vat = subtotal * 0.12;
+                    const vat = subtotal * this.vatRate;
                     const grandTotal = subtotal + vat;
                     return '₱' + grandTotal.toLocaleString();
                 },
@@ -908,7 +910,7 @@
                         foodTotal += food.price * food.quantity;
                     });
                     const subtotal = this.accommodationTotal + this.activitiesTotal + foodTotal;
-                    const vat = subtotal * 0.12;
+                    const vat = subtotal * this.vatRate;
                     return '₱' + vat.toLocaleString();
                 },
 

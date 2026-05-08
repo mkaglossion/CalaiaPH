@@ -249,13 +249,10 @@
 
                     <div>
                         <label for="min_booking_amount" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Min Booking Amount</label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₱</span>
-                            <input type="number" step="0.01" min="0" x-model="form.min_booking_amount" id="min_booking_amount" name="min_booking_amount"
-                                   autocomplete="off"
-                                   class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-7 transition"
-                                   placeholder="0.00">
-                        </div>
+                        <input type="number" step="0.01" min="0" x-model="form.min_booking_amount" id="min_booking_amount" name="min_booking_amount"
+                               autocomplete="off"
+                               class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                               placeholder="₱0.00">
                         <p class="mt-1 text-xs text-gray-500">Minimum booking amount to apply discount</p>
                     </div>
                 </div>

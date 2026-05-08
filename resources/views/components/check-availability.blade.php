@@ -566,7 +566,6 @@
                                         <i class="bi bi-arrow-right text-gray-600 text-sm"></i>
                                         <span class="text-sm font-medium text-gray-800">${checkIn}</span>
                                     </span>
-                                    <span class="inline-flex items-center px-2 text-gray-400">→</span>
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-100 border border-gray-300 rounded-lg">
                                         <i class="bi bi-arrow-left text-gray-600 text-sm"></i>
                                         <span class="text-sm font-medium text-gray-800">${checkOut}</span>

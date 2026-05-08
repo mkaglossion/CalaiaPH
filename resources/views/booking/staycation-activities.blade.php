@@ -76,7 +76,7 @@
             </div>
 
             <div
-                x-data="staycationActivitiesSelection({{ $accommodationTotal }}, {{ $foodTotal }}, {{ $nights }})"
+                x-data="staycationActivitiesSelection({{ $accommodationTotal }}, {{ $foodTotal }}, {{ $nights }}, {{ $vatRate }}, {{ $vatRatePercentage }})"
                 class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10"
             >
                 {{-- LEFT --}}
@@ -181,7 +181,7 @@
     </div>
 
     <script>
-        function staycationActivitiesSelection(accommodationTotal = 0, foodTotal = 0, nights = 1) {
+        function staycationActivitiesSelection(accommodationTotal = 0, foodTotal = 0, nights = 1, vatRate = 0.0, vatRatePercentage = 0) {
             return {
                 selectedActivities: [],
                 selectedActivityPackages: [],
@@ -189,6 +189,8 @@
                 accommodationTotal: accommodationTotal,
                 foodTotal: foodTotal,
                 nights: nights,
+                vatRate: vatRate,
+                vatRatePercentage: vatRatePercentage,
 
                 toggleActivity(activityId, name, category, price) {
                     const id = String(activityId);
@@ -371,7 +373,7 @@
                         total += (pkg.price || 0) * (pkg.quantity || 1);
                     });
                     // Calculate 12% VAT on subtotal
-                    const vat = total * 0.12;
+                    const vat = total * this.vatRate;
                     return '₱' + vat.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 },
 

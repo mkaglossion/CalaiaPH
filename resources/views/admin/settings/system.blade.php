@@ -72,7 +72,7 @@
 
                     <div>
                         <label for="vat_rate" class="block text-sm font-medium text-gray-700 mb-1">VAT Rate (%)</label>
-                        <input type="number" id="vat_rate" name="vat_rate" value="{{ $settings['vat_rate'] ?? '12' }}" step="0.01" min="0" max="100"
+                        <input type="number" id="vat_rate" name="vat_rate" value="{{ $settings['vat_rate'] ?? '0' }}" step="0.01" min="0" max="100"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             required>
                         @error('vat_rate') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
@@ -116,7 +116,7 @@
                         <input type="hidden" name="business_hours_start" value="{{ $settings['business_hours_start'] ?? '06:00' }}">
                         <input type="hidden" name="business_hours_end" value="{{ $settings['business_hours_end'] ?? '22:00' }}">
                         <input type="hidden" name="enable_new_bookings" value="{{ $settings['enable_new_bookings'] ?? '1' }}">
-                        <input type="hidden" name="vat_rate" value="{{ $settings['vat_rate'] ?? '12' }}">
+                        <input type="hidden" name="vat_rate" value="{{ $settings['vat_rate'] ?? '0' }}">
                         <input type="hidden" name="maintenance_message" value="{{ $settings['maintenance_message'] ?? '' }}">
                         <input type="hidden" name="system_maintenance" value="{{ $isMaintenanceActive ? '0' : '1' }}">
                         <button type="submit" class="inline-flex items-center px-4 py-2 rounded-lg transition {{ $isMaintenanceActive ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-red-600 text-white hover:bg-red-700' }}">

@@ -21,7 +21,7 @@ class AdminSystemSettingsController extends Controller
             'business_hours_start' => '06:00',
             'business_hours_end' => '22:00',
             'enable_new_bookings' => true,
-            'vat_rate' => 12,
+            'vat_rate' => 0,
             'system_maintenance' => false,
             'maintenance_message' => '',
         ]);

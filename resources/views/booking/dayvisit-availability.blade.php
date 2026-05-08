@@ -8,16 +8,16 @@
         <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
         <script>
         // Dynamic VAT rate from admin settings
-        let dynamicVatRate = 0.12; // Default to 12%
-        let dynamicVatRatePercentage = 12;
+        let dynamicVatRate = 0.0; // Default to 0%
+        let dynamicVatRatePercentage = 0;
 
         // Fetch VAT rate from API
         function fetchVatRateForDayVisit() {
             fetch('/api/vat-rate')
                 .then(response => response.json())
                 .then(data => {
-                    dynamicVatRate = data.rate || 0.12;
-                    dynamicVatRatePercentage = data.rate_percentage || 12;
+                    dynamicVatRate = data.rate || 0.0;
+                    dynamicVatRatePercentage = data.rate_percentage || 0;
                     // Update the VAT label
                     document.getElementById('vat-label').textContent = `${dynamicVatRatePercentage}% VAT`;
                     // Recalculate totals with new VAT rate
@@ -45,8 +45,8 @@
             fetch('/api/vat-rate')
                 .then(response => response.json())
                 .then(data => {
-                    dynamicVatRate = data.rate || 0.12;
-                    dynamicVatRatePercentage = data.rate_percentage || 12;
+                    dynamicVatRate = data.rate || 0.0;
+                    dynamicVatRatePercentage = data.rate_percentage || 0;
                     document.getElementById('vat-label').textContent = `${dynamicVatRatePercentage}% VAT`;
                     updateSummaryFromSelected();
                 })

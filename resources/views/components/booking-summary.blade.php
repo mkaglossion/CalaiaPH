@@ -312,42 +312,42 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
         @endif
         
         {{-- Subtotal (before VAT) --}}
-        <div class="flex justify-between items-center text-sm border-t border-gray-100 pt-2">
+        <!-- <div class="flex justify-between items-center text-sm border-t border-gray-100 pt-2">
             <span class="text-gray-600">Subtotal:</span>
             @if($showDynamicFood || $showDynamicActivities)
                 <span class="font-semibold" x-text="calculateSubtotal()"></span>
             @else
                 <span class="font-semibold">₱{{ number_format($grandTotal, 2) }}</span>
             @endif
-        </div>
-        
+        </div> -->
+
         {{-- VAT Included Breakdown --}}
-        <div class="flex justify-between items-center text-sm text-gray-500">
+        <!-- <div class="flex justify-between items-center text-sm text-gray-500">
             <span>
                 <i class="bi bi-info-circle text-gray-400 text-xs cursor-help" title="Value Added Tax as per Philippine TRAIN Law"></i>
-                Includes 12% VAT:
+<x-vat-label />
             </span>
             @if($showDynamicFood || $showDynamicActivities)
             <span x-text="calculateVAT()"></span>
             @else
             <span>₱{{ number_format($vatBreakdown['vat_amount'], 2) }}</span>
             @endif
-        </div>
-        
+        </div> -->
+
         {{-- Grand Total --}}
         <div class="flex justify-between items-center text-lg font-bold border-t border-gray-200 pt-2">
             <span>Grand Total:</span>
             @if($showDynamicFood || $showDynamicActivities)
                 <span class="text-[#8f5d54]" x-text="calculateTotal()" data-food-total="{{ $foodTotalProp }}"></span>
             @else
-                <span class="text-[#8f5d54]" data-food-total="{{ $foodTotal }}">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
+                <span id="grand-total" class="text-[#8f5d54]" data-food-total="{{ $foodTotal }}">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
             @endif
         </div>
         
         {{-- VAT Note --}}
-        <p class="text-xs text-gray-500 italic text-center mt-2">
+        <!--<p class="text-xs text-gray-500 italic text-center mt-2">
             * All prices are VAT-inclusive as required by Philippine tax regulations.
-        </p>
+        </p>-->
     </div>
     @endif
 

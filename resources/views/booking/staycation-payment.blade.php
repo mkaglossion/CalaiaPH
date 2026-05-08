@@ -58,9 +58,10 @@ $activitiesTotal = $booking['final_totals']['activities_total'] ?? 0;
 $foodTotal = $booking['final_totals']['food_total'] ?? 0;
 $grandTotal = $booking['final_totals']['grand_total'] ?? 0;
 
-// Calculate VAT breakdown using VatService (12% Philippine VAT)
+// Calculate VAT breakdown using VatService (dynamic VAT rate)
 $vatService = app(\App\Services\VatService::class);
 $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // false = VAT exclusive
+$vatRate = $vatService->getCurrentVatRate();
 
 // Get selected activities from session
 $selectedActivities = $booking['selected_activities'] ?? [];
@@ -70,6 +71,7 @@ $selectedActivityPackages = $booking['selected_activity_packages'] ?? [];
 <script>
 let appliedPromo = null;
 let originalTotal = {{ $vatBreakdown['gross_amount'] }};
+let vatRate = {{ $vatRate }};
 </script>
 
 <body class="bg-[#f5efe7]">
@@ -271,14 +273,14 @@ let originalTotal = {{ $vatBreakdown['gross_amount'] }};
                              <label for="promo_code" class="block text-sm font-medium text-gray-700 mb-2">
                                Enter Promo Code
                              </label>
-                             <input
-                               type="text"
-                               id="promo_code"
-                               name="promo_code"
-                               autocomplete="off"
-                               class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors lowercase"
-                               placeholder="Enter your promo code to get discounts"
-                             >
+                              <input
+                                type="text"
+                                id="promo_code"
+                                name="promo_code"
+                                autocomplete="off"
+                                class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                                placeholder="Enter your promo code to get discounts"
+                              >
                            </div>
                            <div class="flex items-end">
                              <button
@@ -316,7 +318,7 @@ let originalTotal = {{ $vatBreakdown['gross_amount'] }};
                      </div>
 
                      {{-- Payment Method --}}
-                     <div class="space-y-3">
+                     <!--<div class="space-y-3">
                       <h3 class="block text-sm sm:text-base font-medium text-gray-800 mb-1">
                         Payment Method
                       </h3>
@@ -364,7 +366,7 @@ let originalTotal = {{ $vatBreakdown['gross_amount'] }};
                           <i class="fa-solid fa-mobile-screen-button text-gray-300 text-sm ml-auto"></i>
                         </label>
                       </div>
-                    </div>
+                    </div>-->
 
                     {{-- Booking Terms & Policy Agreement --}}
                     <div class="bg-yellow-50 border border-blue-200 rounded-xl p-4 sm:p-6">
@@ -466,24 +468,35 @@ function applyPromoCode() {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Promo code response:', data);
         if (data.valid) {
             appliedPromo = data.promo_code;
+
+            // Check if required data is available
+            if (!data.promo_code || data.promo_code.discount_amount === undefined || data.new_total === undefined) {
+                let missing = [];
+                if (!data.promo_code) missing.push('promo_code');
+                if (data.promo_code && data.promo_code.discount_amount === undefined) missing.push('discount_amount');
+                if (data.new_total === undefined) missing.push('new_total');
+                showPromoStatus('error', 'Invalid promo code response: missing ' + missing.join(', ') + '. Please try again.');
+                return;
+            }
 
             // Update hidden inputs
             document.getElementById('applied_promo_id').value = data.promo_code.id;
             document.getElementById('applied_promo_code').value = data.promo_code.code;
-            document.getElementById('applied_discount_amount').value = data.discount_amount;
+            document.getElementById('applied_discount_amount').value = data.promo_code.discount_amount;
 
             // Show promo details
             document.getElementById('promo_name').textContent = data.promo_code.name;
             document.getElementById('promo_description').textContent = data.promo_code.code;
-            document.getElementById('promo_discount').textContent = '₱' + data.discount_amount.toFixed(2);
+            document.getElementById('promo_discount').textContent = '₱' + parseFloat(data.promo_code.discount_amount).toFixed(2);
             document.getElementById('promo_details').classList.remove('hidden');
 
             // Update totals display
-            updateTotalsDisplay(data.new_total);
+            updateTotalsDisplay(parseFloat(data.new_total));
 
-            showPromoStatus('success', data.message + ' You saved ₱' + data.discount_amount.toFixed(2) + '!');
+            showPromoStatus('success', data.message + ' You saved ₱' + parseFloat(data.promo_code.discount_amount).toFixed(2) + '!');
 
             // Change button to remove
             btn.innerHTML = '<i class="bi bi-x-circle"></i> Remove';
@@ -530,6 +543,11 @@ function removePromoCode() {
 }
 
 function updateTotalsDisplay(newTotal) {
+    if (typeof newTotal !== 'number' || isNaN(newTotal)) {
+        console.error('Invalid newTotal value:', newTotal);
+        return;
+    }
+
     // Update the button total
     const button = document.querySelector('button[type="submit"]');
     const totalSpan = button.querySelector('span:last-child');
@@ -541,20 +559,6 @@ function updateTotalsDisplay(newTotal) {
     const sidebarTotal = document.getElementById('grand-total');
     if (sidebarTotal) {
         sidebarTotal.textContent = '₱' + newTotal.toFixed(2);
-    }
-
-    // Update subtotal and VAT in sidebar
-    const subtotal = newTotal / 1.12; // Remove VAT
-    const vatAmount = newTotal - subtotal;
-
-    const sidebarSubtotal = document.getElementById('subtotal');
-    if (sidebarSubtotal) {
-        sidebarSubtotal.textContent = '₱' + subtotal.toFixed(2);
-    }
-
-    const sidebarVat = document.getElementById('vat-amount');
-    if (sidebarVat) {
-        sidebarVat.textContent = '₱' + vatAmount.toFixed(2);
     }
 }
 

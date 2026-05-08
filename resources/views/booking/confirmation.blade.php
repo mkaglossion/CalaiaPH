@@ -243,7 +243,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                 <div class="flex justify-between items-center text-sm text-gray-500">
                   <span>
                     <i class="bi bi-info-circle text-gray-400 text-xs"></i>
-                    Includes 12% VAT:
+<x-vat-label />
                   </span>
                   <span>₱{{ number_format($vatBreakdown['vat_amount'] ?? 0, 2) }}</span>
                 </div>
@@ -251,9 +251,9 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                   <span>Total Amount Paid:</span>
                   <span class="text-[#8f5d54]">₱{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal ?? 0, 2) }}</span>
                 </div>
-                <p class="text-xs text-gray-500 italic text-center mt-2">
+                <!--<p class="text-xs text-gray-500 italic text-center mt-2">
                   * All prices are VAT-inclusive as required by Philippine tax regulations.
-                </p>
+                </p>-->
               </div>
             </div>
           @elseif(isset($isStaycation) && $isStaycation)
@@ -434,9 +434,10 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                   <span>Total Amount Paid:</span>
                   <span class="text-[#8f5d54]">₱{{ number_format($vatBreakdown['gross_amount'] ?? ($accommodationTotal + $foodTotal + $activitiesTotal), 2) }}</span>
                 </div>
+                <!-- <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.1/css/all.css" integrity="sha384-O8whS3fhG2OnA5Kas0Y9l3cfpmYjapjI0E4theH4iuMD+pLhbf6JI0jIMfYcK3yZ" crossorigin="anonymous">
                 <p class="text-xs text-gray-500 italic text-center mt-2">
                   * All prices are VAT-inclusive as required by Philippine tax regulations.
-                </p>
+                </p> -->
               </div>
             </div>
           @else
@@ -531,9 +532,12 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                   <span>Total Amount Paid:</span>
                   <span class="text-[#8f5d54]">₱{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal, 2) }}</span>
                 </div>
-                <p class="text-xs text-gray-500 italic text-center mt-2">
+                <!-- <p class="text-xs text-gray-500 italic text-center mt-2">
                   * All prices are VAT-inclusive as required by Philippine tax regulations.
-                </p>
+                </p> -->
+
+
+                
               </div>
             </div>
           @endif

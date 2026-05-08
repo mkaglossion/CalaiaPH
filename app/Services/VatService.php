@@ -13,18 +13,18 @@ namespace App\Services;
 class VatService
 {
     /**
-     * Default Philippine VAT rate (12%)
+     * Default VAT rate (0% initially)
      * Used when admin settings don't specify a rate
      */
-    const DEFAULT_VAT_RATE = 0.12;
-    const DEFAULT_VAT_RATE_PERCENTAGE = 12;
+    const DEFAULT_VAT_RATE = 0.0;
+    const DEFAULT_VAT_RATE_PERCENTAGE = 0;
 
     /**
      * @deprecated Use getDynamicVatRate() or getCurrentVatRate() instead
      * Kept for backward compatibility
      */
-    const VAT_RATE = 0.12;
-    const VAT_RATE_PERCENTAGE = 12;
+    const VAT_RATE = 0.0;
+    const VAT_RATE_PERCENTAGE = 0;
 
     /**
      * Get current VAT rate from admin settings (0-1 format)

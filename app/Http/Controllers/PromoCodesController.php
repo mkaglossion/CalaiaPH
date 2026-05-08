@@ -210,7 +210,7 @@ class PromoCodesController extends Controller
         $bookingTotal = (float) $request->booking_total;
 
         try {
-            $promoCode = PromoCode::where('code', $code)->first();
+            $promoCode = PromoCode::whereRaw('UPPER(code) = ?', [$code])->first();
 
             if (!$promoCode) {
                 return response()->json([

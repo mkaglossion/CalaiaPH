@@ -235,7 +235,7 @@
                     return sum + this.getFoodPrice(foodId);
                 }, 0);
 
-                this.vatAmount = this.subtotal * 0.12;
+                this.vatAmount = this.subtotal * this.vatRate;
                 this.grandTotal = this.subtotal + this.vatAmount;
             },
 

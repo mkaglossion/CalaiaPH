@@ -205,7 +205,7 @@
             </div>
 
             <div
-                x-data="staycationAvailabilityMerged({{ $roomsCount }}, {{ $adultsTotal }}, {{ $childrenTotal }})"
+                x-data="staycationAvailabilityMerged({{ $roomsCount }}, {{ $adultsTotal }}, {{ $childrenTotal }}, {{ $vatRate }}, {{ $vatRatePercentage }})"
                 class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10"
             >
                 {{-- LEFT --}}
@@ -784,23 +784,7 @@
                                                     <i class="bi bi-exclamation-circle mr-1"></i>Check agreement to enable pets count
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        {{-- Price Breakdown --}}
-                                        <div class="text-sm bg-white rounded p-3 border border-gray-200">
-                                            <div class="flex justify-between mb-1">
-                                                <span class="text-gray-600">Accommodation:</span>
-                                                <span class="font-semibold" x-text="getPriceRange(getSelectedRoom({{ $staycation->id }}))"></span>
-                                            </div>
-                                            <div x-show="getSelectedRoom({{ $staycation->id }}).pets === 'yes' && getSelectedRoom({{ $staycation->id }}).num_pets > 0" class="flex justify-between mb-1">
-                                                <span class="text-gray-600">Pets:</span>
-                                                <span class="font-semibold" x-text="'₱' + calculatePetPrice(getSelectedRoom({{ $staycation->id }})).toLocaleString()"></span>
-                                            </div>
-                                            <div class="border-t pt-1 flex justify-between font-semibold">
-                                                <span>Total:</span>
-                                                <span class="text-green-600" x-text="calculateRoomPrice(getSelectedRoom({{ $staycation->id }}))"></span>
-                                            </div>
-                                        </div>
+                                        </div>                    
                                     </div>
 
                                     {{-- Get features for modal --}}
@@ -985,20 +969,27 @@
                                                             <span>Adults: <span class="font-semibold" x-text="item.adults"></span>, Children: <span class="font-semibold" x-text="item.children"></span></span>
                                                         </template>
                                                     </div>
-                                                    <div class="text-xs text-green-600 font-semibold mt-1" x-text="calculateRoomPrice(item)"></div>
-                                                </div>
-                                                <button type="button"
-                                                        class="text-xs text-red-600 hover:text-red-800 font-semibold px-2"
-                                                        @click.stop="removeRoom(item.id)"
-                                                >
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
+                                                     <div class="text-xs text-green-600 font-semibold mt-1" x-text="calculateRoomPrice(item)"></div>
+
+                                                     {{-- Price Breakdown --}}
+                                                     <div class="mt-2 text-xs bg-white rounded p-2 border border-gray-200">
+                                                         <div class="flex justify-between mb-1">
+                                                             <span class="text-gray-600">Accommodation:</span>
+                                                             <span class="font-semibold" x-text="getPriceRange(item)"></span>
+                                                         </div>
+                                                         <div x-show="item.pets === 'yes' && item.num_pets > 0" class="flex justify-between mb-1">
+                                                             <span class="text-gray-600">Pets:</span>
+                                                             <span class="text-gray-600font-semibold" x-text="'₱' + calculatePetPrice(item).toLocaleString()"></span>
+                                                         </div>
+                                                          <div class="border-t border-gray-300 pt-1 flex justify-between font-semibold">
+                                                             <span>Total:</span>
+                                                             <span class="text-green-600" x-text="calculateRoomPrice(item)"></span>
+                                                         </div>
+                                                     </div>
+                                                 </div>
                                         </div>
-
-
                                     </div>
-                                </template>
+                                </template>                  
                             </div>
                         </div>
 
@@ -1009,33 +1000,33 @@
                             </h4>
 
                             <div class="bg-green-50 rounded-lg p-4 border border-green-200 space-y-2">
-                                <div class="flex justify-between items-center text-sm">
+                                <!--<div class="flex justify-between items-center text-sm">
                                     <span class="text-gray-600">Subtotal:</span>
                                     <span class="font-semibold" x-text="calculateSubtotal()"></span>
-                                </div>
+                                </div>-->
 
-                                <div class="flex justify-between items-center text-sm text-gray-500">
+                                <!--<div class="flex justify-between items-center text-sm text-gray-500">
                                     <span>
                                         <i class="bi bi-info-circle text-gray-400 text-xs" title="Value Added Tax as per Philippine TRAIN Law"></i>
                                         <span x-text="`${vatRatePercentage}% VAT:`"></span>
                                     </span>
                                     <span x-text="calculateVAT()"></span>
-                                </div>
+                                </div>-->
 
-                                <div class="border-t border-green-200 pt-2 flex justify-between items-center">
+                                <div class="pt-2 flex justify-between items-center">
                                     <span class="font-semibold text-gray-800">Grand Total:</span>
                                     <span class="text-2xl font-bold text-green-600" x-text="calculateTotalPrice()"></span>
                                 </div>
 
                                 <div class="text-xs text-gray-500 mt-1">Final price with VAT (calculated at checkout)</div>
 
-                                <button type="button"
+                                <!--<button type="button"
                                         x-show="hasRegularRooms()"
                                         @click="showPriceBreakdownModal = true"
                                         class="mt-2 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition">
                                     <i class="bi bi-eye text-base"></i>
                                     <span>View Price Breakdown</span>
-                                </button>
+                                </button>-->
 
                                 <div x-show="!hasRegularRooms()" class="mt-2 text-sm text-gray-500">
                                     <i class="bi bi-info-circle mr-1"></i>
@@ -1533,7 +1524,7 @@
     </div>
 
     <script>
-        function staycationAvailabilityMerged(targetRooms = 1, targetAdults = 1, targetChildren = 0) {
+        function staycationAvailabilityMerged(targetRooms = 1, targetAdults = 1, targetChildren = 0, vatRate = 0.0, vatRatePercentage = 0) {
             return {
                 roomType: 'all',
 
@@ -1543,9 +1534,9 @@
 
                 maxSlots: Math.min(Math.max(targetRooms, 1), 4),
 
-                // Dynamic VAT rate from admin settings (default to 12%)
-                vatRate: 0.12,
-                vatRatePercentage: 12,
+                // Dynamic VAT rate from admin settings
+                vatRate: vatRate,
+                vatRatePercentage: vatRatePercentage,
 
                 addRoomSlot() {
                     if (this.maxSlots >= 4) {
@@ -1937,7 +1928,7 @@
 
                 getSelectedRoom(roomId) {
                     const instances = this.getSelectedRoomInstances(roomId);
-                    if (instances.length === 0) return null;
+                    if (instances.length === 0) return { adults: 1, children: 0, pets: 'no', pet_agreement: false, num_pets: 1, extra_mattress: 1, name: '' };
                     return this.selectedRooms[instances[0]];
                 },
 

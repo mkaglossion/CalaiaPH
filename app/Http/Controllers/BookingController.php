@@ -719,8 +719,13 @@ class BookingController extends Controller
             // Get selected activities from session
         $selectedActivities = $booking['selected_activities'] ?? session('selected_activities', []);
         $selectedActivityPackages = $booking['selected_activity_packages'] ?? session('selected_activity_packages', []);
-        
-        return view('booking.staycation-activities', compact('booking', 'activities', 'activityPackages', 'staycations', 'selectedFoods', 'foods', 'selectedActivities', 'selectedActivityPackages'));
+
+        // Get dynamic VAT rate
+        $vatService = app(\App\Services\VatService::class);
+        $vatRate = $vatService->getCurrentVatRate();
+        $vatRatePercentage = $vatService->getCurrentVatRatePercentage();
+
+        return view('booking.staycation-activities', compact('booking', 'activities', 'activityPackages', 'staycations', 'selectedFoods', 'foods', 'selectedActivities', 'selectedActivityPackages', 'vatRate', 'vatRatePercentage'));
     }
 
     public function storeStaycationActivities(Request $request)
@@ -955,8 +960,13 @@ class BookingController extends Controller
         // Get selected activities and activity packages from session
         $selectedActivities = $booking['selected_activities'] ?? [];
         $selectedActivityPackages = $booking['selected_activity_packages'] ?? [];
-        
-        return view('booking.staycation-payment', compact('booking', 'selectedFoods', 'foods', 'staycations', 'selectedActivities', 'selectedActivityPackages'));
+
+        // Get dynamic VAT rate
+        $vatService = app(\App\Services\VatService::class);
+        $vatRate = $vatService->getCurrentVatRate();
+        $vatRatePercentage = $vatService->getCurrentVatRatePercentage();
+
+        return view('booking.staycation-payment', compact('booking', 'selectedFoods', 'foods', 'staycations', 'selectedActivities', 'selectedActivityPackages', 'vatRate', 'vatRatePercentage'));
     }
 
     public function payment()
@@ -1110,7 +1120,7 @@ class BookingController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
-            'payment_method' => 'required|string|in:paymongo,qr,gcash,paymaya,bank,qrph,grab_pay,billease',
+            'payment_method' => 'nullable|string|in:paymongo,qr,gcash,paymaya,bank,qrph,grab_pay,billease',
             'applied_promo_id' => 'nullable|exists:promo_codes,id',
             'applied_promo_code' => 'nullable|string',
             'applied_discount_amount' => 'nullable|numeric|min:0',
@@ -2250,7 +2260,12 @@ class BookingController extends Controller
         // Get dynamic max pets per room setting
         $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);
 
-        return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'currentSeason', 'roomsCount', 'adultsTotal', 'childrenTotal', 'rooms', 'maxPetsPerRoom'));
+        // Get dynamic VAT rate
+        $vatService = app(\App\Services\VatService::class);
+        $vatRate = $vatService->getCurrentVatRate();
+        $vatRatePercentage = $vatService->getCurrentVatRatePercentage();
+
+        return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'currentSeason', 'roomsCount', 'adultsTotal', 'childrenTotal', 'rooms', 'maxPetsPerRoom', 'vatRate', 'vatRatePercentage'));
     }
 
     /**
@@ -2434,7 +2449,12 @@ class BookingController extends Controller
         $accommodationIds = array_keys($booking['accommodations'] ?? []);
         $staycations = Staycation::whereIn('id', $accommodationIds)->get();
 
-        return view('booking.staycation-food', compact('booking', 'foodMenus', 'foodPackages', 'staycations', 'packagesSettings'));
+        // Get dynamic VAT rate
+        $vatService = app(\App\Services\VatService::class);
+        $vatRate = $vatService->getCurrentVatRate();
+        $vatRatePercentage = $vatService->getCurrentVatRatePercentage();
+
+        return view('booking.staycation-food', compact('booking', 'foodMenus', 'foodPackages', 'staycations', 'packagesSettings', 'vatRate', 'vatRatePercentage'));
     }
 
     public function saveFoodSelection(Request $request)

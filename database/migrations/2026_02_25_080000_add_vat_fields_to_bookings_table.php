@@ -24,7 +24,7 @@ return new class extends Migration
                 ->comment('12% VAT amount');
             
             // VAT rate (for flexibility if rate changes in the future)
-            $table->decimal('vat_rate', 5, 4)->default(0.12)->after('vat_amount')
+            $table->decimal('vat_rate', 5, 4)->default(0.0)->after('vat_amount')
                 ->comment('VAT rate applied (default 12%)');
             
             // VAT inclusive flag

@@ -5,7 +5,9 @@
     $guestCount = (int) ($reservation->adults ?? 0);
     $mealPrice = (float) ($food->price ?? 0);
     $subtotal = $mealPrice * $guestCount;
-    $vatAmount = $subtotal * 0.12 / 1.12; // VAT already included in total
+    $vatService = app(\App\Services\VatService::class);
+    $vatRate = $vatService->getCurrentVatRate();
+    $vatAmount = $subtotal * $vatRate / (1 + $vatRate); // VAT already included in total
     $confirmationNumber = 'DR' . str_pad($reservation->id ?? 0, 5, '0', STR_PAD_LEFT);
 
     $formattedDate = !empty($reservation->reservation_date)
