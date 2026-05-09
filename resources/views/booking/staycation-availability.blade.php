@@ -955,9 +955,20 @@
                                          <div class="p-3 bg-gray-50">
                                              <div class="flex items-start justify-between gap-3">
                                                  <div class="flex-1">
-                                                     <div class="flex items-center gap-2">
-                                                         <div class="font-semibold text-gray-900 text-sm" x-text="item.name"></div>
-                                                     </div>
+                                                     <div class="flex items-start justify-between w-full gap-2">
+                                                        <!-- Room Name -->
+                                                        <div class="font-semibold text-gray-900 text-sm leading-tight flex-1"
+                                                            x-text="item.name">
+                                                        </div>
+
+                                                        <!-- Trash Icon -->
+                                                        <button type="button"
+                                                                class="text-red-600 hover:text-red-800 text-xs shrink-0 mt-0.5"
+                                                                @click.stop="removeRoom(item.id)">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                     
                                                     <div class="text-xs text-gray-600 mt-1">
                                                         <template x-if="item.name.toLowerCase().includes('byot') || item.name.toLowerCase().includes('bring your own tent')">
                                                             <span>BYOT Qty: <span class="font-semibold" x-text="item.extra_mattress || 1"></span></span>

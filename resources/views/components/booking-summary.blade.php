@@ -111,7 +111,7 @@ if ($grandTotal === 0) {
     }
 }
 
-// Calculate VAT breakdown using VatService (12% Philippine VAT)
+// Calculate VAT breakdown using VatService (dynamic VAT rate)
 $vatService = app(\App\Services\VatService::class);
 $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // false = VAT exclusive (we add VAT to base price)
 @endphp
@@ -338,7 +338,7 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
         <div class="flex justify-between items-center text-lg font-bold border-t border-gray-200 pt-2">
             <span>Grand Total:</span>
             @if($showDynamicFood || $showDynamicActivities)
-                <span class="text-[#8f5d54]" x-text="calculateTotal()" data-food-total="{{ $foodTotalProp }}"></span>
+                <span id="grand-total" class="text-[#8f5d54]" x-text="calculateTotal()" data-food-total="{{ $foodTotalProp }}"></span>
             @else
                 <span id="grand-total" class="text-[#8f5d54]" data-food-total="{{ $foodTotal }}">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
             @endif

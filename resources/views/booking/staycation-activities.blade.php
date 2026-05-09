@@ -372,7 +372,7 @@
                     this.selectedActivityPackages.forEach(pkg => {
                         total += (pkg.price || 0) * (pkg.quantity || 1);
                     });
-                    // Calculate 12% VAT on subtotal
+                    // Calculate VAT on subtotal
                     const vat = total * this.vatRate;
                     return '₱' + vat.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 },
@@ -386,9 +386,9 @@
                     this.selectedActivityPackages.forEach(pkg => {
                         total += (pkg.price || 0) * (pkg.quantity || 1);
                     });
-                    // Apply 12% VAT to match payment page (Philippine VAT law)
-                    const vatInclusiveTotal = total * 1.12;
-                    return '₱' + vatInclusiveTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    const vat = total * this.vatRate;
+                    const grandTotal = total + vat;
+                    return '₱' + grandTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 },
 
                 decreaseActivityPackageQty(packageId) {

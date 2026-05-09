@@ -401,7 +401,7 @@ let vatRate = {{ $vatRate }};
                       >
                         <i class="bi bi-lock-fill mr-2"></i>
                         <span>Complete Staycation Payment</span>
-                        <span class="font-bold ml-2">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
+                        <span id="button-total" class="font-bold ml-2">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
                       </button>
 
                       <p class="mt-3 text-xs text-center text-gray-500">
@@ -549,10 +549,9 @@ function updateTotalsDisplay(newTotal) {
     }
 
     // Update the button total
-    const button = document.querySelector('button[type="submit"]');
-    const totalSpan = button.querySelector('span:last-child');
-    if (totalSpan) {
-        totalSpan.textContent = '₱' + newTotal.toFixed(2);
+    const buttonTotal = document.getElementById('button-total');
+    if (buttonTotal) {
+        buttonTotal.textContent = '₱' + newTotal.toFixed(2);
     }
 
     // Update sidebar grand total

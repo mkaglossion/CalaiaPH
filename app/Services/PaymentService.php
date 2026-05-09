@@ -71,6 +71,9 @@ class PaymentService
 
             $description = ucfirst($type) . ' Booking Payment';
 
+            // Ensure amount is in centavos and integer
+            $amount = (int) round($amount);
+
             // Ensure there's always a reference number. Use provided one if available,
             // otherwise generate a CALAIA-XXXXXXXXXXXX reference for visibility on PayMongo.
             if (!empty($referenceId)) {

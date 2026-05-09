@@ -1209,13 +1209,6 @@ class BookingController extends Controller
                 $appliedPromo->increment('usage_count');
             }
 
-            // Add discount line item
-            $lineItems[] = [
-                'name' => 'Promo Code: ' . $request->applied_promo_code,
-                'unit_price' => -$promoDiscount,
-                'quantity' => 1,
-            ];
-
             Log::info('Promo code applied:', [
                 'code' => $request->applied_promo_code,
                 'discount' => $promoDiscount,
@@ -1223,21 +1216,16 @@ class BookingController extends Controller
             ]);
         }
 
-        // Add 12% VAT to the grand total (PHP and PayMongo expect VAT-inclusive amounts)
+        // Calculate dynamic VAT using VatService
         $vatService = app(\App\Services\VatService::class);
         $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // false = VAT exclusive (we add VAT)
         $grandTotalWithVat = $vatBreakdown['gross_amount']; // This includes VAT
-        
-        Log::info('Grand total with VAT:', ['subtotal' => $grandTotal, 'vat' => $vatBreakdown['vat_amount'], 'total' => $grandTotalWithVat]);
+        $vatAmount = $vatBreakdown['vat_amount'];
 
-        // Apply VAT to each line item so PayMongo displays them with VAT included
-        $vatMultiplier = 1.12; // 12% PHP VAT
-        foreach ($lineItems as &$item) {
-            $item['unit_price'] = round((float)$item['unit_price'] * $vatMultiplier, 2);
-        }
-        unset($item); // Break the reference
+        Log::info('Grand total with VAT:', ['subtotal' => $grandTotal, 'vat' => $vatAmount, 'total' => $grandTotalWithVat]);
 
-        Log::info('Line items with VAT being sent to PayMongo:', $lineItems);
+        // Use single line item for PayMongo to avoid issues with negative discounts
+        $lineItems = null;
 
         // Store booking and payment data in session
         session([
@@ -1268,7 +1256,7 @@ class BookingController extends Controller
             'amount' => $grandTotalWithVat * 100,
             'success_url' => $successUrl,
             'failed_url' => $failedUrl,
-            'line_items_count' => count($lineItems),
+            'line_items_count' => is_array($lineItems) ? count($lineItems) : 0,
             'reference_id' => $referenceId,
             'customer_email' => $request->email,
         ]);
