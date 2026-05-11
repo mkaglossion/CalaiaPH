@@ -9,7 +9,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
-    @if(config('broadcasting.default') !== 'null')
+    @php
+        $enablePageRealtime = config('broadcasting.default') === 'pusher'
+            && filled(config('broadcasting.connections.pusher.key'))
+            && filled(config('broadcasting.connections.pusher.options.cluster'))
+            && !in_array(request()->getHost(), ['127.0.0.1', 'localhost']);
+    @endphp
+
+    @if($enablePageRealtime)
         <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.5.0/dist/web/pusher.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
         <script>
@@ -24,6 +31,99 @@
 
     <style>
         [x-cloak]{display:none!important;}
+        .cards-grid-responsive {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+        @media (max-width: 767px) {
+            .mobile-layout-mode-1 .cards-grid-responsive {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .mobile-layout-mode-2 .cards-grid-responsive {
+                grid-template-columns: minmax(0, 1fr);
+            }
+            .mobile-layout-mode-3 .cards-grid-responsive {
+                display: flex;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                gap: 0;
+                padding-bottom: 0;
+                scroll-behavior: smooth;
+                -webkit-overflow-scrolling: touch;
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .mobile-layout-mode-3 .cards-grid-responsive::-webkit-scrollbar {
+                display: none;
+            }
+            .mobile-layout-mode-3 .cards-grid-responsive > * {
+                flex: 0 0 100%;
+                max-width: 100%;
+                scroll-snap-align: start;
+            }
+            .mobile-layout-mode-3 .mobile-carousel-dots {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 0.35rem;
+                margin-top: 0.75rem;
+            }
+            .mobile-layout-mode-3 .mobile-carousel-dot {
+                width: 0.375rem;
+                height: 0.375rem;
+                border-radius: 9999px;
+                background: #cbd5e1;
+                border: 0;
+                padding: 0;
+                transition: all 0.2s ease;
+            }
+            .mobile-layout-mode-3 .mobile-carousel-dot.is-active {
+                width: 1.125rem;
+                background: #8f5d54;
+            }
+        }
+        @media (min-width: 640px) {
+            .cards-grid-responsive { gap: 1rem; }
+        }
+        @media (min-width: 768px) {
+            .cards-grid-responsive { gap: 1.5rem; }
+        }
+        .room-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+        @media (min-width: 430px) {
+            .room-actions {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        .mobile-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .mobile-card-title {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 2.8rem;
+        }
+        @media (min-width: 640px) {
+            .mobile-clamp-3 {
+                display: block;
+                -webkit-line-clamp: initial;
+                overflow: visible;
+            }
+            .mobile-card-title {
+                display: block;
+                -webkit-line-clamp: initial;
+                min-height: 0;
+            }
+        }
 
         .flatpickr-day { border-radius: 6px; }
         .fp-avail-high { background:#d4edda !important; color:#155724 !important; }
@@ -172,7 +272,11 @@
         }
     </style>
 
-    <div class="bg-[#f5efe7] min-h-screen">
+    @php
+        $mobileLayoutStep1 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step1_availability')->value('value') ?? 1);
+    @endphp
+
+    <div class="bg-[#f5efe7] min-h-screen mobile-layout-mode-{{ $mobileLayoutStep1 }}">
         <div class="pt-6 px-4 sm:px-6 lg:px-12">
             {{-- Header --}}
             <div class="text-center mb-10">
@@ -570,7 +674,7 @@
                     </div>
 
                     {{-- Rooms Grid --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="cards-grid-responsive">
                         @forelse($staycations as $staycation)
                             @php
                                 $roomDetail = $roomDetails[$staycation->id];
@@ -584,7 +688,7 @@
                             @endphp
 
                             <div
-                                class="relative bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl {{ $status === 'unavailable' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer' }}
+                                class="relative h-full flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl {{ $status === 'unavailable' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer' }}
                                 {{ $status === 'available' ? 'ring-2 ring-green-200 hover:ring-green-300' : ($status === 'limited' ? 'ring-2 ring-yellow-200 hover:ring-yellow-300' : 'ring-2 ring-gray-200') }}"
                                 :class="{ 'opacity-50 cursor-not-allowed': getRemainingSlots({{ $staycation->id }}) === 0 && !isSelected({{ $staycation->id }}) }"
                                 data-room-id="{{ $staycation->id }}"
@@ -602,11 +706,11 @@
                                 {{-- Image (First image only - carousel now in modal) --}}
                                 <div class="relative">
                                     @if($staycation->image)
-                                        <img src="{{ $staycation->image }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
+                                        <img src="{{ $staycation->image }}" alt="{{ $roomDetail['name'] }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
                                     @elseif($staycation->swiperImages && $staycation->swiperImages->count() > 0)
-                                        <img src="{{ $staycation->swiperImages->first()->image_path }}" alt="{{ $roomDetail['name'] }}" class="w-full h-96 object-cover">
+                                        <img src="{{ $staycation->swiperImages->first()->image_path }}" alt="{{ $roomDetail['name'] }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
                                     @else
-                                        <div class="w-full h-96 bg-linear-to-br from-blue-200 to-purple-200 flex items-center justify-center cursor-pointer hover:from-blue-300 hover:to-purple-300">
+                                        <div class="w-full h-44 sm:h-56 md:h-96 bg-linear-to-br from-blue-200 to-purple-200 flex items-center justify-center cursor-pointer hover:from-blue-300 hover:to-purple-300">
                                             <div class="text-center">
                                                 <i class="bi bi-image text-4xl opacity-50 text-white block mb-2"></i>
                                                 <p class="text-xs text-white opacity-70">No images</p>
@@ -615,8 +719,8 @@
                                     @endif
 
                                     {{-- Status badge --}}
-                                    <div class="absolute top-4 right-4 z-10">
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold text-white {{ $bgClass }}">
+                                    <div class="absolute top-3 right-3 z-10">
+                                        <span class="px-2 py-1 rounded-full text-[10px] sm:text-xs font-bold text-white {{ $bgClass }}">
                                             @if($status === 'available')
                                                 <i class="bi bi-check-circle-fill mr-1"></i>Available
                                             @elseif($status === 'limited')
@@ -628,24 +732,24 @@
                                     </div>
 
                                     {{-- Type badge --}}
-                                    <div class="absolute bottom-4 left-4 z-10">
-                                        <span class="px-3 py-1 bg-[#8f5d54] text-white text-sm font-semibold rounded-full">
+                                    <div class="absolute bottom-3 left-3 z-10">
+                                        <span class="px-2.5 py-1 bg-[#8f5d54] text-white text-[10px] sm:text-xs md:text-sm font-semibold rounded-full">
                                             {{ ucfirst($roomDetail['type']) }}
                                         </span>
                                     </div>
 
                                     {{-- Qty badge --}}
                                     @if(($avail['min_quantity'] ?? 0) > 0)
-                                        <div class="absolute bottom-4 right-4 z-10">
-                                            <span class="availability-badge px-2 py-1 bg-black/70 text-white text-xs font-semibold rounded-full"
+                                        <div class="absolute bottom-3 right-3 z-10">
+                                            <span class="availability-badge px-2 py-1 bg-black/70 text-white text-[10px] sm:text-xs font-semibold rounded-full"
                                                   x-text="getRemainingSlots({{ $staycation->id }}) + ' available'">
                                             </span>
                                         </div>
                                     @endif
                                 </div>
 
-                                <div class="p-6">
-                                    <h3 class="text-xl font-bold mb-2">
+                                <div class="p-3 sm:p-4 md:p-6">
+                                    <h3 class="text-sm sm:text-base md:text-xl font-bold mb-1.5 md:mb-2 leading-tight mobile-card-title">
                                         {{ $roomDetail['name'] }}
                                     </h3>
 
@@ -659,7 +763,7 @@
                                         $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
                                     @endphp
 
-                                    <div class="text-lg font-bold text-[#8f5d54] mb-2">
+                                    <div class="text-sm sm:text-base md:text-lg font-bold text-[#8f5d54] mb-1.5 md:mb-2">
                                         @if($priceRange['min_price'] > 0 && $priceRange['max_price'] > 0)
                                             @if($priceRange['min_price'] == $priceRange['max_price'])
                                                 {{ $priceRange['min_label'] }}
@@ -677,7 +781,7 @@
                                         @endif
                                     </div>
 
-                                    <p class="text-gray-600 mb-4 text-sm">
+                                    <p class="text-gray-600 mb-3 md:mb-4 text-xs sm:text-sm mobile-clamp-3">
                                         {{ $roomDetail['description'] }}
                                     </p>
 
@@ -787,49 +891,50 @@
                                         </div>                    
                                     </div>
 
-                                    {{-- Get features for modal --}}
-                                    @php
-                                        $featuresText = $staycation->texts->firstWhere('section', 'features');
-                                        $features = $featuresText ? explode("\n", $featuresText->content) : [];
-                                    @endphp
+                                    <div class="mt-auto">
+                                        {{-- Get features for modal --}}
+                                        @php
+                                            $featuresText = $staycation->texts->firstWhere('section', 'features');
+                                            $features = $featuresText ? explode("\n", $featuresText->content) : [];
+                                        @endphp
 
-                                    {{-- View Room Details Button --}}
-                                    <button
-                                        type="button"
-                                        @click.stop="showRoomDetailsModal(
-                                            {{ $staycation->id }},
-                                            '{{ addslashes($roomDetail['name']) }}',
-                                            '{{ addslashes($roomDetail['description']) }}',
-                                            {{ json_encode(array_values(array_filter(array_map('trim', $features)))) }},
-                                            {{ json_encode($staycation->swiperImages ? $staycation->swiperImages->map(function($img) { return $img->image_url; })->toArray() : []) }}
-                                        )"
-                                        class="w-full bg-gray-50 text-gray-700 py-2 px-4 rounded-lg font-semibold hover:bg-gray-100 transition text-sm mb-4 border border-gray-200"
-                                    >
-                                        <i class="bi bi-info-circle mr-1"></i> View Room Details
-                                    </button>
-
-                                    {{-- Availability info --}}
-                                    @if($status === 'limited')
-                                        <div class="text-sm text-amber-700 mb-4 bg-amber-50 p-3 rounded-lg border border-amber-200">
-                                            <i class="bi bi-exclamation-triangle mr-1"></i>
-                                            Only {{ $avail['available_nights'] }}/{{ $avail['total_nights'] }} nights available
-                                        </div>
-                                    @elseif($status === 'available')
-                                        <div class="text-sm text-green-700 mb-4 bg-green-50 p-3 rounded-lg border border-green-200">
-                                            <i class="bi bi-check-circle mr-1"></i>
-                                            Fully available for your dates
-                                        </div>
-                                    @endif
-
-                                    {{-- Buttons --}}
-                                    <div class="flex gap-2">
+                                        {{-- View Room Details Button --}}
                                         <button
                                             type="button"
-                                            @click.stop="showCalendar('{{ $roomDetail['type'] }}', {{ $staycation->id }})"
-                                            class="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-semibold hover:bg-gray-200 transition text-sm"
+                                            @click.stop="showRoomDetailsModal(
+                                                {{ $staycation->id }},
+                                                '{{ addslashes($roomDetail['name']) }}',
+                                                '{{ addslashes($roomDetail['description']) }}',
+                                                {{ json_encode(array_values(array_filter(array_map('trim', $features)))) }},
+                                                {{ json_encode($staycation->swiperImages ? $staycation->swiperImages->map(function($img) { return $img->image_url; })->toArray() : []) }}
+                                            )"
+                                            class="w-full bg-gray-50 text-gray-700 py-2 px-3 sm:px-4 rounded-lg font-semibold hover:bg-gray-100 transition text-xs sm:text-sm leading-tight mb-3 md:mb-4 border border-gray-200"
                                         >
-                                            <i class="bi bi-calendar mr-1"></i>Calendar
+                                            <i class="bi bi-info-circle mr-1"></i> View Room Details
                                         </button>
+
+                                        {{-- Availability info --}}
+                                        @if($status === 'limited')
+                                            <div class="text-xs sm:text-sm text-amber-700 mb-3 md:mb-4 bg-amber-50 p-2.5 sm:p-3 rounded-lg border border-amber-200">
+                                                <i class="bi bi-exclamation-triangle mr-1"></i>
+                                                Only {{ $avail['available_nights'] }}/{{ $avail['total_nights'] }} nights available
+                                            </div>
+                                        @elseif($status === 'available')
+                                            <div class="text-xs sm:text-sm text-green-700 mb-3 md:mb-4 bg-green-50 p-2.5 sm:p-3 rounded-lg border border-green-200">
+                                                <i class="bi bi-check-circle mr-1"></i>
+                                                Fully available for your dates
+                                            </div>
+                                        @endif
+
+                                        {{-- Buttons --}}
+                                        <div class="room-actions">
+                                            <button
+                                                type="button"
+                                                @click.stop="showCalendar('{{ $roomDetail['type'] }}', {{ $staycation->id }})"
+                                                class="w-full bg-gray-100 text-gray-700 py-2 px-2 sm:px-4 rounded-lg font-semibold hover:bg-gray-200 transition text-xs sm:text-sm leading-tight"
+                                            >
+                                                <i class="bi bi-calendar mr-1"></i>Calendar
+                                            </button>
 
                                         @php
                                             $isBYOTButton = str_contains(strtolower($roomDetail['name']), 'byot') ||
@@ -837,22 +942,26 @@
                                             $isCarCampingButton = str_contains(strtolower($roomDetail['name']), 'car camping');
                                             $isSpecialRoomButton = $isBYOTButton || $isCarCampingButton;
                                         @endphp
-                                        <button
-                                            type="button"
-                                            class="flex-1 py-2 px-4 rounded-lg font-semibold transition text-sm"
-                                            @click.stop="toggleRoom({{ $staycation->id }}, '{{ $roomDetail['type'] }}')"
-                                            :disabled="{{ $status !== 'available' ? 'true' : 'false' }} || (!isSelected({{ $staycation->id }}) && getRemainingSlots({{ $staycation->id }}) === 0)"
-                                            :class="isSelected({{ $staycation->id }})
-                                                ? 'bg-green-600 text-white hover:bg-green-700'
-                                                : (getRemainingSlots({{ $staycation->id }}) === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : '{{ $status === 'available' ? 'bg-[#8f5d54] text-white hover:bg-[#7a4e48]' : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}')"
->
-                                            <template x-if="isSelected({{ $staycation->id }})">
-                                                <span><i class="bi bi-check mr-1"></i> Added (<span x-text="getSelectedCount({{ $staycation->id }})"></span>) - <span x-text="getRemainingSlots({{ $staycation->id }})"></span> left</span>
-                                            </template>
-                                            <template x-if="!isSelected({{ $staycation->id }})">
-                                                <span x-text="getRemainingSlots({{ $staycation->id }}) === 0 ? 'Fully Booked' : 'Select'"></span>
-                                            </template>
-                                        </button>
+                                            <button
+                                                type="button"
+                                                class="w-full py-2 px-2 sm:px-4 rounded-lg font-semibold transition text-xs sm:text-sm leading-tight"
+                                                @click.stop="toggleRoom({{ $staycation->id }}, '{{ $roomDetail['type'] }}')"
+                                                :disabled="{{ $status !== 'available' ? 'true' : 'false' }} || (!isSelected({{ $staycation->id }}) && getRemainingSlots({{ $staycation->id }}) === 0)"
+                                                :class="isSelected({{ $staycation->id }})
+                                                    ? 'bg-green-600 text-white hover:bg-green-700'
+                                                    : (getRemainingSlots({{ $staycation->id }}) === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : '{{ $status === 'available' ? 'bg-[#8f5d54] text-white hover:bg-[#7a4e48]' : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}')"
+    >
+                                                <template x-if="isSelected({{ $staycation->id }})">
+                                                    <span>
+                                                        <span class="sm:hidden"><i class="bi bi-check mr-1"></i>Added (<span x-text="getSelectedCount({{ $staycation->id }})"></span>)</span>
+                                                        <span class="hidden sm:inline"><i class="bi bi-check mr-1"></i> Added (<span x-text="getSelectedCount({{ $staycation->id }})"></span>) - <span x-text="getRemainingSlots({{ $staycation->id }})"></span> left</span>
+                                                    </span>
+                                                </template>
+                                                <template x-if="!isSelected({{ $staycation->id }})">
+                                                    <span x-text="getRemainingSlots({{ $staycation->id }}) === 0 ? 'Fully Booked' : 'Select'"></span>
+                                                </template>
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {{-- Edit hint --}}
@@ -3192,6 +3301,66 @@
                 }
             }
         }
+
+        function initMobileCardCarousels() {
+            if (!window.matchMedia('(max-width: 767px)').matches) return;
+            const root = document.querySelector('.mobile-layout-mode-3');
+            if (!root) return;
+
+            const getSlideWidth = (track) => {
+                const firstCard = track.querySelector(':scope > *');
+                if (!firstCard) return track.clientWidth || 1;
+                const trackStyles = getComputedStyle(track);
+                const gapValue = parseFloat(trackStyles.columnGap || trackStyles.gap || '0') || 0;
+                return firstCard.getBoundingClientRect().width + gapValue;
+            };
+
+            const syncActiveDot = (track) => {
+                const dots = track.nextElementSibling;
+                if (!dots || !dots.classList.contains('mobile-carousel-dots')) return;
+                const slideWidth = getSlideWidth(track);
+                if (!slideWidth) return;
+
+                const maxIndex = dots.children.length - 1;
+                const activeIndex = Math.min(maxIndex, Math.max(0, Math.round(track.scrollLeft / slideWidth)));
+
+                Array.from(dots.children).forEach((dot, index) => {
+                    dot.classList.toggle('is-active', index === activeIndex);
+                });
+            };
+
+            root.querySelectorAll('.cards-grid-responsive').forEach((track) => {
+                if (track.dataset.mobileCarouselReady === '1') return;
+                const cards = Array.from(track.children).filter((node) => node.nodeType === 1);
+                if (cards.length <= 1) return;
+
+                const dots = document.createElement('div');
+                dots.className = 'mobile-carousel-dots';
+                dots.setAttribute('aria-label', 'Carousel pagination');
+
+                cards.forEach((_, index) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = `mobile-carousel-dot${index === 0 ? ' is-active' : ''}`;
+                    button.setAttribute('aria-label', `Go to card ${index + 1}`);
+                    button.addEventListener('click', () => {
+                        track.scrollTo({
+                            left: index * getSlideWidth(track),
+                            behavior: 'smooth'
+                        });
+                    });
+                    dots.appendChild(button);
+                });
+
+                track.insertAdjacentElement('afterend', dots);
+                track.addEventListener('scroll', () => syncActiveDot(track), { passive: true });
+                window.addEventListener('resize', () => syncActiveDot(track));
+                syncActiveDot(track);
+                track.dataset.mobileCarouselReady = '1';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initMobileCardCarousels);
 
         // NOTE: your original realtime listeners used "this" outside Alpine scope.
         // I left them out to avoid runtime errors; if you want, paste them inside init() where "this" is valid.

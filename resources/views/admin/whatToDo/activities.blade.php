@@ -10,6 +10,30 @@
         Activities Management
     </h1>
     <p class="text-gray-600 text-sm sm:text-base mb-6 sm:mb-10">Manage activities & experience packages available for booking.</p>
+    @php
+        $mobileLayoutStep3 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step3_activities')->value('value') ?? 1);
+    @endphp
+    <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+        <div class="flex flex-col md:flex-row md:items-end gap-3">
+            <div class="flex-1">
+                <h3 class="text-sm font-semibold text-indigo-900">Booking Step 3 Mobile Layout</h3>
+                <p class="text-xs text-indigo-700 mt-1">Controls mobile card style for `/booking/staycation/activities` only. Desktop layout stays unchanged.</p>
+            </div>
+            <div class="flex gap-2 items-center">
+                <select id="mobileLayoutStep3"
+                        class="px-3 py-2 border border-indigo-300 rounded-lg text-sm bg-white">
+                    <option value="1" {{ $mobileLayoutStep3 === 1 ? 'selected' : '' }}>2 Columns</option>
+                    <option value="2" {{ $mobileLayoutStep3 === 2 ? 'selected' : '' }}>1 Card Per Row</option>
+                    <option value="3" {{ $mobileLayoutStep3 === 3 ? 'selected' : '' }}>Carousel (1 Card Swipe)</option>
+                </select>
+                <button type="button"
+                        onclick="saveMobileLayoutSetting('mobile_layout_step3_activities', document.getElementById('mobileLayoutStep3').value)"
+                        class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition">
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
 
     {{-- Search Box - Full width at top --}}
     <div class="mb-8 sm:mb-10">
@@ -656,6 +680,47 @@
 </div>
 
 <script>
+if (typeof window.saveMobileLayoutSetting !== 'function') {
+    window.saveMobileLayoutSetting = function(settingKey, value) {
+        const csrf = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+        fetch('{{ route("admin.booking-settings.update") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrf
+            },
+            body: JSON.stringify({ setting_key: settingKey, value: Number(value) })
+        })
+        .then(async (res) => {
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data.success === false) {
+                throw new Error(data.message || 'Failed to update mobile layout setting.');
+            }
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Saved',
+                    text: 'Mobile layout updated.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1800
+                });
+            } else {
+                alert('Mobile layout updated.');
+            }
+        })
+        .catch((err) => {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Failed to update mobile layout setting.' });
+            } else {
+                alert(err.message || 'Failed to update mobile layout setting.');
+            }
+        });
+    }
+}
+
 function activityManager() {
     return {
         // State management

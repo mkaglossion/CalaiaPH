@@ -512,6 +512,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         // Booking Extra Fees (mattress, pet fees) - must come before {id} route
         Route::get('/extra-fees', [BookingSettingsController::class, 'index'])->name('admin.booking-settings.index');
         Route::post('/extra-fees', [BookingSettingsController::class, 'update'])->name('admin.booking-settings.update');
+        Route::post('/mobile-layout', [BookingSettingsController::class, 'updateMobileLayout'])->name('admin.booking-settings.mobile-layout.update');
 
         // Package bookings (admin)
         Route::get('/package/{id}', [AdminPackageBookingsController::class, 'show'])->name('admin.package_bookings.show');

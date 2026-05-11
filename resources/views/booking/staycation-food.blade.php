@@ -9,7 +9,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
-    @if(config('broadcasting.default') !== 'null')
+    @php
+        $enablePageRealtime = config('broadcasting.default') === 'pusher'
+            && filled(config('broadcasting.connections.pusher.key'))
+            && filled(config('broadcasting.connections.pusher.options.cluster'))
+            && !in_array(request()->getHost(), ['127.0.0.1', 'localhost']);
+    @endphp
+
+    @if($enablePageRealtime)
     <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.5.0/dist/web/pusher.min.js"></script>
     <script>
@@ -29,13 +36,98 @@
 
     <style>
         [x-cloak]{display:none!important;}
+        .cards-grid-responsive {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+        @media (max-width: 767px) {
+            .mobile-layout-mode-1 .cards-grid-responsive {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .mobile-layout-mode-2 .cards-grid-responsive {
+                grid-template-columns: minmax(0, 1fr);
+            }
+            .mobile-layout-mode-3 .cards-grid-responsive {
+                display: flex;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                gap: 0;
+                padding-bottom: 0;
+                scroll-behavior: smooth;
+                -webkit-overflow-scrolling: touch;
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .mobile-layout-mode-3 .cards-grid-responsive::-webkit-scrollbar {
+                display: none;
+            }
+            .mobile-layout-mode-3 .cards-grid-responsive > * {
+                flex: 0 0 100%;
+                max-width: 100%;
+                scroll-snap-align: start;
+            }
+            .mobile-layout-mode-3 .mobile-carousel-dots {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 0.35rem;
+                margin-top: 0.75rem;
+            }
+            .mobile-layout-mode-3 .mobile-carousel-dot {
+                width: 0.375rem;
+                height: 0.375rem;
+                border-radius: 9999px;
+                background: #cbd5e1;
+                border: 0;
+                padding: 0;
+                transition: all 0.2s ease;
+            }
+            .mobile-layout-mode-3 .mobile-carousel-dot.is-active {
+                width: 1.125rem;
+                background: #8f5d54;
+            }
+        }
+        .mobile-card-title {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 2.8rem;
+        }
+        .mobile-card-description {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 4.6rem;
+        }
+        @media (min-width: 640px) {
+            .cards-grid-responsive { gap: 1rem; }
+            .mobile-card-title,
+            .mobile-card-description {
+                display: block;
+                -webkit-line-clamp: initial;
+                min-height: 0;
+                overflow: visible;
+            }
+        }
+        @media (min-width: 768px) {
+            .cards-grid-responsive { gap: 1.5rem; }
+        }
 
         /* base rounding */
         .flatpickr-day { border-radius: 6px; }
 
         /* Swiper styles */
         .swiper {
-            height: 384px; /* h-96 = 24rem = 384px */
+            height: 176px;
+        }
+        @media (min-width: 640px) {
+            .swiper { height: 224px; }
+        }
+        @media (min-width: 768px) {
+            .swiper { height: 384px; } /* h-96 = 24rem = 384px */
         }
         .swiper-button-next, .swiper-button-prev {
             color: white;
@@ -111,7 +203,11 @@
     })->values();
     @endphp
 
-    <div class="bg-[#f5efe7] min-h-screen">
+    @php
+        $mobileLayoutStep2 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step2_food')->value('value') ?? 1);
+    @endphp
+
+    <div class="bg-[#f5efe7] min-h-screen mobile-layout-mode-{{ $mobileLayoutStep2 }}">
         <div class="pt-6 px-4 sm:px-6 lg:px-12">
             {{-- Header --}}
             <div class="text-center mb-10">
@@ -221,7 +317,7 @@
                                 </p>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="cards-grid-responsive">
                                 @foreach($messhallPackages as $package)
                                     @include('booking.partials.food-package-card', ['package' => $package])
                                 @endforeach
@@ -238,14 +334,14 @@
                         </div>
 
                         @if($messhallFoods->count() > 0)
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="cards-grid-responsive">
                                 @foreach($messhallFoods as $food)
                                     @php
                                         $category = 'messhall';
                                     @endphp
 
                                     <div
-                                        class="relative bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl ring-2 ring-gray-200 hover:ring-[#8f5d54] cursor-pointer"
+                                        class="relative h-full flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl ring-2 ring-gray-200 hover:ring-[#8f5d54] cursor-pointer"
                                         data-category="{{ $category }}"
                                         data-food-id="{{ $food->id }}"
                                         @click="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})"
@@ -263,7 +359,7 @@
                                                     <div class="swiper-wrapper">
                                                         @foreach($food->swiperImages as $image)
                                                             <div class="swiper-slide">
-                                                                <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $food->name }}" class="w-full h-96 object-cover">
+                                                                <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
                                                             </div>
                                                         @endforeach
                                                     </div>
@@ -272,11 +368,11 @@
                                                     <div class="swiper-button-prev swiper-button-prev-{{ $food->id }}"></div>
                                                 </div>
                                             @elseif($hasSingleSwiperImage)
-                                                <img src="{{ $food->swiperImages->first()->image_path }}" alt="{{ $food->swiperImages->first()->title ?? $food->name }}" class="w-full h-96 object-cover">
+                                                <img src="{{ $food->swiperImages->first()->image_path }}" alt="{{ $food->swiperImages->first()->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
                                             @elseif($food->image)
-                                                <img src="{{ $food->image }}" alt="{{ $food->name }}" class="w-full h-96 object-cover">
+                                                <img src="{{ $food->image }}" alt="{{ $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
                                             @else
-                                                <div class="w-full h-96 bg-linear-to-br from-gray-300 to-gray-400 flex items-center justify-center">
+                                                <div class="w-full h-44 sm:h-56 md:h-96 bg-linear-to-br from-gray-300 to-gray-400 flex items-center justify-center">
                                                     <i class="bi bi-image text-6xl text-gray-300"></i>
                                                 </div>
                                             @endif
@@ -310,11 +406,11 @@
                                              @endif
                                          </div>
 
-                                         <div class="p-6">
-                                             <h3 class="text-xl font-bold mb-2">{{ $food->name }}</h3>
+                                         <div class="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
+                                             <h3 class="text-sm sm:text-base md:text-xl font-bold mb-1.5 md:mb-2 leading-tight mobile-card-title">{{ $food->name }}</h3>
 
                                              <div class="mb-3">
-                                                 <span class="text-lg font-bold text-[#8f5d54]">
+                                                 <span class="text-sm sm:text-base md:text-lg font-bold text-[#8f5d54]">
                                                      ₱{{ number_format($food->price ?? 0, 0, ',', ',') }}
                                                  </span>
                                              </div>
@@ -335,12 +431,12 @@
                                                  </div>
                                              </template>
 
-                                             <p class="text-gray-600 mb-4 text-sm">
+                                             <p class="text-gray-600 mb-3 md:mb-4 text-xs sm:text-sm mobile-card-description">
                                                  {{ $food->description ?? 'No description available' }}
                                              </p>
 
                                              <button type="button"
-                                                     class="w-full py-2 rounded-lg font-semibold transition"
+                                                     class="w-full mt-auto py-2 rounded-lg font-semibold transition"
                                                      :class="{
                                                          'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
                                                          'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
@@ -373,7 +469,7 @@
                                 <p class="mt-2 text-sm text-gray-500">Choose from Cook Your Own packages below.</p>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="cards-grid-responsive">
                                 @foreach($cookYourOwnPackages as $package)
                                     @include('booking.partials.food-package-card', ['package' => $package])
                                 @endforeach
@@ -388,14 +484,14 @@
                         </div>
 
                         @if($cookYourOwnFoods->count() > 0)
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="cards-grid-responsive">
                                 @foreach($cookYourOwnFoods as $food)
                                     @php
                                         $category = 'cook_your_own';
                                     @endphp
 
                                     <div
-                                        class="relative bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl ring-2 ring-gray-200 hover:ring-[#8f5d54] cursor-pointer"
+                                        class="relative h-full flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl ring-2 ring-gray-200 hover:ring-[#8f5d54] cursor-pointer"
                                         data-category="{{ $category }}"
                                         data-food-id="{{ $food->id }}"
                                         @click="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})"
@@ -413,7 +509,7 @@
                                                     <div class="swiper-wrapper">
                                                         @foreach($food->swiperImages as $image)
                                                             <div class="swiper-slide">
-                                                                <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $food->name }}" class="w-full h-96 object-cover">
+                                                                <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
                                                             </div>
                                                         @endforeach
                                                     </div>
@@ -422,11 +518,11 @@
                                                     <div class="swiper-button-prev swiper-button-prev-{{ $food->id }}"></div>
                                                 </div>
                                             @elseif($hasSingleSwiperImage)
-                                                <img src="{{ $food->swiperImages->first()->image_path }}" alt="{{ $food->swiperImages->first()->title ?? $food->name }}" class="w-full h-96 object-cover">
+                                                <img src="{{ $food->swiperImages->first()->image_path }}" alt="{{ $food->swiperImages->first()->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
                                             @elseif($food->image)
-                                                <img src="{{ $food->image }}" alt="{{ $food->name }}" class="w-full h-96 object-cover">
+                                                <img src="{{ $food->image }}" alt="{{ $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
                                             @else
-                                                <div class="w-full h-96 bg-linear-to-br from-green-100 to-emerald-200 flex items-center justify-center">
+                                                <div class="w-full h-44 sm:h-56 md:h-96 bg-linear-to-br from-green-100 to-emerald-200 flex items-center justify-center">
                                                     <i class="bi bi-fire text-6xl text-green-600"></i>
                                                 </div>
                                             @endif
@@ -460,11 +556,11 @@
                                             @endif
                                         </div>
 
-                                         <div class="p-6">
-                                             <h3 class="text-xl font-bold mb-2">{{ $food->name }}</h3>
+                                         <div class="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
+                                             <h3 class="text-sm sm:text-base md:text-xl font-bold mb-1.5 md:mb-2 leading-tight mobile-card-title">{{ $food->name }}</h3>
 
                                              <div class="mb-3">
-                                                 <span class="text-lg font-bold text-[#8f5d54]">
+                                                 <span class="text-sm sm:text-base md:text-lg font-bold text-[#8f5d54]">
                                                      ₱{{ number_format($food->price ?? 0, 0, ',', ',') }}
                                                  </span>
                                              </div>
@@ -485,12 +581,12 @@
                                                  </div>
                                              </template>
 
-                                             <p class="text-gray-600 mb-4 text-sm">
+                                             <p class="text-gray-600 mb-3 md:mb-4 text-xs sm:text-sm mobile-card-description">
                                                  {{ $food->description ?? 'No description available' }}
                                              </p>
 
                                              <button type="button"
-                                                     class="w-full py-2 rounded-lg font-semibold transition"
+                                                     class="w-full mt-auto py-2 rounded-lg font-semibold transition"
                                                      :class="{
                                                          'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
                                                          'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
@@ -523,7 +619,7 @@
                                 <p class="mt-2 text-sm text-gray-500">Choose from Special packages below.</p>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="cards-grid-responsive">
                                 @foreach($specialPackages as $package)
                                     @include('booking.partials.food-package-card', ['package' => $package])
                                 @endforeach
@@ -538,7 +634,7 @@
                                 <p class="mt-2 text-sm text-gray-500">Additional special selections.</p>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="cards-grid-responsive">
                                 @foreach($specialFoods as $special)
                                     @php
                                         $category = $special->category ?? 'special';
@@ -549,13 +645,13 @@
                                     @endphp
 
                                     <div
-                                        class="relative bg-linear-to-br rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl ring-2 cursor-pointer"
+                                        class="relative h-full flex flex-col bg-linear-to-br rounded-2xl shadow-lg overflow-hidden border transition-all duration-300 hover:shadow-xl ring-2 cursor-pointer"
                                         :class="'{{ $specialColor['bg'] }} {{ $specialColor['ring'] }} {{ $specialColor['border'] }}'"
                                         @click="toggleFood({{ $special->id }}, '{{ $special->name }}', '{{ $category }}', {{ $special->price }})"
                                     >
                                         @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $special->id . ')', 'qty' => 'getSelectedQuantity(' . $special->id . ')'])
 
-                                        <div class="relative overflow-hidden h-96 flex items-center justify-center bg-gray-100">
+                                        <div class="relative overflow-hidden h-44 sm:h-56 md:h-96 flex items-center justify-center bg-gray-100">
                                             @php
                                                 $hasMultipleSwiperImages = $special->swiperImages && $special->swiperImages->count() > 1;
                                                 $hasSingleSwiperImage = $special->swiperImages && $special->swiperImages->count() == 1;
@@ -566,7 +662,7 @@
                                                     <div class="swiper-wrapper">
                                                         @foreach($special->swiperImages as $image)
                                                             <div class="swiper-slide">
-                                                                <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $special->name }}" class="w-full h-96 object-cover">
+                                                                <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
                                                             </div>
                                                         @endforeach
                                                     </div>
@@ -575,9 +671,9 @@
                                                     <div class="swiper-button-prev swiper-button-prev-special-{{ $special->id }}"></div>
                                                 </div>
                                             @elseif($hasSingleSwiperImage)
-                                                <img src="{{ $special->swiperImages->first()->image_path }}" alt="{{ $special->swiperImages->first()->title ?? $special->name }}" class="w-full h-96 object-cover">
+                                                <img src="{{ $special->swiperImages->first()->image_path }}" alt="{{ $special->swiperImages->first()->title ?? $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
                                             @elseif($special->image)
-                                                <img src="{{ $special->image }}" alt="{{ $special->name }}" class="w-full h-96 object-cover">
+                                                <img src="{{ $special->image }}" alt="{{ $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
                                             @else
                                                 <div class="text-center" :class="'bg-linear-to-br {{ $specialColor['bg'] }}'">
                                                     <i class="bi {{ $specialColor['icon'] }} text-6xl mb-4 block" :class="'{{ $specialColor['icon'] === 'bi-fire' ? 'text-green-600' : 'text-blue-600' }}'"></i>
@@ -592,23 +688,23 @@
                                             </div>
                                         </div>
 
-                                        <div class="p-6">
-                                            <h3 class="text-xl font-bold mb-2">{{ $special->name }}</h3>
+                                        <div class="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
+                                            <h3 class="text-sm sm:text-base md:text-xl font-bold mb-1.5 md:mb-2 leading-tight mobile-card-title">{{ $special->name }}</h3>
 
                                             <div class="mb-3">
-                                                <span class="text-lg font-bold" :class="{{ $special->price }} === 0 ? 'text-green-600' : 'text-[#8f5d54]'">
+                                                <span class="text-sm sm:text-base md:text-lg font-bold" :class="{{ $special->price }} === 0 ? 'text-green-600' : 'text-[#8f5d54]'">
                                                     {{ $special->price === 0 ? 'FREE' : '₱' . number_format($special->price, 0) }}
                                                 </span>
                                             </div>
 
-                                            <p class="text-gray-600 mb-4 text-sm">
+                                            <p class="text-gray-600 mb-3 md:mb-4 text-xs sm:text-sm mobile-card-description">
                                                 {{ $special->description ?? 'Special option for your staycation' }}
                                             </p>
 
                                             <button type="button"
-                                                    class="w-full py-2 rounded-lg font-semibold transition text-white"
+                                                    class="w-full mt-auto py-2 rounded-lg font-semibold transition text-white"
                                                     :class="isSelected({{ $special->id }}) ? '{{ $specialColor['btn'] }}' : 'bg-gray-400 hover:bg-gray-500'"
-                                                    @click.stop="toggleFood({{ $special->id }}, '{{ $special->name }}', '{{ $category }}', {{ $special->price }})">">
+                                                    @click.stop="toggleFood({{ $special->id }}, '{{ $special->name }}', '{{ $category }}', {{ $special->price }})">
                                                 <i :class="isSelected({{ $special->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
                                                 <span x-text="isSelected({{ $special->id }}) ? 'Selected' : 'Select Option'"></span>
                                             </button>
@@ -1014,6 +1110,63 @@
             }
         }
 
+        function initMobileCardCarousels() {
+            if (!window.matchMedia('(max-width: 767px)').matches) return;
+            const root = document.querySelector('.mobile-layout-mode-3');
+            if (!root) return;
+
+            const getSlideWidth = (track) => {
+                const firstCard = track.querySelector(':scope > *');
+                if (!firstCard) return track.clientWidth || 1;
+                const trackStyles = getComputedStyle(track);
+                const gapValue = parseFloat(trackStyles.columnGap || trackStyles.gap || '0') || 0;
+                return firstCard.getBoundingClientRect().width + gapValue;
+            };
+
+            const syncActiveDot = (track) => {
+                const dots = track.nextElementSibling;
+                if (!dots || !dots.classList.contains('mobile-carousel-dots')) return;
+                const slideWidth = getSlideWidth(track);
+                if (!slideWidth) return;
+
+                const maxIndex = dots.children.length - 1;
+                const activeIndex = Math.min(maxIndex, Math.max(0, Math.round(track.scrollLeft / slideWidth)));
+                Array.from(dots.children).forEach((dot, index) => {
+                    dot.classList.toggle('is-active', index === activeIndex);
+                });
+            };
+
+            root.querySelectorAll('.cards-grid-responsive').forEach((track) => {
+                if (track.dataset.mobileCarouselReady === '1') return;
+                const cards = Array.from(track.children).filter((node) => node.nodeType === 1);
+                if (cards.length <= 1) return;
+
+                const dots = document.createElement('div');
+                dots.className = 'mobile-carousel-dots';
+                dots.setAttribute('aria-label', 'Carousel pagination');
+
+                cards.forEach((_, index) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = `mobile-carousel-dot${index === 0 ? ' is-active' : ''}`;
+                    button.setAttribute('aria-label', `Go to card ${index + 1}`);
+                    button.addEventListener('click', () => {
+                        track.scrollTo({
+                            left: index * getSlideWidth(track),
+                            behavior: 'smooth'
+                        });
+                    });
+                    dots.appendChild(button);
+                });
+
+                track.insertAdjacentElement('afterend', dots);
+                track.addEventListener('scroll', () => syncActiveDot(track), { passive: true });
+                window.addEventListener('resize', () => syncActiveDot(track));
+                syncActiveDot(track);
+                track.dataset.mobileCarouselReady = '1';
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize swipers for each food item
             const foodCards = document.querySelectorAll('[data-category]');
@@ -1071,7 +1224,7 @@
             });
 
             // Listen for real-time food stock updates
-            @if(config('broadcasting.default') !== 'null')
+            @if($enablePageRealtime)
             if (typeof Echo !== 'undefined') {
                 Echo.channel('food-stock')
                     .listen('.food.updated', (e) => {
@@ -1080,6 +1233,8 @@
                     });
             }
             @endif
+
+            initMobileCardCarousels();
         });
 
         // Function to update food stock display in real-time

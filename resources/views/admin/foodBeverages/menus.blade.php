@@ -97,8 +97,6 @@
     x-init="setupKeyboardShortcuts()"
 
 >
-    <hr class="my-6">
-
     <div class="flex justify-between items-end mb-6">
         <div>
             <h2 class="text-xl font-semibold">Menus</h2>

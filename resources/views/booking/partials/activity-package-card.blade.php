@@ -19,13 +19,13 @@
     })->values();
 @endphp
 
-<div class="relative bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-200 hover:border-[#8f5d54] hover:shadow-xl transition cursor-pointer"
+<div class="relative h-full flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-200 hover:border-[#8f5d54] hover:shadow-xl transition cursor-pointer"
      @click="toggleActivityPackage({{ $package->id }}, @js($package->name), {{ $package->getEffectivePrice() }}, @js($packageActivities))">
     
     {{-- Checkmark Badge --}}
     @include('booking.partials._checkmark-badge', ['condition' => 'isActivityPackageSelected(' . $package->id . ')'])
     
-    <div class="relative bg-gray-200 overflow-hidden h-80 md:h-96">
+    <div class="relative bg-gray-200 overflow-hidden h-44 sm:h-56 md:h-80 lg:h-96">
         @if(!empty($package->image))
             <img src="{{ $package->image }}" alt="{{ $package->name }}" class="w-full h-full object-cover">
         @else
@@ -42,11 +42,11 @@
         </div>
     </div>
 
-    <div class="p-6">
-        <h3 class="text-lg font-bold text-gray-900 mb-2">{{ $package->name }}</h3>
+    <div class="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
+        <h3 class="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1.5 md:mb-2 leading-tight mobile-card-title">{{ $package->name }}</h3>
 
         <div class="mb-3">
-            <span class="text-base font-bold text-[#8f5d54]">
+            <span class="text-sm sm:text-base font-bold text-[#8f5d54]">
                 ₱{{ number_format($package->getEffectivePrice(), 0) }}
             </span>
 
@@ -58,7 +58,7 @@
         </div>
 
         @if($package->description)
-            <p class="text-gray-600 mb-5 leading-relaxed text-sm">{{ $package->description }}</p>
+            <p class="text-gray-600 mb-4 md:mb-5 leading-relaxed text-xs sm:text-sm mobile-card-description">{{ $package->description }}</p>
         @endif
 
         {{-- Quantity controls for selected packages --}}
@@ -92,7 +92,7 @@
 
         <button
             type="button"
-            class="w-full py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2"
+            class="w-full mt-auto py-2.5 md:py-3 rounded-xl text-xs sm:text-sm md:text-base font-semibold transition flex items-center justify-center gap-2"
             :class="isActivityPackageSelected({{ $package->id }}) ? 'bg-[#8f5d54] text-white hover:bg-[#7a4e48]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
             @click.stop="toggleActivityPackage({{ $package->id }}, @js($package->name), {{ $package->getEffectivePrice() }}, @js($packageActivities))"
         >

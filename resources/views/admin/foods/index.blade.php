@@ -56,11 +56,36 @@
     x-init="window.foodCrudInstance = $data; $data.setupKeyboardShortcuts(); $data.loadPackages(); $data.loadAvailableFoods()"
     class="p-3 sm:p-6 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-lg sm:rounded-xl"
 >
+    @php
+        $mobileLayoutStep2 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step2_food')->value('value') ?? 1);
+    @endphp
 
     <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-2 sm:mb-3 tracking-tight text-gray-900">
         Food Management
     </h1>
     <p class="text-gray-600 text-sm sm:text-base mb-6 sm:mb-10">Manage food & beverage items, categories, prices, and inventory.</p>
+
+    <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+        <div class="flex flex-col md:flex-row md:items-end gap-3">
+            <div class="flex-1">
+                <h3 class="text-sm font-semibold text-indigo-900">Booking Step 2 Mobile Layout</h3>
+                <p class="text-xs text-indigo-700 mt-1">Controls mobile card style for `/booking/staycation/food` only. Desktop layout stays unchanged.</p>
+            </div>
+            <div class="flex gap-2 items-center">
+                <select id="mobileLayoutStep2"
+                        class="px-3 py-2 border border-indigo-300 rounded-lg text-sm bg-white">
+                    <option value="1" {{ $mobileLayoutStep2 === 1 ? 'selected' : '' }}>2 Columns</option>
+                    <option value="2" {{ $mobileLayoutStep2 === 2 ? 'selected' : '' }}>1 Card Per Row</option>
+                    <option value="3" {{ $mobileLayoutStep2 === 3 ? 'selected' : '' }}>Carousel (1 Card Swipe)</option>
+                </select>
+                <button type="button"
+                        onclick="saveMobileLayoutSetting('mobile_layout_step2_food', document.getElementById('mobileLayoutStep2').value)"
+                        class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition">
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
 
     {{-- Search Box - Full width at top --}}
     <div class="mb-8 sm:mb-10">
@@ -552,6 +577,43 @@
     </div>
 
     <script>
+        if (typeof window.saveMobileLayoutSetting !== 'function') {
+            window.saveMobileLayoutSetting = function(settingKey, value) {
+                const csrf = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+                fetch('{{ route("admin.booking-settings.update") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf
+                    },
+                    body: JSON.stringify({ setting_key: settingKey, value: Number(value) })
+                })
+                .then(async (res) => {
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok || data.success === false) {
+                        throw new Error(data.message || 'Failed to update mobile layout setting.');
+                    }
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saved',
+                        text: 'Mobile layout updated.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 1800
+                    });
+                })
+                .catch((err) => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: err.message || 'Failed to update mobile layout setting.'
+                    });
+                });
+            }
+        }
+
         function foodCrud() {
             return {
                 showModal: false,
@@ -591,17 +653,15 @@
                 
                 // Toast notifications
                 showToast(message, type = 'info') {
-                    const toast = document.createElement('div');
-                    toast.className = `toast ${type}`;
-                    toast.innerHTML = `
-                        <span>${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span>
-                        <span>${message}</span>
-                    `;
-                    document.body.appendChild(toast);
-                    setTimeout(() => {
-                        toast.classList.add('hide');
-                        setTimeout(() => toast.remove(), 300);
-                    }, 3000);
+                    const icon = ['success', 'error', 'warning', 'info', 'question'].includes(type) ? type : 'info';
+                    Swal.fire({
+                        icon,
+                        title: message,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2200
+                    });
                 },
 
                 // Alert helper for Swal.fire
@@ -1099,3 +1159,4 @@
 </div>
 
 @endsection
+

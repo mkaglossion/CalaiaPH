@@ -14,6 +14,31 @@
         Staycations Management
     </h1>
     <p class="text-gray-600 mb-8 sm:mb-10 text-sm sm:text-base">Manage all your accommodation options, capacity, pricing, and inventory.</p>
+    @php
+        $mobileLayoutStep1 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step1_availability')->value('value') ?? 1);
+    @endphp
+
+    <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+        <div class="flex flex-col md:flex-row md:items-end gap-3">
+            <div class="flex-1">
+                <h3 class="text-sm font-semibold text-indigo-900">Booking Step 1 Mobile Layout</h3>
+                <p class="text-xs text-indigo-700 mt-1">Controls mobile card style for `/booking/staycation/availability` only. Desktop layout stays unchanged.</p>
+            </div>
+            <div class="flex gap-2 items-center">
+                <select id="mobileLayoutStep1"
+                        class="px-3 py-2 border border-indigo-300 rounded-lg text-sm bg-white">
+                    <option value="1" {{ $mobileLayoutStep1 === 1 ? 'selected' : '' }}>2 Columns</option>
+                    <option value="2" {{ $mobileLayoutStep1 === 2 ? 'selected' : '' }}>1 Card Per Row</option>
+                    <option value="3" {{ $mobileLayoutStep1 === 3 ? 'selected' : '' }}>Carousel (1 Card Swipe)</option>
+                </select>
+                <button type="button"
+                        onclick="saveMobileLayoutSetting('mobile_layout_step1_availability', document.getElementById('mobileLayoutStep1').value)"
+                        class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition">
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
 
     {{-- Toolbar --}}
     <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-6">
@@ -134,13 +159,29 @@
 
     @if(session('success'))
         <script>
-            toastr.success("{{ session('success') }}", 'Success');
+            Swal.fire({
+                icon: 'success',
+                title: 'Saved',
+                text: @json(session('success')),
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2200
+            });
         </script>
     @endif
 
     @if(session('error'))
         <script>
-            toastr.error("{{ session('error') }}", 'Error');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: @json(session('error')),
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2600
+            });
         </script>
     @endif
 
@@ -1051,7 +1092,15 @@ function staycationManager() {
                 }
             } catch(err) {
                 console.error(err);
-                alert('Error submitting text.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error submitting text.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2600
+                });
             } finally {
                 this.isLoading = false;
             }
@@ -1067,12 +1116,26 @@ function staycationManager() {
 
         quickSetInventory() {
             if (!this.form.id) {
-                alert('❌ Save the staycation first!');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Save the staycation first.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2200
+                });
                 return;
             }
             const qty = this.inventoryQty;
             if (!qty || qty < 1) {
-                alert('❌ Please enter a valid quantity');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Please enter a valid quantity.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2200
+                });
                 return;
             }
             this.sendInventoryRequest({
@@ -1084,15 +1147,36 @@ function staycationManager() {
 
         addDateRangeInventory() {
             if (!this.form.id) {
-                alert('❌ Save the staycation first!');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Save the staycation first.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2200
+                });
                 return;
             }
             if (!this.inventoryStartDate || !this.inventoryEndDate) {
-                alert('❌ Please select start and end dates');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Please select start and end dates.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2200
+                });
                 return;
             }
             if (this.inventoryStartDate > this.inventoryEndDate) {
-                alert('❌ Start date must be before end date');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Start date must be before end date.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2200
+                });
                 return;
             }
             this.sendInventoryRequest({
@@ -1139,7 +1223,15 @@ function staycationManager() {
                     throw new Error(msg);
                 }
 
-                alert('✅ ' + (res.message || 'Saved'));
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Saved',
+                    text: res.message || 'Saved',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1800
+                });
                 this.inventoryStartDate = '';
                 this.inventoryEndDate = '';
                 this.inventoryQtyRange = 10;
@@ -1147,7 +1239,17 @@ function staycationManager() {
                 // Refresh the page so the listing table reflects new availability
                 setTimeout(() => window.location.reload(), 300);
             })
-            .catch(err => alert('❌ ' + err.message));
+            .catch(err => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2600
+                });
+            });
         },
 
         loadInventoryPreview() {
@@ -1418,5 +1520,44 @@ document.addEventListener('DOMContentLoaded', function() {
     box-shadow: 0 16px 35px rgba(0,0,0,0.18);
 }
 </style>
+
+<script>
+if (typeof window.saveMobileLayoutSetting !== 'function') {
+    window.saveMobileLayoutSetting = function(settingKey, value) {
+        const csrf = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+        fetch('{{ route("admin.booking-settings.update") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrf
+            },
+            body: JSON.stringify({ setting_key: settingKey, value: Number(value) })
+        })
+        .then(async (res) => {
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data.success === false) {
+                throw new Error(data.message || 'Failed to update mobile layout setting.');
+            }
+            Swal.fire({
+                icon: 'success',
+                title: 'Saved',
+                text: 'Mobile layout updated.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 1800
+            });
+        })
+        .catch((err) => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: err.message || 'Failed to update mobile layout setting.'
+            });
+        });
+    }
+}
+</script>
 
 @endsection

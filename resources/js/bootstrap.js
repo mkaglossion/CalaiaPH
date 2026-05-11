@@ -45,6 +45,7 @@ if (token) {
   
   // Also intercept XMLHttpRequest
   const xhrOpen = XMLHttpRequest.prototype.open;
+  const xhrSend = XMLHttpRequest.prototype.send;
   XMLHttpRequest.prototype.open = function(method, url, ...args) {
     if (url.includes('_boost') || url.includes('browser-logs') || url.includes('pulse')) {
       this._blocked = true;
@@ -54,8 +55,8 @@ if (token) {
   };
   
   XMLHttpRequest.prototype.send = function(data) {
-    if (this._blocked) return Promise.resolve();
-    return XMLHttpRequest.prototype.send.call(this, data);
+    if (this._blocked) return;
+    return xhrSend.call(this, data);
   };
 })();
 
@@ -64,10 +65,27 @@ if (token) {
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 window.Pusher = Pusher;
-window.Echo = new Echo({
-    broadcaster: 'pusher',
-    key: import.meta.env.VITE_PUSHER_APP_KEY,
-    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
-    forceTLS: true,
-    enabledTransports: ['ws', 'wss']
-});
+
+const pusherKey = import.meta.env.VITE_PUSHER_APP_KEY;
+const pusherCluster = import.meta.env.VITE_PUSHER_APP_CLUSTER;
+const host = window.location.hostname;
+const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(host);
+const allowLocalEcho = String(import.meta.env.VITE_ENABLE_ECHO_LOCAL || 'false').toLowerCase() === 'true';
+const shouldInitEcho = !!pusherKey && !!pusherCluster && (!isLocalhost || allowLocalEcho);
+
+if (shouldInitEcho) {
+    try {
+        window.Echo = new Echo({
+            broadcaster: 'pusher',
+            key: pusherKey,
+            cluster: pusherCluster,
+            forceTLS: true,
+            enabledTransports: ['ws', 'wss'],
+        });
+    } catch (error) {
+        console.warn('Echo initialization skipped:', error);
+        window.Echo = null;
+    }
+} else {
+    window.Echo = null;
+}
