@@ -87,7 +87,20 @@
         </div>
     </div>
 
-    {{-- Search Box - Full width at top --}}
+    {{-- Search + Sort --}}
+    <div class="mb-4 flex flex-col sm:flex-row gap-3 sm:items-end sm:justify-between">
+        <form method="GET" action="{{ route('admin.foods.index') }}" class="w-full sm:w-auto">
+            <label for="sort_by" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Sort by</label>
+            <select id="sort_by" name="sort_by"
+                    onchange="this.form.submit()"
+                    class="w-full sm:w-72 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white">
+                @foreach(($sortOptions ?? ['featured' => 'Featured']) as $key => $label)
+                    <option value="{{ $key }}" {{ ($sortBy ?? 'featured') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
+        </form>
+    </div>
+
     <div class="mb-8 sm:mb-10">
         <input 
             id="search_foods"
@@ -131,7 +144,7 @@
         </div>
 
         <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
-            <div class="overflow-x-auto md:overflow-visible">
+            <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs sm:text-sm">
                     <thead class="bg-gray-100/70 backdrop-blur">
                         <tr>
@@ -141,7 +154,7 @@
                             <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-center">Price</th>
                             <th class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Items</th>
                             <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Status</th>
-                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-right">Actions</th>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-right sticky right-0 bg-gray-100/70 z-20">Actions</th>
                         </tr>
                     </thead>
                 <tbody class="divide-y divide-gray-200" x-html="packagesHtml"></tbody>
@@ -175,7 +188,7 @@
 
     {{-- Food Items Table --}}
     <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
-        <div class="overflow-x-auto md:overflow-visible">
+        <div class="overflow-x-auto">
             <table class="w-full text-left text-xs sm:text-sm">
                 <thead class="bg-gray-100/70 backdrop-blur">
                     <tr>
@@ -187,7 +200,7 @@
                         <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 w-16 sm:w-20">Image</th>
                         <th class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Status</th>
                         <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Special</th>
-                        <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-right">Actions</th>
+                        <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-right sticky right-0 bg-gray-100/70 z-20">Actions</th>
                     </tr>
                 </thead>
             <tbody class="divide-y divide-gray-200">

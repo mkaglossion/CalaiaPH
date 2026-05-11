@@ -43,9 +43,49 @@ use Illuminate\Support\Facades\Log;
 
 class AdminController extends Controller
 {
-    public function staycation()
+    public function staycation(Request $request)
     {
-        $staycations = Staycation::all();
+        $sortBy = $request->string('sort_by', 'featured')->toString();
+        $sortOptions = [
+            'featured' => 'Featured',
+            'name_asc' => 'Alphabetically, A-Z',
+            'name_desc' => 'Alphabetically, Z-A',
+            'price_asc' => 'Price, low to high',
+            'price_desc' => 'Price, high to low',
+            'oldest' => 'Date, old to new',
+            'newest' => 'Date, new to old',
+        ];
+        if (!array_key_exists($sortBy, $sortOptions)) {
+            $sortBy = 'featured';
+        }
+
+        $staycationsQuery = Staycation::query();
+        switch ($sortBy) {
+            case 'name_asc':
+                $staycationsQuery->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $staycationsQuery->orderBy('name', 'desc');
+                break;
+            case 'price_asc':
+                $staycationsQuery->orderByRaw('COALESCE(price, 0) asc')->orderBy('name', 'asc');
+                break;
+            case 'price_desc':
+                $staycationsQuery->orderByRaw('COALESCE(price, 0) desc')->orderBy('name', 'asc');
+                break;
+            case 'oldest':
+                $staycationsQuery->orderBy('created_at', 'asc')->orderBy('name', 'asc');
+                break;
+            case 'newest':
+                $staycationsQuery->orderBy('created_at', 'desc')->orderBy('name', 'asc');
+                break;
+            case 'featured':
+            default:
+                $staycationsQuery->orderBy('id', 'asc');
+                break;
+        }
+
+        $staycations = $staycationsQuery->get();
 
         // Add today's available inventory to each staycation
         $today = now()->format('Y-m-d');
@@ -70,7 +110,7 @@ class AdminController extends Controller
 
         $images = StaycationSwiperImage::with('staycation')->latest()->get();
         $texts = StaycationText::all();
-        return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts', 'currentSeason'));
+        return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts', 'currentSeason', 'sortBy', 'sortOptions'));
     }
 
     public function staycationInventory()
@@ -79,10 +119,49 @@ class AdminController extends Controller
         return view('admin.whereToStay.inventory', compact('staycations'));
     }
 
-    public function activity()
+    public function activity(Request $request)
     {
+        $sortBy = $request->string('sort_by', 'featured')->toString();
+        $sortOptions = [
+            'featured' => 'Featured',
+            'name_asc' => 'Alphabetically, A-Z',
+            'name_desc' => 'Alphabetically, Z-A',
+            'price_asc' => 'Price, low to high',
+            'price_desc' => 'Price, high to low',
+            'oldest' => 'Date, old to new',
+            'newest' => 'Date, new to old',
+        ];
+        if (!array_key_exists($sortBy, $sortOptions)) {
+            $sortBy = 'featured';
+        }
+
         // Paginate activities first
-        $activities = Activity::orderBy('sort_order')->paginate(10);
+        $activitiesQuery = Activity::query();
+        switch ($sortBy) {
+            case 'name_asc':
+                $activitiesQuery->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $activitiesQuery->orderBy('name', 'desc');
+                break;
+            case 'price_asc':
+                $activitiesQuery->orderBy('price', 'asc')->orderBy('name', 'asc');
+                break;
+            case 'price_desc':
+                $activitiesQuery->orderBy('price', 'desc')->orderBy('name', 'asc');
+                break;
+            case 'oldest':
+                $activitiesQuery->orderBy('created_at', 'asc')->orderBy('name', 'asc');
+                break;
+            case 'newest':
+                $activitiesQuery->orderBy('created_at', 'desc')->orderBy('name', 'asc');
+                break;
+            case 'featured':
+            default:
+                $activitiesQuery->orderBy('sort_order', 'asc')->orderBy('id', 'asc');
+                break;
+        }
+        $activities = $activitiesQuery->paginate(10)->appends(['sort_by' => $sortBy]);
         
         // Load related data only for current page
         $activityIds = $activities->pluck('id')->toArray();
@@ -104,7 +183,7 @@ class AdminController extends Controller
         // Load all activities for the activity selector in the modal
         $allActivities = Activity::all(['id', 'name', 'description', 'price']);
         
-        return view('admin.whatToDo.activities', compact('activities', 'images', 'texts', 'activityPackages', 'allActivities'));
+        return view('admin.whatToDo.activities', compact('activities', 'images', 'texts', 'activityPackages', 'allActivities', 'sortBy', 'sortOptions'));
     }
 
     public function menu()

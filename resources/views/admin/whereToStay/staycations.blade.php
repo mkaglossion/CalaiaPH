@@ -48,6 +48,26 @@
         </div>
 
         <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <form method="GET" action="{{ route('admin.stay.staycations') }}">
+                @foreach(request()->except('sort_by') as $queryKey => $queryValue)
+                    @if(is_array($queryValue))
+                        @foreach($queryValue as $nestedValue)
+                            <input type="hidden" name="{{ $queryKey }}[]" value="{{ $nestedValue }}">
+                        @endforeach
+                    @else
+                        <input type="hidden" name="{{ $queryKey }}" value="{{ $queryValue }}">
+                    @endif
+                @endforeach
+                <label for="sort_by" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Sort by</label>
+                <select id="sort_by" name="sort_by"
+                        onchange="this.form.submit()"
+                        class="w-full min-w-64 px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    @foreach(($sortOptions ?? ['featured' => 'Featured']) as $key => $label)
+                        <option value="{{ $key }}" {{ ($sortBy ?? 'featured') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </form>
+
             <a
                 href="{{ route('admin.stay.settings') }}"
                 class="px-3 py-2 sm:px-4 rounded-xl bg-orange-600 text-white font-medium shadow hover:bg-orange-700 hover:shadow-lg transition text-center text-sm sm:text-base"

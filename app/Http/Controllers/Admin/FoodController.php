@@ -13,6 +13,16 @@ use Illuminate\Database\Schema\Blueprint;
 
 class FoodController extends Controller
 {
+    private const SORT_OPTIONS = [
+        'featured' => 'Featured',
+        'name_asc' => 'Alphabetically, A-Z',
+        'name_desc' => 'Alphabetically, Z-A',
+        'price_asc' => 'Price, low to high',
+        'price_desc' => 'Price, high to low',
+        'oldest' => 'Date, old to new',
+        'newest' => 'Date, new to old',
+    ];
+
     private function ensureFoodOrderingColumns(): void
     {
         if (!Schema::hasColumn('foods', 'meal_type')) {
@@ -50,14 +60,47 @@ class FoodController extends Controller
             return $this->apiIndex($request);
         }
 
-        $foodsQuery = Food::query()->orderBy('category');
-        if (Schema::hasColumn('foods', 'meal_type') && Schema::hasColumn('foods', 'sort_order')) {
-            $foodsQuery
-                ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
-                ->orderBy('sort_order');
+        $sortBy = $request->string('sort_by', 'featured')->toString();
+        if (!array_key_exists($sortBy, self::SORT_OPTIONS)) {
+            $sortBy = 'featured';
         }
-        $foods = $foodsQuery->orderBy('name')->paginate(10);
-        return view('admin.foods.index', compact('foods'));
+
+        $foodsQuery = Food::query();
+        switch ($sortBy) {
+            case 'name_asc':
+                $foodsQuery->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $foodsQuery->orderBy('name', 'desc');
+                break;
+            case 'price_asc':
+                $foodsQuery->orderBy('price', 'asc')->orderBy('name', 'asc');
+                break;
+            case 'price_desc':
+                $foodsQuery->orderBy('price', 'desc')->orderBy('name', 'asc');
+                break;
+            case 'oldest':
+                $foodsQuery->orderBy('created_at', 'asc')->orderBy('name', 'asc');
+                break;
+            case 'newest':
+                $foodsQuery->orderBy('created_at', 'desc')->orderBy('name', 'asc');
+                break;
+            case 'featured':
+            default:
+                $foodsQuery->orderBy('category');
+                if (Schema::hasColumn('foods', 'meal_type') && Schema::hasColumn('foods', 'sort_order')) {
+                    $foodsQuery
+                        ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
+                        ->orderBy('sort_order');
+                }
+                $foodsQuery->orderBy('name');
+                break;
+        }
+
+        $foods = $foodsQuery->paginate(10)->appends(['sort_by' => $sortBy]);
+        $sortOptions = self::SORT_OPTIONS;
+
+        return view('admin.foods.index', compact('foods', 'sortBy', 'sortOptions'));
     }
 
     public function create()

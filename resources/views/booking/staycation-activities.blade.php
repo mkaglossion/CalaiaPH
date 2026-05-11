@@ -176,6 +176,29 @@
                             </select>
                         </div>
 
+                        <div>
+                            <label for="sortBy" class="block text-sm font-medium text-gray-700 mb-2">Sort by:</label>
+                            <form method="GET" action="{{ route('booking.staycationActivities') }}">
+                                @foreach(request()->except('sort_by') as $queryKey => $queryValue)
+                                    @if(is_array($queryValue))
+                                        @foreach($queryValue as $nestedValue)
+                                            <input type="hidden" name="{{ $queryKey }}[]" value="{{ $nestedValue }}">
+                                        @endforeach
+                                    @else
+                                        <input type="hidden" name="{{ $queryKey }}" value="{{ $queryValue }}">
+                                    @endif
+                                @endforeach
+
+                                <select id="sortBy" name="sort_by"
+                                        onchange="this.form.submit()"
+                                        class="block w-full min-w-56 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8f5d54] focus:border-[#8f5d54]">
+                                    @foreach(($sortOptions ?? ['featured' => 'Featured']) as $key => $label)
+                                        <option value="{{ $key }}" {{ ($sortBy ?? 'featured') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </form>
+                        </div>
+
                         <button type="button"
                                 class="ml-auto px-4 py-2 rounded-lg font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
                                 @click="resetAll()"

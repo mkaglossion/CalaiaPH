@@ -35,14 +35,30 @@
         </div>
     </div>
 
-    {{-- Search Box - Full width at top --}}
+    {{-- Search + Sort --}}
+    <div class="mb-4 flex flex-col sm:flex-row gap-3 sm:items-end sm:justify-between">
+        <form method="GET" action="{{ route('admin.do.activities') }}" class="w-full sm:w-auto">
+            <label for="sort_by" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Sort by</label>
+            <select id="sort_by" name="sort_by"
+                    onchange="this.form.submit()"
+                    class="w-full sm:w-72 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white">
+                @foreach(($sortOptions ?? ['featured' => 'Featured']) as $key => $label)
+                    <option value="{{ $key }}" {{ ($sortBy ?? 'featured') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
+        </form>
+    </div>
+
     <div class="mb-8 sm:mb-10">
-        <input 
+        <input
+            id="search_activities"
+            name="search"
             x-model="searchQuery"
             @input="filterActivities()"
-            type="text" 
-            placeholder="🔍 Search by name, category, or description..." 
-            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition"
+            type="text"
+            autocomplete="off"
+            placeholder="&#128269; Search by name or category..."
+            class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:border-blue-500 focus:outline-none transition"
         >
     </div>
 

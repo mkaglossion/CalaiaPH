@@ -680,10 +680,24 @@ class BookingController extends Controller
         return $this->storeBookingActivities($request, 'regular', ValidationService::activitiesRules(), 'selected_activities');
     }
 
-    public function staycationActivities()
+    public function staycationActivities(Request $request)
     {
-            // Fetch staycations from the database
-            $staycations = Staycation::all()->keyBy('id'); // Key by ID for proper lookup
+        $sortBy = $request->string('sort_by', 'featured')->toString();
+        $sortOptions = [
+            'featured' => 'Featured',
+            'name_asc' => 'Alphabetically, A-Z',
+            'name_desc' => 'Alphabetically, Z-A',
+            'price_asc' => 'Price, low to high',
+            'price_desc' => 'Price, high to low',
+            'oldest' => 'Date, old to new',
+            'newest' => 'Date, new to old',
+        ];
+        if (!array_key_exists($sortBy, $sortOptions)) {
+            $sortBy = 'featured';
+        }
+
+        // Fetch staycations from the database
+        $staycations = Staycation::all()->keyBy('id'); // Key by ID for proper lookup
 
         $booking = session('booking', []);
 
@@ -692,19 +706,65 @@ class BookingController extends Controller
         }
 
         // Fetch activities
-        $activities = Activity::where('is_active', true)
-            ->orderBy('sort_order', 'asc')
-            ->orderBy('id', 'asc')
-            ->get();
+        $activitiesQuery = Activity::where('is_active', true);
+        switch ($sortBy) {
+            case 'name_asc':
+                $activitiesQuery->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $activitiesQuery->orderBy('name', 'desc');
+                break;
+            case 'price_asc':
+                $activitiesQuery->orderBy('price', 'asc')->orderBy('name', 'asc');
+                break;
+            case 'price_desc':
+                $activitiesQuery->orderBy('price', 'desc')->orderBy('name', 'asc');
+                break;
+            case 'oldest':
+                $activitiesQuery->orderBy('created_at', 'asc')->orderBy('name', 'asc');
+                break;
+            case 'newest':
+                $activitiesQuery->orderBy('created_at', 'desc')->orderBy('name', 'asc');
+                break;
+            case 'featured':
+            default:
+                $activitiesQuery->orderBy('sort_order', 'asc')->orderBy('id', 'asc');
+                break;
+        }
+        $activities = $activitiesQuery->get();
         
         // Fetch activity packages with their activities
-        $activityPackages = ActivityPackage::where('is_active', true)
+        $activityPackagesQuery = ActivityPackage::where('is_active', true)
             ->with(['activities' => function($q) {
                 $q->select('activities.id', 'activities.name', 'activities.price')
                   ->orderBy('activities.name');
-            }])
-            ->latest()
-            ->get();
+            }]);
+
+        switch ($sortBy) {
+            case 'name_asc':
+                $activityPackagesQuery->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $activityPackagesQuery->orderBy('name', 'desc');
+                break;
+            case 'price_asc':
+                $activityPackagesQuery->orderByRaw('COALESCE(price, 0) asc')->orderBy('name', 'asc');
+                break;
+            case 'price_desc':
+                $activityPackagesQuery->orderByRaw('COALESCE(price, 0) desc')->orderBy('name', 'asc');
+                break;
+            case 'oldest':
+                $activityPackagesQuery->orderBy('created_at', 'asc')->orderBy('name', 'asc');
+                break;
+            case 'newest':
+                $activityPackagesQuery->orderBy('created_at', 'desc')->orderBy('name', 'asc');
+                break;
+            case 'featured':
+            default:
+                $activityPackagesQuery->latest();
+                break;
+        }
+        $activityPackages = $activityPackagesQuery->get();
         
         // Get selected foods from session
         $selectedFoods = $booking['selected_foods'] ?? session('selected_foods', []);
@@ -725,7 +785,7 @@ class BookingController extends Controller
         $vatRate = $vatService->getCurrentVatRate();
         $vatRatePercentage = $vatService->getCurrentVatRatePercentage();
 
-        return view('booking.staycation-activities', compact('booking', 'activities', 'activityPackages', 'staycations', 'selectedFoods', 'foods', 'selectedActivities', 'selectedActivityPackages', 'vatRate', 'vatRatePercentage'));
+        return view('booking.staycation-activities', compact('booking', 'activities', 'activityPackages', 'staycations', 'selectedFoods', 'foods', 'selectedActivities', 'selectedActivityPackages', 'vatRate', 'vatRatePercentage', 'sortBy', 'sortOptions'));
     }
 
     public function storeStaycationActivities(Request $request)
@@ -1996,6 +2056,20 @@ class BookingController extends Controller
 
     public function staycationAvailability(Request $request)
     {
+        $sortBy = $request->string('sort_by', 'featured')->toString();
+        $sortOptions = [
+            'featured' => 'Featured',
+            'name_asc' => 'Alphabetically, A-Z',
+            'name_desc' => 'Alphabetically, Z-A',
+            'price_asc' => 'Price, low to high',
+            'price_desc' => 'Price, high to low',
+            'oldest' => 'Date, old to new',
+            'newest' => 'Date, new to old',
+        ];
+        if (!array_key_exists($sortBy, $sortOptions)) {
+            $sortBy = 'featured';
+        }
+
         // Check for dates in query parameters first (from calendar), then session
         $checkin = $request->query('checkin');
         $checkout = $request->query('checkout');
@@ -2088,10 +2162,37 @@ class BookingController extends Controller
             ->toArray();
 
         // Get all staycations from admin panel
-        $staycations = Staycation::with([
+        $staycationsQuery = Staycation::with([
             'texts',
             'swiperImages'
-        ])->get();
+        ]);
+
+        switch ($sortBy) {
+            case 'name_asc':
+                $staycationsQuery->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $staycationsQuery->orderBy('name', 'desc');
+                break;
+            case 'price_asc':
+                $staycationsQuery->orderByRaw('COALESCE(price, 0) asc')->orderBy('name', 'asc');
+                break;
+            case 'price_desc':
+                $staycationsQuery->orderByRaw('COALESCE(price, 0) desc')->orderBy('name', 'asc');
+                break;
+            case 'oldest':
+                $staycationsQuery->orderBy('created_at', 'asc')->orderBy('name', 'asc');
+                break;
+            case 'newest':
+                $staycationsQuery->orderBy('created_at', 'desc')->orderBy('name', 'asc');
+                break;
+            case 'featured':
+            default:
+                $staycationsQuery->orderBy('id', 'asc');
+                break;
+        }
+
+        $staycations = $staycationsQuery->get();
 
         // Commented out dummy data creation for production
         // if ($staycations->isEmpty()) {
@@ -2253,7 +2354,7 @@ class BookingController extends Controller
         $vatRate = $vatService->getCurrentVatRate();
         $vatRatePercentage = $vatService->getCurrentVatRatePercentage();
 
-        return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'currentSeason', 'roomsCount', 'adultsTotal', 'childrenTotal', 'rooms', 'maxPetsPerRoom', 'vatRate', 'vatRatePercentage'));
+        return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'currentSeason', 'roomsCount', 'adultsTotal', 'childrenTotal', 'rooms', 'maxPetsPerRoom', 'vatRate', 'vatRatePercentage', 'sortBy', 'sortOptions'));
     }
 
     /**
@@ -2378,6 +2479,19 @@ class BookingController extends Controller
     public function staycationFood()
     {
         $booking = session('booking', []);
+        $sortBy = request()->query('sort_by', 'featured');
+        $sortOptions = [
+            'featured' => 'Featured',
+            'name_asc' => 'Alphabetically, A-Z',
+            'name_desc' => 'Alphabetically, Z-A',
+            'price_asc' => 'Price, low to high',
+            'price_desc' => 'Price, high to low',
+            'oldest' => 'Date, old to new',
+            'newest' => 'Date, new to old',
+        ];
+        if (!array_key_exists($sortBy, $sortOptions)) {
+            $sortBy = 'featured';
+        }
         // Ensure rooms were selected first
         if (empty($booking['accommodations'])) {
             return redirect()->route('booking.staycationAvailability')
@@ -2411,29 +2525,78 @@ class BookingController extends Controller
             ->where(function ($query) {
                 $query->whereIn('category', ['messhall', 'cook_your_own'])
                       ->orWhere('is_special_option', true);
-            })
-            ->orderBy('category');
+            });
 
-        if (Schema::hasColumn('foods', 'meal_type') && Schema::hasColumn('foods', 'sort_order')) {
-            $foodMenusQuery
-                ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
-                ->orderBy('sort_order');
+        switch ($sortBy) {
+            case 'name_asc':
+                $foodMenusQuery->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $foodMenusQuery->orderBy('name', 'desc');
+                break;
+            case 'price_asc':
+                $foodMenusQuery->orderBy('price', 'asc')->orderBy('name', 'asc');
+                break;
+            case 'price_desc':
+                $foodMenusQuery->orderBy('price', 'desc')->orderBy('name', 'asc');
+                break;
+            case 'oldest':
+                $foodMenusQuery->orderBy('created_at', 'asc')->orderBy('name', 'asc');
+                break;
+            case 'newest':
+                $foodMenusQuery->orderBy('created_at', 'desc')->orderBy('name', 'asc');
+                break;
+            case 'featured':
+            default:
+                $foodMenusQuery->orderBy('category');
+                if (Schema::hasColumn('foods', 'meal_type') && Schema::hasColumn('foods', 'sort_order')) {
+                    $foodMenusQuery
+                        ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
+                        ->orderBy('sort_order');
+                }
+                $foodMenusQuery->orderBy('name');
+                break;
         }
-        $foodMenus = $foodMenusQuery->orderBy('name')->get();
+        $foodMenus = $foodMenusQuery->get();
 
         // Fetch food packages for staycation
         $foodPackagesQuery = FoodPackage::with(['foods' => function($q) {
             $q->select('foods.id', 'foods.name', 'foods.price', 'foods.category');
         }])
             ->where('is_active', true)
-            ->orderBy('category');
+            ;
 
-        if (Schema::hasColumn('food_packages', 'meal_type') && Schema::hasColumn('food_packages', 'sort_order')) {
-            $foodPackagesQuery
-                ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
-                ->orderBy('sort_order');
+        switch ($sortBy) {
+            case 'name_asc':
+                $foodPackagesQuery->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $foodPackagesQuery->orderBy('name', 'desc');
+                break;
+            case 'price_asc':
+                $foodPackagesQuery->orderByRaw('COALESCE(price, 0) asc')->orderBy('name', 'asc');
+                break;
+            case 'price_desc':
+                $foodPackagesQuery->orderByRaw('COALESCE(price, 0) desc')->orderBy('name', 'asc');
+                break;
+            case 'oldest':
+                $foodPackagesQuery->orderBy('created_at', 'asc')->orderBy('name', 'asc');
+                break;
+            case 'newest':
+                $foodPackagesQuery->orderBy('created_at', 'desc')->orderBy('name', 'asc');
+                break;
+            case 'featured':
+            default:
+                $foodPackagesQuery->orderBy('category');
+                if (Schema::hasColumn('food_packages', 'meal_type') && Schema::hasColumn('food_packages', 'sort_order')) {
+                    $foodPackagesQuery
+                        ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
+                        ->orderBy('sort_order');
+                }
+                $foodPackagesQuery->orderBy('name');
+                break;
         }
-        $foodPackages = $foodPackagesQuery->orderBy('name')->get();
+        $foodPackages = $foodPackagesQuery->get();
 
         // Group food menus by meal_type for display
         $foodMenusByMealType = $foodMenus->groupBy('meal_type');
@@ -2461,7 +2624,7 @@ class BookingController extends Controller
         $vatRate = $vatService->getCurrentVatRate();
         $vatRatePercentage = $vatService->getCurrentVatRatePercentage();
 
-        return view('booking.staycation-food', compact('booking', 'foodMenus', 'foodMenusByMealType', 'foodPackages', 'staycations', 'packagesSettings', 'vatRate', 'vatRatePercentage'));
+        return view('booking.staycation-food', compact('booking', 'foodMenus', 'foodMenusByMealType', 'foodPackages', 'staycations', 'packagesSettings', 'vatRate', 'vatRatePercentage', 'sortBy', 'sortOptions'));
     }
 
     public function saveFoodSelection(Request $request)
