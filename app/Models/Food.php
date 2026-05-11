@@ -8,12 +8,13 @@ class Food extends Model
 {
     protected $table = 'foods';
 
-    protected $fillable = ['name', 'category', 'subcategory', 'price', 'description', 'image', 'is_active', 'is_special_option', 'stock_quantity', 'is_inventory_managed', 'available_for_day_visit', 'day_visit_only'];
+    protected $fillable = ['name', 'category', 'subcategory', 'meal_type', 'sort_order', 'price', 'description', 'image', 'is_active', 'is_special_option', 'stock_quantity', 'is_inventory_managed', 'available_for_day_visit', 'day_visit_only'];
 
     protected $casts = [
         'is_active' => 'boolean',
         'is_special_option' => 'boolean',
         'stock_quantity' => 'integer',
+        'sort_order' => 'integer',
         'is_inventory_managed' => 'boolean',
         'available_for_day_visit' => 'boolean',
         'day_visit_only' => 'boolean',

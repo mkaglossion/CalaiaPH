@@ -8,17 +8,55 @@ use App\Models\Food;
 use App\Models\FoodSwiperImage;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 
 class FoodController extends Controller
 {
+    private function ensureFoodOrderingColumns(): void
+    {
+        if (!Schema::hasColumn('foods', 'meal_type')) {
+            Schema::table('foods', function (Blueprint $table) {
+                $table->string('meal_type', 20)->default('all_day')->after('subcategory');
+                $table->index('meal_type');
+            });
+        }
+
+        if (!Schema::hasColumn('foods', 'sort_order')) {
+            Schema::table('foods', function (Blueprint $table) {
+                $table->integer('sort_order')->default(1)->after('meal_type');
+                $table->index('sort_order');
+            });
+        }
+    }
+
+    private function hasFoodColumn(string $column): bool
+    {
+        static $columnCache = [];
+
+        if (!array_key_exists($column, $columnCache)) {
+            $columnCache[$column] = Schema::hasColumn('foods', $column);
+        }
+
+        return $columnCache[$column];
+    }
+
     public function index(Request $request)
     {
+        $this->ensureFoodOrderingColumns();
+
         // Handle API requests
         if ($request->query('api') === '1') {
             return $this->apiIndex($request);
         }
 
-        $foods = Food::latest()->paginate(10);
+        $foodsQuery = Food::query()->orderBy('category');
+        if (Schema::hasColumn('foods', 'meal_type') && Schema::hasColumn('foods', 'sort_order')) {
+            $foodsQuery
+                ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
+                ->orderBy('sort_order');
+        }
+        $foods = $foodsQuery->orderBy('name')->paginate(10);
         return view('admin.foods.index', compact('foods'));
     }
 
@@ -39,8 +77,10 @@ class FoodController extends Controller
 
     public function store(Request $request)
     {
+        $this->ensureFoodOrderingColumns();
+
         try {
-            $validated = $request->validate([
+            $rules = [
                 'name' => 'required|string|max:255|unique:foods,name',
                 'category' => 'required|string|in:messhall,cook_your_own',
                 'subcategory' => 'nullable|string|max:255',
@@ -51,7 +91,17 @@ class FoodController extends Controller
                 'is_special_option' => 'nullable|boolean',
                 'stock_quantity' => 'nullable|integer|min:0',
                 'is_inventory_managed' => 'nullable|boolean',
-            ]);
+            ];
+
+            if ($this->hasFoodColumn('meal_type')) {
+                $rules['meal_type'] = 'nullable|string|in:breakfast,lunch,dinner,all_day';
+            }
+
+            if ($this->hasFoodColumn('sort_order')) {
+                $rules['sort_order'] = 'nullable|integer|min:1';
+            }
+
+            $validated = $request->validate($rules);
 
             // Handle image upload
             $imagePath = null;
@@ -62,7 +112,7 @@ class FoodController extends Controller
                 $imagePath = $uploadResult['secure_url'];
             }
 
-            $food = Food::create([
+            $createData = [
                 'name' => $request->name,
                 'category' => $request->category,
                 'subcategory' => $request->subcategory,
@@ -73,7 +123,17 @@ class FoodController extends Controller
                 'is_special_option' => $request->boolean('is_special_option', false),
                 'stock_quantity' => $request->integer('stock_quantity', 0),
                 'is_inventory_managed' => $request->boolean('is_inventory_managed', false),
-            ]);
+            ];
+
+            if ($this->hasFoodColumn('meal_type')) {
+                $createData['meal_type'] = $request->meal_type ?? 'all_day';
+            }
+
+            if ($this->hasFoodColumn('sort_order')) {
+                $createData['sort_order'] = $request->filled('sort_order') ? $request->integer('sort_order') : 1;
+            }
+
+            $food = Food::create($createData);
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -99,8 +159,10 @@ class FoodController extends Controller
 
     public function update(Request $request, Food $food)
     {
+        $this->ensureFoodOrderingColumns();
+
         try {
-            $validated = $request->validate([
+            $rules = [
                 'name' => 'required|string|max:255|unique:foods,name,' . $food->id,
                 'category' => 'required|string|in:messhall,cook_your_own',
                 'subcategory' => 'nullable|string|max:255',
@@ -112,7 +174,17 @@ class FoodController extends Controller
                 'is_special_option' => 'nullable|boolean',
                 'stock_quantity' => 'nullable|integer|min:0',
                 'is_inventory_managed' => 'nullable|boolean',
-            ]);
+            ];
+
+            if ($this->hasFoodColumn('meal_type')) {
+                $rules['meal_type'] = 'nullable|string|in:breakfast,lunch,dinner,all_day';
+            }
+
+            if ($this->hasFoodColumn('sort_order')) {
+                $rules['sort_order'] = 'nullable|integer|min:1';
+            }
+
+            $validated = $request->validate($rules);
 
             $updateData = [
                 'name' => $request->name,
@@ -125,6 +197,14 @@ class FoodController extends Controller
                 'stock_quantity' => $request->integer('stock_quantity', 0),
                 'is_inventory_managed' => $request->boolean('is_inventory_managed', false),
             ];
+
+            if ($this->hasFoodColumn('meal_type')) {
+                $updateData['meal_type'] = $request->meal_type ?? 'all_day';
+            }
+
+            if ($this->hasFoodColumn('sort_order')) {
+                $updateData['sort_order'] = $request->filled('sort_order') ? $request->integer('sort_order') : 1;
+            }
 
             if ($request->has('remove_image') && $request->remove_image == '1') {
                 $updateData['image'] = null;
@@ -171,15 +251,31 @@ class FoodController extends Controller
      */
     public function apiIndex(Request $request)
     {
+        $this->ensureFoodOrderingColumns();
+
         if ($request->query('api') !== '1' && ! $request->expectsJson()) {
             return $this->index($request);
         }
 
-        $foods = Food::query()
-            ->select('id', 'name', 'category', 'price', 'is_active')
-            ->orderBy('category')
-            ->orderBy('name')
-            ->get();
+        $selectColumns = ['id', 'name', 'category', 'price', 'is_active'];
+        if (Schema::hasColumn('foods', 'meal_type')) {
+            $selectColumns[] = 'meal_type';
+        }
+        if (Schema::hasColumn('foods', 'sort_order')) {
+            $selectColumns[] = 'sort_order';
+        }
+
+        $foodsQuery = Food::query()
+            ->select($selectColumns)
+            ->orderBy('category');
+
+        if (Schema::hasColumn('foods', 'meal_type') && Schema::hasColumn('foods', 'sort_order')) {
+            $foodsQuery
+                ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
+                ->orderBy('sort_order');
+        }
+
+        $foods = $foodsQuery->orderBy('name')->get();
 
         return response()->json(['foods' => $foods]);
     }

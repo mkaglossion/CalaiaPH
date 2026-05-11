@@ -2406,24 +2406,43 @@ class BookingController extends Controller
 
         // Pull food items from database with images and texts
         // Filter for staycation: only messhall, cook_your_own, and special options
-        $foodMenus = Food::with(['swiperImages', 'texts'])
+        $foodMenusQuery = Food::with(['swiperImages', 'texts'])
             ->where('is_active', true)
             ->where(function ($query) {
                 $query->whereIn('category', ['messhall', 'cook_your_own'])
                       ->orWhere('is_special_option', true);
             })
-            ->orderBy('category')
-            ->orderBy('name')
-            ->get();
+            ->orderBy('category');
+
+        if (Schema::hasColumn('foods', 'meal_type') && Schema::hasColumn('foods', 'sort_order')) {
+            $foodMenusQuery
+                ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
+                ->orderBy('sort_order');
+        }
+        $foodMenus = $foodMenusQuery->orderBy('name')->get();
 
         // Fetch food packages for staycation
-        $foodPackages = FoodPackage::with(['foods' => function($q) {
+        $foodPackagesQuery = FoodPackage::with(['foods' => function($q) {
             $q->select('foods.id', 'foods.name', 'foods.price', 'foods.category');
         }])
             ->where('is_active', true)
-            ->orderBy('category')
-            ->orderBy('name')
-            ->get();
+            ->orderBy('category');
+
+        if (Schema::hasColumn('food_packages', 'meal_type') && Schema::hasColumn('food_packages', 'sort_order')) {
+            $foodPackagesQuery
+                ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
+                ->orderBy('sort_order');
+        }
+        $foodPackages = $foodPackagesQuery->orderBy('name')->get();
+
+        // Group food menus by meal_type for display
+        $foodMenusByMealType = $foodMenus->groupBy('meal_type');
+
+        // Ensure consistent ordering: breakfast, lunch, dinner, then others
+        $mealTypeOrder = ['breakfast' => 1, 'lunch' => 2, 'dinner' => 3];
+        $foodMenusByMealType = $foodMenusByMealType->sortBy(function($items, $mealType) use ($mealTypeOrder) {
+            return $mealTypeOrder[$mealType] ?? 4;
+        });
 
         // Fetch food packages section settings from admin
         $packagesSettings = [
@@ -2442,7 +2461,7 @@ class BookingController extends Controller
         $vatRate = $vatService->getCurrentVatRate();
         $vatRatePercentage = $vatService->getCurrentVatRatePercentage();
 
-        return view('booking.staycation-food', compact('booking', 'foodMenus', 'foodPackages', 'staycations', 'packagesSettings', 'vatRate', 'vatRatePercentage'));
+        return view('booking.staycation-food', compact('booking', 'foodMenus', 'foodMenusByMealType', 'foodPackages', 'staycations', 'packagesSettings', 'vatRate', 'vatRatePercentage'));
     }
 
     public function saveFoodSelection(Request $request)

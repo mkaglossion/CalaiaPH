@@ -211,6 +211,12 @@
                                 <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 truncate">
                                     {{ ucfirst($food->category) }}
                                 </span>
+                                <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 truncate">
+                                    {{ ucwords(str_replace('_', ' ', $food->meal_type ?? 'all_day')) }}
+                                </span>
+                                <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 truncate">
+                                    Priority: {{ ($food->sort_order ?: 1) }}{{ substr(($food->sort_order ?: 1), -1) === '1' ? 'st' : (substr(($food->sort_order ?: 1), -1) === '2' ? 'nd' : (substr(($food->sort_order ?: 1), -1) === '3' ? 'rd' : 'th')) }}
+                                </span>
                                 @if($food->subcategory)
                                     <span class="hidden sm:inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 truncate">
                                         {{ ucfirst($food->subcategory) }}
@@ -344,7 +350,32 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-6">
+                    <div>
+                        <label for="food_meal_type" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Meal Type *</label>
+                        <select x-model="form.meal_type" id="food_meal_type" name="meal_type" required
+                                @change="if (!editMode) { form.sort_order = getNextSortOrderForMealType(form.meal_type); }"
+                                autocomplete="off"
+                                class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                            <option value="all_day">All Day</option>
+                            <option value="breakfast">Breakfast</option>
+                            <option value="lunch">Lunch</option>
+                            <option value="dinner">Dinner</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="food_sort_order" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Sort Priority</label>
+                        <input type="number" min="1" step="1" x-model.number="form.sort_order" id="food_sort_order" name="sort_order"
+                               autocomplete="off"
+                               class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                               placeholder="1">
+                        <p class="mt-1 text-xs text-gray-500">
+                            Lower number appears first. Suggested for
+                            <span class="font-medium" x-text="(form.meal_type || 'all_day').replace('_',' ')"></span>:
+                            <span class="font-semibold" x-text="getNextSortOrderForMealType(form.meal_type)"></span>
+                        </p>
+                    </div>
                     <div>
                         <label for="food_price" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Price (₱) *</label>
                         <input type="number" step="0.01" min="0" x-model="form.price" id="food_price" name="price" required
@@ -451,7 +482,7 @@
                            placeholder="e.g., Breakfast Bundle, Romantic Dinner for 2">
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                     <div>
                         <label for="package_category" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Category *</label>
                         <select x-model="packageForm.category" id="package_category" name="category" required
@@ -464,6 +495,26 @@
                         </select>
                     </div>
 
+                    <div>
+                        <label for="package_meal_type" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Meal Type *</label>
+                        <select x-model="packageForm.meal_type" id="package_meal_type" name="meal_type" required
+                                autocomplete="off"
+                                class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
+                            <option value="all_day">All Day</option>
+                            <option value="breakfast">Breakfast</option>
+                            <option value="lunch">Lunch</option>
+                            <option value="dinner">Dinner</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="package_sort_order" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Sort Priority</label>
+                        <input type="number" min="1" step="1" x-model.number="packageForm.sort_order" id="package_sort_order" name="sort_order"
+                               autocomplete="off"
+                               class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                               placeholder="1">
+                        <p class="mt-1 text-xs text-gray-500">Lower number appears first.</p>
+                    </div>
                     <div>
                         <h3 class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Package Price (₱)</h3>
                         <div class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg bg-gray-50 text-gray-900">
@@ -628,6 +679,8 @@
                     id: null,
                     name: '',
                     category: '',
+                    meal_type: 'all_day',
+                    sort_order: 1,
                     subcategory: '',
                     price: '',
                     description: '',
@@ -643,6 +696,8 @@
                     id: null,
                     name: '',
                     category: '',
+                    meal_type: 'all_day',
+                    sort_order: 1,
                     price: '',
                     description: '',
                     is_active: true,
@@ -717,7 +772,31 @@
                         'Accept': 'application/json'
                     };
                 },
-                
+
+                normalizeMealType(mealType) {
+                    const allowed = ['breakfast', 'lunch', 'dinner', 'all_day'];
+                    return allowed.includes(mealType) ? mealType : 'all_day';
+                },
+
+                getNextSortOrderForMealType(mealType) {
+                    const normalizedMealType = this.normalizeMealType(mealType);
+                    const sameMealItems = (this.availableFoods || []).filter(food => {
+                        const foodMealType = this.normalizeMealType(food.meal_type || 'all_day');
+                        return foodMealType === normalizedMealType;
+                    });
+
+                    if (sameMealItems.length === 0) {
+                        return 1;
+                    }
+
+                    const maxSortOrder = Math.max(...sameMealItems.map(food => {
+                        const parsed = Number(food.sort_order);
+                        return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+                    }));
+
+                    return maxSortOrder + 1;
+                },
+                 
                 // Search/Filter
                 filterFoods() {
                     // Filtering handled by x-show directives on table rows
@@ -790,6 +869,7 @@
 
                 openCreate() {
                     this.resetForm();
+                    this.form.sort_order = this.getNextSortOrderForMealType(this.form.meal_type);
                     this.showModal = true;
                 },
 
@@ -807,6 +887,8 @@
                         this.form.id = food.id;
                         this.form.name = food.name || '';
                         this.form.category = food.category || '';
+                        this.form.meal_type = food.meal_type || 'all_day';
+                        this.form.sort_order = food.sort_order || 1;
                         this.form.subcategory = food.subcategory || '';
                         this.form.price = food.price ?? '';
                         this.form.description = food.description || '';
@@ -828,6 +910,8 @@
                         id: null,
                         name: '',
                         category: '',
+                        meal_type: 'all_day',
+                        sort_order: null,
                         subcategory: '',
                         price: '',
                         description: '',
@@ -874,9 +958,15 @@
                                 </div>
                             </td>
                             <td class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
-                                <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 truncate">
-                                    ${pkg.category.charAt(0).toUpperCase() + pkg.category.slice(1).replace('_', ' ')}
-                                </span>
+                                <div class="flex flex-col items-start gap-1">
+                                    <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 truncate">
+                                        ${pkg.category.charAt(0).toUpperCase() + pkg.category.slice(1).replace('_', ' ')}
+                                    </span>
+                                    <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 truncate">
+                                        ${(pkg.meal_type || 'all_day').replace('_', ' ').replace(/\\b\\w/g, c => c.toUpperCase())}
+                                    </span>
+                                    <span class="text-[11px] text-gray-500">Sort: ${pkg.sort_order ?? 1}</span>
+                                </div>
                             </td>
                             <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 font-medium text-gray-900 text-center">₱${pkg.effective_price ? pkg.effective_price.toLocaleString() : '0'}</td>
                             <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
@@ -926,6 +1016,8 @@
                             this.packageForm.id = pkg.id;
                             this.packageForm.name = pkg.name || '';
                             this.packageForm.category = pkg.category || '';
+                            this.packageForm.meal_type = pkg.meal_type || 'all_day';
+                            this.packageForm.sort_order = pkg.sort_order ?? 1;
                             this.packageForm.description = pkg.description || '';
                             this.packageForm.is_active = !!pkg.is_active;
                             this.packageForm.stock_quantity = pkg.stock_quantity ?? 0;
@@ -956,6 +1048,8 @@
                         id: null,
                         name: '',
                         category: '',
+                        meal_type: 'all_day',
+                        sort_order: 1,
                         price: '',
                         description: '',
                         is_active: true,
@@ -980,6 +1074,9 @@
                         });
                         const data = await response.json();
                         this.availableFoods = data.foods || [];
+                        if (!this.editMode && !this.isPackageMode && !this.form.sort_order) {
+                            this.form.sort_order = this.getNextSortOrderForMealType(this.form.meal_type);
+                        }
                     } catch (error) {
                         console.error('Failed to load foods:', error);
                         this.availableFoods = [];
@@ -1024,6 +1121,8 @@
                     const formData = new FormData();
                     formData.append('name', this.form.name);
                     formData.append('category', this.form.category);
+                    formData.append('meal_type', this.form.meal_type || 'all_day');
+                    formData.append('sort_order', this.form.sort_order ?? 1);
                     formData.append('subcategory', this.form.subcategory ?? '');
                     formData.append('price', this.form.price ?? '');
                     formData.append('description', this.form.description ?? '');
@@ -1090,6 +1189,8 @@
                     const formData = new FormData();
                     formData.append('name', this.packageForm.name);
                     formData.append('category', this.packageForm.category);
+                    formData.append('meal_type', this.packageForm.meal_type || 'all_day');
+                    formData.append('sort_order', this.packageForm.sort_order ?? 1);
                     formData.append('price', this.getPackageTotal());
                     formData.append('description', this.packageForm.description || '');
                     formData.append('is_active', this.packageForm.is_active ? 1 : 0);
@@ -1159,4 +1260,6 @@
 </div>
 
 @endsection
+
+
 

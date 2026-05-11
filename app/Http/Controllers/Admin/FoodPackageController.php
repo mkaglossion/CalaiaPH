@@ -8,9 +8,28 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 
 class FoodPackageController extends Controller
 {
+    private function ensurePackageOrderingColumns(): void
+    {
+        if (!Schema::hasColumn('food_packages', 'meal_type')) {
+            Schema::table('food_packages', function (Blueprint $table) {
+                $table->string('meal_type', 20)->default('all_day')->after('category');
+                $table->index('meal_type');
+            });
+        }
+
+        if (!Schema::hasColumn('food_packages', 'sort_order')) {
+            Schema::table('food_packages', function (Blueprint $table) {
+                $table->integer('sort_order')->default(1)->after('meal_type');
+                $table->index('sort_order');
+            });
+        }
+    }
+
     protected const CATEGORIES = [
         'messhall' => 'Messhall',
         'cook_your_own' => 'Cook Your Own',
@@ -26,6 +45,8 @@ class FoodPackageController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'category' => 'required|in:messhall,cook_your_own,special',
+            'meal_type' => 'nullable|string|in:breakfast,lunch,dinner,all_day',
+            'sort_order' => 'nullable|integer|min:1',
             'price' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
             'is_inventory_managed' => 'boolean',
@@ -65,6 +86,8 @@ class FoodPackageController extends Controller
             'name' => $package->name,
             'description' => $package->description,
             'category' => $package->category,
+            'meal_type' => $package->meal_type,
+            'sort_order' => $package->sort_order,
             'price' => $package->price,
             'effective_price' => $package->getEffectivePrice(),
             'is_active' => $package->is_active,
@@ -100,6 +123,8 @@ class FoodPackageController extends Controller
      */
     public function index(Request $request)
     {
+        $this->ensurePackageOrderingColumns();
+
         if ($request->query('api') === '1') {
             return $this->apiIndex($request);
         }
@@ -122,12 +147,16 @@ class FoodPackageController extends Controller
      */
     public function store(Request $request)
     {
+        $this->ensurePackageOrderingColumns();
+
         $validated = $request->validate($this->getValidationRules());
 
         $package = FoodPackage::create([
             'name' => $validated['name'],
             'description' => $validated['description'],
             'category' => $validated['category'],
+            'meal_type' => $validated['meal_type'] ?? 'all_day',
+            'sort_order' => $validated['sort_order'] ?? 1,
             'price' => $validated['price'],
             'is_active' => $request->has('is_active'),
             'is_inventory_managed' => $request->has('is_inventory_managed'),
@@ -178,12 +207,16 @@ class FoodPackageController extends Controller
      */
     public function update(Request $request, FoodPackage $package)
     {
+        $this->ensurePackageOrderingColumns();
+
         $validated = $request->validate($this->getValidationRules());
 
         $package->update([
             'name' => $validated['name'],
             'description' => $validated['description'],
             'category' => $validated['category'],
+            'meal_type' => $validated['meal_type'] ?? 'all_day',
+            'sort_order' => $validated['sort_order'] ?? 1,
             'price' => $validated['price'],
             'is_active' => $request->has('is_active'),
             'is_inventory_managed' => $request->has('is_inventory_managed'),
@@ -238,9 +271,20 @@ class FoodPackageController extends Controller
      */
     public function apiIndex(Request $request)
     {
-        $packages = FoodPackage::with(['foods' => function($q) {
+        $this->ensurePackageOrderingColumns();
+
+        $packagesQuery = FoodPackage::with(['foods' => function($q) {
             $q->select('foods.id', 'foods.name', 'foods.price');
-        }])->withCount('foods')->latest()->get();
+        }])->withCount('foods')
+            ->orderBy('category');
+
+        if (Schema::hasColumn('food_packages', 'meal_type') && Schema::hasColumn('food_packages', 'sort_order')) {
+            $packagesQuery
+                ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
+                ->orderBy('sort_order');
+        }
+
+        $packages = $packagesQuery->orderBy('name')->get();
 
         $packagesData = $packages->map(function($package) {
             return [
@@ -248,6 +292,8 @@ class FoodPackageController extends Controller
                 'name' => $package->name,
                 'description' => $package->description,
                 'category' => $package->category,
+                'meal_type' => $package->meal_type,
+                'sort_order' => $package->sort_order,
                 'effective_price' => $package->getEffectivePrice(),
                 'is_active' => $package->is_active,
                 'foods_count' => $package->foods_count,

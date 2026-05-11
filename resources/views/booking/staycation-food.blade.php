@@ -292,22 +292,38 @@
                     </div>
 
                     @php
-                        $messhallFoods = $foodMenus->filter(function ($food) {
-                            return !($food->is_special_option ?? false) && strtolower($food->category ?? '') === 'messhall';
-                        })->values();
+                        // Group foods by meal type and category for display
+                        $foodsByMealAndCategory = [];
+                        foreach ($foodMenusByMealType as $mealType => $foods) {
+                            $foodsByMealAndCategory[$mealType] = [
+                                'messhall' => $foods->filter(function ($food) {
+                                    return !($food->is_special_option ?? false) && strtolower($food->category ?? '') === 'messhall';
+                                })->values(),
+                                'cook_your_own' => $foods->filter(function ($food) {
+                                    $category = strtolower($food->category ?? '');
+                                    $name = strtolower($food->name ?? '');
+                                    return $name === 'cook your own' || $category === 'cook_your_own';
+                                })->values(),
+                                'special' => $foods->filter(function ($food) {
+                                    $name = strtolower($food->name ?? '');
+                                    return ($food->is_special_option ?? false) && $name !== 'cook your own';
+                                })->values(),
+                            ];
+                        }
 
-                        $cookYourOwnFoods = $foodMenus->filter(function ($food) {
-                            $category = strtolower($food->category ?? '');
-                            $name = strtolower($food->name ?? '');
-                            return $name === 'cook your own' || $category === 'cook_your_own';
-                        })->values();
-
-                        $specialFoods = $foodMenus->filter(function ($food) {
-                            $name = strtolower($food->name ?? '');
-                            return ($food->is_special_option ?? false) && $name !== 'cook your own';
-                        })->values();
+                        // Helper function to get meal type display name
+                        $getMealTypeDisplayName = function($mealType) {
+                            return match(strtolower((string) $mealType)) {
+                                'breakfast' => 'Breakfast',
+                                'lunch' => 'Lunch',
+                                'dinner' => 'Dinner',
+                                'all_day' => 'All Day',
+                                default => ucwords(str_replace('_', ' ', (string) ($mealType ?: 'Other')))
+                            };
+                        };
                     @endphp
 
+                    {{-- Keep packages sections outside the meal type loop --}}
                     @if($messhallPackages->count() > 0)
                         <div class="mb-10" x-show="selectedCategory === 'all' || selectedCategory === 'messhall'">
                             <div class="mb-8 text-center flex flex-col items-center justify-center">
@@ -325,143 +341,6 @@
                         </div>
                     @endif
 
-                    <div class="mb-8" x-show="selectedCategory === 'all' || selectedCategory === 'messhall'">
-                        <div class="mb-8 text-center flex flex-col items-center justify-center">
-                            <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">Messhall</h2>
-                            <p class="mt-3 text-base md:text-lg text-gray-500 max-w-2xl">
-                                Choose from Messhall à la carte below.
-                            </p>
-                        </div>
-
-                        @if($messhallFoods->count() > 0)
-                            <div class="cards-grid-responsive">
-                                @foreach($messhallFoods as $food)
-                                    @php
-                                        $category = 'messhall';
-                                    @endphp
-
-                                    <div
-                                        class="relative h-full flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl ring-2 ring-gray-200 hover:ring-[#8f5d54] cursor-pointer"
-                                        data-category="{{ $category }}"
-                                        data-food-id="{{ $food->id }}"
-                                        @click="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})"
-                                    >
-                                        @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $food->id . ')', 'qty' => 'getSelectedQuantity(' . $food->id . ')'])
-
-                                        <div class="relative bg-gray-200 overflow-hidden">
-                                            @php
-                                                $hasMultipleSwiperImages = $food->swiperImages && $food->swiperImages->count() > 1;
-                                                $hasSingleSwiperImage = $food->swiperImages && $food->swiperImages->count() == 1;
-                                            @endphp
-
-                                            @if($hasMultipleSwiperImages)
-                                                <div class="swiper food-swiper-{{ $food->id }}">
-                                                    <div class="swiper-wrapper">
-                                                        @foreach($food->swiperImages as $image)
-                                                            <div class="swiper-slide">
-                                                                <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
-                                                            </div>
-                                                        @endforeach
-                                                    </div>
-                                                    <div class="swiper-pagination swiper-pagination-{{ $food->id }}"></div>
-                                                    <div class="swiper-button-next swiper-button-next-{{ $food->id }}"></div>
-                                                    <div class="swiper-button-prev swiper-button-prev-{{ $food->id }}"></div>
-                                                </div>
-                                            @elseif($hasSingleSwiperImage)
-                                                <img src="{{ $food->swiperImages->first()->image_path }}" alt="{{ $food->swiperImages->first()->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
-                                            @elseif($food->image)
-                                                <img src="{{ $food->image }}" alt="{{ $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
-                                            @else
-                                                <div class="w-full h-44 sm:h-56 md:h-96 bg-linear-to-br from-gray-300 to-gray-400 flex items-center justify-center">
-                                                    <i class="bi bi-image text-6xl text-gray-300"></i>
-                                                </div>
-                                            @endif
-
-                                             <div class="absolute bottom-4 left-4 z-10">
-                                                 <span class="px-3 py-1 bg-[#8f5d54] text-white text-sm font-semibold rounded-full">
-                                                     Messhall
-                                                 </span>
-                                             </div>
-
-                                             @if($food->is_inventory_managed)
-                                                 <div class="absolute bottom-4 right-4 z-10">
-                                                     @if($food->stock_quantity <= 0)
-                                                         <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full">
-                                                             Out of Stock
-                                                         </span>
-                                                     @elseif($food->stock_quantity <= 5)
-                                                         <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full animate-pulse">
-                                                             Only {{ $food->stock_quantity }} left
-                                                         </span>
-                                                     @elseif($food->stock_quantity <= 10)
-                                                         <span class="availability-badge px-2 py-1 bg-orange-600 text-white text-xs font-semibold rounded-full">
-                                                             {{ $food->stock_quantity }} left
-                                                         </span>
-                                                     @else
-                                                         <span class="availability-badge px-2 py-1 bg-black/70 text-white text-xs font-semibold rounded-full">
-                                                             {{ $food->stock_quantity }} available
-                                                         </span>
-                                                     @endif
-                                                 </div>
-                                             @endif
-                                         </div>
-
-                                         <div class="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
-                                             <h3 class="text-sm sm:text-base md:text-xl font-bold mb-1.5 md:mb-2 leading-tight mobile-card-title">{{ $food->name }}</h3>
-
-                                             <div class="mb-3">
-                                                 <span class="text-sm sm:text-base md:text-lg font-bold text-[#8f5d54]">
-                                                     ₱{{ number_format($food->price ?? 0, 0, ',', ',') }}
-                                                 </span>
-                                             </div>
-
-                                             {{-- Quantity controls for selected food --}}
-                                             <template x-if="isSelected({{ $food->id }})">
-                                                 <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-                                                     <div class="flex items-center justify-between gap-4">
-                                                         <div class="flex items-center gap-2">
-                                                             <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="decreaseQty({{ $food->id }})">−</button>
-                                                             <input type="number" min="1" max="20" :id="'food-qty-card-' + {{ $food->id }}" class="w-12 text-center border border-gray-300 rounded-lg py-1 text-sm font-semibold focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54]" :value="getSelectedQuantity({{ $food->id }})" @change.stop="setField({{ $food->id }}, 'quantity', $event.target.value)">
-                                                             <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="increaseQty({{ $food->id }})">+</button>
-                                                         </div>
-                                                         <div class="text-right">
-                                                             <div class="text-lg font-bold text-[#8f5d54]" x-text="'₱' + ({{ $food->price ?? 0 }} * getSelectedQuantity({{ $food->id }})).toLocaleString()"></div>
-                                                         </div>
-                                                     </div>
-                                                 </div>
-                                             </template>
-
-                                             <p class="text-gray-600 mb-3 md:mb-4 text-xs sm:text-sm mobile-card-description">
-                                                 {{ $food->description ?? 'No description available' }}
-                                             </p>
-
-                                             <button type="button"
-                                                     class="w-full mt-auto py-2 rounded-lg font-semibold transition"
-                                                     :class="{
-                                                         'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
-                                                         'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
-                                                         'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
-                                                     }"
-                                                     :disabled="{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'true' : 'false' }}"
-                                                     @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
-                                                 <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
-                                                 <span x-text="isSelected({{ $food->id }}) ? 'Added to Cart' : '{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'Out of Stock' : 'Add to Cart' }}'"></span>
-                                             </button>
-                                         </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="col-span-full text-center py-12 bg-white rounded-2xl shadow border border-gray-200">
-                                <div class="text-gray-500">
-                                    <i class="bi bi-cup-straw text-6xl mb-4 block text-gray-300"></i>
-                                    <h3 class="text-2xl font-semibold mb-2 text-gray-700">No Messhall Items Available</h3>
-                                    <p class="text-gray-500 mb-4">No Messhall food items are currently available for selection.</p>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-
                     @if($cookYourOwnPackages->count() > 0)
                         <div class="mb-10 mt-12" x-show="selectedCategory === 'all' || selectedCategory === 'cook_your_own'">
                             <div class="mb-6 text-center">
@@ -476,141 +355,6 @@
                             </div>
                         </div>
                     @endif
-
-                    <div class="mb-8 mt-12" x-show="selectedCategory === 'all' || selectedCategory === 'cook_your_own'">
-                        <div class="mb-6 text-center">
-                            <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Cook Your Own</h2>
-                            <p class="mt-2 text-sm text-gray-500">Choose from Cook Your Own à la carte below.</p>
-                        </div>
-
-                        @if($cookYourOwnFoods->count() > 0)
-                            <div class="cards-grid-responsive">
-                                @foreach($cookYourOwnFoods as $food)
-                                    @php
-                                        $category = 'cook_your_own';
-                                    @endphp
-
-                                    <div
-                                        class="relative h-full flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl ring-2 ring-gray-200 hover:ring-[#8f5d54] cursor-pointer"
-                                        data-category="{{ $category }}"
-                                        data-food-id="{{ $food->id }}"
-                                        @click="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})"
-                                    >
-                                        @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $food->id . ')', 'qty' => 'getSelectedQuantity(' . $food->id . ')'])
-
-                                        <div class="relative bg-gray-200 overflow-hidden">
-                                            @php
-                                                $hasMultipleSwiperImages = $food->swiperImages && $food->swiperImages->count() > 1;
-                                                $hasSingleSwiperImage = $food->swiperImages && $food->swiperImages->count() == 1;
-                                            @endphp
-
-                                            @if($hasMultipleSwiperImages)
-                                                <div class="swiper food-swiper-{{ $food->id }}">
-                                                    <div class="swiper-wrapper">
-                                                        @foreach($food->swiperImages as $image)
-                                                            <div class="swiper-slide">
-                                                                <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
-                                                            </div>
-                                                        @endforeach
-                                                    </div>
-                                                    <div class="swiper-pagination swiper-pagination-{{ $food->id }}"></div>
-                                                    <div class="swiper-button-next swiper-button-next-{{ $food->id }}"></div>
-                                                    <div class="swiper-button-prev swiper-button-prev-{{ $food->id }}"></div>
-                                                </div>
-                                            @elseif($hasSingleSwiperImage)
-                                                <img src="{{ $food->swiperImages->first()->image_path }}" alt="{{ $food->swiperImages->first()->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
-                                            @elseif($food->image)
-                                                <img src="{{ $food->image }}" alt="{{ $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
-                                            @else
-                                                <div class="w-full h-44 sm:h-56 md:h-96 bg-linear-to-br from-green-100 to-emerald-200 flex items-center justify-center">
-                                                    <i class="bi bi-fire text-6xl text-green-600"></i>
-                                                </div>
-                                            @endif
-
-                                            <div class="absolute bottom-4 left-4 z-10">
-                                                <span class="px-3 py-1 bg-green-600 text-white text-sm font-semibold rounded-full">
-                                                    Cook Your Own
-                                                </span>
-                                            </div>
-
-                                            @if($food->is_inventory_managed)
-                                                <div class="absolute bottom-4 right-4 z-10">
-                                                    @if($food->stock_quantity <= 0)
-                                                        <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full">
-                                                            Out of Stock
-                                                        </span>
-                                                    @elseif($food->stock_quantity <= 5)
-                                                        <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full animate-pulse">
-                                                            Only {{ $food->stock_quantity }} left
-                                                        </span>
-                                                    @elseif($food->stock_quantity <= 10)
-                                                        <span class="availability-badge px-2 py-1 bg-orange-600 text-white text-xs font-semibold rounded-full">
-                                                            {{ $food->stock_quantity }} left
-                                                        </span>
-                                                    @else
-                                                        <span class="availability-badge px-2 py-1 bg-black/70 text-white text-xs font-semibold rounded-full">
-                                                            {{ $food->stock_quantity }} available
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            @endif
-                                        </div>
-
-                                         <div class="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
-                                             <h3 class="text-sm sm:text-base md:text-xl font-bold mb-1.5 md:mb-2 leading-tight mobile-card-title">{{ $food->name }}</h3>
-
-                                             <div class="mb-3">
-                                                 <span class="text-sm sm:text-base md:text-lg font-bold text-[#8f5d54]">
-                                                     ₱{{ number_format($food->price ?? 0, 0, ',', ',') }}
-                                                 </span>
-                                             </div>
-
-                                             {{-- Quantity controls for selected food --}}
-                                             <template x-if="isSelected({{ $food->id }}) && '{{ $category }}' !== 'special'">
-                                                 <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-                                                     <div class="flex items-center justify-between gap-4">
-                                                         <div class="flex items-center gap-2">
-                                                             <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="decreaseQty({{ $food->id }})">−</button>
-                                                             <input type="number" min="1" max="20" :id="'food-qty-card-' + {{ $food->id }}" class="w-12 text-center border border-gray-300 rounded-lg py-1 text-sm font-semibold focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54]" :value="getSelectedQuantity({{ $food->id }})" @change.stop="setField({{ $food->id }}, 'quantity', $event.target.value)">
-                                                             <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="increaseQty({{ $food->id }})">+</button>
-                                                         </div>
-                                                         <div class="text-right">
-                                                             <div class="text-lg font-bold text-[#8f5d54]" x-text="'₱' + ({{ $food->price ?? 0 }} * getSelectedQuantity({{ $food->id }})).toLocaleString()"></div>
-                                                         </div>
-                                                     </div>
-                                                 </div>
-                                             </template>
-
-                                             <p class="text-gray-600 mb-3 md:mb-4 text-xs sm:text-sm mobile-card-description">
-                                                 {{ $food->description ?? 'No description available' }}
-                                             </p>
-
-                                             <button type="button"
-                                                     class="w-full mt-auto py-2 rounded-lg font-semibold transition"
-                                                     :class="{
-                                                         'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
-                                                         'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
-                                                         'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
-                                                     }"
-                                                     :disabled="{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'true' : 'false' }}"
-                                                     @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
-                                                 <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
-                                                 <span x-text="isSelected({{ $food->id }}) ? 'Added to Cart' : '{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'Out of Stock' : 'Add to Cart' }}'"></span>
-                                             </button>
-                                         </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="col-span-full text-center py-12 bg-white rounded-2xl shadow border border-gray-200">
-                                <div class="text-gray-500">
-                                    <i class="bi bi-cup-straw text-6xl mb-4 block text-gray-300"></i>
-                                    <h3 class="text-2xl font-semibold mb-2 text-gray-700">No Cook Your Own Items Available</h3>
-                                    <p class="text-gray-500 mb-4">No Cook Your Own items are currently available for selection.</p>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
 
                     @if($specialPackages->count() > 0)
                         <div class="mb-8 mt-12" x-show="selectedCategory === 'all' || selectedCategory === 'special'">
@@ -627,93 +371,357 @@
                         </div>
                     @endif
 
-                    @if($specialFoods->count() > 0)
-                        <div class="mb-8 mt-12" x-show="selectedCategory === 'all' || selectedCategory === 'special'">
-                            <div class="mb-6 text-center">
-                                <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Special Options</h2>
-                                <p class="mt-2 text-sm text-gray-500">Additional special selections.</p>
-                            </div>
+                    {{-- Loop through meal types --}}
+                    @foreach($foodsByMealAndCategory as $mealType => $categories)
+                        @php
+                            $mealTypeDisplayName = $getMealTypeDisplayName($mealType);
+                            $hasAnyFoodsInMealType = collect($categories)->flatten()->count() > 0;
+                        @endphp
 
-                            <div class="cards-grid-responsive">
-                                @foreach($specialFoods as $special)
-                                    @php
-                                        $category = $special->category ?? 'special';
-                                        $specialColor = match($special->name) {
-                                            'Cook Your Own' => ['bg' => 'from-green-50 to-emerald-50', 'ring' => 'ring-green-200 hover:ring-green-400', 'border' => 'border-green-300', 'btn' => 'bg-green-600 hover:bg-green-700', 'badge' => 'bg-green-600', 'icon' => 'bi-fire'],
-                                            default => ['bg' => 'from-blue-50 to-cyan-50', 'ring' => 'ring-blue-200 hover:ring-blue-400', 'border' => 'border-blue-300', 'btn' => 'bg-blue-600 hover:bg-blue-700', 'badge' => 'bg-blue-600', 'icon' => 'bi-star']
-                                        };
-                                    @endphp
+                        @if($hasAnyFoodsInMealType)
+                            <div class="mb-12" x-show="selectedCategory === 'all' || selectedCategory === 'messhall' || selectedCategory === 'cook_your_own' || selectedCategory === 'special'">
+                                <div class="mb-8 text-center flex flex-col items-center justify-center">
+                                    <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">{{ $mealTypeDisplayName }}</h2>
+                                    <p class="mt-3 text-base md:text-lg text-gray-500 max-w-2xl">
+                                        Choose your {{ strtolower($mealTypeDisplayName) }} options below.
+                                    </p>
+                                </div>
 
-                                    <div
-                                        class="relative h-full flex flex-col bg-linear-to-br rounded-2xl shadow-lg overflow-hidden border transition-all duration-300 hover:shadow-xl ring-2 cursor-pointer"
-                                        :class="'{{ $specialColor['bg'] }} {{ $specialColor['ring'] }} {{ $specialColor['border'] }}'"
-                                        @click="toggleFood({{ $special->id }}, '{{ $special->name }}', '{{ $category }}', {{ $special->price }})"
-                                    >
-                                        @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $special->id . ')', 'qty' => 'getSelectedQuantity(' . $special->id . ')'])
+                                {{-- Display Messhall foods for this meal type --}}
+                                @if($categories['messhall']->count() > 0 && (request()->get('debug') || true))
+                                    <div class="mb-8" x-show="selectedCategory === 'all' || selectedCategory === 'messhall'">
+                                        <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Messhall</h3>
+                                        <div class="cards-grid-responsive">
+                                            @foreach($categories['messhall'] as $food)
+                                                @php
+                                                    $category = 'messhall';
+                                                @endphp
 
-                                        <div class="relative overflow-hidden h-44 sm:h-56 md:h-96 flex items-center justify-center bg-gray-100">
-                                            @php
-                                                $hasMultipleSwiperImages = $special->swiperImages && $special->swiperImages->count() > 1;
-                                                $hasSingleSwiperImage = $special->swiperImages && $special->swiperImages->count() == 1;
-                                            @endphp
+                                                <div
+                                                    class="relative h-full flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl ring-2 ring-gray-200 hover:ring-[#8f5d54] cursor-pointer"
+                                                    data-category="{{ $category }}"
+                                                    data-food-id="{{ $food->id }}"
+                                                    @click="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})"
+                                                >
+                                                    @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $food->id . ')', 'qty' => 'getSelectedQuantity(' . $food->id . ')'])
 
-                                            @if($hasMultipleSwiperImages)
-                                                <div class="swiper special-swiper-{{ $special->id }}">
-                                                    <div class="swiper-wrapper">
-                                                        @foreach($special->swiperImages as $image)
-                                                            <div class="swiper-slide">
-                                                                <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                    <div class="relative bg-gray-200 overflow-hidden">
+                                                        @php
+                                                            $hasMultipleSwiperImages = $food->swiperImages && $food->swiperImages->count() > 1;
+                                                            $hasSingleSwiperImage = $food->swiperImages && $food->swiperImages->count() == 1;
+                                                        @endphp
+
+                                                        @if($hasMultipleSwiperImages)
+                                                            <div class="swiper food-swiper-{{ $food->id }}">
+                                                                <div class="swiper-wrapper">
+                                                                    @foreach($food->swiperImages as $image)
+                                                                        <div class="swiper-slide">
+                                                                            <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                                <div class="swiper-pagination swiper-pagination-{{ $food->id }}"></div>
+                                                                <div class="swiper-button-next swiper-button-next-{{ $food->id }}"></div>
+                                                                <div class="swiper-button-prev swiper-button-prev-{{ $food->id }}"></div>
                                                             </div>
-                                                        @endforeach
-                                                    </div>
-                                                    <div class="swiper-pagination swiper-pagination-special-{{ $special->id }}"></div>
-                                                    <div class="swiper-button-next swiper-button-next-special-{{ $special->id }}"></div>
-                                                    <div class="swiper-button-prev swiper-button-prev-special-{{ $special->id }}"></div>
+                                                        @elseif($hasSingleSwiperImage)
+                                                            <img src="{{ $food->swiperImages->first()->image_path }}" alt="{{ $food->swiperImages->first()->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                        @elseif($food->image)
+                                                            <img src="{{ $food->image }}" alt="{{ $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                        @else
+                                                            <div class="w-full h-44 sm:h-56 md:h-96 bg-linear-to-br from-gray-300 to-gray-400 flex items-center justify-center">
+                                                                <i class="bi bi-image text-6xl text-gray-300"></i>
+                                                            </div>
+                                                        @endif
+
+                                                         <div class="absolute bottom-4 left-4 z-10">
+                                                             <span class="px-3 py-1 bg-[#8f5d54] text-white text-sm font-semibold rounded-full">
+                                                                 Messhall
+                                                             </span>
+                                                         </div>
+
+                                                         @if($food->is_inventory_managed)
+                                                             <div class="absolute bottom-4 right-4 z-10">
+                                                                 @if($food->stock_quantity <= 0)
+                                                                     <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full">
+                                                                         Out of Stock
+                                                                     </span>
+                                                                 @elseif($food->stock_quantity <= 5)
+                                                                     <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full animate-pulse">
+                                                                         Only {{ $food->stock_quantity }} left
+                                                                     </span>
+                                                                 @elseif($food->stock_quantity <= 10)
+                                                                     <span class="availability-badge px-2 py-1 bg-orange-600 text-white text-xs font-semibold rounded-full">
+                                                                         {{ $food->stock_quantity }} left
+                                                                     </span>
+                                                                 @else
+                                                                     <span class="availability-badge px-2 py-1 bg-black/70 text-white text-xs font-semibold rounded-full">
+                                                                         {{ $food->stock_quantity }} available
+                                                                     </span>
+                                                                 @endif
+                                                             </div>
+                                                         @endif
+                                                     </div>
+
+                                                     <div class="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
+                                                         <h3 class="text-sm sm:text-base md:text-xl font-bold mb-1.5 md:mb-2 leading-tight mobile-card-title">{{ $food->name }}</h3>
+
+                                                         <div class="mb-3">
+                                                             <span class="text-sm sm:text-base md:text-lg font-bold text-[#8f5d54]">
+                                                                 ₱{{ number_format($food->price ?? 0, 0, ',', ',') }}
+                                                             </span>
+                                                         </div>
+
+                                                         {{-- Quantity controls for selected food --}}
+                                                         <template x-if="isSelected({{ $food->id }})">
+                                                             <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                                                                 <div class="flex items-center justify-between gap-4">
+                                                                     <div class="flex items-center gap-2">
+                                                                         <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="decreaseQty({{ $food->id }})">−</button>
+                                                                         <input type="number" min="1" max="20" :id="'food-qty-card-' + {{ $food->id }}" class="w-12 text-center border border-gray-300 rounded-lg py-1 text-sm font-semibold focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54]" :value="getSelectedQuantity({{ $food->id }})" @change.stop="setField({{ $food->id }}, 'quantity', $event.target.value)">
+                                                                         <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="increaseQty({{ $food->id }})">+</button>
+                                                                     </div>
+                                                                     <div class="text-right">
+                                                                         <div class="text-lg font-bold text-[#8f5d54]" x-text="'₱' + ({{ $food->price ?? 0 }} * getSelectedQuantity({{ $food->id }})).toLocaleString()"></div>
+                                                                     </div>
+                                                                 </div>
+                                                             </div>
+                                                         </template>
+
+                                                         <p class="text-gray-600 mb-3 md:mb-4 text-xs sm:text-sm mobile-card-description">
+                                                             {{ $food->description ?? 'No description available' }}
+                                                         </p>
+
+                                                         <button type="button"
+                                                                 class="w-full mt-auto py-2 rounded-lg font-semibold transition"
+                                                                 :class="{
+                                                                     'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
+                                                                     'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
+                                                                     'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
+                                                                 }"
+                                                                 :disabled="{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'true' : 'false' }}"
+                                                                 @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
+                                                             <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
+                                                             <span x-text="isSelected({{ $food->id }}) ? 'Added to Cart' : '{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'Out of Stock' : 'Add to Cart' }}'"></span>
+                                                         </button>
+                                                     </div>
                                                 </div>
-                                            @elseif($hasSingleSwiperImage)
-                                                <img src="{{ $special->swiperImages->first()->image_path }}" alt="{{ $special->swiperImages->first()->title ?? $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
-                                            @elseif($special->image)
-                                                <img src="{{ $special->image }}" alt="{{ $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
-                                            @else
-                                                <div class="text-center" :class="'bg-linear-to-br {{ $specialColor['bg'] }}'">
-                                                    <i class="bi {{ $specialColor['icon'] }} text-6xl mb-4 block" :class="'{{ $specialColor['icon'] === 'bi-fire' ? 'text-green-600' : 'text-blue-600' }}'"></i>
-                                                    <p class="font-semibold" :class="'{{ $specialColor['icon'] === 'bi-fire' ? 'text-green-700' : 'text-blue-700' }}'">{{ $special->name }}</p>
-                                                </div>
-                                            @endif
-                                            
-                                            <div class="absolute bottom-4 left-4 z-10">
-                                                <span class="px-3 py-1 text-white text-sm font-semibold rounded-full" :class="'{{ $specialColor['badge'] }}'">
-                                                    Special
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div class="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
-                                            <h3 class="text-sm sm:text-base md:text-xl font-bold mb-1.5 md:mb-2 leading-tight mobile-card-title">{{ $special->name }}</h3>
-
-                                            <div class="mb-3">
-                                                <span class="text-sm sm:text-base md:text-lg font-bold" :class="{{ $special->price }} === 0 ? 'text-green-600' : 'text-[#8f5d54]'">
-                                                    {{ $special->price === 0 ? 'FREE' : '₱' . number_format($special->price, 0) }}
-                                                </span>
-                                            </div>
-
-                                            <p class="text-gray-600 mb-3 md:mb-4 text-xs sm:text-sm mobile-card-description">
-                                                {{ $special->description ?? 'Special option for your staycation' }}
-                                            </p>
-
-                                            <button type="button"
-                                                    class="w-full mt-auto py-2 rounded-lg font-semibold transition text-white"
-                                                    :class="isSelected({{ $special->id }}) ? '{{ $specialColor['btn'] }}' : 'bg-gray-400 hover:bg-gray-500'"
-                                                    @click.stop="toggleFood({{ $special->id }}, '{{ $special->name }}', '{{ $category }}', {{ $special->price }})">
-                                                <i :class="isSelected({{ $special->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
-                                                <span x-text="isSelected({{ $special->id }}) ? 'Selected' : 'Select Option'"></span>
-                                            </button>
+                                            @endforeach
                                         </div>
                                     </div>
-                                @endforeach
+                                @endif
+                            {{-- Display Cook Your Own foods for this meal type --}}
+                                @if($categories['cook_your_own']->count() > 0)
+                                    <div class="mb-8" x-show="selectedCategory === 'all' || selectedCategory === 'cook_your_own'">
+                                        <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Cook Your Own</h3>
+                                        <div class="cards-grid-responsive">
+                                            @foreach($categories['cook_your_own'] as $food)
+                                                @php
+                                                    $category = 'cook_your_own';
+                                                @endphp
+
+                                                <div
+                                                    class="relative h-full flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl ring-2 ring-gray-200 hover:ring-[#8f5d54] cursor-pointer"
+                                                    data-category="{{ $category }}"
+                                                    data-food-id="{{ $food->id }}"
+                                                    @click="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})"
+                                                >
+                                                    @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $food->id . ')', 'qty' => 'getSelectedQuantity(' . $food->id . ')'])
+
+                                                    <div class="relative bg-gray-200 overflow-hidden">
+                                                        @php
+                                                            $hasMultipleSwiperImages = $food->swiperImages && $food->swiperImages->count() > 1;
+                                                            $hasSingleSwiperImage = $food->swiperImages && $food->swiperImages->count() == 1;
+                                                        @endphp
+
+                                                        @if($hasMultipleSwiperImages)
+                                                            <div class="swiper food-swiper-{{ $food->id }}">
+                                                                <div class="swiper-wrapper">
+                                                                    @foreach($food->swiperImages as $image)
+                                                                        <div class="swiper-slide">
+                                                                            <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                                <div class="swiper-pagination swiper-pagination-{{ $food->id }}"></div>
+                                                                <div class="swiper-button-next swiper-button-next-{{ $food->id }}"></div>
+                                                                <div class="swiper-button-prev swiper-button-prev-{{ $food->id }}"></div>
+                                                            </div>
+                                                        @elseif($hasSingleSwiperImage)
+                                                            <img src="{{ $food->swiperImages->first()->image_path }}" alt="{{ $food->swiperImages->first()->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                        @elseif($food->image)
+                                                            <img src="{{ $food->image }}" alt="{{ $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                        @else
+                                                            <div class="w-full h-44 sm:h-56 md:h-96 bg-linear-to-br from-green-100 to-emerald-200 flex items-center justify-center">
+                                                                <i class="bi bi-fire text-6xl text-green-600"></i>
+                                                            </div>
+                                                        @endif
+
+                                                        <div class="absolute bottom-4 left-4 z-10">
+                                                            <span class="px-3 py-1 bg-green-600 text-white text-sm font-semibold rounded-full">
+                                                                Cook Your Own
+                                                            </span>
+                                                        </div>
+
+                                                        @if($food->is_inventory_managed)
+                                                            <div class="absolute bottom-4 right-4 z-10">
+                                                                @if($food->stock_quantity <= 0)
+                                                                    <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full">
+                                                                        Out of Stock
+                                                                    </span>
+                                                                @elseif($food->stock_quantity <= 5)
+                                                                    <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full animate-pulse">
+                                                                        Only {{ $food->stock_quantity }} left
+                                                                    </span>
+                                                                @elseif($food->stock_quantity <= 10)
+                                                                    <span class="availability-badge px-2 py-1 bg-orange-600 text-white text-xs font-semibold rounded-full">
+                                                                        {{ $food->stock_quantity }} left
+                                                                    </span>
+                                                                @else
+                                                                    <span class="availability-badge px-2 py-1 bg-black/70 text-white text-xs font-semibold rounded-full">
+                                                                        {{ $food->stock_quantity }} available
+                                                                    </span>
+                                                                @endif
+                                                            </div>
+                                                        @endif
+                                                    </div>
+
+                                                     <div class="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
+                                                         <h3 class="text-sm sm:text-base md:text-xl font-bold mb-1.5 md:mb-2 leading-tight mobile-card-title">{{ $food->name }}</h3>
+
+                                                         <div class="mb-3">
+                                                             <span class="text-sm sm:text-base md:text-lg font-bold text-[#8f5d54]">
+                                                                 ₱{{ number_format($food->price ?? 0, 0, ',', ',') }}
+                                                             </span>
+                                                         </div>
+
+                                                         {{-- Quantity controls for selected food --}}
+                                                         <template x-if="isSelected({{ $food->id }}) && '{{ $category }}' !== 'special'">
+                                                             <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                                                                 <div class="flex items-center justify-between gap-4">
+                                                                     <div class="flex items-center gap-2">
+                                                                         <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="decreaseQty({{ $food->id }})">−</button>
+                                                                         <input type="number" min="1" max="20" :id="'food-qty-card-' + {{ $food->id }}" class="w-12 text-center border border-gray-300 rounded-lg py-1 text-sm font-semibold focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54]" :value="getSelectedQuantity({{ $food->id }})" @change.stop="setField({{ $food->id }}, 'quantity', $event.target.value)">
+                                                                         <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="increaseQty({{ $food->id }})">+</button>
+                                                                     </div>
+                                                                     <div class="text-right">
+                                                                         <div class="text-lg font-bold text-[#8f5d54]" x-text="'₱' + ({{ $food->price ?? 0 }} * getSelectedQuantity({{ $food->id }})).toLocaleString()"></div>
+                                                                     </div>
+                                                                 </div>
+                                                             </div>
+                                                         </template>
+
+                                                         <p class="text-gray-600 mb-3 md:mb-4 text-xs sm:text-sm mobile-card-description">
+                                                             {{ $food->description ?? 'No description available' }}
+                                                         </p>
+
+                                                         <button type="button"
+                                                                 class="w-full mt-auto py-2 rounded-lg font-semibold transition"
+                                                                 :class="{
+                                                                     'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
+                                                                     'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
+                                                                     'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
+                                                                 }"
+                                                                 :disabled="{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'true' : 'false' }}"
+                                                                 @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
+                                                             <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
+                                                             <span x-text="isSelected({{ $food->id }}) ? 'Added to Cart' : '{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'Out of Stock' : 'Add to Cart' }}'"></span>
+                                                         </button>
+                                                     </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+
+
+                                  {{-- Display Special foods for this meal type --}}
+                                @if($categories['special']->count() > 0)
+                                    <div class="mb-8" x-show="selectedCategory === 'all' || selectedCategory === 'special'">
+                                        <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Special Options</h3>
+                                        <div class="cards-grid-responsive">
+                                            @foreach($categories['special'] as $special)
+                                                @php
+                                                    $category = $special->category ?? 'special';
+                                                    $specialColor = match($special->name) {
+                                                        'Cook Your Own' => ['bg' => 'from-green-50 to-emerald-50', 'ring' => 'ring-green-200 hover:ring-green-400', 'border' => 'border-green-300', 'btn' => 'bg-green-600 hover:bg-green-700', 'badge' => 'bg-green-600', 'icon' => 'bi-fire'],
+                                                        default => ['bg' => 'from-blue-50 to-cyan-50', 'ring' => 'ring-blue-200 hover:ring-blue-400', 'border' => 'border-blue-300', 'btn' => 'bg-blue-600 hover:bg-blue-700', 'badge' => 'bg-blue-600', 'icon' => 'bi-star']
+                                                    };
+                                                @endphp
+
+                                                <div
+                                                    class="relative h-full flex flex-col bg-linear-to-br rounded-2xl shadow-lg overflow-hidden border transition-all duration-300 hover:shadow-xl ring-2 cursor-pointer"
+                                                    :class="'{{ $specialColor['bg'] }} {{ $specialColor['ring'] }} {{ $specialColor['border'] }}'"
+                                                    @click="toggleFood({{ $special->id }}, '{{ $special->name }}', '{{ $category }}', {{ $special->price }})"
+                                                >
+                                                    @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $special->id . ')', 'qty' => 'getSelectedQuantity(' . $special->id . ')'])
+
+                                                    <div class="relative overflow-hidden h-44 sm:h-56 md:h-96 flex items-center justify-center bg-gray-100">
+                                                        @php
+                                                            $hasMultipleSwiperImages = $special->swiperImages && $special->swiperImages->count() > 1;
+                                                            $hasSingleSwiperImage = $special->swiperImages && $special->swiperImages->count() == 1;
+                                                        @endphp
+
+                                                        @if($hasMultipleSwiperImages)
+                                                            <div class="swiper special-swiper-{{ $special->id }}">
+                                                                <div class="swiper-wrapper">
+                                                                    @foreach($special->swiperImages as $image)
+                                                                        <div class="swiper-slide">
+                                                                            <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                                <div class="swiper-pagination swiper-pagination-special-{{ $special->id }}"></div>
+                                                                <div class="swiper-button-next swiper-button-next-special-{{ $special->id }}"></div>
+                                                                <div class="swiper-button-prev swiper-button-prev-special-{{ $special->id }}"></div>
+                                                            </div>
+                                                        @elseif($hasSingleSwiperImage)
+                                                            <img src="{{ $special->swiperImages->first()->image_path }}" alt="{{ $special->swiperImages->first()->title ?? $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                        @elseif($special->image)
+                                                            <img src="{{ $special->image }}" alt="{{ $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                        @else
+                                                            <div class="text-center" :class="'bg-linear-to-br {{ $specialColor['bg'] }}'">
+                                                                <i class="bi {{ $specialColor['icon'] }} text-6xl mb-4 block" :class="'{{ $specialColor['icon'] === 'bi-fire' ? 'text-green-600' : 'text-blue-600' }}'"></i>
+                                                                <p class="font-semibold" :class="'{{ $specialColor['icon'] === 'bi-fire' ? 'text-green-700' : 'text-blue-700' }}'">{{ $special->name }}</p>
+                                                            </div>
+                                                        @endif
+
+                                                        <div class="absolute bottom-4 left-4 z-10">
+                                                            <span class="px-3 py-1 text-white text-sm font-semibold rounded-full" :class="'{{ $specialColor['badge'] }}'">
+                                                                Special
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
+                                                        <h3 class="text-sm sm:text-base md:text-xl font-bold mb-1.5 md:mb-2 leading-tight mobile-card-title">{{ $special->name }}</h3>
+
+                                                        <div class="mb-3">
+                                                            <span class="text-sm sm:text-base md:text-lg font-bold" :class="{{ $special->price }} === 0 ? 'text-green-600' : 'text-[#8f5d54]'">
+                                                                {{ $special->price === 0 ? 'FREE' : '₱' . number_format($special->price, 0) }}
+                                                            </span>
+                                                        </div>
+
+                                                        <p class="text-gray-600 mb-3 md:mb-4 text-xs sm:text-sm mobile-card-description">
+                                                            {{ $special->description ?? 'Special option for your staycation' }}
+                                                        </p>
+
+                                                        <button type="button"
+                                                                class="w-full mt-auto py-2 rounded-lg font-semibold transition text-white"
+                                                                :class="isSelected({{ $special->id }}) ? '{{ $specialColor['btn'] }}' : 'bg-gray-400 hover:bg-gray-500'"
+                                                                @click.stop="toggleFood({{ $special->id }}, '{{ $special->name }}', '{{ $category }}', {{ $special->price }})">
+                                                            <i :class="isSelected({{ $special->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
+                                                            <span x-text="isSelected({{ $special->id }}) ? 'Selected' : 'Select Option'"></span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
-                        </div>
-                    @endif
+                        @endif
+                    @endforeach
 
                 </div>
 
@@ -1278,3 +1286,4 @@
         }
     </script>
 </x-app-layout>
+

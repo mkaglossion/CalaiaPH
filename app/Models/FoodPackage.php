@@ -13,6 +13,8 @@ class FoodPackage extends Model
         'description',
         'price',
         'category',
+        'meal_type',
+        'sort_order',
         'image',
         'is_active',
         'stock_quantity',
@@ -24,6 +26,7 @@ class FoodPackage extends Model
         'is_inventory_managed' => 'boolean',
         'price' => 'decimal:2',
         'stock_quantity' => 'integer',
+        'sort_order' => 'integer',
     ];
 
     /**
