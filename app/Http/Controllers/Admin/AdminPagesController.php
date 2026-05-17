@@ -19,6 +19,7 @@ use App\Models\HomeSwiperImage;
 use App\Models\HomeText;
 use App\Models\PackageSwiperImage;
 use App\Models\PackageText;
+use App\Models\Package;
 use App\Models\EventSection;
 use App\Models\PackageImage;
 use App\Models\PackageContent;
@@ -52,6 +53,8 @@ class AdminPagesController extends Controller
     private function showPage($page)
     {
         [$imageModel, $textModel, $view] = $this->pageConfigs[$page];
+        $extraData = [];
+
         if ($page === 'dayTour') {
             $images = $imageModel::whereNull('daytour_id')->get();
         } elseif ($page === 'packages') {
@@ -64,7 +67,13 @@ class AdminPagesController extends Controller
         }
         $texts = $textModel::all();
 
-        return view($view, compact('images', 'texts'));
+        if ($page === 'whatToDo') {
+            $mainPackages = Package::orderBy('created_at', 'asc')->limit(6)->get();
+            $mainPackagesTotal = Package::count();
+            $extraData = compact('mainPackages', 'mainPackagesTotal');
+        }
+
+        return view($view, compact('images', 'texts') + $extraData);
     }
 
     public function items()
@@ -73,4 +82,3 @@ class AdminPagesController extends Controller
         return view('admin.home.items', compact('sections'));
     }
 }
-

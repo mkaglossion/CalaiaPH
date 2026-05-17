@@ -557,11 +557,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::delete('/day-tour/inventory/{inventory}', [DayTourInventoryController::class, 'delete'])->name('admin.day-tour.inventory.delete');
     });
     Route::prefix('/packages')->group(function () {
-        // Explicit routes for package CRUD
-        Route::get('/', [PackageController::class, 'index'])->name('admin.packages.index');
-        Route::get('/create', [PackageController::class, 'create'])->name('admin.packages.create');
+        // Temporarily redirect package admin pages to What to Do CMS.
+        Route::get('/', function () { return redirect()->route('admin.do.whattodo'); })->name('admin.packages.index');
+        Route::get('/create', function () { return redirect()->route('admin.do.whattodo'); })->name('admin.packages.create');
         Route::post('/', [PackageController::class, 'store'])->name('admin.packages.store');
-        Route::get('/{package}/edit', [PackageController::class, 'edit'])->name('admin.packages.edit');
+        Route::get('/{package}/edit', function () { return redirect()->route('admin.do.whattodo'); })->name('admin.packages.edit');
         Route::put('/{package}', [PackageController::class, 'update'])->name('admin.packages.update');
         Route::delete('/{package}', [PackageController::class, 'destroy'])->name('admin.packages.destroy');
         
@@ -572,7 +572,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::post('/inventory', [PackageInventoryController::class, 'storeInventory'])->name('admin.packages.inventory.store');
         Route::put('/inventory/{inventory}', [PackageInventoryController::class, 'updateInventoryRecord'])->name('admin.packages.inventory.update');
         Route::delete('/inventory/{inventory}', [PackageInventoryController::class, 'destroyInventory'])->name('admin.packages.inventory.destroy');
-        Route::get('/information', [AdminPagesController::class, 'packages'])->name('admin.packages.packagesInfos');
+        Route::get('/information', function () { return redirect()->route('admin.do.whattodo'); })->name('admin.packages.packagesInfos');
         Route::resource('swiper-images', PackageSwiperImageController::class, ['names' => [
             'store' => 'package-swiper-images.store',
             'update' => 'package-swiper-images.update',

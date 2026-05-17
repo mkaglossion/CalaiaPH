@@ -141,6 +141,56 @@
         </table>
     </div>
 
+    <div id="main-packages-preview" class="mb-10 rounded-2xl border border-gray-200 bg-white/80 backdrop-blur p-5 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">Main Packages Preview</h2>
+                <p class="text-sm text-gray-600">
+                    Showing {{ ($mainPackages ?? collect())->count() }} of {{ $mainPackagesTotal ?? 0 }} package{{ ($mainPackagesTotal ?? 0) !== 1 ? 's' : '' }}.
+                </p>
+            </div>
+        </div>
+
+        @if(($mainPackages ?? collect())->count() > 0)
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+                @foreach($mainPackages as $pkg)
+                    <div class="rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
+                        @if($pkg->image)
+                            <img src="{{ $pkg->image }}" alt="{{ $pkg->name }}" class="w-full h-40 object-cover">
+                        @else
+                            <div class="w-full h-40 bg-gray-100 flex items-center justify-center text-gray-400">
+                                <i class="bi bi-image text-3xl"></i>
+                            </div>
+                        @endif
+
+                        <div class="p-4 flex flex-col flex-1">
+                            <div class="flex items-start justify-between gap-3 mb-2">
+                                <h3 class="text-base font-bold text-gray-900 leading-tight">{{ $pkg->name }}</h3>
+                                <span class="shrink-0 inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold {{ $pkg->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700' }}">
+                                    {{ $pkg->is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+
+                            <p class="text-sm text-gray-600 mb-3">{{ Str::limit($pkg->description, 95) }}</p>
+
+                            <div class="space-y-1 text-sm mb-4">
+                                <p class="text-gray-800 font-semibold">₱{{ number_format($pkg->price, 0) }} <span class="text-gray-500 font-normal">{{ $pkg->pricing_type === 'per_pax' ? '/person' : '/group' }}</span></p>
+                                <p class="text-gray-600">Max guests: {{ $pkg->max_guests }}</p>
+                            </div>
+
+                            <div class="mt-auto flex items-center justify-between pt-3 border-t border-gray-100">
+                                <span class="text-xs text-gray-500">{{ $pkg->created_at?->format('Y-m-d') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="text-center py-10">
+                <p class="text-gray-500 mb-3">No packages available yet.</p>
+            </div>
+        @endif
+    </div>
 
     {{-- ============================================================= --}}
     {{-- MODALS --}}

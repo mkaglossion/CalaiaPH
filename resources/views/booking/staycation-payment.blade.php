@@ -408,7 +408,7 @@ let vatRate = {{ $vatRate }};
                         x-show="bookingPolicyModal"
                         x-cloak
                         x-transition.opacity
-                        class="fixed inset-0 z-[9999] bg-black/50 p-4 sm:p-6"
+                        class="fixed inset-0 z-9999 bg-black/50 p-4 sm:p-6"
                         @click.self="bookingPolicyModal = false"
                       >
                         <div class="mx-auto mt-4 sm:mt-10 w-full max-w-3xl rounded-2xl bg-white shadow-2xl border border-gray-200">

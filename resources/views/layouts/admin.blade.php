@@ -101,10 +101,11 @@
           //   ['label'=>'Pages Information','route'=>'admin.day.daytour'],
           //   ['label'=>'Items','route'=>'admin.day.day'],
           // ]],
-          ['title'=>'Packages','icon'=>'package','route'=>'admin.packages.*','sub'=>[
-            ['label'=>'All Packages','route'=>'admin.packages.index'],
-            ['label'=>'Page Information','route'=>'admin.packages.packagesInfos'],
-          ]],
+          // Temporarily hidden from admin sidebar navigation.
+          // ['title'=>'Packages','icon'=>'package','route'=>'admin.packages.*','sub'=>[
+          //   ['label'=>'All Packages','route'=>'admin.packages.index'],
+          //   ['label'=>'Page Information','route'=>'admin.packages.packagesInfos'],
+          // ]],
           ['title'=>'Where to Stay','icon'=>'building','route'=>'admin.stay.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.stay.wheretostay'],
             ['label'=>'Variants','route'=>'admin.stay.staycations'],

@@ -12,8 +12,38 @@
    {{-- Hero Slider --}}
     <x-hero-slider :images="$swiperImages" :texts="$texts" />
 
-    {{-- ========= ACTIVITIES SECTION ========= --}}
+    {{-- ========= PACKAGES SECTION (MERGED FROM /packages) ========= --}}
     <main id="main">
+      <section class="container mx-auto px-4 py-12 md:py-16">
+        <div class="max-w-7xl mx-auto">
+          <div class="mb-10 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold text-brand mb-3">
+              Packages
+            </h2>
+            <p class="text-base md:text-lg text-[#5f524c] max-w-2xl mx-auto">
+              Start with our curated package options, then explore activities you can add to your stay.
+            </p>
+            <hr class="border-t-2 border-[#a97464] mt-6 w-48 mx-auto rounded-full">
+          </div>
+
+          @if($packages->count() > 0)
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max">
+              @foreach($packages as $package)
+                <div class="h-full">
+                  <x-package-card :package="$package" variant="frontend" />
+                </div>
+              @endforeach
+            </div>
+          @else
+            <div class="text-center py-16">
+              <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-2">No Packages Available</h3>
+              <p class="text-gray-600">Please check back soon for new package offerings.</p>
+            </div>
+          @endif
+        </div>
+      </section>
+
+    {{-- ========= ACTIVITIES SECTION ========= --}}
       <section class="container mx-auto px-4 py-12">
         <div class="max-w-300 mx-auto">
 

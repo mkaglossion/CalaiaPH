@@ -12,7 +12,8 @@
 
   $nav = [
     ['key' => 'home',          'label' => 'Home',          'href' => url('/')],
-    ['key' => 'packages',      'label' => 'Packages',      'href' => url('/packages')],
+    // Temporarily hidden in frontend nav; route is kept for easy rollback.
+    // ['key' => 'packages',      'label' => 'Packages',      'href' => url('/packages')],
     //['key' => 'daytour',       'label' => 'Day Tour',      'href' => url('/daytour')],
     ['key' => 'staycation',    'label' => 'Where to Stay', 'href' => url('/staycation')],
     ['key' => 'activities',    'label' => 'What to Do',    'href' => url('/activities')],

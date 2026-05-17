@@ -473,11 +473,16 @@ class PagesController extends Controller
             return [strtolower($field) => $content];
         })->toArray();
 
+        // Temporarily merge packages into activities page (shown first).
+        $packages = Package::with(['contents', 'images', 'inventory'])
+            ->where('is_active', true)
+            ->get();
+
         // Fetch activities from database with swiper images and group by category
         $activities = Activity::with('swiperImages')->get();
         $slidesByCategory = $this->formatActivitiesForSlides($activities, $activities);
 
-        $data = compact('swiperImages', 'texts', 'slidesByCategory');
+        $data = compact('swiperImages', 'texts', 'slidesByCategory', 'packages');
         $data['active'] = 'activities';
         
         return view('activities', $data);
