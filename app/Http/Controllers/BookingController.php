@@ -2330,6 +2330,9 @@ class BookingController extends Controller
                 'status' => $status,
                 'available_quantity' => $minOverRange,
                 'total_quantity' => $baseQty,
+                'adults_limit' => (int)($staycation->adults ?? 0),
+                'children_limit' => (int)($staycation->children ?? 0),
+                'included_guest_capacity' => $this->resolveIncludedGuestCapacity($staycation),
                 'capacity' => (int)($staycation->capacity ?? 0),
                 'price' => $currentRate, // Per night rate for current season
                 'price_range' => $priceRange, // NEW: Price range for displayed dates
@@ -3052,9 +3055,34 @@ class BookingController extends Controller
         }
 
         $totalGuests = max(1, $adults) + max(0, $children);
-        $capacity = max(1, (int)($staycation->capacity ?? 0));
+        $capacity = $this->resolveIncludedGuestCapacity($staycation);
 
         return max(0, $totalGuests - $capacity);
+    }
+
+    /**
+     * Resolve the included guest capacity used to compute overflow/extra mattress.
+     * Priority:
+     * 1) adults + children limits (if configured)
+     * 2) capacity
+     * 3) minimum fallback of 1
+     */
+    protected function resolveIncludedGuestCapacity(Staycation $staycation): int
+    {
+        $roomName = strtolower((string)($staycation->name ?? ''));
+        if (str_contains($roomName, 'standard glamping')) {
+            // Business rule: Standard Glamping includes up to 6 guests.
+            return 6;
+        }
+
+        $adultsLimit = max(0, (int)($staycation->adults ?? 0));
+        $childrenLimit = max(0, (int)($staycation->children ?? 0));
+        $configuredGuestLimit = $adultsLimit + $childrenLimit;
+        if ($configuredGuestLimit > 0) {
+            return $configuredGuestLimit;
+        }
+
+        return max(1, (int)($staycation->capacity ?? 0));
     }
 
     /**

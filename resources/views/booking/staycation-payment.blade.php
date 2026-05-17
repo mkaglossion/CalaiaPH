@@ -369,7 +369,11 @@ let vatRate = {{ $vatRate }};
                     </div>-->
 
                     {{-- Booking Terms & Policy Agreement --}}
-                    <div class="bg-yellow-50 border border-blue-200 rounded-xl p-4 sm:p-6">
+                    <div
+                      class="bg-yellow-50 border border-blue-200 rounded-xl p-4 sm:p-6"
+                      x-data="{ bookingPolicyModal: false }"
+                      @keydown.escape.window="bookingPolicyModal = false"
+                    >
                       <div class="flex items-start">
                         <input
                           type="checkbox"
@@ -386,9 +390,105 @@ let vatRate = {{ $vatRate }};
                           During peak seasons, stricter policies may apply. Payment is non-refundable except in cases specified in the policy.
                         </label>
                       </div>
+                      <div class="mt-3 pl-7">
+                        <button
+                          type="button"
+                          class="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#8f5d54] hover:underline"
+                          @click="bookingPolicyModal = true"
+                        >
+                          <i class="bi bi-file-earmark-text"></i>
+                          Read full booking policy
+                        </button>
+                      </div>
                       @error('terms_and_policy_accepted')
                         <p class="text-xs text-red-600 mt-2">{{ $message }}</p>
                       @enderror
+
+                      <div
+                        x-show="bookingPolicyModal"
+                        x-cloak
+                        x-transition.opacity
+                        class="fixed inset-0 z-[9999] bg-black/50 p-4 sm:p-6"
+                        @click.self="bookingPolicyModal = false"
+                      >
+                        <div class="mx-auto mt-4 sm:mt-10 w-full max-w-3xl rounded-2xl bg-white shadow-2xl border border-gray-200">
+                          <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6">
+                            <div>
+                              <p class="text-xs font-semibold tracking-wide text-[#8f5d54]">BOOKING POLICY</p>
+                              <h3 class="mt-1 text-base sm:text-lg font-semibold text-gray-900">Booking Confirmation Terms</h3>
+                            </div>
+                            <button
+                              type="button"
+                              class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                              @click="bookingPolicyModal = false"
+                              aria-label="Close booking policy modal"
+                            >
+                              <i class="bi bi-x-lg"></i>
+                            </button>
+                          </div>
+
+                          <div class="max-h-[70vh] overflow-y-auto px-5 py-4 sm:px-6 sm:py-5">
+                            <div class="space-y-5 text-sm text-gray-700">
+                              <div class="space-y-1">
+                                <p class="font-semibold text-gray-900">Can I modify my booking after confirmation?</p>
+                                <p>Yes. Modifications such as guest details, add-ons, or activity preferences can be made up to the night before your date of stay, subject to availability.</p>
+                              </div>
+
+                              <hr class="border-gray-200">
+
+                              <div class="space-y-1">
+                                <p class="font-semibold text-gray-900">Can I rebook my stay?</p>
+                                <ul class="space-y-1">
+                                  <li>&bull; You are entitled to one (1) free rebooking if you inform us more than 6 days before your original booking date.</li>
+                                  <li>&bull; Rebooking requests made less than 6 days before the original booking will incur a 20% charge based on the tent rental fees and any prepaid meals.</li>
+                                  <li>&bull; Second rebooking requests, regardless of when they are made, will be charged 50% of the tent rental fees and prepaid meals.</li>
+                                  <li>&bull; A third rebooking is no longer allowed, and the booking will be considered void.</li>
+                                  <li>&bull; The new date must be within 30 days from your original booking date.</li>
+                                </ul>
+                              </div>
+
+                              <hr class="border-gray-200">
+
+                              <div class="space-y-1">
+                                <p class="font-semibold text-gray-900">What is your cancellation policy?</p>
+                                <ul class="space-y-1">
+                                  <li>&bull; 7 days or more before the booking date &ndash; Full refund.</li>
+                                  <li>&bull; 3&ndash;6 days before the booking date &ndash; 50% refund.</li>
+                                  <li>&bull; Less than 3 days before the booking date &ndash; Non-refundable.</li>
+                                </ul>
+                              </div>
+
+                              <hr class="border-gray-200">
+
+                              <div class="space-y-1">
+                                <p class="font-semibold text-gray-900">Are there refunds for bad weather or emergencies?</p>
+                                <p>If Calaia Nature Park cancels your booking due to bad weather or unforeseen circumstances, you will receive a full refund or the option to reschedule.</p>
+                              </div>
+
+                              <hr class="border-gray-200">
+
+                              <div class="space-y-1">
+                                <p class="font-semibold text-gray-900">What happens if I don't show up for my booking?</p>
+                                <p>No-shows are non-refundable.</p>
+                              </div>
+
+                              <hr class="border-gray-200">
+
+                              <div class="space-y-1">
+                                <p class="font-semibold text-gray-900">How do I request a refund?</p>
+                                <p>Please contact us via Instagram or Facebook Messenger with your booking details and proof of payment for verification.</p>
+                              </div>
+
+                              <hr class="border-gray-200">
+
+                              <div class="space-y-1">
+                                <p class="font-semibold text-gray-900">Can I transfer my reservation to someone else?</p>
+                                <p>No. All reservations and bookings are non-transferable.</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {{-- PayMongo platform fee notice removed: PayMongo does not add a 19.4% platform fee by default. --}}
