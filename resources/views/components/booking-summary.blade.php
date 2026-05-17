@@ -157,6 +157,8 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                             $actualRoomId = $room['accommodation_id'] ?? $roomId;
                             $staycation = $staycations->get((int)$actualRoomId);
                             $roomNameLower = strtolower($staycation->name ?? '');
+                            $roomType = strtolower((string)(($staycation ? $staycation->type : null) ?? ($room['type'] ?? '')));
+                            $supportsExtraMattress = $roomType === 'glamping';
 
                             // Check for BYOT first (prioritize BYOT over car camping)
                             $isBYOT = str_contains($roomNameLower, 'byot') ||
@@ -182,6 +184,9 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                                     <div>Vehicles: <span class="font-semibold">{{ $room['extra_mattress'] ?? 1 }}</span></div>
                                 @else
                                     <div>Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
+                                    @if($supportsExtraMattress)
+                                        <div>Extra Mattress: <span class="font-semibold">{{ $room['extra_mattress'] ?? 0 }}</span></div>
+                                    @endif
                                     <div>Pets: <span class="font-semibold">{{ $room['pets'] ?? 'no' }}</span>
                                         @if(($room['pets'] ?? 'no') === 'yes')
                                             <span>(#{{ $room['num_pets'] ?? 0 }})</span>
@@ -196,12 +201,18 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                                 <div class="text-xs text-gray-600 space-y-1">
                                     <div class="flex justify-between">
                                         <span>Accommodation:</span>
-                                        <span class="font-semibold">₱{{ number_format($room['accommodation_price'] ?? 0, 0) }}</span>
+                                        <span class="font-semibold">&#8369;{{ number_format($room['accommodation_price'] ?? 0, 0) }}</span>
                                     </div>
+                                    @if($supportsExtraMattress)
+                                        <div class="flex justify-between">
+                                            <span>Extra Mattress:</span>
+                                            <span class="font-semibold">&#8369;{{ number_format($room['mattress_price'] ?? 0, 0) }}</span>
+                                        </div>
+                                    @endif
                                     @if(($room['pets'] ?? 'no') === 'yes' && (($room['num_pets'] ?? 0) > 0))
                                         <div class="flex justify-between">
                                             <span>Pets:</span>
-                                            <span class="font-semibold">₱{{ number_format($room['pet_price'] ?? 0, 0) }}</span>
+                                            <span class="font-semibold">&#8369;{{ number_format($room['pet_price'] ?? 0, 0) }}</span>
                                         </div>
                                     @endif
                                 </div>
@@ -210,15 +221,16 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                             
                             @php
                                 $roomAccommodationPrice = (float)($room['accommodation_price'] ?? 0);
+                                $roomMattressPrice = (float)($room['mattress_price'] ?? 0);
                                 $roomPetPrice = (($room['pets'] ?? 'no') === 'yes' && (($room['num_pets'] ?? 0) > 0))
                                     ? (float)($room['pet_price'] ?? 0)
                                     : 0;
-                                $roomDisplayTotal = $roomAccommodationPrice + $roomPetPrice;
+                                $roomDisplayTotal = $roomAccommodationPrice + $roomMattressPrice + $roomPetPrice;
                             @endphp
                             <div class="border-t border-gray-100 pt-2">
                                 <div class="flex justify-between">
                                     <span class="font-semibold text-gray-800">Total:</span>
-                                    <span class="font-bold text-[#8f5d54]">₱{{ number_format($roomDisplayTotal, 0) }}</span>
+                                    <span class="font-bold text-[#8f5d54]">&#8369;{{ number_format($roomDisplayTotal, 0) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -290,7 +302,7 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
         @else
         <div class="flex justify-between items-center text-sm">
             <span class="text-gray-600">Accommodation:</span>
-            <span class="font-semibold">₱{{ number_format($accommodationTotal, 0) }}</span>
+            <span class="font-semibold">&#8369;{{ number_format($accommodationTotal, 0) }}</span>
         </div>
         @endif
         @if($showDynamicFood)
@@ -301,7 +313,7 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
         @elseif(!empty($selectedFoods) && count($selectedFoods) > 0)
         <div class="flex justify-between items-center text-sm">
             <span class="text-gray-600">Food & Beverages:</span>
-            <span class="font-semibold">₱{{ number_format($calculatedFoodTotal ?? $foodTotal, 0) }}</span>
+            <span class="font-semibold">&#8369;{{ number_format($calculatedFoodTotal ?? $foodTotal, 0) }}</span>
         </div>
         @endif
         @if(($showActivities && !empty($selectedActivities)) || $showDynamicActivities)
@@ -317,7 +329,7 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
             @if($showDynamicFood || $showDynamicActivities)
                 <span class="font-semibold" x-text="calculateSubtotal()"></span>
             @else
-                <span class="font-semibold">₱{{ number_format($grandTotal, 2) }}</span>
+                <span class="font-semibold">&#8369;{{ number_format($grandTotal, 2) }}</span>
             @endif
         </div> -->
 
@@ -330,7 +342,7 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
             @if($showDynamicFood || $showDynamicActivities)
             <span x-text="calculateVAT()"></span>
             @else
-            <span>₱{{ number_format($vatBreakdown['vat_amount'], 2) }}</span>
+            <span>&#8369;{{ number_format($vatBreakdown['vat_amount'], 2) }}</span>
             @endif
         </div> -->
 
@@ -340,7 +352,7 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
             @if($showDynamicFood || $showDynamicActivities)
                 <span id="grand-total" class="text-[#8f5d54]" x-text="calculateTotal()" data-food-total="{{ $foodTotalProp }}"></span>
             @else
-                <span id="grand-total" class="text-[#8f5d54]" data-food-total="{{ $foodTotal }}">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
+                <span id="grand-total" class="text-[#8f5d54]" data-food-total="{{ $foodTotal }}">&#8369;{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
             @endif
         </div>
         

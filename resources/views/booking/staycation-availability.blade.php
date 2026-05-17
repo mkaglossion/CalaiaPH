@@ -337,8 +337,8 @@
                               'Non-refundable - 0-3 days before stay'
                             ],
                             fine: [
-                              'Best for unsure plans—more flexible refund options.',
-                              'Processing time: 3–5 business days after approval.',
+                              'Best for unsure plansâ€”more flexible refund options.',
+                              'Processing time: 3â€“5 business days after approval.',
                               'Rebooking: 20% charge if less than 7 days before stay, no charge if more than 7 days.'
                             ]
                           },
@@ -378,7 +378,7 @@
                           </span>
                           <span class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1">
                             <i class="bi bi-clock-history text-blue-600"></i>
-                            3–5 business days
+                            3â€“5 business days
                           </span>
                         </div>
                       </div>
@@ -441,19 +441,19 @@
                                     <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                                       <i class="bi bi-check"></i>
                                     </span>
-                                    <span><span class="font-semibold">Up to 7 days</span> — 100% refundable</span>
+                                    <span><span class="font-semibold">Up to 7 days</span> â€” 100% refundable</span>
                                   </li>
                                   <li class="flex items-start gap-2">
                                     <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-amber-700">
                                       <i class="bi bi-dash"></i>
                                     </span>
-                                    <span><span class="font-semibold">3–6 days</span> — 50% refundable</span>
+                                    <span><span class="font-semibold">3â€“6 days</span> â€” 50% refundable</span>
                                   </li>
                                   <li class="flex items-start gap-2">
                                     <span class="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-rose-100 text-rose-700">
                                       <i class="bi bi-x"></i>
                                     </span>
-                                    <span><span class="font-semibold">0–3 days</span> — Non-refundable</span>
+                                    <span><span class="font-semibold">0â€“3 days</span> â€” Non-refundable</span>
                                   </li>
                                 </ul>
                               </div>
@@ -471,7 +471,7 @@
                               <div x-show="expanded === 'flexible'" x-transition class="rounded-xl border border-gray-200 bg-white p-3 text-xs text-gray-600">
                                 <ul class="list-disc pl-5 space-y-1">
                                   <li>Refund tier is based on days before check-in (server time).</li>
-                                  <li>Processing time: 3–5 business days after approval (banks may take longer).</li>
+                                  <li>Processing time: 3â€“5 business days after approval (banks may take longer).</li>
                                   <li>No-show or early departure is non-refundable.</li>
                                   <li><strong>Rebooking Policy:</strong> 20% charge on all fees if rebooked less than 7 days before stay. No rebooking charge if rebooked more than 7 days before stay.</li>
                                 </ul>
@@ -566,7 +566,7 @@
                             <p class="text-sm font-semibold text-gray-900 flex items-center gap-2">
                               <i class="bi bi-check2-circle text-green-600"></i>
                               Selected Policy:
-                              <span class="text-[#8f5d54]" x-text="policy ? (policy === 'standard' ? 'Standard' : (policy === 'flexible' ? 'Flexible' : 'Non-Refundable')) : '—'"></span>
+                              <span class="text-[#8f5d54]" x-text="policy ? (policy === 'standard' ? 'Standard' : (policy === 'flexible' ? 'Flexible' : 'Non-Refundable')) : 'â€”'"></span>
                             </p>
                             <p class="text-xs text-gray-600 mt-1">
                               Tip: Flexible is recommended if your plans might change.
@@ -575,7 +575,7 @@
 
                           <div class="text-xs text-gray-600">
                             <p class="font-semibold text-gray-800">Refund timeline</p>
-                            <p>3–5 business days after approval</p>
+                            <p>3â€“5 business days after approval</p>
                           </div>
                         </div>
 
@@ -593,7 +593,7 @@
                         <div class="mt-3 text-xs text-gray-600">
                           <p class="font-semibold text-gray-800 mb-1">Important notes</p>
                           <ul class="list-disc pl-5 space-y-1">
-                            <li>Peak season dates (e.g., Dec 15–Jan 5, Holy Week & Summer) may have stricter rules.</li>
+                            <li>Peak season dates (e.g., Dec 15â€“Jan 5, Holy Week & Summer) may have stricter rules.</li>
                             <li>No-show or early departure is typically non-refundable.</li>
                             <li>Cancellations must be requested through the booking system.</li>
                             <li><strong>Rebooking:</strong> 20% charge on all fees if rebooked less than 7 days before stay. No charge if rebooked more than 7 days.</li>
@@ -778,7 +778,7 @@
 
                                     {{-- Price Range Display --}}
                                     @php
-                                        $priceRange = $roomDetail['price_range'] ?? ['min_price' => 0, 'max_price' => 0, 'min_label' => '—', 'max_label' => '—'];
+                                        $priceRange = $roomDetail['price_range'] ?? ['min_price' => 0, 'max_price' => 0, 'min_label' => 'â€”', 'max_label' => 'â€”'];
                                         $roomNameLower = strtolower($roomDetail['name']);
                                         $isBYOT = str_contains($roomNameLower, 'byot') ||
                                                  str_contains($roomNameLower, 'bring your own tent') ||
@@ -794,7 +794,7 @@
                                                 {{ $priceRange['min_label'] }} - {{ $priceRange['max_label'] }}
                                             @endif
                                         @else
-                                            ₱{{ number_format($roomDetail['price'], 0) }}
+                                            &#8369;{{ number_format($roomDetail['price'], 0) }}
                                         @endif
 
                                         @if($isBYOT || $isCarCamping)
@@ -1032,7 +1032,7 @@
                                         @if ($selCheckin)
                                             {{ \Carbon\Carbon::parse($selCheckin)->format('M j, Y') }}
                                         @else
-                                            —
+                                            â€”
                                         @endif
                                     </span>
                                 </div>
@@ -1042,7 +1042,7 @@
                                         @if ($selCheckout)
                                             {{ \Carbon\Carbon::parse($selCheckout)->format('M j, Y') }}
                                         @else
-                                            —
+                                            â€”
                                         @endif
                                     </span>
                                 </div>
@@ -1052,7 +1052,7 @@
                                         @if ($selCheckin && $selCheckout)
                                             {{ \Carbon\Carbon::parse($selCheckin)->diffInDays(\Carbon\Carbon::parse($selCheckout)) }}
                                         @else
-                                            —
+                                            â€”
                                         @endif
                                     </span>
                                 </div>
@@ -1111,6 +1111,11 @@
                                                         <template x-if="!item.name.toLowerCase().includes('byot') && !item.name.toLowerCase().includes('bring your own tent') && !item.name.toLowerCase().includes('car camping')">
                                                             <span>Adults: <span class="font-semibold" x-text="item.adults"></span>, Children: <span class="font-semibold" x-text="item.children"></span></span>
                                                         </template>
+                                                        <template x-if="supportsExtraMattress(item)">
+                                                            <div class="mt-1">
+                                                                Extra Mattress: <span class="font-semibold" x-text="calculateAutoMattressCount(item)"></span>
+                                                            </div>
+                                                        </template>
                                                     </div>
                                                      <div class="text-xs text-green-600 font-semibold mt-1" x-text="calculateRoomPrice(item)"></div>
 
@@ -1118,11 +1123,15 @@
                                                      <div class="mt-2 text-xs bg-white rounded p-2 border border-gray-200">
                                                          <div class="flex justify-between mb-1">
                                                              <span class="text-gray-600">Accommodation:</span>
-                                                             <span class="font-semibold" x-text="getPriceRange(item)"></span>
+                                                             <span class="font-semibold" x-text="formatCurrency(item.accommodation_price || 0)"></span>
+                                                         </div>
+                                                         <div x-show="supportsExtraMattress(item)" class="flex justify-between mb-1">
+                                                             <span class="text-gray-600">Extra Mattress:</span>
+                                                             <span class="text-gray-600 font-semibold" x-text="formatCurrency(calculateMattressPrice(item))"></span>
                                                          </div>
                                                          <div x-show="item.pets === 'yes' && item.num_pets > 0" class="flex justify-between mb-1">
                                                              <span class="text-gray-600">Pets:</span>
-                                                             <span class="text-gray-600font-semibold" x-text="'₱' + calculatePetPrice(item).toLocaleString()"></span>
+                                                             <span class="text-gray-600 font-semibold" x-text="formatCurrency(calculatePetPrice(item))"></span>
                                                          </div>
                                                           <div class="border-t border-gray-300 pt-1 flex justify-between font-semibold">
                                                              <span>Total:</span>
@@ -1252,7 +1261,7 @@
                             </div>
                             <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                                 <div class="font-semibold">Overnight Stays & Pet Fee</div>
-                                <div>₱2,000 per pet fee applies when staying inside. Any damages charged accordingly.</div>
+                                <div>&#8369;2,000 per pet fee applies when staying inside. Any damages charged accordingly.</div>
                             </div>
                             <div class="bg-red-50 border border-red-200 rounded-lg p-4">
                                 <div class="font-semibold text-red-900">Damage & Liability</div>
@@ -1636,7 +1645,7 @@
                                                     </span>
                                                 </td>
                                                 <td class="px-4 py-3 text-right font-semibold text-green-600"
-                                                    x-text="'₱' + row.rate.toLocaleString()"></td>
+                                                    x-text="'\u20B1' + row.rate.toLocaleString()"></td>
                                             </tr>
                                         </template>
 
@@ -1847,7 +1856,7 @@
                 lastClickedRoom: null,
                 lastClickTime: 0,
 
-                // ✅ FIX: single click on already-selected should ADD another instance (not show "Room Already Selected")
+                // âœ… FIX: single click on already-selected should ADD another instance (not show "Room Already Selected")
                 // For BYOT/Car Camping: increment quantity instead of creating new instance
                 toggleRoom(roomId, type) {
                     const staycations = @json($staycations);
@@ -1918,7 +1927,7 @@
                         if (this.selectedCount() >= this.maxSlots) {
                             Swal.fire({
                                 title: 'Slots Full',
-                                text: `All ${this.maxSlots} slot(s) are filled. Add more slots if needed.`,
+                            text: `All ${this.maxSlots} slot(s) are filled. Add more slots if needed.`,
                                 icon: 'warning',
                                 confirmButtonColor: '#8f5d54'
                             });
@@ -1948,7 +1957,7 @@
                     if (this.selectedCount() >= this.maxSlots) {
                         Swal.fire({
                             title: 'Slots Full',
-                            text: `You can only select up to ${this.maxSlots} room(s). Add more slots if needed.`,
+                            text: `All ${this.maxSlots} slot(s) are filled. Add more slots if needed.`,
                             icon: 'warning',
                             confirmButtonColor: '#8f5d54'
                         });
@@ -2093,6 +2102,33 @@
                     return Object.values(this.selectedRooms);
                 },
 
+                getRoomType(room) {
+                    const directType = String(room?.type || '').toLowerCase();
+                    if (directType) return directType;
+
+                    const lookupId = room?.originalId || room?.id;
+                    return String(this.roomDetailsMap?.[lookupId]?.type || '').toLowerCase();
+                },
+
+                isCampingRoom(room) {
+                    const type = this.getRoomType(room);
+                    if (type === 'byot' || type === 'car camping' || type === 'camping') return true;
+
+                    const roomNameLower = String(room?.name || '').toLowerCase();
+                    return roomNameLower.includes('byot')
+                        || roomNameLower.includes('bring your own tent')
+                        || roomNameLower.includes('bring your own')
+                        || roomNameLower.includes('car camping');
+                },
+
+                isGlampingRoom(room) {
+                    return this.getRoomType(room) === 'glamping';
+                },
+
+                supportsExtraMattress(room) {
+                    return this.isGlampingRoom(room);
+                },
+
                 getSlotClass(slotNum) {
                     const rooms = this.getSelectedRoomArray();
                     return slotNum <= rooms.length
@@ -2111,28 +2147,21 @@
                         const r = rooms[slotNum - 1];
                         if (!r) return 'Room ' + slotNum;
 
-                        const roomNameLower = (r.name || '').toLowerCase();
-                        const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
-                        const isCarCamping = roomNameLower.includes('car camping');
-
                         // For BYOT/Car Camping, show quantity if > 1
-                        if ((isBYOT || isCarCamping) && (r.extra_mattress > 1)) {
+                        if (this.isCampingRoom(r) && (r.extra_mattress > 1)) {
                             return `${r.name} (${r.extra_mattress})`;
                         }
 
                         const instanceNum = r.instanceNum || 1;
                         return instanceNum > 1 ? `${r.name} #${instanceNum}` : r.name;
                     }
-                    return '—';
+                    return '-';
                 },
 
                 hasRegularRooms() {
                     for (const k in this.selectedRooms) {
                         const r = this.selectedRooms[k];
-                        const name = (r.name || '').toLowerCase();
-                        const type = (r.type || '').toLowerCase();
-                        const isSpecial = name.includes('byot') || name.includes('bring your own tent') || name.includes('car camping') || type === 'byot' || type === 'car camping';
-                        if (!isSpecial) return true;
+                        if (!this.isCampingRoom(r)) return true;
                     }
                     return false;
                 },
@@ -2194,24 +2223,6 @@
                     const normalizedValue = parseInt(value || 0, 10);
                     if (!isFinite(normalizedValue)) {
                         this.setField(roomId, field, 0);
-                        return;
-                    }
-
-                    const currentRoom = this.getRoom(roomId);
-                    let adults = field === 'adults' ? normalizedValue : (currentRoom.adults || 1);
-                    let children = field === 'children' ? normalizedValue : (currentRoom.children || 0);
-                    const totalGuests = adults + children;
-
-                    // For standard/premium rooms, enforce max 6 guests
-                    if ((roomName.includes('standard') || roomName.includes('premium')) && totalGuests > 6) {
-                        // Adjust the changed field to fit within limit
-                        if (field === 'adults') {
-                            const maxAdults = Math.max(1, 6 - children);
-                            this.setField(roomId, field, maxAdults);
-                        } else if (field === 'children') {
-                            const maxChildren = Math.max(0, 6 - adults);
-                            this.setField(roomId, field, maxChildren);
-                        }
                         return;
                     }
 
@@ -2350,24 +2361,24 @@
                     const priceRange = roomDetail?.price_range || null;
                     if (priceRange && priceRange.min_price > 0 && priceRange.max_price > 0) {
                         if (priceRange.min_price === priceRange.max_price) {
-                            this.roomDetailsPrice = priceRange.min_label || '₱' + priceRange.min_price.toLocaleString();
+                            this.roomDetailsPrice = priceRange.min_label || '\u20B1' + priceRange.min_price.toLocaleString();
                         } else {
-                            this.roomDetailsPrice = (priceRange.min_label || '₱' + priceRange.min_price.toLocaleString()) + ' - ' + (priceRange.max_label || '₱' + priceRange.max_price.toLocaleString());
+                            this.roomDetailsPrice = (priceRange.min_label || '\u20B1' + priceRange.min_price.toLocaleString()) + ' - ' + (priceRange.max_label || '\u20B1' + priceRange.max_price.toLocaleString());
                         }
                         this.roomDetailsPriceLabel = '/ night';
                     } else if (roomDetail?.price) {
-                        this.roomDetailsPrice = '₱' + parseInt(roomDetail.price).toLocaleString();
+                        this.roomDetailsPrice = '\u20B1' + parseInt(roomDetail.price).toLocaleString();
                         const roomNameLower = (name || '').toLowerCase();
                         const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own');
                         const isCarCamping = roomNameLower.includes('car camping');
                         this.roomDetailsPriceLabel = (isBYOT || isCarCamping) ? '' : '/ night';
                     } else {
-                        this.roomDetailsPrice = '₱0';
+                        this.roomDetailsPrice = '\u20B10';
                         this.roomDetailsPriceLabel = '/ night';
                     }
                     
                     // Set available quantity
-                    this.roomDetailsAvailable = roomDetail?.available_quantity || roomDetail?.total_quantity || '∞';
+                    this.roomDetailsAvailable = roomDetail?.available_quantity || roomDetail?.total_quantity || 'âˆž';
                     
                     // Calculate nights
                     if (this.checkin && this.checkout) {
@@ -2376,7 +2387,7 @@
                         const nights = Math.max(1, Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24)));
                         this.roomDetailsNights = nights;
                     } else {
-                        this.roomDetailsNights = '—';
+                        this.roomDetailsNights = 'â€”';
                     }
                     
                     // Set total guests
@@ -2678,12 +2689,22 @@
                         nights = Math.max(1, Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24)));
                     }
 
-                    const roomNameLower = (room.name || '').toLowerCase();
-                    const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own tent');
-                    const isCarCamping = roomNameLower.includes('car camping');
-                    if (isBYOT || isCarCamping) return 0;
+                    if (!this.supportsExtraMattress(room)) return 0;
 
-                    return (room.extra_mattress || 0) * this.bookingSettings.mattress_price_per_night * nights;
+                    const autoMattress = this.calculateAutoMattressCount(room);
+                    return autoMattress * this.bookingSettings.mattress_price_per_night * nights;
+                },
+
+                calculateAutoMattressCount(room) {
+                    if (!this.supportsExtraMattress(room)) return 0;
+
+                    const lookupId = room.originalId || room.id;
+                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[lookupId] ? this.roomDetailsMap[lookupId] : null;
+                    const capacity = Math.max(1, parseInt(roomDetail?.capacity || 0, 10) || 1);
+                    const adults = Math.max(1, parseInt(room.adults || 1, 10) || 1);
+                    const children = Math.max(0, parseInt(room.children || 0, 10) || 0);
+                    const totalGuests = adults + children;
+                    return Math.max(0, totalGuests - capacity);
                 },
 
                 calculatePetPrice(room) {
@@ -2708,7 +2729,7 @@
                         const lookupId = room.originalId || room.id;
                         const roomDetail = this.roomDetailsMap && this.roomDetailsMap[lookupId] ? this.roomDetailsMap[lookupId] : null;
                         const basePrice = (roomDetail && roomDetail.price) ? roomDetail.price : 1500;
-                        return '₱' + basePrice.toLocaleString();
+                        return this.formatCurrency(basePrice);
                     }
 
                     // FIX: Use originalId for lookup since room.id might be a composite key
@@ -2770,46 +2791,47 @@
                     }
 
                     const uniqueRates = [...new Set(rates)];
-                    if (uniqueRates.length === 1) return '₱' + uniqueRates[0].toLocaleString() + ' / night';
-                    return '₱' + Math.min(...uniqueRates).toLocaleString() + ' - ₱' + Math.max(...uniqueRates).toLocaleString() + ' / night';
+                    if (uniqueRates.length === 1) return this.formatCurrency(uniqueRates[0]) + ' / night';
+                    return this.formatCurrency(Math.min(...uniqueRates)) + ' - ' + this.formatCurrency(Math.max(...uniqueRates)) + ' / night';
                 },
 
                 calculateRoomPrice(room) {
                     // Use stored accommodation_price which is already calculated
                     const base = room.accommodation_price || 0;
+                    const mattress = this.calculateMattressPrice(room);
                     const pet = this.calculatePetPrice(room);
-                    return '₱' + (base + pet).toLocaleString();
+                    return this.formatCurrency(base + mattress + pet);
                 },
 
                 calculateSubtotal() {
                     let total = 0;
                     for (const room of Object.values(this.selectedRooms)) {
                         const base = room.accommodation_price || 0;
-                        total += base + this.calculatePetPrice(room);
+                        total += base + this.calculateMattressPrice(room) + this.calculatePetPrice(room);
                     }
-                    return '₱' + total.toLocaleString();
+                    return this.formatCurrency(total);
                 },
 
                 calculateVAT() {
                     let total = 0;
                     for (const room of Object.values(this.selectedRooms)) {
                         const base = room.accommodation_price || 0;
-                        total += base + this.calculatePetPrice(room);
+                        total += base + this.calculateMattressPrice(room) + this.calculatePetPrice(room);
                     }
                     // Calculate dynamic VAT from subtotal (using dynamic rate from admin settings)
                     const vat = total * this.vatRate;
-                    return '₱' + vat.toLocaleString();
+                    return this.formatCurrency(vat);
                 },
 
                 calculateTotalPrice() {
                     let total = 0;
                     for (const room of Object.values(this.selectedRooms)) {
                         const base = room.accommodation_price || 0;
-                        total += base + this.calculatePetPrice(room);
+                        total += base + this.calculateMattressPrice(room) + this.calculatePetPrice(room);
                     }
                     // Calculate Grand Total (subtotal + dynamic VAT)
                     const grandTotal = total * (1 + this.vatRate);
-                    return '₱' + grandTotal.toLocaleString();
+                    return this.formatCurrency(grandTotal);
                 },
 
                 // For breakdown modal - shows base total without VAT and WITHOUT pet price (pet price only in subtotal)
@@ -2817,9 +2839,14 @@
                     let total = 0;
                     for (const room of Object.values(this.selectedRooms)) {
                         const base = room.accommodation_price || 0;
-                        total += base; // Only room price, not pet price
+                        total += base + this.calculateMattressPrice(room); // Room + mattress, without pets/VAT
                     }
-                    return '₱' + total.toLocaleString();
+                    return this.formatCurrency(total);
+                },
+
+                formatCurrency(amount) {
+                    const value = Number.isFinite(amount) ? amount : parseFloat(amount || 0);
+                    return '\u20B1' + (Number.isFinite(value) ? value : 0).toLocaleString();
                 },
 
                 // breakdown helpers (unchanged behavior)
@@ -2842,9 +2869,9 @@
                     if (roomCount === 0) return 'No rooms selected';
                     if (roomCount === 1) {
                         const room = Object.values(this.selectedRooms)[0];
-                        return `${room.name} • ${nights} night(s) • ${ci} to ${co}`;
+                        return `${room.name} â€¢ ${nights} night(s) â€¢ ${ci} to ${co}`;
                     }
-                    return `${roomCount} rooms • ${nights} night(s) • ${ci} to ${co}`;
+                    return `${roomCount} rooms â€¢ ${nights} night(s) â€¢ ${ci} to ${co}`;
                 },
 
                 getNightsCount() {
@@ -3298,6 +3325,16 @@
                         }
                     }
 
+                    const normalizedSelectedRooms = {};
+                    for (const [key, room] of Object.entries(this.selectedRooms)) {
+                        normalizedSelectedRooms[key] = {
+                            ...room,
+                            extra_mattress: this.isCampingRoom(room)
+                                ? (parseInt(room.extra_mattress || 1, 10) || 1)
+                                : (this.supportsExtraMattress(room) ? this.calculateAutoMattressCount(room) : 0)
+                        };
+                    }
+
                     fetch('{{ route("booking.staycation") }}', {
                         method: 'POST',
                         headers: {
@@ -3305,7 +3342,7 @@
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         },
                         body: JSON.stringify({
-                            selected_rooms: this.selectedRooms,
+                            selected_rooms: normalizedSelectedRooms,
                             proceed_to_activities: true
                         })
                     })

@@ -326,31 +326,34 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                       @php
                       $staycation = $staycations->get($accommodation['accommodation_id'] ?? $roomId);
                       $name = strtolower($staycation->name ?? '');
+                      $roomType = strtolower((string)(($staycation ? $staycation->type : null) ?? ($accommodation['type'] ?? '')));
+                      $supportsExtraMattress = $roomType === 'glamping';
                       $isBYOT = stripos($name, 'byot') !== false || stripos($name, 'bring your own tent') !== false;
                       $isCarCamping = stripos($name, 'car camping') !== false;
                       $quantity = $accommodation['quantity'] ?? 1;
+                      $extraMattressCount = (int)($accommodation['extra_mattress'] ?? 0);
                       $basePrice = $accommodation['base_price'] ?? 0;
                       $mattressPrice = $accommodation['mattress_price'] ?? 0;
                       $petPrice = $accommodation['pet_price'] ?? 0;
                       $totalPrice = $accommodation['total_price'] ?? 0;
                       @endphp
                       @if($staycation)
-                        <li>• {{ $staycation->name }}
+                        <li>&bull; {{ $staycation->name }}
                           @if($isBYOT || $isCarCamping)
                             {{-- BYOT/Car Camping: Show quantity only --}}
                             - {{ $quantity }} unit{{ $quantity !== 1 ? 's' : '' }}
-                            - ₱{{ number_format($totalPrice, 2) }}
+                            - &#8369;{{ number_format($totalPrice, 2) }}
                           @else
                             {{-- Regular rooms: Show guests --}}
                             @if(!empty($accommodation['adults']) || !empty($accommodation['children']))
-                              ({{ $accommodation['adults'] ?? 0 }} adult{{ ($accommodation['adults'] ?? 0) !== 1 ? 's' : '' }}, {{ $accommodation['children'] ?? 0 }} child{{ ($accommodation['children'] ?? 0) !== 1 ? 'ren' : '' }})
+                              ({{ $accommodation['adults'] ?? 0 }} adult{{ ($accommodation['adults'] ?? 0) !== 1 ? 's' : '' }}, {{ $accommodation['children'] ?? 0 }} child{{ ($accommodation['children'] ?? 0) !== 1 ? 'ren' : '' }}@if($supportsExtraMattress), {{ $extraMattressCount }} extra mattress{{ $extraMattressCount !== 1 ? 'es' : '' }}@endif)
                             @endif
-                            - ₱{{ number_format($totalPrice, 2) }}
-                            @if($mattressPrice > 0)
-                              + Mattress: ₱{{ number_format($mattressPrice, 2) }}
+                            - &#8369;{{ number_format($totalPrice, 2) }}
+                            @if($supportsExtraMattress)
+                              + Mattress: &#8369;{{ number_format($mattressPrice, 2) }}
                             @endif
                             @if($petPrice > 0)
-                              + Pet: ₱{{ number_format($petPrice, 2) }}
+                              + Pet: &#8369;{{ number_format($petPrice, 2) }}
                             @endif
                           @endif
                         </li>

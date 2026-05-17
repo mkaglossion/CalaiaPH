@@ -54,7 +54,7 @@ class BookingSettingsController extends Controller
      */
     public function index()
     {
-        $settings = BookingSetting::whereIn('key', ['pet_price', 'max_pets_per_room'])->get();
+        $settings = BookingSetting::whereIn('key', ['mattress_price_per_night', 'pet_price', 'max_pets_per_room'])->get();
 
         return view('admin.booking-settings.index', [
             'settings' => $settings,
@@ -105,14 +105,20 @@ class BookingSettingsController extends Controller
             }
 
             $validated = $request->validate([
+                'mattress_price_per_night' => 'required|numeric|min:0',
                 'pet_price' => 'required|numeric|min:0',
                 'max_pets_per_room' => 'required|integer|min:1|max:999',
             ]);
 
             $settings = [
+                'mattress_price_per_night' => [
+                    'label' => 'Extra Mattress Price',
+                    'description' => 'Price per extra mattress per night (₱)',
+                    'category' => 'pricing',
+                ],
                 'pet_price' => [
                     'label' => 'Pet Fee',
-                    'description' => 'One-time pet fee per booking (₱)',
+                    'description' => 'Pet fee per pet (₱)',
                     'category' => 'pricing',
                 ],
                 'max_pets_per_room' => [

@@ -102,11 +102,9 @@ class BookingController extends Controller
         $checkout = \Carbon\Carbon::parse($checkoutDate);
         $nights = $checkin->diffInDays($checkout);
 
-        // Determine room type
-        $roomNameLower = strtolower($staycation->name ?? '');
-        $isBYOT = str_contains($roomNameLower, 'byot') || str_contains($roomNameLower, 'bring your own tent') || str_contains($roomNameLower, 'bring your own');
-        $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
-        $isSpecialRoom = $isBYOT || $isCarCamping;
+        // Determine room type behavior
+        $isSpecialRoom = $this->isSpecialStaycationRoom($staycation);
+        $supportsExtraMattress = $this->supportsExtraMattress($staycation);
 
         $accommodationPrice = 0;
         $breakdown = [];
@@ -161,9 +159,11 @@ class BookingController extends Controller
         $mattressPrice = 0;
         $petPrice = 0;
 
-        // Calculate extra fees for non-BYOT/Car Camping rooms
-        if (!$isSpecialRoom) {
+        // Extra mattress is GLAMPING-only. Pets remain non-special-room only.
+        if ($supportsExtraMattress) {
             $mattressPrice = $this->calculateMattressFee($extraMattresses, $nights);
+        }
+        if (!$isSpecialRoom) {
             if ($hasPets && $numPets > 0) {
                 $petPrice = $this->calculatePetFee($numPets);
             }
@@ -901,6 +901,12 @@ class BookingController extends Controller
             $children = (int)($acc['children'] ?? 0);
             $numPets = (int)($acc['num_pets'] ?? 0);
             $hasPets = (($acc['pets'] ?? 'no') === 'yes') && ($numPets > 0);
+            $extraMattresses = $this->resolveExtraMattressCount(
+                $staycation,
+                $adults,
+                $children,
+                (int)($acc['extra_mattress'] ?? 0)
+            );
             
             $pricingResult = $this->calculateCentralizedStaycationPrice(
                 $staycation,
@@ -908,13 +914,14 @@ class BookingController extends Controller
                 $checkoutDate,
                 $adults,
                 $children,
-                (int)($acc['extra_mattress'] ?? 0),
+                $extraMattresses,
                 $numPets,
                 $hasPets
             );
             
             // Update accommodation with calculated prices
             $acc['accommodation_price'] = $pricingResult['accommodation_price'];
+            $acc['extra_mattress'] = $extraMattresses;
             $acc['mattress_price'] = $pricingResult['mattress_price'];
             $acc['pet_price'] = $pricingResult['pet_price'];
             $acc['total_price'] = $pricingResult['total_price'];
@@ -945,6 +952,12 @@ class BookingController extends Controller
                 // Use centralized pricing method
                 $numPets = (int)($room['num_pets'] ?? 0);
                 $hasPets = (($room['pets'] ?? 'no') === 'yes') && ($numPets > 0);
+                $extraMattresses = $this->resolveExtraMattressCount(
+                    $staycation,
+                    (int)($room['adults'] ?? 1),
+                    (int)($room['children'] ?? 0),
+                    (int)($room['extra_mattress'] ?? 0)
+                );
 
                 $pricingResult = $this->calculateCentralizedStaycationPrice(
                     $staycation,
@@ -952,13 +965,14 @@ class BookingController extends Controller
                     $checkoutDate,
                     (int)($room['adults'] ?? 1),
                     (int)($room['children'] ?? 0),
-                    (int)($room['extra_mattress'] ?? 0),
+                    $extraMattresses,
                     $numPets,
                     $hasPets
                 );
                 
                 // Update room with calculated prices
                 $room['accommodation_price'] = $pricingResult['accommodation_price'];
+                $room['extra_mattress'] = $extraMattresses;
                 $room['mattress_price'] = $pricingResult['mattress_price'];
                 $room['pet_price'] = $pricingResult['pet_price'];
                 $room['total_price'] = $pricingResult['total_price'];
@@ -1784,20 +1798,18 @@ class BookingController extends Controller
                         $nights = max(1, \Carbon\Carbon::parse($checkinDate)->diffInDays(\Carbon\Carbon::parse($checkoutDate)));
                     }
                     
-                    // Check if BYOT or Car Camping
-                    $roomNameLower = strtolower($staycation->name ?? '');
-                    // Check for BYOT first (prioritize BYOT over car camping)
-                    $isBYOT = str_contains($roomNameLower, 'byot') ||
-                             str_contains($roomNameLower, 'bring your own tent') ||
-                             str_contains($roomNameLower, 'bring your own');
-                    // Check for car camping only if not BYOT
-                    $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
+                    $isSpecialRoom = $this->isSpecialStaycationRoom($staycation);
 
                     // Use CENTRALIZED pricing method for consistency across all booking steps
                     // IMPORTANT: pass real adults/children so pricing + pets are computed correctly
                     $adults = (int)($room['adults'] ?? 1);
                     $children = (int)($room['children'] ?? 0);
-                    $extraMattresses = !($isBYOT || $isCarCamping) ? (int)($room['extra_mattress'] ?? 0) : 0;
+                    $extraMattresses = $this->resolveExtraMattressCount(
+                        $staycation,
+                        $adults,
+                        $children,
+                        (int)($room['extra_mattress'] ?? 0)
+                    );
 
                     // pets should be charged whenever pets=yes and num_pets>0
                     // do NOT hard-require pet_agreement for fee computation
@@ -1830,8 +1842,8 @@ class BookingController extends Controller
                         'accommodation_price' => $accommodationPrice,
                         'adults'         => $adults,
                         'children'       => (int)($room['children'] ?? 0),
-                        'extra_mattress' => (int)($room['extra_mattress'] ?? 0),
-                        'quantity'       => ($isBYOT || $isCarCamping) ? max(1, (int)($room['extra_mattress'] ?? 1)) : ($adults + (int)($room['children'] ?? 0)),
+                        'extra_mattress' => $extraMattresses,
+                        'quantity'       => $isSpecialRoom ? max(1, (int)($room['extra_mattress'] ?? 1)) : ($adults + (int)($room['children'] ?? 0)),
                         'pets'           => ($room['pets'] ?? 'no'),
                         'pet_agreement'  => (bool)($room['pet_agreement'] ?? false),
                         'num_pets'       => $numPets,
@@ -1918,19 +1930,7 @@ class BookingController extends Controller
             $validated = $request->validate(ValidationService::staycationPostRules());
             $booking = session('booking', []);
 
-            // Validate that adults+children <= staycation.capacity for each accommodation
-            if (isset($validated['accommodations']) && is_array($validated['accommodations'])) {
-                foreach ($validated['accommodations'] as $acc) {
-                    $staycation = isset($acc['staycation']['id'])
-                        ? \App\Models\Staycation::find($acc['staycation']['id'])
-                        : null;
-                    $adults = $acc['adults'] ?? 0;
-                    $children = $acc['children'] ?? 0;
-                    if ($staycation && ($adults + $children > $staycation->capacity)) {
-                        return back()->withErrors(["The total guests for {$staycation->name} exceed its capacity."])->withInput();
-                    }
-                }
-            }
+            // Capacity overflow is allowed; extra mattress is auto-computed from guest overflow.
 
             if ($request->has('check_in') && $request->has('check_out')) {
                 $newCheckin = $request->check_in;
@@ -2330,6 +2330,7 @@ class BookingController extends Controller
                 'status' => $status,
                 'available_quantity' => $minOverRange,
                 'total_quantity' => $baseQty,
+                'capacity' => (int)($staycation->capacity ?? 0),
                 'price' => $currentRate, // Per night rate for current season
                 'price_range' => $priceRange, // NEW: Price range for displayed dates
                 'price_configs' => $staycation->price_configs ?? [],
@@ -3006,6 +3007,54 @@ class BookingController extends Controller
             'check_in' => 'required|date',
             'check_out' => 'required|date|after:check_in',
         ]);
+    }
+
+    /**
+     * Determine if a staycation room is BYOT/Car Camping (special-room pricing).
+     */
+    protected function isSpecialStaycationRoom(Staycation $staycation): bool
+    {
+        $roomNameLower = strtolower($staycation->name ?? '');
+        $isBYOT = str_contains($roomNameLower, 'byot')
+            || str_contains($roomNameLower, 'bring your own tent')
+            || str_contains($roomNameLower, 'bring your own');
+        $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
+
+        return $isBYOT || $isCarCamping;
+    }
+
+    /**
+     * Extra mattress should only apply to glamping accommodations.
+     */
+    protected function supportsExtraMattress(Staycation $staycation): bool
+    {
+        $type = strtolower((string)($staycation->type ?? ''));
+        return $type === 'glamping';
+    }
+
+    /**
+     * Resolve extra mattress count.
+     * For regular rooms: auto-compute based on guests above room capacity.
+     * For BYOT/Car Camping: keep submitted quantity (minimum 1).
+     */
+    protected function resolveExtraMattressCount(
+        Staycation $staycation,
+        int $adults,
+        int $children,
+        int $submittedExtraMattress = 0
+    ): int {
+        if ($this->isSpecialStaycationRoom($staycation)) {
+            return max(1, $submittedExtraMattress);
+        }
+
+        if (!$this->supportsExtraMattress($staycation)) {
+            return 0;
+        }
+
+        $totalGuests = max(1, $adults) + max(0, $children);
+        $capacity = max(1, (int)($staycation->capacity ?? 0));
+
+        return max(0, $totalGuests - $capacity);
     }
 
     /**
