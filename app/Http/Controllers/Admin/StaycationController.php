@@ -9,6 +9,7 @@ use App\Models\StaycationSwiperImage;
 use App\Models\PeakPeriod;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class StaycationController extends Controller
 {
@@ -45,11 +46,20 @@ class StaycationController extends Controller
             'days' => 'required|integer|min:1',
             'adults' => 'required|integer|min:0',
             'children' => 'required|integer|min:0',
+            'max_guest_capacity' => 'nullable|integer|min:1|max:30',
+            'included_guest_capacity' => 'nullable|integer|min:1|max:30',
             'priceConfigs' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
-        $capacity = $request->adults + $request->children;
+        $defaultIncludedCapacity = $request->adults + $request->children;
+        $includedGuestCapacity = max(1, (int)($request->input('included_guest_capacity', $defaultIncludedCapacity)));
+        $capacity = $includedGuestCapacity;
+        $requestedMaxGuestCapacity = (int)($request->input('max_guest_capacity', 0));
+        $maxGuestCapacity = max($includedGuestCapacity, $requestedMaxGuestCapacity);
+        if ($maxGuestCapacity <= 0) {
+            $maxGuestCapacity = null;
+        }
 
         // Determine type based on name
         $name = strtolower($request->name);
@@ -145,6 +155,9 @@ class StaycationController extends Controller
             }
         }
 
+        $supportsMaxGuestCapacity = Schema::hasColumn('staycations', 'max_guest_capacity');
+        $supportsIncludedGuestCapacity = Schema::hasColumn('staycations', 'included_guest_capacity');
+
         $staycationData = [
             'name' => $request->name,
             'days' => $request->days,
@@ -155,6 +168,12 @@ class StaycationController extends Controller
             'image' => $imagePath,
             'price' => 0,
         ];
+        if ($supportsMaxGuestCapacity) {
+            $staycationData['max_guest_capacity'] = $maxGuestCapacity;
+        }
+        if ($supportsIncludedGuestCapacity) {
+            $staycationData['included_guest_capacity'] = $includedGuestCapacity;
+        }
 
         if (!empty($priceConfigs)) {
             $staycationData['price_configs'] = $priceConfigs;
@@ -170,6 +189,8 @@ class StaycationController extends Controller
                 'name' => $staycation->name,
                 'days' => $staycation->days,
                 'capacity' => $staycation->capacity,
+                'max_guest_capacity' => $staycation->max_guest_capacity ?? $maxGuestCapacity ?? $capacity,
+                'included_guest_capacity' => $staycation->included_guest_capacity ?? $includedGuestCapacity ?? $capacity,
                 'adults' => $staycation->adults,
                 'children' => $staycation->children,
                 'image' => $staycation->image,
@@ -193,12 +214,21 @@ class StaycationController extends Controller
             'days' => 'required|integer|min:1',
             'adults' => 'required|integer|min:0',
             'children' => 'required|integer|min:0',
+            'max_guest_capacity' => 'nullable|integer|min:1|max:30',
+            'included_guest_capacity' => 'nullable|integer|min:1|max:30',
             'priceConfigs' => 'nullable|string', // JSON string from frontend
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'remove_image' => 'nullable|in:1',
         ]);
 
-        $capacity = $request->adults + $request->children;
+        $defaultIncludedCapacity = $request->adults + $request->children;
+        $includedGuestCapacity = max(1, (int)($request->input('included_guest_capacity', $defaultIncludedCapacity)));
+        $capacity = $includedGuestCapacity;
+        $requestedMaxGuestCapacity = (int)($request->input('max_guest_capacity', 0));
+        $maxGuestCapacity = max($includedGuestCapacity, $requestedMaxGuestCapacity);
+        if ($maxGuestCapacity <= 0) {
+            $maxGuestCapacity = null;
+        }
 
         // Determine type based on name
         $name = strtolower($request->name);
@@ -258,6 +288,9 @@ class StaycationController extends Controller
         }
 
         // Handle image upload
+        $supportsMaxGuestCapacity = Schema::hasColumn('staycations', 'max_guest_capacity');
+        $supportsIncludedGuestCapacity = Schema::hasColumn('staycations', 'included_guest_capacity');
+
         $updateData = [
             'name' => $request->name,
             'days' => $request->days,
@@ -267,6 +300,12 @@ class StaycationController extends Controller
             'children' => $request->children,
             'price' => 0,
         ];
+        if ($supportsMaxGuestCapacity) {
+            $updateData['max_guest_capacity'] = $maxGuestCapacity;
+        }
+        if ($supportsIncludedGuestCapacity) {
+            $updateData['included_guest_capacity'] = $includedGuestCapacity;
+        }
 
         if (!empty($priceConfigs)) {
             $updateData['price_configs'] = $priceConfigs;
@@ -329,6 +368,8 @@ class StaycationController extends Controller
                 'name' => $updatedStaycation->name,
                 'days' => $updatedStaycation->days,
                 'capacity' => $updatedStaycation->capacity,
+                'max_guest_capacity' => $updatedStaycation->max_guest_capacity ?? $maxGuestCapacity ?? $capacity,
+                'included_guest_capacity' => $updatedStaycation->included_guest_capacity ?? $includedGuestCapacity ?? $capacity,
                 'adults' => $updatedStaycation->adults,
                 'children' => $updatedStaycation->children,
                 'image' => $updatedStaycation->image,

@@ -26,7 +26,7 @@ Route::middleware('api')->group(function () {
     // Payment routes
     Route::post('/payment/create-checkout', [PaymentController::class, 'createCheckout']);
     Route::get('/payment/confirm', [PaymentController::class, 'confirmCheckout']);
-    Route::post('/payment/webhook', [PaymentController::class, 'webhook']);
+    Route::post('/payment/webhook', [PaymongoWebhookController::class, 'handle']);
     // PayMongo webhook (stateless API route)
     Route::post('/webhooks/paymongo', [PaymongoWebhookController::class, 'handle']);
     // Backwards-compatible route for production domain registration

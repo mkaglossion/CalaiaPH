@@ -18,6 +18,7 @@ class PackageInventory extends Model
         'booked_groups',
         'available_groups',
         'is_blocked',
+        'block_reason',
     ];
 
     protected $casts = [

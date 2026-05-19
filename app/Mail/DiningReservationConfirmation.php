@@ -3,14 +3,16 @@
 namespace App\Mail;
 
 use App\Models\DiningReservation;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class DiningReservationConfirmation extends Mailable
+class DiningReservationConfirmation extends Mailable implements ShouldQueue
 {
-    use SerializesModels;
+    use Queueable, SerializesModels;
 
     public function __construct(public DiningReservation $reservation)
     {

@@ -11,7 +11,7 @@
     </h1>
     <p class="text-gray-600 text-sm sm:text-base mb-6 sm:mb-10">Manage activities & experience packages available for booking.</p>
     @php
-        $mobileLayoutStep3 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step3_activities')->value('value') ?? 1);
+        $mobileLayoutStep3 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step3_activities')->value('value') ?? 3);
     @endphp
     <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
         <div class="flex flex-col md:flex-row md:items-end gap-3">

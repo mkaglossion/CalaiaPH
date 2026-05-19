@@ -82,7 +82,7 @@ class DiningReservationController extends Controller
             // Send confirmation email
             try {
                 Mail::to($validated['email'])
-                    ->send(new DiningReservationConfirmation($reservation));
+                    ->queue(new DiningReservationConfirmation($reservation));
                 Log::info('Dining reservation email sent successfully to: ' . $validated['email']);
             } catch (\Exception $e) {
                 // Log error but don't fail the reservation

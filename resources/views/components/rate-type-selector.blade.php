@@ -41,7 +41,7 @@
       Select Rate Type
     </h3>
     <p class="text-sm text-gray-600 mt-1">
-      Choose the rate that best matches your travel plans.
+      Choose the rate that best matches your stay plans.
     </p>
   </div>
 

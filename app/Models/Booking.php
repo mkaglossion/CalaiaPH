@@ -162,7 +162,7 @@ class Booking extends Model
     /**
      * Reduce inventory for all accommodations in this booking
      */
-    public function reduceInventory()
+    public function reduceInventory(bool $strict = false)
     {
         $bookingData = $this->booking_data ?? [];
         $bookingType = $this->booking_type ?? ($bookingData['booking_type'] ?? null);
@@ -195,8 +195,10 @@ class Booking extends Model
                         );
                         Log::info("Reduced inventory for staycation {$staycationId} on {$currentDate->toDateString()} by {$quantity}");
                     } catch (\Exception $e) {
-                        // Log error but don't fail the booking
                         Log::error("Failed to reduce inventory for booking {$this->id}: " . $e->getMessage());
+                        if ($strict) {
+                            throw $e;
+                        }
                     }
                 }
             }
@@ -205,13 +207,13 @@ class Booking extends Model
         }
 
         // Reduce food inventory
-        $this->reduceFoodInventory();
+        $this->reduceFoodInventory($strict);
     }
 
     /**
      * Reduce food inventory for selected foods in this booking
      */
-    public function reduceFoodInventory()
+    public function reduceFoodInventory(bool $strict = false)
     {
         $bookingData = $this->booking_data ?? [];
         $selectedFoods = $bookingData['selected_foods'] ?? [];
@@ -228,10 +230,17 @@ class Booking extends Model
                         broadcast(new FoodStockUpdated($food))->toOthers();
                         Log::info("Reduced food inventory for food {$foodId} by {$quantity}");
                     } else {
-                        Log::warning("Insufficient stock or food not found for food {$foodId}");
+                        $message = "Insufficient stock or food not found for food {$foodId}";
+                        Log::warning($message);
+                        if ($strict) {
+                            throw new \Exception($message);
+                        }
                     }
                 } catch (\Exception $e) {
                     Log::error("Failed to reduce food inventory for booking {$this->id}: " . $e->getMessage());
+                    if ($strict) {
+                        throw $e;
+                    }
                 }
             }
         }

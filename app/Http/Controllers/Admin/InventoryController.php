@@ -5,13 +5,109 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Staycation;
 use App\Models\StaycationInventory;
+use App\Models\InventoryAuditLog;
 use App\Models\Food;
 use App\Models\Product;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InventoryController extends Controller
 {
+    public function bulkUpsert(Request $request)
+    {
+        $validated = $request->validate([
+            'staycation_id' => 'required|exists:staycations,id',
+            'date_from' => 'required|date_format:Y-m-d',
+            'date_to' => 'required|date_format:Y-m-d|after_or_equal:date_from',
+            'total_quantity' => 'required|integer|min:1',
+            'is_blocked' => 'nullable|boolean',
+            'block_reason' => 'nullable|string|max:255',
+        ]);
+
+        $dateFrom = Carbon::parse($validated['date_from'])->startOfDay();
+        $dateTo = Carbon::parse($validated['date_to'])->startOfDay();
+        $days = $dateFrom->diffInDays($dateTo) + 1;
+
+        if ($days > 366) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Date range is too large. Please limit to 366 days.',
+            ], 422);
+        }
+
+        $isBlocked = (bool) ($validated['is_blocked'] ?? false);
+        $totalQty = (int) $validated['total_quantity'];
+
+        $existing = StaycationInventory::where('staycation_id', $validated['staycation_id'])
+            ->whereBetween('date', [$dateFrom->toDateString(), $dateTo->toDateString()])
+            ->get()
+            ->keyBy(fn ($item) => Carbon::parse($item->date)->toDateString());
+
+        $results = [];
+
+        DB::transaction(function () use ($validated, $dateFrom, $dateTo, $existing, $isBlocked, $totalQty, &$results) {
+            $period = CarbonPeriod::create($dateFrom, $dateTo);
+            foreach ($period as $date) {
+                $dateKey = $date->toDateString();
+                $current = $existing->get($dateKey);
+                $bookedQty = (int) ($current->booked_quantity ?? 0);
+                $availableQty = $isBlocked ? 0 : max(0, $totalQty - $bookedQty);
+
+                $inventory = StaycationInventory::updateOrCreate(
+                    [
+                        'staycation_id' => $validated['staycation_id'],
+                        'date' => $dateKey,
+                    ],
+                    [
+                        'total_quantity' => $totalQty,
+                        'booked_quantity' => $bookedQty,
+                        'available_quantity' => $availableQty,
+                        'is_blocked' => $isBlocked,
+                        'block_reason' => $validated['block_reason'] ?? null,
+                    ]
+                );
+
+                $results[] = $inventory;
+            }
+        });
+
+        $this->logInventoryBulkAction($request, 'staycation', 'bulk_upsert', (int) $validated['staycation_id'], count($results), [
+            'date_from' => $validated['date_from'],
+            'date_to' => $validated['date_to'],
+            'total_quantity' => $totalQty,
+            'is_blocked' => $isBlocked,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Inventory upserted for {$days} day(s).",
+            'data' => $results,
+        ]);
+    }
+
+    public function bulkDeleteByIds(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:staycation_inventories,id',
+        ]);
+
+        $deleted = StaycationInventory::whereIn('id', $validated['ids'])->delete();
+
+        $this->logInventoryBulkAction($request, 'staycation', 'bulk_delete', null, $deleted, [
+            'ids_count' => count($validated['ids']),
+            'ids' => $validated['ids'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Deleted {$deleted} inventory record(s).",
+            'deleted' => $deleted,
+        ]);
+    }
+
     public function store(Request $request)
     {
         // Handle both old API format and new inventory management form format
@@ -452,5 +548,33 @@ class InventoryController extends Controller
             ->values();
 
         return view('admin.inventory.shop', compact('products', 'categories'));
+    }
+
+    private function logInventoryBulkAction(
+        Request $request,
+        string $entityType,
+        string $action,
+        ?int $entityId,
+        int $affectedCount,
+        array $payload = []
+    ): void {
+        try {
+            InventoryAuditLog::create([
+                'user_id' => auth()->id(),
+                'entity_type' => $entityType,
+                'entity_id' => $entityId,
+                'action' => $action,
+                'affected_count' => $affectedCount,
+                'payload' => $payload,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+        } catch (\Throwable $e) {
+            \Log::warning('Failed to write inventory audit log', [
+                'entity_type' => $entityType,
+                'action' => $action,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

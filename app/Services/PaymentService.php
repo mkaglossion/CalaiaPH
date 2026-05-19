@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use App\Mail\BookingConfirmation;
 use App\Models\Booking;
 
@@ -198,11 +199,12 @@ class PaymentService
         }
 
         // Add payment details and calculated values
-        $staycationBooking['transaction_id'] = 'TXN-' . strtoupper(uniqid());
+        $staycationBooking['transaction_id'] = $paymentData['reference_id'] ?? ('TXN-' . strtoupper(uniqid()));
         $staycationBooking['payment_method'] = $paymentData['payment_method'] ?? 'N/A';
         $staycationBooking['payment_date'] = now()->toDateTimeString();
         $staycationBooking['nights'] = $nights;
         $staycationBooking['total_guests'] = $totalGuests;
+        $staycationBooking['paymongo_checkout_id'] = $paymentData['checkout_id'] ?? null;
         $staycationBooking['customer_info'] = [
             'first_name' => $paymentData['first_name'] ?? '',
             'last_name'  => $paymentData['last_name'] ?? '',
@@ -211,44 +213,73 @@ class PaymentService
             'phone'      => $paymentData['phone'] ?? '',
         ];
 
-        // Calculate final totals if not already set
-        if (!isset($staycationBooking['final_totals'])) {
-            $accommodationTotal = 0;
-            foreach ($staycationBooking['accommodations'] ?? [] as $acc) {
-                $accommodationTotal += $acc['total_price'] ?? 0;
-            }
-
-            $foodTotal = 0;
-            if (!empty($staycationBooking['selected_foods'])) {
-                // Food should be charged per quantity only (no nights multiplication)
-                foreach ($staycationBooking['selected_foods'] as $foodData) {
-                    $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
-                }
-            }
-
-            $activitiesTotal = 0;
-            if (!empty($staycationBooking['selected_activities'])) {
-                foreach ($staycationBooking['selected_activities'] as $activity) {
-                    $activitiesTotal += ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
-                }
-            }
-
-            $staycationBooking['final_totals'] = [
-                'accommodation_total' => $accommodationTotal,
-                'food_total' => $foodTotal,
-                'activities_total' => $activitiesTotal,
-                'grand_total' => $accommodationTotal + $foodTotal + $activitiesTotal
-            ];
+        // Build canonical totals so UI/email/admin all read the same source of truth.
+        $accommodationTotal = 0.0;
+        foreach ($staycationBooking['accommodations'] ?? [] as $acc) {
+            $accommodationTotal += (float) ($acc['total_price'] ?? 0);
         }
 
-        // Process payment with PayMongo
-        $amount = (int) (($staycationBooking['final_totals']['grand_total'] ?? 0) * 100); // Convert to centavos
+        $foodTotal = 0.0;
+        foreach ($staycationBooking['selected_foods'] ?? [] as $foodData) {
+            $foodTotal += (float) ($foodData['price'] ?? 0) * (int) ($foodData['quantity'] ?? 1);
+        }
 
-        if ($paymentData['payment_method'] === 'paymongo') {
-            $staycationBooking['paymongo_checkout_id'] = $paymentData['checkout_id'] ?? null;
-            $paymentStatus = 'paid';
-        } else {
-            $paymentStatus = 'paid';
+        $activitiesTotal = 0.0;
+        foreach ($staycationBooking['selected_activities'] ?? [] as $activity) {
+            $activitiesTotal += (float) ($activity['price'] ?? 0) * (int) ($activity['guests'] ?? 1);
+        }
+
+        $subtotalBeforeDiscount = max(0.0, $accommodationTotal + $foodTotal + $activitiesTotal);
+        $promoDiscount = max(0.0, (float) ($paymentData['promo_discount'] ?? 0));
+        $subtotalAfterDiscount = max(0.0, $subtotalBeforeDiscount - $promoDiscount);
+
+        $vatService = app(\App\Services\VatService::class);
+        $vatBreakdown = $vatService->generateBreakdown((float) $subtotalAfterDiscount, false); // VAT exclusive -> add VAT
+        $computedVatAmount = (float) ($vatBreakdown['vat_amount'] ?? 0);
+        $computedGrossTotal = (float) ($vatBreakdown['gross_amount'] ?? $subtotalAfterDiscount);
+        $currentVatRate = (float) ($vatBreakdown['vat_rate'] ?? $vatService->getCurrentVatRate());
+
+        $expectedAmountCentavos = (int) ($paymentData['expected_amount_centavos'] ?? 0);
+        $paidAmountCentavos = isset($paymentData['paid_amount_centavos'])
+            ? (int) $paymentData['paid_amount_centavos']
+            : null;
+        $chargedAmountCentavos = $paidAmountCentavos ?? ($expectedAmountCentavos > 0 ? $expectedAmountCentavos : null);
+        $grandTotalPaid = $chargedAmountCentavos !== null
+            ? ((float) $chargedAmountCentavos / 100)
+            : $computedGrossTotal;
+
+        $staycationBooking['payment_summary'] = [
+            'subtotal_before_discount' => $subtotalBeforeDiscount,
+            'promo_discount' => $promoDiscount,
+            'subtotal_after_discount' => $subtotalAfterDiscount,
+            'vat_rate' => $currentVatRate,
+            'vat_amount' => $computedVatAmount,
+            'grand_total_paid' => $grandTotalPaid,
+            'expected_amount_centavos' => $expectedAmountCentavos,
+            'paid_amount_centavos' => $paidAmountCentavos,
+            'checkout_id' => $paymentData['checkout_id'] ?? null,
+        ];
+
+        $staycationBooking['final_totals'] = [
+            'accommodation_total' => $accommodationTotal,
+            'food_total' => $foodTotal,
+            'activities_total' => $activitiesTotal,
+            'subtotal_before_discount' => $subtotalBeforeDiscount,
+            'promo_discount' => $promoDiscount,
+            'subtotal_after_discount' => $subtotalAfterDiscount,
+            'vat_amount' => $computedVatAmount,
+            'grand_total' => $grandTotalPaid,
+        ];
+
+        $paymentStatus = !empty($paymentData['checkout_id']) ? 'paid' : 'pending';
+
+        $existingBooking = Booking::where('transaction_id', $staycationBooking['transaction_id'])->first();
+        if ($existingBooking) {
+            Log::warning('Duplicate staycation payment processing prevented', [
+                'transaction_id' => $staycationBooking['transaction_id'],
+                'booking_id' => $existingBooking->id,
+            ]);
+            return redirect()->route('booking.confirmation');
         }
 
         // Create booking record
@@ -273,77 +304,124 @@ class PaymentService
             }
         }
 
-        $booking = Booking::create([
-            'transaction_id' => $staycationBooking['transaction_id'],
-            'customer_name' => $customerName,
-            'customer_email' => $paymentData['email'] ?? 'N/A',
-            'customer_phone' => $paymentData['phone'] ?? 'N/A',
-            'booking_type' => $bookingType,
-            'checkin_date' => $staycationBooking['checkin'],
-            'checkout_date' => $staycationBooking['checkout'],
-            'booking_data' => $staycationBooking,
-            'total_amount' => $staycationBooking['final_totals']['grand_total'] ?? 0,
-            'payment_method' => 'paymongo',
-            'payment_status' => $paymentStatus,
-            'status' => 'confirmed',
-        ]);
+        $booking = DB::transaction(function () use ($staycationBooking, $paymentData, $bookingType, $customerName, $paymentStatus) {
+            $booking = Booking::create([
+                'transaction_id' => $staycationBooking['transaction_id'],
+                'customer_name' => $customerName,
+                'customer_email' => $paymentData['email'] ?? 'N/A',
+                'customer_phone' => $paymentData['phone'] ?? 'N/A',
+                'booking_type' => $bookingType,
+                'checkin_date' => $staycationBooking['checkin'],
+                'checkout_date' => $staycationBooking['checkout'],
+                'booking_data' => $staycationBooking,
+                'total_amount' => (float) ($staycationBooking['payment_summary']['grand_total_paid'] ?? ($staycationBooking['final_totals']['grand_total'] ?? 0)),
+                'payment_method' => 'paymongo',
+                'payment_status' => $paymentStatus,
+                'status' => 'confirmed',
+            ]);
 
-        try {
-            $booking->reduceInventory();
-        } catch (\Exception $e) {
-            Log::error("Failed to reduce inventory for booking {$booking->id}: " . $e->getMessage());
-        }
+            // Strict reduction: if inventory/stock cannot be reduced, rollback booking creation.
+            $booking->reduceInventory(true);
+
+            return $booking;
+        });
 
         $staycations = \App\Models\Staycation::all()->keyBy('id');
         $foods = \App\Models\Food::all()->keyBy('id');
 
-        Mail::to($paymentData['email'])->send(new BookingConfirmation([
-            'bookingData' => $staycationBooking,
-            'selectedActivities' => $staycationBooking['selected_activities'] ?? [],
-            'selectedFoods' => $staycationBooking['selected_foods'] ?? [],
-            'staycations' => $staycations,
-            'foods' => $foods,
-            'grandTotal' => $staycationBooking['final_totals']['grand_total'] ?? 0,
-            'customerInfo' => $paymentData,
-            'isStaycation' => true
-        ]));
+        try {
+            Mail::to($paymentData['email'])->queue(new BookingConfirmation([
+                'bookingData' => $staycationBooking,
+                'selectedActivities' => $staycationBooking['selected_activities'] ?? [],
+                'selectedFoods' => $staycationBooking['selected_foods'] ?? [],
+                'staycations' => $staycations,
+                'foods' => $foods,
+                'grandTotal' => (float) ($staycationBooking['payment_summary']['grand_total_paid'] ?? ($staycationBooking['final_totals']['grand_total'] ?? 0)),
+                'customerInfo' => $paymentData,
+                'isStaycation' => true
+            ]));
+        } catch (\Exception $e) {
+            Log::error('Failed to send staycation booking confirmation email', [
+                'booking_transaction' => $staycationBooking['transaction_id'],
+                'email' => $paymentData['email'] ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
-        session([
-            'staycation_customer_info' => $paymentData,
-            'staycation_selected_foods' => $staycationBooking['selected_foods'] ?? []
-        ]);
+        if ($this->canUseSession()) {
+            session([
+                'booking' => $staycationBooking,
+                'staycation_customer_info' => $paymentData,
+                'staycation_selected_foods' => $staycationBooking['selected_foods'] ?? []
+            ]);
+        }
 
         return redirect()->route('booking.confirmation')->with('success', 'Payment processed successfully!');
     }
 
     public function processDayvisitPayment($dayvisitBooking, $paymentData)
     {
-        $grandTotal = $dayvisitBooking['price'] + collect(session('dayvisit_selected_activities', []))->sum(function($activity) {
+        $selectedActivities = $dayvisitBooking['selected_activities']
+            ?? ($this->canUseSession() ? session('dayvisit_selected_activities', []) : []);
+
+        $grandTotal = ($dayvisitBooking['price'] ?? 0) + collect($selectedActivities)->sum(function($activity) {
             return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
         });
 
-        $dayvisitBooking['transaction_id'] = 'TXN-' . strtoupper(uniqid());
+        $dayvisitBooking['transaction_id'] = $paymentData['reference_id']
+            ?? ($dayvisitBooking['transaction_id'] ?? ('TXN-' . strtoupper(uniqid())));
         $dayvisitBooking['payment_method'] = $paymentData['payment_method'] ?? 'N/A';
         $dayvisitBooking['payment_date'] = now()->toDateTimeString();
 
-        $amount = (int) ($grandTotal * 100);
+        $dayvisitBooking['paymongo_checkout_id'] = $paymentData['checkout_id'] ?? null;
+        $paymentStatus = !empty($paymentData['checkout_id']) ? 'paid' : 'pending';
+        $expectedAmountCentavos = (int) ($paymentData['expected_amount_centavos'] ?? 0);
+        $paidAmountCentavos = isset($paymentData['paid_amount_centavos'])
+            ? (int) $paymentData['paid_amount_centavos']
+            : null;
+        $chargedAmountCentavos = $paidAmountCentavos ?? ($expectedAmountCentavos > 0 ? $expectedAmountCentavos : null);
+        $grandTotalPaid = $chargedAmountCentavos !== null
+            ? ((float) $chargedAmountCentavos / 100)
+            : (float) $grandTotal;
 
-        if ($paymentData['payment_method'] === 'paymongo') {
-            $dayvisitBooking['paymongo_checkout_id'] = $paymentData['checkout_id'] ?? null;
-            $paymentStatus = 'paid';
-        } else {
-            $paymentStatus = 'paid';
+        $dayvisitBooking['payment_summary'] = [
+            'subtotal_before_discount' => (float) $grandTotal,
+            'promo_discount' => 0.0,
+            'subtotal_after_discount' => (float) $grandTotal,
+            'vat_amount' => 0.0,
+            'grand_total_paid' => (float) $grandTotalPaid,
+            'expected_amount_centavos' => $expectedAmountCentavos,
+            'paid_amount_centavos' => $paidAmountCentavos,
+            'checkout_id' => $paymentData['checkout_id'] ?? null,
+        ];
+
+        $existingBooking = Booking::where('transaction_id', $dayvisitBooking['transaction_id'])->first();
+        if ($existingBooking) {
+            if ($paymentStatus === 'paid' && ($existingBooking->payment_status ?? 'pending') !== 'paid') {
+                $existingBooking->payment_status = 'paid';
+                $existingBooking->payment_method = 'paymongo';
+                $existingBooking->save();
+            }
+            return redirect()->route('booking.confirmation');
         }
 
-        Mail::to($paymentData['email'])->send(new BookingConfirmation([
-            'bookingData' => $dayvisitBooking,
-            'selectedActivities' => session('dayvisit_selected_activities', []),
-            'grandTotal' => $grandTotal,
-            'customerInfo' => $paymentData,
-            'isDayvisit' => true
-        ]));
+        try {
+            Mail::to($paymentData['email'])->queue(new BookingConfirmation([
+                'bookingData' => $dayvisitBooking,
+                'selectedActivities' => $selectedActivities,
+                'grandTotal' => $grandTotalPaid,
+                'customerInfo' => $paymentData,
+                'isDayvisit' => true
+            ]));
+        } catch (\Exception $e) {
+            Log::error('Failed to send dayvisit booking confirmation email', [
+                'booking_transaction' => $dayvisitBooking['transaction_id'],
+                'email' => $paymentData['email'] ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
-        $dayvisitBooking['selected_activities'] = session('dayvisit_selected_activities', []);
+        $dayvisitBooking['selected_activities'] = $selectedActivities;
         $dayvisitBooking['customer_info'] = [
             'first_name' => $paymentData['first_name'] ?? '',
             'last_name'  => $paymentData['last_name'] ?? '',
@@ -372,23 +450,27 @@ class PaymentService
             'checkin_date' => $dayvisitBooking['booking_date'] ?? null,
             'checkout_date' => null,
             'booking_data' => $dayvisitBooking,
-            'total_amount' => $grandTotal,
+            'total_amount' => $grandTotalPaid,
             'payment_method' => 'paymongo',
             'payment_status' => $paymentStatus,
             'status' => 'confirmed',
         ]);
 
-        session([
-            'dayvisit_customer_info' => $paymentData,
-            'dayvisit_grand_total' => $grandTotal
-        ]);
+        if ($this->canUseSession()) {
+            session([
+                'dayvisit_customer_info' => $paymentData,
+                'dayvisit_grand_total' => $grandTotalPaid
+            ]);
+        }
 
         return redirect()->route('booking.confirmation')->with('success', 'Payment processed successfully!');
     }
 
     public function processRegularBookingPayment($bookingData, $paymentData)
     {
-        $grandTotal = ($bookingData['price'] ?? 0) + collect(session('selected_activities', []))->sum(function($activity) {
+        $selectedActivities = $bookingData['selected_activities']
+            ?? ($this->canUseSession() ? session('selected_activities', []) : []);
+        $grandTotal = ($bookingData['price'] ?? 0) + collect($selectedActivities)->sum(function($activity) {
             return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
         });
 
@@ -398,21 +480,25 @@ class PaymentService
 
         $amount = (int) ($grandTotal * 100);
 
-        if ($paymentData['payment_method'] === 'paymongo') {
-            $bookingData['paymongo_checkout_id'] = $paymentData['checkout_id'] ?? null;
-            $paymentStatus = 'paid';
-        } else {
-            $paymentStatus = 'paid';
+        $bookingData['paymongo_checkout_id'] = $paymentData['checkout_id'] ?? null;
+        $paymentStatus = !empty($paymentData['checkout_id']) ? 'paid' : 'pending';
+
+        try {
+            Mail::to($paymentData['email'])->queue(new BookingConfirmation([
+                'bookingData' => $bookingData,
+                'selectedActivities' => $selectedActivities,
+                'grandTotal' => $grandTotal,
+                'customerInfo' => $paymentData
+            ]));
+        } catch (\Exception $e) {
+            Log::error('Failed to send regular booking confirmation email', [
+                'booking_transaction' => $bookingData['transaction_id'],
+                'email' => $paymentData['email'] ?? null,
+                'error' => $e->getMessage(),
+            ]);
         }
 
-        Mail::to($paymentData['email'])->send(new BookingConfirmation([
-            'bookingData' => $bookingData,
-            'selectedActivities' => session('selected_activities', []),
-            'grandTotal' => $grandTotal,
-            'customerInfo' => $paymentData
-        ]));
-
-        $bookingData['selected_activities'] = session('selected_activities', []);
+        $bookingData['selected_activities'] = $selectedActivities;
         $bookingData['customer_info'] = [
             'first_name' => $paymentData['first_name'] ?? '',
             'last_name'  => $paymentData['last_name'] ?? '',
@@ -447,8 +533,23 @@ class PaymentService
             'status' => 'confirmed',
         ]);
 
-        session(['customer_info' => $paymentData, 'grand_total' => $grandTotal]);
+        if ($this->canUseSession()) {
+            session(['customer_info' => $paymentData, 'grand_total' => $grandTotal]);
+        }
 
         return redirect()->route('booking.confirmation')->with('success', 'Payment processed successfully!');
+    }
+
+    private function canUseSession(): bool
+    {
+        if (!app()->bound('request')) {
+            return false;
+        }
+
+        try {
+            return request()->hasSession();
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 }

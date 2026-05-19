@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Cache;
 use App\Services\BookingService;
 use App\Services\PaymentService;
 use App\Services\ValidationService;
@@ -510,6 +511,16 @@ class DayVisitController extends Controller
         $referenceId = 'TXN-' . strtoupper(uniqid());
         Session::put('dayvisit_payment_data.reference_id', $referenceId);
 
+        Cache::put('paymongo_checkout_context:' . $referenceId, [
+            'type' => 'dayvisit',
+            'booking_data' => $bookingData,
+            'payment_data' => array_merge(Session::get('dayvisit_payment_data', []), [
+                'reference_id' => $referenceId,
+                'expected_amount_centavos' => (int) round($grandTotal * 100),
+            ]),
+            'created_at' => now()->toDateTimeString(),
+        ], now()->addHours(24));
+
         try {
             \Illuminate\Support\Facades\Log::info('Creating PayMongo checkout for day visit', [
                 'grand_total' => $grandTotal,
@@ -532,6 +543,20 @@ class DayVisitController extends Controller
                 'checkout_id' => $checkout->id ?? 'unknown',
                 'checkout_url' => $checkout->checkout_url ?? 'unknown',
             ]);
+
+            if (!empty($checkout->id)) {
+                Cache::put('paymongo_checkout_reference:' . $checkout->id, $referenceId, now()->addHours(24));
+                Cache::put('paymongo_checkout_context:' . $referenceId, [
+                    'type' => 'dayvisit',
+                    'booking_data' => $bookingData,
+                    'payment_data' => array_merge(Session::get('dayvisit_payment_data', []), [
+                        'reference_id' => $referenceId,
+                        'checkout_session_id' => $checkout->id,
+                        'expected_amount_centavos' => (int) round($grandTotal * 100),
+                    ]),
+                    'created_at' => now()->toDateTimeString(),
+                ], now()->addHours(24));
+            }
             
             return redirect($checkout->checkout_url);
         } catch (\Exception $e) {
@@ -596,6 +621,12 @@ class DayVisitController extends Controller
                 // Process the payment
                 $paymentData['checkout_id'] = $checkoutId;
                 $result = $this->paymentService->processDayvisitPayment($bookingData, $paymentData);
+
+                $referenceId = $paymentData['reference_id'] ?? null;
+                if (!empty($referenceId)) {
+                    Cache::forget('paymongo_checkout_context:' . $referenceId);
+                }
+                Cache::forget('paymongo_checkout_reference:' . $checkoutId);
 
                 // Clear session
                 Session::forget(['dayvisit_booking_data', 'dayvisit_selected_activities', 'dayvisit_payment_data']);

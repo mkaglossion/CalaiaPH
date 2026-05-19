@@ -7,6 +7,7 @@ use App\Models\PackageBooking;
 use App\Models\PackageInventory;
 use App\Models\AdminSystemAlert;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PackageBookingConfirmation;
@@ -69,6 +70,16 @@ class PaymongoWebhookService
                     );
                     return true;
                 }
+            }
+
+            // Fallback: recover pending staycation/dayvisit checkout context.
+            if (self::recoverPendingBookingFromCheckoutContext(
+                $referenceNumber,
+                null,
+                $paymentId,
+                is_numeric($amount) ? (int) $amount : null
+            )) {
+                return true;
             }
 
             // Then try PackageBooking
@@ -269,6 +280,16 @@ class PaymongoWebhookService
             }
         }
 
+        // 1.5) Fallback recovery from cached pending checkout context.
+        if (self::recoverPendingBookingFromCheckoutContext(
+            $referenceNumber,
+            $checkoutSessionId,
+            $paymentId,
+            is_numeric($amount) ? (int) $amount : null
+        )) {
+            return true;
+        }
+
         // 2) Try PackageBooking via metadata booking_id or booking_reference or paymongo_reference
         $pb = null;
         if (!empty($metadata['booking_id'])) {
@@ -371,6 +392,90 @@ class PaymongoWebhookService
 
         // Add additional lookup logic if you use other reference formats
         return null;
+    }
+
+    private static function recoverPendingBookingFromCheckoutContext(
+        ?string $referenceNumber,
+        ?string $checkoutSessionId = null,
+        ?string $paymentReference = null,
+        ?int $paidAmountCentavos = null
+    ): bool {
+        $reference = $referenceNumber;
+        if (empty($reference) && !empty($checkoutSessionId)) {
+            $reference = Cache::get('paymongo_checkout_reference:' . $checkoutSessionId);
+        }
+
+        if (empty($reference)) {
+            return false;
+        }
+
+        if (self::findBookingByReference($reference) instanceof Booking) {
+            Cache::forget('paymongo_checkout_context:' . $reference);
+            if (!empty($checkoutSessionId)) {
+                Cache::forget('paymongo_checkout_reference:' . $checkoutSessionId);
+            }
+            return true;
+        }
+
+        $context = Cache::get('paymongo_checkout_context:' . $reference);
+        if (!is_array($context)) {
+            return false;
+        }
+
+        $type = $context['type'] ?? null;
+        if (!in_array($type, ['staycation', 'dayvisit'], true)) {
+            return false;
+        }
+
+        $bookingData = $context['booking_data'] ?? null;
+        $paymentData = $context['payment_data'] ?? null;
+        if (!is_array($bookingData) || !is_array($paymentData)) {
+            return false;
+        }
+
+        $paymentData['reference_id'] = $reference;
+        if (!empty($checkoutSessionId)) {
+            $paymentData['checkout_id'] = $checkoutSessionId;
+            $paymentData['checkout_session_id'] = $checkoutSessionId;
+        }
+        if (!empty($paymentReference)) {
+            $paymentData['payment_reference'] = $paymentReference;
+        }
+        if ($paidAmountCentavos !== null) {
+            $paymentData['paid_amount_centavos'] = $paidAmountCentavos;
+        }
+
+        try {
+            /** @var \App\Services\PaymentService $paymentService */
+            $paymentService = app(PaymentService::class);
+            if ($type === 'staycation') {
+                $paymentService->processStaycationPayment($bookingData, $paymentData);
+            } elseif ($type === 'dayvisit') {
+                $paymentService->processDayvisitPayment($bookingData, $paymentData);
+            }
+
+            if (self::findBookingByReference($reference) instanceof Booking) {
+                Cache::forget('paymongo_checkout_context:' . $reference);
+                if (!empty($checkoutSessionId)) {
+                    Cache::forget('paymongo_checkout_reference:' . $checkoutSessionId);
+                }
+                Log::info('Recovered booking via PayMongo webhook context', [
+                    'reference' => $reference,
+                    'type' => $type,
+                    'checkout_session_id' => $checkoutSessionId,
+                ]);
+                return true;
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to recover pending booking from webhook context', [
+                'reference' => $reference,
+                'type' => $type,
+                'checkout_session_id' => $checkoutSessionId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return false;
     }
 
     public static function verifySignature(string $payloadString, string $signature): bool

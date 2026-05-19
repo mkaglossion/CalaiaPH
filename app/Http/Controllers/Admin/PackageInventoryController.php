@@ -5,12 +5,116 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Package;
 use App\Models\PackageInventory;
+use App\Models\InventoryAuditLog;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class PackageInventoryController extends Controller
 {
+    private ?bool $supportsBlockReason = null;
+
+    public function bulkUpsert(Request $request)
+    {
+        $validated = $request->validate([
+            'package_id' => 'required|integer|exists:packages,id',
+            'date_from' => 'required|date_format:Y-m-d',
+            'date_to' => 'required|date_format:Y-m-d|after_or_equal:date_from',
+            'max_groups' => 'required|integer|min:1|max:20',
+            'is_blocked' => 'nullable|boolean',
+            'block_reason' => 'nullable|string|max:255',
+        ]);
+
+        $dateFrom = Carbon::parse($validated['date_from'])->startOfDay();
+        $dateTo = Carbon::parse($validated['date_to'])->startOfDay();
+        $days = $dateFrom->diffInDays($dateTo) + 1;
+
+        if ($days > 366) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Date range is too large. Please limit to 366 days.',
+            ], 422);
+        }
+
+        $isBlocked = (bool) ($validated['is_blocked'] ?? false);
+        $maxGroups = (int) $validated['max_groups'];
+        $supportsBlockReason = $this->packageInventorySupportsBlockReason();
+
+        $existing = PackageInventory::where('package_id', $validated['package_id'])
+            ->whereBetween('date', [$dateFrom->toDateString(), $dateTo->toDateString()])
+            ->get()
+            ->keyBy(fn ($item) => Carbon::parse($item->date)->toDateString());
+
+        $results = [];
+
+        DB::transaction(function () use ($validated, $dateFrom, $dateTo, $existing, $isBlocked, $maxGroups, $supportsBlockReason, &$results) {
+            $period = CarbonPeriod::create($dateFrom, $dateTo);
+            foreach ($period as $date) {
+                $dateKey = $date->toDateString();
+                $current = $existing->get($dateKey);
+                $bookedGroups = (int) ($current->booked_groups ?? 0);
+                $availableGroups = $isBlocked ? 0 : max(0, $maxGroups - $bookedGroups);
+
+                $updatePayload = [
+                    'max_groups' => $maxGroups,
+                    'booked_groups' => $bookedGroups,
+                    'available_groups' => $availableGroups,
+                    'is_blocked' => $isBlocked,
+                ];
+                if ($supportsBlockReason) {
+                    $updatePayload['block_reason'] = $validated['block_reason'] ?? null;
+                }
+
+                $inventory = PackageInventory::updateOrCreate(
+                    [
+                        'package_id' => $validated['package_id'],
+                        'date' => $dateKey,
+                    ],
+                    $updatePayload
+                );
+
+                $results[] = $inventory;
+            }
+        });
+
+        $this->logInventoryBulkAction($request, 'package', 'bulk_upsert', (int) $validated['package_id'], count($results), [
+            'date_from' => $validated['date_from'],
+            'date_to' => $validated['date_to'],
+            'max_groups' => $maxGroups,
+            'is_blocked' => $isBlocked,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Inventory upserted for {$days} day(s).",
+            'data' => $results,
+        ]);
+    }
+
+    public function bulkDeleteByIds(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:package_inventory,id',
+        ]);
+
+        $deleted = PackageInventory::whereIn('id', $validated['ids'])->delete();
+
+        $this->logInventoryBulkAction($request, 'package', 'bulk_delete', null, $deleted, [
+            'ids_count' => count($validated['ids']),
+            'ids' => $validated['ids'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Deleted {$deleted} inventory record(s).",
+            'deleted' => $deleted,
+        ]);
+    }
+
     /**
      * Display package inventory management page
      */
@@ -38,6 +142,7 @@ class PackageInventoryController extends Controller
         try {
             $packageId = $validated['package_id'];
             $date = $validated['date'];
+            $supportsBlockReason = $this->packageInventorySupportsBlockReason();
 
             // Check if inventory already exists for this date
             $existing = PackageInventory::where('package_id', $packageId)
@@ -53,12 +158,16 @@ class PackageInventoryController extends Controller
             }
 
             // Create new inventory
-            $inventory = PackageInventory::create([
+            $createPayload = [
                 'package_id' => $packageId,
                 'date' => $date,
                 'max_groups' => $validated['max_groups'],
                 'is_blocked' => $validated['is_blocked'] ?? false
-            ]);
+            ];
+            if ($supportsBlockReason) {
+                $createPayload['block_reason'] = $validated['block_reason'] ?? null;
+            }
+            $inventory = PackageInventory::create($createPayload);
 
             return response()->json([
                 'success' => true,
@@ -86,11 +195,15 @@ class PackageInventoryController extends Controller
         ]);
 
         try {
-            $inventory->update([
+            $supportsBlockReason = $this->packageInventorySupportsBlockReason();
+            $updatePayload = [
                 'max_groups' => $validated['max_groups'],
                 'is_blocked' => $validated['is_blocked'] ?? $inventory->is_blocked,
-                'block_reason' => $validated['block_reason'] ?? $inventory->block_reason
-            ]);
+            ];
+            if ($supportsBlockReason) {
+                $updatePayload['block_reason'] = $validated['block_reason'] ?? $inventory->block_reason;
+            }
+            $inventory->update($updatePayload);
 
             return response()->json([
                 'success' => true,
@@ -157,5 +270,42 @@ class PackageInventoryController extends Controller
                 'message' => 'Failed to fetch inventory: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    private function logInventoryBulkAction(
+        Request $request,
+        string $entityType,
+        string $action,
+        ?int $entityId,
+        int $affectedCount,
+        array $payload = []
+    ): void {
+        try {
+            InventoryAuditLog::create([
+                'user_id' => auth()->id(),
+                'entity_type' => $entityType,
+                'entity_id' => $entityId,
+                'action' => $action,
+                'affected_count' => $affectedCount,
+                'payload' => $payload,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to write inventory audit log', [
+                'entity_type' => $entityType,
+                'action' => $action,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function packageInventorySupportsBlockReason(): bool
+    {
+        if ($this->supportsBlockReason === null) {
+            $this->supportsBlockReason = Schema::hasColumn('package_inventory', 'block_reason');
+        }
+
+        return $this->supportsBlockReason;
     }
 }

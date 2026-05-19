@@ -51,10 +51,11 @@ class ValidationService
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
-            'payment_method' => 'required|string|in:paymongo,gcash,paymaya,bank',
+            'payment_method' => 'nullable|string|in:paymongo,qr,gcash,paymaya,bank,qrph,grab_pay,billease',
             'special_requests' => 'nullable|string|max:1000',
-            'cancellation_policy' => 'required|string|in:standard,flexible,nonrefundable',
-            'terms_accepted' => 'accepted',
+            'cancellation_policy' => 'nullable|string|in:standard,flexible,nonrefundable',
+            'terms_accepted' => 'sometimes|accepted',
+            'terms_and_policy_accepted' => 'sometimes|accepted',
         ];
     }
 
@@ -66,7 +67,7 @@ class ValidationService
             'accommodations' => 'nullable|array',
             'accommodations.*.staycation' => 'required|array',
             'accommodations.*.adults' => 'required|integer|min:1',
-            'accommodations.*.children' => 'required|integer|min:0',
+            'accommodations.*.children' => 'nullable|integer|min:0',
             'accommodations.*.pet_agreement' => 'nullable|boolean',
             'accommodations.*.num_pets' => 'nullable|integer|min:0',
             'accommodations.*.has_breakfast' => 'nullable|boolean',

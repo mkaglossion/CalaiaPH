@@ -159,6 +159,8 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                             $roomNameLower = strtolower($staycation->name ?? '');
                             $roomType = strtolower((string)(($staycation ? $staycation->type : null) ?? ($room['type'] ?? '')));
                             $supportsExtraMattress = $roomType === 'glamping';
+                            $additionalAdults = (int)($room['additional_adults'] ?? $room['extra_mattress'] ?? 0);
+                            $additionalAdultPrice = (float)($room['additional_adult_price'] ?? $room['mattress_price'] ?? 0);
 
                             // Check for BYOT first (prioritize BYOT over car camping)
                             $isBYOT = str_contains($roomNameLower, 'byot') ||
@@ -184,12 +186,18 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                                     <div>Vehicles: <span class="font-semibold">{{ $room['extra_mattress'] ?? 1 }}</span></div>
                                 @else
                                     <div>Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
-                                    @if($supportsExtraMattress)
-                                        <div>Extra Mattress: <span class="font-semibold">{{ $room['extra_mattress'] ?? 0 }}</span></div>
+                                    @if($supportsExtraMattress && $additionalAdults > 0)
+                                        <div>
+                                            Additional {{ $additionalAdults }} adult{{ $additionalAdults !== 1 ? 's' : '' }}
+                                        </div>
                                     @endif
-                                    <div>Pets: <span class="font-semibold">{{ $room['pets'] ?? 'no' }}</span>
-                                        @if(($room['pets'] ?? 'no') === 'yes')
-                                            <span>(#{{ $room['num_pets'] ?? 0 }})</span>
+                                @endif
+                                @if(($room['pets'] ?? 'no') === 'yes' && (($room['num_pets'] ?? 0) > 0))
+                                    <div>
+                                        Pets Declared:
+                                        <span class="font-semibold">{{ $room['num_pets'] ?? 0 }}</span>
+                                        @if($isSpecialRoom)
+                                            <span class="text-[11px] text-gray-500">(no pet fee for BYOT/Car Camping)</span>
                                         @endif
                                     </div>
                                 @endif
@@ -203,10 +211,10 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                                         <span>Accommodation:</span>
                                         <span class="font-semibold">&#8369;{{ number_format($room['accommodation_price'] ?? 0, 0) }}</span>
                                     </div>
-                                    @if($supportsExtraMattress)
+                                    @if($supportsExtraMattress && $additionalAdultPrice > 0)
                                         <div class="flex justify-between">
-                                            <span>Extra Mattress:</span>
-                                            <span class="font-semibold">&#8369;{{ number_format($room['mattress_price'] ?? 0, 0) }}</span>
+                                            <span>Additional Adult{{ $additionalAdults !== 1 ? 's' : '' }}:</span>
+                                            <span class="font-semibold">&#8369;{{ number_format($additionalAdultPrice, 0) }}</span>
                                         </div>
                                     @endif
                                     @if(($room['pets'] ?? 'no') === 'yes' && (($room['num_pets'] ?? 0) > 0))
@@ -221,8 +229,8 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                             
                             @php
                                 $roomAccommodationPrice = (float)($room['accommodation_price'] ?? 0);
-                                $roomMattressPrice = (float)($room['mattress_price'] ?? 0);
-                                $roomPetPrice = (($room['pets'] ?? 'no') === 'yes' && (($room['num_pets'] ?? 0) > 0))
+                                $roomMattressPrice = (float)($room['additional_adult_price'] ?? $room['mattress_price'] ?? 0);
+                                $roomPetPrice = (!$isSpecialRoom && (($room['pets'] ?? 'no') === 'yes' && (($room['num_pets'] ?? 0) > 0)))
                                     ? (float)($room['pet_price'] ?? 0)
                                     : 0;
                                 $roomDisplayTotal = $roomAccommodationPrice + $roomMattressPrice + $roomPetPrice;

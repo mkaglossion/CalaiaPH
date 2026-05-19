@@ -219,7 +219,7 @@ class PaymentController extends Controller
 
                         // Send confirmation email
                         \Illuminate\Support\Facades\Mail::to($booking->email)
-                            ->send(new \App\Mail\PackageBookingConfirmation($booking));
+                            ->queue(new \App\Mail\PackageBookingConfirmation($booking));
 
                         return redirect('/packages')->with('success', 'Booking confirmed! Check your email for details.');
                     }
@@ -285,7 +285,7 @@ class PaymentController extends Controller
 
                         // Send email
                         \Illuminate\Support\Facades\Mail::to($booking->email)
-                            ->send(new \App\Mail\PackageBookingConfirmation($booking));
+                            ->queue(new \App\Mail\PackageBookingConfirmation($booking));
                     }
                 }
             }

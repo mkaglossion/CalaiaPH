@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <!-- Updated to fix undefined variable -->
 <html lang="en">
 <head>
@@ -72,7 +72,8 @@
                                     $childrenCount = $accommodation['children'] ?? 0;
                                     $quantity = $accommodation['quantity'] ?? 1;
                                     $basePrice = $accommodation['base_price'] ?? 0;
-                                    $mattressPrice = $accommodation['mattress_price'] ?? 0;
+                                    $additionalAdults = (int)($accommodation['additional_adults'] ?? $accommodation['extra_mattress'] ?? 0);
+                                    $mattressPrice = $accommodation['additional_adult_price'] ?? ($accommodation['mattress_price'] ?? 0);
                                     $petPrice = $accommodation['pet_price'] ?? 0;
                                     $totalPrice = $accommodation['total_price'] ?? ($basePrice + $mattressPrice + $petPrice);
                                     $roomName = $staycation->name ?? '';
@@ -87,12 +88,12 @@
                                             @if(!$isSpecialRoom)
                                             ({{ $adultsCount }} adult{{ $adultsCount !== 1 ? 's' : '' }}, {{ $childrenCount }} child{{ $childrenCount !== 1 ? 'ren' : '' }})
                                             @endif
-                                            - ₱{{ number_format($basePrice, 2) }}
+                                            - â‚±{{ number_format($basePrice, 2) }}
                                             @if($mattressPrice > 0)
-                                                + Mattress: ₱{{ number_format($mattressPrice, 2) }}
+                                                + Additional Adult{{ $additionalAdults !== 1 ? 's' : '' }}: â‚±{{ number_format($mattressPrice, 2) }}
                                             @endif
                                             @if($petPrice > 0)
-                                                + Pet: ₱{{ number_format($petPrice, 2) }}
+                                                + Pet: â‚±{{ number_format($petPrice, 2) }}
                                             @endif
                                         </li>
                                     @endif
@@ -111,29 +112,36 @@
                                 $foodQuantity = $foodData['quantity'] ?? 1;
                                 $foodItemTotal = $foodPrice * $foodQuantity;
                                 @endphp
-                                <li>{{ $foodName }} - ₱{{ number_format($foodPrice, 2) }} × {{ $foodQuantity }} = ₱{{ number_format($foodItemTotal, 2) }}</li>
+                                <li>{{ $foodName }} - â‚±{{ number_format($foodPrice, 2) }} Ã— {{ $foodQuantity }} = â‚±{{ number_format($foodItemTotal, 2) }}</li>
                             @endforeach
                         </ul>
                     @endif
                     
                     @php
+                    $paymentSummary = (array) ($bookingData['payment_summary'] ?? []);
                     $accommodationTotal = $bookingData['final_totals']['accommodation_total'] ?? 0;
                     $foodTotal = $bookingData['final_totals']['food_total'] ?? 0;
                     $activitiesTotal = $bookingData['final_totals']['activities_total'] ?? 0;
-                    $grandTotal = $bookingData['final_totals']['grand_total'] ?? 0;
+                    $promoDiscount = (float) ($paymentSummary['promo_discount'] ?? ($bookingData['final_totals']['promo_discount'] ?? 0));
+                    $grandTotal = !empty($paymentSummary)
+                        ? (float) ($paymentSummary['grand_total_paid'] ?? 0)
+                        : (float) ($bookingData['final_totals']['grand_total'] ?? 0);
                     @endphp
                     
                     @if($accommodationTotal > 0)
-                        <p><strong>Accommodation Total:</strong> ₱{{ number_format($accommodationTotal, 2) }}</p>
+                        <p><strong>Accommodation Total:</strong> â‚±{{ number_format($accommodationTotal, 2) }}</p>
                     @endif
                     @if($foodTotal > 0)
-                        <p><strong>Food Total:</strong> ₱{{ number_format($foodTotal, 2) }}</p>
+                        <p><strong>Food Total:</strong> â‚±{{ number_format($foodTotal, 2) }}</p>
                     @endif
                     @if($activitiesTotal > 0)
-                        <p><strong>Activities Total:</strong> ₱{{ number_format($activitiesTotal, 2) }}</p>
+                        <p><strong>Activities Total:</strong> â‚±{{ number_format($activitiesTotal, 2) }}</p>
+                    @endif
+                    @if($promoDiscount > 0)
+                        <p><strong>Promo Discount:</strong> -&#8369;{{ number_format($promoDiscount, 2) }}</p>
                     @endif
                     @if($grandTotal > 0)
-                    <p><strong>Total Amount Paid:</strong> ₱{{ number_format($grandTotal, 2) }}</p>
+                    <p><strong>Total Amount Paid:</strong> â‚±{{ number_format($grandTotal, 2) }}</p>
                     @endif
                 @else
                     @php
@@ -144,7 +152,7 @@
                     @endphp
                     <p><strong>Type:</strong> {{ ucfirst($bookingData['type'] ?? 'N/A') }}</p>
                     <p><strong>Package:</strong> {{ $bookingData['package'] ?? 'N/A' }}</p>
-                    <p><strong>Price:</strong> ₱{{ number_format((float)($bookingData['price'] ?? 0)) }}</p>
+                    <p><strong>Price:</strong> â‚±{{ number_format((float)($bookingData['price'] ?? 0)) }}</p>
                     <p><strong>Preferred Date:</strong> {{ !empty($bookingData['booking_date']) ? \Carbon\Carbon::parse($bookingData['booking_date'])->format('F j, Y') : 'N/A' }}</p>
                     <p><strong>Number of Guests:</strong> {{ $bookingData['guests'] ?? 'N/A' }}</p>
 
@@ -162,7 +170,7 @@
                             @if(!$isByotOrCamping)
                                 ({{ $activity['guests'] ?? 1 }} guest{{ ($activity['guests'] ?? 1) > 1 ? 's' : '' }})
                             @endif
-                            - ₱{{ number_format(($activity['price'] ?? 0) * ($activity['guests'] ?? 1)) }}
+                            - â‚±{{ number_format(($activity['price'] ?? 0) * ($activity['guests'] ?? 1)) }}
                         </li>
                         @endforeach
                     </ul>
@@ -172,14 +180,14 @@
                     });
                     @endphp
                     @if($activitiesTotal > 0)
-                    <p><strong>Activities Total:</strong> ₱{{ number_format($activitiesTotal, 2) }}</p>
+                    <p><strong>Activities Total:</strong> â‚±{{ number_format($activitiesTotal, 2) }}</p>
                     @endif
                     @endif
                     @php
                     $grandTotal = ($bookingData['price'] ?? 0) + $activitiesTotal;
                     @endphp
                     @if($grandTotal > 0)
-                    <p><strong>Total Amount Paid:</strong> ₱{{ number_format($grandTotal, 2) }}</p>
+                    <p><strong>Total Amount Paid:</strong> â‚±{{ number_format($grandTotal, 2) }}</p>
                     @endif
                     @if($bookingData['special_requests'] ?? $bookingData['customer_info']['special_requests'] ?? false)
                     <p><strong>Special Requests:</strong> {{ $bookingData['special_requests'] ?? $bookingData['customer_info']['special_requests'] ?? '' }}</p>
@@ -193,14 +201,16 @@
                 <p><strong>Payment Method:</strong> {{ ucfirst($bookingData['payment_method'] ?? 'N/A') }}</p>
                 <p><strong>Payment Date:</strong> {{ !empty($bookingData['payment_date']) ? \Carbon\Carbon::parse($bookingData['payment_date'])->format('M d, Y H:i') : 'N/A' }}</p>
                 @php
-                // Calculate grand total properly
-                if (isset($bookingData['final_totals'])) {
+                $paymentSummary = (array) ($bookingData['payment_summary'] ?? []);
+                if (!empty($paymentSummary)) {
+                    $finalGrandTotal = (float) ($paymentSummary['grand_total_paid'] ?? 0);
+                } elseif (isset($bookingData['final_totals'])) {
                     $finalGrandTotal = $bookingData['final_totals']['grand_total'] ?? 0;
                 } else {
                     $finalGrandTotal = $grandTotal ?? $bookingData['price'] ?? 0;
                 }
                 @endphp
-                <p><strong>Total Amount Paid:</strong> ₱{{ number_format($finalGrandTotal, 2) }}</p>
+                <p><strong>Total Amount Paid:</strong> â‚±{{ number_format($finalGrandTotal, 2) }}</p>
             </div>
 
             <h3>What's Next?</h3>
@@ -226,3 +236,5 @@
     </div>
 </body>
 </html>
+
+

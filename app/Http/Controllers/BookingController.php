@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
 use App\Mail\BookingConfirmation;
@@ -72,7 +73,7 @@ class BookingController extends Controller
      * @param string $checkinDate (Y-m-d format)
      * @param string $checkoutDate (Y-m-d format)
      * @param int $quantity Number of units (guests for regular rooms, qty for BYOT/Car Camping)
-     * @param int $extraMattresses Number of extra mattresses
+     * @param int $extraMattresses Legacy input field (kept for compatibility)
      * @param int $numPets Number of pets
      * @param bool $hasPets Whether pets are included
      * @return array With keys: accommodation_price, mattress_price, pet_price, total_price, breakdown
@@ -157,11 +158,13 @@ class BookingController extends Controller
         }
 
         $mattressPrice = 0;
+        $additionalAdults = 0;
         $petPrice = 0;
 
-        // Extra mattress is GLAMPING-only. Pets remain non-special-room only.
+        // Additional adult fee (legacy: mattress_price key) is GLAMPING-only.
         if ($supportsExtraMattress) {
-            $mattressPrice = $this->calculateMattressFee($extraMattresses, $nights);
+            $additionalAdults = $this->resolveAdditionalAdultCount($staycation, $adults);
+            $mattressPrice = $this->calculateAdditionalAdultFee($additionalAdults, $nights);
         }
         if (!$isSpecialRoom) {
             if ($hasPets && $numPets > 0) {
@@ -174,6 +177,8 @@ class BookingController extends Controller
         return [
             'accommodation_price' => $accommodationPrice,
             'mattress_price' => $mattressPrice,
+            'additional_adults' => $additionalAdults,
+            'additional_adult_price' => $mattressPrice,
             'pet_price' => $petPrice,
             'total_price' => $totalPrice,
             'breakdown' => $breakdown,
@@ -342,7 +347,7 @@ class BookingController extends Controller
         $request->validate([
             'date' => 'required|date',
             'adults' => 'required|integer|min:1',
-            'children' => 'required|integer|min:0',
+            'children' => 'nullable|integer|min:0',
         ]);
 
         try {
@@ -366,14 +371,16 @@ class BookingController extends Controller
             $adultPrice = $dayTour->price ?? 0;
             $childrenPrice = ($dayTour->price ?? 0) * 0.7; // Children at 70% price
             
-            $totalPrice = ($request->adults * $adultPrice) + ($request->children * $childrenPrice);
+            $adults = (int) $request->input('adults', 1);
+            $children = (int) $request->input('children', 0);
+            $totalPrice = ($adults * $adultPrice) + ($children * $childrenPrice);
 
             return response()->json([
                 'success' => true,
                 'total' => round($totalPrice, 2),
                 'breakdown' => [
-                    'adults' => $request->adults,
-                    'children' => $request->children,
+                    'adults' => $adults,
+                    'children' => $children,
                     'adult_price' => round($adultPrice, 2),
                     'children_price' => round($childrenPrice, 2),
                 ]
@@ -398,7 +405,7 @@ class BookingController extends Controller
             'checkout' => 'required|date|after:checkin',
             'rooms' => 'required|integer|min:1|max:4',
             'adults' => 'required|integer|min:1',
-            'children' => 'required|integer|min:0',
+            'children' => 'nullable|integer|min:0',
             'pets' => 'required|integer|min:0',
         ]);
 
@@ -417,15 +424,18 @@ class BookingController extends Controller
             }
 
             // Calculate price using the pricing service
+            $adults = (int) $request->input('adults', 1);
+            $children = (int) $request->input('children', 0);
+            $pets = (int) $request->input('pets', 0);
             $priceResult = $this->calculateCentralizedStaycationPrice(
                 $staycation,
                 $checkin,
                 $checkout,
-                $request->adults,
-                $request->children,
+                $adults,
+                $children,
                 0, // extra_mattresses - not needed for calendar preview
-                $request->pets,
-                $request->pets > 0
+                $pets,
+                $pets > 0
             );
 
             return response()->json([
@@ -453,8 +463,8 @@ class BookingController extends Controller
             'checkin_date' => 'required|date',
             'checkout_date' => 'required|date|after:checkin_date',
             'adults' => 'required|integer|min:1',
-            'children' => 'required|integer|min:0',
-            'extra_mattresses' => 'required|integer|min:0',
+            'children' => 'nullable|integer|min:0',
+            'extra_mattresses' => 'nullable|integer|min:0',
             'num_pets' => 'required|integer|min:0',
             'has_pets' => 'required|boolean',
         ]);
@@ -464,13 +474,15 @@ class BookingController extends Controller
             return response()->json(['success' => false, 'message' => 'Staycation not found'], 404);
         }
 
+        $adults = (int) $request->input('adults', 1);
+        $children = (int) $request->input('children', 0);
         $pricingResult = $this->calculateCentralizedStaycationPrice(
             $staycation,
             $request->checkin_date,
             $request->checkout_date,
-            $request->adults,
-            $request->children,
-            $request->extra_mattresses,
+            $adults,
+            $children,
+            (int)($request->extra_mattresses ?? 0),
             $request->num_pets,
             $request->has_pets
         );
@@ -772,7 +784,10 @@ class BookingController extends Controller
         // Fetch food details if we have selected foods
         $foods = [];
         if (!empty($selectedFoods)) {
-            $foodIds = array_column($selectedFoods, 'id');
+            $foodIds = array_values(array_filter(array_map(function ($item) {
+                $id = $item['id'] ?? null;
+                return is_numeric($id) ? (int) $id : null;
+            }, $selectedFoods)));
             $foods = \App\Models\Food::whereIn('id', $foodIds)->get()->keyBy('id');
         }
 
@@ -801,28 +816,16 @@ class BookingController extends Controller
         try {
             $validated = $request->validate([
                 'selected_activities' => 'nullable|array',
-                'selected_activities.*.id' => 'required_unless:selected_activities.*.is_package,true|string|max:50',
-                'selected_activities.*.package_id' => 'required_if:selected_activities.*.is_package,true|integer',
-                'selected_activities.*.name' => 'required|string|max:255',
-                'selected_activities.*.category' => 'required|string|max:50',
-                'selected_activities.*.price' => 'required|numeric|min:0',
-                'selected_activities.*.quantity' => 'sometimes|integer|min:1',
-                'selected_activities.*.is_package' => 'boolean',
-                'selected_activities.*.included_activities' => 'nullable|array',
             ]);
 
             $selectedActivities = $validated['selected_activities'] ?? [];
+            [$activities, $activityPackages] = $this->normalizeStaycationActivities($selectedActivities);
 
-            // Process and separate individual activities and packages
-            $activities = [];
-            $activityPackages = [];
-
-            foreach ($selectedActivities as $item) {
-                if ($item['is_package'] ?? false) {
-                    $activityPackages[] = $item;
-                } else {
-                    $activities[] = $item;
-                }
+            if (!empty($selectedActivities) && empty($activities) && empty($activityPackages)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid activity selection.',
+                ], 422);
             }
 
             // Store in booking session
@@ -837,43 +840,7 @@ class BookingController extends Controller
             ], 422);
         }
 
-        // Calculate final totals using dynamic pricing
-        $checkinDate = $booking['checkin'] ?? null;
-        $checkoutDate = $booking['checkout'] ?? null;
-        $datesSelected = !empty($checkinDate) && !empty($checkoutDate);
-
-        $accommodationTotal = 0;
-        if ($datesSelected && !empty($booking['accommodations'])) {
-            $accommodations = $booking['accommodations'];
-            $accommodationTotal = $this->calculateStaycationTotal($accommodations, $checkinDate, $checkoutDate);
-            $booking['accommodations'] = $accommodations;
-        }
-
-        // Calculate activities total (individual items)
-        $activitiesTotal = collect($booking['selected_activities'] ?? [])->sum(function($activity) {
-            return ($activity['price'] ?? 0) * ($activity['quantity'] ?? 1);
-        });
-
-        // Calculate activity packages total
-        $packagesTotal = collect($booking['selected_activity_packages'] ?? [])->sum(function($package) {
-            return ($package['price'] ?? 0) * ($package['quantity'] ?? 1);
-        });
-
-        // Calculate food total if foods were selected
-        $foodTotal = 0;
-        if (!empty($booking['selected_foods'])) {
-            foreach ($booking['selected_foods'] as $foodData) {
-                $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
-            }
-        }
-
-        // Store final totals in session
-        $booking['final_totals'] = [
-            'accommodation_total' => $accommodationTotal,
-            'activities_total' => $activitiesTotal + $packagesTotal,
-            'food_total' => $foodTotal,
-            'grand_total' => $accommodationTotal + $activitiesTotal + $packagesTotal + $foodTotal
-        ];
+        $booking = $this->normalizeAndRecalculateStaycationBooking($booking);
         
         $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [3]));
         $booking['current_step'] = 4;
@@ -899,6 +866,9 @@ class BookingController extends Controller
             // Use CENTRALIZED pricing method
             $adults = (int)($acc['adults'] ?? 1);
             $children = (int)($acc['children'] ?? 0);
+            [$adults, $children] = $this->clampRoomGuestCounts($staycation, $adults, $children);
+            $acc['adults'] = $adults;
+            $acc['children'] = $children;
             $numPets = (int)($acc['num_pets'] ?? 0);
             $hasPets = (($acc['pets'] ?? 'no') === 'yes') && ($numPets > 0);
             $extraMattresses = $this->resolveExtraMattressCount(
@@ -923,6 +893,8 @@ class BookingController extends Controller
             $acc['accommodation_price'] = $pricingResult['accommodation_price'];
             $acc['extra_mattress'] = $extraMattresses;
             $acc['mattress_price'] = $pricingResult['mattress_price'];
+            $acc['additional_adults'] = $pricingResult['additional_adults'] ?? $extraMattresses;
+            $acc['additional_adult_price'] = $pricingResult['additional_adult_price'] ?? $pricingResult['mattress_price'];
             $acc['pet_price'] = $pricingResult['pet_price'];
             $acc['total_price'] = $pricingResult['total_price'];
             
@@ -930,6 +902,298 @@ class BookingController extends Controller
         }
 
         return $total;
+    }
+
+    private function clampInt(mixed $value, int $min, int $max): int
+    {
+        $number = (int) $value;
+        if ($number < $min) {
+            return $min;
+        }
+        if ($number > $max) {
+            return $max;
+        }
+        return $number;
+    }
+
+    private function extractNumericId(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value > 0 ? $value : null;
+        }
+
+        if (is_string($value)) {
+            if (preg_match('/(\d+)/', $value, $matches)) {
+                $id = (int) $matches[1];
+                return $id > 0 ? $id : null;
+            }
+        }
+
+        if (is_numeric($value)) {
+            $id = (int) $value;
+            return $id > 0 ? $id : null;
+        }
+
+        return null;
+    }
+
+    private function normalizeStaycationFoods(array $selectedFoods): array
+    {
+        $foodIds = [];
+        $packageIds = [];
+
+        foreach ($selectedFoods as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $rawId = $item['id'] ?? null;
+            $isPackage = ($item['category'] ?? null) === 'package'
+                || isset($item['package_id'])
+                || (is_string($rawId) && str_starts_with($rawId, 'package-'));
+
+            if ($isPackage) {
+                $packageId = $this->extractNumericId($item['package_id'] ?? $rawId);
+                if ($packageId) {
+                    $packageIds[$packageId] = $packageId;
+                }
+                continue;
+            }
+
+            $foodId = $this->extractNumericId($rawId);
+            if ($foodId) {
+                $foodIds[$foodId] = $foodId;
+            }
+        }
+
+        $foods = Food::whereIn('id', array_values($foodIds))->get()->keyBy('id');
+        $foodPackages = FoodPackage::whereIn('id', array_values($packageIds))->get()->keyBy('id');
+
+        $normalized = [];
+        foreach ($selectedFoods as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $rawId = $item['id'] ?? null;
+            $isPackage = ($item['category'] ?? null) === 'package'
+                || isset($item['package_id'])
+                || (is_string($rawId) && str_starts_with($rawId, 'package-'));
+            $quantity = $this->clampInt($item['quantity'] ?? 1, 1, 20);
+            $notes = trim((string) ($item['notes'] ?? ''));
+
+            if ($isPackage) {
+                $packageId = $this->extractNumericId($item['package_id'] ?? $rawId);
+                if (!$packageId || !isset($foodPackages[$packageId])) {
+                    continue;
+                }
+
+                $foodPackage = $foodPackages[$packageId];
+                $normalized[] = [
+                    'id' => 'package-' . $foodPackage->id,
+                    'package_id' => (string) $foodPackage->id,
+                    'name' => $foodPackage->name,
+                    'category' => 'package',
+                    'price' => (float) $foodPackage->getEffectivePrice(),
+                    'quantity' => $quantity,
+                    'notes' => $notes,
+                ];
+                continue;
+            }
+
+            $foodId = $this->extractNumericId($rawId);
+            if (!$foodId || !isset($foods[$foodId])) {
+                continue;
+            }
+
+            $food = $foods[$foodId];
+            $normalized[] = [
+                'id' => (int) $food->id,
+                'name' => $food->name,
+                'category' => $food->category ?? ($item['category'] ?? 'messhall'),
+                'price' => (float) $food->price,
+                'quantity' => $quantity,
+                'notes' => $notes,
+            ];
+        }
+
+        return $normalized;
+    }
+
+    private function normalizeStaycationActivities(array $selectedItems): array
+    {
+        $activityIds = [];
+        $packageIds = [];
+
+        foreach ($selectedItems as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $rawId = $item['id'] ?? null;
+            $isPackage = (bool) ($item['is_package'] ?? false)
+                || isset($item['package_id'])
+                || (is_string($rawId) && str_starts_with($rawId, 'package-'));
+
+            if ($isPackage) {
+                $packageId = $this->extractNumericId($item['package_id'] ?? $rawId);
+                if ($packageId) {
+                    $packageIds[$packageId] = $packageId;
+                }
+                continue;
+            }
+
+            $activityId = $this->extractNumericId($rawId);
+            if ($activityId) {
+                $activityIds[$activityId] = $activityId;
+            }
+        }
+
+        $activities = Activity::whereIn('id', array_values($activityIds))->get()->keyBy('id');
+        $activityPackages = ActivityPackage::with(['activities:id,name'])
+            ->whereIn('id', array_values($packageIds))
+            ->get()
+            ->keyBy('id');
+
+        $normalizedActivities = [];
+        $normalizedPackages = [];
+
+        foreach ($selectedItems as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $rawId = $item['id'] ?? null;
+            $isPackage = (bool) ($item['is_package'] ?? false)
+                || isset($item['package_id'])
+                || (is_string($rawId) && str_starts_with($rawId, 'package-'));
+
+            if ($isPackage) {
+                $packageId = $this->extractNumericId($item['package_id'] ?? $rawId);
+                if (!$packageId || !isset($activityPackages[$packageId])) {
+                    continue;
+                }
+
+                $package = $activityPackages[$packageId];
+                $quantity = $this->clampInt($item['quantity'] ?? 1, 1, 20);
+                $includedActivities = $package->activities->map(function ($activity) {
+                    return [
+                        'id' => $activity->id,
+                        'name' => $activity->name,
+                        'quantity' => (int) ($activity->pivot->quantity ?? 1),
+                    ];
+                })->values()->all();
+
+                $normalizedPackages[] = [
+                    'id' => 'package-' . $package->id,
+                    'package_id' => (string) $package->id,
+                    'name' => $package->name,
+                    'category' => $package->category ?? 'package',
+                    'price' => (float) $package->getEffectivePrice(),
+                    'quantity' => $quantity,
+                    'is_package' => true,
+                    'included_activities' => $includedActivities,
+                ];
+                continue;
+            }
+
+            $activityId = $this->extractNumericId($rawId);
+            if (!$activityId || !isset($activities[$activityId])) {
+                continue;
+            }
+
+            $activity = $activities[$activityId];
+            $guests = $this->clampInt($item['guests'] ?? $item['quantity'] ?? 1, 1, 20);
+            $normalizedActivities[] = [
+                'id' => (string) $activity->id,
+                'name' => $activity->name,
+                'category' => $activity->category ?? ($item['category'] ?? 'activity'),
+                'price' => (float) $activity->price,
+                'guests' => $guests,
+            ];
+        }
+
+        return [$normalizedActivities, $normalizedPackages];
+    }
+
+    private function normalizeAndRecalculateStaycationBooking(array $booking): array
+    {
+        $checkinDate = $booking['checkin'] ?? null;
+        $checkoutDate = $booking['checkout'] ?? null;
+        $datesSelected = !empty($checkinDate) && !empty($checkoutDate);
+
+        if ($datesSelected && !empty($booking['accommodations'])) {
+            $accommodations = $booking['accommodations'];
+            $accommodationTotal = $this->calculateStaycationTotal($accommodations, $checkinDate, $checkoutDate);
+            $booking['accommodations'] = $accommodations;
+        } else {
+            $accommodationTotal = collect($booking['accommodations'] ?? [])->sum(fn ($acc) => (float) ($acc['total_price'] ?? 0));
+        }
+
+        $booking['selected_foods'] = $this->normalizeStaycationFoods($booking['selected_foods'] ?? []);
+
+        $selectedActivitiesRaw = array_merge(
+            $booking['selected_activities'] ?? [],
+            $booking['selected_activity_packages'] ?? []
+        );
+        [$normalizedActivities, $normalizedPackages] = $this->normalizeStaycationActivities($selectedActivitiesRaw);
+        $booking['selected_activities'] = $normalizedActivities;
+        $booking['selected_activity_packages'] = $normalizedPackages;
+
+        $foodTotal = collect($booking['selected_foods'] ?? [])->sum(function ($food) {
+            return ((float) ($food['price'] ?? 0)) * ((int) ($food['quantity'] ?? 1));
+        });
+
+        $activitiesTotal = collect($booking['selected_activities'] ?? [])->sum(function ($activity) {
+            return ((float) ($activity['price'] ?? 0)) * ((int) ($activity['guests'] ?? 1));
+        });
+
+        $activitiesTotal += collect($booking['selected_activity_packages'] ?? [])->sum(function ($package) {
+            return ((float) ($package['price'] ?? 0)) * ((int) ($package['quantity'] ?? 1));
+        });
+
+        $booking['final_totals'] = [
+            'accommodation_total' => $accommodationTotal,
+            'activities_total' => $activitiesTotal,
+            'food_total' => $foodTotal,
+            'grand_total' => $accommodationTotal + $activitiesTotal + $foodTotal,
+        ];
+
+        return $booking;
+    }
+
+    private function getValidatedPromoDiscount(?int $promoId, ?string $promoCode, float $bookingTotal): array
+    {
+        if (!$promoId || empty($promoCode)) {
+            return ['discount' => 0.0, 'promo' => null];
+        }
+
+        $promo = \App\Models\PromoCode::find($promoId);
+        if (!$promo || strtoupper((string) $promo->code) !== strtoupper(trim($promoCode))) {
+            return ['discount' => 0.0, 'promo' => null];
+        }
+
+        $now = now();
+        if (!$promo->is_active || $now->lt($promo->start_date) || $now->gt($promo->end_date)) {
+            return ['discount' => 0.0, 'promo' => null];
+        }
+
+        if ($promo->min_booking_amount && $bookingTotal < (float) $promo->min_booking_amount) {
+            return ['discount' => 0.0, 'promo' => null];
+        }
+
+        if ($promo->usage_limit && $promo->usage_count >= $promo->usage_limit) {
+            return ['discount' => 0.0, 'promo' => null];
+        }
+
+        $discount = 0.0;
+        if ($promo->discount_type === 'percentage') {
+            $discount = $bookingTotal * ((float) $promo->discount_value / 100);
+        } else {
+            $discount = min((float) $promo->discount_value, $bookingTotal);
+        }
+
+        return ['discount' => max(0.0, $discount), 'promo' => $promo];
     }
 
     public function staycationPayment()
@@ -942,79 +1206,7 @@ class BookingController extends Controller
 
         $checkinDate = $booking['checkin'];
         $checkoutDate = $booking['checkout'];
-        
-        // Recalculate accommodation prices using CENTRALIZED method for consistency
-        foreach ($booking['accommodations'] as $roomId => &$room) {
-            $actualRoomId = $room['accommodation_id'] ?? $roomId;
-            $staycation = \App\Models\Staycation::find($actualRoomId);
-            
-            if ($staycation) {
-                // Use centralized pricing method
-                $numPets = (int)($room['num_pets'] ?? 0);
-                $hasPets = (($room['pets'] ?? 'no') === 'yes') && ($numPets > 0);
-                $extraMattresses = $this->resolveExtraMattressCount(
-                    $staycation,
-                    (int)($room['adults'] ?? 1),
-                    (int)($room['children'] ?? 0),
-                    (int)($room['extra_mattress'] ?? 0)
-                );
-
-                $pricingResult = $this->calculateCentralizedStaycationPrice(
-                    $staycation,
-                    $checkinDate,
-                    $checkoutDate,
-                    (int)($room['adults'] ?? 1),
-                    (int)($room['children'] ?? 0),
-                    $extraMattresses,
-                    $numPets,
-                    $hasPets
-                );
-                
-                // Update room with calculated prices
-                $room['accommodation_price'] = $pricingResult['accommodation_price'];
-                $room['extra_mattress'] = $extraMattresses;
-                $room['mattress_price'] = $pricingResult['mattress_price'];
-                $room['pet_price'] = $pricingResult['pet_price'];
-                $room['total_price'] = $pricingResult['total_price'];
-            }
-        }
-        
-        // Calculate accommodation total
-        $accommodationTotal = collect($booking['accommodations'] ?? [])->sum(function($acc) {
-            return $acc['total_price'] ?? 0;
-        });
-        
-        // Calculate activities total (including both individual activities and packages)
-        $activitiesTotal = collect($booking['selected_activities'] ?? [])->sum(function($activity) {
-            return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
-        });
-        
-        // Add activity packages to activities total
-        $activitiesTotal += collect($booking['selected_activity_packages'] ?? [])->sum(function($package) {
-            return ($package['price'] ?? 0) * ($package['quantity'] ?? 1);
-        });
-        
-        // Calculate nights
-        $nights = 1; // default
-        if (!empty($checkinDate) && !empty($checkoutDate)) {
-            $nights = max(1, \Carbon\Carbon::parse($checkinDate)->diffInDays(\Carbon\Carbon::parse($checkoutDate)));
-        }
-        
-        // Calculate food total
-        $foodTotal = 0;
-        if (!empty($booking['selected_foods'])) {
-            foreach ($booking['selected_foods'] as $foodData) {
-                $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1); // No nights multiplication
-            }
-        }
-        
-        // Store final totals in booking session
-        $booking['final_totals'] = [
-            'accommodation_total' => $accommodationTotal,
-            'activities_total' => $activitiesTotal,
-            'food_total' => $foodTotal,
-            'grand_total' => $accommodationTotal + $activitiesTotal + $foodTotal
-        ];
+        $booking = $this->normalizeAndRecalculateStaycationBooking($booking);
         
         session(['booking' => $booking]);
 
@@ -1024,7 +1216,10 @@ class BookingController extends Controller
         // Fetch food details if we have selected foods
         $foods = [];
         if (!empty($selectedFoods)) {
-            $foodIds = array_column($selectedFoods, 'id');
+            $foodIds = array_values(array_filter(array_map(function ($item) {
+                $id = $item['id'] ?? null;
+                return is_numeric($id) ? (int) $id : null;
+            }, $selectedFoods)));
             $foods = \App\Models\Food::whereIn('id', $foodIds)->get()->keyBy('id');
         }
 
@@ -1096,46 +1291,14 @@ class BookingController extends Controller
     {
         // Validate payment form
         $request->validate(ValidationService::paymentRules());
+        if (!$request->boolean('terms_accepted') && !$request->boolean('terms_and_policy_accepted')) {
+            return redirect()->back()
+                ->withErrors(['terms_and_policy_accepted' => 'You must accept the booking terms and policy.'])
+                ->withInput();
+        }
 
-        // Get booking data from session first, then use posted data as backup
+        // Use only trusted server-side session data.
         $staycationBooking = session('booking', []);
-        
-        // If booking data was posted, merge it with session data to ensure we have everything
-        if ($request->has('accommodations')) {
-            $postedAccommodations = json_decode($request->input('accommodations', '[]'), true);
-            if (!empty($postedAccommodations)) {
-                $staycationBooking['accommodations'] = $postedAccommodations;
-            }
-        }
-        
-        if ($request->has('selected_foods')) {
-            $postedFoods = json_decode($request->input('selected_foods', '[]'), true);
-            if (!empty($postedFoods)) {
-                $staycationBooking['selected_foods'] = $postedFoods;
-            }
-        }
-        
-        if ($request->has('selected_activities')) {
-            $postedActivities = json_decode($request->input('selected_activities', '[]'), true);
-            if (!empty($postedActivities)) {
-                $staycationBooking['selected_activities'] = $postedActivities;
-            }
-        }
-        
-        if ($request->has('selected_activity_packages')) {
-            $postedActivityPackages = json_decode($request->input('selected_activity_packages', '[]'), true);
-            if (!empty($postedActivityPackages)) {
-                $staycationBooking['selected_activity_packages'] = $postedActivityPackages;
-            }
-        }
-        
-        if ($request->has('checkin')) {
-            $staycationBooking['checkin'] = $request->input('checkin');
-        }
-        
-        if ($request->has('checkout')) {
-            $staycationBooking['checkout'] = $request->input('checkout');
-        }
 
         // Get other booking data
         $bookingData = session('booking_data');
@@ -1150,7 +1313,10 @@ class BookingController extends Controller
         $paymentProcessors = [
             [
                 'condition' => !empty($staycationBooking) && isset($staycationBooking['booking_type']) && $staycationBooking['booking_type'] === 'staycation',
-                'processor' => fn() => $this->paymentService->processStaycationPayment($staycationBooking, $request->all())
+                'processor' => fn() => redirect()->route('booking.staycationPayment')->with(
+                    'error',
+                    'Please complete payment using secure checkout.'
+                )
             ],
             [
                 'condition' => (bool) $dayvisitBooking,
@@ -1187,7 +1353,11 @@ class BookingController extends Controller
         }
 
         // Debug: Log all request data
-        Log::info('Initiate Payment Request Data:', $request->all());
+        Log::info('Initiate Payment Request', [
+            'has_promo' => $request->filled('applied_promo_code') || $request->filled('applied_promo_id'),
+            'payment_method' => $request->input('payment_method'),
+            'booking_type' => $booking['booking_type'] ?? null,
+        ]);
 
         $request->validate([
             'first_name' => 'required|string|max:255',
@@ -1197,8 +1367,20 @@ class BookingController extends Controller
             'payment_method' => 'nullable|string|in:paymongo,qr,gcash,paymaya,bank,qrph,grab_pay,billease',
             'applied_promo_id' => 'nullable|exists:promo_codes,id',
             'applied_promo_code' => 'nullable|string',
-            'applied_discount_amount' => 'nullable|numeric|min:0',
+            'terms_and_policy_accepted' => 'sometimes|accepted',
+            'terms_accepted' => 'sometimes|accepted',
         ]);
+
+        if (!$request->boolean('terms_and_policy_accepted') && !$request->boolean('terms_accepted')) {
+            return redirect()->back()
+                ->withErrors(['terms_and_policy_accepted' => 'You must accept the booking terms and policy.'])
+                ->withInput();
+        }
+
+        if (!empty($booking) && (($booking['booking_type'] ?? null) === 'staycation')) {
+            $booking = $this->normalizeAndRecalculateStaycationBooking($booking);
+            session(['booking' => $booking]);
+        }
 
         $lineItems = [];
         $grandTotal = 0.0; // in PHP (not centavos)
@@ -1270,21 +1452,21 @@ class BookingController extends Controller
         Log::info('Line items being sent to PayMongo (in order):', $lineItems);
         Log::info('Calculated grand total (from line items):', ['total' => $grandTotal]);
 
-        // Apply promo code discount if present
-        $promoDiscount = 0;
+        // Apply promo code discount only after server-side validation.
+        $promoDiscount = 0.0;
         $appliedPromo = null;
-        if ($request->filled('applied_promo_id') && $request->filled('applied_discount_amount')) {
-            $promoDiscount = (float) $request->applied_discount_amount;
-            $grandTotal = max(0, $grandTotal - $promoDiscount);
+        $promoValidation = $this->getValidatedPromoDiscount(
+            $request->filled('applied_promo_id') ? (int) $request->applied_promo_id : null,
+            $request->input('applied_promo_code'),
+            $grandTotal
+        );
+        $promoDiscount = (float) ($promoValidation['discount'] ?? 0);
+        $appliedPromo = $promoValidation['promo'] ?? null;
+        $grandTotal = max(0, $grandTotal - $promoDiscount);
 
-            // Get promo details and increment usage
-            $appliedPromo = \App\Models\PromoCode::find($request->applied_promo_id);
-            if ($appliedPromo) {
-                $appliedPromo->increment('usage_count');
-            }
-
-            Log::info('Promo code applied:', [
-                'code' => $request->applied_promo_code,
+        if ($appliedPromo) {
+            Log::info('Promo code applied (server-side):', [
+                'code' => $appliedPromo->code,
                 'discount' => $promoDiscount,
                 'new_total' => $grandTotal
             ]);
@@ -1298,8 +1480,8 @@ class BookingController extends Controller
 
         Log::info('Grand total with VAT:', ['subtotal' => $grandTotal, 'vat' => $vatAmount, 'total' => $grandTotalWithVat]);
 
-        // Use single line item for PayMongo to avoid issues with negative discounts
-        $lineItems = null;
+        // Send detailed line items so customer sees breakdown on PayMongo checkout
+        // (promo discount is already subtracted from grandTotal; we don't send negative line items)
 
         // Store booking and payment data in session
         session([
@@ -1312,19 +1494,30 @@ class BookingController extends Controller
                 'special_requests' => $request->special_requests,
                 'cancellation_policy' => $request->cancellation_policy,
                 'payment_method' => $request->payment_method,
-                'promo_code' => $request->applied_promo_code,
+                'promo_code' => $appliedPromo?->code,
                 'promo_discount' => $promoDiscount,
-                'promo_id' => $request->applied_promo_id,
+                'promo_id' => $appliedPromo?->id,
             ]
         ]);
 
         $successUrl = url('/booking/payment/success?checkout_id={CHECKOUT_ID}');
-        $failedUrl = url('/booking/staycation/payment');
+        $failedUrl = url('/booking/payment/failed?checkout_id={CHECKOUT_ID}');
 
         // Generate a reference id for this checkout so it appears on PayMongo checkout
         $referenceId = 'TXN-' . strtoupper(uniqid());
         // Persist reference in session payment data
         session()->put('staycation_payment_data.reference_id', $referenceId);
+
+        // Persist checkout context so webhook can finalize booking even without success-page redirect.
+        Cache::put('paymongo_checkout_context:' . $referenceId, [
+            'type' => 'staycation',
+            'booking_data' => $booking,
+            'payment_data' => array_merge(session('staycation_payment_data', []), [
+                'reference_id' => $referenceId,
+                'expected_amount_centavos' => (int) round($grandTotalWithVat * 100),
+            ]),
+            'created_at' => now()->toDateTimeString(),
+        ], now()->addHours(24));
 
         Log::info('Creating PayMongo checkout', [
             'amount' => $grandTotalWithVat * 100,
@@ -1336,7 +1529,23 @@ class BookingController extends Controller
         ]);
 
         try {
-            $checkout = $this->paymentService->createCheckout((int)round($grandTotalWithVat * 100), 'staycation', $successUrl, $failedUrl, $lineItems, $referenceId, $request->email);
+            $expectedAmountCentavos = (int) round($grandTotalWithVat * 100);
+            $checkout = $this->paymentService->createCheckout($expectedAmountCentavos, 'staycation', $successUrl, $failedUrl, $lineItems, $referenceId, $request->email);
+
+            session()->put('staycation_payment_data.expected_amount_centavos', $expectedAmountCentavos);
+            session()->put('staycation_payment_data.checkout_session_id', $checkout->id);
+            Cache::put('paymongo_checkout_reference:' . $checkout->id, $referenceId, now()->addHours(24));
+            Cache::put('paymongo_checkout_context:' . $referenceId, [
+                'type' => 'staycation',
+                'booking_data' => $booking,
+                'payment_data' => array_merge(session('staycation_payment_data', []), [
+                    'reference_id' => $referenceId,
+                    'checkout_session_id' => $checkout->id,
+                    'expected_amount_centavos' => $expectedAmountCentavos,
+                ]),
+                'created_at' => now()->toDateTimeString(),
+            ], now()->addHours(24));
+
             Log::info('PayMongo checkout created successfully', ['checkout_url' => $checkout->checkout_url]);
             return redirect($checkout->checkout_url);
         } catch (\Exception $e) {
@@ -1374,6 +1583,27 @@ class BookingController extends Controller
         }
 
         try {
+            $lockKey = 'staycation_payment_processed_' . $checkoutId;
+            if (session()->has($lockKey)) {
+                return redirect()->route('booking.confirmation');
+            }
+
+            $bookingData = session('staycation_booking_data');
+            $paymentData = session('staycation_payment_data');
+
+            if (!$bookingData || !$paymentData) {
+                return redirect()->route('booking.payment')->with('error', 'Booking data not found.');
+            }
+
+            $expectedCheckoutId = $paymentData['checkout_session_id'] ?? null;
+            if (!empty($expectedCheckoutId) && $expectedCheckoutId !== $checkoutId) {
+                Log::warning('Checkout ID mismatch during payment success', [
+                    'expected' => $expectedCheckoutId,
+                    'actual' => $checkoutId,
+                ]);
+                return redirect()->route('booking.payment')->with('error', 'Checkout session mismatch.');
+            }
+
             $client = new \GuzzleHttp\Client();
             $response = $client->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutId}", [
                 'headers' => [
@@ -1383,28 +1613,82 @@ class BookingController extends Controller
             ]);
 
             $data = json_decode($response->getBody(), true);
-            $checkout = (object) $data['data']['attributes'];
+            $checkoutAttributes = $data['data']['attributes'] ?? [];
+            $paymentStatus = $checkoutAttributes['payment_status'] ?? null;
+            $paymentIntentStatus = $checkoutAttributes['payment_intent']['status'] ?? null;
+            $isPaid = $paymentStatus === 'paid' || $paymentIntentStatus === 'succeeded';
 
-            if ($checkout->payment_intent && $checkout->payment_intent->status === 'succeeded') {
-                // Payment successful, process the booking
-                $bookingData = session('staycation_booking_data');
-                $paymentData = session('staycation_payment_data');
+            $expectedAmountCentavos = (int) ($paymentData['expected_amount_centavos'] ?? 0);
+            $paidAmountCentavos = null;
+            $firstPayment = $checkoutAttributes['payments'][0]['attributes'] ?? null;
+            if (is_array($firstPayment) && isset($firstPayment['amount'])) {
+                $paidAmountCentavos = (int) $firstPayment['amount'];
+            } elseif (isset($checkoutAttributes['amount'])) {
+                $paidAmountCentavos = (int) $checkoutAttributes['amount'];
+            }
 
-                if (!$bookingData || !$paymentData) {
-                    return redirect()->route('booking.payment')->with('error', 'Booking data not found.');
+            $referenceCandidates = [
+                $checkoutAttributes['reference'] ?? null,
+                $checkoutAttributes['reference_number'] ?? null,
+                $checkoutAttributes['metadata']['reference'] ?? null,
+                $checkoutAttributes['metadata']['reference_id'] ?? null,
+            ];
+            $actualReference = collect($referenceCandidates)->first(fn ($value) => !empty($value));
+            $expectedReference = $paymentData['reference_id'] ?? null;
+
+            if ($expectedAmountCentavos > 0 && $paidAmountCentavos !== null && $paidAmountCentavos !== $expectedAmountCentavos) {
+                Log::warning('PayMongo paid amount mismatch', [
+                    'checkout_id' => $checkoutId,
+                    'expected' => $expectedAmountCentavos,
+                    'actual' => $paidAmountCentavos,
+                ]);
+                return redirect()->route('booking.payment')->with('error', 'Payment amount mismatch.');
+            }
+
+            if (!empty($expectedReference) && !empty($actualReference) && $expectedReference !== $actualReference) {
+                Log::warning('PayMongo reference mismatch', [
+                    'checkout_id' => $checkoutId,
+                    'expected' => $expectedReference,
+                    'actual' => $actualReference,
+                ]);
+                return redirect()->route('booking.payment')->with('error', 'Payment reference mismatch.');
+            }
+
+            if ($isPaid) {
+                // Prevent duplicate booking creation on refresh/revisit.
+                if (session()->has($lockKey)) {
+                    return redirect()->route('booking.confirmation');
                 }
 
-                // Process the payment
                 $paymentData['checkout_id'] = $checkoutId;
+                $paymentData['expected_amount_centavos'] = $expectedAmountCentavos;
+                if ($paidAmountCentavos !== null) {
+                    $paymentData['paid_amount_centavos'] = $paidAmountCentavos;
+                }
                 $result = $this->paymentService->processStaycationPayment($bookingData, $paymentData);
+                session()->put($lockKey, true);
+
+                $referenceId = $paymentData['reference_id'] ?? null;
+                if (!empty($referenceId)) {
+                    Cache::forget('paymongo_checkout_context:' . $referenceId);
+                }
+                Cache::forget('paymongo_checkout_reference:' . $checkoutId);
+
+                // Increment promo usage only after successful payment verification.
+                if (!empty($paymentData['promo_id'])) {
+                    $promo = \App\Models\PromoCode::find($paymentData['promo_id']);
+                    if ($promo && (!$promo->usage_limit || $promo->usage_count < $promo->usage_limit)) {
+                        $promo->increment('usage_count');
+                    }
+                }
 
                 // Clear session
                 session()->forget(['staycation_booking_data', 'staycation_payment_data']);
 
-                return $result; // This should be the redirect to confirmation
-            } else {
-                return redirect()->route('booking.payment')->with('error', 'Payment was not successful.');
+                return $result;
             }
+
+            return redirect()->route('booking.payment')->with('error', 'Payment was not successful.');
         } catch (\Exception $e) {
             Log::error('PayMongo checkout verification failed: ' . $e->getMessage());
             return redirect()->route('booking.payment')->with('error', 'Payment verification failed.');
@@ -1758,6 +2042,13 @@ class BookingController extends Controller
                 // Ensure booking type
                 $booking['booking_type'] = 'staycation';
 
+                if (empty($booking['checkin']) || empty($booking['checkout'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Please select your check-in and check-out dates first.',
+                    ], 422);
+                }
+
                 /**
                  * Normalize to a clean "accommodations" array for downstream steps:
                  * - Key by room_id so easy update/remove
@@ -1779,6 +2070,12 @@ class BookingController extends Controller
                     
                     // Fetch staycation to get pricing info
                     $staycation = Staycation::find($roomId);
+                    if (!$staycation) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Invalid room selection for room key {$originalKey}. Please reselect your room.",
+                        ], 422);
+                    }
                     
                     // Get checkin/checkout dates from booking session
                     $checkinDate = $booking['checkin'] ?? null;
@@ -1804,6 +2101,16 @@ class BookingController extends Controller
                     // IMPORTANT: pass real adults/children so pricing + pets are computed correctly
                     $adults = (int)($room['adults'] ?? 1);
                     $children = (int)($room['children'] ?? 0);
+                    [$adults, $children] = $this->clampRoomGuestCounts($staycation, $adults, $children);
+                    $totalGuests = $adults + $children;
+                    $maxGuestCapacity = $this->resolveMaxGuestCapacity($staycation);
+                    if ($totalGuests > $maxGuestCapacity) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Guest limit exceeded for {$staycation->name}. Maximum {$maxGuestCapacity} guests allowed.",
+                        ], 422);
+                    }
+
                     $extraMattresses = $this->resolveExtraMattressCount(
                         $staycation,
                         $adults,
@@ -1841,7 +2148,7 @@ class BookingController extends Controller
                         'instance_num'   => $instanceNum,
                         'accommodation_price' => $accommodationPrice,
                         'adults'         => $adults,
-                        'children'       => (int)($room['children'] ?? 0),
+                        'children'       => $children,
                         'extra_mattress' => $extraMattresses,
                         'quantity'       => $isSpecialRoom ? max(1, (int)($room['extra_mattress'] ?? 1)) : ($adults + (int)($room['children'] ?? 0)),
                         'pets'           => ($room['pets'] ?? 'no'),
@@ -1849,6 +2156,8 @@ class BookingController extends Controller
                         'num_pets'       => $numPets,
                         'base_price'     => $accommodationPrice,
                         'mattress_price' => $mattressPrice,
+                        'additional_adults' => $pricingResult['additional_adults'] ?? $extraMattresses,
+                        'additional_adult_price' => $pricingResult['additional_adult_price'] ?? $mattressPrice,
                         'pet_price'      => $petPrice,
                         'total_price'    => $totalPrice,
                     ];
@@ -1887,12 +2196,6 @@ class BookingController extends Controller
             if ($request->has('selected_foods')) {
                 $validator = \Illuminate\Support\Facades\Validator::make($data, [
                     'selected_foods' => ['required', 'array', 'min:1'],
-                    'selected_foods.*.id' => ['required'],
-                    'selected_foods.*.name' => ['required', 'string'],
-                    'selected_foods.*.category' => ['nullable', 'string'],
-                    'selected_foods.*.price' => ['required', 'numeric', 'min:0'],
-                    'selected_foods.*.quantity' => ['required', 'integer', 'min:1', 'max:20'],
-                    'selected_foods.*.notes' => ['nullable', 'string', 'max:500'],
                     'proceed_to_activities' => ['nullable', 'boolean'],
                 ]);
 
@@ -1915,7 +2218,16 @@ class BookingController extends Controller
                 ]);
 
                 $booking['booking_type'] = 'staycation';
-                $booking['selected_foods'] = $data['selected_foods'];
+                $normalizedFoods = $this->normalizeStaycationFoods($data['selected_foods']);
+                if (empty($normalizedFoods)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid food selection data.',
+                    ], 422);
+                }
+
+                $booking['selected_foods'] = $normalizedFoods;
+                $booking = $this->normalizeAndRecalculateStaycationBooking($booking);
                 $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [2]));
                 $booking['current_step'] = 3;
 
@@ -2029,14 +2341,14 @@ class BookingController extends Controller
     {
         $validated = $request->validate([
             'checkin' => 'required|date_format:Y-m-d',
-            'checkout' => 'required|date_format:Y-m-d',
+            'checkout' => 'required|date_format:Y-m-d|after:checkin',
             'rooms_count' => 'required|integer|min:1|max:4',
             'adults_total' => 'required|integer|min:1',
-            'children_total' => 'required|integer|min:0',
+            'children_total' => 'nullable|integer|min:0',
             'pets_total' => 'required|integer|min:0',
             'rooms' => 'required|array',
             'rooms.*.adults' => 'required|integer|min:1',
-            'rooms.*.children' => 'required|integer|min:0',
+            'rooms.*.children' => 'nullable|integer|min:0',
             'rooms.*.pets' => 'integer|min:0',
         ]);
 
@@ -2046,7 +2358,7 @@ class BookingController extends Controller
             'checkout' => $validated['checkout'],
             'rooms_count' => $validated['rooms_count'],
             'adults_total' => $validated['adults_total'],
-            'children_total' => $validated['children_total'],
+            'children_total' => (int)($validated['children_total'] ?? 0),
             'pets_total' => $validated['pets_total'],
             'rooms' => $validated['rooms'],
         ]]);
@@ -2333,6 +2645,7 @@ class BookingController extends Controller
                 'adults_limit' => (int)($staycation->adults ?? 0),
                 'children_limit' => (int)($staycation->children ?? 0),
                 'included_guest_capacity' => $this->resolveIncludedGuestCapacity($staycation),
+                'max_guest_capacity' => $this->resolveMaxGuestCapacity($staycation),
                 'capacity' => (int)($staycation->capacity ?? 0),
                 'price' => $currentRate, // Per night rate for current season
                 'price_range' => $priceRange, // NEW: Price range for displayed dates
@@ -2639,17 +2952,13 @@ class BookingController extends Controller
                 'selected_foods' => 'required|array|min:1',
             ]);
 
-            // Get the actual data without strict field validation
-            $selectedFoods = $request->input('selected_foods', []);
-            
-            // Validate each food item has required fields
-            foreach ($selectedFoods as $index => $food) {
-                if (empty($food['id']) || empty($food['name']) || empty($food['category']) || !isset($food['price']) || !isset($food['quantity'])) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Invalid food item data at index ' . $index
-                    ], 422);
-                }
+            // Normalize against DB prices/names/categories to avoid payload tampering
+            $selectedFoods = $this->normalizeStaycationFoods($request->input('selected_foods', []));
+            if (empty($selectedFoods)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid food selection.'
+                ], 422);
             }
 
             // Store selected foods in session (legacy key)
@@ -2668,38 +2977,7 @@ class BookingController extends Controller
 
             $booking['booking_type'] = 'staycation';
             $booking['selected_foods'] = $selectedFoods;
-
-            // Calculate food total from selected foods
-            $foodTotal = 0;
-            foreach ($selectedFoods as $foodData) {
-                $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1);
-            }
-            
-            // Calculate accommodation total from current accommodations if available
-            $accommodationTotal = 0;
-            if (!empty($booking['accommodations'])) {
-                foreach ($booking['accommodations'] as $acc) {
-                    if (!empty($acc)) {
-                        $accommodationTotal += $acc['total_price'] ?? 0;
-                    }
-                }
-            }
-            
-            // Update final_totals to include food cost
-            if (!isset($booking['final_totals'])) {
-                $booking['final_totals'] = [
-                    'accommodation_total' => $accommodationTotal,
-                    'activities_total' => 0,
-                    'food_total' => $foodTotal,
-                    'grand_total' => $accommodationTotal + $foodTotal
-                ];
-            } else {
-                $booking['final_totals']['food_total'] = $foodTotal;
-                $booking['final_totals']['grand_total'] = 
-                    ($booking['final_totals']['accommodation_total'] ?? 0) + 
-                    ($booking['final_totals']['activities_total'] ?? 0) + 
-                    $foodTotal;
-            }
+            $booking = $this->normalizeAndRecalculateStaycationBooking($booking);
             
             $booking['completed_steps'] = array_unique(array_merge($booking['completed_steps'] ?? [], [2]));
             $booking['current_step'] = 3;
@@ -3031,13 +3309,23 @@ class BookingController extends Controller
      */
     protected function supportsExtraMattress(Staycation $staycation): bool
     {
+        if ($this->isSpecialStaycationRoom($staycation)) {
+            return false;
+        }
+
         $type = strtolower((string)($staycation->type ?? ''));
-        return $type === 'glamping';
+        if ($type === 'glamping') {
+            return true;
+        }
+
+        // Fallback for legacy/misaligned data where type may be stale but room name is glamping.
+        $roomName = strtolower((string)($staycation->name ?? ''));
+        return str_contains($roomName, 'glamping');
     }
 
     /**
      * Resolve extra mattress count.
-     * For regular rooms: auto-compute based on guests above room capacity.
+     * For regular rooms: use submitted value but clamp to allowed overflow limit.
      * For BYOT/Car Camping: keep submitted quantity (minimum 1).
      */
     protected function resolveExtraMattressCount(
@@ -3054,35 +3342,129 @@ class BookingController extends Controller
             return 0;
         }
 
-        $totalGuests = max(1, $adults) + max(0, $children);
-        $capacity = $this->resolveIncludedGuestCapacity($staycation);
+        // Legacy key name, but now this is auto-computed additional-adult count.
+        return $this->resolveAdditionalAdultCount($staycation, $adults);
+    }
 
-        return max(0, $totalGuests - $capacity);
+    /**
+     * Additional adult count is automatic and based on adult headcount only.
+     * Rule:
+     * - Base included adults: 4
+     * - Additional adults allowed: up to 2 (adult #5 and #6)
+     */
+    protected function resolveAdditionalAdultCount(Staycation $staycation, int $adults): int
+    {
+        if ($this->isSpecialStaycationRoom($staycation) || !$this->supportsExtraMattress($staycation)) {
+            return 0;
+        }
+
+        $baseIncludedAdults = 4;
+        $maxAdditionalAdults = 2;
+        $adultCount = max(1, $adults);
+        $adultOverflow = max(0, $adultCount - $baseIncludedAdults);
+
+        return min($maxAdditionalAdults, $adultOverflow);
     }
 
     /**
      * Resolve the included guest capacity used to compute overflow/extra mattress.
      * Priority:
-     * 1) adults + children limits (if configured)
-     * 2) capacity
-     * 3) minimum fallback of 1
+     * 1) explicit included_guest_capacity
+     * 2) adults limit (represents base beds/included guests)
+     * 3) capacity (legacy fallback)
+     * 4) minimum fallback of 1
      */
     protected function resolveIncludedGuestCapacity(Staycation $staycation): int
     {
-        $roomName = strtolower((string)($staycation->name ?? ''));
-        if (str_contains($roomName, 'standard glamping')) {
-            // Business rule: Standard Glamping includes up to 6 guests.
-            return 6;
+        $explicitIncluded = max(0, (int)($staycation->included_guest_capacity ?? 0));
+        if ($explicitIncluded > 0) {
+            return $explicitIncluded;
         }
 
         $adultsLimit = max(0, (int)($staycation->adults ?? 0));
-        $childrenLimit = max(0, (int)($staycation->children ?? 0));
-        $configuredGuestLimit = $adultsLimit + $childrenLimit;
-        if ($configuredGuestLimit > 0) {
-            return $configuredGuestLimit;
+        if ($adultsLimit > 0) {
+            return $adultsLimit;
         }
 
-        return max(1, (int)($staycation->capacity ?? 0));
+        // Legacy fallback when base included is not explicitly configured.
+        $baseCapacity = max(0, (int)($staycation->capacity ?? 0));
+        if ($baseCapacity > 0) {
+            return $baseCapacity;
+        }
+        
+        return 1;
+    }
+
+    /**
+     * Resolve the maximum guest capacity allowed per room.
+     * Falls back to included capacity if no explicit max is configured.
+     */
+    protected function resolveMaxGuestCapacity(Staycation $staycation): int
+    {
+        $included = $this->resolveIncludedGuestCapacity($staycation);
+        $configuredMax = max(0, (int)($staycation->max_guest_capacity ?? 0));
+
+        if ($configuredMax > 0) {
+            return max($included, $configuredMax);
+        }
+
+        // Legacy fallback: derive from adults + children limits when present.
+        $adultsLimit = max(0, (int)($staycation->adults ?? 0));
+        $childrenLimit = max(0, (int)($staycation->children ?? 0));
+        $derivedMax = $adultsLimit + $childrenLimit;
+        if ($derivedMax > 0) {
+            return max($included, $derivedMax);
+        }
+
+        // Last fallback: use capacity if bigger than included.
+        $legacyCapacity = max(0, (int)($staycation->capacity ?? 0));
+        if ($legacyCapacity > 0) {
+            return max($included, $legacyCapacity);
+        }
+
+        // Backward-compatible fallback for existing Standard Glamping records.
+        $roomName = strtolower((string)($staycation->name ?? ''));
+        if (str_contains($roomName, 'standard glamping')) {
+            return max($included, 6);
+        }
+
+        return max(1, $included);
+    }
+
+    /**
+     * Clamp room guest counts to the configured maximum capacity.
+     * Preference: reduce children first, then adults (keeping at least 1 adult).
+     */
+    protected function clampRoomGuestCounts(Staycation $staycation, int $adults, int $children): array
+    {
+        $adults = max(1, $adults);
+        $children = max(0, $children);
+
+        if ($this->isSpecialStaycationRoom($staycation)) {
+            return [$adults, $children];
+        }
+
+        $maxGuests = $this->resolveMaxGuestCapacity($staycation);
+        $total = $adults + $children;
+        if ($total <= $maxGuests) {
+            return [$adults, $children];
+        }
+
+        $overflow = $total - $maxGuests;
+        if ($children >= $overflow) {
+            $children -= $overflow;
+            return [$adults, $children];
+        }
+
+        $overflow -= $children;
+        $children = 0;
+        $adults = max(1, $adults - $overflow);
+
+        if (($adults + $children) > $maxGuests) {
+            $adults = max(1, $maxGuests - $children);
+        }
+
+        return [$adults, $children];
     }
 
     /**
@@ -3091,8 +3473,16 @@ class BookingController extends Controller
      */
     protected function calculateMattressFee(int $mattressCount, int $nights)
     {
-        $pricePerNight = BookingSetting::getValue('mattress_price_per_night', 0);
-        return (int)$mattressCount * (int)$pricePerNight * max(1, $nights);
+        return $this->calculateAdditionalAdultFee($mattressCount, $nights);
+    }
+
+    /**
+     * Calculate additional adult fee for a given quantity and number of nights.
+     */
+    protected function calculateAdditionalAdultFee(int $additionalAdultCount, int $nights)
+    {
+        $pricePerNight = BookingSetting::getValue('mattress_price_per_night', 1200);
+        return (int)$additionalAdultCount * (int)$pricePerNight * max(1, $nights);
     }
 
     /**

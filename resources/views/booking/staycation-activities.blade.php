@@ -123,7 +123,7 @@
     @endphp
 
     @php
-        $mobileLayoutStep3 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step3_activities')->value('value') ?? 1);
+        $mobileLayoutStep3 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step3_activities')->value('value') ?? 3);
     @endphp
 
     <div class="bg-[#f5efe7] min-h-screen mobile-layout-mode-{{ $mobileLayoutStep3 }}">

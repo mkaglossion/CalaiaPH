@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\PackageBooking;
+use App\Models\PaymongoWebhookEvent;
 use App\Models\Staycation;
 use App\Models\StaycationInventory;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Schema;
 
 class AdminBookingsController extends Controller
 {
@@ -250,5 +252,78 @@ class AdminBookingsController extends Controller
         ksort($dailyTotals);
         
         return view('admin.bookings.inventory', compact('inventoryData', 'dailyTotals', 'dateFrom', 'dateTo', 'staycations', 'pagination', 'perPage', 'totalDays'));
+    }
+
+    public function paymongoWebhooks(Request $request)
+    {
+        if (!Schema::hasTable('paymongo_webhook_events')) {
+            $events = new LengthAwarePaginator(
+                collect(),
+                0,
+                20,
+                max(1, (int) $request->query('page', 1)),
+                ['path' => $request->url(), 'query' => $request->query()]
+            );
+            $stats = [
+                'total' => 0,
+                'ok' => 0,
+                'failed' => 0,
+                'handled' => 0,
+                'invalid_signature' => 0,
+            ];
+            $tableReady = false;
+
+            return view('admin.bookings.paymongo-webhooks', compact('events', 'stats', 'tableReady'));
+        }
+
+        $query = PaymongoWebhookEvent::query()->latest();
+
+        if ($request->filled('event_type')) {
+            $eventType = (string) $request->string('event_type');
+            $query->where('event_type', 'like', '%' . $eventType . '%');
+        }
+
+        if ($request->filled('reference')) {
+            $query->where(function ($q) use ($request) {
+                $value = (string) $request->string('reference');
+                $q->where('reference', 'like', '%' . $value . '%')
+                    ->orWhere('checkout_session_id', 'like', '%' . $value . '%')
+                    ->orWhere('payment_id', 'like', '%' . $value . '%');
+            });
+        }
+
+        if ($request->filled('signature_valid')) {
+            $signatureValid = $request->input('signature_valid');
+            if (in_array($signatureValid, ['0', '1'], true)) {
+                $query->where('signature_valid', (int) $signatureValid);
+            }
+        }
+
+        if ($request->filled('handled')) {
+            $handled = $request->input('handled');
+            if (in_array($handled, ['0', '1'], true)) {
+                $query->where('handled', (int) $handled);
+            }
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $events = $query->paginate(20)->withQueryString();
+        $stats = [
+            'total' => PaymongoWebhookEvent::count(),
+            'ok' => PaymongoWebhookEvent::where('http_status', 200)->count(),
+            'failed' => PaymongoWebhookEvent::where('http_status', '!=', 200)->count(),
+            'handled' => PaymongoWebhookEvent::where('handled', true)->count(),
+            'invalid_signature' => PaymongoWebhookEvent::where('signature_present', true)->where('signature_valid', false)->count(),
+        ];
+        $tableReady = true;
+
+        return view('admin.bookings.paymongo-webhooks', compact('events', 'stats', 'tableReady'));
     }
 }

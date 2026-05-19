@@ -1,4 +1,4 @@
-{{-- resources/views/booking/staycation-availability.blade.php --}}
+﻿{{-- resources/views/booking/staycation-availability.blade.php --}}
 <x-app-layout active-header="booking">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -273,7 +273,7 @@
     </style>
 
     @php
-        $mobileLayoutStep1 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step1_availability')->value('value') ?? 1);
+        $mobileLayoutStep1 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step1_availability')->value('value') ?? 3);
     @endphp
 
     <div class="bg-[#f5efe7] min-h-screen mobile-layout-mode-{{ $mobileLayoutStep1 }}">
@@ -499,7 +499,7 @@
 
                                     {{-- Price Range Display --}}
                                     @php
-                                        $priceRange = $roomDetail['price_range'] ?? ['min_price' => 0, 'max_price' => 0, 'min_label' => 'â€”', 'max_label' => 'â€”'];
+                                        $priceRange = $roomDetail['price_range'] ?? ['min_price' => 0, 'max_price' => 0, 'min_label' => 'Ã¢â‚¬â€', 'max_label' => 'Ã¢â‚¬â€'];
                                         $roomNameLower = strtolower($roomDetail['name']);
                                         $isBYOT = str_contains($roomNameLower, 'byot') ||
                                                  str_contains($roomNameLower, 'bring your own tent') ||
@@ -569,22 +569,24 @@
                                                                :id="'adults-card-' + {{ $staycation->id }}" :name="'adults-card-' + {{ $staycation->id }}"
                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                                                                x-model.number="getSelectedRoom({{ $staycation->id }}).adults"
+                                                                :max="Math.max(1, getRoomGuestLimit({{ $staycation->id }}))"
                                                                @change="validateAndSetGuests({{ $staycation->id }}, 'adults', getSelectedRoom({{ $staycation->id }}).adults, getSelectedRoom({{ $staycation->id }}).name.toLowerCase())"
                                                                @click.stop
                                                         >
                                                     </div>
                                                     <div>
-                                                        <label :for="'children-card-' + {{ $staycation->id }}" class="block text-sm font-semibold text-gray-700 mb-1">Children</label>
+                                                         <label :for="'children-card-' + {{ $staycation->id }}" class="block text-sm font-semibold text-gray-700 mb-1">Children</label>
                                                         <input type="number" min="0" max="20"
                                                                :id="'children-card-' + {{ $staycation->id }}" :name="'children-card-' + {{ $staycation->id }}"
                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                                                                x-model.number="getSelectedRoom({{ $staycation->id }}).children"
+                                                                :max="Math.max(0, getRoomIncludedChildren({{ $staycation->id }}))"
                                                                @change="validateAndSetGuests({{ $staycation->id }}, 'children', getSelectedRoom({{ $staycation->id }}).children, getSelectedRoom({{ $staycation->id }}).name.toLowerCase())"
                                                                @click.stop
                                                         >
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                     </div>
+                                                  </div>
+                                             </div>
                                         </template>
 
                                         {{-- Pets (for all room types) --}}
@@ -753,7 +755,7 @@
                                         @if ($selCheckin)
                                             {{ \Carbon\Carbon::parse($selCheckin)->format('M j, Y') }}
                                         @else
-                                            â€”
+                                            Ã¢â‚¬â€
                                         @endif
                                     </span>
                                 </div>
@@ -763,7 +765,7 @@
                                         @if ($selCheckout)
                                             {{ \Carbon\Carbon::parse($selCheckout)->format('M j, Y') }}
                                         @else
-                                            â€”
+                                            Ã¢â‚¬â€
                                         @endif
                                     </span>
                                 </div>
@@ -773,7 +775,7 @@
                                         @if ($selCheckin && $selCheckout)
                                             {{ \Carbon\Carbon::parse($selCheckin)->diffInDays(\Carbon\Carbon::parse($selCheckout)) }}
                                         @else
-                                            â€”
+                                            Ã¢â‚¬â€
                                         @endif
                                     </span>
                                 </div>
@@ -832,9 +834,18 @@
                                                         <template x-if="!item.name.toLowerCase().includes('byot') && !item.name.toLowerCase().includes('bring your own tent') && !item.name.toLowerCase().includes('car camping')">
                                                             <span>Adults: <span class="font-semibold" x-text="item.adults"></span>, Children: <span class="font-semibold" x-text="item.children"></span></span>
                                                         </template>
-                                                        <template x-if="supportsExtraMattress(item)">
+                                                        <template x-if="supportsExtraMattress(item) && getEffectiveMattressCount(item) > 0">
                                                             <div class="mt-1">
-                                                                Extra Mattress: <span class="font-semibold" x-text="calculateAutoMattressCount(item)"></span>
+                                                                <span x-text="getAdditionalAdultLabel(getEffectiveMattressCount(item))"></span>
+                                                            </div>
+                                                        </template>
+                                                        <template x-if="item.pets === 'yes' && item.num_pets > 0">
+                                                            <div class="mt-1 text-amber-700">
+                                                                Pets Declared:
+                                                                <span class="font-semibold" x-text="item.num_pets"></span>
+                                                                <template x-if="isCampingRoom(item)">
+                                                                    <span class="text-[11px] text-gray-500">(no pet fee for BYOT/Car Camping)</span>
+                                                                </template>
                                                             </div>
                                                         </template>
                                                     </div>
@@ -846,11 +857,11 @@
                                                              <span class="text-gray-600">Accommodation:</span>
                                                              <span class="font-semibold" x-text="formatCurrency(item.accommodation_price || 0)"></span>
                                                          </div>
-                                                         <div x-show="supportsExtraMattress(item)" class="flex justify-between mb-1">
-                                                             <span class="text-gray-600">Extra Mattress:</span>
+                                                         <div x-show="supportsExtraMattress(item) && getEffectiveMattressCount(item) > 0" class="flex justify-between mb-1">
+                                                             <span class="text-gray-600" x-text="getAdditionalAdultLabel(getEffectiveMattressCount(item)) + ':'"></span>
                                                              <span class="text-gray-600 font-semibold" x-text="formatCurrency(calculateMattressPrice(item))"></span>
                                                          </div>
-                                                         <div x-show="item.pets === 'yes' && item.num_pets > 0" class="flex justify-between mb-1">
+                                                         <div x-show="item.pets === 'yes' && item.num_pets > 0 && !isCampingRoom(item)" class="flex justify-between mb-1">
                                                              <span class="text-gray-600">Pets:</span>
                                                              <span class="text-gray-600 font-semibold" x-text="formatCurrency(calculatePetPrice(item))"></span>
                                                          </div>
@@ -891,7 +902,6 @@
                                     <span class="text-2xl font-bold text-green-600" x-text="calculateTotalPrice()"></span>
                                 </div>
 
-                                <div class="text-xs text-gray-500 mt-1">Final price with VAT (calculated at checkout)</div>
 
                                 <!--<button type="button"
                                         x-show="hasRegularRooms()"
@@ -1528,7 +1538,8 @@
                 roomDetailsMap: @json($roomDetails),
 
                 bookingSettings: {
-                    mattress_price_per_night: 800,
+                    mattress_price_per_night: 1200,
+                    additional_adult_price_per_night: 1200,
                     pet_price: 2000,
                 },
 
@@ -1577,7 +1588,7 @@
                 lastClickedRoom: null,
                 lastClickTime: 0,
 
-                // âœ… FIX: single click on already-selected should ADD another instance (not show "Room Already Selected")
+                // Ã¢Å“â€¦ FIX: single click on already-selected should ADD another instance (not show "Room Already Selected")
                 // For BYOT/Car Camping: increment quantity instead of creating new instance
                 toggleRoom(roomId, type) {
                     const staycations = @json($staycations);
@@ -1850,6 +1861,11 @@
                     return this.isGlampingRoom(room);
                 },
 
+                getAdditionalAdultLabel(count) {
+                    const normalized = Math.max(0, parseInt(count || 0, 10) || 0);
+                    return normalized === 1 ? 'Additional 1 adult' : `Additional ${normalized} adults`;
+                },
+
                 getSlotClass(slotNum) {
                     const rooms = this.getSelectedRoomArray();
                     return slotNum <= rooms.length
@@ -1895,6 +1911,127 @@
                     return this.selectedRooms[key];
                 },
 
+                getRoomGuestLimit(roomId) {
+                    const lookupId = String(roomId).includes('_') ? String(roomId).split('_')[0] : roomId;
+                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[lookupId] ? this.roomDetailsMap[lookupId] : null;
+                    const included = this.getRoomIncludedCapacity(roomId);
+                    const adultsLimit = Math.max(0, parseInt(roomDetail?.adults_limit || 0, 10) || 0);
+                    const childrenLimit = Math.max(0, parseInt(roomDetail?.children_limit || 0, 10) || 0);
+                    const derivedMax = adultsLimit + childrenLimit;
+                    const configuredMax = Math.max(0, parseInt(roomDetail?.max_guest_capacity || 0, 10) || 0);
+
+                    if (configuredMax > 0) {
+                        return Math.max(included, configuredMax);
+                    }
+
+                    if (derivedMax > 0) {
+                        return Math.max(included, derivedMax);
+                    }
+
+                    const legacyCapacity = Math.max(0, parseInt(roomDetail?.capacity || 0, 10) || 0);
+                    if (legacyCapacity > 0) {
+                        return Math.max(included, legacyCapacity);
+                    }
+
+                    return included;
+                },
+
+                getRoomIncludedCapacity(roomId) {
+                    const lookupId = String(roomId).includes('_') ? String(roomId).split('_')[0] : roomId;
+                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[lookupId] ? this.roomDetailsMap[lookupId] : null;
+                    const roomType = String(roomDetail?.type || '').toLowerCase();
+                    if (roomType === 'glamping') {
+                        return 4;
+                    }
+                    const adultsLimit = Math.max(0, parseInt(roomDetail?.adults_limit || 0, 10) || 0);
+
+                    if ((parseInt(roomDetail?.included_guest_capacity || 0, 10) || 0) > 0) {
+                        return Math.max(1, parseInt(roomDetail?.included_guest_capacity || 0, 10) || 1);
+                    }
+
+                    if (adultsLimit > 0) {
+                        return Math.max(1, adultsLimit);
+                    }
+
+                    return Math.max(1, parseInt(roomDetail?.capacity || 0, 10) || 1);
+                },
+
+                getRoomIncludedChildren(roomId) {
+                    const lookupId = String(roomId).includes('_') ? String(roomId).split('_')[0] : roomId;
+                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[lookupId] ? this.roomDetailsMap[lookupId] : null;
+                    return Math.max(0, parseInt(roomDetail?.children_limit || 0, 10) || 0);
+                },
+
+                getRoomMaxExtraMattress(roomId) {
+                    const included = this.getRoomIncludedCapacity(roomId);
+                    const maxAllowed = this.getRoomGuestLimit(roomId);
+                    return Math.max(0, Math.min(2, maxAllowed - included));
+                },
+
+                getAutoAdditionalAdultCount(roomId) {
+                    const key = String(roomId);
+                    const room = this.selectedRooms[key] || this.getSelectedRoom(roomId);
+                    if (!room || !this.supportsExtraMattress(room) || this.isCampingRoom(room)) return 0;
+
+                    const lookupKey = String(room.id || key);
+                    const included = this.getRoomIncludedCapacity(lookupKey);
+                    const maxAdditionalAdults = this.getRoomMaxExtraMattress(lookupKey);
+                    const adults = Math.max(1, parseInt(room.adults || 1, 10) || 1);
+                    const children = Math.max(0, parseInt(room.children || 0, 10) || 0);
+                    const totalGuests = adults + children;
+                    const overflow = Math.max(0, totalGuests - included);
+
+                    return Math.max(0, Math.min(maxAdditionalAdults, overflow));
+                },
+
+                syncExtraMattressWithGuests(roomId) {
+                    const key = String(roomId);
+                    const room = this.selectedRooms[key];
+                    if (!room || !this.supportsExtraMattress(room) || this.isCampingRoom(room)) return;
+                    this.selectedRooms[key].extra_mattress = this.getAutoAdditionalAdultCount(key);
+                },
+
+                getRoomCapacityHint(roomId) {
+                    const included = this.getRoomIncludedCapacity(roomId);
+                    const maxAllowed = this.getRoomGuestLimit(roomId);
+                    if (maxAllowed <= included) {
+                        return `Included: ${included} adults • Max: ${maxAllowed} guests • No additional adult allowance`;
+                    }
+                    const extraStartsAt = included + 1;
+                    return `Included: ${included} adults • Max: ${maxAllowed} guests • Additional adult fee starts at adult #${extraStartsAt}`;
+                },
+
+                getRoomGuestCount(roomId) {
+                    const key = String(roomId);
+                    const room = this.selectedRooms[key];
+                    if (!room) return 1;
+                    const adults = Math.max(1, parseInt(room.adults || 1, 10) || 1);
+                    const children = Math.max(0, parseInt(room.children || 0, 10) || 0);
+                    return adults + children;
+                },
+
+                getRoomGuestCountLabel(roomId) {
+                    const rawTotal = this.getRoomGuestCount(roomId);
+                    const maxGuests = this.getRoomGuestLimit(roomId);
+                    const totalGuests = Math.min(rawTotal, maxGuests);
+                    return `Total guests: ${totalGuests} / ${maxGuests}`;
+                },
+
+                getRoomExtraMattressLabel(roomId) {
+                    const key = String(roomId);
+                    const room = this.selectedRooms[key] || this.getSelectedRoom(roomId);
+                    if (!room || !this.supportsExtraMattress(room)) return 'No additional adult charge';
+
+                    const count = this.getAutoAdditionalAdultCount(roomId);
+                    const fee = this.calculateMattressPrice(room);
+                    if (count < 1) return 'No additional adult charge';
+                    return `${this.getAdditionalAdultLabel(count)} • ${this.formatCurrency(fee)}`;
+                },
+
+                getRoomAdditionalAdultSummary(roomId) {
+                    return this.getRoomExtraMattressLabel(roomId);
+                },
+
                 setField(roomId, field, value) {
                     const key = String(roomId);
                     if (!this.selectedRooms[key]) return;
@@ -1905,12 +2042,8 @@
                         if (field === 'adults' && value < 1) value = 1;
                         if (['children','extra_mattress','num_pets'].includes(field) && value < 0) value = 0;
 
-                        const nameLower = (this.selectedRooms[key].name || '').toLowerCase();
-                        const isBYOTorCar = nameLower.includes('byot') || nameLower.includes('bring your own tent') || nameLower.includes('car camping');
-
                         if (field === 'num_pets') {
-                            if (isBYOTorCar) value = 0;
-                            else if (value > {{ $maxPetsPerRoom }}) {
+                            if (value > {{ $maxPetsPerRoom }}) {
                                 value = {{ $maxPetsPerRoom }};
                                 Swal.fire({
                                     icon: 'warning',
@@ -1944,6 +2077,56 @@
                     const normalizedValue = parseInt(value || 0, 10);
                     if (!isFinite(normalizedValue)) {
                         this.setField(roomId, field, 0);
+                        return;
+                    }
+                    const key = String(roomId);
+                    const room = this.selectedRooms[key] || {};
+                    const maxGuests = this.getRoomGuestLimit(roomId);
+                    const roomLabel = room.name || 'this room';
+
+                    if (field === 'adults') {
+                        const maxAdults = Math.max(1, maxGuests);
+                        let adultsValue = Math.max(1, normalizedValue);
+
+                        if (adultsValue > maxAdults) {
+                            adultsValue = maxAdults;
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Guest Limit Exceeded',
+                                text: `Maximum ${maxGuests} guests allowed for ${roomLabel}.`,
+                                toast: true,
+                                position: 'bottom-end',
+                                showConfirmButton: false,
+                                timer: 2200,
+                                timerProgressBar: true
+                            });
+                        }
+
+                        this.setField(roomId, field, adultsValue);
+                        this.syncExtraMattressWithGuests(roomId);
+                        return;
+                    }
+
+                    if (field === 'children') {
+                        const maxChildren = this.getRoomIncludedChildren(roomId);
+                        let childrenValue = Math.max(0, normalizedValue);
+
+                        if (childrenValue > maxChildren) {
+                            childrenValue = maxChildren;
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Children Limit Exceeded',
+                                text: `Maximum ${maxChildren} children allowed for ${roomLabel}.`,
+                                toast: true,
+                                position: 'bottom-end',
+                                showConfirmButton: false,
+                                timer: 2200,
+                                timerProgressBar: true
+                            });
+                        }
+
+                        this.setField(roomId, field, childrenValue);
+                        this.syncExtraMattressWithGuests(roomId);
                         return;
                     }
 
@@ -1992,6 +2175,13 @@
                     }
 
                     this.setField(roomId, fieldName, normalizedValue);
+                },
+
+                validateExtraMattressInput(roomId) {
+                    const key = String(roomId);
+                    const room = this.selectedRooms[key];
+                    if (!room || !this.supportsExtraMattress(room) || this.isCampingRoom(room)) return;
+                    this.setField(key, 'extra_mattress', this.getAutoAdditionalAdultCount(key));
                 },
 
                 resetAll() {
@@ -2099,7 +2289,7 @@
                     }
                     
                     // Set available quantity
-                    this.roomDetailsAvailable = roomDetail?.available_quantity || roomDetail?.total_quantity || 'âˆž';
+                    this.roomDetailsAvailable = roomDetail?.available_quantity || roomDetail?.total_quantity || 'Ã¢Ë†Å¾';
                     
                     // Calculate nights
                     if (this.checkin && this.checkout) {
@@ -2108,7 +2298,7 @@
                         const nights = Math.max(1, Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24)));
                         this.roomDetailsNights = nights;
                     } else {
-                        this.roomDetailsNights = 'â€”';
+                        this.roomDetailsNights = 'Ã¢â‚¬â€';
                     }
                     
                     // Set total guests
@@ -2412,34 +2602,16 @@
 
                     if (!this.supportsExtraMattress(room)) return 0;
 
-                    const autoMattress = this.calculateAutoMattressCount(room);
-                    return autoMattress * this.bookingSettings.mattress_price_per_night * nights;
+                    const additionalAdults = this.getEffectiveMattressCount(room);
+                    const feePerAdult = this.bookingSettings.additional_adult_price_per_night || this.bookingSettings.mattress_price_per_night || 1200;
+                    return additionalAdults * feePerAdult * nights;
                 },
 
-                calculateAutoMattressCount(room) {
+                getEffectiveMattressCount(room) {
                     if (!this.supportsExtraMattress(room)) return 0;
 
                     const lookupId = room.originalId || room.id;
-                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[lookupId] ? this.roomDetailsMap[lookupId] : null;
-                    const roomNameLower = String(room?.name || roomDetail?.name || '').toLowerCase();
-                    if (roomNameLower.includes('standard glamping')) {
-                        const adults = Math.max(1, parseInt(room.adults || 1, 10) || 1);
-                        const children = Math.max(0, parseInt(room.children || 0, 10) || 0);
-                        const totalGuests = adults + children;
-                        return Math.max(0, totalGuests - 6);
-                    }
-
-                    const adultsLimit = Math.max(0, parseInt(roomDetail?.adults_limit || 0, 10) || 0);
-                    const childrenLimit = Math.max(0, parseInt(roomDetail?.children_limit || 0, 10) || 0);
-                    const configuredGuestLimit = adultsLimit + childrenLimit;
-                    const includedGuestCapacity = Math.max(
-                        1,
-                        parseInt(roomDetail?.included_guest_capacity || configuredGuestLimit || roomDetail?.capacity || 0, 10) || 1
-                    );
-                    const adults = Math.max(1, parseInt(room.adults || 1, 10) || 1);
-                    const children = Math.max(0, parseInt(room.children || 0, 10) || 0);
-                    const totalGuests = adults + children;
-                    return Math.max(0, totalGuests - includedGuestCapacity);
+                    return this.getAutoAdditionalAdultCount(lookupId);
                 },
 
                 calculatePetPrice(room) {
@@ -2604,9 +2776,9 @@
                     if (roomCount === 0) return 'No rooms selected';
                     if (roomCount === 1) {
                         const room = Object.values(this.selectedRooms)[0];
-                        return `${room.name} â€¢ ${nights} night(s) â€¢ ${ci} to ${co}`;
+                        return `${room.name} Ã¢â‚¬Â¢ ${nights} night(s) Ã¢â‚¬Â¢ ${ci} to ${co}`;
                     }
-                    return `${roomCount} rooms â€¢ ${nights} night(s) â€¢ ${ci} to ${co}`;
+                    return `${roomCount} rooms Ã¢â‚¬Â¢ ${nights} night(s) Ã¢â‚¬Â¢ ${ci} to ${co}`;
                 },
 
                 getNightsCount() {
@@ -2928,6 +3100,7 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.mattress_price_per_night !== undefined) this.bookingSettings.mattress_price_per_night = data.mattress_price_per_night;
+                            this.bookingSettings.additional_adult_price_per_night = this.bookingSettings.mattress_price_per_night || 1200;
                             if (data.pet_price !== undefined) this.bookingSettings.pet_price = data.pet_price;
                         })
                         .catch(error => console.error('Failed to fetch booking settings:', error));
@@ -3003,6 +3176,9 @@
 
                     // Always assign fresh object to avoid stale reactive leftovers
                     this.selectedRooms = { ...hydrated };
+                    for (const roomKey of Object.keys(this.selectedRooms)) {
+                        this.syncExtraMattressWithGuests(roomKey);
+                    }
 
                     const keys = Object.keys(this.selectedRooms);
                     this.editingRoom = keys.length > 0 ? keys[0] : null;
@@ -3058,6 +3234,11 @@
                                 return;
                             }
                         }
+
+                        if (!this.isCampingRoom(r) && this.supportsExtraMattress(r)) {
+                            const roomKey = String(r.id);
+                            this.syncExtraMattressWithGuests(roomKey);
+                        }
                     }
 
                     const normalizedSelectedRooms = {};
@@ -3066,7 +3247,9 @@
                             ...room,
                             extra_mattress: this.isCampingRoom(room)
                                 ? (parseInt(room.extra_mattress || 1, 10) || 1)
-                                : (this.supportsExtraMattress(room) ? this.calculateAutoMattressCount(room) : 0)
+                                : (this.supportsExtraMattress(room)
+                                    ? this.getEffectiveMattressCount(room)
+                                    : 0)
                         };
                     }
 
@@ -3178,3 +3361,5 @@
     </script>
     @endif
 </x-app-layout>
+
+

@@ -323,8 +323,50 @@ function packageInventoryManager() {
             this.errors = [];
         },
 
-        refreshPage() {
-            window.location.reload();
+        normalizeDate(dateValue) {
+            if (!dateValue) return '';
+            const date = new Date(dateValue);
+            if (Number.isNaN(date.getTime())) return '';
+            return date.toISOString().split('T')[0];
+        },
+
+        sortInventories(pkg) {
+            if (!pkg || !Array.isArray(pkg.inventory)) return;
+            pkg.inventory.sort((a, b) => new Date(a.date) - new Date(b.date));
+        },
+
+        applyInventoryRecord(record, fallbackPackageId = null) {
+            const packageId = Number(record?.package_id ?? fallbackPackageId);
+            if (!packageId) return;
+
+            const pkg = this.packages.find(p => Number(p.id) === packageId);
+            if (!pkg) return;
+
+            if (!Array.isArray(pkg.inventory)) {
+                pkg.inventory = [];
+            }
+
+            const normalized = {
+                ...record,
+                date: this.normalizeDate(record.date),
+                package_id: packageId,
+            };
+
+            const idx = pkg.inventory.findIndex(inv => Number(inv.id) === Number(normalized.id));
+            if (idx >= 0) {
+                pkg.inventory.splice(idx, 1, normalized);
+            } else {
+                pkg.inventory.push(normalized);
+            }
+            this.sortInventories(pkg);
+        },
+
+        removeInventoryRecordById(id) {
+            this.packages.forEach(pkg => {
+                if (!Array.isArray(pkg.inventory)) return;
+                pkg.inventory = pkg.inventory.filter(inv => Number(inv.id) !== Number(id));
+            });
+            this.selectedItems = this.selectedItems.filter(itemId => Number(itemId) !== Number(id));
         },
 
         editPackage(packageId) {
@@ -398,9 +440,8 @@ function packageInventoryManager() {
                             icon: 'success',
                             title: 'Deleted!',
                             confirmButtonColor: '#2563eb'
-                        }).then(() => {
-                            this.refreshPage();
                         });
+                        this.removeInventoryRecordById(id);
                     })
                     .catch(err => {
                         Swal.fire({
@@ -452,7 +493,7 @@ function packageInventoryManager() {
 
         isAllSelected(packageId) {
             const packageData = this.packages.find(p => p.id === packageId);
-            if (!packageData || !packageData.inventories || packageData.inventories.length === 0) return false;
+            if (!packageData || !packageData.inventory || packageData.inventory.length === 0) return false;
             return packageData.inventory.every(inv => this.selectedItems.includes(inv.id));
         },
 
@@ -480,25 +521,36 @@ function packageInventoryManager() {
             this.isLoading = true;
             let successCount = 0;
             let failureCount = 0;
+            let responseMessage = '';
 
-            for (const id of this.selectedItems) {
-                try {
-                    const res = await fetch(`/admin/packages/inventory/${id}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': csrf,
-                            'Accept': 'application/json'
-                        }
-                    });
+            try {
+                const res = await fetch('/admin/packages/inventory/bulk-delete', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ ids: this.selectedItems })
+                });
 
-                    if (res.ok) {
-                        successCount++;
-                    } else {
-                        failureCount++;
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok) {
+                    successCount = Number(data.deleted ?? this.selectedItems.length);
+                    if (successCount > this.selectedItems.length) {
+                        successCount = this.selectedItems.length;
                     }
-                } catch (err) {
-                    failureCount++;
+                    failureCount = this.selectedItems.length - successCount;
+                    responseMessage = data.message || '';
+                    this.selectedItems.forEach(id => this.removeInventoryRecordById(id));
+                    this.clearSelection();
+                } else {
+                    failureCount = this.selectedItems.length;
+                    responseMessage = data.message || '';
                 }
+            } catch (err) {
+                failureCount = this.selectedItems.length;
             }
 
             this.isLoading = false;
@@ -506,10 +558,8 @@ function packageInventoryManager() {
             Swal.fire({
                 icon: failureCount === 0 ? 'success' : 'warning',
                 title: failureCount === 0 ? 'Deleted!' : 'Partially Deleted',
-                text: `${successCount} deleted${failureCount > 0 ? ` (${failureCount} failed)` : ''}`,
+                text: responseMessage || `${successCount} deleted${failureCount > 0 ? ` (${failureCount} failed)` : ''}`,
                 confirmButtonColor: '#2563eb'
-            }).then(() => {
-                this.refreshPage();
             });
         },
 
@@ -546,64 +596,45 @@ function packageInventoryManager() {
 
             try {
                 if (this.form.dateMode === 'range') {
-                    const startDate = new Date(this.form.dateFrom);
-                    const endDate = new Date(this.form.dateTo);
-                    let currentDate = new Date(startDate);
-                    let successCount = 0;
-                    let failureCount = 0;
+                    const payload = {
+                        package_id: Number(this.form.packageId),
+                        date_from: this.form.dateFrom,
+                        date_to: this.form.dateTo,
+                        max_groups: Number(this.form.maxGroups),
+                        is_blocked: this.form.isBlocked,
+                        block_reason: this.form.blockReason || null
+                    };
 
-                    while (currentDate < endDate) {
-                        const dateStr = currentDate.toISOString().split('T')[0];
-                        
-                        const payload = {
-                            package_id: this.form.packageId,
-                            date: dateStr,
-                            max_groups: this.form.maxGroups,
-                            is_blocked: this.form.isBlocked,
-                            block_reason: this.form.blockReason || null
-                        };
-
-                        try {
-                            const res = await fetch('/admin/packages/inventory', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': csrf,
-                                    'Accept': 'application/json'
-                                },
-                                body: JSON.stringify(payload)
-                            });
-
-                            if (res.ok) {
-                                successCount++;
-                            } else {
-                                const errData = await res.json();
-                                if (errData.message && errData.message.includes('already exists')) {
-                                    successCount++;
-                                } else {
-                                    failureCount++;
-                                }
-                            }
-                        } catch (err) {
-                            failureCount++;
-                        }
-
-                        currentDate.setDate(currentDate.getDate() + 1);
-                    }
-
-                    Swal.fire({
-                        icon: failureCount === 0 ? "success" : "warning",
-                        title: failureCount === 0 ? "Done!" : "Partial",
-                        text: `${successCount} created${failureCount > 0 ? ` (${failureCount} failed)` : ''}`,
-                        confirmButtonColor: "#2563eb"
-                    }).then(() => {
-                        window.location.reload();
+                    const res = await fetch('/admin/packages/inventory/bulk-upsert', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
                     });
+
+                    const data = await res.json();
+                    if (res.ok) {
+                        (data.data || []).forEach(inv => this.applyInventoryRecord(inv, payload.package_id));
+                        this.showModal = false;
+                        this.resetForm();
+                        await Swal.fire({
+                            icon: "success",
+                            title: "Done!",
+                            text: data.message || 'Inventory updated successfully.',
+                            confirmButtonColor: "#2563eb"
+                        });
+                        window.location.reload();
+                    } else {
+                        this.errors = data.errors ? Object.values(data.errors).flat() : [data.message || 'Failed'];
+                    }
                 } else {
                     const payload = {
-                        package_id: this.form.packageId,
+                        package_id: Number(this.form.packageId),
                         date: this.form.date,
-                        max_groups: this.form.maxGroups,
+                        max_groups: Number(this.form.maxGroups),
                         is_blocked: this.form.isBlocked,
                         block_reason: this.form.blockReason || null
                     };
@@ -629,13 +660,15 @@ function packageInventoryManager() {
                     const data = await res.json();
 
                     if (res.ok) {
-                        Swal.fire({
+                        this.applyInventoryRecord(data.data, payload.package_id);
+                        this.showModal = false;
+                        this.resetForm();
+                        await Swal.fire({
                             icon: "success",
                             title: this.editMode ? "Updated!" : "Created!",
                             confirmButtonColor: "#2563eb"
-                        }).then(() => {
-                            window.location.reload();
                         });
+                        window.location.reload();
                     } else {
                         this.errors = data.errors ? Object.values(data.errors).flat() : [data.message || 'Failed'];
                     }

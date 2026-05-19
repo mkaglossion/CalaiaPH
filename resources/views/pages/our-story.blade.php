@@ -66,7 +66,7 @@
                             Calaia Farm was born from a simple dream: to create a space where people could reconnect with nature while supporting sustainable farming practices.
                         </p>
                         <p class="text-lg leading-relaxed">
-                            Founded by <span class="font-bold text-amber-900">Gilson Chu and Georgia Rocha Chu</span>, what started as a small family farm in Calaca, Batangas has grown into a beloved nature park that welcomes visitors from all walks of life.
+                            The ownwers founded, what started as a small family farm in Calaca, Batangas has grown into a beloved nature park that welcomes visitors from all walks of life.
                         </p>
                         <p class="flex items-center gap-3 text-xl font-bold text-amber-900">
                             <span>✨</span> A vision turned into reality, one harvest at a time.

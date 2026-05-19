@@ -30,9 +30,25 @@
   $cardClass = $variant === 'admin' 
     ? 'tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 shadow-md hover:shadow-xl'
     : 'bg-white shadow-lg hover:shadow-2xl';
+
+  $today = now()->toDateString();
+  $inventoryRows = collect($package->inventory ?? []);
+  $futureInventory = $inventoryRows->filter(function ($inv) use ($today) {
+    if (empty($inv->date)) return false;
+    $invDate = $inv->date instanceof \Carbon\Carbon
+      ? $inv->date->toDateString()
+      : \Carbon\Carbon::parse($inv->date)->toDateString();
+    return $invDate >= $today;
+  });
+  $hasConfiguredInventory = $futureInventory->isNotEmpty();
+  $hasAvailableInventory = $futureInventory->contains(function ($inv) {
+    return !((bool)($inv->is_blocked ?? false)) && (int)($inv->available_groups ?? 0) > 0;
+  });
+  $isFrontendUnavailable = $variant === 'frontend' && (!$hasConfiguredInventory || !$hasAvailableInventory);
+  $packagePayload = array_merge($package->toArray(), ['is_unavailable' => $isFrontendUnavailable]);
 @endphp
 
-<div class="package-card {{ $cardClass }} rounded-2xl overflow-hidden transition flex flex-col h-full" x-data="packageCardData({{ json_encode($package) }})">
+<div class="package-card {{ $cardClass }} rounded-2xl overflow-hidden transition flex flex-col h-full" x-data="packageCardData({{ json_encode($packagePayload) }})">
   <!-- Package Image -->
   <div class="relative h-40 sm:h-48 md:h-56 overflow-hidden bg-gray-200 shrink-0">
     <img 
@@ -49,6 +65,20 @@
         <span class="{{ $package->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }} text-xs font-semibold px-3 py-1 rounded-full">
           {{ $package->is_active ? '✓ Active' : 'Draft' }}
         </span>
+      </div>
+    @endif
+
+    @if($variant === 'frontend')
+      <div class="absolute top-2 left-2">
+        @if($isFrontendUnavailable)
+          <span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded-full">
+            <i class="bi bi-x-circle-fill"></i> Unavailable
+          </span>
+        @else
+          <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">
+            <i class="bi bi-check-circle-fill"></i> Available
+          </span>
+        @endif
       </div>
     @endif
     
@@ -183,14 +213,24 @@
 
       <!-- Action Button -->
       <button 
-        @click="showBookingModal = true"
-        class="w-full bg-brand hover:bg-[#a0675a] text-white font-semibold py-2 sm:py-2.5 px-4 rounded-xl transition duration-300 ease-out transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg hover:shadow-2xl">
-        <i class="bi bi-calendar-check text-lg"></i>
-        <span class="text-sm font-bold">Book Now</span>
+        @click="if (!{{ $isFrontendUnavailable ? 'true' : 'false' }}) showBookingModal = true"
+        {{ $isFrontendUnavailable ? 'disabled' : '' }}
+        class="w-full font-semibold py-2 sm:py-2.5 px-4 rounded-xl transition duration-300 ease-out transform flex items-center justify-center gap-2
+          {{ $isFrontendUnavailable
+              ? 'bg-gray-300 text-gray-600 cursor-not-allowed shadow-none'
+              : 'bg-brand hover:bg-[#a0675a] text-white hover:scale-105 shadow-lg hover:shadow-2xl' }}">
+        <i class="bi {{ $isFrontendUnavailable ? 'bi-x-circle' : 'bi-calendar-check' }} text-lg"></i>
+        <span class="text-sm font-bold">{{ $isFrontendUnavailable ? 'Unavailable' : 'Book Now' }}</span>
       </button>
 
+      @if($isFrontendUnavailable)
+        <p class="text-xs text-red-600 font-medium text-center">
+          No inventory available for booking yet.
+        </p>
+      @endif
+
       <!-- Booking Modal (only on frontend) -->
-      @if($variant === 'frontend')
+      @if($variant === 'frontend' && !$isFrontendUnavailable)
         <x-package-booking-modal />
       @endif
     </div>
@@ -227,6 +267,32 @@ function packageCardData(pkg) {
             return parseInt(price).toLocaleString();
         },
 
+        to12HourTime(rawTime) {
+            const value = String(rawTime || '').trim();
+            if (!value) return '';
+
+            // Already in 12-hour format
+            if (/am|pm/i.test(value)) {
+                return value.toUpperCase().replace(/\s+/g, ' ');
+            }
+
+            const match = value.match(/^(\d{1,2}):(\d{2})$/);
+            if (!match) return value;
+
+            let hour = parseInt(match[1], 10);
+            const minute = match[2];
+            const suffix = hour >= 12 ? 'PM' : 'AM';
+            hour = hour % 12 || 12;
+            return `${hour}:${minute} ${suffix}`;
+        },
+
+        formatSessionTimeRange(session) {
+            if (!session) return '';
+            const start = this.to12HourTime(session.start);
+            const end = this.to12HourTime(session.end);
+            return `${start} - ${end}`.trim();
+        },
+
         getMinDate() {
             const today = new Date();
             return today.toISOString().split('T')[0];
@@ -247,6 +313,11 @@ function packageCardData(pkg) {
         },
 
         async processBooking() {
+            if (this.package.is_unavailable) {
+                this.errors = ['This package is currently unavailable for booking.'];
+                return;
+            }
+
             this.isLoading = true;
             this.errors = [];
 

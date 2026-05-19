@@ -7,10 +7,12 @@ use Illuminate\Support\Facades\Artisan;
 
 class Staycation extends Model
 {
-    protected $fillable = ['name', 'days', 'type', 'base_quantity', 'capacity', 'adults', 'children', 'image', 'price_configs', 'price'];
+    protected $fillable = ['name', 'days', 'type', 'base_quantity', 'capacity', 'max_guest_capacity', 'included_guest_capacity', 'adults', 'children', 'image', 'price_configs', 'price'];
 
     protected $casts = [
         'price_configs' => 'array',
+        'max_guest_capacity' => 'integer',
+        'included_guest_capacity' => 'integer',
     ];
 
     protected static function boot()
@@ -66,4 +68,3 @@ class Staycation extends Model
     }
 
 }
-

@@ -19,12 +19,17 @@ $nights = 0;
 $accommodationTotal = 0;
 $foodTotal = 0;
 $activitiesTotal = 0;
+$paymentSummary = [];
+$grandTotal = 0;
 
 if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations'])) {
-    // Use total_guests from PaymentService if available, otherwise calculate
+    // Use canonical payment summary when available.
+    $paymentSummary = (array) ($bookingData['payment_summary'] ?? []);
+
+    // Use total_guests from PaymentService if available, otherwise calculate.
     $totalGuests = $bookingData['total_guests'] ?? collect($bookingData['accommodations'])->sum(function($acc) { return ($acc['adults'] ?? 0) + ($acc['children'] ?? 0); });
 
-    // Use nights from PaymentService if available, otherwise calculate
+    // Use nights from PaymentService if available, otherwise calculate.
     if (isset($bookingData['nights']) && $bookingData['nights'] > 0) {
         $nights = $bookingData['nights'];
     } elseif (!empty($bookingData['checkin']) && !empty($bookingData['checkout'])) {
@@ -44,32 +49,43 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
         $nights = 1; // default to 1 night if no dates
     }
 
-  // Always recalculate accommodation total from stored total_price (more reliable than final_totals)
-  foreach ($bookingData['accommodations'] as $roomId => $accommodation) {
-      if (!empty($accommodation)) {
-          $accommodationTotal += $accommodation['total_price'] ?? 0;
-      }
-  }
-  
-  // Calculate activities total
-  $activitiesTotal = collect($selectedActivities ?? [])->sum(function($activity) {
-      return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
-  });
-  
-  // Always calculate food total from selectedFoods array data (most accurate)
-  if (!empty($selectedFoods)) {
-      foreach ($selectedFoods as $foodData) {
-          $foodTotal += ($foodData['price'] ?? 0) * ($foodData['quantity'] ?? 1); // No nights multiplication
-      }
-  }
-  
-  // Calculate grand total for staycation
-  $grandTotal = $accommodationTotal + $activitiesTotal + $foodTotal;
+    if (!empty($paymentSummary)) {
+        $accommodationTotal = (float) ($bookingData['final_totals']['accommodation_total'] ?? 0);
+        $foodTotal = (float) ($bookingData['final_totals']['food_total'] ?? 0);
+        $activitiesTotal = (float) ($bookingData['final_totals']['activities_total'] ?? 0);
+        $grandTotal = (float) ($paymentSummary['grand_total_paid'] ?? ($bookingData['final_totals']['grand_total'] ?? 0));
+    } else {
+        foreach ($bookingData['accommodations'] as $roomId => $accommodation) {
+            if (!empty($accommodation)) {
+                $accommodationTotal += (float) ($accommodation['total_price'] ?? 0);
+            }
+        }
+
+        $activitiesTotal = collect($selectedActivities ?? [])->sum(function($activity) {
+            return (float) ($activity['price'] ?? 0) * (int) ($activity['guests'] ?? 1);
+        });
+
+        if (!empty($selectedFoods)) {
+            foreach ($selectedFoods as $foodData) {
+                $foodTotal += (float) ($foodData['price'] ?? 0) * (int) ($foodData['quantity'] ?? 1);
+            }
+        }
+
+        $grandTotal = $accommodationTotal + $activitiesTotal + $foodTotal;
+    }
 }
 
 // Calculate VAT breakdown using VatService (12% Philippine VAT)
 $vatService = app(\App\Services\VatService::class);
-$vatBreakdown = $vatService->generateBreakdown((float) ($grandTotal ?? 0), true); // true = VAT inclusive
+if ((isset($isStaycation) && $isStaycation) && !empty($paymentSummary)) {
+    $fallbackVat = $vatService->generateBreakdown((float) ($grandTotal ?? 0), true);
+    $vatBreakdown = [
+        'gross_amount' => (float) ($paymentSummary['grand_total_paid'] ?? ($grandTotal ?? 0)),
+        'vat_amount' => (float) ($paymentSummary['vat_amount'] ?? ($fallbackVat['vat_amount'] ?? 0)),
+    ];
+} else {
+    $vatBreakdown = $vatService->generateBreakdown((float) ($grandTotal ?? 0), true); // true = VAT inclusive
+}
 @endphp
 
 @php
@@ -333,7 +349,8 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                       $quantity = $accommodation['quantity'] ?? 1;
                       $extraMattressCount = (int)($accommodation['extra_mattress'] ?? 0);
                       $basePrice = $accommodation['base_price'] ?? 0;
-                      $mattressPrice = $accommodation['mattress_price'] ?? 0;
+                      $additionalAdults = (int)($accommodation['additional_adults'] ?? $extraMattressCount);
+                      $mattressPrice = $accommodation['additional_adult_price'] ?? ($accommodation['mattress_price'] ?? 0);
                       $petPrice = $accommodation['pet_price'] ?? 0;
                       $totalPrice = $accommodation['total_price'] ?? 0;
                       @endphp
@@ -346,11 +363,11 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                           @else
                             {{-- Regular rooms: Show guests --}}
                             @if(!empty($accommodation['adults']) || !empty($accommodation['children']))
-                              ({{ $accommodation['adults'] ?? 0 }} adult{{ ($accommodation['adults'] ?? 0) !== 1 ? 's' : '' }}, {{ $accommodation['children'] ?? 0 }} child{{ ($accommodation['children'] ?? 0) !== 1 ? 'ren' : '' }}@if($supportsExtraMattress), {{ $extraMattressCount }} extra mattress{{ $extraMattressCount !== 1 ? 'es' : '' }}@endif)
+                              ({{ $accommodation['adults'] ?? 0 }} adult{{ ($accommodation['adults'] ?? 0) !== 1 ? 's' : '' }}, {{ $accommodation['children'] ?? 0 }} child{{ ($accommodation['children'] ?? 0) !== 1 ? 'ren' : '' }}@if($supportsExtraMattress && $additionalAdults > 0), additional {{ $additionalAdults }} adult{{ $additionalAdults !== 1 ? 's' : '' }}@endif)
                             @endif
                             - &#8369;{{ number_format($totalPrice, 2) }}
-                            @if($supportsExtraMattress)
-                              + Mattress: &#8369;{{ number_format($mattressPrice, 2) }}
+                            @if($supportsExtraMattress && $mattressPrice > 0)
+                              + Additional Adult{{ $additionalAdults !== 1 ? 's' : '' }}: &#8369;{{ number_format($mattressPrice, 2) }}
                             @endif
                             @if($petPrice > 0)
                               + Pet: &#8369;{{ number_format($petPrice, 2) }}
@@ -421,6 +438,12 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                 <div class="flex justify-between items-center text-sm">
                   <span>Activities Total:</span>
                   <span>₱{{ number_format($activitiesTotal, 2) }}</span>
+                </div>
+                @endif
+                @if((float)($paymentSummary['promo_discount'] ?? 0) > 0)
+                <div class="flex justify-between items-center text-sm text-green-700">
+                  <span>Promo Discount:</span>
+                  <span>-&#8369;{{ number_format((float)($paymentSummary['promo_discount'] ?? 0), 2) }}</span>
                 </div>
                 @endif
                 {{-- Subtotal (VAT-inclusive) --}}

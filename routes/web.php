@@ -193,6 +193,8 @@ Route::post('/booking/activities', [BookingController::class, 'storeActivities']
 Route::get('/booking/staycation/activities', [BookingController::class, 'staycationActivities'])->name('booking.staycationActivities');
 Route::post('/booking/staycation/activities', [BookingController::class, 'storeStaycationActivities'])->name('booking.storeStaycationActivities');
 Route::get('/booking/staycation/payment', [BookingController::class, 'staycationPayment'])->name('booking.staycationPayment');
+Route::get('/booking/payment/success', [BookingController::class, 'paymentSuccess'])->name('booking.payment.success');
+Route::get('/booking/payment/failed', [BookingController::class, 'paymentFailed'])->name('booking.payment.failed');
 Route::match(['GET', 'POST'], '/booking/staycation', [BookingController::class, 'staycation'])->name('booking.staycation');
 Route::post('/booking/save-session', [BookingController::class, 'saveBookingSession'])->name('booking.saveSession');
 Route::get('/booking/staycation/availability', [BookingController::class, 'staycationAvailability'])->name('booking.staycationAvailability');
@@ -508,6 +510,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::prefix('bookings')->group(function () {
         Route::get('/', [AdminBookingsController::class, 'index'])->name('admin.bookings.index');
         Route::get('/inventory', [InventoryManagementController::class, 'index'])->name('admin.bookings.inventory');
+        Route::get('/paymongo-webhooks', [AdminBookingsController::class, 'paymongoWebhooks'])->name('admin.bookings.paymongo-webhooks');
 
         // Booking Extra Fees (mattress, pet fees) - must come before {id} route
         Route::get('/extra-fees', [BookingSettingsController::class, 'index'])->name('admin.booking-settings.index');
@@ -557,11 +560,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::delete('/day-tour/inventory/{inventory}', [DayTourInventoryController::class, 'delete'])->name('admin.day-tour.inventory.delete');
     });
     Route::prefix('/packages')->group(function () {
-        // Temporarily redirect package admin pages to What to Do CMS.
+        // Hide direct package manager pages; use What to Do CMS section instead.
         Route::get('/', function () { return redirect()->route('admin.do.whattodo'); })->name('admin.packages.index');
         Route::get('/create', function () { return redirect()->route('admin.do.whattodo'); })->name('admin.packages.create');
         Route::post('/', [PackageController::class, 'store'])->name('admin.packages.store');
-        Route::get('/{package}/edit', function () { return redirect()->route('admin.do.whattodo'); })->name('admin.packages.edit');
+        Route::get('/{package}/edit', [PackageController::class, 'edit'])->name('admin.packages.edit');
         Route::put('/{package}', [PackageController::class, 'update'])->name('admin.packages.update');
         Route::delete('/{package}', [PackageController::class, 'destroy'])->name('admin.packages.destroy');
         
@@ -570,9 +573,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         // Inventory Routes (must come after other routes)
         Route::get('/inventory', function () { return redirect('/admin/bookings/inventory'); })->name('admin.packages.inventory');
         Route::post('/inventory', [PackageInventoryController::class, 'storeInventory'])->name('admin.packages.inventory.store');
+        Route::post('/inventory/bulk-upsert', [PackageInventoryController::class, 'bulkUpsert'])->name('admin.packages.inventory.bulk-upsert');
+        Route::delete('/inventory/bulk-delete', [PackageInventoryController::class, 'bulkDeleteByIds'])->name('admin.packages.inventory.bulk-delete');
         Route::put('/inventory/{inventory}', [PackageInventoryController::class, 'updateInventoryRecord'])->name('admin.packages.inventory.update');
         Route::delete('/inventory/{inventory}', [PackageInventoryController::class, 'destroyInventory'])->name('admin.packages.inventory.destroy');
-        Route::get('/information', function () { return redirect()->route('admin.do.whattodo'); })->name('admin.packages.packagesInfos');
+        Route::get('/information', [AdminPagesController::class, 'packages'])->name('admin.packages.packagesInfos');
         Route::resource('swiper-images', PackageSwiperImageController::class, ['names' => [
             'store' => 'package-swiper-images.store',
             'update' => 'package-swiper-images.update',
@@ -591,6 +596,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/settings', [AdminController::class, 'staySettings'])->name('admin.stay.settings');
         Route::get('/inventory', function () { return redirect('/admin/bookings/inventory'); })->name('admin.stay.inventory');
         Route::post('/inventory', [InventoryController::class, 'store'])->name('admin.stay.inventory.store');
+        Route::post('/inventory/bulk-upsert', [InventoryController::class, 'bulkUpsert'])->name('admin.stay.inventory.bulk-upsert');
+        Route::delete('/inventory/bulk-delete', [InventoryController::class, 'bulkDeleteByIds'])->name('admin.stay.inventory.bulk-delete');
         Route::put('/inventory/{inventory}', [InventoryController::class, 'update'])->name('admin.stay.inventory.update');
         Route::delete('/inventory/{inventory}', [InventoryController::class, 'delete'])->name('admin.stay.inventory.delete');
         // Removed redundant booking settings - now using centralized PricingConfig system

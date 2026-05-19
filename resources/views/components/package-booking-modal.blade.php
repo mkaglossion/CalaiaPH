@@ -90,7 +90,7 @@
                                 class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 transition">
                                 <option value="">-- Select Time --</option>
                                 <template x-for="session in package.sessions" :key="session.name">
-                                    <option :value="session.name" x-text="session.name + ': ' + session.start + ' - ' + session.end"></option>
+                                    <option :value="session.name" x-text="session.name + ': ' + formatSessionTimeRange(session)"></option>
                                 </template>
                             </select>
                         </div>

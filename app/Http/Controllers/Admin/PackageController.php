@@ -25,7 +25,7 @@ class PackageController extends Controller
      */
     public function create()
     {
-        return view('admin.packages.create');
+        return redirect()->route('admin.do.whattodo');
     }
 
     /**
@@ -122,7 +122,7 @@ class PackageController extends Controller
             return response()->json($package);
         }
 
-        return view('admin.packages.edit', compact('package'));
+        return redirect()->route('admin.do.whattodo');
     }
 
     /**

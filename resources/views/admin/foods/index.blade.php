@@ -57,7 +57,7 @@
     class="p-3 sm:p-6 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-lg sm:rounded-xl"
 >
     @php
-        $mobileLayoutStep2 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step2_food')->value('value') ?? 1);
+        $mobileLayoutStep2 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step2_food')->value('value') ?? 3);
     @endphp
 
     <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-2 sm:mb-3 tracking-tight text-gray-900">

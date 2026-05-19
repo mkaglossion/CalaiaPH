@@ -326,8 +326,50 @@ function staycationInventoryManager() {
             this.errors = [];
         },
 
-        refreshPage() {
-            window.location.reload();
+        normalizeDate(dateValue) {
+            if (!dateValue) return '';
+            const date = new Date(dateValue);
+            if (Number.isNaN(date.getTime())) return '';
+            return date.toISOString().split('T')[0];
+        },
+
+        sortInventories(staycation) {
+            if (!staycation || !Array.isArray(staycation.inventories)) return;
+            staycation.inventories.sort((a, b) => new Date(a.date) - new Date(b.date));
+        },
+
+        applyInventoryRecord(record, fallbackStaycationId = null) {
+            const staycationId = Number(record?.staycation_id ?? fallbackStaycationId);
+            if (!staycationId) return;
+
+            const staycation = this.staycations.find(s => Number(s.id) === staycationId);
+            if (!staycation) return;
+
+            if (!Array.isArray(staycation.inventories)) {
+                staycation.inventories = [];
+            }
+
+            const normalized = {
+                ...record,
+                date: this.normalizeDate(record.date),
+                staycation_id: staycationId,
+            };
+
+            const idx = staycation.inventories.findIndex(inv => Number(inv.id) === Number(normalized.id));
+            if (idx >= 0) {
+                staycation.inventories.splice(idx, 1, normalized);
+            } else {
+                staycation.inventories.push(normalized);
+            }
+            this.sortInventories(staycation);
+        },
+
+        removeInventoryRecordById(id) {
+            this.staycations.forEach(staycation => {
+                if (!Array.isArray(staycation.inventories)) return;
+                staycation.inventories = staycation.inventories.filter(inv => Number(inv.id) !== Number(id));
+            });
+            this.selectedItems = this.selectedItems.filter(itemId => Number(itemId) !== Number(id));
         },
 
         editStaycation(staycationId) {
@@ -401,9 +443,8 @@ function staycationInventoryManager() {
                             icon: 'success',
                             title: 'Deleted!',
                             confirmButtonColor: '#2563eb'
-                        }).then(() => {
-                            this.refreshPage();
                         });
+                        this.removeInventoryRecordById(id);
                     })
                     .catch(err => {
                        Swal.fire({
@@ -481,27 +522,39 @@ function staycationInventoryManager() {
 
             const csrf = document.querySelector('meta[name=csrf-token]').content;
             this.isLoading = true;
+
             let successCount = 0;
             let failureCount = 0;
+            let responseMessage = '';
 
-            for (const id of this.selectedItems) {
-                try {
-                    const res = await fetch(`/admin/stay/inventory/${id}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': csrf,
-                            'Accept': 'application/json'
-                        }
-                    });
+            try {
+                const res = await fetch('/admin/stay/inventory/bulk-delete', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ ids: this.selectedItems })
+                });
 
-                    if (res.ok) {
-                        successCount++;
-                    } else {
-                        failureCount++;
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok) {
+                    successCount = Number(data.deleted ?? this.selectedItems.length);
+                    if (successCount > this.selectedItems.length) {
+                        successCount = this.selectedItems.length;
                     }
-                } catch (err) {
-                    failureCount++;
+                    failureCount = this.selectedItems.length - successCount;
+                    responseMessage = data.message || '';
+                    this.selectedItems.forEach(id => this.removeInventoryRecordById(id));
+                    this.clearSelection();
+                } else {
+                    failureCount = this.selectedItems.length;
+                    responseMessage = data.message || '';
                 }
+            } catch (err) {
+                failureCount = this.selectedItems.length;
             }
 
             this.isLoading = false;
@@ -509,10 +562,8 @@ function staycationInventoryManager() {
             Swal.fire({
                 icon: failureCount === 0 ? 'success' : 'warning',
                 title: failureCount === 0 ? 'Deleted!' : 'Partially Deleted',
-                text: `${successCount} deleted${failureCount > 0 ? ` (${failureCount} failed)` : ''}`,
+                text: responseMessage || `${successCount} deleted${failureCount > 0 ? ` (${failureCount} failed)` : ''}`,
                 confirmButtonColor: '#2563eb'
-            }).then(() => {
-                this.refreshPage();
             });
         },
 
@@ -549,64 +600,45 @@ function staycationInventoryManager() {
 
             try {
                 if (this.form.dateMode === 'range') {
-                    const startDate = new Date(this.form.dateFrom);
-                    const endDate = new Date(this.form.dateTo);
-                    let currentDate = new Date(startDate);
-                    let successCount = 0;
-                    let failureCount = 0;
+                    const payload = {
+                        staycation_id: Number(this.form.staycationId),
+                        date_from: this.form.dateFrom,
+                        date_to: this.form.dateTo,
+                        total_quantity: Number(this.form.totalQuantity),
+                        is_blocked: this.form.isBlocked,
+                        block_reason: this.form.blockReason || null
+                    };
 
-                    while (currentDate < endDate) {
-                        const dateStr = currentDate.toISOString().split('T')[0];
-                        
-                        const payload = {
-                            staycation_id: this.form.staycationId,
-                            date: dateStr,
-                            total_quantity: this.form.totalQuantity,
-                            is_blocked: this.form.isBlocked,
-                            block_reason: this.form.blockReason || null
-                        };
-
-                        try {
-                            const res = await fetch('/admin/stay/inventory', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': csrf,
-                                    'Accept': 'application/json'
-                                },
-                                body: JSON.stringify(payload)
-                            });
-
-                            if (res.ok) {
-                                successCount++;
-                            } else {
-                                const errData = await res.json();
-                                if (errData.message && errData.message.includes('already exists')) {
-                                    successCount++;
-                                } else {
-                                    failureCount++;
-                                }
-                            }
-                        } catch (err) {
-                            failureCount++;
-                        }
-
-                        currentDate.setDate(currentDate.getDate() + 1);
-                    }
-
-                    Swal.fire({
-                        icon: failureCount === 0 ? "success" : "warning",
-                        title: failureCount === 0 ? "Done!" : "Partial",
-                        text: `${successCount} created${failureCount > 0 ? ` (${failureCount} failed)` : ''}`,
-                        confirmButtonColor: "#2563eb"
-                    }).then(() => {
-                        window.location.reload();
+                    const res = await fetch('/admin/stay/inventory/bulk-upsert', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
                     });
+
+                    const data = await res.json();
+                    if (res.ok) {
+                        (data.data || []).forEach(inv => this.applyInventoryRecord(inv, payload.staycation_id));
+                        this.showModal = false;
+                        this.resetForm();
+                        await Swal.fire({
+                            icon: "success",
+                            title: "Done!",
+                            text: data.message || 'Inventory updated successfully.',
+                            confirmButtonColor: "#2563eb"
+                        });
+                        window.location.reload();
+                    } else {
+                        this.errors = data.errors ? Object.values(data.errors).flat() : [data.message || 'Failed'];
+                    }
                 } else {
                     const payload = {
-                        staycation_id: this.form.staycationId,
+                        staycation_id: Number(this.form.staycationId),
                         date: this.form.date,
-                        total_quantity: this.form.totalQuantity,
+                        total_quantity: Number(this.form.totalQuantity),
                         is_blocked: this.form.isBlocked,
                         block_reason: this.form.blockReason || null
                     };
@@ -632,13 +664,15 @@ function staycationInventoryManager() {
                     const data = await res.json();
 
                     if (res.ok) {
-                        Swal.fire({
+                        this.applyInventoryRecord(data.data, payload.staycation_id);
+                        this.showModal = false;
+                        this.resetForm();
+                        await Swal.fire({
                             icon: "success",
                             title: this.editMode ? "Updated!" : "Created!",
                             confirmButtonColor: "#2563eb"
-                        }).then(() => {
-                            window.location.reload();
                         });
+                        window.location.reload();
                     } else {
                         this.errors = data.errors ? Object.values(data.errors).flat() : [data.message || 'Failed'];
                     }

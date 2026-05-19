@@ -590,13 +590,13 @@ function applyPromoCode() {
             // Show promo details
             document.getElementById('promo_name').textContent = data.promo_code.name;
             document.getElementById('promo_description').textContent = data.promo_code.code;
-            document.getElementById('promo_discount').textContent = '₱' + parseFloat(data.promo_code.discount_amount).toFixed(2);
+            document.getElementById('promo_discount').textContent = formatPhpCurrency(parseFloat(data.promo_code.discount_amount));
             document.getElementById('promo_details').classList.remove('hidden');
 
             // Update totals display
             updateTotalsDisplay(parseFloat(data.new_total));
 
-            showPromoStatus('success', data.message + ' You saved ₱' + parseFloat(data.promo_code.discount_amount).toFixed(2) + '!');
+            showPromoStatus('success', data.message + ' You saved ' + formatPhpCurrency(parseFloat(data.promo_code.discount_amount)) + '!');
 
             // Change button to remove
             btn.innerHTML = '<i class="bi bi-x-circle"></i> Remove';
@@ -651,14 +651,23 @@ function updateTotalsDisplay(newTotal) {
     // Update the button total
     const buttonTotal = document.getElementById('button-total');
     if (buttonTotal) {
-        buttonTotal.textContent = '₱' + newTotal.toFixed(2);
+        buttonTotal.textContent = formatPhpCurrency(newTotal);
     }
 
     // Update sidebar grand total
     const sidebarTotal = document.getElementById('grand-total');
     if (sidebarTotal) {
-        sidebarTotal.textContent = '₱' + newTotal.toFixed(2);
+        sidebarTotal.textContent = formatPhpCurrency(newTotal);
     }
+}
+
+function formatPhpCurrency(amount) {
+    const value = Number(amount);
+    if (!Number.isFinite(value)) return '₱0.00';
+    return '₱' + value.toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
 }
 
 function showPromoStatus(type, message) {

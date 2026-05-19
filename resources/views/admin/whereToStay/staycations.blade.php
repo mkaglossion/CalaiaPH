@@ -15,7 +15,7 @@
     </h1>
     <p class="text-gray-600 mb-8 sm:mb-10 text-sm sm:text-base">Manage all your accommodation options, capacity, pricing, and inventory.</p>
     @php
-        $mobileLayoutStep1 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step1_availability')->value('value') ?? 1);
+        $mobileLayoutStep1 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step1_availability')->value('value') ?? 3);
     @endphp
 
     <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
@@ -121,7 +121,10 @@
                     @endphp
                     
                     <template x-if="!staycation.name || (!staycation.name.toLowerCase().includes('byot') && !staycation.name.toLowerCase().includes('car camping') && !staycation.name.toLowerCase().includes('bring your own'))">
-                        <p><span x-text="`Adults: ${staycation.adults || 'N/A'} | Children: ${staycation.children || 'N/A'}`"></span></p>
+                        <div class="space-y-1">
+                            <p><span x-text="`Base included guests: ${staycation.included_guest_capacity || staycation.capacity || ((staycation.adults || 0) + (staycation.children || 0)) || 0}`"></span></p>
+                            <p><span x-text="`Max guests: ${staycation.max_guest_capacity || staycation.capacity || 'N/A'}`"></span></p>
+                        </div>
                     </template>
                     
                     <template x-if="staycation.name && (staycation.name.toLowerCase().includes('byot') || staycation.name.toLowerCase().includes('car camping') || staycation.name.toLowerCase().includes('bring your own'))">
@@ -266,7 +269,7 @@
                 @csrf
 
                 <!-- Staycation Name, Days, Adults & Children -->
-                <div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5" :class="isSpecialStaycation ? 'lg:grid-cols-3' : ''">
+                <div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6" :class="isSpecialStaycation ? 'lg:grid-cols-3' : ''">
                     <div>
                         <label for="staycation_name" class="block text-sm font-medium mb-1">Staycation Name</label>
                         <input type="text" id="staycation_name" name="name" autocomplete="off" x-model="form.name" @input="updateSpecialRoomStatus()" class="w-full border rounded px-3 py-2 h-10" placeholder="Premium Glamping Tent" required>
@@ -279,13 +282,26 @@
                     </div>
 
                     <div x-show="!isSpecialStaycation">
-                        <label for="staycation_adults" class="block text-sm font-medium mb-1">Adults</label>
+                        <label for="staycation_adults" class="block text-sm font-medium mb-1">Base Adults Included</label>
                         <input type="number" id="staycation_adults" name="adults" x-model.number="form.adults" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
                     </div>
                     <div x-show="!isSpecialStaycation">
-                        <label for="staycation_children" class="block text-sm font-medium mb-1">Children</label>
+                        <label for="staycation_children" class="block text-sm font-medium mb-1">Base Children Included</label>
                         <input type="number" id="staycation_children" name="children" x-model.number="form.children" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
                     </div>
+                    <div x-show="!isSpecialStaycation">
+                        <label for="staycation_max_capacity" class="block text-sm font-medium mb-1">Maximum Guests Allowed</label>
+                        <input type="number" id="staycation_max_capacity" name="max_guest_capacity" x-model.number="form.max_guest_capacity" :min="Math.max(1, form.included_guest_capacity || 1)" class="w-full border rounded px-3 py-2 h-10" placeholder="6" required>
+                        <p class="text-xs text-gray-500 mt-1">Can be higher than base setup to allow extra beds.</p>
+                    </div>
+                    <div x-show="!isSpecialStaycation">
+                        <label for="staycation_included_capacity" class="block text-sm font-medium mb-1">Base Included Guests</label>
+                        <input type="number" id="staycation_included_capacity" name="included_guest_capacity" x-model.number="form.included_guest_capacity" min="1" class="w-full border rounded px-3 py-2 h-10" placeholder="4" required>
+                        <p class="text-xs text-gray-500 mt-1">Guests covered by base price before extra mattress.</p>
+                    </div>
+                </div>
+                <div x-show="!isSpecialStaycation" class="text-xs text-gray-600 -mt-2">
+                    <span x-text="`Base included guests = ${Math.max(1, form.included_guest_capacity || 1)} • Extra bed starts from guest #${Math.max(1, form.included_guest_capacity || 1) + 1}`"></span>
                 </div>
 
                 <!-- Dynamic Price Configs -->
@@ -716,6 +732,8 @@ function staycationManager() {
             quantity: 1,
             adults: 0,
             children: 0,
+            included_guest_capacity: 1,
+            max_guest_capacity: 1,
             section: '',
             label: '',
             text: '',
@@ -760,7 +778,7 @@ function staycationManager() {
         },
 
         resetForm() {
-            this.form = { id: null, name: '', days: 1, quantity: 1, adults: 0, children: 0, priceConfigs: [], image: null, imagePreview: null, existingImage: null, removeImage: false };
+            this.form = { id: null, name: '', days: 1, quantity: 1, adults: 0, children: 0, included_guest_capacity: 1, max_guest_capacity: 1, priceConfigs: [], image: null, imagePreview: null, existingImage: null, removeImage: false };
             this.editModeStaycation = false;
             this.isSpecialStaycation = false;
             this.removeImage(); // Explicitly clear image and input
@@ -813,6 +831,8 @@ function staycationManager() {
                 this.form.quantity = staycation.capacity;
                 this.form.adults = staycation.adults;
                 this.form.children = staycation.children;
+                this.form.included_guest_capacity = Number(staycation.included_guest_capacity || staycation.capacity || ((staycation.adults || 0) + (staycation.children || 0)) || 1);
+                this.form.max_guest_capacity = Number(staycation.max_guest_capacity || staycation.capacity || this.form.included_guest_capacity || 1);
                 // Align inventory inputs with base capacity
                 this.inventoryQty = Number(staycation.base_quantity || 1);
                 this.inventoryQtyRange = Number(staycation.base_quantity || 1);
@@ -943,6 +963,29 @@ function staycationManager() {
                 });
                 return;
             }
+
+            if (!this.isSpecialRoom(this.form.name)) {
+                const includedCapacity = Number(this.form.included_guest_capacity || 0);
+                const maxCapacity = Number(this.form.max_guest_capacity || 0);
+                if (includedCapacity < 1) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Invalid Capacity',
+                        text: 'Base included guests must be at least 1.',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                    return;
+                }
+                if (maxCapacity < Math.max(1, includedCapacity)) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Invalid Capacity',
+                        text: `Max guests must be at least ${Math.max(1, includedCapacity)} based on your base included guests.`,
+                        confirmButtonColor: '#3b82f6'
+                    });
+                    return;
+                }
+            }
             
             // For non-special rooms, require at least one guest
             if (!this.isSpecialRoom(this.form.name) && this.form.adults + this.form.children === 0) {
@@ -973,6 +1016,8 @@ function staycationManager() {
             formData.append('quantity', this.form.quantity);
             formData.append('adults', this.form.adults);
             formData.append('children', this.form.children);
+            formData.append('included_guest_capacity', this.isSpecialRoom(this.form.name) ? '' : Number(this.form.included_guest_capacity || 1));
+            formData.append('max_guest_capacity', this.isSpecialRoom(this.form.name) ? '' : Number(this.form.max_guest_capacity || 0));
             formData.append('priceConfigs', JSON.stringify(this.form.priceConfigs));
             
             if (this.form.image) {

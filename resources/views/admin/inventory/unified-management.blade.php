@@ -33,12 +33,12 @@
         <form method="GET" action="{{ route('admin.bookings.inventory') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
             <div>
                 <label for="date_from" class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
-                <input type="date" id="date_from" name="date_from" value="{{ request('date_from', now()->format('Y-m-d')) }}" 
+                <input type="date" id="date_from" name="date_from" value="{{ ($dateFrom ?? now())->format('Y-m-d') }}" 
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent">
             </div>
             <div>
                 <label for="date_to" class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
-                <input type="date" id="date_to" name="date_to" value="{{ request('date_to', now()->addDays(30)->format('Y-m-d')) }}" 
+                <input type="date" id="date_to" name="date_to" value="{{ ($dateTo ?? now()->addDays(30))->format('Y-m-d') }}" 
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent">
             </div>
             <div class="flex gap-2">

@@ -204,7 +204,7 @@
     @endphp
 
     @php
-        $mobileLayoutStep2 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step2_food')->value('value') ?? 1);
+        $mobileLayoutStep2 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step2_food')->value('value') ?? 3);
     @endphp
 
     <div class="bg-[#f5efe7] min-h-screen mobile-layout-mode-{{ $mobileLayoutStep2 }}">

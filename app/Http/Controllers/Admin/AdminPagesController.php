@@ -68,9 +68,10 @@ class AdminPagesController extends Controller
         $texts = $textModel::all();
 
         if ($page === 'whatToDo') {
-            $mainPackages = Package::orderBy('created_at', 'asc')->limit(6)->get();
+            $mainPackages = Package::orderBy('created_at', 'asc')->get();
             $mainPackagesTotal = Package::count();
-            $extraData = compact('mainPackages', 'mainPackagesTotal');
+            $packages = Package::orderBy('created_at', 'asc')->paginate(15);
+            $extraData = compact('mainPackages', 'mainPackagesTotal', 'packages');
         }
 
         return view($view, compact('images', 'texts') + $extraData);

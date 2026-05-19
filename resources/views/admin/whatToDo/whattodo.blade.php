@@ -14,6 +14,7 @@
     </h1>
     <p class="text-gray-600 mb-10">Manage the image slider and content displayed on your What to Do page.</p>
 
+
     {{-- ============================================================= --}}
     {{-- SWIPER IMAGES SECTION --}}
     {{-- ============================================================= --}}
@@ -141,56 +142,235 @@
         </table>
     </div>
 
-    <div id="main-packages-preview" class="mb-10 rounded-2xl border border-gray-200 bg-white/80 backdrop-blur p-5 sm:p-6">
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5">
+    <hr class="my-10 border-gray-300">
+
+    {{-- ============================================================= --}}
+    {{-- MANAGE PACKAGES (EMBEDDED) --}}
+    {{-- ============================================================= --}}
+    <div x-data="packageManager()" class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-1">Manage Packages</h2>
+        <p class="text-gray-600 mb-6">Manage all vacation packages, bookings, and availability CalaiaPH offers</p>
+
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 mb-6">
             <div>
-                <h2 class="text-xl font-bold text-gray-900">Main Packages Preview</h2>
-                <p class="text-sm text-gray-600">
-                    Showing {{ ($mainPackages ?? collect())->count() }} of {{ $mainPackagesTotal ?? 0 }} package{{ ($mainPackagesTotal ?? 0) !== 1 ? 's' : '' }}.
-                </p>
+                <h3 class="text-xl font-bold text-gray-800">All Packages</h3>
+                <p class="text-gray-500 text-sm mt-1">Create, edit, and manage packages</p>
             </div>
+            <button
+                @click="showPackageModal = true; resetForm()"
+                class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition flex items-center justify-center gap-2">
+                <i class="fas fa-plus"></i> New Package
+            </button>
         </div>
 
-        @if(($mainPackages ?? collect())->count() > 0)
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
-                @foreach($mainPackages as $pkg)
-                    <div class="rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
-                        @if($pkg->image)
-                            <img src="{{ $pkg->image }}" alt="{{ $pkg->name }}" class="w-full h-40 object-cover">
+        @if(($packages ?? collect())->count() > 0)
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach($packages as $package)
+                    <div class="bg-white/70 backdrop-blur-lg border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden flex flex-col h-full" data-package-id="{{ $package->id }}">
+                        @if($package->image)
+                            <div class="w-full h-48 overflow-hidden">
+                                <img src="{{ $package->image }}" alt="{{ $package->name }}" class="w-full h-full object-cover">
+                            </div>
                         @else
-                            <div class="w-full h-40 bg-gray-100 flex items-center justify-center text-gray-400">
-                                <i class="bi bi-image text-3xl"></i>
+                            <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-image text-gray-400 text-4xl"></i>
                             </div>
                         @endif
 
-                        <div class="p-4 flex flex-col flex-1">
-                            <div class="flex items-start justify-between gap-3 mb-2">
-                                <h3 class="text-base font-bold text-gray-900 leading-tight">{{ $pkg->name }}</h3>
-                                <span class="shrink-0 inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold {{ $pkg->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700' }}">
-                                    {{ $pkg->is_active ? 'Active' : 'Inactive' }}
+                        <div class="p-6 flex flex-col flex-1">
+                            <h3 class="text-lg font-bold text-gray-900 mb-1">{{ $package->name }}</h3>
+                            <p class="text-gray-600 text-sm mb-3">{{ Str::limit((string)($package->description ?? ''), 100) }}</p>
+
+                            <div class="mb-3">
+                                <span class="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
+                                    Good for {{ $package->max_guests }} person{{ $package->max_guests > 1 ? 's' : '' }}
                                 </span>
                             </div>
 
-                            <p class="text-sm text-gray-600 mb-3">{{ Str::limit($pkg->description, 95) }}</p>
-
-                            <div class="space-y-1 text-sm mb-4">
-                                <p class="text-gray-800 font-semibold">₱{{ number_format($pkg->price, 0) }} <span class="text-gray-500 font-normal">{{ $pkg->pricing_type === 'per_pax' ? '/person' : '/group' }}</span></p>
-                                <p class="text-gray-600">Max guests: {{ $pkg->max_guests }}</p>
+                            <div class="mb-3">
+                                <p class="text-2xl font-bold text-gray-900">
+                                    P{{ number_format($package->price, 0) }}
+                                    <span class="text-sm font-normal text-gray-600">
+                                        {{ $package->pricing_type === 'per_pax' ? '/person' : '/group' }}
+                                    </span>
+                                </p>
+                                @if($package->pricing_type === 'per_pax')
+                                    <p class="text-sm text-gray-500">per person x {{ $package->max_guests }} = P{{ number_format($package->price * $package->max_guests, 0) }} total</p>
+                                @else
+                                    <p class="text-sm text-gray-500">covers up to {{ $package->max_guests }} people</p>
+                                @endif
                             </div>
 
-                            <div class="mt-auto flex items-center justify-between pt-3 border-t border-gray-100">
-                                <span class="text-xs text-gray-500">{{ $pkg->created_at?->format('Y-m-d') }}</span>
+                            <hr class="my-3 border-gray-200">
+
+                            @if($package->inclusions && is_array($package->inclusions) && count($package->inclusions) > 0)
+                                <div class="mb-3 flex flex-wrap gap-2">
+                                    @foreach($package->inclusions as $inclusion)
+                                        <span class="inline-block bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full font-medium">{{ $inclusion }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            <div class="flex justify-between items-center pt-3 mt-auto border-t border-gray-200">
+                                <span class="text-xs text-gray-500">{{ optional($package->created_at)->format('Y-m-d') }}</span>
+                                <div class="flex items-center space-x-4">
+                                    <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition text-sm" @click="editPackage({{ $package->id }})">Edit</button>
+                                    <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition text-sm" @click="deletePackage({{ $package->id }}, '{{ route('admin.packages.destroy', $package->id) }}')">Delete</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 @endforeach
             </div>
         @else
-            <div class="text-center py-10">
-                <p class="text-gray-500 mb-3">No packages available yet.</p>
+            <div class="text-center py-16">
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">No Packages Yet</h3>
+                <p class="text-gray-600 mb-6">Get started by creating your first package</p>
+                <button @click="showPackageModal = true; resetForm()" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-semibold">
+                    <i class="fas fa-plus mr-2"></i> Create Package
+                </button>
             </div>
         @endif
+
+        <div
+            x-show="showPackageModal"
+            class="fixed inset-0 z-1000 bg-black/50 backdrop-blur-sm px-4 py-6 overflow-y-auto"
+            x-transition.opacity
+            @click.self="showPackageModal = false"
+            @keydown.escape.window="showPackageModal = false"
+        >
+            <div class="min-h-full flex items-center justify-center">
+                <div class="bg-white/95 rounded-2xl shadow-xl w-full max-w-2xl border border-gray-200 max-h-[88vh] flex flex-col" @click.stop>
+                        <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                            <h3 class="text-2xl font-bold text-gray-900" x-text="isPackageEditMode ? 'Edit Package' : 'Create New Package'"></h3>
+                            <button @click="showPackageModal = false" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto p-6">
+                            <form @submit.prevent="savePackage" class="space-y-5" enctype="multipart/form-data">
+                                @csrf
+                                <input type="hidden" x-model="form.id" name="id" />
+
+                                <div>
+                                    <label for="pkg_name" class="block font-semibold mb-2 text-gray-700">Package Name *</label>
+                                    <input id="pkg_name" type="text" x-model="form.name" class="w-full border border-gray-300 rounded-xl px-4 py-2.5" required>
+                                </div>
+
+                                <div>
+                                    <label for="pkg_description" class="block font-semibold mb-2 text-gray-700">Description *</label>
+                                    <textarea id="pkg_description" x-model="form.description" rows="3" class="w-full border border-gray-300 rounded-xl px-4 py-2.5" required></textarea>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label for="pkg_price" class="block font-semibold mb-2 text-gray-700">Price (P) *</label>
+                                        <input id="pkg_price" type="number" x-model="form.price" step="100" min="0" class="w-full border border-gray-300 rounded-xl px-4 py-2.5" required>
+                                    </div>
+                                    <div>
+                                        <label for="pkg_duration" class="block font-semibold mb-2 text-gray-700">Duration (Days) *</label>
+                                        <input id="pkg_duration" type="number" x-model="form.duration_days" min="1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5" required>
+                                    </div>
+                                    <div>
+                                        <label for="pkg_guests" class="block font-semibold mb-2 text-gray-700">Max Guests *</label>
+                                        <input id="pkg_guests" type="number" x-model="form.max_guests" min="1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5" required>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="pkg_pricing_type" class="block font-semibold mb-2 text-gray-700">Pricing Type *</label>
+                                        <select id="pkg_pricing_type" x-model="form.pricing_type" class="w-full border border-gray-300 rounded-xl px-4 py-2.5" required>
+                                            <option value="per_pax">Per Person</option>
+                                            <option value="per_group">Per Group</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="pkg_groups_per_day" class="block font-semibold mb-2 text-gray-700">Max Groups/Day *</label>
+                                        <input id="pkg_groups_per_day" type="number" x-model="form.max_groups_per_day" min="1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5" required>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="pkg_image" class="block font-semibold mb-2 text-gray-700">Package Image</label>
+                                    <input id="pkg_image" type="file" x-ref="imageFile" accept="image/*" class="w-full border border-gray-300 rounded-xl px-4 py-2.5"
+                                        @change="
+                                            const file = $el.files[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onload = (e) => form.imagePreview = e.target.result;
+                                                reader.readAsDataURL(file);
+                                            }
+                                        ">
+                                    <template x-if="form.imagePreview">
+                                        <div class="relative inline-block mt-3">
+                                            <img :src="form.imagePreview" alt="Preview" class="h-32 rounded-lg border">
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div>
+                                    <span class="block font-semibold mb-2 text-gray-700">Inclusions</span>
+                                    <div class="flex gap-2 mb-3">
+                                        <input id="newInclusion" type="text" placeholder="e.g., Lunch, ATV Ride, Guide..." @keyup.enter="addInclusion()" class="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm">
+                                        <button type="button" @click="addInclusion()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm">Add</button>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-xl p-3 space-y-2" x-show="form.inclusionsList.length > 0">
+                                        <template x-for="(item, idx) in form.inclusionsList" :key="idx">
+                                            <div class="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2">
+                                                <span x-text="item" class="text-sm text-gray-700"></span>
+                                                <button type="button" @click="removeInclusion(idx)" class="text-red-600 font-bold">x</button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <span class="block font-semibold mb-2 text-gray-700">Available Sessions</span>
+                                    <p class="text-xs text-gray-500 mb-3">Control the booking time slots shown on the Activities page.</p>
+                                    <div class="bg-gray-50 rounded-xl p-3 space-y-3">
+                                        <template x-for="(session, idx) in form.sessions" :key="session.name">
+                                            <div class="bg-white border border-gray-200 rounded-lg p-3">
+                                                <label class="flex items-center gap-2 cursor-pointer mb-2">
+                                                    <input type="checkbox" x-model="session.enabled" class="w-4 h-4 rounded border-gray-300 text-blue-600">
+                                                    <span class="font-medium text-sm text-gray-800" x-text="session.name"></span>
+                                                </label>
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" :class="!session.enabled ? 'opacity-50' : ''">
+                                                    <div>
+                                                        <label class="block text-xs font-medium text-gray-600 mb-1">Start</label>
+                                                        <input type="time" x-model="session.start" :disabled="!session.enabled" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-100">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-xs font-medium text-gray-600 mb-1">End</label>
+                                                        <input type="time" x-model="session.end" :disabled="!session.enabled" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-100">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <input type="checkbox" id="pkg_active" x-model="form.is_active" class="w-5 h-5 rounded border-gray-300 text-blue-600">
+                                    <label for="pkg_active" class="font-medium text-gray-700">Active Package</label>
+                                </div>
+
+                                <div x-show="errors.length > 0" class="p-4 bg-red-50 border border-red-200 rounded-xl">
+                                    <template x-for="error in errors" :key="error">
+                                        <div x-text="error" class="text-red-800 text-sm"></div>
+                                    </template>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="flex justify-end space-x-3 p-6 border-t border-gray-200">
+                            <button type="button" @click="showPackageModal = false" class="px-6 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-100">Cancel</button>
+                            <button type="button" @click="savePackage()" class="px-6 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700" x-text="isPackageEditMode ? 'Update Package' : 'Create Package'"></button>
+                        </div>
+                </div>
+            </div>
+        </div>
     </div>
+
 
     {{-- ============================================================= --}}
     {{-- MODALS --}}
@@ -288,10 +468,262 @@
             <span class="text-white text-lg font-medium">Processing...</span>
         </div>
     </div>
-
+    
 </div>
 
 <script>
+function packageManager() {
+    return {
+        isLoading: false,
+        showPackageModal: false,
+        isPackageEditMode: false,
+        errors: [],
+        packages: @js(($packages ?? collect())->all()),
+        form: {
+            id: null,
+            name: '',
+            description: '',
+            price: '',
+            duration_days: '',
+            max_guests: '',
+            max_groups_per_day: '',
+            pricing_type: 'per_pax',
+            imagePreview: null,
+            inclusionsList: [],
+            sessions: [],
+            is_active: true
+        },
+
+        defaultSessions() {
+            return [
+                { name: 'Morning', start: '08:00', end: '11:00', enabled: true },
+                { name: 'Afternoon', start: '12:00', end: '15:00', enabled: true },
+                { name: 'Late Session', start: '15:30', end: '18:30', enabled: true }
+            ];
+        },
+
+        parseSessionsForForm(sourceSessions) {
+            const defaults = this.defaultSessions();
+            if (!Array.isArray(sourceSessions) || sourceSessions.length === 0) {
+                return defaults;
+            }
+
+            const normalized = sourceSessions
+                .filter(s => s && s.name)
+                .map(s => ({
+                    name: String(s.name || '').trim(),
+                    start: String(s.start || '').trim(),
+                    end: String(s.end || '').trim(),
+                }));
+
+            return defaults.map(def => {
+                const match = normalized.find(s => s.name.toLowerCase() === def.name.toLowerCase());
+                if (!match) {
+                    return { ...def, enabled: false };
+                }
+                return {
+                    ...def,
+                    start: match.start || def.start,
+                    end: match.end || def.end,
+                    enabled: true
+                };
+            });
+        },
+
+        resetForm() {
+            this.form = {
+                id: null,
+                name: '',
+                description: '',
+                price: '',
+                duration_days: '',
+                max_guests: '',
+                max_groups_per_day: '',
+                pricing_type: 'per_pax',
+                imagePreview: null,
+                inclusionsList: [],
+                sessions: this.defaultSessions(),
+                is_active: true
+            };
+            this.isPackageEditMode = false;
+            this.errors = [];
+            if (this.$refs.imageFile) this.$refs.imageFile.value = '';
+            const input = document.getElementById('newInclusion');
+            if (input) input.value = '';
+        },
+
+        addInclusion() {
+            const input = document.getElementById('newInclusion');
+            if (!input) return;
+            const value = input.value.trim();
+            if (!value) return;
+            if (this.form.inclusionsList.includes(value)) return;
+            this.form.inclusionsList.push(value);
+            input.value = '';
+        },
+
+        removeInclusion(idx) {
+            this.form.inclusionsList.splice(idx, 1);
+        },
+
+        editPackage(id) {
+            this.isLoading = true;
+            this.errors = [];
+
+            fetch(`/admin/packages/${id}/edit`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.form.id = data.id;
+                this.form.name = data.name || '';
+                this.form.description = data.description || '';
+                this.form.price = String(parseFloat(data.price) || 0);
+                this.form.duration_days = String(parseInt(data.duration_days) || 1);
+                this.form.max_guests = String(parseInt(data.max_guests) || 1);
+                this.form.max_groups_per_day = String(parseInt(data.max_groups_per_day) || 1);
+                this.form.pricing_type = data.pricing_type || 'per_pax';
+                this.form.imagePreview = data.image || null;
+                this.form.inclusionsList = Array.isArray(data.inclusions) ? data.inclusions : [];
+                this.form.sessions = this.parseSessionsForForm(data.sessions);
+                this.form.is_active = Boolean(data.is_active);
+                if (this.$refs.imageFile) this.$refs.imageFile.value = '';
+                this.isPackageEditMode = true;
+                this.$nextTick(() => {
+                    this.showPackageModal = true;
+                });
+            })
+            .catch(() => {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to load package' });
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
+        },
+
+        deletePackage(id, route) {
+            Swal.fire({
+                title: 'Delete Package?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+
+                const csrf = document.querySelector('meta[name=csrf-token]').content;
+                this.isLoading = true;
+
+                fetch(route, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then((data) => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: data.message || 'Package deleted successfully.'
+                    }).then(() => window.location.reload());
+                })
+                .catch(() => {
+                    Swal.fire({ icon: 'error', title: 'Delete Failed', text: 'Failed to delete package' });
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                });
+            });
+        },
+
+        async savePackage() {
+            this.isLoading = true;
+            this.errors = [];
+
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+            const formData = new FormData();
+
+            formData.append('name', this.form.name);
+            formData.append('description', this.form.description);
+            formData.append('price', Number(this.form.price || 0));
+            formData.append('duration_days', Number(this.form.duration_days || 1));
+            formData.append('max_guests', Number(this.form.max_guests || 1));
+            formData.append('max_groups_per_day', Number(this.form.max_groups_per_day || 1));
+            formData.append('pricing_type', this.form.pricing_type);
+            formData.append('inclusions', JSON.stringify(this.form.inclusionsList || []));
+
+            const selectedSessions = (this.form.sessions || [])
+                .filter(s => s.enabled)
+                .map(s => ({
+                    name: s.name,
+                    start: s.start,
+                    end: s.end
+                }));
+
+            if (selectedSessions.length === 0) {
+                this.errors = ['Please enable at least one available session.'];
+                this.isLoading = false;
+                return;
+            }
+
+            if (selectedSessions.some(s => !s.start || !s.end)) {
+                this.errors = ['Please complete start and end time for all enabled sessions.'];
+                this.isLoading = false;
+                return;
+            }
+
+            formData.append('sessions', JSON.stringify(selectedSessions));
+            formData.append('is_active', this.form.is_active ? 1 : 0);
+
+            if (this.$refs.imageFile && this.$refs.imageFile.files.length > 0) {
+                formData.append('image', this.$refs.imageFile.files[0]);
+            }
+
+            let url = '{{ route('admin.packages.store') }}';
+            if (this.isPackageEditMode && this.form.id) {
+                url = `/admin/packages/${this.form.id}`;
+                formData.append('_method', 'PUT');
+            }
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: this.isPackageEditMode ? 'Updated!' : 'Created!',
+                        text: data.message || 'Package saved successfully!'
+                    }).then(() => window.location.reload());
+                } else if (data.errors) {
+                    this.errors = Object.values(data.errors).flat();
+                } else {
+                    this.errors = ['Unable to save package.'];
+                }
+            } catch (e) {
+                this.errors = ['An unexpected error occurred. Please try again.'];
+            } finally {
+                this.isLoading = false;
+            }
+        }
+    };
+}
+
 function whatToDoManager() {
     return {
         isLoading: false,

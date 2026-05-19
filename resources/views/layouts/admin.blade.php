@@ -93,6 +93,7 @@
           ['title'=>'Bookings','icon'=>'calendar-check','route'=>'admin.bookings.*','sub'=>[
             ['label'=>'All Bookings','route'=>'admin.bookings.index'],
             ['label'=>'Unified Inventory','route'=>'admin.bookings.inventory'],
+            ['label'=>'PayMongo Logs','route'=>'admin.bookings.paymongo-webhooks'],
           ]],
           ['title'=>'Reservation Monitor','icon'=>'bell-ring','route'=>'admin.reservations.*','sub'=>[
             ['label'=>'Monitor','route'=>'admin.reservations.monitor'],
