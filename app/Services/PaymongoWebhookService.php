@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\PackageBooking;
 use App\Models\PackageInventory;
 use App\Models\AdminSystemAlert;
+use App\Models\ShopOrder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -37,6 +38,9 @@ class PaymongoWebhookService
             'payment.failed' => self::handlePaymentFailed($data),
             'checkout_session.payment_failed' => self::handleCheckoutPaymentFailed($data),
             'checkout_session.payment_success' => self::handleCheckoutPaymentSuccess($data),
+            // Current PayMongo naming used in checkout webhooks
+            'checkout_session.payment.paid' => self::handleCheckoutPaymentSuccess($data),
+            'checkout_session.payment.failed' => self::handleCheckoutPaymentFailed($data),
             default => self::handleUnknownEvent($eventType, $data),
         };
     }
@@ -48,6 +52,8 @@ class PaymongoWebhookService
         $status = $attributes['status'] ?? null;
         $amount = $attributes['amount'] ?? 0;
         $referenceNumber = $attributes['reference'] ?? null;
+        $referenceNumber = $referenceNumber ?: ($attributes['reference_number'] ?? null);
+        $checkoutSessionId = data_get($attributes, 'source.id');
 
         Log::info("PayMongo payment paid event", [
             'payment_id' => $paymentId,
@@ -56,6 +62,10 @@ class PaymongoWebhookService
         ]);
 
         if ($status === 'paid') {
+            if (self::markShopOrderPaid($referenceNumber, $checkoutSessionId, $paymentId, $amount)) {
+                return true;
+            }
+
             // Try existing Booking flow first
             if ($referenceNumber) {
                 $booking = self::findBookingByReference($referenceNumber);
@@ -162,11 +172,17 @@ class PaymongoWebhookService
         $attributes = $data['attributes'] ?? [];
         $paymentId = $data['id'] ?? null;
         $referenceNumber = $attributes['reference'] ?? null;
+        $referenceNumber = $referenceNumber ?: ($attributes['reference_number'] ?? null);
+        $checkoutSessionId = data_get($attributes, 'source.id');
 
         Log::warning("PayMongo payment failed event", [
             'payment_id' => $paymentId,
             'reference' => $referenceNumber,
         ]);
+
+        if (self::markShopOrderFailed($referenceNumber, $checkoutSessionId, $paymentId)) {
+            return true;
+        }
 
         if ($referenceNumber) {
             $booking = self::findBookingByReference($referenceNumber);
@@ -202,11 +218,16 @@ class PaymongoWebhookService
         $attributes = $data['attributes'] ?? [];
         $checkoutSessionId = $data['id'] ?? null;
         $referenceNumber = $attributes['reference'] ?? null;
+        $referenceNumber = $referenceNumber ?: ($attributes['reference_number'] ?? null);
 
         Log::warning("PayMongo checkout payment failed", [
             'checkout_session_id' => $checkoutSessionId,
             'reference' => $referenceNumber,
         ]);
+
+        if (self::markShopOrderFailed($referenceNumber, $checkoutSessionId)) {
+            return true;
+        }
 
         // Try Booking first
         if ($referenceNumber) {
@@ -248,6 +269,7 @@ class PaymongoWebhookService
         $attributes = $data['attributes'] ?? [];
         $checkoutSessionId = $data['id'] ?? null;
         $referenceNumber = $attributes['reference'] ?? null;
+        $referenceNumber = $referenceNumber ?: ($attributes['reference_number'] ?? null);
         $payments = $attributes['payments'] ?? [];
         $metadata = $attributes['metadata'] ?? [];
 
@@ -263,6 +285,10 @@ class PaymongoWebhookService
         $paymentId = $payment['id'] ?? null;
         $paymentAttributes = $payment['attributes'] ?? [];
         $amount = $paymentAttributes['amount'] ?? null;
+
+        if (self::markShopOrderPaid($referenceNumber, $checkoutSessionId, $paymentId, $amount)) {
+            return true;
+        }
 
         // 1) Try Booking via reference
         if ($referenceNumber) {
@@ -371,6 +397,92 @@ class PaymongoWebhookService
         }
 
         return false;
+    }
+
+    private static function markShopOrderPaid(
+        ?string $referenceNumber,
+        ?string $checkoutSessionId = null,
+        ?string $paymentReference = null,
+        $amountCentavos = null
+    ): bool {
+        $query = ShopOrder::query();
+
+        if (!empty($checkoutSessionId)) {
+            $query->where('paymongo_checkout_id', $checkoutSessionId);
+        } elseif (!empty($referenceNumber)) {
+            $query->where('transaction_id', $referenceNumber)
+                ->orWhere('order_reference', $referenceNumber);
+        } else {
+            return false;
+        }
+
+        $order = $query->first();
+        if (!$order) {
+            return false;
+        }
+
+        if (($order->payment_status ?? null) === ShopOrder::PAYMENT_STATUS_PAID) {
+            return true;
+        }
+
+        $order->payment_status = ShopOrder::PAYMENT_STATUS_PAID;
+        $order->order_status = ShopOrder::ORDER_STATUS_CONFIRMED;
+        $order->paid_at = now();
+
+        if (!empty($checkoutSessionId) && empty($order->paymongo_checkout_id)) {
+            $order->paymongo_checkout_id = $checkoutSessionId;
+        }
+
+        $order->save();
+
+        Log::info('ShopOrder marked paid via PayMongo webhook', [
+            'shop_order_id' => $order->id,
+            'order_reference' => $order->order_reference,
+            'transaction_id' => $order->transaction_id,
+            'checkout_session_id' => $checkoutSessionId,
+            'payment_reference' => $paymentReference,
+            'amount_centavos' => $amountCentavos,
+        ]);
+
+        return true;
+    }
+
+    private static function markShopOrderFailed(
+        ?string $referenceNumber,
+        ?string $checkoutSessionId = null,
+        ?string $paymentReference = null
+    ): bool {
+        $query = ShopOrder::query();
+
+        if (!empty($checkoutSessionId)) {
+            $query->where('paymongo_checkout_id', $checkoutSessionId);
+        } elseif (!empty($referenceNumber)) {
+            $query->where('transaction_id', $referenceNumber)
+                ->orWhere('order_reference', $referenceNumber);
+        } else {
+            return false;
+        }
+
+        $order = $query->first();
+        if (!$order) {
+            return false;
+        }
+
+        if (($order->payment_status ?? null) !== ShopOrder::PAYMENT_STATUS_PAID) {
+            $order->payment_status = ShopOrder::PAYMENT_STATUS_FAILED;
+            $order->order_status = ShopOrder::ORDER_STATUS_CANCELLED;
+            $order->save();
+        }
+
+        Log::warning('ShopOrder marked failed via PayMongo webhook', [
+            'shop_order_id' => $order->id,
+            'order_reference' => $order->order_reference,
+            'transaction_id' => $order->transaction_id,
+            'checkout_session_id' => $checkoutSessionId,
+            'payment_reference' => $paymentReference,
+        ]);
+
+        return true;
     }
 
     private static function handleUnknownEvent(string $eventType, array $data): bool

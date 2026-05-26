@@ -107,4 +107,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(AdminActivityLog::class);
     }
+
+    public function customerAddresses()
+    {
+        return $this->hasMany(CustomerAddress::class);
+    }
 }

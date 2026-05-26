@@ -44,7 +44,9 @@ class ShopOrder extends Model
     const PAYMENT_STATUS_FAILED = 'failed';
 
     const ORDER_STATUS_PENDING = 'pending';
-    const ORDER_STATUS_CONFIRMED = 'confirmed';
+    const ORDER_STATUS_READY = 'ready';
+    // Backward-compatible alias used by existing code paths.
+    const ORDER_STATUS_CONFIRMED = self::ORDER_STATUS_READY;
     const ORDER_STATUS_PROCESSING = 'processing';
     const ORDER_STATUS_COMPLETED = 'completed';
     const ORDER_STATUS_CANCELLED = 'cancelled';
@@ -89,7 +91,7 @@ class ShopOrder extends Model
      */
     public function isConfirmed(): bool
     {
-        return in_array($this->order_status, [self::ORDER_STATUS_CONFIRMED, self::ORDER_STATUS_COMPLETED]);
+        return in_array($this->order_status, [self::ORDER_STATUS_READY, self::ORDER_STATUS_COMPLETED], true);
     }
 
     /**

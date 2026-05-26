@@ -89,6 +89,12 @@
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
+        "audit": {
+            "ignore-abandoned": {
+                "sebastian/code-unit": "Transitive dependency of phpunit/phpunit 11.x for PHP 8.2 projects; no direct replacement available.",
+                "sebastian/code-unit-reverse-lookup": "Transitive dependency of phpunit/phpunit 11.x for PHP 8.2 projects; no direct replacement available."
+            }
+        },
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true

@@ -12,6 +12,7 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
 
 
     {{-- Flatpickr CSS --}}
@@ -42,6 +43,36 @@
             color: #ffffff;
             border-radius: 9999px;
         }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container--default .select2-selection--single {
+            height: 42px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #374151;
+            line-height: 40px;
+            padding-left: 12px;
+            padding-right: 28px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px;
+            right: 8px;
+        }
+
+        .select2-dropdown {
+            border-color: #d1d5db;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
     </style>
   </head>
   <body class="bg-[#f5efe7]">
@@ -67,23 +98,34 @@
 
     <!-- Page Header -->
     <div class="bg-white border-b border-gray-100">
-      <div class="container mx-auto px-4 py-8">
+      <div class="container mx-auto px-4 py-6 md:py-8">
         <div class="flex items-center justify-center">
           <i class="bi bi-credit-card text-2xl text-[#8f5d54] mr-3"></i>
-          <h1 class="text-2xl font-semibold text-[#8f5d54]" style="">Checkout</h1>
+          <h1 class="text-xl md:text-2xl font-semibold text-[#8f5d54]" style="">Checkout</h1>
         </div>
       </div>
     </div>
 
     <!-- Back Button -->
-    <div class="container mx-auto px-4 py-6">
-      <a href="{{ route('home') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-        <i class="bi bi-arrow-left mr-2"></i>
+    <div class="container mx-auto px-4 py-4 md:py-6">
+      <a href="{{ route('home') }}" class="inline-flex items-center gap-2 px-4 py-2 border border-[#d9c8bf] rounded-lg text-sm font-medium text-[#8f5d54] no-underline bg-white hover:bg-[#f8f2ef] transition shadow-xs">
+        <i class="bi bi-arrow-left"></i>
         Back
       </a>
     </div>
 
     <div class="container mx-auto px-4 pb-16">
+        @if(session('error'))
+            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {{ $errors->first() }}
+            </div>
+        @endif
 
         @if($cartCount === 0)
             <div class="max-w-md mx-auto text-center py-16">
@@ -97,9 +139,9 @@
                 </a>
             </div>
         @else
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-8 items-start">
                 <!-- Checkout Form -->
-                <div class="bg-white rounded-2xl shadow-xl p-6">
+                <div class="bg-white rounded-2xl shadow-xl p-4 md:p-6">
                     <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center" style="">
                         <i class="bi bi-person-lines-fill mr-2 text-[#8f5d54]"></i>
                         Contact Information
@@ -110,19 +152,19 @@
                         <div class="space-y-4">
                             <div>
                                 <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                                <input type="text" id="name" name="name" required autocomplete="name"
+                                <input type="text" id="name" name="name" value="{{ old('name') }}" required autocomplete="name"
                                        class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none">
                             </div>
 
                             <div>
                                 <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                                <input type="email" id="email" name="email" required autocomplete="email"
+                                <input type="email" id="email" name="email" value="{{ old('email') }}" required autocomplete="email"
                                        class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none">
                             </div>
 
                             <div>
                                 <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                <input type="tel" id="phone" name="phone" required autocomplete="tel"
+                                <input type="tel" id="phone" name="phone" value="{{ old('phone') }}" required autocomplete="tel"
                                        class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none">
                             </div>
 
@@ -131,14 +173,14 @@
                                 <p class="block text-sm font-medium text-gray-700 mb-3">Delivery Option</p>
                                 <div class="space-y-2">
                                     <label class="flex items-center p-3 bg-white rounded-lg border border-gray-200 cursor-pointer hover:border-[#8f5d54] transition-colors">
-                                        <input type="radio" name="delivery_option" value="pickup" class="w-4 h-4 text-[#8f5d54]" checked onchange="toggleAddressField()">
+                                        <input type="radio" name="delivery_option" value="pickup" class="w-4 h-4 text-[#8f5d54]" {{ old('delivery_option', 'pickup') === 'pickup' ? 'checked' : '' }} onchange="toggleAddressField()">
                                         <div class="ml-3">
                                             <span class="text-sm font-medium text-gray-700">Pickup at Farm</span>
                                             <p class="text-xs text-gray-500">Collect your order at CalaiaPH farm</p>
                                         </div>
                                     </label>
                                     <label class="flex items-center p-3 bg-white rounded-lg border border-gray-200 cursor-pointer hover:border-[#8f5d54] transition-colors">
-                                        <input type="radio" name="delivery_option" value="delivery" class="w-4 h-4 text-[#8f5d54]" onchange="toggleAddressField()">
+                                        <input type="radio" name="delivery_option" value="delivery" class="w-4 h-4 text-[#8f5d54]" {{ old('delivery_option') === 'delivery' ? 'checked' : '' }} onchange="toggleAddressField()">
                                         <div class="ml-3">
                                             <span class="text-sm font-medium text-gray-700">Home Delivery</span>
                                             <p class="text-xs text-gray-500">We'll deliver to your address (additional fee may apply)</p>
@@ -147,17 +189,17 @@
                                 </div>
                             </div>
 
-                            <!-- Address Field (shown when delivery is selected) -->
-                            <div id="address-field" class="hidden">
-                                <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Delivery Address <span class="text-red-500">*</span></label>
-                                <textarea id="address" name="address" rows="3" placeholder="Enter your complete delivery address (street, barangay, city, province)..." autocomplete="street-address"
-                                          class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none resize-none"></textarea>
-                                <p class="text-xs text-gray-500 mt-1">Please provide complete address including landmarks if applicable.</p>
-                            </div>
+                            <x-address.philippine-address-form
+                                :fixed-region-id="$fixedRegionId"
+                                :fixed-province-id="$fixedProvinceId"
+                                :fixed-city-id="$fixedCityId"
+                                :fixed-location-label="$fixedLocationLabel"
+                                :barangays="$barangays"
+                            />
 
                             <div>
                                 <label for="booking_date" class="block text-sm font-medium text-gray-700 mb-1">Pickup/Delivery Date</label>
-                                <input type="text" id="booking_date" name="booking_date" required autocomplete="off"
+                                <input type="text" id="booking_date" name="booking_date" value="{{ old('booking_date') }}" required autocomplete="off"
                                        class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none">
                             </div>
 
@@ -172,47 +214,16 @@
                                     rows="3"
                                     class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8f5d54] focus:border-[#8f5d54] outline-none resize-none"
                                     placeholder="Any special instructions for your order..."
-                                ></textarea>
+                                >{{ old('special_requests') }}</textarea>
                             </div>
 
-                            <!-- Payment Method Section -->
-                            <div class="mt-8 pt-6 border-t">
-                                <h3 class="text-lg font-semibold text-gray-800 mb-2">Payment Method</h3>
-                                <p class="text-sm text-gray-600 mb-4">Secure payment via PayMongo. Choose your preferred payment method including card, GCash, PayMaya, or QR PH.</p>
-                                
-                                <div class="space-y-3">
-                                    <!-- Credit/Debit Card Option -->
-                                    <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-[#8f5d54] transition-colors" onclick="document.getElementById('payment_method_card').checked = true;">
-                                        <input type="radio" id="payment_method_card" name="payment_method" value="card" required class="w-5 h-5 text-[#8f5d54] shrink-0" checked>
-                                        <div class="ml-3 flex-1">
-                                            <div class="flex items-center gap-2">
-                                                <i class="bi bi-credit-card text-[#8f5d54] text-lg"></i>
-                                                <span class="font-semibold text-gray-900">Credit/Debit Card</span>
-                                            </div>
-                                            <p class="text-sm text-gray-600 mt-1 ml-6">Secure payment via PayMongo</p>
-                                        </div>
-                                    </label>
-
-                                    <!-- Scan QR Code Option -->
-                                    <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-[#8f5d54] transition-colors" onclick="document.getElementById('payment_method_qr').checked = true;">
-                                        <input type="radio" id="payment_method_qr" name="payment_method" value="qr_code" required class="w-5 h-5 text-[#8f5d54] shrink-0">
-                                        <div class="ml-3 flex-1">
-                                            <div class="flex items-center gap-2">
-                                                <i class="bi bi-qr-code text-[#8f5d54] text-lg"></i>
-                                                <span class="font-semibold text-gray-900">Scan QR Code</span>
-                                            </div>
-                                            <p class="text-sm text-gray-600 mt-1 ml-6">Pay using GCash, PayMaya, QR PH, or other QR-enabled wallets</p>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
                         </div>
 
                     </form>
                 </div>
 
                 <!-- Order Summary -->
-                <div class="bg-white rounded-2xl shadow-xl p-6 h-fit self-start">
+                <div class="bg-white rounded-2xl shadow-xl p-4 md:p-6 h-fit self-start">
                     <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center" style="">
                         <i class="bi bi-calculator mr-2 text-[#8f5d54]"></i>
                         Order Summary
@@ -238,7 +249,7 @@
                             <span>₱{{ number_format($cartTotal, 2) }}</span>
                         </div>
 
-                        <div class="flex justify-between text-gray-600">
+                        <div class="hidden text-gray-600" aria-hidden="true">
                             <span>VAT (12%)</span>
                             <span>₱{{ number_format($vatAmount, 2) }}</span>
                         </div>
@@ -275,24 +286,81 @@
 
     {{-- Flatpickr JS --}}
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script>
     <script>
+        const barangaySelect = document.getElementById('barangay_id');
+        const addressHiddenInput = document.getElementById('address');
+        const fixedLocationLabel = {!! json_encode($fixedLocationLabel ?? 'Calaca, Batangas, CALABARZON, Philippines') !!};
+
+        function composeDeliveryAddress() {
+            const streetAddress = (document.getElementById('street_address')?.value || '').trim();
+            const subdivision = (document.getElementById('subdivision')?.value || '').trim();
+            const zipCode = (document.getElementById('zip_code')?.value || '').trim();
+            const landmark = (document.getElementById('landmark')?.value || '').trim();
+
+            const barangayText = barangaySelect?.selectedOptions?.[0]?.textContent?.trim() || '';
+
+            const line1 = [streetAddress, subdivision].filter(Boolean).join(', ');
+            const line2 = [barangayText, fixedLocationLabel].filter(Boolean).join(', ');
+            const line3 = [zipCode ? `ZIP ${zipCode}` : '', landmark ? `Landmark: ${landmark}` : ''].filter(Boolean).join(', ');
+
+            return [line1, line2, line3].filter(Boolean).join('\n');
+        }
+
+        function syncHiddenAddress() {
+            const deliveryOption = document.querySelector('input[name="delivery_option"]:checked')?.value;
+            addressHiddenInput.value = deliveryOption === 'delivery' ? composeDeliveryAddress() : '';
+        }
+
+        function setAddressFieldRequirements(isRequired) {
+            ['barangay_id', 'street_address', 'zip_code'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (isRequired) {
+                    el.setAttribute('required', 'required');
+                } else {
+                    el.removeAttribute('required');
+                }
+            });
+        }
+
+        function initializeSelect2() {
+            $('.address-select').select2({
+                width: '100%',
+                placeholder: 'Select an option',
+                allowClear: true
+            });
+        }
+
+        function bindAddressEvents() {
+            $('#barangay_id').on('change', syncHiddenAddress);
+            ['street_address', 'subdivision', 'zip_code', 'landmark'].forEach((id) => {
+                document.getElementById(id)?.addEventListener('input', syncHiddenAddress);
+            });
+        }
+
         function toggleAddressField() {
-            const deliveryOption = document.querySelector('input[name="delivery_option"]:checked').value;
+            const checkedDeliveryOption = document.querySelector('input[name="delivery_option"]:checked');
+            if (!checkedDeliveryOption) return;
+            const deliveryOption = checkedDeliveryOption.value;
             const addressField = document.getElementById('address-field');
-            const addressInput = document.getElementById('address');
-            
+            if (!addressField) return;
+
             if (deliveryOption === 'delivery') {
                 addressField.classList.remove('hidden');
-                addressInput.setAttribute('required', 'required');
+                setAddressFieldRequirements(true);
             } else {
                 addressField.classList.add('hidden');
-                addressInput.removeAttribute('required');
-                addressInput.value = '';
+                setAddressFieldRequirements(false);
             }
+
+            syncHiddenAddress();
         }
 
         // Validate form before submission
-        document.getElementById('checkout-form').addEventListener('submit', function(e) {
+        const checkoutForm = document.getElementById('checkout-form');
+        if (checkoutForm) checkoutForm.addEventListener('submit', function(e) {
             // Check if date is selected
             const bookingDate = document.getElementById('booking_date').value;
             if (!bookingDate) {
@@ -306,6 +374,36 @@
                 document.getElementById('booking_date').focus();
                 return false;
             }
+
+            const deliveryOption = document.querySelector('input[name="delivery_option"]:checked')?.value;
+            if (deliveryOption === 'delivery') {
+                const zipCode = (document.getElementById('zip_code')?.value || '').trim();
+                if (!zipCode) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'ZIP Code Required',
+                        text: 'Please provide ZIP code for delivery address.',
+                        confirmButtonColor: '#8f5d54'
+                    });
+                    document.getElementById('zip_code')?.focus();
+                    return false;
+                }
+
+                const barangayValue = barangaySelect?.value || '';
+                if (!barangayValue) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Barangay Required',
+                        text: 'Please select a barangay within Calaca service area.',
+                        confirmButtonColor: '#8f5d54'
+                    });
+                    return false;
+                }
+
+                syncHiddenAddress();
+            }
         });
 
         function markWeekends(dayElem) {
@@ -318,9 +416,15 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize address field visibility
-            toggleAddressField();
+            if (checkoutForm) {
+                initializeSelect2();
+                bindAddressEvents();
+                toggleAddressField();
+                syncHiddenAddress();
+            }
             
+            if (!document.getElementById('booking_date')) return;
+
             flatpickr('#booking_date', {
                 dateFormat: 'Y-m-d',
                 minDate: 'today',

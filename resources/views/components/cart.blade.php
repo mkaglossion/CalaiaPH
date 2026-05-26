@@ -49,11 +49,11 @@
             <div x-show="!loading && cart.count === 0" class="text-center py-8">
                 <i class="bi bi-cart-x text-5xl text-gray-300 mb-3"></i>
                 <h2 class="text-lg font-semibold text-gray-600 mb-1">Your cart is empty</h2>
-                <p class="text-gray-500 mb-4 text-sm">Start booking your staycation, activities, and shop</p>
-                <a href="{{ route('booking.calendar') }}?type=staycation"
+                <p class="text-gray-500 mb-4 text-sm">Start shopping from our store to add items to your cart</p>
+                <a href="{{ route('shop') }}"
                    class="bg-[#8f5d54] text-white px-5 py-2 rounded-lg font-semibold hover:bg-[#8f5d54]/90 transition text-sm inline-flex items-center">
-                    <i class="bi bi-calendar-event mr-1"></i>
-                    Book Staycation
+                    <i class="bi bi-bag mr-1"></i>
+                    Go to Shop
                 </a>
             </div>
 
@@ -194,11 +194,11 @@
                 </div>
 
                 <div class="mt-4 flex justify-center gap-2">
-                    <a href="/shop"
+                    <a href="{{ route('shop') }}"
                        class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition text-sm text-center">
                         Continue Shopping
                     </a>
-                    <a href="/checkout"
+                    <a href="{{ route('checkout.form') }}"
                        class="bg-[#8f5d54] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#8f5d54]/90 transition text-sm text-center">
                         Proceed to Checkout
                     </a>
@@ -224,12 +224,42 @@
                 });
             },
 
+            applyCartData(data) {
+                this.cart = {
+                    items: Array.isArray(data?.items) ? data.items : [],
+                    total: Number(data?.total ?? 0),
+                    count: Number(data?.count ?? 0)
+                };
+            },
+
+            async loadCart() {
+                this.loading = true;
+                try {
+                    const res = await fetch('/cart', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin'
+                    });
+
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    this.applyCartData(data);
+                } catch (err) {
+                    console.error('Failed to load cart:', err);
+                } finally {
+                    this.loading = false;
+                }
+            },
+
             async removeItem(id) {
                 const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                 if (!csrf) return;
 
                 try {
-                    const res = await fetch(`/cart/${id}`, {
+                    const res = await fetch(`/cart/${encodeURIComponent(id)}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': csrf,
@@ -239,7 +269,8 @@
                     });
 
                     if (res.ok) {
-                        // Item removed from cart
+                        const data = await res.json();
+                        this.applyCartData(data);
                     }
                 } catch (err) {
                     console.error('Failed to remove item:', err);
@@ -248,10 +279,12 @@
 
             toggle() {
                 this.open = !this.open;
+                if (this.open) this.loadCart();
             },
 
             init() {
-                // Cart component initialized
+                this.loadCart();
+                window.addEventListener('cart:refresh', () => this.loadCart());
             }
         }
     }

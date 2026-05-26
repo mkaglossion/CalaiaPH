@@ -92,15 +92,18 @@ use App\Http\Controllers\DayVisitController;
 use App\Http\Controllers\PaymentController;
 // ========== Root Route ==========
 
-// Debug route to check maintenance mode cache
-Route::get('/debug/maintenance', function () {
-    $settings = cache()->get('admin.settings', []);
-    return response()->json([
-        'cache_settings' => $settings,
-        'is_maintenance_active' => $settings['system_maintenance'] ?? false,
-        'cache_exists' => cache()->has('admin.settings'),
-    ]);
-});
+// Debug/test routes are local-only to avoid production exposure.
+if (app()->environment('local')) {
+    // Debug route to check maintenance mode cache
+    Route::get('/debug/maintenance', function () {
+        $settings = cache()->get('admin.settings', []);
+        return response()->json([
+            'cache_settings' => $settings,
+            'is_maintenance_active' => $settings['system_maintenance'] ?? false,
+            'cache_exists' => cache()->has('admin.settings'),
+        ]);
+    });
+}
 
 // Admin login (separate page) - allowed during maintenance via middleware except rules
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -112,7 +115,9 @@ Route::get('/', function () {
 
 // ========== Public Routes ==========
 Route::get('/home', [PagesController::class, 'home'])->name('home');
-Route::get('/settings-test', function() { return view('settings-test'); })->name('settings.test');
+if (app()->environment('local')) {
+    Route::get('/settings-test', function() { return view('settings-test'); })->name('settings.test');
+}
 Route::get('/our-story', [PagesController::class, 'ourStory'])->name('our-story');
 Route::get('/sustainability', [PagesController::class, 'sustainability'])->name('sustainability');
 Route::get('/our-services', [PagesController::class, 'ourServices'])->name('our-services');
@@ -287,16 +292,19 @@ Route::get('/api/booking/staycation/prices', [BookingController::class, 'getStay
 // API Routes for inventory (public access for preview purposes)
 Route::get('/api/inventory/{roomId}', [\App\Http\Controllers\Admin\InventoryController::class, 'getInventory'])->name('api.inventory.get');
 Route::get('/api/day-tour-inventory/{dayTourId}', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getInventory'])->name('api.day-tour-inventory.get');
-Route::get('/test-inventory/{dayTourId}', function($dayTourId) {
-    $controller = new \App\Http\Controllers\Admin\DayTourInventoryController(new \App\Services\DayTourInventoryService());
-    return $controller->getInventory($dayTourId);
-});
+if (app()->environment('local')) {
+    Route::get('/test-inventory/{dayTourId}', function($dayTourId) {
+        $controller = new \App\Http\Controllers\Admin\DayTourInventoryController(new \App\Services\DayTourInventoryService());
+        return $controller->getInventory($dayTourId);
+    });
+}
 Route::post('/booking/select-dates', [BookingController::class, 'selectDates'])->name('booking.selectDates');
 Route::post('/booking/check-availability', [BookingController::class, 'checkAvailability'])->name('booking.checkAvailability');
 Route::get('/booking/payment', [BookingController::class, 'payment'])->name('booking.payment');
 Route::post('/booking/create-payment-intent', [BookingController::class, 'createPaymentIntent'])->name('booking.createPaymentIntent');
 Route::post('/booking/initiate-payment', [BookingController::class, 'initiatePayment'])->name('booking.initiatePayment');
 Route::post('/booking/payment', [BookingController::class, 'processPayment'])->name('booking.processPayment');
+if (app()->environment('local')) {
 Route::get('/test-paymongo', function() {
     try {
         $client = new \GuzzleHttp\Client();
@@ -334,34 +342,37 @@ Route::get('/test-success', function() {
 Route::get('/test-failed', function() {
     return "Payment Failed or Cancelled.";
 });
+}
 Route::get('/booking/confirmation', [BookingController::class, 'confirmation'])->name('booking.confirmation');
 Route::get('/booking/widget', [BookingController::class, 'widget'])->name('booking.widget');
 Route::post('/booking/calculate-price', [BookingController::class, 'getDynamicPrice'])->name('booking.calculatePrice');
-Route::get('/debug-pricing', function () {
-    $configs = \App\Models\PricingConfig::where('unit_type', 'glamping')
-        ->with(['peakType', 'dayType'])
-        ->get();
+if (app()->environment('local')) {
+    Route::get('/debug-pricing', function () {
+        $configs = \App\Models\PricingConfig::where('unit_type', 'glamping')
+            ->with(['peakType', 'dayType'])
+            ->get();
 
-    $data = [];
-    foreach ($configs as $config) {
-        $data[] = [
-            'id' => $config->id,
-            'unit_type' => $config->unit_type,
-            'peak_type' => $config->peakType->name,
-            'day_type' => $config->dayType->name,
-            'price' => $config->price
-        ];
-    }
+        $data = [];
+        foreach ($configs as $config) {
+            $data[] = [
+                'id' => $config->id,
+                'unit_type' => $config->unit_type,
+                'peak_type' => $config->peakType->name,
+                'day_type' => $config->dayType->name,
+                'price' => $config->price
+            ];
+        }
 
-    return response()->json($data);
-});
+        return response()->json($data);
+    });
 
-Route::get('/debug-session', [BookingController::class, 'debugSession']);
+    Route::get('/debug-session', [BookingController::class, 'debugSession']);
 
-Route::get('/booking/reset-inventory', function () {
-    session()->forget('inventory');
-    return redirect('/booking/widget')->with('success', 'Inventory reset!');
-})->name('booking.reset-inventory');
+    Route::get('/booking/reset-inventory', function () {
+        session()->forget('inventory');
+        return redirect('/booking/widget')->with('success', 'Inventory reset!');
+    })->name('booking.reset-inventory');
+}
 // Day Visit Routes
 Route::get('/booking/dayvisit', [DayVisitController::class, 'index'])->name('dayvisit.index');
 Route::match(['GET', 'POST'], '/booking/dayvisit/availability', [DayVisitController::class, 'availability'])->name('dayvisit.availability');
@@ -378,52 +389,54 @@ Route::post('/booking/dayvisit/initiate-payment', [DayVisitController::class, 'i
 Route::get('/booking/dayvisit/payment/success', [DayVisitController::class, 'paymentSuccess'])->name('dayvisit.paymentSuccess');
 Route::get('/booking/dayvisit/payment/failed', [DayVisitController::class, 'paymentFailed'])->name('dayvisit.paymentFailed');
 
-// Test route for payment page
-Route::get('/test-payment', function () {
-    // Set dummy booking data
-    Session::put('dayvisit_booking_data', [
-        'booking_date' => now()->toDateString(),
-        'guests' => 2,
-        'price' => 500,
-        'first_name' => 'Juan',
-        'last_name' => 'Dela Cruz',
-        'email' => 'juan@example.com',
-        'phone' => '+639123456789'
-    ]);
-
-    // Set dummy selected activities
-    Session::put('dayvisit_selected_activities', [
-        [
-            'name' => 'Farm Tour',
-            'price' => 200,
+if (app()->environment('local')) {
+    // Test route for payment page
+    Route::get('/test-payment', function () {
+        // Set dummy booking data
+        Session::put('dayvisit_booking_data', [
+            'booking_date' => now()->toDateString(),
             'guests' => 2,
-            'id' => 1
-        ],
-        [
-            'name' => 'Nature Hike',
-            'price' => 300,
+            'price' => 500,
+            'first_name' => 'Juan',
+            'last_name' => 'Dela Cruz',
+            'email' => 'juan@example.com',
+            'phone' => '+639123456789'
+        ]);
+
+        // Set dummy selected activities
+        Session::put('dayvisit_selected_activities', [
+            [
+                'name' => 'Farm Tour',
+                'price' => 200,
+                'guests' => 2,
+                'id' => 1
+            ],
+            [
+                'name' => 'Nature Hike',
+                'price' => 300,
+                'guests' => 2,
+                'id' => 2
+            ]
+        ]);
+
+        return redirect()->route('dayvisit.payment');
+    });
+
+    Route::get('/test-activities', function () {
+        // Set dummy booking data
+        Session::put('dayvisit_booking_data', [
+            'booking_date' => now()->toDateString(),
             'guests' => 2,
-            'id' => 2
-        ]
-    ]);
+            'price' => 500,
+            'first_name' => 'Juan',
+            'last_name' => 'Dela Cruz',
+            'email' => 'juan@example.com',
+            'phone' => '+639123456789'
+        ]);
 
-    return redirect()->route('dayvisit.payment');
-});
-
-Route::get('/test-activities', function () {
-    // Set dummy booking data
-    Session::put('dayvisit_booking_data', [
-        'booking_date' => now()->toDateString(),
-        'guests' => 2,
-        'price' => 500,
-        'first_name' => 'Juan',
-        'last_name' => 'Dela Cruz',
-        'email' => 'juan@example.com',
-        'phone' => '+639123456789'
-    ]);
-
-    return redirect()->route('dayvisit.activities');
-});
+        return redirect()->route('dayvisit.activities');
+    });
+}
 
 // ========== Cart Routes ==========
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
@@ -670,6 +683,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
      Route::prefix('/shop')->group(function () {
          Route::get('/shopstore', [AdminController::class, 'shopstore'])->name('admin.shop.shopstore');
          Route::get('/shopitems', [AdminController::class, 'shopitems'])->name('admin.shop.shopitems');
+         Route::get('/orders', [AdminController::class, 'shopOrders'])->name('admin.shop.orders');
          Route::resource('shop-swiper-images', ShopSwiperImageController::class, ['names' => [
              'store' => 'admin.shop-swiper-images.store',
              'update' => 'admin.shop-swiper-images.update',

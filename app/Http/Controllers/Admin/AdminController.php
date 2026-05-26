@@ -35,6 +35,7 @@ use App\Models\PricingConfig;
 use App\Models\FarmSwiperImage;
 use App\Models\FarmText;
 use App\Models\Product;
+use App\Models\ShopOrder;
 use App\Models\ShopSwiperImage;
 use App\Models\DayTourSwiperImage;
 use App\Models\DayTourInventory;
@@ -273,6 +274,51 @@ class AdminController extends Controller
     {
         $products = Product::paginate(10);
         return view('admin.ShopStore.shopitems', compact('products'));
+    }
+
+    public function shopOrders(Request $request)
+    {
+        $query = ShopOrder::query()->latest();
+
+        if ($request->filled('q')) {
+            $term = trim((string) $request->string('q'));
+            $query->where(function ($q) use ($term) {
+                $q->where('order_reference', 'like', '%' . $term . '%')
+                    ->orWhere('transaction_id', 'like', '%' . $term . '%')
+                    ->orWhere('paymongo_checkout_id', 'like', '%' . $term . '%')
+                    ->orWhere('customer_name', 'like', '%' . $term . '%')
+                    ->orWhere('customer_email', 'like', '%' . $term . '%')
+                    ->orWhere('customer_phone', 'like', '%' . $term . '%');
+            });
+        }
+
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', (string) $request->string('payment_status'));
+        }
+
+        if ($request->filled('order_status')) {
+            $query->where('order_status', (string) $request->string('order_status'));
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->input('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->input('date_to'));
+        }
+
+        $orders = $query->paginate(20)->withQueryString();
+
+        $stats = [
+            'total' => ShopOrder::count(),
+            'pending' => ShopOrder::where('payment_status', ShopOrder::PAYMENT_STATUS_PENDING)->count(),
+            'paid' => ShopOrder::where('payment_status', ShopOrder::PAYMENT_STATUS_PAID)->count(),
+            'failed' => ShopOrder::where('payment_status', ShopOrder::PAYMENT_STATUS_FAILED)->count(),
+            'paid_revenue' => (float) ShopOrder::where('payment_status', ShopOrder::PAYMENT_STATUS_PAID)->sum('final_total'),
+        ];
+
+        return view('admin.ShopStore.orders', compact('orders', 'stats'));
     }
 
     public function eventExperience()

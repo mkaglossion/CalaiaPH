@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PackageBookingController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\AddressController;
 use App\Http\Controllers\Api\PaymongoWebhookController;
 
 /*
@@ -18,6 +19,13 @@ use App\Http\Controllers\Api\PaymongoWebhookController;
 */
 
 Route::middleware('api')->group(function () {
+    // Address cascading endpoints (PSGC-based hierarchy)
+    Route::get('/address/provinces/{region}', [AddressController::class, 'provinces']);
+    Route::get('/address/cities/{province}', [AddressController::class, 'cities']);
+    Route::get('/address/cities-by-region/{region}', [AddressController::class, 'citiesByRegion']);
+    Route::get('/address/barangays/{city}', [AddressController::class, 'barangays']);
+    Route::post('/customer-addresses', [AddressController::class, 'store']);
+
     // Public package booking routes
     Route::post('/package-bookings', [PackageBookingController::class, 'store']);
     Route::get('/package-bookings/{id}', [PackageBookingController::class, 'show']);

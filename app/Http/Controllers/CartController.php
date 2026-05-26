@@ -6,12 +6,21 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\Receipt;
 use App\Models\Product;
+use App\Models\Region;
+use App\Models\Province;
+use App\Models\City;
+use App\Models\Barangay;
+use App\Models\CustomerAddress;
 use App\Events\ProductStockUpdated;
 use App\Services\VatService;
 use App\Models\ShopOrder;
 
 class CartController extends Controller
 {
+    private const SERVICE_REGION_PSGC = '0400000000'; // CALABARZON
+    private const SERVICE_PROVINCE_PSGC = '0401000000'; // Batangas
+    private const SERVICE_CITY_PSGC = '0401007000'; // Calaca
+
     /**
      * Build a normalized cart summary array with VAT calculations.
      */
@@ -50,6 +59,7 @@ class CartController extends Controller
                 'image'    => $it['image'] ?? asset('assets/images/carousel/activities-1.jpg'),
                 'quantity' => $qty,
                 'subtotal' => $subtotal,
+                'type'     => $it['type'] ?? null,
                 'isDining' => $isDining,
             ];
 
@@ -78,6 +88,48 @@ class CartController extends Controller
     protected function jsonSummary(array $cart, array $extra = [])
     {
         return response()->json(array_merge($this->buildCartSummary($cart), $extra));
+    }
+
+    /**
+     * Build a printable full delivery address from structured checkout fields.
+     */
+    protected function formatDeliveryAddress(array $data): string
+    {
+        $region = Region::find($data['region_id'] ?? null);
+        $province = !empty($data['province_id']) ? Province::find($data['province_id']) : null;
+        $city = City::find($data['city_id'] ?? null);
+        $barangay = Barangay::find($data['barangay_id'] ?? null);
+
+        $line1 = trim(implode(' ', array_filter([
+            $data['street_address'] ?? null,
+            $data['subdivision'] ?? null,
+        ])));
+
+        $line2 = trim(implode(', ', array_filter([
+            optional($barangay)->name,
+            optional($city)->name,
+            optional($province)->name,
+            optional($region)->name,
+        ])));
+
+        $line3 = trim(implode(', ', array_filter([
+            !empty($data['zip_code']) ? ('ZIP ' . $data['zip_code']) : null,
+            !empty($data['landmark']) ? ('Landmark: ' . $data['landmark']) : null,
+        ])));
+
+        return trim(implode("\n", array_filter([$line1, $line2, $line3])));
+    }
+
+    /**
+     * Resolve fixed service area: Calaca, Batangas, CALABARZON.
+     */
+    protected function resolveServiceArea(): array
+    {
+        $region = Region::where('psgc_code', self::SERVICE_REGION_PSGC)->first();
+        $province = Province::where('psgc_code', self::SERVICE_PROVINCE_PSGC)->first();
+        $city = City::where('psgc_code', self::SERVICE_CITY_PSGC)->first();
+
+        return [$region, $province, $city];
     }
 
     public function index(Request $request)
@@ -315,6 +367,15 @@ class CartController extends Controller
         $rawCart = session('cart', []);
         $cart    = is_array($rawCart) ? $rawCart : [];
         $summary = $this->buildCartSummary($cart);
+        [$region, $province, $city] = $this->resolveServiceArea();
+
+        $barangays = collect();
+        if ($city) {
+            $barangays = Barangay::query()
+                ->where('city_id', $city->id)
+                ->orderBy('name')
+                ->get(['id', 'name']);
+        }
 
         return view('checkout', [
             'cart'      => $cart,
@@ -322,21 +383,55 @@ class CartController extends Controller
             'cartTotal' => $summary['total'],
             'vatAmount' => $summary['vat_amount'],
             'finalTotal' => $summary['final_total'],
+            'fixedRegionId' => $region?->id,
+            'fixedProvinceId' => $province?->id,
+            'fixedCityId' => $city?->id,
+            'fixedLocationLabel' => 'Calaca, Batangas, CALABARZON, Philippines',
+            'barangays' => $barangays,
         ]);
     }
 
     public function checkoutSubmit(Request $request)
     {
         $data = $request->validate([
-            'name'           => 'required|string',
-            'email'          => 'required|email',
-            'phone'          => 'required|string',
+            'name'           => 'required|string|max:120',
+            'email'          => 'required|email|max:191',
+            'phone'          => 'required|string|max:30',
             'delivery_option' => 'required|in:pickup,delivery',
-            'address'        => 'required_if:delivery_option,delivery|nullable|string',
+            'address'        => 'nullable|string|max:1000',
+            'barangay_id'     => 'required_if:delivery_option,delivery|nullable|exists:barangays,id',
+            'street_address'  => 'required_if:delivery_option,delivery|nullable|string|max:255',
+            'subdivision'     => 'nullable|string|max:255',
+            'zip_code'        => 'required_if:delivery_option,delivery|nullable|string|max:10',
+            'landmark'        => 'nullable|string|max:255',
             'booking_date'   => 'required|date|after_or_equal:today',
-            'payment_method' => 'required|in:card,qr_code',
-            'special_requests' => 'nullable|string',
+            'special_requests' => 'nullable|string|max:1000',
         ]);
+
+        $deliveryAddress = null;
+        $data['payment_method'] = 'paymongo';
+        if (($data['delivery_option'] ?? null) === 'delivery') {
+            [$region, $province, $city] = $this->resolveServiceArea();
+            if (!$region || !$province || !$city) {
+                return back()->withErrors([
+                    'delivery_option' => 'Delivery area is temporarily unavailable. Please contact support.',
+                ])->withInput();
+            }
+
+            $barangay = Barangay::find($data['barangay_id']);
+
+            if ($barangay && (int) $barangay->city_id !== (int) $city->id) {
+                return back()->withErrors([
+                    'barangay_id' => 'Selected barangay is outside Calaca service area.',
+                ])->withInput();
+            }
+
+            $data['region_id'] = $region->id;
+            $data['province_id'] = $province->id;
+            $data['city_id'] = $city->id;
+
+            $deliveryAddress = $this->formatDeliveryAddress($data);
+        }
 
         $rawCart = session('cart', []);
         $cart    = is_array($rawCart) ? $rawCart : [];
@@ -360,7 +455,7 @@ class CartController extends Controller
             'vat_amount' => $summary['vat_amount'],
             'final_total' => $summary['final_total'],
             'delivery_option' => $data['delivery_option'],
-            'delivery_address' => $data['address'] ?? null,
+            'delivery_address' => $deliveryAddress,
             'pickup_date' => $data['booking_date'],
             'payment_method' => $data['payment_method'],
             'transaction_id' => 'TXN-' . strtoupper(uniqid()),
@@ -368,6 +463,21 @@ class CartController extends Controller
             'order_status' => 'pending',
             'special_requests' => $data['special_requests'] ?? null,
         ]);
+
+        // Store normalized delivery address for reporting/reuse.
+        if (($data['delivery_option'] ?? null) === 'delivery') {
+            CustomerAddress::create([
+                'user_id' => auth()->id(),
+                'region_id' => $data['region_id'],
+                'province_id' => $data['province_id'] ?? null,
+                'city_id' => $data['city_id'],
+                'barangay_id' => $data['barangay_id'],
+                'street_address' => $data['street_address'],
+                'subdivision' => $data['subdivision'] ?? null,
+                'zip_code' => $data['zip_code'],
+                'landmark' => $data['landmark'] ?? null,
+            ]);
+        }
 
         // Add payment details for email
         $data['transaction_id'] = $shopOrder->transaction_id;
@@ -395,7 +505,6 @@ class CartController extends Controller
                 $data['email'],
                 $data['name'],
                 $data['transaction_id'],
-                $data['payment_method'],
                 $summary
             );
 
@@ -407,13 +516,14 @@ class CartController extends Controller
 
                 // Store order data in session for later confirmation
                 session([
+                    'current_shop_order_id' => $shopOrder->id,
                     'pending_order' => [
                         'transaction_id' => $data['transaction_id'],
                         'name' => $data['name'],
                         'email' => $data['email'],
                         'phone' => $data['phone'],
                         'delivery_option' => $data['delivery_option'],
-                        'address' => $data['address'] ?? null,
+                        'address' => $deliveryAddress,
                         'booking_date' => $data['booking_date'],
                         'payment_method' => $data['payment_method'],
                         'cart' => $cart,
@@ -438,12 +548,14 @@ class CartController extends Controller
     /**
      * Create PayMongo checkout session
      */
-    protected function createPaymongoCheckout($amount, $email, $name, $transactionId, $paymentMethod, $summary)
+    protected function createPaymongoCheckout($amount, $email, $name, $transactionId, $summary)
     {
         $client = new \GuzzleHttp\Client();
         $apiKey = config('services.paymongo.secret_key');
 
-        $paymentMethodTypes = $paymentMethod === 'qr_code' ? ['gcash'] : ['card'];
+        // Offer QR Ph + Card + E-Wallets on hosted checkout.
+        // Note: methods still depend on what is activated in your PayMongo account.
+        $paymentMethodTypes = ['qrph', 'card', 'gcash', 'grab_pay', 'paymaya'];
 
         $lineItems = array_map(function ($item) {
             return [
@@ -484,14 +596,18 @@ class CartController extends Controller
         $statusCode = $response->getStatusCode();
         $body = json_decode($response->getBody()->getContents(), true);
 
-        if ($statusCode === 201) {
+        $checkoutId = $body['data']['id'] ?? null;
+        $checkoutUrl = $body['data']['attributes']['checkout_url'] ?? null;
+
+        // PayMongo may return 200 or 201 depending on API behavior/version.
+        if (in_array($statusCode, [200, 201], true) && $checkoutId && $checkoutUrl) {
             return [
-                'id' => $body['data']['id'],
-                'checkout_url' => $body['data']['attributes']['checkout_url'],
+                'id' => $checkoutId,
+                'checkout_url' => $checkoutUrl,
             ];
-        } else {
-            throw new \Exception('Failed to create PayMongo checkout session: ' . json_encode($body));
         }
+
+        throw new \Exception('Failed to create PayMongo checkout session.');
     }
 
     /**
@@ -568,7 +684,7 @@ class CartController extends Controller
             // Update order status to paid
             $shopOrder->update([
                 'payment_status' => 'paid',
-                'order_status' => 'confirmed',
+                'order_status' => 'ready',
                 'paid_at' => now(),
             ]);
 

@@ -131,6 +131,7 @@
           ['title'=>'Shop','icon'=>'shopping-bag','route'=>'admin.shop.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.shop.shopstore'],
             ['label'=>'Store Management','route'=>'admin.shop.shopitems'],
+            ['label'=>'Orders','route'=>'admin.shop.orders'],
             ['label'=>'Inventory Monitor','route'=>'admin.inventory.shop']
           ]],
           ['title'=>'Pricing','icon'=>'coins','route'=>'admin.pricing.*','sub'=>[
