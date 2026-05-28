@@ -40,12 +40,34 @@
       : \Carbon\Carbon::parse($inv->date)->toDateString();
     return $invDate >= $today;
   });
-  $hasConfiguredInventory = $futureInventory->isNotEmpty();
-  $hasAvailableInventory = $futureInventory->contains(function ($inv) {
+  $availableFutureInventory = $futureInventory->filter(function ($inv) {
     return !((bool)($inv->is_blocked ?? false)) && (int)($inv->available_groups ?? 0) > 0;
-  });
+  })->sortBy(function ($inv) {
+    return $inv->date instanceof \Carbon\Carbon
+      ? $inv->date->timestamp
+      : \Carbon\Carbon::parse($inv->date)->timestamp;
+  })->values();
+
+  $nextAvailableInventory = $availableFutureInventory->first();
+  $nextAvailableGroups = $nextAvailableInventory ? (int)($nextAvailableInventory->available_groups ?? 0) : 0;
+  $nextAvailableDate = $nextAvailableInventory
+    ? ($nextAvailableInventory->date instanceof \Carbon\Carbon
+        ? $nextAvailableInventory->date
+        : \Carbon\Carbon::parse($nextAvailableInventory->date))
+    : null;
+
+  $availabilityTone = 'available';
+  if ($nextAvailableGroups <= 1 && $nextAvailableGroups > 0) {
+    $availabilityTone = 'limited';
+  }
+
+  $hasConfiguredInventory = $futureInventory->isNotEmpty();
+  $hasAvailableInventory = $availableFutureInventory->isNotEmpty();
   $isFrontendUnavailable = $variant === 'frontend' && (!$hasConfiguredInventory || !$hasAvailableInventory);
-  $packagePayload = array_merge($package->toArray(), ['is_unavailable' => $isFrontendUnavailable]);
+  $packagePayload = array_merge($package->toArray(), [
+    'is_unavailable' => $isFrontendUnavailable,
+    'next_available_groups' => $nextAvailableGroups,
+  ]);
 @endphp
 
 <div class="package-card {{ $cardClass }} rounded-2xl overflow-hidden transition flex flex-col h-full" x-data="packageCardData({{ json_encode($packagePayload) }})">
@@ -74,9 +96,13 @@
           <span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded-full">
             <i class="bi bi-x-circle-fill"></i> Unavailable
           </span>
+        @elseif($availabilityTone === 'limited')
+          <span class="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded-full">
+            <i class="bi bi-exclamation-triangle-fill"></i> Limited: {{ $nextAvailableGroups }} slot{{ $nextAvailableGroups === 1 ? '' : 's' }}
+          </span>
         @else
           <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">
-            <i class="bi bi-check-circle-fill"></i> Available
+            <i class="bi bi-check-circle-fill"></i> Available: {{ $nextAvailableGroups }} slots
           </span>
         @endif
       </div>
@@ -117,17 +143,21 @@
 
     <!-- Quick Info Grid -->
     <div class="grid grid-cols-2 gap-2 mb-1.5 pb-1.5 border-b border-gray-200">
-      @if($package->duration_days)
+      @if($package->duration_label || $package->duration_days)
         <div class="text-center p-1.5 bg-gray-50 rounded-lg">
           <i class="bi bi-calendar-event text-brand text-lg mb-0.5 block"></i>
-          <span class="text-xs font-semibold text-gray-700">{{ $package->duration_days }} Day{{ $package->duration_days > 1 ? 's' : '' }}</span>
+          <span class="text-xs font-semibold text-gray-700">{{ $package->duration_label ?? (($package->duration_days ?? 1) . ' Day' . (($package->duration_days ?? 1) > 1 ? 's' : '')) }}</span>
         </div>
       @endif
       
       @if($package->max_guests)
         <div class="text-center p-1.5 bg-gray-50 rounded-lg">
           <i class="bi bi-people text-brand text-lg mb-0.5 block"></i>
-          <span class="text-xs font-semibold text-gray-700">{{ $package->max_guests }} Guest{{ $package->max_guests > 1 ? 's' : '' }}</span>
+          <span class="text-xs font-semibold text-gray-700">
+            {{ $package->pricing_type === 'per_group'
+                ? ('Up to ' . $package->max_guests . ' / group')
+                : ($package->max_guests . ' Guest' . ($package->max_guests > 1 ? 's' : '')) }}
+          </span>
         </div>
       @endif
     </div>
@@ -187,25 +217,16 @@
       @if($package->price)
         <div class="p-2.5 bg-linear-to-br from-brand/10 to-brand/5 rounded-xl border border-brand/20">
           <div class="text-center">
-            @if($package->pricing_type === 'per_pax')
-              <span class="text-xs font-semibold text-gray-600">
-                Total for {{ $package->max_guests ?? 1 }} 
-                {{ ($package->max_guests ?? 1) == 1 ? 'guest' : 'guests' }}
+            <span class="text-xs font-semibold text-gray-600">{{ $package->pricing_type === 'per_group' ? 'Per Group' : 'Per Head' }}</span>
+            <div class="text-2xl sm:text-3xl font-bold text-brand">
+              ₱{{ number_format($package->price, 0) }}
+            </div>
+            @if($package->max_guests)
+              <span class="text-xs text-gray-500 block pt-1 border-t border-brand/20 mt-1">
+                {{ $package->pricing_type === 'per_group'
+                    ? 'Fixed total price for the whole group (max ' . $package->max_guests . ')'
+                    : 'Total shown at checkout based on selected guests (max ' . $package->max_guests . ')' }}
               </span>
-              <div class="text-xl sm:text-2xl font-bold text-brand">
-                ₱{{ number_format($package->price, 0) }}
-              </div>
-            @else
-              <span class="text-xs font-semibold text-gray-600">Per Group</span>
-              <div class="text-2xl sm:text-3xl font-bold text-brand">
-                ₱{{ number_format($package->price, 0) }}
-              </div>
-              @if($package->max_guests)
-                <span class="text-xs text-gray-500 block pt-1 border-t border-brand/20 mt-1">
-                  Covers up to {{ $package->max_guests }} 
-                  {{ $package->max_guests == 1 ? 'person' : 'people' }}
-                </span>
-              @endif
             @endif
           </div>
         </div>
@@ -226,6 +247,10 @@
       @if($isFrontendUnavailable)
         <p class="text-xs text-red-600 font-medium text-center">
           No inventory available for booking yet.
+        </p>
+      @elseif($nextAvailableDate)
+        <p class="text-xs text-gray-500 text-center">
+          Next available date: {{ $nextAvailableDate->format('M j, Y') }}
         </p>
       @endif
 
@@ -257,10 +282,10 @@ function packageCardData(pkg) {
         },
 
         get totalPrice() {
-            if (this.package.pricing_type === 'per_pax') {
-                return this.package.price * this.form.totalGuests;
+            if (this.package.pricing_type === 'per_group') {
+                return this.package.price;
             }
-            return this.package.price;
+            return this.package.price * this.form.totalGuests;
         },
 
         formatPrice(price) {
@@ -453,3 +478,4 @@ function packageCardData(pkg) {
     };
 }
 </script>
+

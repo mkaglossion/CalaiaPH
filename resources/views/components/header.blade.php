@@ -16,7 +16,7 @@
     // ['key' => 'packages',      'label' => 'Packages',      'href' => url('/packages')],
     //['key' => 'daytour',       'label' => 'Day Tour',      'href' => url('/daytour')],
     ['key' => 'staycation',    'label' => 'Where to Stay', 'href' => url('/staycation')],
-    ['key' => 'activities',    'label' => 'What to Do',    'href' => url('/activities')],
+    ['key' => 'activities',    'label' => 'Day Trip',    'href' => url('/activities')],
     ['key' => 'dining',        'label' => 'Dining',        'href' => url('/dining')],
     ['key' => 'special-events','label' => 'Special Events','href' => url('/special-events')],
     ['key' => 'farm',          'label' => 'Our Farm',      'href' => url('/farm')],

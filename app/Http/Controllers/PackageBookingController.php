@@ -27,7 +27,7 @@ class PackageBookingController extends Controller
             'phone' => 'required|string|regex:/^[0-9]{10}$/',
             'email' => 'required|email',
             'special_requests' => 'nullable|string',
-            'total_amount' => 'required|numeric|min:0'
+            'total_amount' => 'nullable|numeric|min:0'
         ]);
 
         try {
@@ -40,6 +40,11 @@ class PackageBookingController extends Controller
                     'message' => 'Number of guests exceeds package capacity'
                 ], 422);
             }
+
+            // Compute total on server for consistency and integrity.
+            $totalAmount = $package->pricing_type === 'per_group'
+                ? (float) $package->price
+                : (float) $package->price * (int) $validated['total_guests'];
 
             // Create booking
             $booking = PackageBooking::create([
@@ -54,7 +59,7 @@ class PackageBookingController extends Controller
                 'phone' => $validated['phone'],
                 'email' => $validated['email'],
                 'special_requests' => $validated['special_requests'],
-                'total_amount' => $validated['total_amount'],
+                'total_amount' => $totalAmount,
                 'status' => 'pending_payment'
             ]);
 

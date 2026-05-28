@@ -191,14 +191,13 @@
                                 <p class="text-2xl font-bold text-gray-900">
                                     P{{ number_format($package->price, 0) }}
                                     <span class="text-sm font-normal text-gray-600">
-                                        {{ $package->pricing_type === 'per_pax' ? '/person' : '/group' }}
+                                        {{ $package->pricing_type === 'per_group' ? '/group' : '/head' }}
                                     </span>
                                 </p>
-                                @if($package->pricing_type === 'per_pax')
-                                    <p class="text-sm text-gray-500">per person x {{ $package->max_guests }} = P{{ number_format($package->price * $package->max_guests, 0) }} total</p>
-                                @else
-                                    <p class="text-sm text-gray-500">covers up to {{ $package->max_guests }} people</p>
-                                @endif
+                                <p class="text-sm text-gray-500">
+                                    {{ $package->pricing_type === 'per_group' ? 'fixed price per group booking' : 'per head pricing, total depends on selected guests' }}
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">Duration: {{ $package->duration_label ?? (($package->duration_days ?? 1) . ' Day' . (($package->duration_days ?? 1) > 1 ? 's' : '')) }}</p>
                             </div>
 
                             <hr class="my-3 border-gray-200">
@@ -267,12 +266,20 @@
                                         <input id="pkg_price" type="number" x-model="form.price" step="100" min="0" class="w-full border border-gray-300 rounded-xl px-4 py-2.5" required>
                                     </div>
                                     <div>
-                                        <label for="pkg_duration" class="block font-semibold mb-2 text-gray-700">Duration (Days) *</label>
-                                        <input id="pkg_duration" type="number" x-model="form.duration_days" min="1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5" required>
+                                        <label for="pkg_duration_value" class="block font-semibold mb-2 text-gray-700">Duration *</label>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input id="pkg_duration_value" type="number" x-model="form.duration_value" min="1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5" required>
+                                            <select id="pkg_duration_unit" x-model="form.duration_unit" class="w-full border border-gray-300 rounded-xl px-4 py-2.5" required>
+                                                <option value="minutes">Minute(s)</option>
+                                                <option value="hours">Hour(s)</option>
+                                                <option value="days">Day(s)</option>
+                                            </select>
+                                        </div>
                                     </div>
                                     <div>
-                                        <label for="pkg_guests" class="block font-semibold mb-2 text-gray-700">Max Guests *</label>
+                                        <label for="pkg_guests" class="block font-semibold mb-2 text-gray-700" x-text="form.pricing_type === 'per_group' ? 'Max Guests per Group *' : 'Guest Capacity *'"></label>
                                         <input id="pkg_guests" type="number" x-model="form.max_guests" min="1" class="w-full border border-gray-300 rounded-xl px-4 py-2.5" required>
+                                        <p class="text-xs text-gray-500 mt-1" x-text="form.pricing_type === 'per_group' ? 'Maximum people allowed in one group booking.' : 'Maximum people allowed in one booking (price is per head).'"></p>
                                     </div>
                                 </div>
 
@@ -280,7 +287,7 @@
                                     <div>
                                         <label for="pkg_pricing_type" class="block font-semibold mb-2 text-gray-700">Pricing Type *</label>
                                         <select id="pkg_pricing_type" x-model="form.pricing_type" class="w-full border border-gray-300 rounded-xl px-4 py-2.5" required>
-                                            <option value="per_pax">Per Person</option>
+                                            <option value="per_pax">Per Head</option>
                                             <option value="per_group">Per Group</option>
                                         </select>
                                     </div>
@@ -364,7 +371,13 @@
 
                         <div class="flex justify-end space-x-3 p-6 border-t border-gray-200">
                             <button type="button" @click="showPackageModal = false" class="px-6 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-100">Cancel</button>
-                            <button type="button" @click="savePackage()" class="px-6 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700" x-text="isPackageEditMode ? 'Update Package' : 'Create Package'"></button>
+                            <button
+                                type="button"
+                                @click="savePackage()"
+                                :disabled="isLoading"
+                                class="px-6 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                                x-text="isLoading ? (isPackageEditMode ? 'Updating...' : 'Creating...') : (isPackageEditMode ? 'Update Package' : 'Create Package')">
+                            </button>
                         </div>
                 </div>
             </div>
@@ -484,7 +497,8 @@ function packageManager() {
             name: '',
             description: '',
             price: '',
-            duration_days: '',
+            duration_value: '',
+            duration_unit: 'hours',
             max_guests: '',
             max_groups_per_day: '',
             pricing_type: 'per_pax',
@@ -536,7 +550,8 @@ function packageManager() {
                 name: '',
                 description: '',
                 price: '',
-                duration_days: '',
+                duration_value: '',
+                duration_unit: 'hours',
                 max_guests: '',
                 max_groups_per_day: '',
                 pricing_type: 'per_pax',
@@ -582,7 +597,8 @@ function packageManager() {
                 this.form.name = data.name || '';
                 this.form.description = data.description || '';
                 this.form.price = String(parseFloat(data.price) || 0);
-                this.form.duration_days = String(parseInt(data.duration_days) || 1);
+                this.form.duration_value = String(parseInt(data.duration_value) || parseInt(data.duration_days) || 1);
+                this.form.duration_unit = data.duration_unit || 'days';
                 this.form.max_guests = String(parseInt(data.max_guests) || 1);
                 this.form.max_groups_per_day = String(parseInt(data.max_groups_per_day) || 1);
                 this.form.pricing_type = data.pricing_type || 'per_pax';
@@ -654,10 +670,11 @@ function packageManager() {
             formData.append('name', this.form.name);
             formData.append('description', this.form.description);
             formData.append('price', Number(this.form.price || 0));
-            formData.append('duration_days', Number(this.form.duration_days || 1));
+            formData.append('duration_value', Number(this.form.duration_value || 1));
+            formData.append('duration_unit', this.form.duration_unit || 'hours');
             formData.append('max_guests', Number(this.form.max_guests || 1));
             formData.append('max_groups_per_day', Number(this.form.max_groups_per_day || 1));
-            formData.append('pricing_type', this.form.pricing_type);
+            formData.append('pricing_type', this.form.pricing_type || 'per_pax');
             formData.append('inclusions', JSON.stringify(this.form.inclusionsList || []));
 
             const selectedSessions = (this.form.sessions || [])
@@ -702,18 +719,31 @@ function packageManager() {
                     },
                     body: formData
                 });
-                const data = await res.json();
+                const raw = await res.text();
+                let data = {};
+                try {
+                    data = raw ? JSON.parse(raw) : {};
+                } catch (_) {
+                    data = {};
+                }
 
                 if (res.ok) {
-                    Swal.fire({
+                    this.showPackageModal = false;
+                    await Swal.fire({
+                        toast: true,
+                        position: 'top-end',
                         icon: 'success',
-                        title: this.isPackageEditMode ? 'Updated!' : 'Created!',
-                        text: data.message || 'Package saved successfully!'
-                    }).then(() => window.location.reload());
+                        title: this.isPackageEditMode ? 'Package updated' : 'Package created',
+                        text: data.message || 'Saved successfully.',
+                        showConfirmButton: false,
+                        timer: 1200,
+                        timerProgressBar: true
+                    });
+                    window.location.reload();
                 } else if (data.errors) {
                     this.errors = Object.values(data.errors).flat();
                 } else {
-                    this.errors = ['Unable to save package.'];
+                    this.errors = [data.message || 'Unable to save package.'];
                 }
             } catch (e) {
                 this.errors = ['An unexpected error occurred. Please try again.'];

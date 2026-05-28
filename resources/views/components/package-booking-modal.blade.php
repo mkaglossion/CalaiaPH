@@ -63,7 +63,7 @@
 
                     <!-- Number of Guests -->
                     <div>
-                        <label for="total_guests" class="block font-semibold text-gray-700 mb-1.5 text-sm">Guests *</label>
+                        <label for="total_guests" class="block font-semibold text-gray-700 mb-1.5 text-sm" x-text="package.pricing_type === 'per_group' ? 'Group Size *' : 'Guests *'"></label>
                         <div class="flex gap-2 items-end">
                             <input
                                 type="number"
@@ -74,7 +74,7 @@
                                 :max="package.max_guests"
                                 required
                                 class="flex-1 border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-sm focus:border-brand focus:ring-2 focus:ring-brand/20 transition">
-                            <span class="text-xs sm:text-sm text-gray-500 font-medium whitespace-nowrap" x-text="'Max: ' + package.max_guests"></span>
+                            <span class="text-xs sm:text-sm text-gray-500 font-medium whitespace-nowrap" x-text="package.pricing_type === 'per_group' ? ('Max per group: ' + package.max_guests) : ('Max: ' + package.max_guests)"></span>
                         </div>
                     </div>
 
@@ -177,10 +177,10 @@
             <div class="bg-linear-to-r from-brand/10 to-brand/5 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-brand/20">
                 <div class="space-y-2">
                     <div class="flex justify-between text-xs sm:text-sm text-gray-600">
-                        <span>Base Price:</span>
+                        <span x-text="package.pricing_type === 'per_group' ? 'Price per group:' : 'Price per head:'"></span>
                         <span x-text="'₱' + formatPrice(package.price)" class="font-medium"></span>
                     </div>
-                    <div class="flex justify-between text-xs sm:text-sm text-gray-600" x-show="form.totalGuests > 1">
+                    <div class="flex justify-between text-xs sm:text-sm text-gray-600" x-show="package.pricing_type !== 'per_group' && form.totalGuests > 1">
                         <span x-text="'For ' + form.totalGuests + ' guests:'"></span>
                         <span x-text="'₱' + formatPrice(totalPrice)" class="font-medium"></span>
                     </div>

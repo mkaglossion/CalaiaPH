@@ -24,6 +24,8 @@ class Package extends Model
         'price_configs',
         'slug',
         'duration_days',
+        'duration_value',
+        'duration_unit',
         'inclusions',
         'sessions',
     ];
@@ -32,11 +34,39 @@ class Package extends Model
         'max_guests' => 'integer',
         'is_active' => 'boolean',
         'max_groups_per_day' => 'integer',
+        'duration_days' => 'integer',
+        'duration_value' => 'integer',
         'price_configs' => 'array',
         'inclusions' => 'array',
         'sessions' => 'array',
         'price' => 'decimal:2',
     ];
+
+    /**
+     * Human-readable duration label with backward compatibility for legacy duration_days data.
+     */
+    public function getDurationLabelAttribute(): ?string
+    {
+        $unit = $this->duration_unit;
+        $value = (int) ($this->duration_value ?? 0);
+
+        if (!$unit || $value < 1) {
+            $legacyDays = (int) ($this->duration_days ?? 0);
+            if ($legacyDays < 1) {
+                return null;
+            }
+
+            return $legacyDays . ' ' . ($legacyDays === 1 ? 'Day' : 'Days');
+        }
+
+        $labels = [
+            'minutes' => $value === 1 ? 'Minute' : 'Minutes',
+            'hours' => $value === 1 ? 'Hour' : 'Hours',
+            'days' => $value === 1 ? 'Day' : 'Days',
+        ];
+
+        return $value . ' ' . ($labels[$unit] ?? 'Days');
+    }
 
     /**
      * Package content/descriptions

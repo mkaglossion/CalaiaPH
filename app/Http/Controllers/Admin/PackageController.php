@@ -40,7 +40,8 @@ class PackageController extends Controller
             'price' => 'required|numeric|min:0',
             'pricing_type' => 'required|in:per_pax,per_group',
             'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'duration_days' => 'required|integer|min:1',
+            'duration_value' => 'required|integer|min:1',
+            'duration_unit' => 'required|in:minutes,hours,days',
             'max_guests' => 'required|integer|min:1',
             'max_groups_per_day' => 'required|integer|min:1',
             'inclusions' => 'nullable|string',
@@ -54,6 +55,12 @@ class PackageController extends Controller
             if (empty($validated['slug'])) {
                 $validated['slug'] = Str::slug($validated['name']);
             }
+
+            // Keep legacy duration_days in sync for backwards compatibility.
+            $validated['duration_days'] = $this->toDurationDays(
+                (int) $validated['duration_value'],
+                (string) $validated['duration_unit']
+            );
 
             // Parse JSON fields
             if (isset($validated['inclusions'])) {
@@ -137,7 +144,8 @@ class PackageController extends Controller
             'price' => 'required|numeric|min:0',
             'pricing_type' => 'required|in:per_pax,per_group',
             'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:10240',
-            'duration_days' => 'required|integer|min:1',
+            'duration_value' => 'required|integer|min:1',
+            'duration_unit' => 'required|in:minutes,hours,days',
             'max_guests' => 'required|integer|min:1',
             'max_groups_per_day' => 'required|integer|min:1',
             'inclusions' => 'nullable|string',
@@ -151,6 +159,12 @@ class PackageController extends Controller
             if (empty($validated['slug'])) {
                 $validated['slug'] = Str::slug($validated['name']);
             }
+
+            // Keep legacy duration_days in sync for backwards compatibility.
+            $validated['duration_days'] = $this->toDurationDays(
+                (int) $validated['duration_value'],
+                (string) $validated['duration_unit']
+            );
 
             // Parse JSON fields
             if (isset($validated['inclusions'])) {
@@ -268,5 +282,14 @@ class PackageController extends Controller
                 'message' => 'Failed to update status: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    private function toDurationDays(int $value, string $unit): int
+    {
+        return match ($unit) {
+            'minutes' => max(1, (int) ceil($value / 1440)),
+            'hours' => max(1, (int) ceil($value / 24)),
+            default => max(1, $value),
+        };
     }
 }

@@ -515,7 +515,23 @@
           vrCurrentIndex: 0,
           vrData: {},
           pannellumViewer: null,
-          book(url){ window.location.href = url; },
+          book(url){
+            const calendarUrl = new URL('{{ route('booking.calendar') }}', window.location.origin);
+            calendarUrl.searchParams.set('type', 'staycation');
+
+            // Preserve selected package hint from the original button URL if present.
+            try {
+              const originalUrl = new URL(url, window.location.origin);
+              const packageName = originalUrl.searchParams.get('package');
+              if (packageName) {
+                calendarUrl.searchParams.set('package', packageName);
+              }
+            } catch (e) {
+              // Ignore malformed fallback URLs and continue to calendar.
+            }
+
+            window.location.href = calendarUrl.toString();
+          },
           openModal(which){
             if(which==='glamping') this.glampingOpen = true; else this.campingOpen = true;
             document.body.style.overflow = 'hidden';

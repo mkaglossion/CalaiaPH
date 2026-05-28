@@ -642,14 +642,10 @@
 
     /* ===== Responsive flatpickr centered ===== */
     .booking-calendar{
-      display:flex !important;
-      justify-content:center !important;
-      align-items:center !important;
-      width:100% !important;
-      margin:0 auto !important;
+      display:block !important;
+      margin:0 !important;
       padding:0 !important;
-      overflow-x:visible !important;
-      overflow-y:visible !important;
+      overflow:visible !important;
     }
 
     .booking-calendar .flatpickr-calendar{
@@ -668,12 +664,14 @@
       font-family:inherit !important;
       overflow-x:visible !important;
       overflow-y:visible !important;
+      border-radius:0 !important;
     }
 
     .booking-calendar .flatpickr-calendar.inline{
       display:flex !important;
       justify-content:center !important;
       width:auto !important;
+      border-radius:0 !important;
     }
 
     .booking-calendar .flatpickr-rContainer{
@@ -1028,6 +1026,29 @@
        }
      }
 
+      /* Flatpickr placement hard override (inline) */
+      .booking-calendar > .flatpickr-calendar,
+      .booking-calendar + .flatpickr-calendar {
+        display: block !important;
+        position: relative !important;
+        width: fit-content !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        left: auto !important;
+        right: auto !important;
+        transform: none !important;
+        border-radius: 0 !important;
+      }
+      @media (min-width: 768px) {
+        .booking-calendar:has(+ .flatpickr-calendar) {
+          width: 0 !important;
+          min-width: 0 !important;
+          height: 0 !important;
+          min-height: 0 !important;
+          flex: 0 0 0 !important;
+        }
+      }
+
     /* Scrollbar styling for mobile scroll */
     .booking-calendar .flatpickr-innerContainer::-webkit-scrollbar {
       height:6px !important;
@@ -1041,18 +1062,6 @@
     }
     .booking-calendar .flatpickr-innerContainer::-webkit-scrollbar-thumb:hover {
       background:rgba(0,0,0,0.3) !important;
-    }
-
-    /* ===== Mobile sticky CTA ===== */
-    .mobile-cta-wrap{
-      position: fixed;
-      left: 0; right: 0;
-      bottom: 0;
-      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
-      background: rgba(245,239,231,.92);
-      backdrop-filter: blur(8px);
-      border-top: 1px solid rgba(0,0,0,.08);
-      z-index: 99999;
     }
 
     /* Mobile calendar scrolling wrapper */
@@ -1484,20 +1493,6 @@
 
       </section>
 
-      {{-- CONTINUE BUTTON (extra small screens sticky) --}}
-      <div class="sm:hidden fixed left-0 right-0 bottom-0 p-3 sm:p-4 bg-white border-t border-gray-200 z-40 shadow-lg">
-        <button
-          class="w-full h-12 bg-[#8f5d54] text-white rounded-lg font-bold hover:bg-[#7a4e48] transition flex items-center justify-center gap-2 text-sm sm:text-base shadow-md"
-          @click="continueBooking()"
-        >
-          @if($bookingType === 'daytour')
-            Continue to Packages <i class="bi bi-arrow-right"></i>
-          @else
-            Continue to Rooms <i class="bi bi-arrow-right"></i>
-          @endif
-        </button>
-      </div>
-
       {{-- SELECTION SUMMARY BANNER --}}
       <template x-if="@js($bookingType) === 'daytour' && selectedDate">
         <section class="bg-linear-to-r from-[#8f5d54] to-[#a67563] rounded-2xl shadow-lg p-4 sm:p-6 mb-6 text-white">
@@ -1568,7 +1563,7 @@
 
       {{-- CALENDAR WRAP - CENTERED CARD LAYOUT --}}
       <section class="mx-auto mb-6 px-3 sm:px-4" style="max-width: 700px;">
-        <div class="bg-white rounded-2xl shadow-lg calendar-section overflow-hidden hover:shadow-xl transition-shadow duration-300">
+        <div class="bg-white rounded-none shadow-lg calendar-section overflow-hidden hover:shadow-xl transition-shadow duration-300">
           <div class="p-5 sm:p-6 md:p-8 calendar-wrapper">
             <div x-show="!bookingStartDate || !bookingEndDate" class="text-center py-12">
               <i class="bi bi-calendar-x text-6xl text-gray-300 mb-4"></i>
@@ -1590,7 +1585,7 @@
             </div>
 
             <!-- Calendar - Perfectly Centered -->
-            <div x-show="bookingStartDate && bookingEndDate" class="flex justify-center w-full mb-8">
+            <div x-show="bookingStartDate && bookingEndDate" class="w-full mb-8">
               <div x-ref="calendar" class="booking-calendar"></div>
             </div>
 
@@ -1631,12 +1626,12 @@
 
         <!-- Info Bar -->
         @if($bookingType === 'daytour')
-          <div class="mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 sm:px-6 py-4 sm:py-5 text-white rounded-b-2xl text-center md:text-left" style="background:#91b474; max-width: 700px;">
+          <div class="mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-4 sm:px-6 py-4 sm:py-5 text-white rounded-none text-center md:text-left" style="background:#91b474; max-width: 700px;">
             <div class="text-xs sm:text-sm font-semibold">⏰ Operating Hours: <span class="font-normal">8:00 AM - 5:00 PM</span></div>
             <div class="text-xs sm:text-sm italic hidden sm:block">Select a date to see available packages</div>
           </div>
         @else
-          <div class="mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-4 sm:px-6 py-4 sm:py-5 text-white rounded-b-2xl text-center md:text-left" style="background:#91b474; max-width: 700px;">
+          <div class="mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-4 sm:px-6 py-4 sm:py-5 text-white rounded-none text-center md:text-left" style="background:#91b474; max-width: 700px;">
             <div class="text-xs sm:text-sm font-semibold">
               🕐 Check-in: <span class="font-normal">1:00 PM</span> | Check-out: <span class="font-normal">11:00 AM</span>
             </div>
@@ -1644,20 +1639,6 @@
           </div>
         @endif
       </section>
-
-      {{-- MOBILE STICKY CTA (always visible) --}}
-      <div class="mobile-cta-wrap md:hidden">
-        <button
-          class="w-full h-13 bg-[#8f5d54] text-white rounded-xl font-extrabold shadow-xl hover:bg-[#7a4e48] transition flex items-center justify-center gap-2 text-base hover:scale-105"
-          @click="continueBooking()"
-        >
-          @if($bookingType === 'daytour')
-            Continue to Packages <i class="bi bi-arrow-right text-lg"></i>
-          @else
-            Continue to Rooms <i class="bi bi-arrow-right text-lg"></i>
-          @endif
-        </button>
-      </div>
 
     </div> {{-- end x-data wrapper --}}
   </div> {{-- end page wrapper --}}

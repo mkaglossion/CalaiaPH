@@ -18,7 +18,7 @@
         <div class="max-w-7xl mx-auto">
           <div class="mb-10 text-center">
             <h2 class="text-3xl md:text-4xl font-bold text-brand mb-3">
-              Packages
+              Day Packages
             </h2>
             <p class="text-base md:text-lg text-[#5f524c] max-w-2xl mx-auto">
               Start with our curated package options, then explore activities you can add to your stay.
@@ -44,7 +44,7 @@
       </section>
 
     {{-- ========= ACTIVITIES SECTION ========= --}}
-      <section class="container mx-auto px-4 py-12">
+      <section class="container mx-auto px-4 py-12 hidden">
         <div class="max-w-300 mx-auto">
 
           <h2 class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center">

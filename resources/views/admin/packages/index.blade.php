@@ -60,18 +60,11 @@
                             <p class="text-2xl font-bold text-gray-900">
                                 ₱{{ number_format($package->price, 0) }} 
                                 <span class="text-sm font-normal text-gray-600">
-                                    @if($package->pricing_type === 'per_pax')
-                                        /person
-                                    @else
-                                        /group
-                                    @endif
+                                    /head
                                 </span>
                             </p>
-                            @if($package->pricing_type === 'per_pax')
-                                <p class="text-sm text-gray-500">per person × {{ $package->max_guests }} = ₱{{ number_format($package->price * $package->max_guests, 0) }} total</p>
-                            @else
-                                <p class="text-sm text-gray-500">covers up to {{ $package->max_guests }} people</p>
-                            @endif
+                            <p class="text-sm text-gray-500">per head pricing, total depends on selected guests</p>
+                            <p class="text-xs text-gray-500 mt-1">Duration: {{ $package->duration_label ?? (($package->duration_days ?? 1) . ' Day' . (($package->duration_days ?? 1) > 1 ? 's' : '')) }}</p>
                         </div>
 
                         <hr class="my-3 border-gray-200">
@@ -177,8 +170,7 @@
                         <div>
                             <label for="price" class="block font-semibold mb-2 text-gray-700">
                               Price (₱)
-                              <span x-show="form.pricing_type === 'per_pax'" class="text-xs font-normal text-gray-500">per person</span>
-                              <span x-show="form.pricing_type === 'per_group'" class="text-xs font-normal text-gray-500">per group</span>
+                              <span class="text-xs font-normal text-gray-500">per head</span>
                               *
                             </label>
                             <input 
@@ -191,28 +183,34 @@
                                 autocomplete="off"
                                 class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-brand focus:ring-2 focus:ring-brand/20 transition"
                                 required>
-                            <p class="text-xs text-gray-500 mt-1">
-                              <span x-show="form.pricing_type === 'per_pax'">
-                                This amount will be multiplied by <span x-text="form.max_guests"></span> guests on display
-                              </span>
-                              <span x-show="form.pricing_type === 'per_group'">
-                                This is the fixed price for the entire group
-                              </span>
-                            </p>
+                            <p class="text-xs text-gray-500 mt-1">This amount is charged per head.</p>
                         </div>
 
                         <div>
-                            <label for="duration_days" class="block font-semibold mb-2 text-gray-700">Duration (Days) *</label>
-                            <input 
-                                type="number" 
-                                id="duration_days" 
-                                x-model="form.duration_days" 
-                                name="duration_days"
-                                placeholder="1"
-                                min="1"
-                                autocomplete="off"
-                                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-brand focus:ring-2 focus:ring-brand/20 transition"
-                                required>
+                            <label class="block font-semibold mb-2 text-gray-700">Duration *</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input 
+                                    type="number" 
+                                    id="duration_value" 
+                                    x-model="form.duration_value" 
+                                    name="duration_value"
+                                    placeholder="3"
+                                    min="1"
+                                    autocomplete="off"
+                                    class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-brand focus:ring-2 focus:ring-brand/20 transition"
+                                    required>
+                                <select
+                                    id="duration_unit"
+                                    x-model="form.duration_unit"
+                                    name="duration_unit"
+                                    autocomplete="off"
+                                    class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-brand focus:ring-2 focus:ring-brand/20 transition"
+                                    required>
+                                    <option value="minutes">Minute(s)</option>
+                                    <option value="hours">Hour(s)</option>
+                                    <option value="days">Day(s)</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div>
@@ -233,25 +231,8 @@
                     <!-- Grid: Pricing Type, Max Groups -->
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="pricing_type" class="block font-semibold mb-2 text-gray-700">Pricing Type *</label>
-                            <select 
-                                id="pricing_type" 
-                                x-model="form.pricing_type" 
-                                name="pricing_type"
-                                autocomplete="off"
-                                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-brand focus:ring-2 focus:ring-brand/20 transition"
-                                required>
-                                <option value="per_pax">Per Person</option>
-                                <option value="per_group">Per Group</option>
-                            </select>
-                            <p class="text-xs text-gray-500 mt-2">
-                              <span x-show="form.pricing_type === 'per_pax'">
-                                Price per person. Will show total for max guests.
-                              </span>
-                              <span x-show="form.pricing_type === 'per_group'">
-                                Fixed price for entire group (up to max guests).
-                              </span>
-                            </p>
+                            <label class="block font-semibold mb-2 text-gray-700">Pricing Type</label>
+                            <input type="text" value="Per Head" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-gray-50 text-gray-700" readonly>
                         </div>
 
                         <div>
@@ -439,7 +420,8 @@ function packageManager() {
             name: '', 
             description: '', 
             price: '', 
-            duration_days: '', 
+            duration_value: '', 
+            duration_unit: 'hours',
             max_guests: '', 
             max_groups_per_day: '',
             pricing_type: 'per_pax',
@@ -460,7 +442,8 @@ function packageManager() {
                 name: '', 
                 description: '', 
                 price: '', 
-                duration_days: '', 
+                duration_value: '', 
+                duration_unit: 'hours',
                 max_guests: '', 
                 max_groups_per_day: '',
                 pricing_type: 'per_pax',
@@ -520,10 +503,11 @@ function packageManager() {
                 this.form.name = data.name || '';
                 this.form.description = data.description || '';
                 this.form.price = String(parseFloat(data.price) || 0);
-                this.form.duration_days = String(parseInt(data.duration_days) || 1);
+                this.form.duration_value = String(parseInt(data.duration_value) || parseInt(data.duration_days) || 1);
+                this.form.duration_unit = data.duration_unit || 'days';
                 this.form.max_guests = String(parseInt(data.max_guests) || 1);
                 this.form.max_groups_per_day = String(parseInt(data.max_groups_per_day) || 1);
-                this.form.pricing_type = data.pricing_type || 'per_pax';
+                this.form.pricing_type = 'per_pax';
                 this.form.image = data.image || '';
                 this.form.imagePreview = data.image || null;
                 // Parse inclusions JSON into array for the UI
@@ -643,10 +627,11 @@ function packageManager() {
             formData.append('name', this.form.name);
             formData.append('description', this.form.description);
             formData.append('price', Number(this.form.price));
-            formData.append('duration_days', Number(this.form.duration_days));
+            formData.append('duration_value', Number(this.form.duration_value || 1));
+            formData.append('duration_unit', this.form.duration_unit || 'hours');
             formData.append('max_guests', Number(this.form.max_guests));
             formData.append('max_groups_per_day', Number(this.form.max_groups_per_day));
-            formData.append('pricing_type', this.form.pricing_type);
+            formData.append('pricing_type', 'per_pax');
             formData.append('inclusions', JSON.stringify(inclusions));
             formData.append('sessions', JSON.stringify(sessions));
             formData.append('is_active', this.form.is_active ? 1 : 0);
@@ -703,3 +688,4 @@ function packageManager() {
 </script>
 
 @endsection
+
