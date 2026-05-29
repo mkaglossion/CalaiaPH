@@ -158,7 +158,9 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                             $staycation = $staycations->get((int)$actualRoomId);
                             $roomNameLower = strtolower($staycation->name ?? '');
                             $roomType = strtolower((string)(($staycation ? $staycation->type : null) ?? ($room['type'] ?? '')));
-                            $supportsExtraMattress = $roomType === 'glamping';
+                            $supportsExtraMattress = $roomType === 'glamping'
+                                || str_contains($roomNameLower, 'dome')
+                                || str_contains($roomNameLower, 'bell');
                             $additionalAdults = (int)($room['additional_adults'] ?? $room['extra_mattress'] ?? 0);
                             $additionalAdultPrice = (float)($room['additional_adult_price'] ?? $room['mattress_price'] ?? 0);
 

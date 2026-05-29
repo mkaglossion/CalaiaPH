@@ -111,7 +111,7 @@
             ['label'=>'Pages Information','route'=>'admin.stay.wheretostay'],
             ['label'=>'Variants','route'=>'admin.stay.staycations'],
           ]],
-          ['title'=>'What to Do','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
+          ['title'=>'Day Visit','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.do.whattodo'],
             ['label'=>'Activities Management','route'=>'admin.do.activities']
           ]],

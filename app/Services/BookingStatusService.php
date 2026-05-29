@@ -121,17 +121,24 @@ class BookingStatusService
             'reference' => $reference,
         ];
 
-        BookingTimeline::log(
-            $booking->id,
-            $eventType,
-            "Payment of ₱" . number_format($amount, 2) . " via " . ucfirst($method) . ($reference ? " (Ref: {$reference})" : ""),
-            $triggeredBy,
-            $adminId,
-            $oldPaymentStatus,
-            $newPaymentStatus,
-            'payment_status',
-            $metadata
-        );
+        try {
+            BookingTimeline::log(
+                $booking->id,
+                $eventType,
+                "Payment of ₱" . number_format($amount, 2) . " via " . ucfirst($method) . ($reference ? " (Ref: {$reference})" : ""),
+                $triggeredBy,
+                $adminId,
+                $oldPaymentStatus,
+                $newPaymentStatus,
+                'payment_status',
+                $metadata
+            );
+        } catch (\Throwable $e) {
+            Log::error("Failed to write booking payment timeline entry", [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         // Send payment confirmation email
         if ($newPaymentStatus === 'paid') {
@@ -268,3 +275,4 @@ class BookingStatusService
             ->get();
     }
 }
+

@@ -2598,8 +2598,16 @@ class BookingController extends Controller
             $description = $staycation->texts->first()->description ?? 'Experience the beauty of nature with our premium accommodation options.';
             $image = $staycation->image ?? asset('assets/images/carousel/Glamping-1.jpg');
 
-            $name = strtolower($staycation->name);
-            if (strpos($name, 'glamping') !== false) {
+            $name = strtolower((string) $staycation->name);
+            $storedType = strtolower((string) ($staycation->type ?? ''));
+            $isDomeOrBell = strpos($name, 'dome') !== false || strpos($name, 'bell') !== false;
+            if ($isDomeOrBell) {
+                $type = 'glamping';
+            } elseif (in_array($storedType, ['glamping', 'camping', 'byot', 'car camping'], true)) {
+                $type = $storedType;
+            } elseif (strpos($name, 'byot') !== false || strpos($name, 'bring your own') !== false || strpos($name, 'car camping') !== false) {
+                $type = 'camping';
+            } elseif (strpos($name, 'glamping') !== false || strpos($name, 'dome') !== false || strpos($name, 'bell') !== false) {
                 $type = 'glamping';
             } elseif (strpos($name, 'tent') !== false || strpos($name, 'camping') !== false) {
                 $type = 'camping';
@@ -3320,7 +3328,9 @@ class BookingController extends Controller
 
         // Fallback for legacy/misaligned data where type may be stale but room name is glamping.
         $roomName = strtolower((string)($staycation->name ?? ''));
-        return str_contains($roomName, 'glamping');
+        return str_contains($roomName, 'glamping')
+            || str_contains($roomName, 'dome')
+            || str_contains($roomName, 'bell');
     }
 
     /**
@@ -3422,10 +3432,10 @@ class BookingController extends Controller
             return max($included, $legacyCapacity);
         }
 
-        // Backward-compatible fallback for existing Standard Glamping records.
-        $roomName = strtolower((string)($staycation->name ?? ''));
-        if (str_contains($roomName, 'standard glamping')) {
-            return max($included, 6);
+        // Backward-compatible fallback for glamping rooms without explicit max capacity:
+        // allow up to 2 additional adults beyond included capacity.
+        if ($this->supportsExtraMattress($staycation)) {
+            return max($included, $included + 2);
         }
 
         return max(1, $included);

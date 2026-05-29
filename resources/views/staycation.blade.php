@@ -132,7 +132,7 @@
                 <div class="flex items-center justify-between">
                    <div class="text-left">
                      @if($staycation && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
-                       <div class="font-bold leading-tight" style="color:#7a7d52">₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
+                       <div class="font-bold leading-tight" style="color:#7a7d52">Starts at ₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
                      @else
                        <div class="font-bold leading-tight text-red-700">No pricing set for current season</div>
                      @endif
@@ -172,7 +172,7 @@
                  <div class="flex items-center justify-between">
                    <div class="text-left">
                      @if($staycation && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
-                       <div class="font-bold leading-tight" style="color:#7a7d52">₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
+                       <div class="font-bold leading-tight" style="color:#7a7d52">Starts at ₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
                      @else
                        <div class="font-bold leading-tight text-red-700">No pricing set for current season</div>
                      @endif
@@ -236,7 +236,7 @@
                 <div class="flex items-center justify-between">
                    <div class="text-left">
                      @if($staycation && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
-                       <div class="font-bold leading-tight" style="color:#7a7d52">₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
+                       <div class="font-bold leading-tight" style="color:#7a7d52">Starts at ₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
                      @else
                        <div class="font-bold leading-tight text-red-700">No pricing set for current season</div>
                      @endif
@@ -284,7 +284,7 @@
                 <div class="flex items-center justify-between">
                    <div class="text-left">
                      @if($staycation && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
-                       <div class="font-bold leading-tight" style="color:#7a7d52">₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
+                       <div class="font-bold leading-tight" style="color:#7a7d52">Starts at ₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
                      @else
                        <div class="font-bold leading-tight text-red-700">No pricing set for current season</div>
                      @endif
@@ -332,7 +332,7 @@
                 <div class="flex items-center justify-between">
                    <div class="text-left">
                      @if($staycation && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
-                       <div class="font-bold leading-tight" style="color:#7a7d52">₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
+                       <div class="font-bold leading-tight" style="color:#7a7d52">Starts at ₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
                      @else
                        <div class="font-bold leading-tight text-red-700">No pricing set for current season</div>
                      @endif
@@ -384,7 +384,7 @@
                    @endphp
                    <div class="text-left">
                      @if($staycation && isset($roomDetails[$staycation->id]['currentPrice']) && $roomDetails[$staycation->id]['currentPrice'])
-                       <div class="font-bold leading-tight" style="color:#7a7d52">₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
+                       <div class="font-bold leading-tight" style="color:#7a7d52">Starts at ₱{{ number_format($roomDetails[$staycation->id]['currentPrice']) }} <span class="text-xs text-gray-500">/night</span></div>
                      @else
                        <div class="font-bold leading-tight text-red-700">No pricing set for current season</div>
                      @endif

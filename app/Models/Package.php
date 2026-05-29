@@ -47,7 +47,13 @@ class Package extends Model
      */
     public function getDurationLabelAttribute(): ?string
     {
-        $unit = $this->duration_unit;
+        $unitRaw = strtolower(trim((string) $this->duration_unit));
+        $unit = match ($unitRaw) {
+            'minute', 'minutes', 'min', 'mins' => 'minutes',
+            'hour', 'hours', 'hr', 'hrs' => 'hours',
+            'day', 'days' => 'days',
+            default => '',
+        };
         $value = (int) ($this->duration_value ?? 0);
 
         if (!$unit || $value < 1) {
@@ -65,7 +71,7 @@ class Package extends Model
             'days' => $value === 1 ? 'Day' : 'Days',
         ];
 
-        return $value . ' ' . ($labels[$unit] ?? 'Days');
+        return $value . ' ' . $labels[$unit];
     }
 
     /**

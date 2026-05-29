@@ -12,18 +12,25 @@
 ])
 
 @php
-  $image = $package->image;
+  $image = is_string($package->image) ? trim($package->image) : null;
   $isCloudinary = is_string($image) && str_contains($image, 'res.cloudinary.com');
   $isValidUrl = is_string($image) && (str_starts_with($image, 'http://') || str_starts_with($image, 'https://') || str_starts_with($image, '/'));
+  $placeholder = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="400"%3E%3Crect fill="%23e5e7eb" width="600" height="400"/%3E%3Ctext x="50%25" y="50%25" font-family="sans-serif" font-size="24" fill="%239ca3af" text-anchor="middle" dy=".3em"%3ENo Image Available%3C/text%3E%3C/svg%3E';
   
   if (!$isValidUrl) {
-    $imgSrc = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="400"%3E%3Crect fill="%23e5e7eb" width="600" height="400"/%3E%3Ctext x="50%25" y="50%25" font-family="sans-serif" font-size="24" fill="%239ca3af" text-anchor="middle" dy=".3em"%3ENo Image Available%3C/text%3E%3C/svg%3E';
+    $imgSrc = $placeholder;
+    $imgRawSrc = null;
     $imgSrcset = null;
   } elseif ($isCloudinary) {
+    $imgRawSrc = $image;
     $imgSrc = CloudinaryHelper::optimize($image, 600, false, false, 'good');
+    if (!$imgSrc) {
+      $imgSrc = $imgRawSrc;
+    }
     $imgSrcset = CloudinaryHelper::srcset($image, [400, 600, 900], false, false, 'good');
   } else {
     $imgSrc = $image;
+    $imgRawSrc = $image;
     $imgSrcset = null;
   }
   
@@ -75,10 +82,24 @@
   <div class="relative h-40 sm:h-48 md:h-56 overflow-hidden bg-gray-200 shrink-0">
     <img 
       src="{{ $imgSrc }}"
+      data-raw-src="{{ $imgRawSrc }}"
+      data-placeholder-src="{{ $placeholder }}"
       @if($imgSrcset) srcset="{{ $imgSrcset }}" @endif
       alt="{{ $package->name }}"
       crossorigin="anonymous"
       class="w-full h-full object-cover photo-clarity"
+      loading="lazy"
+      decoding="async"
+      onerror="
+        if (!this.dataset.triedRaw && this.dataset.rawSrc && this.src !== this.dataset.rawSrc) {
+          this.dataset.triedRaw = '1';
+          this.src = this.dataset.rawSrc;
+          return;
+        }
+        this.onerror = null;
+        this.removeAttribute('srcset');
+        this.src = this.dataset.placeholderSrc || '';
+      "
     >
     
     {{-- Status Badge for Admin --}}

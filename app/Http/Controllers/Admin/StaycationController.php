@@ -64,8 +64,18 @@ class StaycationController extends Controller
         // Determine type based on name
         $name = strtolower($request->name);
         $type = 'glamping'; // default
-        if (str_contains($name, 'byot') || str_contains($name, 'car camping') || str_contains($name, 'bring your own') || str_contains($name, 'dome') || str_contains($name, 'bell')) {
+        if (str_contains($name, 'byot') || str_contains($name, 'car camping') || str_contains($name, 'bring your own')) {
             $type = 'camping';
+        }
+
+        // Glamping rooms must always have at least 1 adult.
+        if ($type === 'glamping' && (int) $request->adults < 1) {
+            return response()->json([
+                'message' => 'Validation failed.',
+                'errors' => [
+                    'adults' => ['Glamping rooms must have at least 1 adult.']
+                ]
+            ], 422);
         }
 
         // Handle price configs
@@ -233,8 +243,18 @@ class StaycationController extends Controller
         // Determine type based on name
         $name = strtolower($request->name);
         $type = 'glamping'; // default
-        if (str_contains($name, 'byot') || str_contains($name, 'car camping') || str_contains($name, 'bring your own') || str_contains($name, 'dome') || str_contains($name, 'bell')) {
+        if (str_contains($name, 'byot') || str_contains($name, 'car camping') || str_contains($name, 'bring your own')) {
             $type = 'camping';
+        }
+
+        // Glamping rooms must always have at least 1 adult.
+        if ($type === 'glamping' && (int) $request->adults < 1) {
+            return response()->json([
+                'message' => 'Validation failed.',
+                'errors' => [
+                    'adults' => ['Glamping rooms must have at least 1 adult.']
+                ]
+            ], 422);
         }
 
         // Handle price configs

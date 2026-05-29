@@ -282,11 +282,12 @@
                     </div>
 
                     <div x-show="!isSpecialStaycation">
-                        <label for="staycation_adults" class="block text-sm font-medium mb-1">Base Adults Included</label>
-                        <input type="number" id="staycation_adults" name="adults" x-model.number="form.adults" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
+                        <label for="staycation_adults" class="block text-sm font-medium mb-1">Max Adults Allowed</label>
+                        <input type="number" id="staycation_adults" name="adults" x-model.number="form.adults" min="1" class="w-full border rounded px-3 py-2 h-10" placeholder="1" required>
+                        <p class="text-xs text-gray-500 mt-1">For glamping rooms, minimum is 1 adult.</p>
                     </div>
                     <div x-show="!isSpecialStaycation">
-                        <label for="staycation_children" class="block text-sm font-medium mb-1">Base Children Included</label>
+                        <label for="staycation_children" class="block text-sm font-medium mb-1">Max Children Allowed</label>
                         <input type="number" id="staycation_children" name="children" x-model.number="form.children" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
                     </div>
                     <div x-show="!isSpecialStaycation">
@@ -295,7 +296,7 @@
                         <p class="text-xs text-gray-500 mt-1">Can be higher than base setup to allow extra beds.</p>
                     </div>
                     <div x-show="!isSpecialStaycation">
-                        <label for="staycation_included_capacity" class="block text-sm font-medium mb-1">Base Included Guests</label>
+                        <label for="staycation_included_capacity" class="block text-sm font-medium mb-1">Base number of guests</label>
                         <input type="number" id="staycation_included_capacity" name="included_guest_capacity" x-model.number="form.included_guest_capacity" min="1" class="w-full border rounded px-3 py-2 h-10" placeholder="4" required>
                         <p class="text-xs text-gray-500 mt-1">Guests covered by base price before extra mattress.</p>
                     </div>
@@ -730,7 +731,7 @@ function staycationManager() {
             name: '',
             days: 1,
             quantity: 1,
-            adults: 0,
+            adults: 1,
             children: 0,
             included_guest_capacity: 1,
             max_guest_capacity: 1,
@@ -778,7 +779,7 @@ function staycationManager() {
         },
 
         resetForm() {
-            this.form = { id: null, name: '', days: 1, quantity: 1, adults: 0, children: 0, included_guest_capacity: 1, max_guest_capacity: 1, priceConfigs: [], image: null, imagePreview: null, existingImage: null, removeImage: false };
+            this.form = { id: null, name: '', days: 1, quantity: 1, adults: 1, children: 0, included_guest_capacity: 1, max_guest_capacity: 1, priceConfigs: [], image: null, imagePreview: null, existingImage: null, removeImage: false };
             this.editModeStaycation = false;
             this.isSpecialStaycation = false;
             this.removeImage(); // Explicitly clear image and input
@@ -829,7 +830,7 @@ function staycationManager() {
                 this.form.days = staycation.days || 1;
                 this.updateSpecialRoomStatus();
                 this.form.quantity = staycation.capacity;
-                this.form.adults = staycation.adults;
+                this.form.adults = this.isSpecialStaycation ? Number(staycation.adults || 0) : Math.max(1, Number(staycation.adults || 0));
                 this.form.children = staycation.children;
                 this.form.included_guest_capacity = Number(staycation.included_guest_capacity || staycation.capacity || ((staycation.adults || 0) + (staycation.children || 0)) || 1);
                 this.form.max_guest_capacity = Number(staycation.max_guest_capacity || staycation.capacity || this.form.included_guest_capacity || 1);
@@ -964,6 +965,16 @@ function staycationManager() {
                 return;
             }
 
+            if (!this.isSpecialRoom(this.form.name) && Number(this.form.adults || 0) < 1) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Input',
+                    text: 'Glamping rooms must have at least 1 adult.',
+                    confirmButtonColor: '#3b82f6'
+                });
+                return;
+            }
+
             if (!this.isSpecialRoom(this.form.name)) {
                 const includedCapacity = Number(this.form.included_guest_capacity || 0);
                 const maxCapacity = Number(this.form.max_guest_capacity || 0);
@@ -987,12 +998,12 @@ function staycationManager() {
                 }
             }
             
-            // For non-special rooms, require at least one guest
-            if (!this.isSpecialRoom(this.form.name) && this.form.adults + this.form.children === 0) {
+            // For non-special rooms, ensure at least one guest in total.
+            if (!this.isSpecialRoom(this.form.name) && (Number(this.form.adults || 0) + Number(this.form.children || 0)) < 1) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Missing Field',
-                    text: 'At least one adult or child is required.',
+                    text: 'Please set at least 1 guest.',
                     confirmButtonColor: '#3b82f6'
                 });
                 return;

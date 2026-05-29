@@ -592,16 +592,63 @@ class PaymongoWebhookService
 
     public static function verifySignature(string $payloadString, string $signature): bool
     {
-        $secret = config('services.paymongo.webhook_secret');
+        $secret = trim((string) config('services.paymongo.webhook_secret', ''));
 
-        if (!$secret) {
+        if ($secret === '') {
             Log::warning("PayMongo webhook secret not configured");
             return false;
         }
 
-        $hash = hash_hmac('sha256', $payloadString, $secret, true);
-        $calculatedSignature = base64_encode($hash);
+        $signature = trim($signature);
+        if ($signature === '') {
+            return false;
+        }
 
-        return hash_equals($calculatedSignature, $signature);
+        // Support PayMongo canonical signature header format:
+        // t=<timestamp>,te=<test_signature>,li=<live_signature>
+        //
+        // Signing input: "{timestamp}.{raw_json_payload}"
+        // HMAC: SHA-256 using webhook secret (hex digest)
+        $headerParts = self::parseSignatureHeader($signature);
+        if (isset($headerParts['t'])) {
+            $timestamp = (string) $headerParts['t'];
+            $signedPayload = $timestamp . '.' . $payloadString;
+            $expectedHex = hash_hmac('sha256', $signedPayload, $secret);
+
+            foreach (['li', 'te'] as $key) {
+                $provided = trim((string) ($headerParts[$key] ?? ''));
+                if ($provided !== '' && hash_equals(strtolower($expectedHex), strtolower($provided))) {
+                    return true;
+                }
+            }
+        }
+
+        // Backward-compatible fallback for plain signature headers.
+        $rawHash = hash_hmac('sha256', $payloadString, $secret, true);
+        $expectedBase64 = base64_encode($rawHash);
+        $expectedHex = hash_hmac('sha256', $payloadString, $secret);
+
+        return hash_equals($expectedBase64, $signature)
+            || hash_equals(strtolower($expectedHex), strtolower($signature));
+    }
+
+    private static function parseSignatureHeader(string $signature): array
+    {
+        $result = [];
+        $chunks = explode(',', $signature);
+        foreach ($chunks as $chunk) {
+            $pair = explode('=', trim($chunk), 2);
+            if (count($pair) !== 2) {
+                continue;
+            }
+
+            $key = trim($pair[0]);
+            $value = trim($pair[1]);
+            if ($key !== '') {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
     }
 }

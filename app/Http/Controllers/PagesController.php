@@ -246,8 +246,13 @@ class PagesController extends Controller
             $description = $staycation->texts->first()->description ?? 'Experience the beauty of nature with our premium accommodation options.';
             $image = $staycation->image ?? asset('assets/images/carousel/Glamping-1.jpg');
 
-            $name = strtolower($staycation->name);
-            if (strpos($name, 'glamping') !== false) {
+            $name = strtolower((string) $staycation->name);
+            $storedType = strtolower((string) ($staycation->type ?? ''));
+            if (in_array($storedType, ['glamping', 'camping', 'byot', 'car camping'], true)) {
+                $type = $storedType;
+            } elseif (strpos($name, 'byot') !== false || strpos($name, 'bring your own') !== false || strpos($name, 'car camping') !== false) {
+                $type = 'camping';
+            } elseif (strpos($name, 'glamping') !== false || strpos($name, 'dome') !== false || strpos($name, 'bell') !== false) {
                 $type = 'glamping';
             } elseif (strpos($name, 'tent') !== false || strpos($name, 'camping') !== false) {
                 $type = 'camping';

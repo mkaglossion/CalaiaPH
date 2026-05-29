@@ -343,7 +343,9 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                       $staycation = $staycations->get($accommodation['accommodation_id'] ?? $roomId);
                       $name = strtolower($staycation->name ?? '');
                       $roomType = strtolower((string)(($staycation ? $staycation->type : null) ?? ($accommodation['type'] ?? '')));
-                      $supportsExtraMattress = $roomType === 'glamping';
+                      $supportsExtraMattress = $roomType === 'glamping'
+                        || str_contains($name, 'dome')
+                        || str_contains($name, 'bell');
                       $isBYOT = stripos($name, 'byot') !== false || stripos($name, 'bring your own tent') !== false;
                       $isCarCamping = stripos($name, 'car camping') !== false;
                       $quantity = $accommodation['quantity'] ?? 1;

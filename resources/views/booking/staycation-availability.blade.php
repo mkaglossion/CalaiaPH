@@ -1836,13 +1836,24 @@
 
                 getRoomType(room) {
                     const directType = String(room?.type || '').toLowerCase();
+                    if (directType === 'camping' && this.isDomeOrBellRoom(room)) return 'glamping';
                     if (directType) return directType;
 
                     const lookupId = room?.originalId || room?.id;
-                    return String(this.roomDetailsMap?.[lookupId]?.type || '').toLowerCase();
+                    const lookupRoom = this.roomDetailsMap?.[lookupId] || null;
+                    const lookupType = String(lookupRoom?.type || '').toLowerCase();
+                    if (lookupType === 'camping' && this.isDomeOrBellRoom(lookupRoom || room)) return 'glamping';
+                    return lookupType;
+                },
+
+                isDomeOrBellRoom(room) {
+                    const roomNameLower = String(room?.name || '').toLowerCase();
+                    return roomNameLower.includes('dome') || roomNameLower.includes('bell');
                 },
 
                 isCampingRoom(room) {
+                    if (this.isDomeOrBellRoom(room)) return false;
+
                     const type = this.getRoomType(room);
                     if (type === 'byot' || type === 'car camping' || type === 'camping') return true;
 
@@ -1854,11 +1865,11 @@
                 },
 
                 isGlampingRoom(room) {
-                    return this.getRoomType(room) === 'glamping';
+                    return this.getRoomType(room) === 'glamping' || this.isDomeOrBellRoom(room);
                 },
 
                 supportsExtraMattress(room) {
-                    return this.isGlampingRoom(room);
+                    return this.isGlampingRoom(room) && !this.isCampingRoom(room);
                 },
 
                 getAdditionalAdultLabel(count) {
@@ -3361,5 +3372,4 @@
     </script>
     @endif
 </x-app-layout>
-
 
