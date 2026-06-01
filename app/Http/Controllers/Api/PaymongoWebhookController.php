@@ -25,10 +25,14 @@ class PaymongoWebhookController extends Controller
             $eventMeta = $this->extractEventMeta($payload);
 
             // Signature is required for all webhook calls.
-            $signature = $request->header('X-Paymongo-Signature');
+            // PayMongo commonly uses "Paymongo-Signature"; keep legacy "X-Paymongo-Signature" support too.
+            $signature = $request->header('Paymongo-Signature')
+                ?: $request->header('X-Paymongo-Signature');
             $signaturePresent = !empty($signature);
             if (!$signature) {
-                Log::warning("PayMongo webhook missing signature header");
+                Log::warning("PayMongo webhook missing signature header", [
+                    'available_headers' => array_keys($request->headers->all()),
+                ]);
                 $this->storeWebhookEvent(
                     $payload,
                     array_merge($eventMeta, [
