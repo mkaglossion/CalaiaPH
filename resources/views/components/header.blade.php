@@ -509,8 +509,8 @@
       <form method="POST" action="{{ route('login.submit') }}" class="space-y-4">
         @csrf
         <div>
-          <label for="login_username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-          <input type="text" id="login_username" name="username" placeholder="Enter your username" autocomplete="username"
+          <label for="login_username" class="block text-sm font-medium text-gray-700 mb-1">Username or Email</label>
+          <input type="text" id="login_username" name="username" placeholder="Enter your username or email" autocomplete="username"
             class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             required>
         </div>
@@ -525,6 +525,43 @@
           Log In
         </button>
       </form>
+
+      <div class="mt-6">
+        <div class="flex items-center gap-3" aria-hidden="true">
+          <div class="h-px flex-1 bg-gray-200"></div>
+          <span class="inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold tracking-[0.3em] text-gray-500">
+            OR
+          </span>
+          <div class="h-px flex-1 bg-gray-200"></div>
+        </div>
+
+        <div class="mt-4 space-y-3">
+          <a
+            href="{{ route('auth.google.redirect', ['intended' => request()->fullUrl()]) }}"
+            aria-label="Continue with Google"
+            class="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-.8 2.4-1.8 3.2l3 2.3c1.8-1.7 2.8-4.1 2.8-6.9 0-.7-.1-1.4-.2-2H12Z"/>
+              <path fill="#34A853" d="M12 22c2.6 0 4.8-.9 6.5-2.5l-3-2.3c-.8.6-1.9 1-3.5 1-2.7 0-5-1.8-5.8-4.3l-3.1 2.4C4.9 19.5 8.2 22 12 22Z"/>
+              <path fill="#4A90E2" d="M6.2 13.9c-.2-.6-.3-1.3-.3-1.9s.1-1.3.3-1.9l-3.1-2.4C2.4 9.1 2 10.5 2 12s.4 2.9 1.1 4.3l3.1-2.4Z"/>
+              <path fill="#FBBC05" d="M12 5.8c1.5 0 2.8.5 3.8 1.5l2.8-2.8C16.8 2.9 14.6 2 12 2 8.2 2 4.9 4.5 3.1 7.7l3.1 2.4C7 7.6 9.3 5.8 12 5.8Z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </a>
+
+          <a
+            href="{{ route('auth.facebook.redirect', ['intended' => request()->fullUrl()]) }}"
+            aria-label="Continue with Facebook"
+            class="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <svg class="h-5 w-5 shrink-0 text-[#1877F2]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M13.5 22v-8.2h2.8l.4-3.2h-3.2V8.6c0-.9.3-1.6 1.6-1.6h1.8V4.1c-.3 0-1.4-.1-2.6-.1-2.6 0-4.3 1.6-4.3 4.5v2.1H8v3.2h2.6V22h2.9Z"/>
+            </svg>
+            <span>Continue with Facebook</span>
+          </a>
+        </div>
+      </div>
 
       <div class="text-center mt-4">
         <a href="#"

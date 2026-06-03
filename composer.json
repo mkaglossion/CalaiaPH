@@ -13,6 +13,7 @@
         "cloudinary-labs/cloudinary-laravel": "^3.0",
         "doctrine/dbal": "^4.4",
         "laravel/framework": "^12.0",
+        "laravel/socialite": "^5.27",
         "laravel/telescope": "^5.15",
         "laravel/tinker": "^2.10.1",
         "paymongo/paymongo-php": "*",

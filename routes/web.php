@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\DiningReservationController;
@@ -464,6 +465,10 @@ Route::get('/verify-email/{token}', [RegisterController::class, 'verifyEmail'])-
 
 Route::get('/login', function () { return redirect('/'); })->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
+Route::get('/auth/google/redirect', [SocialLoginController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+Route::get('/auth/google/callback', [SocialLoginController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+Route::get('/auth/facebook/redirect', [SocialLoginController::class, 'redirectToFacebook'])->name('auth.facebook.redirect');
+Route::get('/auth/facebook/callback', [SocialLoginController::class, 'handleFacebookCallback'])->name('auth.facebook.callback');
 Route::match(['GET', 'POST'], '/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Password Reset Routes
