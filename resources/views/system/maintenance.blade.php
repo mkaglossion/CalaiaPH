@@ -348,8 +348,8 @@
             <div class="footer">
                 <div class="footer-text">
                     <span>You can contact us:</span>
-                    <span>Phone: <strong>+63 905-129-4741</strong></span>
-                    <span>Email: <strong>support@calaiaph.com</strong></span>
+                    <span>Phone: <strong>+63 956-319-2448</strong></span>
+                    <span>Email: <strong>calaia.ph@gmail.com</strong></span>
                 </div>
                 <div class="social-links">
                     <a href="https://www.facebook.com/calaia.ph/" class="social-link" title="Facebook">
