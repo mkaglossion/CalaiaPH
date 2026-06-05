@@ -95,9 +95,9 @@
             ['label'=>'Unified Inventory','route'=>'admin.bookings.inventory'],
             ['label'=>'PayMongo Logs','route'=>'admin.bookings.paymongo-webhooks'],
           ]],
-          ['title'=>'Reservation Monitor','icon'=>'bell-ring','route'=>'admin.reservations.*','sub'=>[
-            ['label'=>'Monitor','route'=>'admin.reservations.monitor'],
-          ]],
+          //['title'=>'Reservation Monitor','icon'=>'bell-ring','route'=>'admin.reservations.*','sub'=>[
+          //  ['label'=>'Monitor','route'=>'admin.reservations.monitor'],
+          //]],
           // ['title'=>'Day Tour','icon'=>'sun','route'=>'admin.day.*','sub'=>[
           //   ['label'=>'Pages Information','route'=>'admin.day.daytour'],
           //   ['label'=>'Items','route'=>'admin.day.day'],
