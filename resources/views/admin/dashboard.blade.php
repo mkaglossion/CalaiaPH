@@ -527,7 +527,7 @@
     </x-admin.section-card>
 
     {{-- Recent Admin Activity --}}
-    <x-admin.section-card title="Recent Activity" class="lg:col-span-1">
+    <x-admin.section-card title="Recent Admin Activity" class="lg:col-span-1">
       @if($recentActivity->count() > 0)
         <div class="space-y-3 text-sm">
           @foreach($recentActivity as $activity)

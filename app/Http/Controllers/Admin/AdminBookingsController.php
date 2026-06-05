@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminActivityLog;
 use App\Models\Booking;
 use App\Models\PackageBooking;
 use App\Models\PaymongoWebhookEvent;
@@ -158,7 +159,14 @@ class AdminBookingsController extends Controller
     public function cancel($id)
     {
         $booking = Booking::findOrFail($id);
+        $oldStatus = $booking->status;
         $booking->cancel();
+        AdminActivityLog::log(
+            'booking_status_update',
+            "Cancelled booking {$booking->transaction_id} from {$oldStatus} to cancelled",
+            $booking,
+            ['old_status' => $oldStatus, 'new_status' => 'cancelled']
+        );
         
         return redirect()->back()->with('success', 'Booking cancelled and inventory restored successfully.');
     }

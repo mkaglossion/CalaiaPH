@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PackageBooking;
+use App\Services\PaymongoWebhookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
@@ -135,8 +136,8 @@ class PaymentController extends Controller
                                 'customer_email' => $validated['email'],
                                 'customer_name' => $validated['name']
                             ],
-                            'success_url' => route('booking.payment-success'),
-                            'cancel_url' => route('booking.payment-cancelled')
+                            'success_url' => route('booking.payment-success') . '?checkout_id={CHECKOUT_ID}',
+                            'cancel_url' => route('booking.payment-cancelled') . '?checkout_id={CHECKOUT_ID}'
                         ]
                     ]
                 ]);
@@ -192,7 +193,7 @@ class PaymentController extends Controller
     public function paymentSuccess(Request $request)
     {
         try {
-            $checkoutSessionId = $request->query('checkout_session_id');
+            $checkoutSessionId = $request->query('checkout_session_id') ?: $request->query('checkout_id');
 
             if (!$checkoutSessionId) {
                 return redirect('/packages')->with('error', 'Invalid payment reference');
@@ -212,16 +213,13 @@ class PaymentController extends Controller
                     $booking = PackageBooking::where('paymongo_reference', $checkoutSessionId)->first();
                     
                     if ($booking) {
-                        $booking->update([
-                            'payment_status' => 'paid',
-                            'status' => 'confirmed'
-                        ]);
+                        $paymentReference = data_get($data, 'data.attributes.payments.0.id')
+                            ?: data_get($data, 'data.attributes.payment_intent.id')
+                            ?: $checkoutSessionId;
 
-                        // Send confirmation email
-                        \Illuminate\Support\Facades\Mail::to($booking->email)
-                            ->queue(new \App\Mail\PackageBookingConfirmation($booking));
-
-                        return redirect('/packages')->with('success', 'Booking confirmed! Check your email for details.');
+                        if (PaymongoWebhookService::markPackageBookingPaid($booking, $paymentReference)) {
+                            return redirect('/packages')->with('success', 'Booking confirmed! Check your email for details.');
+                        }
                     }
                 }
             }
@@ -240,7 +238,7 @@ class PaymentController extends Controller
     public function paymentCancelled(Request $request)
     {
         try {
-            $checkoutSessionId = $request->query('checkout_session_id');
+            $checkoutSessionId = $request->query('checkout_session_id') ?: $request->query('checkout_id');
 
             if ($checkoutSessionId) {
                 $booking = PackageBooking::where('paymongo_reference', $checkoutSessionId)->first();

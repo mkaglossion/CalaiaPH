@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Booking;
+use App\Models\PackageBooking;
 use App\Models\Product;
 use App\Models\Food;
 use App\Models\AdminSystemAlert;
@@ -35,9 +36,11 @@ class AdminDashboardController extends Controller
         $clientUsers   = (int) $usersAgg->client_users;
 
         // -----------------------------
-        // BOOKINGS + REVENUE (1 query)
+        // BOOKINGS + REVENUE (2 queries: Booking + PackageBooking)
         // -----------------------------
         $base = Booking::query()
+            ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
+        $packageBase = PackageBooking::query()
             ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
 
         $agg = (clone $base)->selectRaw("
@@ -50,15 +53,25 @@ class AdminDashboardController extends Controller
             SUM(CASE WHEN status = 'completed' AND payment_status = 'paid' THEN total_amount ELSE 0 END) as completed_revenue,
             SUM(CASE WHEN status != 'cancelled' AND payment_status = 'refunded' THEN total_amount ELSE 0 END) as refunded_revenue
         ")->first();
+        $packageAgg = (clone $packageBase)->selectRaw("
+            COUNT(*) as total_bookings,
+            SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as active_bookings,
+            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_bookings,
 
-        $totalBookings     = (int) $agg->total_bookings;
-        $activeBookings    = (int) $agg->active_bookings;
-        $completedBookings = (int) $agg->completed_bookings;
+            SUM(CASE WHEN status != 'cancelled' AND payment_status = 'paid' THEN total_amount ELSE 0 END) as total_revenue,
+            SUM(CASE WHEN status != 'cancelled' AND payment_status = 'pending' THEN total_amount ELSE 0 END) as pending_revenue,
+            SUM(CASE WHEN status = 'completed' AND payment_status = 'paid' THEN total_amount ELSE 0 END) as completed_revenue,
+            SUM(CASE WHEN status != 'cancelled' AND payment_status = 'refunded' THEN total_amount ELSE 0 END) as refunded_revenue
+        ")->first();
 
-        $totalRevenue      = (float) $agg->total_revenue;
-        $pendingRevenue    = (float) $agg->pending_revenue;
-        $completedRevenue  = (float) $agg->completed_revenue;
-        $refundedRevenue   = (float) $agg->refunded_revenue;
+        $totalBookings     = (int) $agg->total_bookings + (int) $packageAgg->total_bookings;
+        $activeBookings    = (int) $agg->active_bookings + (int) $packageAgg->active_bookings;
+        $completedBookings = (int) $agg->completed_bookings + (int) $packageAgg->completed_bookings;
+
+        $totalRevenue      = (float) $agg->total_revenue + (float) $packageAgg->total_revenue;
+        $pendingRevenue    = (float) $agg->pending_revenue + (float) $packageAgg->pending_revenue;
+        $completedRevenue  = (float) $agg->completed_revenue + (float) $packageAgg->completed_revenue;
+        $refundedRevenue   = (float) $agg->refunded_revenue + (float) $packageAgg->refunded_revenue;
 
         $netRevenue        = $totalRevenue - $refundedRevenue;
 
@@ -82,24 +95,63 @@ class AdminDashboardController extends Controller
         $lowStockFoods = (int) $foodsAgg->low_stock_foods;
 
         // -----------------------------
-        // RECENT BOOKINGS (1 query)
+        // RECENT BOOKINGS (2 queries: Booking + PackageBooking)
         // -----------------------------
         $recentBookings = (clone $base)
             ->latest()
             ->take(6)
-            ->get();
+            ->get()
+            ->map(function ($booking) {
+                $booking->display_customer_name = $booking->display_customer_name;
+                return $booking;
+            })
+            ->concat(
+                (clone $packageBase)
+                    ->latest()
+                    ->take(6)
+                    ->get()
+                    ->map(function ($booking) {
+                        $booking->display_customer_name = $booking->full_name;
+                        $booking->booking_type = 'package';
+                        $booking->checkin_date = $booking->booking_date;
+                        return $booking;
+                    })
+            )
+            ->sortByDesc('created_at')
+            ->take(6)
+            ->values();
 
         // -----------------------------
-        // MONTHLY BOOKINGS (1 query)
+        // MONTHLY BOOKINGS (2 queries merged)
         // (last 12 months, independent of range filter)
         // -----------------------------
-        $monthlyBookings = Booking::query()
+        $bookingMonthly = Booking::query()
             ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as count')
             ->where('created_at', '>=', now()->subMonths(11)->startOfMonth())
             ->groupBy('year', 'month')
             ->orderBy('year')
             ->orderBy('month')
             ->get();
+        $packageMonthly = PackageBooking::query()
+            ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as count')
+            ->where('created_at', '>=', now()->subMonths(11)->startOfMonth())
+            ->groupBy('year', 'month')
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get();
+        $monthlyBookings = $bookingMonthly
+            ->concat($packageMonthly)
+            ->groupBy(fn($row) => $row->year . '-' . $row->month)
+            ->map(function ($group) {
+                $first = $group->first();
+                return (object) [
+                    'year' => (int) $first->year,
+                    'month' => (int) $first->month,
+                    'count' => (int) $group->sum('count'),
+                ];
+            })
+            ->sortBy(fn($row) => sprintf('%04d-%02d', $row->year, $row->month))
+            ->values();
 
         // -----------------------------------------------
         // SYSTEM ALERTS (Unresolved Critical + Warnings)

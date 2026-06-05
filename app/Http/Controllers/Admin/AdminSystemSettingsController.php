@@ -61,14 +61,40 @@ class AdminSystemSettingsController extends Controller
         return back()->with('success', 'System settings updated successfully.');
     }
 
-    public function showAlerts()
+    public function showAlerts(Request $request)
     {
-        $unresolved = AdminSystemAlert::unresolved()
-            ->orderBy('severity', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        $status = $request->string('status', 'unresolved')->toString();
+        $severity = $request->string('severity', 'all')->toString();
 
-        return view('admin.settings.alerts', compact('unresolved'));
+        if (!in_array($status, ['unresolved', 'resolved', 'all'], true)) {
+            $status = 'unresolved';
+        }
+
+        if (!in_array($severity, ['all', 'critical', 'warning', 'info'], true)) {
+            $severity = 'all';
+        }
+
+        $alertsQuery = AdminSystemAlert::query()
+            ->when($status === 'unresolved', fn ($q) => $q->whereNull('resolved_at'))
+            ->when($status === 'resolved', fn ($q) => $q->whereNotNull('resolved_at'))
+            ->when($severity !== 'all', fn ($q) => $q->where('severity', $severity))
+            ->orderBy('severity', 'desc')
+            ->orderByDesc('created_at');
+
+        $alerts = $alertsQuery->paginate(15)->withQueryString();
+        $severityBase = AdminSystemAlert::query()
+            ->when($status === 'unresolved', fn ($q) => $q->whereNull('resolved_at'))
+            ->when($status === 'resolved', fn ($q) => $q->whereNotNull('resolved_at'));
+        $counts = [
+            'all' => AdminSystemAlert::count(),
+            'unresolved' => AdminSystemAlert::whereNull('resolved_at')->count(),
+            'resolved' => AdminSystemAlert::whereNotNull('resolved_at')->count(),
+            'critical' => (clone $severityBase)->where('severity', 'critical')->count(),
+            'warning' => (clone $severityBase)->where('severity', 'warning')->count(),
+            'info' => (clone $severityBase)->where('severity', 'info')->count(),
+        ];
+
+        return view('admin.settings.alerts', compact('alerts', 'counts', 'status', 'severity'));
     }
 
     public function resolveAlert($id)

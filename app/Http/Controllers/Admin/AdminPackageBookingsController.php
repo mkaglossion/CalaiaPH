@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminActivityLog;
 use App\Models\PackageBooking;
 use App\Models\PackageInventory;
 use App\Models\AdminSystemAlert;
@@ -21,8 +22,16 @@ class AdminPackageBookingsController extends Controller
     public function confirm($id)
     {
         $booking = PackageBooking::findOrFail($id);
+        $oldStatus = $booking->status;
         $booking->status = 'confirmed';
         $booking->save();
+
+        AdminActivityLog::log(
+            'package_booking_status_update',
+            "Confirmed package booking {$booking->booking_reference} from {$oldStatus} to confirmed",
+            $booking,
+            ['old_status' => $oldStatus, 'new_status' => 'confirmed']
+        );
 
         // Log and create admin alert
         Log::info('Package booking confirmed by admin', ['id' => $booking->id, 'reference' => $booking->booking_reference]);
@@ -39,6 +48,7 @@ class AdminPackageBookingsController extends Controller
     public function cancel($id)
     {
         $booking = PackageBooking::findOrFail($id);
+        $oldStatus = $booking->status;
         $booking->status = 'cancelled';
         $booking->save();
 
@@ -88,6 +98,12 @@ class AdminPackageBookingsController extends Controller
 
         // Log and create admin alert for cancellation
         Log::info('Package booking cancelled by admin', ['id' => $booking->id, 'reference' => $booking->booking_reference]);
+        AdminActivityLog::log(
+            'package_booking_status_update',
+            "Cancelled package booking {$booking->booking_reference} from {$oldStatus} to cancelled",
+            $booking,
+            ['old_status' => $oldStatus, 'new_status' => 'cancelled']
+        );
         AdminSystemAlert::create([
             'type' => 'package_booking',
             'severity' => 'info',
@@ -108,6 +124,7 @@ class AdminPackageBookingsController extends Controller
         ]);
 
         $booking = PackageBooking::findOrFail($data['booking_id']);
+        $oldPaymentStatus = $booking->payment_status;
         $booking->payment_status = 'paid';
         $booking->payment_reference = $data['notes'] ?? $booking->payment_reference;
         $booking->total_amount = $data['amount'];
@@ -164,6 +181,18 @@ class AdminPackageBookingsController extends Controller
 
         // Log and admin alert for payment
         Log::info('Package booking payment recorded by admin', ['id' => $booking->id, 'reference' => $booking->booking_reference, 'amount' => $booking->total_amount]);
+        AdminActivityLog::log(
+            'package_booking_payment_recorded',
+            "Recorded payment for package booking {$booking->booking_reference} via {$data['payment_method']}",
+            $booking,
+            [
+                'old_payment_status' => $oldPaymentStatus,
+                'new_payment_status' => 'paid',
+                'payment_method' => $data['payment_method'],
+                'amount' => (float) $booking->total_amount,
+                'notes' => $data['notes'] ?? null,
+            ]
+        );
         AdminSystemAlert::create([
             'type' => 'package_booking',
             'severity' => 'info',

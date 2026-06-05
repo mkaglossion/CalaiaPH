@@ -107,10 +107,12 @@ class PaymongoWebhookController extends Controller
 
     private function extractEventMeta(array $payload): array
     {
-        $eventType = $payload['type'] ?? data_get($payload, 'data.attributes.type');
-        $resourceType = data_get($payload, 'data.type');
-        $resourceId = data_get($payload, 'data.id');
-        $attributes = data_get($payload, 'data.attributes', []);
+        $normalized = PaymongoWebhookService::normalizeWebhookPayload($payload);
+        $eventType = $normalized['event_type'];
+        $resource = $normalized['resource'];
+        $resourceType = $resource['type'] ?? null;
+        $resourceId = $resource['id'] ?? null;
+        $attributes = is_array($resource['attributes'] ?? null) ? $resource['attributes'] : [];
         $metadata = is_array($attributes['metadata'] ?? null) ? $attributes['metadata'] : [];
 
         $reference = $attributes['reference']
@@ -124,15 +126,18 @@ class PaymongoWebhookController extends Controller
 
         if (($eventType && str_starts_with($eventType, 'checkout_session.')) || $resourceType === 'checkout_session') {
             $checkoutSessionId = $checkoutSessionId ?: $resourceId;
+            $paymentId = $paymentId ?: data_get($attributes, 'payments.0.id');
         }
         if (($eventType && str_starts_with($eventType, 'payment.')) || $resourceType === 'payment') {
             $paymentId = $paymentId ?: $resourceId;
-            $checkoutSessionId = $checkoutSessionId ?: data_get($attributes, 'source.id');
         }
 
         $amountCentavos = $attributes['amount'] ?? null;
         if (!is_numeric($amountCentavos)) {
-            $amountCentavos = null;
+            $amountCentavos = data_get($attributes, 'payments.0.attributes.amount');
+            if (!is_numeric($amountCentavos)) {
+                $amountCentavos = null;
+            }
         }
 
         return [

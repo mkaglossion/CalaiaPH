@@ -213,6 +213,18 @@ class ReservationMonitorController extends Controller
                     ], 400);
                 }
 
+                AdminActivityLog::log(
+                    'booking_payment_recorded',
+                    "Recorded payment for booking {$booking->transaction_id} via {$validated['payment_method']}",
+                    $booking,
+                    [
+                        'new_payment_status' => $booking->payment_status,
+                        'payment_method' => $booking->payment_method,
+                        'amount' => (float) $validated['amount'],
+                        'notes' => $validated['notes'] ?? null,
+                    ]
+                );
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Payment recorded successfully',
@@ -240,6 +252,18 @@ class ReservationMonitorController extends Controller
                 // Refresh and log after update to ensure persistence
                 $dining->refresh();
                 Log::info('Recording dining payment via admin - after update', ['dining_id' => $dining->id, 'payment_status' => $dining->payment_status, 'total_amount' => $dining->total_amount]);
+
+                AdminActivityLog::log(
+                    'dining_payment_recorded',
+                    "Recorded payment for dining reservation #{$dining->id} via {$validated['payment_method']}",
+                    $dining,
+                    [
+                        'new_payment_status' => $dining->payment_status,
+                        'payment_method' => $dining->payment_method,
+                        'amount' => (float) $validated['amount'],
+                        'notes' => $validated['notes'] ?? null,
+                    ]
+                );
 
                 return response()->json([
                     'success' => true,
@@ -314,6 +338,8 @@ class ReservationMonitorController extends Controller
                 ], 404);
             }
 
+            $oldStatus = $booking->status;
+
             // Use BookingStatusService to update status with timeline logging
             $success = BookingStatusService::updateStatus(
                 $booking,
@@ -329,6 +355,18 @@ class ReservationMonitorController extends Controller
                     'message' => 'Invalid status transition for current booking status.',
                 ], 400);
             }
+
+            $booking->refresh();
+            AdminActivityLog::log(
+                'booking_status_update',
+                "Updated booking {$booking->transaction_id} status from {$oldStatus} to {$booking->status}",
+                $booking,
+                [
+                    'old_status' => $oldStatus,
+                    'new_status' => $booking->status,
+                    'notes' => $validated['notes'] ?? null,
+                ]
+            );
 
             return response()->json([
                 'success' => true,
@@ -377,15 +415,12 @@ class ReservationMonitorController extends Controller
 
             // Log the action - with proper error handling
             try {
-                AdminActivityLog::create([
-                    'user_id' => Auth::id(),
-                    'action' => 'dining_reservation_status_update',
-                    'description' => "Updated dining reservation #{$id} status from {$oldStatus} to {$validated['status']}",
-                    'model_type' => 'DiningReservation',
-                    'model_id' => $id,
-                    'changes' => ['old_status' => $oldStatus, 'new_status' => $validated['status']],
-                    'ip_address' => $request->ip(),
-                ]);
+                AdminActivityLog::log(
+                    'dining_reservation_status_update',
+                    "Updated dining reservation #{$id} status from {$oldStatus} to {$validated['status']}",
+                    $dining,
+                    ['old_status' => $oldStatus, 'new_status' => $validated['status'], 'notes' => $validated['notes'] ?? null]
+                );
             } catch (\Exception $logError) {
                 Log::warning('Could not create activity log for dining status update', [
                     'dining_id' => $id,
@@ -436,9 +471,18 @@ class ReservationMonitorController extends Controller
                 ], 422);
             }
 
+            $oldStatus = $booking->status;
+
             $booking->update([
                 'status' => 'cancelled',
             ]);
+
+            AdminActivityLog::log(
+                'booking_status_update',
+                "Cancelled booking {$booking->transaction_id} from {$oldStatus} to cancelled",
+                $booking,
+                ['old_status' => $oldStatus, 'new_status' => 'cancelled', 'reason' => $validated['reason'] ?? null]
+            );
 
             return response()->json([
                 'success' => true,
@@ -583,17 +627,22 @@ class ReservationMonitorController extends Controller
                     $oldStatus = $dining->status;
                     $dining->update(['status' => $validated['status']]);
                     $updated++;
-
-                    // Log the action
-                    AdminActivityLog::create([
-                        'user_id' => $adminId,
-                        'action' => 'dining_reservation_status_update',
-                        'description' => "Updated dining reservation #{$diningId} status from {$oldStatus} to {$validated['status']}",
-                        'model_type' => 'DiningReservation',
-                        'model_id' => $diningId,
-                        'changes' => ['old_status' => $oldStatus, 'new_status' => $validated['status']],
-                    ]);
                 }
+            }
+
+            if ($updated > 0) {
+                AdminActivityLog::log(
+                    'bulk_reservation_status_update',
+                    "Bulk updated {$updated} reservation(s) to {$validated['status']}",
+                    null,
+                    [
+                        'booking_ids' => $bookingIds,
+                        'dining_ids' => $diningIds,
+                        'new_status' => $validated['status'],
+                        'updated_count' => $updated,
+                        'failed' => $failed,
+                    ]
+                );
             }
 
             Log::info("Bulk status update completed", [
