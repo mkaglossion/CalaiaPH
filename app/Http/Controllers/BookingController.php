@@ -1508,14 +1508,19 @@ class BookingController extends Controller
         // Persist reference in session payment data
         session()->put('staycation_payment_data.reference_id', $referenceId);
 
+        // Create pending booking record in DB before redirecting to PayMongo
+        // This ensures webhook can find the booking even if cache/session is lost
+        $paymentDataForPending = array_merge(session('staycation_payment_data', []), [
+            'reference_id' => $referenceId,
+            'expected_amount_centavos' => (int) round($grandTotalWithVat * 100),
+        ]);
+        $pendingBooking = $this->paymentService->createPendingBooking($booking, $paymentDataForPending, 'staycation');
+
         // Persist checkout context so webhook can finalize booking even without success-page redirect.
         Cache::put('paymongo_checkout_context:' . $referenceId, [
             'type' => 'staycation',
             'booking_data' => $booking,
-            'payment_data' => array_merge(session('staycation_payment_data', []), [
-                'reference_id' => $referenceId,
-                'expected_amount_centavos' => (int) round($grandTotalWithVat * 100),
-            ]),
+            'payment_data' => $paymentDataForPending,
             'created_at' => now()->toDateTimeString(),
         ], now()->addHours(24));
 
@@ -1526,11 +1531,27 @@ class BookingController extends Controller
             'line_items_count' => is_array($lineItems) ? count($lineItems) : 0,
             'reference_id' => $referenceId,
             'customer_email' => $request->email,
+            'pending_booking_id' => $pendingBooking->id,
         ]);
 
         try {
             $expectedAmountCentavos = (int) round($grandTotalWithVat * 100);
-            $checkout = $this->paymentService->createCheckout($expectedAmountCentavos, 'staycation', $successUrl, $failedUrl, $lineItems, $referenceId, $request->email);
+            $firstAccommodation = $booking['accommodations'][0] ?? [];
+            $roomName = strtolower((string) ($firstAccommodation['staycation']['name'] ?? $firstAccommodation['name'] ?? ''));
+            $staycationCategory = str_contains($roomName, 'byot') || str_contains($roomName, 'car camping') || str_contains($roomName, 'bring your own')
+                ? 'camping'
+                : 'glamping';
+            $checkoutMetadata = array_filter([
+                'booking_type' => 'staycation',
+                'staycation_category' => $staycationCategory,
+                'checkin_date' => $booking['checkin'] ?? null,
+                'checkout_date' => $booking['checkout'] ?? null,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+            ], fn ($value) => $value !== null && $value !== '');
+            $checkout = $this->paymentService->createCheckout($expectedAmountCentavos, 'staycation', $successUrl, $failedUrl, $lineItems, $referenceId, $request->email, $checkoutMetadata);
 
             session()->put('staycation_payment_data.expected_amount_centavos', $expectedAmountCentavos);
             session()->put('staycation_payment_data.checkout_session_id', $checkout->id);
@@ -1546,10 +1567,18 @@ class BookingController extends Controller
                 'created_at' => now()->toDateTimeString(),
             ], now()->addHours(24));
 
+            // Update pending booking with checkout session ID
+            $pendingBooking->update(['paymongo_checkout_id' => $checkout->id]);
+
             Log::info('PayMongo checkout created successfully', ['checkout_url' => $checkout->checkout_url]);
             return redirect($checkout->checkout_url);
         } catch (\Exception $e) {
             Log::error('PayMongo checkout creation failed: ' . $e->getMessage());
+            // Mark pending booking as failed
+            $pendingBooking->update([
+                'payment_status' => 'failed',
+                'status' => 'cancelled',
+            ]);
             return redirect()->back()->with('error', 'Failed to initiate payment: ' . $e->getMessage());
         }
     }
@@ -1655,6 +1684,49 @@ class BookingController extends Controller
             }
 
             if ($isPaid) {
+                $referenceId = $paymentData['reference_id'] ?? null;
+
+                // Find the pending booking by transaction_id (which is the referenceId)
+                $existingBooking = Booking::where('transaction_id', $referenceId)
+                    ->where('payment_status', 'pending')
+                    ->first();
+
+                if ($existingBooking) {
+                    // Update the pending booking to confirmed
+                    $paymentData['checkout_id'] = $checkoutId;
+                    $paymentData['expected_amount_centavos'] = $expectedAmountCentavos;
+                    if ($paidAmountCentavos !== null) {
+                        $paymentData['paid_amount_centavos'] = $paidAmountCentavos;
+                    }
+                    $this->paymentService->confirmPendingBooking($existingBooking, $paymentData);
+
+                    $paymentReference = $checkoutAttributes['payments'][0]['id'] ?? $checkoutId;
+                    $existingBooking->update([
+                        'payment_reference' => $paymentReference,
+                    ]);
+
+                    session()->put($lockKey, true);
+
+                    // Increment promo usage only after successful payment verification.
+                    if (!empty($paymentData['promo_id'])) {
+                        $promo = \App\Models\PromoCode::find($paymentData['promo_id']);
+                        if ($promo && (!$promo->usage_limit || $promo->usage_count < $promo->usage_limit)) {
+                            $promo->increment('usage_count');
+                        }
+                    }
+
+                    // Clear session
+                    session()->forget(['staycation_booking_data', 'staycation_payment_data']);
+
+                    // Clear cache
+                    if (!empty($referenceId)) {
+                        Cache::forget('paymongo_checkout_context:' . $referenceId);
+                    }
+                    Cache::forget('paymongo_checkout_reference:' . $checkoutId);
+
+                    return redirect()->route('booking.confirmation')->with('success', 'Payment processed successfully!');
+                }
+
                 // Prevent duplicate booking creation on refresh/revisit.
                 if (session()->has($lockKey)) {
                     return redirect()->route('booking.confirmation');

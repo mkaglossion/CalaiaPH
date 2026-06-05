@@ -9,9 +9,9 @@ Thank you for booking with CalaiaPH!
 
 **Package:** {{ $package->name }}
 
-**Booking Date:** {{ $booking->booking_date->format('F d, Y') }}
+**Booking Date:** {{ $booking->formatted_booking_date }}
 
-**Session:** {{ ucfirst($booking->session) }}
+**Booking Time:** {{ $booking->display_session }}
 
 **Number of Guests:** {{ $booking->total_guests }}
 

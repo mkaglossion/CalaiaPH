@@ -26,7 +26,7 @@
         <section class="bg-white py-12 sm:py-16 pb-0">
             <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 
-                <p class="text-center text-gray-600 mb-16"><strong>Last Updated:</strong> {{ date('F j, Y') }}</p>
+                <p class="text-center text-gray-600 mb-16"><strong>Last Updated:</strong> January 5, 2026</p>
 
                 {{-- Introduction Section --}}
                 <article id="introduction" class="mb-32 scroll-mt-24">
@@ -527,7 +527,7 @@
         <section class="bg-white border-t-2 border-gray-200 py-16 sm:py-24">
             <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
-                    <p class="text-gray-600 font-semibold mb-2"><strong>Last Updated:</strong> {{ date('F j, Y') }}</p>
+                    <p class="text-gray-600 font-semibold mb-2"><strong>Last Updated:</strong> January 5, 2026</p>
                     <p class="text-gray-600 italic">This Cookies Policy is governed by and shall be construed in accordance with the laws of the Republic of the Philippines.</p>
                 </div>
             </div>

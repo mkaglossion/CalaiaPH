@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use App\Services\BookingService;
 use App\Services\PaymentService;
 use App\Services\ValidationService;
@@ -12,6 +13,7 @@ use App\Services\InventoryService;
 use App\Services\DayTourInventoryService;
 use App\Services\VatService;
 use App\Models\DayTour;
+use App\Models\Booking;
 use Carbon\Carbon;
 
 class DayVisitController extends Controller
@@ -511,13 +513,18 @@ class DayVisitController extends Controller
         $referenceId = 'TXN-' . strtoupper(uniqid());
         Session::put('dayvisit_payment_data.reference_id', $referenceId);
 
+        // Create pending booking record in DB before redirecting to PayMongo
+        // This ensures webhook can find the booking even if cache/session is lost
+        $paymentDataForPending = array_merge(Session::get('dayvisit_payment_data', []), [
+            'reference_id' => $referenceId,
+            'expected_amount_centavos' => (int) round($grandTotal * 100),
+        ]);
+        $pendingBooking = $this->paymentService->createPendingBooking($bookingData, $paymentDataForPending, 'dayvisit');
+
         Cache::put('paymongo_checkout_context:' . $referenceId, [
             'type' => 'dayvisit',
             'booking_data' => $bookingData,
-            'payment_data' => array_merge(Session::get('dayvisit_payment_data', []), [
-                'reference_id' => $referenceId,
-                'expected_amount_centavos' => (int) round($grandTotal * 100),
-            ]),
+            'payment_data' => $paymentDataForPending,
             'created_at' => now()->toDateTimeString(),
         ], now()->addHours(24));
 
@@ -529,6 +536,16 @@ class DayVisitController extends Controller
                 'reference_id' => $referenceId,
             ]);
 
+            $checkoutMetadata = array_filter([
+                'booking_type' => 'dayvisit',
+                'booking_date' => $bookingData['booking_date'] ?? null,
+                'package_id' => $bookingData['package_id'] ?? null,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+            ], fn ($value) => $value !== null && $value !== '');
+
             $checkout = $this->paymentService->createCheckout(
                 (int)round($grandTotal * 100), 
                 'dayvisit', 
@@ -536,7 +553,8 @@ class DayVisitController extends Controller
                 $failedUrl, 
                 $lineItems, 
                 $referenceId, 
-                $request->email
+                $request->email,
+                $checkoutMetadata
             );
             
             \Illuminate\Support\Facades\Log::info('PayMongo checkout created successfully', [
@@ -556,11 +574,19 @@ class DayVisitController extends Controller
                     ]),
                     'created_at' => now()->toDateTimeString(),
                 ], now()->addHours(24));
+
+                // Update pending booking with checkout session ID
+                $pendingBooking->update(['paymongo_checkout_id' => $checkout->id]);
             }
             
             return redirect($checkout->checkout_url);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Failed to create PayMongo checkout: ' . $e->getMessage());
+            // Mark pending booking as failed
+            $pendingBooking->update([
+                'payment_status' => 'failed',
+                'status' => 'cancelled',
+            ]);
             return redirect()->back()->with('error', 'Failed to initiate payment: ' . $e->getMessage());
         }
     }
@@ -593,6 +619,57 @@ class DayVisitController extends Controller
                 $bookingData = Session::get('dayvisit_booking_data');
                 $paymentData = Session::get('dayvisit_payment_data');
 
+                $referenceId = $paymentData['reference_id'] ?? null;
+
+                // Find the pending booking by transaction_id
+                $existingBooking = Booking::where('transaction_id', $referenceId)
+                    ->where('payment_status', 'pending')
+                    ->first();
+
+                if ($existingBooking) {
+                    // Update the pending booking to confirmed
+                    $date = $bookingData['booking_date'] ?? now()->format('Y-m-d');
+                    $packageId = $bookingData['package_id'] ?? null;
+
+                    if ($packageId) {
+                        $slotBooked = $this->dayTourInventoryService->bookSlot(
+                            $packageId, 
+                            $date, 
+                            $checkoutId
+                        );
+
+                        if (!$slotBooked) {
+                            \Illuminate\Support\Facades\Log::error('Failed to book inventory slot after payment', [
+                                'package_id' => $packageId,
+                                'date' => $date,
+                                'checkout_id' => $checkoutId
+                            ]);
+                        }
+                    }
+
+                    $paymentData['checkout_id'] = $checkoutId;
+
+                    // Confirm the pending booking
+                    $this->paymentService->confirmPendingBooking($existingBooking, $paymentData);
+
+                    // Set payment reference
+                    $paymentReference = $checkout->payments[0]['id'] ?? $checkoutId;
+                    $existingBooking->update([
+                        'payment_reference' => $paymentReference,
+                    ]);
+
+                    Cache::forget('paymongo_checkout_reference:' . $checkoutId);
+                    if (!empty($referenceId)) {
+                        Cache::forget('paymongo_checkout_context:' . $referenceId);
+                    }
+
+                    // Clear session
+                    Session::forget(['dayvisit_booking_data', 'dayvisit_selected_activities', 'dayvisit_payment_data']);
+
+                    return redirect()->route('booking.confirmation')->with('success', 'Payment processed successfully!');
+                }
+
+                // Fallback: booking not found via reference, try legacy flow
                 if (!$bookingData || !$paymentData) {
                     return redirect()->route('dayvisit.payment')->with('error', 'Booking data not found.');
                 }
@@ -614,7 +691,6 @@ class DayVisitController extends Controller
                             'date' => $date,
                             'checkout_id' => $checkoutId
                         ]);
-                        // Continue with booking but log the error - admin can manually adjust
                     }
                 }
 
@@ -631,7 +707,7 @@ class DayVisitController extends Controller
                 // Clear session
                 Session::forget(['dayvisit_booking_data', 'dayvisit_selected_activities', 'dayvisit_payment_data']);
 
-                return $result; // This should be the redirect to confirmation
+                return $result;
             } else {
                 return redirect()->route('dayvisit.payment')->with('error', 'Payment was not successful.');
             }

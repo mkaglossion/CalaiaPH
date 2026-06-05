@@ -133,8 +133,13 @@ class PaymentController extends Controller
                             'metadata' => [
                                 'booking_id' => $booking->id,
                                 'booking_reference' => $booking->booking_reference,
+                                'booking_date' => optional($booking->booking_date)->toDateString(),
+                                'session' => $booking->session,
                                 'customer_email' => $validated['email'],
-                                'customer_name' => $validated['name']
+                                'customer_name' => $validated['name'],
+                                'first_name' => $booking->first_name,
+                                'last_name' => $booking->last_name,
+                                'phone' => $booking->phone,
                             ],
                             'success_url' => route('booking.payment-success') . '?checkout_id={CHECKOUT_ID}',
                             'cancel_url' => route('booking.payment-cancelled') . '?checkout_id={CHECKOUT_ID}'

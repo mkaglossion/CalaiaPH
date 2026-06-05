@@ -22,7 +22,7 @@ class PaymentService
         throw new \Exception('Payment intents are no longer used. Use createCheckout instead.');
     }
 
-    public function createCheckout($amount, $type, $successUrl, $failedUrl, $lineItems = null, $referenceId = null, $customerEmail = null)
+    public function createCheckout($amount, $type, $successUrl, $failedUrl, $lineItems = null, $referenceId = null, $customerEmail = null, array $metadata = [])
     {
         Log::info('Creating PayMongo checkout session', [
             'amount' => $amount,
@@ -107,8 +107,13 @@ class PaymentService
             }
             // Attach metadata with many keys to increase chance PayMongo surfaces it
             if (!empty($referenceNumber)) {
+                $metadata = collect($metadata)
+                    ->filter(fn ($value) => is_scalar($value) && $value !== '')
+                    ->map(fn ($value) => (string) $value)
+                    ->all();
+
                 // Add multiple metadata keys to maximize chance PayMongo surfaces it
-                $attributes['metadata'] = [
+                $attributes['metadata'] = array_merge($metadata, [
                     'reference' => $referenceNumber,
                     'reference_id' => $referenceNumber,
                     'reference_number' => $referenceNumber,
@@ -117,7 +122,7 @@ class PaymentService
                     'order_number' => $referenceNumber,
                     'client_reference' => $referenceNumber,
                     'merchant_reference' => $referenceNumber,
-                ];
+                ]);
 
                 // Also add a debug-friendly flat field for PayMongo display
                 $attributes['metadata']['display_reference'] = '#' . $referenceNumber;
@@ -275,6 +280,15 @@ class PaymentService
 
         $existingBooking = Booking::where('transaction_id', $staycationBooking['transaction_id'])->first();
         if ($existingBooking) {
+            // If booking exists and is pending, update it to paid
+            if ($existingBooking->payment_status === 'pending') {
+                $this->confirmPendingBooking($existingBooking, $paymentData);
+                $paymentReference = $paymentData['checkout_id'] ?? $paymentData['payment_reference'] ?? null;
+                if ($paymentReference) {
+                    $existingBooking->update(['payment_reference' => $paymentReference]);
+                }
+                return redirect()->route('booking.confirmation');
+            }
             Log::warning('Duplicate staycation payment processing prevented', [
                 'transaction_id' => $staycationBooking['transaction_id'],
                 'booking_id' => $existingBooking->id,
@@ -294,23 +308,25 @@ class PaymentService
             $customerName = 'N/A';
         }
 
-        $bookingType = 'camping';
+        $staycationCategory = 'camping';
         $glampingNames = ['Standard Glamping', 'Premium Glamping', 'Standard Family Glamping Tent', 'Premium Family Glamping Tent'];
         $firstAccommodation = reset($staycationBooking['accommodations']);
         if ($firstAccommodation && isset($firstAccommodation['room_id'])) {
             $staycation = \App\Models\Staycation::find($firstAccommodation['room_id']);
             if ($staycation && in_array($staycation->name, $glampingNames)) {
-                $bookingType = 'glamping';
+                $staycationCategory = 'glamping';
             }
         }
 
-        $booking = DB::transaction(function () use ($staycationBooking, $paymentData, $bookingType, $customerName, $paymentStatus) {
+        $staycationBooking['staycation_category'] = $staycationCategory;
+
+        $booking = DB::transaction(function () use ($staycationBooking, $paymentData, $customerName, $paymentStatus) {
             $booking = Booking::create([
                 'transaction_id' => $staycationBooking['transaction_id'],
                 'customer_name' => $customerName,
                 'customer_email' => $paymentData['email'] ?? 'N/A',
                 'customer_phone' => $paymentData['phone'] ?? 'N/A',
-                'booking_type' => $bookingType,
+                'booking_type' => 'staycation',
                 'checkin_date' => $staycationBooking['checkin'],
                 'checkout_date' => $staycationBooking['checkout'],
                 'booking_data' => $staycationBooking,
@@ -397,10 +413,13 @@ class PaymentService
 
         $existingBooking = Booking::where('transaction_id', $dayvisitBooking['transaction_id'])->first();
         if ($existingBooking) {
-            if ($paymentStatus === 'paid' && ($existingBooking->payment_status ?? 'pending') !== 'paid') {
-                $existingBooking->payment_status = 'paid';
-                $existingBooking->payment_method = 'paymongo';
-                $existingBooking->save();
+            // If booking exists and is pending with checkout_id, confirm it
+            if ($paymentStatus === 'paid' && $existingBooking->payment_status === 'pending') {
+                $this->confirmPendingBooking($existingBooking, $paymentData);
+                $paymentReference = $paymentData['checkout_id'] ?? $paymentData['payment_reference'] ?? null;
+                if ($paymentReference) {
+                    $existingBooking->update(['payment_reference' => $paymentReference]);
+                }
             }
             return redirect()->route('booking.confirmation');
         }
@@ -474,7 +493,7 @@ class PaymentService
             return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1);
         });
 
-        $bookingData['transaction_id'] = 'TXN-' . strtoupper(uniqid());
+        $bookingData['transaction_id'] = $paymentData['reference_id'] ?? ('TXN-' . strtoupper(uniqid()));
         $bookingData['payment_method'] = $paymentData['payment_method'] ?? 'N/A';
         $bookingData['payment_date'] = now()->toDateTimeString();
 
@@ -482,6 +501,15 @@ class PaymentService
 
         $bookingData['paymongo_checkout_id'] = $paymentData['checkout_id'] ?? null;
         $paymentStatus = !empty($paymentData['checkout_id']) ? 'paid' : 'pending';
+
+        // Check if pending booking exists
+        $existingBooking = Booking::where('transaction_id', $bookingData['transaction_id'])->first();
+        if ($existingBooking) {
+            if ($paymentStatus === 'paid' && $existingBooking->payment_status === 'pending') {
+                $this->confirmPendingBooking($existingBooking, $paymentData);
+            }
+            return redirect()->route('booking.confirmation');
+        }
 
         try {
             Mail::to($paymentData['email'])->queue(new BookingConfirmation([
@@ -551,5 +579,162 @@ class PaymentService
         } catch (\Throwable $e) {
             return false;
         }
+    }
+
+    /**
+     * Create a pending booking record before PayMongo redirect.
+     * This ensures the booking exists in DB so webhook can find it.
+     */
+    public function createPendingBooking(array $bookingData, array $paymentData, string $type): Booking
+    {
+        $transactionId = $paymentData['reference_id'] ?? ('TXN-' . strtoupper(uniqid()));
+        $checkoutSessionId = $paymentData['checkout_session_id'] ?? null;
+        $expectedAmountCentavos = (int) ($paymentData['expected_amount_centavos'] ?? 0);
+
+        $customerName = trim((($paymentData['first_name'] ?? '') . ' ' . ($paymentData['last_name'] ?? '')));
+        if (empty($customerName) && !empty($paymentData['name'])) {
+            $customerName = $paymentData['name'];
+        }
+        if (empty($customerName)) {
+            $customerName = $paymentData['email'] ?? 'N/A';
+        }
+
+        $bookingType = $type === 'staycation' ? 'staycation' : 'dayvisit';
+
+        $checkinDate = $bookingData['checkin'] ?? ($bookingData['booking_date'] ?? now()->toDateString());
+        $checkoutDate = $bookingData['checkout'] ?? null;
+
+        $booking = Booking::create([
+            'transaction_id' => $transactionId,
+            'customer_name' => $customerName,
+            'customer_email' => $paymentData['email'] ?? 'N/A',
+            'customer_phone' => $paymentData['phone'] ?? 'N/A',
+            'booking_type' => $bookingType,
+            'checkin_date' => $checkinDate,
+            'checkout_date' => $checkoutDate,
+            'booking_data' => array_merge($bookingData, [
+                'payment_data' => $paymentData,
+            ]),
+            'total_amount' => $expectedAmountCentavos > 0 ? ($expectedAmountCentavos / 100) : 0,
+            'payment_method' => 'paymongo',
+            'payment_status' => 'pending',
+            'status' => 'pending',
+        ]);
+
+        Log::info('Created pending booking before PayMongo redirect', [
+            'booking_id' => $booking->id,
+            'transaction_id' => $transactionId,
+            'checkout_session_id' => $checkoutSessionId,
+            'type' => $type,
+        ]);
+
+        return $booking;
+    }
+
+    /**
+     * Update pending booking to paid status after successful payment.
+     */
+    public function confirmPendingBooking(Booking $booking, array $paymentData): Booking
+    {
+        $paidAmountCentavos = isset($paymentData['paid_amount_centavos'])
+            ? (int) $paymentData['paid_amount_centavos']
+            : null;
+        $expectedAmountCentavos = (int) ($paymentData['expected_amount_centavos'] ?? 0);
+        $chargedAmountCentavos = $paidAmountCentavos ?? ($expectedAmountCentavos > 0 ? $expectedAmountCentavos : null);
+        $grandTotalPaid = $chargedAmountCentavos !== null
+            ? ((float) $chargedAmountCentavos / 100)
+            : $booking->total_amount;
+
+        $checkoutSessionId = $paymentData['checkout_id'] ?? $paymentData['checkout_session_id'] ?? null;
+        $paymentReference = $paymentData['payment_reference'] ?? $paymentData['reference_id'] ?? null;
+
+        if (($booking->payment_status ?? null) === 'paid') {
+            $updates = array_filter([
+                'paymongo_checkout_id' => $checkoutSessionId,
+                'payment_reference' => $paymentReference,
+            ], fn ($value) => !empty($value));
+
+            if (!empty($updates)) {
+                $booking->update($updates);
+            }
+
+            Log::info('Skipped duplicate booking confirmation; booking already paid', [
+                'booking_id' => $booking->id,
+                'transaction_id' => $booking->transaction_id,
+                'checkout_session_id' => $checkoutSessionId,
+            ]);
+
+            return $booking->fresh();
+        }
+
+        DB::transaction(function () use ($booking, $grandTotalPaid, $checkoutSessionId, $paymentReference, $paymentData) {
+            $booking->update([
+                'total_amount' => $grandTotalPaid,
+                'payment_status' => 'paid',
+                'status' => 'confirmed',
+                'paymongo_checkout_id' => $checkoutSessionId,
+                'payment_reference' => $paymentReference,
+            ]);
+
+            // Handle inventory based on booking type
+            $bookingData = $booking->booking_data ?? [];
+            $bookingType = $booking->booking_type ?? ($bookingData['booking_type'] ?? null);
+
+            if ($bookingType === 'dayvisit') {
+                // For dayvisit, book the slot via DayTourInventoryService
+                $packageId = $bookingData['package_id'] ?? null;
+                $date = $booking->checkin_date;
+                if ($packageId && $date) {
+                    try {
+                        $dayTourInventoryService = app(\App\Services\DayTourInventoryService::class);
+                        $dayTourInventoryService->bookSlot($packageId, $date->toDateString(), $checkoutSessionId);
+                        Log::info('Day visit inventory slot booked via webhook', [
+                            'booking_id' => $booking->id,
+                            'package_id' => $packageId,
+                            'date' => $date->toDateString(),
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Failed to book day visit inventory slot via webhook', [
+                            'booking_id' => $booking->id,
+                            'package_id' => $packageId,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+            } else {
+                // For staycation, reduce inventory
+                $booking->reduceInventory(true);
+            }
+        });
+
+        Log::info('Confirmed pending booking after successful payment', [
+            'booking_id' => $booking->id,
+            'transaction_id' => $booking->transaction_id,
+            'checkout_session_id' => $checkoutSessionId,
+            'type' => $booking->booking_type,
+        ]);
+
+        return $booking;
+    }
+
+    /**
+     * Mark pending booking as failed.
+     */
+    public function failPendingBooking(Booking $booking, ?string $checkoutSessionId = null): void
+    {
+        $booking->update([
+            'payment_status' => 'failed',
+            'status' => 'cancelled',
+        ]);
+
+        if ($checkoutSessionId) {
+            $booking->update(['paymongo_checkout_id' => $checkoutSessionId]);
+        }
+
+        Log::warning('Marked pending booking as failed', [
+            'booking_id' => $booking->id,
+            'transaction_id' => $booking->transaction_id,
+            'checkout_session_id' => $checkoutSessionId,
+        ]);
     }
 }

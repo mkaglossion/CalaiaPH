@@ -14,6 +14,8 @@ class Booking extends Model
 {
     use HasFactory;
 
+    public const STAYCATION_TYPES = ['staycation', 'glamping', 'camping'];
+
     protected $fillable = [
         'transaction_id',
         'customer_name',
@@ -34,6 +36,8 @@ class Booking extends Model
         'checkin_status',
         'checkin_timestamp',
         'checkout_timestamp',
+        'paymongo_checkout_id',
+        'payment_reference',
     ];
 
     protected $casts = [
@@ -85,9 +89,19 @@ class Booking extends Model
         $label = ucfirst($this->booking_type ?? '');
         $data = $this->booking_data ?? [];
 
-        if ($this->booking_type === 'staycation') {
+        if ($this->isStaycationFamilyBooking()) {
             $accommodation = $data['accommodations'][0] ?? null;
             if ($accommodation) {
+                $embeddedName = trim((string) (
+                    $accommodation['staycation']['name']
+                    ?? $accommodation['name']
+                    ?? $accommodation['accommodation_name']
+                    ?? ''
+                ));
+                if ($embeddedName !== '') {
+                    return $embeddedName;
+                }
+
                 $staycationId = $accommodation['room_id'] ?? $accommodation['id'] ?? null;
                 if ($staycationId) {
                     $staycation = Staycation::find($staycationId);
@@ -96,9 +110,52 @@ class Booking extends Model
                     }
                 }
             }
+
+            $category = strtolower(trim((string) ($data['staycation_category'] ?? '')));
+            if (in_array($category, ['glamping', 'camping'], true)) {
+                return ucfirst($category);
+            }
         }
 
         return $label;
+    }
+
+    public function isStaycationFamilyBooking(): bool
+    {
+        return in_array($this->booking_type, self::STAYCATION_TYPES, true);
+    }
+
+    public function getDisplayCheckoutDateAttribute(): ?Carbon
+    {
+        if ($this->checkout_date instanceof Carbon) {
+            return $this->checkout_date;
+        }
+
+        $data = $this->booking_data ?? [];
+        $checkout = $data['checkout'] ?? null;
+        if (!empty($checkout)) {
+            return Carbon::parse($checkout);
+        }
+
+        if ($this->isStaycationFamilyBooking() && $this->checkin_date instanceof Carbon) {
+            return $this->checkin_date->copy()->addDay();
+        }
+
+        return null;
+    }
+
+    public function getDisplayNightsAttribute(): ?int
+    {
+        if (!$this->isStaycationFamilyBooking() || !$this->checkin_date instanceof Carbon) {
+            return null;
+        }
+
+        $checkout = $this->display_checkout_date;
+        if (!$checkout instanceof Carbon) {
+            return null;
+        }
+
+        return max(1, $this->checkin_date->diffInDays($checkout));
     }
 
     /**
@@ -166,9 +223,7 @@ class Booking extends Model
     {
         $bookingData = $this->booking_data ?? [];
         $bookingType = $this->booking_type ?? ($bookingData['booking_type'] ?? null);
-        $staycationTypes = ['staycation', 'glamping', 'camping'];
-
-        if (!in_array($bookingType, $staycationTypes, true)) {
+        if (!in_array($bookingType, self::STAYCATION_TYPES, true)) {
             return;
         }
 
@@ -253,9 +308,7 @@ class Booking extends Model
     {
         $bookingData = $this->booking_data ?? [];
         $bookingType = $this->booking_type ?? ($bookingData['booking_type'] ?? null);
-        $staycationTypes = ['staycation', 'glamping', 'camping'];
-
-        if (!in_array($bookingType, $staycationTypes, true)) {
+        if (!in_array($bookingType, self::STAYCATION_TYPES, true)) {
             return;
         }
 

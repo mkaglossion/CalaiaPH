@@ -74,6 +74,7 @@ class PaymongoWebhookService
         $paymentId = $data['id'] ?? null;
         $status = $attributes['status'] ?? null;
         $amount = $attributes['amount'] ?? 0;
+        $billing = is_array($attributes['billing'] ?? null) ? $attributes['billing'] : [];
         $referenceNumber = $attributes['reference'] ?? null;
         $referenceNumber = $referenceNumber ?: ($attributes['reference_number'] ?? null);
         $referenceNumber = $referenceNumber
@@ -94,26 +95,38 @@ class PaymongoWebhookService
                 return true;
             }
 
-            // Try existing Booking flow first
+            // Try existing Booking flow first (transaction_id or checkout_session_id)
+            $booking = null;
             if ($referenceNumber) {
                 $booking = self::findBookingByReference($referenceNumber);
-                if ($booking instanceof Booking) {
-                    BookingStatusService::updatePaymentStatus(
-                        $booking,
-                        'paid',
-                        $amount / 100,
-                        'paymongo',
-                        $paymentId,
-                        'webhook'
-                    );
-                    return true;
+            }
+            if (!$booking && $checkoutSessionId) {
+                $booking = Booking::where('paymongo_checkout_id', $checkoutSessionId)
+                    ->where('payment_status', 'pending')
+                    ->first();
+            }
+            if ($booking instanceof Booking) {
+                $paymentPayload = [
+                    'checkout_id' => $checkoutSessionId,
+                    'payment_reference' => $paymentId,
+                    'paid_amount_centavos' => is_numeric($amount) ? (int) $amount : null,
+                ];
+
+                if (($booking->payment_status ?? null) === 'pending') {
+                    $paymentService = app(PaymentService::class);
+                    $paymentService->confirmPendingBooking($booking, $paymentPayload);
+                } else {
+                    self::syncBookingPaymentDetails($booking, $paymentPayload);
                 }
+
+                $booking->update(['payment_reference' => $paymentId]);
+                return true;
             }
 
             // Fallback: recover pending staycation/dayvisit checkout context.
             if (self::recoverPendingBookingFromCheckoutContext(
                 $referenceNumber,
-                null,
+                $checkoutSessionId,
                 $paymentId,
                 is_numeric($amount) ? (int) $amount : null
             )) {
@@ -125,6 +138,62 @@ class PaymongoWebhookService
             if ($pb) {
                 return self::markPackageBookingPaid($pb, $paymentId);
             }
+
+            // CRITICAL: Payment received but no booking found anywhere
+            Log::error('PAYMENT RECEIVED BUT NO BOOKING FOUND - ATTEMPTING RESCUE CREATE', [
+                'payment_id' => $paymentId,
+                'amount' => $amount,
+                'reference' => $referenceNumber,
+                'checkout_session_id' => $checkoutSessionId,
+                'metadata' => $metadata,
+            ]);
+
+            // RESCUE: Create booking from webhook data if reference exists in metadata
+            if ($referenceNumber && is_numeric($amount) && $amount > 0) {
+                try {
+                    $rescueMetadata = self::hydrateMetadataWithBilling($metadata, $billing);
+                    $rescueBooking = Booking::create(
+                        self::buildRescueBookingAttributes($referenceNumber, $rescueMetadata, (int) $amount, $checkoutSessionId, $paymentId)
+                    );
+
+                    Log::info('RESCUE: Created booking from webhook data', [
+                        'booking_id' => $rescueBooking->id,
+                        'reference' => $referenceNumber,
+                        'amount' => $amount / 100,
+                    ]);
+
+                    \App\Models\AdminSystemAlert::create([
+                        'type' => 'payment',
+                        'severity' => 'warning',
+                        'message' => "RESCUE: Booking created from webhook. Reference: {$referenceNumber}, Amount: " . ($amount/100) . " PHP. Verify booking details!",
+                        'data' => [
+                            'booking_id' => $rescueBooking->id,
+                            'payment_id' => $paymentId,
+                            'amount' => $amount,
+                            'reference' => $referenceNumber,
+                        ]
+                    ]);
+
+                    return true;
+                } catch (\Throwable $e) {
+                    Log::error('RESCUE: Failed to create booking from webhook', [
+                        'reference' => $referenceNumber,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            \App\Models\AdminSystemAlert::create([
+                'type' => 'payment',
+                'severity' => 'critical',
+                'message' => "Payment received ({$paymentId}) but no booking found. Amount: " . ($amount/100) . " PHP. Reference: {$referenceNumber}",
+                'data' => [
+                    'payment_id' => $paymentId,
+                    'amount' => $amount,
+                    'reference' => $referenceNumber,
+                    'checkout_session_id' => $checkoutSessionId,
+                ]
+            ]);
         }
 
         return false;
@@ -153,19 +222,22 @@ class PaymongoWebhookService
             return true;
         }
 
+        // Try to find pending booking by transaction_id or checkout_session_id
+        $booking = null;
         if ($referenceNumber) {
-            $booking = self::findBookingByReference($referenceNumber);
-            if ($booking instanceof Booking) {
-                BookingStatusService::updatePaymentStatus(
-                    $booking,
-                    'failed',
-                    $booking->total_amount,
-                    'paymongo',
-                    $paymentId,
-                    'webhook'
-                );
-                return true;
-            }
+            $booking = Booking::where('transaction_id', $referenceNumber)
+                ->where('payment_status', 'pending')
+                ->first();
+        }
+        if (!$booking && $checkoutSessionId) {
+            $booking = Booking::where('paymongo_checkout_id', $checkoutSessionId)
+                ->where('payment_status', 'pending')
+                ->first();
+        }
+        if ($booking instanceof Booking) {
+            $paymentService = app(PaymentService::class);
+            $paymentService->failPendingBooking($booking, $checkoutSessionId);
+            return true;
         }
 
         $pb = self::findPackageBookingForWebhook($metadata, $referenceNumber, $checkoutSessionId);
@@ -197,20 +269,22 @@ class PaymongoWebhookService
             return true;
         }
 
-        // Try Booking first
+        // Try to find pending booking by reference or checkout_session_id
+        $booking = null;
         if ($referenceNumber) {
-            $booking = self::findBookingByReference($referenceNumber);
-            if ($booking instanceof Booking) {
-                BookingStatusService::updatePaymentStatus(
-                    $booking,
-                    'failed',
-                    $booking->total_amount,
-                    'paymongo',
-                    $checkoutSessionId,
-                    'webhook'
-                );
-                return true;
-            }
+            $booking = Booking::where('transaction_id', $referenceNumber)
+                ->where('payment_status', 'pending')
+                ->first();
+        }
+        if (!$booking && $checkoutSessionId) {
+            $booking = Booking::where('paymongo_checkout_id', $checkoutSessionId)
+                ->where('payment_status', 'pending')
+                ->first();
+        }
+        if ($booking instanceof Booking) {
+            $paymentService = app(PaymentService::class);
+            $paymentService->failPendingBooking($booking, $checkoutSessionId);
+            return true;
         }
 
         // Try PackageBooking by paymongo_reference or booking_reference
@@ -247,23 +321,40 @@ class PaymongoWebhookService
         $paymentId = $payment['id'] ?? null;
         $paymentAttributes = $payment['attributes'] ?? [];
         $amount = $paymentAttributes['amount'] ?? null;
+        $billing = is_array($paymentAttributes['billing'] ?? null)
+            ? $paymentAttributes['billing']
+            : (is_array($attributes['billing'] ?? null) ? $attributes['billing'] : []);
 
         if (self::markShopOrderPaid($referenceNumber, $checkoutSessionId, $paymentId, $amount)) {
             return true;
         }
 
-        // 1) Try Booking via reference
-        if ($referenceNumber) {
-            $booking = self::findBookingByReference($referenceNumber);
-            if ($booking instanceof Booking && $paymentId) {
-                BookingStatusService::updatePaymentStatus(
-                    $booking,
-                    'paid',
-                    ($amount ?? $booking->total_amount * 100) / 100,
-                    'paymongo',
-                    $paymentId,
-                    'webhook'
-                );
+        // 1) Try Booking via reference (transaction_id or checkout_session_id)
+        if ($referenceNumber || $checkoutSessionId) {
+            $booking = null;
+            if ($referenceNumber) {
+                $booking = self::findBookingByReference($referenceNumber);
+            }
+            if (!$booking && $checkoutSessionId) {
+                $booking = Booking::where('paymongo_checkout_id', $checkoutSessionId)
+                    ->where('payment_status', 'pending')
+                    ->first();
+            }
+            if ($booking instanceof Booking) {
+                $paymentPayload = [
+                    'checkout_id' => $checkoutSessionId,
+                    'payment_reference' => $paymentId,
+                    'paid_amount_centavos' => is_numeric($amount) ? (int) $amount : null,
+                ];
+
+                if (($booking->payment_status ?? null) === 'pending') {
+                    $paymentService = app(PaymentService::class);
+                    $paymentService->confirmPendingBooking($booking, $paymentPayload);
+                } else {
+                    self::syncBookingPaymentDetails($booking, $paymentPayload);
+                }
+
+                $booking->update(['payment_reference' => $paymentId]);
                 return true;
             }
         }
@@ -284,6 +375,60 @@ class PaymongoWebhookService
         if ($pb && $paymentId) {
             return self::markPackageBookingPaid($pb, $paymentId);
         }
+
+        // CRITICAL: Checkout succeeded but no booking found anywhere
+        Log::error('CHECKOUT PAYMENT SUCCEEDED BUT NO BOOKING FOUND - ATTEMPTING RESCUE CREATE', [
+            'checkout_session_id' => $checkoutSessionId,
+            'reference' => $referenceNumber,
+            'amount' => $amount,
+            'metadata' => $metadata,
+        ]);
+
+        // RESCUE: Create booking from webhook data if reference exists
+        if ($referenceNumber && is_numeric($amount) && $amount > 0) {
+            try {
+                $rescueMetadata = self::hydrateMetadataWithBilling($metadata, $billing);
+                $rescueBooking = Booking::create(
+                    self::buildRescueBookingAttributes($referenceNumber, $rescueMetadata, (int) $amount, $checkoutSessionId, $paymentId)
+                );
+
+                Log::info('RESCUE: Created booking from checkout webhook', [
+                    'booking_id' => $rescueBooking->id,
+                    'reference' => $referenceNumber,
+                    'amount' => $amount / 100,
+                ]);
+
+                \App\Models\AdminSystemAlert::create([
+                    'type' => 'payment',
+                    'severity' => 'warning',
+                    'message' => "RESCUE: Booking created from checkout webhook. Reference: {$referenceNumber}, Amount: " . ($amount/100) . " PHP. Verify booking details!",
+                    'data' => [
+                        'booking_id' => $rescueBooking->id,
+                        'checkout_session_id' => $checkoutSessionId,
+                        'amount' => $amount,
+                        'reference' => $referenceNumber,
+                    ]
+                ]);
+
+                return true;
+            } catch (\Throwable $e) {
+                Log::error('RESCUE: Failed to create booking from checkout webhook', [
+                    'reference' => $referenceNumber,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        \App\Models\AdminSystemAlert::create([
+            'type' => 'payment',
+            'severity' => 'critical',
+            'message' => "Checkout payment succeeded ({$checkoutSessionId}) but no booking found. Amount: " . ($amount/100) . " PHP. Reference: {$referenceNumber}",
+            'data' => [
+                'checkout_session_id' => $checkoutSessionId,
+                'amount' => $amount,
+                'reference' => $referenceNumber,
+            ]
+        ]);
 
         return false;
     }
@@ -456,6 +601,12 @@ class PaymongoWebhookService
             return $booking;
         }
 
+        // Also try finding by paymongo_checkout_id (for webhook recovery)
+        $booking = Booking::where('paymongo_checkout_id', $reference)->first();
+        if ($booking) {
+            return $booking;
+        }
+
         // Add additional lookup logic if you use other reference formats
         return null;
     }
@@ -497,10 +648,37 @@ class PaymongoWebhookService
         }
 
         if (empty($reference)) {
+            Log::warning('Webhook recovery failed: no reference found', [
+                'referenceNumber' => $referenceNumber,
+                'checkoutSessionId' => $checkoutSessionId,
+            ]);
             return false;
         }
 
-        if (self::findBookingByReference($reference) instanceof Booking) {
+        $existingBooking = self::findBookingByReference($reference);
+        if ($existingBooking instanceof Booking) {
+            $context = Cache::get('paymongo_checkout_context:' . $reference);
+            $paymentData = is_array($context['payment_data'] ?? null) ? $context['payment_data'] : [];
+            $paymentData['reference_id'] = $reference;
+            if (!empty($checkoutSessionId)) {
+                $paymentData['checkout_id'] = $checkoutSessionId;
+                $paymentData['checkout_session_id'] = $checkoutSessionId;
+            }
+            if (!empty($paymentReference)) {
+                $paymentData['payment_reference'] = $paymentReference;
+            }
+            if ($paidAmountCentavos !== null) {
+                $paymentData['paid_amount_centavos'] = $paidAmountCentavos;
+            }
+
+            if (($existingBooking->payment_status ?? null) === 'pending') {
+                /** @var \App\Services\PaymentService $paymentService */
+                $paymentService = app(PaymentService::class);
+                $paymentService->confirmPendingBooking($existingBooking, $paymentData);
+            } else {
+                self::syncBookingPaymentDetails($existingBooking, $paymentData);
+            }
+
             Cache::forget('paymongo_checkout_context:' . $reference);
             if (!empty($checkoutSessionId)) {
                 Cache::forget('paymongo_checkout_reference:' . $checkoutSessionId);
@@ -510,17 +688,31 @@ class PaymongoWebhookService
 
         $context = Cache::get('paymongo_checkout_context:' . $reference);
         if (!is_array($context)) {
+            Log::warning('Webhook recovery failed: context not in cache', [
+                'reference' => $reference,
+                'checkoutSessionId' => $checkoutSessionId,
+                'cacheKey' => 'paymongo_checkout_context:' . $reference,
+            ]);
             return false;
         }
 
         $type = $context['type'] ?? null;
         if (!in_array($type, ['staycation', 'dayvisit'], true)) {
+            Log::warning('Webhook recovery failed: invalid booking type in cache', [
+                'reference' => $reference,
+                'type' => $type,
+            ]);
             return false;
         }
 
         $bookingData = $context['booking_data'] ?? null;
         $paymentData = $context['payment_data'] ?? null;
         if (!is_array($bookingData) || !is_array($paymentData)) {
+            Log::warning('Webhook recovery failed: missing booking or payment data in cache', [
+                'reference' => $reference,
+                'hasBookingData' => is_array($bookingData),
+                'hasPaymentData' => is_array($paymentData),
+            ]);
             return false;
         }
 
@@ -567,6 +759,107 @@ class PaymongoWebhookService
         }
 
         return false;
+    }
+
+    private static function buildRescueBookingAttributes(
+        string $referenceNumber,
+        array $metadata,
+        int $amountCentavos,
+        ?string $checkoutSessionId = null,
+        ?string $paymentReference = null
+    ): array {
+        $bookingType = self::normalizeBookingType($metadata['booking_type'] ?? null);
+        $checkinDate = $metadata['checkin_date'] ?? $metadata['booking_date'] ?? now()->toDateString();
+        $checkoutDate = $bookingType === 'staycation'
+            ? ($metadata['checkout_date'] ?? null)
+            : null;
+
+        $firstName = trim((string) ($metadata['first_name'] ?? ''));
+        $lastName = trim((string) ($metadata['last_name'] ?? ''));
+        $customerName = trim($firstName . ' ' . $lastName);
+        if ($customerName === '') {
+            $customerName = trim((string) ($metadata['customer_name'] ?? ''));
+        }
+        if ($customerName === '') {
+            $customerName = 'Payment Received';
+        }
+
+        $bookingData = array_filter([
+            'booking_type' => $bookingType,
+            'staycation_category' => $metadata['staycation_category'] ?? null,
+            'checkin' => $bookingType === 'staycation' ? $checkinDate : null,
+            'checkout' => $bookingType === 'staycation' ? $checkoutDate : null,
+            'booking_date' => $bookingType === 'dayvisit' ? $checkinDate : null,
+            'customer_info' => array_filter([
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'name' => $customerName,
+                'email' => $metadata['email'] ?? null,
+                'phone' => $metadata['phone'] ?? null,
+            ], fn ($value) => $value !== null && $value !== ''),
+        ], function ($value) {
+            if (is_array($value)) {
+                return !empty($value);
+            }
+
+            return $value !== null && $value !== '';
+        });
+
+        return [
+            'transaction_id' => $referenceNumber,
+            'customer_name' => $customerName,
+            'customer_email' => $metadata['email'] ?? 'unknown@paymongo-webhook.local',
+            'customer_phone' => $metadata['phone'] ?? '',
+            'booking_type' => $bookingType,
+            'checkin_date' => $checkinDate,
+            'checkout_date' => $checkoutDate,
+            'booking_data' => $bookingData,
+            'total_amount' => ($amountCentavos / 100),
+            'payment_method' => 'paymongo',
+            'payment_status' => 'paid',
+            'status' => 'confirmed',
+            'paymongo_checkout_id' => $checkoutSessionId,
+            'payment_reference' => $paymentReference,
+        ];
+    }
+
+    private static function normalizeBookingType(?string $bookingType): string
+    {
+        $normalized = strtolower(trim((string) $bookingType));
+
+        if (in_array($normalized, ['glamping', 'camping', 'staycation'], true)) {
+            return 'staycation';
+        }
+
+        if ($normalized === 'dayvisit') {
+            return 'dayvisit';
+        }
+
+        return 'staycation';
+    }
+
+    private static function hydrateMetadataWithBilling(array $metadata, array $billing): array
+    {
+        $billingName = trim((string) ($billing['name'] ?? ''));
+        $nameParts = preg_split('/\s+/', $billingName, 2) ?: [];
+
+        if (empty($metadata['customer_name']) && $billingName !== '') {
+            $metadata['customer_name'] = $billingName;
+        }
+        if (empty($metadata['first_name']) && !empty($nameParts[0])) {
+            $metadata['first_name'] = $nameParts[0];
+        }
+        if (empty($metadata['last_name']) && !empty($nameParts[1])) {
+            $metadata['last_name'] = $nameParts[1];
+        }
+        if (empty($metadata['email']) && !empty($billing['email'])) {
+            $metadata['email'] = $billing['email'];
+        }
+        if (empty($metadata['phone']) && !empty($billing['phone'])) {
+            $metadata['phone'] = $billing['phone'];
+        }
+
+        return $metadata;
     }
 
     public static function verifySignature(string $payloadString, string $signature): bool
@@ -629,5 +922,17 @@ class PaymongoWebhookService
         }
 
         return $result;
+    }
+
+    private static function syncBookingPaymentDetails(Booking $booking, array $paymentData): void
+    {
+        $updates = array_filter([
+            'paymongo_checkout_id' => $paymentData['checkout_id'] ?? $paymentData['checkout_session_id'] ?? null,
+            'payment_reference' => $paymentData['payment_reference'] ?? null,
+        ], fn ($value) => !empty($value));
+
+        if (!empty($updates)) {
+            $booking->update($updates);
+        }
     }
 }

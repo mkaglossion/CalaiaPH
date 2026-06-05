@@ -20,7 +20,10 @@
 
         <div>
             <p class="text-sm text-gray-600">Booking Date</p>
-            <p class="font-medium">{{ optional($booking->booking_date)->format('M d, Y') }}</p>
+            <p class="font-medium">{{ $booking->formatted_booking_date }}</p>
+
+            <p class="text-sm text-gray-600 mt-3">Booking Time</p>
+            <p class="font-medium">{{ $booking->display_session }}</p>
 
             <p class="text-sm text-gray-600 mt-3">Total Guests</p>
             <p class="font-medium">{{ $booking->total_guests }}</p>

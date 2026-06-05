@@ -27,7 +27,11 @@ class AdminBookingsController extends Controller
         }
 
         if ($request->filled('booking_type')) {
-            $bookingQuery->where('booking_type', $request->booking_type);
+            if ($request->booking_type === 'staycation') {
+                $bookingQuery->whereIn('booking_type', Booking::STAYCATION_TYPES);
+            } else {
+                $bookingQuery->where('booking_type', $request->booking_type);
+            }
         }
 
         if ($request->filled('search')) {
@@ -49,8 +53,73 @@ class AdminBookingsController extends Controller
         $bookingsCollection = $bookingQuery->orderBy('created_at', 'desc')->get()->map(function($b) {
             $b->resource_type = 'booking';
             $b->resource_id = $b->id;
-            $b->display_type_label = ucfirst($b->booking_type ?? 'staycation');
-            $b->display_customer_name = $b->customer_name;
+            
+            // Extract food and activity data for display
+            $bookingData = $b->booking_data ?? [];
+            $b->food_items = [];
+            $b->activity_items = [];
+            $b->pet_fee = 0;
+            $b->additional_adult_fee = 0;
+            $b->num_pets = 0;
+            $b->has_pets = false;
+            $b->additional_adults = 0;
+            
+            // Extract selected foods
+            if (!empty($bookingData['selected_foods'])) {
+                foreach ($bookingData['selected_foods'] as $food) {
+                    $b->food_items[] = [
+                        'name' => $food['name'] ?? 'Unknown',
+                        'quantity' => (int)($food['quantity'] ?? 1),
+                        'price' => (float)($food['price'] ?? 0)
+                    ];
+                }
+            }
+            
+            // Extract selected activities
+            if (!empty($bookingData['selected_activities'])) {
+                foreach ($bookingData['selected_activities'] as $activity) {
+                    $b->activity_items[] = [
+                        'name' => $activity['name'] ?? 'Unknown',
+                        'quantity' => (int)($activity['guests'] ?? $activity['quantity'] ?? 1),
+                        'price' => (float)($activity['price'] ?? 0)
+                    ];
+                }
+            }
+            
+            // Extract selected activity packages
+            if (!empty($bookingData['selected_activity_packages'])) {
+                foreach ($bookingData['selected_activity_packages'] as $package) {
+                    $b->activity_items[] = [
+                        'name' => $package['name'] ?? 'Unknown Package',
+                        'quantity' => (int)($package['quantity'] ?? 1),
+                        'price' => (float)($package['price'] ?? 0)
+                    ];
+                }
+            }
+            
+            // Extract pet information and fees
+            if (!empty($bookingData['num_pets'])) {
+                $b->num_pets = (int)($bookingData['num_pets'] ?? 0);
+            }
+            if (!empty($bookingData['has_pets'])) {
+                $b->has_pets = (bool)($bookingData['has_pets'] ?? false);
+            }
+            if (!empty($bookingData['pet_price'])) {
+                $b->pet_fee = (float)($bookingData['pet_price'] ?? 0);
+            }
+            
+            // Extract additional adult information and fees
+            if (!empty($bookingData['additional_adults'])) {
+                $b->additional_adults = (int)($bookingData['additional_adults'] ?? 0);
+            }
+            if (!empty($bookingData['additional_adult_price'])) {
+                $b->additional_adult_fee = (float)($bookingData['additional_adult_price'] ?? 0);
+            }
+            // Also check for mattress_price which might be used for additional adults
+            if (!empty($bookingData['mattress_price'])) {
+                $b->additional_adult_fee = (float)($bookingData['mattress_price'] ?? 0);
+            }
+            
             return $b;
         });
 
@@ -61,11 +130,14 @@ class AdminBookingsController extends Controller
             $packageQuery->where('status', $request->status);
         }
 
-        // Map booking_type filter to package if requested
-        if ($request->filled('booking_type') && $request->booking_type !== 'package') {
-            // no-op, package bookings only match when booking_type is 'package'
-            if ($request->booking_type !== 'package') {
-                $packageQuery->whereRaw('1 = 0');
+        // Filter by booking type
+        if ($request->filled('booking_type')) {
+            if ($request->booking_type === 'package') {
+                // Show only PackageBooking
+                $bookingQuery->whereRaw('1 = 0'); // Exclude all Booking
+            } else {
+                // Show only specific Booking type (staycation, dayvisit), exclude PackageBooking
+                $packageQuery->whereRaw('1 = 0'); // Exclude all PackageBooking
             }
         }
 
@@ -104,6 +176,76 @@ class AdminBookingsController extends Controller
             $obj->status = $pb->status;
             $obj->payment_status = $pb->payment_status ?? 'pending';
             $obj->id_for_routes = $pb->id; // id specifically for package routes
+            
+            // Extract food and activity data for package bookings if available
+            $obj->food_items = [];
+            $obj->activity_items = [];
+            $obj->pet_fee = 0;
+            $obj->additional_adult_fee = 0;
+            $obj->num_pets = 0;
+            $obj->has_pets = false;
+            $obj->additional_adults = 0;
+            
+            // Try to get booking_data if it exists (some package bookings might have it)
+            $bookingData = $pb->booking_data ?? [];
+            if (!empty($bookingData)) {
+                // Extract selected foods
+                if (!empty($bookingData['selected_foods'])) {
+                    foreach ($bookingData['selected_foods'] as $food) {
+                        $obj->food_items[] = [
+                            'name' => $food['name'] ?? 'Unknown',
+                            'quantity' => (int)($food['quantity'] ?? 1),
+                            'price' => (float)($food['price'] ?? 0)
+                        ];
+                    }
+                }
+                
+                // Extract selected activities
+                if (!empty($bookingData['selected_activities'])) {
+                    foreach ($bookingData['selected_activities'] as $activity) {
+                        $obj->activity_items[] = [
+                            'name' => $activity['name'] ?? 'Unknown',
+                            'quantity' => (int)($activity['guests'] ?? $activity['quantity'] ?? 1),
+                            'price' => (float)($activity['price'] ?? 0)
+                        ];
+                    }
+                }
+                
+                // Extract selected activity packages
+                if (!empty($bookingData['selected_activity_packages'])) {
+                    foreach ($bookingData['selected_activity_packages'] as $package) {
+                        $obj->activity_items[] = [
+                            'name' => $package['name'] ?? 'Unknown Package',
+                            'quantity' => (int)($package['quantity'] ?? 1),
+                            'price' => (float)($package['price'] ?? 0)
+                        ];
+                    }
+                }
+                
+                // Extract pet information and fees
+                if (!empty($bookingData['num_pets'])) {
+                    $obj->num_pets = (int)($bookingData['num_pets'] ?? 0);
+                }
+                if (!empty($bookingData['has_pets'])) {
+                    $obj->has_pets = (bool)($bookingData['has_pets'] ?? false);
+                }
+                if (!empty($bookingData['pet_price'])) {
+                    $obj->pet_fee = (float)($bookingData['pet_price'] ?? 0);
+                }
+                
+                // Extract additional adult information and fees
+                if (!empty($bookingData['additional_adults'])) {
+                    $obj->additional_adults = (int)($bookingData['additional_adults'] ?? 0);
+                }
+                if (!empty($bookingData['additional_adult_price'])) {
+                    $obj->additional_adult_fee = (float)($bookingData['additional_adult_price'] ?? 0);
+                }
+                // Also check for mattress_price which might be used for additional adults
+                if (!empty($bookingData['mattress_price'])) {
+                    $obj->additional_adult_fee = (float)($bookingData['mattress_price'] ?? 0);
+                }
+            }
+            
             return $obj;
         });
 
@@ -119,12 +261,26 @@ class AdminBookingsController extends Controller
         $slice = $merged->slice(($page - 1) * $perPage, $perPage)->values();
         $bookings = new LengthAwarePaginator($slice, $total, $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]);
         
-        // Get stats
-        $confirmed = Booking::where('status', 'confirmed')->count();
-        $cancelled = Booking::where('status', 'cancelled')->count();
-        $completed = Booking::where('status', 'completed')->count();
-        $total = Booking::count();
-        $today = Booking::whereDate('created_at', Carbon::today())->count();
+        // Get stats - count BOTH Booking and PackageBooking models
+        $bookingConfirmed = Booking::where('status', 'confirmed')->count();
+        $packageConfirmed = PackageBooking::where('status', 'confirmed')->count();
+        $confirmed = $bookingConfirmed + $packageConfirmed;
+        
+        $bookingCancelled = Booking::where('status', 'cancelled')->count();
+        $packageCancelled = PackageBooking::where('status', 'cancelled')->count();
+        $cancelled = $bookingCancelled + $packageCancelled;
+        
+        $bookingCompleted = Booking::where('status', 'completed')->count();
+        $packageCompleted = PackageBooking::where('status', 'completed')->count();
+        $completed = $bookingCompleted + $packageCompleted;
+        
+        $totalBookings = Booking::count();
+        $totalPackages = PackageBooking::count();
+        $total = $totalBookings + $totalPackages;
+        
+        $todayBookings = Booking::whereDate('created_at', Carbon::today())->count();
+        $todayPackages = PackageBooking::whereDate('created_at', Carbon::today())->count();
+        $today = $todayBookings + $todayPackages;
         
         $stats = [
             'total' => $total,

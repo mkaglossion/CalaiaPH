@@ -127,7 +127,7 @@
       <!-- Copyright -->
       <div class="mt-6 pt-4 border-t border-white/20">
         <p class="text-center text-gray-200 text-base" style="">
-          © 2025 CALAIA FARM. ALL RIGHTS RESERVED.
+          © 2026 CALAIA FARM. ALL RIGHTS RESERVED.
         </p>
       </div>
     </div>

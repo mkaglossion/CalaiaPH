@@ -14,7 +14,7 @@ class AdminPackageBookingsController extends Controller
 {
     public function show($id)
     {
-        $booking = PackageBooking::findOrFail($id);
+        $booking = PackageBooking::with('package')->findOrFail($id);
 
         return view('admin.bookings.show_package', compact('booking'));
     }

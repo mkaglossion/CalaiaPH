@@ -43,15 +43,21 @@
                         <label class="block text-sm font-medium text-gray-500">Check-in Date</label>
                         <p class="text-lg text-gray-900">{{ \Carbon\Carbon::parse($booking->checkin_date)->format('F d, Y') }}</p>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500">Check-out Date</label>
-                        <p class="text-lg text-gray-900">{{ $booking->checkout_date ? \Carbon\Carbon::parse($booking->checkout_date)->format('F d, Y') : 'N/A' }}</p>
-                    </div>
-                    @if($booking->booking_type == 'staycation' && $booking->checkout_date)
+<div>
+    <label class="block text-sm font-medium text-gray-500">Check-out Date</label>
+    <p class="text-lg text-gray-900">
+        @if($booking instanceof \App\Models\Booking)
+            {{ $booking->display_checkout_date?->format('F d, Y') ?? 'N/A' }}
+        @else
+            N/A
+        @endif
+    </p>
+</div>
+                    @if($booking->isStaycationFamilyBooking() && $booking->display_nights)
                     <div>
                         <label class="block text-sm font-medium text-gray-500">Number of Nights</label>
                         <p class="text-lg text-gray-900">
-                            {{ \Carbon\Carbon::parse($booking->checkin_date)->diffInDays($booking->checkout_date) }} night(s)
+                            {{ $booking->display_nights }} night(s)
                         </p>
                     </div>
                     @endif
@@ -73,7 +79,7 @@
             </div>
 
             <!-- Accommodations (for staycation bookings) -->
-            @if($booking->booking_type == 'staycation' && isset($booking->booking_data['accommodations']))
+            @if($booking->isStaycationFamilyBooking() && isset($booking->booking_data['accommodations']))
             <div class="bg-white p-6 rounded-lg shadow">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">Accommodations</h2>
                 <div class="space-y-4">
@@ -83,9 +89,15 @@
                             <div>
                                 <h3 class="font-semibold text-lg text-gray-900">
                                     @php
+                                        $embeddedName = trim((string) (
+                                            $accommodation['staycation']['name']
+                                            ?? $accommodation['name']
+                                            ?? $accommodation['accommodation_name']
+                                            ?? ''
+                                        ));
                                         $staycationId = $accommodation['room_id'] ?? $accommodation['id'] ?? null;
                                     @endphp
-                                    {{ $staycationId && isset($staycations[$staycationId]) ? $staycations[$staycationId]->name : 'N/A' }}
+                                    {{ $embeddedName !== '' ? $embeddedName : ($staycationId && isset($staycations[$staycationId]) ? $staycations[$staycationId]->name : 'N/A') }}
                                 </h3>
                                 <div class="mt-2 space-y-1 text-sm text-gray-600">
                                     <p><span class="font-medium">Quantity:</span> {{ $accommodation['quantity'] ?? 1 }}</p>

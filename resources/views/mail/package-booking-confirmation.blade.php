@@ -9,8 +9,8 @@ Your package booking is confirmed.
 
 - **Reference:** {{ $booking->booking_reference }}
 - **Package:** {{ $package->name ?? 'Package' }}
-- **Date:** {{ optional($booking->booking_date)->format('F d, Y') }}
-- **Session:** {{ $booking->session ?: 'N/A' }}
+- **Booking Date:** {{ $booking->formatted_booking_date }}
+- **Booking Time:** {{ $booking->display_session }}
 - **Guests:** {{ $booking->total_guests }}
 - **Groups Booked:** {{ $booking->groups_booked ?? 1 }}
 - **Total Amount:** PHP {{ number_format((float) $booking->total_amount, 2) }}

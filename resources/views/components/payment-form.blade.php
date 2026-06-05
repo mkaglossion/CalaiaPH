@@ -4,11 +4,12 @@
     'action' => '',
     'bookingData' => [],
     'grandTotal' => 0,
-    'errors' => null
+    'errors' => null,
+    'bookingType' => 'staycation'
 ])
 
 <section aria-labelledby="payment-method-heading">
-  <form action="{{ $action }}" method="POST" class="space-y-8">
+  <form action="{{ $action ?: ($bookingType === 'staycation' ? route('booking.initiatePayment') : route('booking.processPayment')) }}" method="POST" class="space-y-8">
     @csrf
 
     {{-- Hidden Booking Data --}}

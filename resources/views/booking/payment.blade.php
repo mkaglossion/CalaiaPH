@@ -57,10 +57,10 @@ $grandTotal = ($bookingData['price'] ?? 0) + $activitiesTotal;
 
           {{-- Payment Form --}}
           <x-payment-form
-              action="{{ route('booking.processPayment') }}"
               :booking-data="$bookingData"
               :grand-total="$grandTotal ?? 0"
               :errors="$errors ?? null"
+              :booking-type="$bookingData['type'] ?? 'staycation'"
           />
         </div>
       </div>

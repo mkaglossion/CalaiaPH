@@ -33,7 +33,7 @@
 
                 <h1 class="text-4xl md:text-6xl font-bold text-center mb-12 text-gray-800 border-b-4 border-amber-800 pb-6">Terms of Service</h1>
 
-                <p class="text-center text-gray-600 mb-8"><strong>Last Updated:</strong> {{ date('F j, Y') }}</p>
+                <p class="text-center text-gray-600 mb-8"><strong>Last Updated:</strong> January 5, 2026</p>
 
                 <!-- Introduction -->
                 <div class="bg-amber-50 p-6 rounded-xl mb-8 border-l-4 border-amber-800">
@@ -240,7 +240,7 @@
                     <h3 class="text-xl font-semibold text-gray-800 mb-4">Thank You for Using Calaia Farm</h3>
                     <p class="text-gray-600 leading-relaxed">By using our Service, you acknowledge that you have read and understood these Terms of Service and agree to be bound by them.</p>
                     <div class="mt-6 pt-6 border-t border-gray-200">
-                        <p class="text-sm text-gray-500 italic"><strong>Last Updated:</strong> {{ date('F j, Y') }}</p>
+                        <p class="text-sm text-gray-500 italic"><strong>Last Updated:</strong> January 5, 2026</p>
                     </div>
                 </div>
             </div>

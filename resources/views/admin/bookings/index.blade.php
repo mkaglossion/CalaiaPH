@@ -98,9 +98,9 @@
                 <label for="booking_type" class="block text-xs font-semibold text-gray-600 mb-1">Type</label>
                 <select id="booking_type" name="booking_type" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                     <option value="">All</option>
-                    <option value="glamping" {{ request('booking_type') == 'glamping' ? 'selected' : '' }}>Glamping</option>
-                    <option value="camping" {{ request('booking_type') == 'camping' ? 'selected' : '' }}>Camping</option>
+                    <option value="staycation" {{ request('booking_type') == 'staycation' ? 'selected' : '' }}>Staycation</option>
                     <option value="dayvisit" {{ request('booking_type') == 'dayvisit' ? 'selected' : '' }}>Day Visit</option>
+                    <option value="package" {{ request('booking_type') == 'package' ? 'selected' : '' }}>Package</option>
                 </select>
             </div>
             <div class="w-full sm:w-auto">
@@ -155,27 +155,89 @@
                             <div class="text-xs text-gray-500">{{ $booking->customer_phone }}</div>
                             @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            @php
-                                $typeLabel = $booking->display_type_label;
-                                $badgeColor = match($booking->booking_type) {
-                                    'glamping' => 'bg-purple-100 text-purple-800',
-                                    'camping' => 'bg-green-100 text-green-800',
-                                    'dayvisit' => 'bg-amber-100 text-amber-800',
-                                    'staycation' => 'bg-blue-100 text-blue-800',
-                                    default => 'bg-gray-100 text-gray-800'
-                                };
-                            @endphp
-                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ $badgeColor }}">
-                                {{ $typeLabel }}
-                            </span>
-                        </td>
+<td class="px-6 py-4 whitespace-nowrap">
+    @php
+        // Get accommodation name for staycation bookings
+        $accommodationName = null;
+        $badgeColor = match($booking->booking_type) {
+            'glamping' => 'bg-purple-100 text-purple-800',
+            'camping' => 'bg-green-100 text-green-800',
+            'dayvisit' => 'bg-amber-100 text-amber-800',
+            'staycation' => 'bg-blue-100 text-blue-800',
+            'package' => 'bg-rose-100 text-rose-800',
+            default => 'bg-gray-100 text-gray-800'
+        };
+
+        if ($booking instanceof \App\Models\Booking && in_array($booking->booking_type, \App\Models\Booking::STAYCATION_TYPES, true)) {
+            // Try to get accommodation name from booking_data
+            $bookingData = $booking->booking_data ?? [];
+            $accommodations = $bookingData['accommodations'] ?? [];
+
+            if (!empty($accommodations)) {
+                $firstAccommodation = $accommodations[0];
+                $accommodationName = trim((string) (
+                    $firstAccommodation['staycation']['name']
+                    ?? $firstAccommodation['name']
+                    ?? $firstAccommodation['accommodation_name']
+                    ?? ''
+                ));
+
+                if (empty($accommodationName)) {
+                    $staycationId = $firstAccommodation['room_id'] ?? $firstAccommodation['id'] ?? null;
+                    if ($staycationId) {
+                        $staycation = \App\Models\Staycation::find($staycationId);
+                        $accommodationName = $staycation ? $staycation->name : null;
+                    }
+                }
+            }
+        }
+
+        // Use accommodation name if available, otherwise fall back to type label
+        $displayName = $accommodationName ?? ($booking->display_type_label ?? ucfirst($booking->booking_type ?? ''));
+    @endphp
+    <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ $badgeColor }}">
+        {{ $displayName }}
+    </span>
+    
+    @if(isset($booking->food_items) || isset($booking->activity_items) || isset($booking->pet_fee) || isset($booking->additional_adult_fee))
+        <div class="mt-1 text-xs text-gray-600">
+            @if(isset($booking->food_items) && count($booking->food_items) > 0)
+                <div class="flex-wrap">
+                    @foreach($booking->food_items as $food)
+                        <span class="mr-2">{{ $food['name'] }} x{{ $food['quantity'] }}</span>
+                    @endforeach
+                </div>
+            @endif
+            @if(isset($booking->activity_items) && count($booking->activity_items) > 0)
+                <div class="flex-wrap mt-1">
+                    @foreach($booking->activity_items as $activity)
+                        <span class="mr-2">{{ $activity['name'] }} x{{ $activity['quantity'] }}</span>
+                    @endforeach
+                </div>
+            @endif
+            @if(isset($booking->pet_fee) && $booking->pet_fee > 0)
+                <div class="flex-wrap mt-1">
+                    <span class="mr-2">Pet Fee: {{ $booking->num_pets }} pet{{ $booking->num_pets != 1 ? 's' : '' }}</span>
+                </div>
+            @endif
+            @if(isset($booking->additional_adult_fee) && $booking->additional_adult_fee > 0)
+                <div class="flex-wrap mt-1">
+                    <span class="mr-2">Additional Adults: {{ $booking->additional_adults }}</span>
+                </div>
+            @endif
+        </div>
+    @endif
+</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {{ \Carbon\Carbon::parse($booking->checkin_date)->format('M d, Y') }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ $booking->checkout_date ? \Carbon\Carbon::parse($booking->checkout_date)->format('M d, Y') : 'N/A' }}
-                        </td>
+<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+    @if($booking instanceof \App\Models\Booking)
+        {{ $booking->display_checkout_date?->format('M d, Y') ?? 'N/A' }}
+    @else
+        N/A
+    @endif
+</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                             ₱{{ number_format($booking->total_amount, 2) }}
                         </td>
