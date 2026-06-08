@@ -6,7 +6,7 @@
 
 <div
     x-data="staycationManager()"
-    x-init="initPrices()"
+    x-init="initialize()"
     class="p-4 sm:p-6 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
 >
 
@@ -90,10 +90,59 @@
         </div>
     </div>
 
+    <div
+        class="mb-6 rounded-xl border px-4 py-3 text-sm"
+        :class="canReorder ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-slate-200 bg-white/80 text-slate-600'"
+    >
+        <template x-if="canReorder">
+            <p>Featured mode uses the saved frontend order. Drag the cards below to update the order used on staycation booking pages.</p>
+        </template>
+        <template x-if="!canReorder">
+            <p>Card dragging is available only in `Featured (Saved Order)` mode so temporary name/price sorts do not overwrite your saved frontend order.</p>
+        </template>
+    </div>
+
     {{-- Card Grid Layout --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+    <div
+        x-ref="staycationGrid"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10"
+    >
         <template x-for="staycation in staycations" :key="staycation.id">
-            <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative">
+            <div
+                data-staycation-card
+                :data-staycation-id="staycation.id"
+                class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative"
+                :class="canReorder ? 'cursor-grab active:cursor-grabbing' : ''"
+            >
+                <div class="absolute right-4 top-4 z-10 flex items-center gap-2">
+                    <span
+                        class="inline-flex min-w-8 items-center justify-center rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-gray-500 shadow-sm"
+                        x-text="`#${staycation.sort_order || 0}`"
+                    ></span>
+                    <button
+                        x-show="canReorder"
+                        type="button"
+                        data-drag-handle
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-500 shadow-sm transition hover:border-gray-300 hover:text-gray-700"
+                        aria-label="Drag to reorder staycation"
+                        title="Drag to reorder staycation"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            aria-hidden="true"
+                        >
+                            <circle cx="6" cy="5" r="1.4" />
+                            <circle cx="6" cy="10" r="1.4" />
+                            <circle cx="6" cy="15" r="1.4" />
+                            <circle cx="14" cy="5" r="1.4" />
+                            <circle cx="14" cy="10" r="1.4" />
+                            <circle cx="14" cy="15" r="1.4" />
+                        </svg>
+                    </button>
+                </div>
+
                 <div class="h-48 overflow-hidden rounded-xl mb-4 relative bg-gray-100">
                     <template x-if="staycation.image && staycation.image.trim() !== ''">
                         <img :src="staycation.image" 
@@ -725,6 +774,10 @@ function staycationManager() {
         currentImageId: null,
         currentStaycationId: '',
         currentImageTitle: '',
+        canReorder: @js(($sortBy ?? 'featured') === 'featured'),
+        reorderEndpoint: @js(route('admin.staycation-list.reorder')),
+        sortableInstance: null,
+        isReordering: false,
         staycations: @js($staycations),
         form: {
             id: null,
@@ -755,6 +808,11 @@ function staycationManager() {
             return this.updatedPrices[staycationId];
         },
 
+        initialize() {
+            this.initPrices();
+            this.$nextTick(() => this.initSortable());
+        },
+
         initPrices() {
             // Initialize updatedPrices from staycations data
             this.staycations.forEach(stay => {
@@ -766,6 +824,99 @@ function staycationManager() {
                     };
                 }
             });
+        },
+
+        initSortable() {
+            if (this.sortableInstance) {
+                this.sortableInstance.destroy();
+                this.sortableInstance = null;
+            }
+
+            if (!this.canReorder || typeof Sortable === 'undefined' || !this.$refs.staycationGrid) {
+                return;
+            }
+
+            this.sortableInstance = Sortable.create(this.$refs.staycationGrid, {
+                animation: 180,
+                handle: '[data-drag-handle]',
+                draggable: '[data-staycation-card]',
+                ghostClass: 'staycation-card-ghost',
+                chosenClass: 'staycation-card-chosen',
+                dragClass: 'staycation-card-drag',
+                onEnd: async () => {
+                    const orderedIds = Array.from(
+                        this.$refs.staycationGrid.querySelectorAll('[data-staycation-id]')
+                    )
+                        .map((card) => Number(card.dataset.staycationId))
+                        .filter((id) => Number.isInteger(id) && id > 0);
+
+                    if (orderedIds.length !== this.staycations.length) {
+                        return;
+                    }
+
+                    this.applyStaycationOrder(orderedIds);
+                    await this.persistStaycationOrder(orderedIds);
+                },
+            });
+        },
+
+        applyStaycationOrder(orderedIds) {
+            const staycationMap = new Map(this.staycations.map((staycation) => [Number(staycation.id), staycation]));
+            this.staycations = orderedIds
+                .map((id, index) => {
+                    const staycation = staycationMap.get(id);
+                    if (!staycation) {
+                        return null;
+                    }
+
+                    return {
+                        ...staycation,
+                        sort_order: index + 1,
+                    };
+                })
+                .filter(Boolean);
+        },
+
+        async persistStaycationOrder(orderedIds) {
+            if (this.isReordering) {
+                return;
+            }
+
+            this.isReordering = true;
+            this.sortableInstance?.option('disabled', true);
+
+            try {
+                const csrf = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+                const response = await fetch(this.reorderEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        ordered_ids: orderedIds,
+                    }),
+                });
+                const payload = await response.json().catch(() => ({}));
+
+                if (!response.ok || payload.success === false) {
+                    throw new Error(payload.message || 'Failed to save staycation order.');
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Order Not Saved',
+                    text: error.message || 'Failed to save staycation order.',
+                    confirmButtonColor: '#ef4444',
+                }).then(() => {
+                    window.location.reload();
+                });
+            } finally {
+                this.isReordering = false;
+                this.sortableInstance?.option('disabled', false);
+            }
         },
 
         updateSpecialRoomStatus() {
@@ -1594,6 +1745,16 @@ document.addEventListener('DOMContentLoaded', function() {
 .tilt-card:hover {
     transform: rotateX(6deg) rotateY(-6deg) translateY(-6px) scale(1.02);
     box-shadow: 0 16px 35px rgba(0,0,0,0.18);
+}
+.staycation-card-ghost {
+    opacity: 0.45;
+}
+.staycation-card-chosen,
+.staycation-card-drag {
+    cursor: grabbing !important;
+}
+.staycation-card-chosen {
+    transform: rotate(1deg) scale(1.01);
 }
 </style>
 

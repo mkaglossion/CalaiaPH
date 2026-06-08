@@ -8,6 +8,7 @@ use App\Models\Staycation;
 use App\Models\StaycationSwiperImage;
 use App\Models\PeakPeriod;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
@@ -15,7 +16,7 @@ class StaycationController extends Controller
 {
     public function index()
     {
-        $staycations = Staycation::latest()->get();
+        $staycations = Staycation::ordered()->get();
         
         // Get current season
         $today = now()->format('Y-m-d');
@@ -207,6 +208,7 @@ class StaycationController extends Controller
                 'price_configs' => $staycation->price_configs,
                 'price' => $staycation->price,
                 'type' => $staycation->type,
+                'sort_order' => $staycation->sort_order,
                 'created_at' => $staycation->created_at
             ]
         ]);
@@ -396,9 +398,41 @@ class StaycationController extends Controller
                 'price_configs' => $updatedStaycation->price_configs,
                 'price' => $updatedStaycation->price,
                 'type' => $updatedStaycation->type,
+                'sort_order' => $updatedStaycation->sort_order,
                 'created_at' => $updatedStaycation->created_at,
                 'updated_at' => $updatedStaycation->updated_at
             ]
+        ]);
+    }
+
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'ordered_ids' => ['required', 'array', 'min:1'],
+            'ordered_ids.*' => ['integer', 'distinct', 'exists:staycations,id'],
+        ]);
+
+        $orderedIds = array_values(array_unique(array_map('intval', $validated['ordered_ids'])));
+        $currentIds = Staycation::query()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        $missingIds = array_values(array_diff($currentIds, $orderedIds));
+        $finalIds = array_merge($orderedIds, $missingIds);
+
+        DB::transaction(function () use ($finalIds) {
+            foreach ($finalIds as $index => $staycationId) {
+                Staycation::whereKey($staycationId)->update([
+                    'sort_order' => $index + 1,
+                ]);
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Staycation order updated successfully.',
         ]);
     }
 

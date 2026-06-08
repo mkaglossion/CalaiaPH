@@ -4,20 +4,30 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
 
 class Staycation extends Model
 {
-    protected $fillable = ['name', 'days', 'type', 'base_quantity', 'capacity', 'max_guest_capacity', 'included_guest_capacity', 'adults', 'children', 'image', 'price_configs', 'price'];
+    protected $fillable = ['name', 'days', 'type', 'base_quantity', 'capacity', 'max_guest_capacity', 'included_guest_capacity', 'adults', 'children', 'image', 'price_configs', 'price', 'sort_order'];
 
     protected $casts = [
         'price_configs' => 'array',
         'max_guest_capacity' => 'integer',
         'included_guest_capacity' => 'integer',
+        'sort_order' => 'integer',
     ];
 
     protected static function boot()
     {
         parent::boot();
+
+        static::creating(function ($staycation) {
+            if (!Schema::hasColumn($staycation->getTable(), 'sort_order') || !empty($staycation->sort_order)) {
+                return;
+            }
+
+            $staycation->sort_order = ((int) static::max('sort_order')) + 1;
+        });
 
         static::updated(function ($staycation) {
             // If quantity changed, sync inventory
@@ -29,6 +39,15 @@ class Staycation extends Model
                 ]);
             }
         });
+    }
+
+    public function scopeOrdered($query)
+    {
+        if (Schema::hasColumn($this->getTable(), 'sort_order')) {
+            return $query->orderBy('sort_order', 'asc')->orderBy('id', 'asc');
+        }
+
+        return $query->orderBy('id', 'asc');
     }
 
     public function texts()

@@ -785,6 +785,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     // List Controllers
     Route::resource('activity-list', ActivityController::class)->only(['store', 'show', 'update', 'destroy']);
+    Route::post('staycation-list/reorder', [StaycationController::class, 'reorder'])->name('admin.staycation-list.reorder');
     Route::resource('staycation-list', StaycationController::class, [
         'names' => [
             'store' => 'admin.staycation-list.store',

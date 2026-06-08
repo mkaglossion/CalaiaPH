@@ -48,7 +48,7 @@ class AdminController extends Controller
     {
         $sortBy = $request->string('sort_by', 'featured')->toString();
         $sortOptions = [
-            'featured' => 'Featured',
+            'featured' => 'Featured (Saved Order)',
             'name_asc' => 'Alphabetically, A-Z',
             'name_desc' => 'Alphabetically, Z-A',
             'price_asc' => 'Price, low to high',
@@ -82,7 +82,7 @@ class AdminController extends Controller
                 break;
             case 'featured':
             default:
-                $staycationsQuery->orderBy('id', 'asc');
+                $staycationsQuery->ordered();
                 break;
         }
 
@@ -116,7 +116,7 @@ class AdminController extends Controller
 
     public function staycationInventory()
     {
-        $staycations = Staycation::with('inventories')->get();
+        $staycations = Staycation::ordered()->with('inventories')->get();
         return view('admin.whereToStay.inventory', compact('staycations'));
     }
 
@@ -246,7 +246,7 @@ class AdminController extends Controller
     {
         $accommodations  = StaycationAccommodation::with('variants')->get(); // get all packages with activities
         $texts = AccommodationText::all();
-        $staycations = Staycation::all(); // list of all activities for selection
+        $staycations = Staycation::ordered()->get(); // list of all activities for selection
         return view('admin.whereToStay.accommodations', compact('accommodations', 'texts', 'staycations'));
     }
 
@@ -360,7 +360,7 @@ class AdminController extends Controller
     public function staySettings()
     {
         // Get all staycations with their pricing configurations
-        $staycations = Staycation::all();
+        $staycations = Staycation::ordered()->get();
 
         // Get current season type by checking today's date
         $today = now()->format('Y-m-d');

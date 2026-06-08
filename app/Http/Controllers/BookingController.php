@@ -709,7 +709,7 @@ class BookingController extends Controller
         }
 
         // Fetch staycations from the database
-        $staycations = Staycation::all()->keyBy('id'); // Key by ID for proper lookup
+        $staycations = Staycation::ordered()->get()->keyBy('id'); // Key by ID for proper lookup
 
         $booking = session('booking', []);
 
@@ -1224,7 +1224,7 @@ class BookingController extends Controller
         }
 
         // Fetch staycations for room names
-        $staycations = \App\Models\Staycation::all()->keyBy('id');
+        $staycations = \App\Models\Staycation::ordered()->get()->keyBy('id');
 
         // Get selected activities and activity packages from session
         $selectedActivities = $booking['selected_activities'] ?? [];
@@ -1250,7 +1250,7 @@ class BookingController extends Controller
         if (!empty($staycationBooking) && isset($staycationBooking['booking_type']) && $staycationBooking['booking_type'] === 'staycation') {
             // Fetch food and staycation models for confirmation display
             $foods = Food::all();
-            $staycations = Staycation::all()->keyBy('id');
+            $staycations = Staycation::ordered()->get()->keyBy('id');
             
             $data = [
                 'bookingData' => $staycationBooking,
@@ -2583,7 +2583,7 @@ class BookingController extends Controller
                 break;
             case 'featured':
             default:
-                $staycationsQuery->orderBy('id', 'asc');
+                $staycationsQuery->ordered();
                 break;
         }
 
@@ -3025,7 +3025,7 @@ class BookingController extends Controller
 
         // Fetch staycation data for display in summary (array keys are room IDs)
         $accommodationIds = array_keys($booking['accommodations'] ?? []);
-        $staycations = Staycation::whereIn('id', $accommodationIds)->get();
+        $staycations = Staycation::ordered()->whereIn('id', $accommodationIds)->get();
 
         // Get dynamic VAT rate
         $vatService = app(\App\Services\VatService::class);
@@ -3124,7 +3124,7 @@ class BookingController extends Controller
             }
         }
 
-        $staycations = $query->get();
+        $staycations = $query->ordered()->get();
 
         // Calculate availability
         $availability = [];
@@ -3163,7 +3163,7 @@ class BookingController extends Controller
         $checkout = $request->checkout;
 
         // Get all staycations with pricing
-        $staycations = Staycation::all();
+        $staycations = Staycation::ordered()->get();
 
         $prices = [];
         foreach ($staycations as $staycation) {
