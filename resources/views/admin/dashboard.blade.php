@@ -39,7 +39,7 @@
       'meta' => array_values(array_filter([
         ['Total', $fmtMoney($totalRevenue)],
         $refundedRevenue > 0 ? ['Refunds', '-'.$fmtMoney($refundedRevenue), 'text-red-600'] : null,
-        $pendingRevenue > 0 ? ['Pending', $fmtMoney($pendingRevenue), 'text-blue-600'] : null,
+        $pendingRevenue > 0 ? ['Live Pending', $fmtMoney($pendingRevenue), 'text-blue-600'] : null,
       ])),
     ],
     [
@@ -53,7 +53,7 @@
 
   $revenueTiles = [
     ['label' => 'Completed Bookings', 'value' => $fmtMoney($completedRevenue), 'class' => 'text-green-600'],
-    ['label' => 'Pending Payments',   'value' => $fmtMoney($pendingRevenue),   'class' => 'text-blue-600'],
+    ['label' => 'Pending Payments',   'value' => $fmtMoney($pendingRevenue),   'class' => 'text-blue-600', 'href' => route('admin.bookings.index', ['payment_scope' => 'attempts', 'payment_status' => 'pending']), 'hint' => ($pendingBookings ?? 0) > 0 ? $fmtInt($pendingBookings).' live attempt(s), expires after '.($pendingWindowMinutes ?? 60).' min' : 'Auto-expires after '.($pendingWindowMinutes ?? 60).' min'],
     ['label' => 'Total Refunds',      'value' => $fmtMoney($refundedRevenue),  'class' => 'text-red-600'],
   ];
 
@@ -402,10 +402,20 @@
       <x-admin.section-card title="Revenue Analytics">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           @foreach($revenueTiles as $t)
-            <div class="rounded-2xl bg-gray-50 p-4 text-center">
+            @php
+              $tileTag = !empty($t['href']) ? 'a' : 'div';
+              $tileClasses = 'rounded-2xl bg-gray-50 p-4 text-center';
+              if (!empty($t['href'])) {
+                  $tileClasses .= ' block hover:bg-blue-50 transition';
+              }
+            @endphp
+            <{{ $tileTag }} @if(!empty($t['href'])) href="{{ $t['href'] }}" @endif class="{{ $tileClasses }}">
               <p class="text-xs uppercase tracking-wide text-gray-500">{{ $t['label'] }}</p>
               <p class="mt-2 text-xl font-extrabold {{ $t['class'] }}">{{ $t['value'] }}</p>
-            </div>
+              @if(!empty($t['hint']))
+                <p class="mt-1 text-xs text-gray-500">{{ $t['hint'] }}</p>
+              @endif
+            </{{ $tileTag }}>
           @endforeach
         </div>
       </x-admin.section-card>

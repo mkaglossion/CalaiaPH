@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AdminActivityLog;
 use App\Models\Booking;
+use App\Models\DayTour;
 use App\Models\PackageBooking;
 use App\Models\PaymongoWebhookEvent;
 use App\Models\Staycation;
@@ -21,6 +22,9 @@ class AdminBookingsController extends Controller
     {
         // Build Booking query with filters
         $bookingQuery = Booking::query();
+        $paymentScope = $this->normalizePaymentScope($request);
+
+        $this->applyPaymentLifecycleFilters($bookingQuery, $request, $paymentScope);
 
         if ($request->filled('status')) {
             $bookingQuery->where('status', $request->status);
@@ -56,18 +60,18 @@ class AdminBookingsController extends Controller
             
             // Extract food and activity data for display
             $bookingData = $b->booking_data ?? [];
-            $b->food_items = [];
-            $b->activity_items = [];
-            $b->pet_fee = 0;
-            $b->additional_adult_fee = 0;
-            $b->num_pets = 0;
-            $b->has_pets = false;
-            $b->additional_adults = 0;
+            $foodItems = [];
+            $activityItems = [];
+            $petFee = 0;
+            $additionalAdultFee = 0;
+            $numPets = 0;
+            $hasPets = false;
+            $additionalAdults = 0;
             
             // Extract selected foods
             if (!empty($bookingData['selected_foods'])) {
                 foreach ($bookingData['selected_foods'] as $food) {
-                    $b->food_items[] = [
+                    $foodItems[] = [
                         'name' => $food['name'] ?? 'Unknown',
                         'quantity' => (int)($food['quantity'] ?? 1),
                         'price' => (float)($food['price'] ?? 0)
@@ -78,7 +82,7 @@ class AdminBookingsController extends Controller
             // Extract selected activities
             if (!empty($bookingData['selected_activities'])) {
                 foreach ($bookingData['selected_activities'] as $activity) {
-                    $b->activity_items[] = [
+                    $activityItems[] = [
                         'name' => $activity['name'] ?? 'Unknown',
                         'quantity' => (int)($activity['guests'] ?? $activity['quantity'] ?? 1),
                         'price' => (float)($activity['price'] ?? 0)
@@ -89,7 +93,7 @@ class AdminBookingsController extends Controller
             // Extract selected activity packages
             if (!empty($bookingData['selected_activity_packages'])) {
                 foreach ($bookingData['selected_activity_packages'] as $package) {
-                    $b->activity_items[] = [
+                    $activityItems[] = [
                         'name' => $package['name'] ?? 'Unknown Package',
                         'quantity' => (int)($package['quantity'] ?? 1),
                         'price' => (float)($package['price'] ?? 0)
@@ -99,32 +103,42 @@ class AdminBookingsController extends Controller
             
             // Extract pet information and fees
             if (!empty($bookingData['num_pets'])) {
-                $b->num_pets = (int)($bookingData['num_pets'] ?? 0);
+                $numPets = (int)($bookingData['num_pets'] ?? 0);
             }
             if (!empty($bookingData['has_pets'])) {
-                $b->has_pets = (bool)($bookingData['has_pets'] ?? false);
+                $hasPets = (bool)($bookingData['has_pets'] ?? false);
             }
             if (!empty($bookingData['pet_price'])) {
-                $b->pet_fee = (float)($bookingData['pet_price'] ?? 0);
+                $petFee = (float)($bookingData['pet_price'] ?? 0);
             }
             
             // Extract additional adult information and fees
             if (!empty($bookingData['additional_adults'])) {
-                $b->additional_adults = (int)($bookingData['additional_adults'] ?? 0);
+                $additionalAdults = (int)($bookingData['additional_adults'] ?? 0);
             }
             if (!empty($bookingData['additional_adult_price'])) {
-                $b->additional_adult_fee = (float)($bookingData['additional_adult_price'] ?? 0);
+                $additionalAdultFee = (float)($bookingData['additional_adult_price'] ?? 0);
             }
             // Also check for mattress_price which might be used for additional adults
             if (!empty($bookingData['mattress_price'])) {
-                $b->additional_adult_fee = (float)($bookingData['mattress_price'] ?? 0);
+                $additionalAdultFee = (float)($bookingData['mattress_price'] ?? 0);
             }
+            
+            // Set attributes
+            $b->setAttribute('food_items', $foodItems);
+            $b->setAttribute('activity_items', $activityItems);
+            $b->setAttribute('pet_fee', $petFee);
+            $b->setAttribute('additional_adult_fee', $additionalAdultFee);
+            $b->setAttribute('num_pets', $numPets);
+            $b->setAttribute('has_pets', $hasPets);
+            $b->setAttribute('additional_adults', $additionalAdults);
             
             return $b;
         });
 
         // Build PackageBooking query with equivalent filters
         $packageQuery = PackageBooking::query();
+        $this->applyPaymentLifecycleFilters($packageQuery, $request, $paymentScope);
 
         if ($request->filled('status')) {
             $packageQuery->where('status', $request->status);
@@ -261,26 +275,11 @@ class AdminBookingsController extends Controller
         $slice = $merged->slice(($page - 1) * $perPage, $perPage)->values();
         $bookings = new LengthAwarePaginator($slice, $total, $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]);
         
-        // Get stats - count BOTH Booking and PackageBooking models
-        $bookingConfirmed = Booking::where('status', 'confirmed')->count();
-        $packageConfirmed = PackageBooking::where('status', 'confirmed')->count();
-        $confirmed = $bookingConfirmed + $packageConfirmed;
-        
-        $bookingCancelled = Booking::where('status', 'cancelled')->count();
-        $packageCancelled = PackageBooking::where('status', 'cancelled')->count();
-        $cancelled = $bookingCancelled + $packageCancelled;
-        
-        $bookingCompleted = Booking::where('status', 'completed')->count();
-        $packageCompleted = PackageBooking::where('status', 'completed')->count();
-        $completed = $bookingCompleted + $packageCompleted;
-        
-        $totalBookings = Booking::count();
-        $totalPackages = PackageBooking::count();
-        $total = $totalBookings + $totalPackages;
-        
-        $todayBookings = Booking::whereDate('created_at', Carbon::today())->count();
-        $todayPackages = PackageBooking::whereDate('created_at', Carbon::today())->count();
-        $today = $todayBookings + $todayPackages;
+        $confirmed = $merged->where('status', 'confirmed')->count();
+        $cancelled = $merged->where('status', 'cancelled')->count();
+        $completed = $merged->where('status', 'completed')->count();
+        $total = $merged->count();
+        $today = $merged->filter(fn ($item) => $item->created_at instanceof Carbon && $item->created_at->isToday())->count();
         
         $stats = [
             'total' => $total,
@@ -299,17 +298,29 @@ class AdminBookingsController extends Controller
             ['label' => 'Today', 'value' => $today, 'subtitle' => ''],
         ];
         
-        return view('admin.bookings.index', compact('bookings', 'stats', 'statCardsData'));
+        return view('admin.bookings.index', compact('bookings', 'stats', 'statCardsData', 'paymentScope'));
     }
     
     public function show($id)
     {
         $booking = Booking::findOrFail($id);
-        
-        // Load staycation names for accommodations
+
         $staycations = Staycation::all()->keyBy('id');
-        
-        return view('admin.bookings.show', compact('booking', 'staycations'));
+        $bookingData = is_array($booking->booking_data) ? $booking->booking_data : [];
+
+        $selectedPackages = $this->extractSelectedPackages($bookingData);
+        $foodItems = $this->extractFoodItems($bookingData);
+        $singleActivities = $this->extractSelectedActivities($bookingData);
+        $activityPackages = $this->extractSelectedActivityPackages($bookingData);
+
+        return view('admin.bookings.show', compact(
+            'booking',
+            'staycations',
+            'selectedPackages',
+            'foodItems',
+            'singleActivities',
+            'activityPackages'
+        ));
     }
     
     public function cancel($id)
@@ -489,5 +500,133 @@ class AdminBookingsController extends Controller
         $tableReady = true;
 
         return view('admin.bookings.paymongo-webhooks', compact('events', 'stats', 'tableReady'));
+    }
+
+    private function normalizePaymentScope(Request $request): string
+    {
+        $scope = (string) $request->query('payment_scope', 'operational');
+
+        return in_array($scope, ['operational', 'all', 'attempts'], true) ? $scope : 'operational';
+    }
+
+    private function applyPaymentLifecycleFilters($query, Request $request, string $paymentScope): void
+    {
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', (string) $request->string('payment_status'));
+            return;
+        }
+
+        if ($paymentScope === 'all') {
+            return;
+        }
+
+        if ($paymentScope === 'attempts') {
+            $query->whereIn('payment_status', ['pending', 'failed']);
+            return;
+        }
+
+        $query->whereNotIn('payment_status', ['pending', 'failed']);
+    }
+
+    private function extractSelectedPackages(array $bookingData): array
+    {
+        if (!empty($bookingData['packages']) && is_array($bookingData['packages'])) {
+            return collect($bookingData['packages'])
+                ->map(function ($package) {
+                    $guests = (int) ($package['guests'] ?? 1);
+                    $quantity = (int) ($package['quantity'] ?? 1);
+                    $pricePerPerson = (float) ($package['price_per_person'] ?? 0);
+
+                    return [
+                        'name' => (string) ($package['name'] ?? 'Selected Package'),
+                        'guests' => $guests,
+                        'quantity' => $quantity,
+                        'price_per_person' => $pricePerPerson,
+                        'total_price' => (float) ($package['total_price'] ?? ($pricePerPerson * $guests * $quantity)),
+                    ];
+                })
+                ->values()
+                ->all();
+        }
+
+        $packageName = trim((string) ($bookingData['package'] ?? ''));
+        $packageId = $bookingData['package_id'] ?? null;
+
+        if ($packageName === '' && $packageId) {
+            $packageName = optional(DayTour::find($packageId))->name ?? '';
+        }
+
+        if ($packageName === '') {
+            return [];
+        }
+
+        $guests = (int) ($bookingData['guests'] ?? $bookingData['total_guests'] ?? 1);
+        $totalPrice = (float) ($bookingData['price'] ?? $bookingData['total_price'] ?? 0);
+        $pricePerPerson = $guests > 0 ? round($totalPrice / $guests, 2) : $totalPrice;
+
+        return [[
+            'name' => $packageName,
+            'guests' => $guests,
+            'quantity' => 1,
+            'price_per_person' => $pricePerPerson,
+            'total_price' => $totalPrice,
+        ]];
+    }
+
+    private function extractFoodItems(array $bookingData): array
+    {
+        return collect($bookingData['selected_foods'] ?? [])
+            ->filter(fn ($food) => is_array($food) && !empty($food['name']))
+            ->map(function ($food) {
+                $quantity = (int) ($food['quantity'] ?? 1);
+                $unitPrice = (float) ($food['price'] ?? 0);
+
+                return [
+                    'name' => (string) $food['name'],
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'total_price' => $unitPrice * $quantity,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function extractSelectedActivities(array $bookingData): array
+    {
+        return collect($bookingData['selected_activities'] ?? [])
+            ->filter(fn ($activity) => is_array($activity) && !empty($activity['name']))
+            ->map(function ($activity) {
+                $quantity = (int) ($activity['guests'] ?? $activity['quantity'] ?? 1);
+                $unitPrice = (float) ($activity['price'] ?? 0);
+
+                return [
+                    'name' => (string) $activity['name'],
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'total_price' => $unitPrice * $quantity,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function extractSelectedActivityPackages(array $bookingData): array
+    {
+        return collect($bookingData['selected_activity_packages'] ?? [])
+            ->filter(fn ($package) => is_array($package) && !empty($package['name']))
+            ->map(function ($package) {
+                $quantity = (int) ($package['quantity'] ?? 1);
+                $unitPrice = (float) ($package['price'] ?? 0);
+
+                return [
+                    'name' => (string) $package['name'],
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'total_price' => $unitPrice * $quantity,
+                ];
+            })
+            ->values()
+            ->all();
     }
 }

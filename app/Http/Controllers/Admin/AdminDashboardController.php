@@ -13,12 +13,15 @@ use App\Models\Food;
 use App\Models\AdminSystemAlert;
 use App\Models\AdminActivityLog;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Builder;
 
 class AdminDashboardController extends Controller
 {
     public function index(Request $request)
     {
         [$start, $end, $rangeLabel, $range] = $this->resolveDateRange($request);
+        $pendingWindowMinutes = 60;
+        $pendingCutoff = now()->subMinutes($pendingWindowMinutes);
 
         // -----------------------------
         // USERS (1 query)
@@ -39,8 +42,20 @@ class AdminDashboardController extends Controller
         // BOOKINGS + REVENUE (2 queries: Booking + PackageBooking)
         // -----------------------------
         $base = Booking::query()
+            ->whereNotIn('payment_status', ['pending', 'failed'])
             ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
         $packageBase = PackageBooking::query()
+            ->whereNotIn('payment_status', ['pending', 'failed'])
+            ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
+        $pendingBase = Booking::query()
+            ->where('payment_status', 'pending')
+            ->whereNotIn('status', ['cancelled', 'completed'])
+            ->where('created_at', '>=', $pendingCutoff)
+            ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
+        $pendingPackageBase = PackageBooking::query()
+            ->where('payment_status', 'pending')
+            ->whereNotIn('status', ['cancelled', 'completed'])
+            ->where('created_at', '>=', $pendingCutoff)
             ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
 
         $agg = (clone $base)->selectRaw("
@@ -59,9 +74,16 @@ class AdminDashboardController extends Controller
             SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_bookings,
 
             SUM(CASE WHEN status != 'cancelled' AND payment_status = 'paid' THEN total_amount ELSE 0 END) as total_revenue,
-            SUM(CASE WHEN status != 'cancelled' AND payment_status = 'pending' THEN total_amount ELSE 0 END) as pending_revenue,
             SUM(CASE WHEN status = 'completed' AND payment_status = 'paid' THEN total_amount ELSE 0 END) as completed_revenue,
             SUM(CASE WHEN status != 'cancelled' AND payment_status = 'refunded' THEN total_amount ELSE 0 END) as refunded_revenue
+        ")->first();
+        $pendingAgg = (clone $pendingBase)->selectRaw("
+            COUNT(*) as pending_bookings,
+            SUM(total_amount) as pending_revenue
+        ")->first();
+        $pendingPackageAgg = (clone $pendingPackageBase)->selectRaw("
+            COUNT(*) as pending_bookings,
+            SUM(total_amount) as pending_revenue
         ")->first();
 
         $totalBookings     = (int) $agg->total_bookings + (int) $packageAgg->total_bookings;
@@ -69,7 +91,8 @@ class AdminDashboardController extends Controller
         $completedBookings = (int) $agg->completed_bookings + (int) $packageAgg->completed_bookings;
 
         $totalRevenue      = (float) $agg->total_revenue + (float) $packageAgg->total_revenue;
-        $pendingRevenue    = (float) $agg->pending_revenue + (float) $packageAgg->pending_revenue;
+        $pendingRevenue    = (float) $pendingAgg->pending_revenue + (float) $pendingPackageAgg->pending_revenue;
+        $pendingBookings   = (int) $pendingAgg->pending_bookings + (int) $pendingPackageAgg->pending_bookings;
         $completedRevenue  = (float) $agg->completed_revenue + (float) $packageAgg->completed_revenue;
         $refundedRevenue   = (float) $agg->refunded_revenue + (float) $packageAgg->refunded_revenue;
 
@@ -125,20 +148,12 @@ class AdminDashboardController extends Controller
         // MONTHLY BOOKINGS (2 queries merged)
         // (last 12 months, independent of range filter)
         // -----------------------------
-        $bookingMonthly = Booking::query()
-            ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as count')
-            ->where('created_at', '>=', now()->subMonths(11)->startOfMonth())
-            ->groupBy('year', 'month')
-            ->orderBy('year')
-            ->orderBy('month')
-            ->get();
-        $packageMonthly = PackageBooking::query()
-            ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as count')
-            ->where('created_at', '>=', now()->subMonths(11)->startOfMonth())
-            ->groupBy('year', 'month')
-            ->orderBy('year')
-            ->orderBy('month')
-            ->get();
+        $bookingMonthly = $this->getMonthlyBookingCounts(
+            Booking::query()->whereNotIn('payment_status', ['pending', 'failed'])
+        );
+        $packageMonthly = $this->getMonthlyBookingCounts(
+            PackageBooking::query()->whereNotIn('payment_status', ['pending', 'failed'])
+        );
         $monthlyBookings = $bookingMonthly
             ->concat($packageMonthly)
             ->groupBy(fn($row) => $row->year . '-' . $row->month)
@@ -174,7 +189,7 @@ class AdminDashboardController extends Controller
             'rangeLabel', 'start', 'end', 'range',
             'clientUsers', 'totalUsers', 'verifiedUsers', 'adminUsers',
             'totalBookings', 'activeBookings', 'completedBookings',
-            'netRevenue', 'totalRevenue', 'pendingRevenue', 'completedRevenue', 'refundedRevenue',
+            'netRevenue', 'totalRevenue', 'pendingRevenue', 'pendingBookings', 'pendingWindowMinutes', 'completedRevenue', 'refundedRevenue',
             'totalProducts', 'totalFoods', 'lowStockProducts', 'lowStockFoods',
             'recentBookings', 'monthlyBookings', 'systemAlerts', 'recentActivity'
         ));
@@ -215,6 +230,21 @@ class AdminDashboardController extends Controller
         }
 
         return [$start, $end, $label, $range];
+    }
+
+    private function getMonthlyBookingCounts(Builder $query)
+    {
+        $driver = DB::connection()->getDriverName();
+        $yearExpr = $driver === 'sqlite' ? "CAST(strftime('%Y', created_at) AS INTEGER)" : 'YEAR(created_at)';
+        $monthExpr = $driver === 'sqlite' ? "CAST(strftime('%m', created_at) AS INTEGER)" : 'MONTH(created_at)';
+
+        return $query
+            ->selectRaw("{$yearExpr} as year, {$monthExpr} as month, COUNT(*) as count")
+            ->where('created_at', '>=', now()->subMonths(11)->startOfMonth())
+            ->groupBy('year', 'month')
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get();
     }
 
     /**

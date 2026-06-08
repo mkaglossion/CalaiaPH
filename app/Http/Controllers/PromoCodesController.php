@@ -226,8 +226,8 @@ class PromoCodesController extends Controller
                 ], 400);
             }
 
-            $now = now();
-            if ($now->lt($promoCode->start_date) || $now->gt($promoCode->end_date)) {
+            $today = today();
+            if ($today->lt($promoCode->start_date) || $today->gt($promoCode->end_date)) {
                 return response()->json([
                     'valid' => false,
                     'message' => 'Promo code is not valid for the current date.'

@@ -739,43 +739,26 @@ class DayVisitController extends Controller
                 ]);
 
                 $data = json_decode($response->getBody(), true);
-                $checkout = (object) $data['data']['attributes'];
+                $paymentIntentStatus = data_get($data, 'data.attributes.payment_intent.status', 'unknown');
 
                 // Log the failure reason
                 \Illuminate\Support\Facades\Log::warning('PayMongo day visit payment failed', [
                     'checkout_id' => $checkoutId,
-                    'status' => $checkout->payment_intent ? $checkout->payment_intent->status : 'unknown',
-                    'payment_intent' => $checkout->payment_intent ?? null,
+                    'status' => $paymentIntentStatus,
+                    'payment_intent' => data_get($data, 'data.attributes.payment_intent'),
                 ]);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('PayMongo checkout verification failed on failure: ' . $e->getMessage());
-            }
-        }
-
-        // Check if this was actually a success that got redirected to failed URL
-        // Sometimes PayMongo redirects to cancel_url even on success
-        if ($checkoutId) {
-            try {
-                $client = new \GuzzleHttp\Client();
-                $response = $client->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutId}", [
-                    'headers' => [
-                        'Authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
-                        'Content-Type' => 'application/json',
-                    ]
-                ]);
-
-                $data = json_decode($response->getBody(), true);
-                $checkout = (object) $data['data']['attributes'];
 
                 // If payment actually succeeded, redirect to success handler
-                if ($checkout->payment_intent && $checkout->payment_intent->status === 'succeeded') {
+                if ($paymentIntentStatus === 'succeeded') {
                     \Illuminate\Support\Facades\Log::info('Payment actually succeeded, redirecting to success handler', [
                         'checkout_id' => $checkoutId,
                     ]);
                     return redirect()->route('dayvisit.paymentSuccess', ['checkout_id' => $checkoutId]);
                 }
+
+                $this->paymentService->failPendingBookingForCheckout($checkoutId, null, 'failed', 'paymongo_failed_callback');
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Error checking payment status on failed callback: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error('PayMongo checkout verification failed on failure: ' . $e->getMessage());
             }
         }
 

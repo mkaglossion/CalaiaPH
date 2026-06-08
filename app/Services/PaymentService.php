@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use App\Mail\BookingConfirmation;
 use App\Models\Booking;
 
@@ -36,6 +37,8 @@ class PaymentService
         $client = new \GuzzleHttp\Client();
 
         try {
+            $targetAmount = max(1, (int) round($amount));
+
             // If detailed line items are provided, build payload using them.
             $formattedLineItems = [];
             $computedTotal = 0;
@@ -46,24 +49,38 @@ class PaymentService
                     $name = $li['name'] ?? ($li['title'] ?? 'Item');
                     $unit = isset($li['unit_price']) ? (float)$li['unit_price'] : (float)($li['price'] ?? 0);
                     $qty = isset($li['quantity']) ? (int)$li['quantity'] : (int)($li['qty'] ?? 1);
+                    $unitAmount = (int) round($unit * 100);
 
                     // unit is in PHP, convert to centavos when sending to PayMongo
                     $formattedLineItems[] = [
-                        'amount' => (int)round($unit * 100), // unit price in centavos
+                        'amount' => $unitAmount, // unit price in centavos
                         'currency' => 'PHP',
                         'name' => $name,
                         'quantity' => $qty,
                     ];
 
-                    $computedTotal += $unit * $qty;
+                    $computedTotal += $unitAmount * $qty;
                 }
 
-                // Override top-level amount to match computed total if mismatch
-                $amount = (int)round($computedTotal * 100);
+                if ($computedTotal !== $targetAmount) {
+                    Log::warning('PayMongo line item total mismatch; using final checkout amount as a single line item.', [
+                        'type' => $type,
+                        'reference_id' => $referenceId,
+                        'computed_total_centavos' => $computedTotal,
+                        'target_amount_centavos' => $targetAmount,
+                    ]);
+
+                    $formattedLineItems = [[
+                        'amount' => $targetAmount,
+                        'currency' => 'PHP',
+                        'name' => ucfirst($type) . ' Booking',
+                        'quantity' => 1,
+                    ]];
+                }
             } else {
                 // Fallback single generic line item (amount is total in centavos)
                 $formattedLineItems[] = [
-                    'amount' => (int)$amount,
+                    'amount' => $targetAmount,
                     'currency' => 'PHP',
                     'name' => ucfirst($type) . ' Booking',
                     'quantity' => 1,
@@ -73,7 +90,7 @@ class PaymentService
             $description = ucfirst($type) . ' Booking Payment';
 
             // Ensure amount is in centavos and integer
-            $amount = (int) round($amount);
+            $amount = $targetAmount;
 
             // Ensure there's always a reference number. Use provided one if available,
             // otherwise generate a CALAIA-XXXXXXXXXXXX reference for visibility on PayMongo.
@@ -603,6 +620,13 @@ class PaymentService
 
         $checkinDate = $bookingData['checkin'] ?? ($bookingData['booking_date'] ?? now()->toDateString());
         $checkoutDate = $bookingData['checkout'] ?? null;
+        $bookingPayload = $this->withPaymentAttemptMetadata(
+            array_merge($bookingData, [
+                'payment_data' => $paymentData,
+            ]),
+            'pending',
+            'checkout_created'
+        );
 
         $booking = Booking::create([
             'transaction_id' => $transactionId,
@@ -612,9 +636,7 @@ class PaymentService
             'booking_type' => $bookingType,
             'checkin_date' => $checkinDate,
             'checkout_date' => $checkoutDate,
-            'booking_data' => array_merge($bookingData, [
-                'payment_data' => $paymentData,
-            ]),
+            'booking_data' => $bookingPayload,
             'total_amount' => $expectedAmountCentavos > 0 ? ($expectedAmountCentavos / 100) : 0,
             'payment_method' => 'paymongo',
             'payment_status' => 'pending',
@@ -720,11 +742,23 @@ class PaymentService
     /**
      * Mark pending booking as failed.
      */
-    public function failPendingBooking(Booking $booking, ?string $checkoutSessionId = null): void
+    public function failPendingBooking(
+        Booking $booking,
+        ?string $checkoutSessionId = null,
+        string $attemptState = 'failed',
+        ?string $reason = null
+    ): void
     {
+        $bookingData = $this->withPaymentAttemptMetadata(
+            is_array($booking->booking_data) ? $booking->booking_data : [],
+            $attemptState,
+            $reason ?? $attemptState
+        );
+
         $booking->update([
             'payment_status' => 'failed',
             'status' => 'cancelled',
+            'booking_data' => $bookingData,
         ]);
 
         if ($checkoutSessionId) {
@@ -735,6 +769,95 @@ class PaymentService
             'booking_id' => $booking->id,
             'transaction_id' => $booking->transaction_id,
             'checkout_session_id' => $checkoutSessionId,
+            'attempt_state' => $attemptState,
+            'reason' => $reason,
         ]);
+    }
+
+    /**
+     * Resolve a pending PayMongo booking by checkout session or cached reference.
+     */
+    public function resolvePendingBookingForCheckout(?string $checkoutSessionId, ?string $referenceId = null): ?Booking
+    {
+        if (empty($referenceId) && !empty($checkoutSessionId)) {
+            $referenceId = Cache::get('paymongo_checkout_reference:' . $checkoutSessionId);
+        }
+
+        $booking = null;
+
+        if (!empty($referenceId)) {
+            $booking = Booking::where('transaction_id', $referenceId)
+                ->where('payment_status', 'pending')
+                ->latest('id')
+                ->first();
+        }
+
+        if (!$booking && !empty($checkoutSessionId)) {
+            $booking = Booking::where('paymongo_checkout_id', $checkoutSessionId)
+                ->where('payment_status', 'pending')
+                ->latest('id')
+                ->first();
+        }
+
+        return $booking;
+    }
+
+    /**
+     * Mark a pending PayMongo booking as failed and clear its recovery cache.
+     */
+    public function failPendingBookingForCheckout(
+        ?string $checkoutSessionId,
+        ?string $referenceId = null,
+        string $attemptState = 'failed',
+        ?string $reason = null
+    ): ?Booking
+    {
+        $booking = $this->resolvePendingBookingForCheckout($checkoutSessionId, $referenceId);
+
+        if (!$booking) {
+            Log::info('No pending booking found for failed checkout cleanup', [
+                'checkout_session_id' => $checkoutSessionId,
+                'reference_id' => $referenceId,
+            ]);
+
+            return null;
+        }
+
+        $resolvedReferenceId = $referenceId ?: $booking->transaction_id;
+
+        $this->failPendingBooking($booking, $checkoutSessionId, $attemptState, $reason);
+
+        if (!empty($resolvedReferenceId)) {
+            Cache::forget('paymongo_checkout_context:' . $resolvedReferenceId);
+        }
+
+        if (!empty($checkoutSessionId)) {
+            Cache::forget('paymongo_checkout_reference:' . $checkoutSessionId);
+        }
+
+        return $booking->fresh();
+    }
+
+    private function withPaymentAttemptMetadata(array $bookingData, string $state, string $reason): array
+    {
+        $attempt = is_array($bookingData['payment_attempt'] ?? null)
+            ? $bookingData['payment_attempt']
+            : [];
+
+        $openedAt = $attempt['opened_at'] ?? now()->toDateTimeString();
+
+        $bookingData['payment_attempt'] = array_merge($attempt, [
+            'record_type' => 'payment_attempt',
+            'state' => $state,
+            'reason' => $reason,
+            'opened_at' => $openedAt,
+            'updated_at' => now()->toDateTimeString(),
+        ]);
+
+        if (in_array($state, ['failed', 'expired'], true)) {
+            $bookingData['payment_attempt']['closed_at'] = now()->toDateTimeString();
+        }
+
+        return $bookingData;
     }
 }

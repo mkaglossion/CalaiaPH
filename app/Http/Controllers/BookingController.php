@@ -1173,8 +1173,8 @@ class BookingController extends Controller
             return ['discount' => 0.0, 'promo' => null];
         }
 
-        $now = now();
-        if (!$promo->is_active || $now->lt($promo->start_date) || $now->gt($promo->end_date)) {
+        $today = today();
+        if (!$promo->is_active || $today->lt($promo->start_date) || $today->gt($promo->end_date)) {
             return ['discount' => 0.0, 'promo' => null];
         }
 
@@ -1785,14 +1785,25 @@ class BookingController extends Controller
             ]);
 
             $data = json_decode($response->getBody(), true);
-            $checkout = (object) $data['data']['attributes'];
+            $paymentIntentStatus = data_get($data, 'data.attributes.payment_intent.status', 'unknown');
+            $lastPaymentError = data_get($data, 'data.attributes.payment_intent.last_payment_error');
+
+            if ($paymentIntentStatus === 'succeeded') {
+                Log::info('PayMongo failure callback resolved to successful staycation payment; redirecting to success handler', [
+                    'checkout_id' => $checkoutId,
+                ]);
+
+                return redirect()->route('booking.payment.success', ['checkout_id' => $checkoutId]);
+            }
 
             // Log the failure reason
             Log::warning('PayMongo payment failed', [
                 'checkout_id' => $checkoutId,
-                'status' => $checkout->payment_intent ? $checkout->payment_intent->status : 'unknown',
-                'error' => $checkout->payment_intent ? $checkout->payment_intent->last_payment_error : null
+                'status' => $paymentIntentStatus,
+                'error' => $lastPaymentError,
             ]);
+
+            $this->paymentService->failPendingBookingForCheckout($checkoutId, null, 'failed', 'paymongo_failed_callback');
 
             return redirect()->route('booking.payment')->with('error', 'Payment failed. Please try again.');
         } catch (\Exception $e) {

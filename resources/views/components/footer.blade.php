@@ -92,7 +92,7 @@
             <div class="flex items-center justify-center md:justify-start">
               <i class="bi bi-telephone-fill mr-3 text-gray-200"></i>
               <a href="tel:+639051294741" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
-                +63 905 129 4741
+                +63 956 319 2448
               </a>
             </div>
             <div class="flex items-center justify-center md:justify-start">

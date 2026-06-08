@@ -17,6 +17,17 @@ class Kernel extends ConsoleKernel
             ->dailyAt('00:05')
             ->withoutOverlapping()
             ->onOneServer();
+
+        // Expire abandoned PayMongo checkout attempts so only operational bookings remain active.
+        $schedule->command('bookings:expire-stale-pending --minutes=60')
+            ->everyFifteenMinutes()
+            ->withoutOverlapping()
+            ->onOneServer();
+
+        $schedule->command('bookings:purge-old-attempts --days=30')
+            ->dailyAt('01:00')
+            ->withoutOverlapping()
+            ->onOneServer();
     }
 
     /**
