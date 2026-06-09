@@ -116,7 +116,6 @@
                 <select id="booking_type" name="booking_type" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                     <option value="">All</option>
                     <option value="staycation" {{ request('booking_type') == 'staycation' ? 'selected' : '' }}>Staycation</option>
-                    <option value="dayvisit" {{ request('booking_type') == 'dayvisit' ? 'selected' : '' }}>Day Visit</option>
                     <option value="package" {{ request('booking_type') == 'package' ? 'selected' : '' }}>Package</option>
                 </select>
             </div>
