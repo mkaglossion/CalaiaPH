@@ -12,14 +12,14 @@ use Illuminate\Http\Request;
 
 class AdminPackageBookingsController extends Controller
 {
-    public function show($id)
+    public function show(int $id)
     {
         $booking = PackageBooking::with('package')->findOrFail($id);
 
         return view('admin.bookings.show_package', compact('booking'));
     }
 
-    public function confirm($id)
+    public function confirm(int $id)
     {
         $booking = PackageBooking::findOrFail($id);
         $oldStatus = $booking->status;
@@ -45,9 +45,50 @@ class AdminPackageBookingsController extends Controller
         return response()->json(['success' => true, 'message' => 'Package booking confirmed']);
     }
 
-    public function cancel($id)
+    public function complete(int $id)
     {
         $booking = PackageBooking::findOrFail($id);
+
+        if (($booking->payment_status ?? 'pending') !== 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only paid package bookings can be marked as completed'
+            ], 422);
+        }
+
+        $oldStatus = $booking->status;
+        $booking->status = 'completed';
+        $booking->save();
+
+        AdminActivityLog::log(
+            'package_booking_status_update',
+            "Marked package booking {$booking->booking_reference} from {$oldStatus} to completed",
+            $booking,
+            ['old_status' => $oldStatus, 'new_status' => 'completed']
+        );
+
+        Log::info('Package booking completed by admin', ['id' => $booking->id, 'reference' => $booking->booking_reference]);
+        AdminSystemAlert::create([
+            'type' => 'package_booking',
+            'severity' => 'info',
+            'message' => "Package booking {$booking->booking_reference} marked as completed by admin",
+            'data' => ['booking_id' => $booking->id]
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Package booking completed']);
+    }
+
+    public function cancel(int $id)
+    {
+        $booking = PackageBooking::findOrFail($id);
+
+        if (($booking->status ?? '') === 'completed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Completed package bookings cannot be cancelled'
+            ], 422);
+        }
+
         $oldStatus = $booking->status;
         $booking->status = 'cancelled';
         $booking->save();

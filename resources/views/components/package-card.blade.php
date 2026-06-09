@@ -417,7 +417,7 @@ function packageCardData(pkg) {
                 if (response.ok && result.success) {
                     console.log('✨ Booking created successfully! ID:', result.booking_id);
                     // Move to the payment confirmation step so the flow stays visible to the user.
-                    window.location.href = `/booking/payment-confirmation/${result.booking_id}`;
+                    window.location.href = result.confirmation_url || `/booking/payment-confirmation/${result.booking_id}/${result.public_token}`;
                 } else {
                     this.errors.push(result.message || 'Failed to create booking');
                     console.error('❌ Booking creation failed:', result);

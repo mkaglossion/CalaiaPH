@@ -49,6 +49,7 @@ class PackageBookingController extends Controller
             // Create booking
             $booking = PackageBooking::create([
                 'booking_reference' => 'PB-' . strtoupper(Str::random(8)),
+                'public_token' => Str::random(64),
                 'package_id' => $validated['package_id'],
                 'booking_date' => $validated['booking_date'],
                 'total_guests' => $validated['total_guests'],
@@ -68,7 +69,12 @@ class PackageBookingController extends Controller
                 'success' => true,
                 'message' => 'Booking created successfully',
                 'booking_id' => $booking->id,
-                'booking_reference' => $booking->booking_reference
+                'booking_reference' => $booking->booking_reference,
+                'public_token' => $booking->public_token,
+                'confirmation_url' => route('booking.payment-confirmation', [
+                    'booking' => $booking->id,
+                    'token' => $booking->public_token,
+                ]),
             ]);
         } catch (\Exception $e) {
             Log::error('Error creating package booking: ' . $e->getMessage());
@@ -82,7 +88,7 @@ class PackageBookingController extends Controller
     /**
      * Get booking details
      */
-    public function show($id)
+    public function show(int $id)
     {
         try {
             $booking = PackageBooking::with('package')->findOrFail($id);
@@ -101,7 +107,7 @@ class PackageBookingController extends Controller
     /**
      * Update booking after successful payment
      */
-    public function updatePaymentStatus(Request $request, $id)
+    public function updatePaymentStatus(Request $request, int $id)
     {
         $validated = $request->validate([
             'payment_status' => 'required|in:paid,failed,cancelled',

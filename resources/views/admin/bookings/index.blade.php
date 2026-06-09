@@ -322,7 +322,6 @@
                             </a>
                             
                             <!-- Status Menu Button -->
-                            @if(!isset($booking->resource_type) || $booking->resource_type !== 'package')
                             <div class="relative">
                                 <button type="button" 
                                     onclick="toggleActionMenu(this)" 
@@ -363,10 +362,12 @@
                                         @endif
                                     @else
                                         <!-- Package-specific actions -->
-                                        @if($booking->status !== 'confirmed')
-                                            <button type="button" onclick="updatePackageStatus({{ $booking->resource_id }}, 'confirmed')" class="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-xs font-medium flex items-center gap-2">Confirm</button>
+                                        @if(($booking->payment_status ?? 'pending') === 'paid' && $booking->status !== 'completed')
+                                            <button type="button" onclick="updatePackageStatus({{ $booking->resource_id }}, 'complete')" class="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-xs font-medium flex items-center gap-2">Mark as Completed</button>
+                                        @elseif($booking->status !== 'confirmed')
+                                            <button type="button" onclick="updatePackageStatus({{ $booking->resource_id }}, 'confirm')" class="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-xs font-medium flex items-center gap-2">Confirm</button>
                                         @endif
-                                        @if($booking->status !== 'cancelled')
+                                        @if($booking->status !== 'cancelled' && $booking->status !== 'completed')
                                             <div class="border-t border-gray-100 my-1"></div>
                                             <button type="button" onclick="cancelPackage({{ $booking->resource_id }}, '{{ addslashes($booking->display_customer_name) }}')" class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-xs font-medium flex items-center gap-2">Cancel</button>
                                         @endif
@@ -375,7 +376,6 @@
                                     @endif
                                 </div>
                             </div>
-                            @endif
                         </td>
                     </tr>
                     @empty
@@ -718,7 +718,11 @@
         closeAllMenus();
 
         try {
-            const response = await fetch(`/admin/bookings/package/${bookingId}/confirm`, {
+            const endpoint = newStatus === 'complete'
+                ? `/admin/bookings/package/${bookingId}/complete`
+                : `/admin/bookings/package/${bookingId}/confirm`;
+
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -729,7 +733,7 @@
             const data = await response.json();
 
             if (data.success) {
-                toastr.success('Package booking updated!');
+                toastr.success(newStatus === 'complete' ? 'Package booking marked as completed!' : 'Package booking confirmed!');
                 location.reload();
             } else {
                 toastr.error(data.message || 'Failed to update package booking');

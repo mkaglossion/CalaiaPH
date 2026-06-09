@@ -10,6 +10,7 @@ class PackageBooking extends Model
 {
     protected $fillable = [
         'booking_reference',
+        'public_token',
         'package_id',
         'booking_date',
         'groups_booked',
@@ -25,6 +26,10 @@ class PackageBooking extends Model
         'payment_status',
         'paymongo_reference',
         'payment_reference'
+    ];
+
+    protected $hidden = [
+        'public_token',
     ];
     
     protected $attributes = [

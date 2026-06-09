@@ -539,6 +539,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         // Package bookings (admin)
         Route::get('/package/{id}', [AdminPackageBookingsController::class, 'show'])->name('admin.package_bookings.show');
         Route::post('/package/{id}/confirm', [AdminPackageBookingsController::class, 'confirm'])->name('admin.package_bookings.confirm');
+        Route::post('/package/{id}/complete', [AdminPackageBookingsController::class, 'complete'])->name('admin.package_bookings.complete');
         Route::post('/package/{id}/cancel', [AdminPackageBookingsController::class, 'cancel'])->name('admin.package_bookings.cancel');
         Route::post('/package/record-payment', [AdminPackageBookingsController::class, 'recordPayment'])->name('admin.package_bookings.record-payment');
 
@@ -927,6 +928,6 @@ Route::group(['middleware' => ['api.throttle:api_strict', 'api.security', 'xss']
 });
 
 // ========== Payment Callback Routes ==========
-Route::get('/booking/payment-confirmation/{booking}', [PaymentController::class, 'showConfirmation'])->name('booking.payment-confirmation');
+Route::get('/booking/payment-confirmation/{booking}/{token}', [PaymentController::class, 'showConfirmation'])->name('booking.payment-confirmation');
 Route::get('/booking/payment-success', [PaymentController::class, 'paymentSuccess'])->name('booking.payment-success');
 Route::get('/booking/payment-cancelled', [PaymentController::class, 'paymentCancelled'])->name('booking.payment-cancelled');

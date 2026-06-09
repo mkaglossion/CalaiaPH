@@ -166,7 +166,7 @@
             }
 
             try {
-                const response = await fetch(`/api/payment/confirm?booking_id={{ $booking->id }}`, {
+                const response = await fetch(`/api/payment/confirm?booking_id={{ $booking->id }}&token={{ $booking->public_token }}`, {
                     headers: {
                         'Accept': 'application/json'
                     }

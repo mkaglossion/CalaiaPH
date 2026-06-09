@@ -11,11 +11,21 @@ use Illuminate\Support\Facades\Http;
 
 class PaymentController extends Controller
 {
+    private function hasValidPublicToken(PackageBooking $booking, string $token): bool
+    {
+        $storedToken = trim((string) ($booking->public_token ?? ''));
+        $providedToken = trim($token);
+
+        return $storedToken !== '' && $providedToken !== '' && hash_equals($storedToken, $providedToken);
+    }
+
     /**
      * Show payment confirmation page
      */
-    public function showConfirmation(PackageBooking $booking)
+    public function showConfirmation(PackageBooking $booking, string $token)
     {
+        abort_unless($this->hasValidPublicToken($booking, $token), 403);
+
         // Load the booking with package relationship
         $booking->load('package');
         $packageName = $booking->package?->name ?? 'Package';
@@ -37,24 +47,27 @@ class PaymentController extends Controller
     {
         try {
             $bookingId = $request->query('booking_id');
+            $token = (string) $request->query('token', '');
             
-            if (!$bookingId) {
+            if (!$bookingId || $token === '') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Booking ID is required'
+                    'message' => 'Booking ID and token are required'
                 ], 400);
             }
 
             $booking = PackageBooking::with('package')->findOrFail($bookingId);
-            $packageName = $booking->package?->name ?? 'Package';
+            if (!$this->hasValidPublicToken($booking, $token)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid booking token'
+                ], 403);
+            }
 
             // Create PayMongo checkout with booking details
             return $this->createCheckout(new \Illuminate\Http\Request([
                 'booking_id' => $booking->id,
-                'amount' => $booking->total_amount,
-                'email' => $booking->email,
-                'name' => $booking->first_name . ' ' . $booking->last_name,
-                'package_name' => $packageName
+                'token' => $token,
             ]));
         } catch (\Exception $e) {
             Log::error('Payment confirmation error: ' . $e->getMessage());
@@ -73,17 +86,13 @@ class PaymentController extends Controller
         Log::info('Payment checkout request received', [
             'all_data' => $request->all(),
             'booking_id' => $request->input('booking_id'),
-            'amount' => $request->input('amount'),
-            'email' => $request->input('email')
+            'token_present' => !empty($request->input('token')),
         ]);
 
         try {
             $validated = $request->validate([
                 'booking_id' => 'required|integer|exists:package_bookings,id',
-                'amount' => 'required|numeric|min:1',
-                'email' => 'required|email',
-                'name' => 'required|string',
-                'package_name' => 'required|string'
+                'token' => 'required|string'
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Payment validation failed', [
@@ -108,7 +117,17 @@ class PaymentController extends Controller
         }
 
         try {
-            $booking = PackageBooking::findOrFail($validated['booking_id']);
+            $booking = PackageBooking::with('package')->findOrFail($validated['booking_id']);
+            if (!$this->hasValidPublicToken($booking, $validated['token'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid booking token'
+                ], 403);
+            }
+
+            $packageName = $booking->package?->name ?? 'Package';
+            $customerName = trim($booking->first_name . ' ' . $booking->last_name);
+            $checkoutAmount = (float) $booking->total_amount;
 
             // Initialize PayMongo API
             $apiKey = config('services.paymongo.secret_key');
@@ -129,9 +148,9 @@ class PaymentController extends Controller
                             'show_payment_details' => true,
                             'line_items' => [
                                 [
-                                    'name' => $validated['package_name'],
+                                    'name' => $packageName,
                                     'quantity' => 1,
-                                    'amount' => (int)($validated['amount'] * 100), // Convert to centavos
+                                    'amount' => (int) round($checkoutAmount * 100), // Convert to centavos
                                     'currency' => 'PHP',
                                     'description' => 'Package Booking #' . $booking->booking_reference
                                 ]
@@ -143,11 +162,12 @@ class PaymentController extends Controller
                                 'booking_reference' => $booking->booking_reference,
                                 'booking_date' => optional($booking->booking_date)->toDateString(),
                                 'session' => $booking->session,
-                                'customer_email' => $validated['email'],
-                                'customer_name' => $validated['name'],
+                                'customer_email' => $booking->email,
+                                'customer_name' => $customerName,
                                 'first_name' => $booking->first_name,
                                 'last_name' => $booking->last_name,
                                 'phone' => $booking->phone,
+                                'public_token' => $booking->public_token,
                             ],
                             'success_url' => route('booking.payment-success') . '?checkout_id={CHECKOUT_ID}',
                             'cancel_url' => route('booking.payment-cancelled') . '?checkout_id={CHECKOUT_ID}'

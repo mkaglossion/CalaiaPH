@@ -28,8 +28,6 @@ Route::middleware('api')->group(function () {
 
     // Public package booking routes
     Route::post('/package-bookings', [PackageBookingController::class, 'store']);
-    Route::get('/package-bookings/{id}', [PackageBookingController::class, 'show']);
-    Route::post('/package-bookings/{id}/payment-status', [PackageBookingController::class, 'updatePaymentStatus']);
 
     // Payment routes
     Route::post('/payment/create-checkout', [PaymentController::class, 'createCheckout']);
