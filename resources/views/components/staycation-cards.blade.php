@@ -12,11 +12,11 @@
         <div class="px-4 pt-4">
           <div class="position-relative overflow-hidden shadow-sm">
             <img 
-              :src="'{{ $accommodation['image'] }}'"
+              src="{{ \App\Helpers\ImageHelper::src($accommodation['image']) }}"
               class="w-full h-full object-cover transition hover:scale-105"
               alt="staycation"
               style="height:260px;"
-              onerror="console.error('Image load failed:', this.src)"
+              onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
             >
           </div>
         </div>

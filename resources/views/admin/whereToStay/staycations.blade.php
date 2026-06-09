@@ -148,7 +148,7 @@
                         <img :src="staycation.image" 
                              class="w-full h-full object-cover transition hover:scale-105" 
                              alt="staycation"
-                             onerror="console.error('Image load failed:', this.src)">
+                             onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                     </template>
                     <template x-if="!staycation.image || staycation.image.trim() === ''">
                         <div class="w-full h-full bg-linear-to-br from-blue-200 to-purple-200 flex items-center justify-center cursor-pointer hover:from-blue-300 hover:to-purple-300">
@@ -275,7 +275,7 @@
                     <tr class="hover:bg-gray-50/70 transition">
                         <td class="px-6 py-4 text-sm text-gray-900">{{ $index + 1 }}</td>
                         <td class="px-6 py-4">
-                            <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded">
+                            <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" alt="{{ $img->title }}" class="w-20 h-12 object-cover rounded" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                         </td>
                         <td class="px-6 py-4 font-medium text-gray-900">{{ $img->staycation->name ?? 'Untitled' }}</td>
                         <td class="px-6 py-4 text-gray-600">{{ $img->title ?? 'Untitled' }}</td>

@@ -40,9 +40,9 @@
                 </div>
                 <div class="overflow-hidden rounded-xl">
                     @if(str_contains($img->image_path, '/video/'))
-                        <video src="{{ $img->image_path }}" class="w-full h-48 object-cover transition hover:scale-105" muted></video>
+                        <video src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-48 object-cover transition hover:scale-105" muted></video>
                     @else
-                        <img src="{{ $img->image_path }}" class="w-full h-48 object-cover transition hover:scale-105">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                     @endif
                 </div>
 

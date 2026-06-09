@@ -14,13 +14,14 @@
       @foreach($images as $index => $image)
       <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
         @if(str_contains($image->image_path ?? $image, '/video/'))
-          <video src="{{ $image->image_path ?? $image }}" class="w-full h-full object-cover object-center" autoplay muted loop loading="lazy"></video>
+          <video src="{{ \App\Helpers\ImageHelper::src($image->image_path ?? $image) }}" class="w-full h-full object-cover object-center" autoplay muted loop loading="lazy"></video>
         @else
           <img
-            src="{{ $image->image_path ?? $image }}"
+            src="{{ \App\Helpers\ImageHelper::src($image->image_path ?? $image) }}"
             alt="{{ $image->title ?? 'Slide Image' }}"
             class="w-full h-full object-cover object-center"
             loading="lazy"
+            onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
           >
         @endif
         <div class="absolute inset-0 bg-black opacity-40 z-10"></div>

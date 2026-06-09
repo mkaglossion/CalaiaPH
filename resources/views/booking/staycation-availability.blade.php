@@ -450,9 +450,9 @@
                                 {{-- Image (First image only - carousel now in modal) --}}
                                 <div class="relative">
                                     @if($staycation->image)
-                                        <img src="{{ $staycation->image }}" alt="{{ $roomDetail['name'] }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                        <img src="{{ \App\Helpers\ImageHelper::src($staycation->image) }}" alt="{{ $roomDetail['name'] }}" class="w-full h-44 sm:h-56 md:h-96 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                     @elseif($staycation->swiperImages && $staycation->swiperImages->count() > 0)
-                                        <img src="{{ $staycation->swiperImages->first()->image_path }}" alt="{{ $roomDetail['name'] }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                        <img src="{{ \App\Helpers\ImageHelper::src($staycation->swiperImages->first()->image_path) }}" alt="{{ $roomDetail['name'] }}" class="w-full h-44 sm:h-56 md:h-96 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                     @else
                                         <div class="w-full h-44 sm:h-56 md:h-96 bg-linear-to-br from-blue-200 to-purple-200 flex items-center justify-center cursor-pointer hover:from-blue-300 hover:to-purple-300">
                                             <div class="text-center">
@@ -3372,4 +3372,3 @@
     </script>
     @endif
 </x-app-layout>
-

@@ -30,7 +30,12 @@
         @forelse($sections as $section)
             <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-6 rounded-2xl shadow-md hover:shadow-xl transition">
                 <div class="mb-4">
-                    <img src="{{ asset($section->image_path) }}" class="w-full h-48 object-cover rounded-xl" alt="{{ $section->title }}">
+                    <img
+                        src="{{ \App\Helpers\ImageHelper::src($section->image_path) }}"
+                        class="w-full h-48 object-cover rounded-xl"
+                        alt="{{ $section->title }}"
+                        onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
+                    >
                 </div>
 
                 <div class="mt-4">

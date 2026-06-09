@@ -4,9 +4,10 @@
 
     {{-- Image --}}
     <img
-        src="{{ $accommodation->image_path ?? 'https://via.placeholder.com/400x280?text=No+Image' }}"
+        src="{{ \App\Helpers\ImageHelper::src($accommodation->image_path ?? null) }}"
         alt="{{ $accommodation->name }}"
         class="w-full object-cover"
+        onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
         style="height: 280px;">
 
     <div class="flex flex-col p-6 h-full">

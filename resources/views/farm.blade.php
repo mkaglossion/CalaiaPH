@@ -33,10 +33,11 @@
     {{-- TOP: Image banner with text overlay --}}
     <section class="relative overflow-hidden rounded-3xl shadow-lg">
       <img
-        src="{{ asset('assets/images/carousel/animal and wellness.jpg') }}"
+        src="{{ \App\Helpers\ImageHelper::src('assets/images/carousel/animal and wellness.jpg') }}"
         alt="Free-range livestock grazing in open pastures at Calaia farm"
         class="w-full h-80 md:h-105 object-cover"
         loading="lazy"
+        onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
       >
 
       {{-- dark overlay (for readability like screenshot) --}}
@@ -94,10 +95,11 @@
           <div class="absolute inset-0">
             <div class="absolute right-0 top-1/2 -translate-y-1/2 w-80 h-80 md:w-110 md:h-110 rounded-full overflow-hidden">
               <img
-                src="{{ asset('assets/images/carousel/animals.jpg') }}"
+                src="{{ \App\Helpers\ImageHelper::src('assets/images/carousel/animals.jpg') }}"
                 alt="Livestock grazing at Calaia farm"
                 class="w-full h-full object-contain"
                 loading="lazy"
+                onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
               >
             </div>
           </div>
@@ -118,8 +120,8 @@
               ['img'=>'organic.png','title'=>'Pasture Lamb','desc'=>'Grazed on diverse pastures for naturally complex flavor.'],
             ] as $product)
             <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300">
-              <img src="{{ asset('assets/images/carousel/'.$product['img']) }}" alt="{{ $product['title'] }} product"
-                   class="w-full h-48 object-cover mb-4" loading="lazy">
+              <img src="{{ \App\Helpers\ImageHelper::src('assets/images/carousel/'.$product['img']) }}" alt="{{ $product['title'] }} product"
+                   class="w-full h-48 object-cover mb-4" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
               <h4 class="font-semibold text-[#8f5d54] mb-2 text-lg md:text-xl">{{ $product['title'] }}</h4>
               <p class="text-gray-600 mb-4 leading-relaxed text-sm md:text-base">{{ $product['desc'] }}</p>
               <div class="flex items-center justify-between">
@@ -142,7 +144,7 @@
         {{-- Vegetable Garden --}}
         <article class="relative overflow-hidden shadow-lg group">
           <div class="absolute inset-0">
-            <img src="{{ asset('assets/images/carousel/vegetable garden.jpg') }}" alt="Vegetable Garden" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
+            <img src="{{ \App\Helpers\ImageHelper::src('assets/images/carousel/vegetable garden.jpg') }}" alt="Vegetable Garden" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"/>
             <div class="absolute inset-0 bg-black/30"></div>
           </div>
 
@@ -157,7 +159,7 @@
         {{-- Orchard Fruits --}}
         <article class="relative overflow-hidden shadow-lg group">
           <div class="absolute inset-0">
-            <img src="{{ asset('assets/images/carousel/orchard fruits.jpg') }}" alt="Orchard Fruits" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
+            <img src="{{ \App\Helpers\ImageHelper::src('assets/images/carousel/orchard fruits.jpg') }}" alt="Orchard Fruits" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"/>
             <div class="absolute inset-0 bg-black/30"></div>
           </div>
 
@@ -193,7 +195,7 @@
                 {{-- Icon Circle --}}
                 <div class="w-24 h-24 mx-auto rounded-full bg-white flex items-center justify-center mb-6 shadow-md">
                   <img
-                    src="{{ asset('assets/icons/noun-soil-7519091.png') }}"
+                    src="{{ \App\Helpers\ImageHelper::src('assets/icons/noun-soil-7519091.png') }}"
                     alt=""
                     class="w-20 h-20 object-contain"
                     loading="lazy"
@@ -214,7 +216,7 @@
               <div class="flex flex-col items-center text-center" role="listitem">
                 <div class="w-24 h-24 mx-auto rounded-full bg-white flex items-center justify-center mb-6 shadow-md">
                   <img
-                    src="{{ asset('assets/icons/noun-biodiversity-8058278.png') }}"
+                    src="{{ \App\Helpers\ImageHelper::src('assets/icons/noun-biodiversity-8058278.png') }}"
                     alt=""
                     class="w-25 h-25 object-contain"
                     loading="lazy"
@@ -235,7 +237,7 @@
               <div class="flex flex-col items-center text-center" role="listitem">
                 <div class="w-24 h-24 mx-auto rounded-full bg-white flex items-center justify-center mb-6 shadow-md">
                   <img
-                    src="{{ asset('assets/icons/noun-plant-7968466.png') }}"
+                    src="{{ \App\Helpers\ImageHelper::src('assets/icons/noun-plant-7968466.png') }}"
                     alt=""
                     class="w-25 h-25 object-contain"
                     loading="lazy"

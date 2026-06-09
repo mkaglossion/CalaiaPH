@@ -8,7 +8,7 @@
     <header class="relative h-[70vh] bg-cover bg-center flex items-center justify-center text-white overflow-hidden"
             role="banner"
             aria-labelledby="hero-title">
-        <img src="{{ asset('images/carousel/animal and wellness.jpg') }}" alt="Beautiful landscape showcasing Calaia Farm's sustainable agriculture and environmental commitment" class="absolute inset-0 w-full h-full object-cover" loading="eager">
+        <img src="{{ \App\Helpers\ImageHelper::src('images/carousel/animal and wellness.jpg') }}" alt="Beautiful landscape showcasing Calaia Farm's sustainable agriculture and environmental commitment" class="absolute inset-0 w-full h-full object-cover" loading="eager" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
         <div class="absolute inset-0 bg-linear-to-br from-green-900/30 to-green-700/30 animate-pulse"></div>
         <div class="relative z-10 text-center px-4 animate-fade-in">
             <h1 id="hero-title" class="text-5xl md:text-6xl font-bold mb-4 drop-shadow-lg">Sustainability</h1>
@@ -61,7 +61,7 @@
                     <h2 class="text-3xl font-bold text-gray-800 mb-8 border-l-4 border-green-800 pl-4 mt-16">Key Sustainability Initiatives</h2>
                     <div class="grid md:grid-cols-2 gap-8 mb-16">
                         <article class="bg-white rounded-lg shadow-md overflow-hidden hover:scale-105 transition-transform duration-300">
-                            <img src="{{ asset('images/carousel/bonfire-5.jpg') }}" alt="Organic farming practices at Calaia Farm" class="w-full h-48 object-cover">
+                            <img src="{{ \App\Helpers\ImageHelper::src('images/carousel/bonfire-5.jpg') }}" alt="Organic farming practices at Calaia Farm" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                             <div class="p-6">
                                 <h3 class="text-xl font-semibold text-green-800 mb-4">Organic Farming Practices</h3>
                                 <p class="text-gray-600 leading-relaxed">
@@ -71,7 +71,7 @@
                         </article>
 
                         <article class="bg-white rounded-lg shadow-md overflow-hidden hover:scale-105 transition-transform duration-300">
-                            <img src="{{ asset('images/carousel/calaia1.jpg') }}" alt="Water conservation systems at Calaia Farm" class="w-full h-48 object-cover">
+                            <img src="{{ \App\Helpers\ImageHelper::src('images/carousel/calaia1.jpg') }}" alt="Water conservation systems at Calaia Farm" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                             <div class="p-6">
                                 <h3 class="text-xl font-semibold text-green-800 mb-4">Water Conservation</h3>
                                 <p class="text-gray-600 leading-relaxed">
@@ -81,7 +81,7 @@
                         </article>
 
                         <article class="bg-white rounded-lg shadow-md overflow-hidden hover:scale-105 transition-transform duration-300">
-                            <img src="{{ asset('images/carousel/animal and wellness.jpg') }}" alt="Biodiversity enhancement at Calaia Farm" class="w-full h-48 object-cover">
+                            <img src="{{ \App\Helpers\ImageHelper::src('images/carousel/animal and wellness.jpg') }}" alt="Biodiversity enhancement at Calaia Farm" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                             <div class="p-6">
                                 <h3 class="text-xl font-semibold text-green-800 mb-4">Biodiversity Enhancement</h3>
                                 <p class="text-gray-600 leading-relaxed">
@@ -91,7 +91,7 @@
                         </article>
 
                         <article class="bg-white rounded-lg shadow-md overflow-hidden hover:scale-105 transition-transform duration-300">
-                            <img src="{{ asset('images/carousel/Calaia-26.jpg') }}" alt="Renewable energy systems at Calaia Farm" class="w-full h-48 object-cover">
+                            <img src="{{ \App\Helpers\ImageHelper::src('images/carousel/Calaia-26.jpg') }}" alt="Renewable energy systems at Calaia Farm" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                             <div class="p-6">
                                 <h3 class="text-xl font-semibold text-green-800 mb-4">Renewable Energy</h3>
                                 <p class="text-gray-600 leading-relaxed">

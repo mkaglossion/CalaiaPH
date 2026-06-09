@@ -33,7 +33,7 @@
                 }
               @endphp
               @if($glampingImage)
-                <img src="{{ $glampingImage }}" alt="Glamping Tent" data-initial-src="{{ $glampingImage }}" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" onerror="this.onerror=null; this.style.display='none'; console.warn('Glamping image failed to load:', this.dataset && this.dataset.initialSrc);">
+                <img src="{{ $glampingImage }}" alt="Glamping Tent" data-initial-src="{{ $glampingImage }}" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" onerror="this.onerror=null; this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
               @else
                 <div class="h-56 sm:h-64 w-full bg-gray-100 flex items-center justify-center text-gray-400">No image uploaded</div>
               @endif
@@ -79,7 +79,7 @@
                 }
               @endphp
               @if($campingImage)
-                <img src="{{ $campingImage }}" data-initial-src="{{ $campingImage }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" onerror="this.onerror=null; this.style.display='none'; console.warn('Camping image failed to load:', this.dataset && this.dataset.initialSrc);">
+                <img src="{{ $campingImage }}" data-initial-src="{{ $campingImage }}" alt="Camping" class="h-56 sm:h-64 w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" onerror="this.onerror=null; this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
               @else
                 <div class="h-56 sm:h-64 w-full bg-gray-100 flex items-center justify-center text-gray-400">No image uploaded</div>
               @endif
@@ -120,7 +120,7 @@
                     @php $staycation = $staycations->firstWhere('name', 'Standard Glamping'); @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ $img->image_path }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'Standard Glamping' }}">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'Standard Glamping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -161,7 +161,7 @@
                     @php $staycation = $staycations->firstWhere('name', 'Premium Glamping'); @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ $img->image_path }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'Premium Glamping' }}">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'Premium Glamping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -217,7 +217,7 @@
                     @php $staycation = $staycations->firstWhere('name', 'Dome Tent'); @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ $img->image_path }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'Dome Tent' }}">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'Dome Tent' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -265,7 +265,7 @@
                     @php $staycation = $staycations->firstWhere('name', 'Bell Tent'); @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ $img->image_path }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'Bell Tent' }}">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'Bell Tent' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -313,7 +313,7 @@
                     @php $staycation = $staycations->firstWhere('name', 'BYOT'); @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ $img->image_path }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'BYOT' }}">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'BYOT' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -361,7 +361,7 @@
                     @php $staycation = $staycations->firstWhere('name', 'Car Camping'); @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ $img->image_path }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'Car Camping' }}">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'Car Camping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -429,7 +429,7 @@
                     @php $staycation = $staycations->firstWhere('name', 'Car Camping'); @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ $img->image_path }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'Car Camping' }}">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-64 object-cover" alt="{{ $img->title ?? 'Car Camping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -477,17 +477,17 @@
     $vrData = [
         'glamping' => [
             'images' => [
-                ['src' => asset('assets/images/carousel/Glamping-1.jpg'), 'title' => 'Glamping Tent Interior', 'desc' => 'Luxurious tent setup with all amenities'],
-                ['src' => asset('assets/images/carousel/staycation.png'), 'title' => 'Glamping Area View', 'desc' => 'Beautiful surroundings of the glamping site'],
-                ['src' => asset('assets/images/carousel/Glamping-1.jpg'), 'title' => 'Glamping Facilities', 'desc' => 'Access to premium facilities and services']
+                ['src' => \App\Helpers\ImageHelper::src('assets/images/carousel/Glamping-1.jpg'), 'title' => 'Glamping Tent Interior', 'desc' => 'Luxurious tent setup with all amenities'],
+                ['src' => \App\Helpers\ImageHelper::src('assets/images/carousel/staycation.png'), 'title' => 'Glamping Area View', 'desc' => 'Beautiful surroundings of the glamping site'],
+                ['src' => \App\Helpers\ImageHelper::src('assets/images/carousel/Glamping-1.jpg'), 'title' => 'Glamping Facilities', 'desc' => 'Access to premium facilities and services']
             ],
             'info' => ['title' => 'Glamping VR Experience', 'desc' => 'Immerse yourself in the luxury of glamping']
         ],
         'camping' => [
             'images' => [
-                ['src' => asset('assets/images/carousel/BYOT-2.jpg'), 'title' => 'Camping Site Overview', 'desc' => 'Spacious camping area in nature'],
-                ['src' => asset('assets/images/carousel/Car-camping3.jpg'), 'title' => 'Camping Facilities', 'desc' => 'Common areas and amenities for campers'],
-                ['src' => asset('assets/images/carousel/games-grounds4.jpg'), 'title' => 'Camping Activities', 'desc' => 'Fun activities available at the campsite']
+                ['src' => \App\Helpers\ImageHelper::src('assets/images/carousel/BYOT-2.jpg'), 'title' => 'Camping Site Overview', 'desc' => 'Spacious camping area in nature'],
+                ['src' => \App\Helpers\ImageHelper::src('assets/images/carousel/Car-camping3.jpg'), 'title' => 'Camping Facilities', 'desc' => 'Common areas and amenities for campers'],
+                ['src' => \App\Helpers\ImageHelper::src('assets/images/carousel/games-grounds4.jpg'), 'title' => 'Camping Activities', 'desc' => 'Fun activities available at the campsite']
             ],
             'info' => ['title' => 'Camping VR Experience', 'desc' => 'Explore the natural camping environment']
         ]

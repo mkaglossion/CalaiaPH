@@ -35,8 +35,8 @@
                 {{-- avatar circle (like screenshot) --}}
                 <div class="mx-auto mb-7 w-20 h-20 rounded-full overflow-hidden bg-[#7a7a7a] flex items-center justify-center">
                   @if(!empty($testimonial->image_path))
-                    <img src="{{ $testimonial->image_path }}" alt="{{ $testimonial->name }}"
-                         class="w-full h-full object-cover">
+                    <img src="{{ \App\Helpers\ImageHelper::src($testimonial->image_path) }}" alt="{{ $testimonial->name }}"
+                         class="w-full h-full object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                   @endif
                 </div>
 

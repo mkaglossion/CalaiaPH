@@ -50,9 +50,9 @@
                 <div class="dining-category-card bg-white rounded-2xl shadow-xl overflow-hidden group">
                     <div class="relative h-64 sm:h-72 md:h-80 overflow-hidden bg-gray-200">
                         @if(isset($diningCategoryImages['messhall']))
-                            <img src="{{ $diningCategoryImages['messhall']->image_path }}" alt="Mess Hall" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                            <img src="{{ \App\Helpers\ImageHelper::src($diningCategoryImages['messhall']->image_path) }}" alt="Mess Hall" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                         @else
-                            <img src="{{ asset('images/mess-hall.jpg') }}" alt="Mess Hall" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                            <img src="{{ \App\Helpers\ImageHelper::src('images/mess-hall.jpg') }}" alt="Mess Hall" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                         @endif
                         <div class="absolute inset-0 bg-linear-to-t from-black/65 via-black/10 to-transparent"></div>
                         <div class="absolute bottom-5 left-5">
@@ -74,9 +74,9 @@
                 <div class="dining-category-card bg-white rounded-2xl shadow-xl overflow-hidden group">
                     <div class="relative h-64 sm:h-72 md:h-80 overflow-hidden bg-gray-200">
                         @if(isset($diningCategoryImages['cook_your_own']))
-                            <img src="{{ $diningCategoryImages['cook_your_own']->image_path }}" alt="Cook Your Own" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                            <img src="{{ \App\Helpers\ImageHelper::src($diningCategoryImages['cook_your_own']->image_path) }}" alt="Cook Your Own" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                         @else
-                            <img src="{{ asset('images/cook-your-own.jpg') }}" alt="Cook Your Own" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                            <img src="{{ \App\Helpers\ImageHelper::src('images/cook-your-own.jpg') }}" alt="Cook Your Own" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                         @endif
                         <div class="absolute inset-0 bg-linear-to-t from-black/65 via-black/10 to-transparent"></div>
                         <div class="absolute bottom-5 left-5">

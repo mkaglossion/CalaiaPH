@@ -429,7 +429,7 @@
                                                                 <div class="swiper-wrapper">
                                                                     @foreach($food->swiperImages as $image)
                                                                         <div class="swiper-slide">
-                                                                            <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                                            <img src="{{ \App\Helpers\ImageHelper::src($image->image_path) }}" alt="{{ $image->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                                                         </div>
                                                                     @endforeach
                                                                 </div>
@@ -438,9 +438,9 @@
                                                                 <div class="swiper-button-prev swiper-button-prev-{{ $food->id }}"></div>
                                                             </div>
                                                         @elseif($hasSingleSwiperImage)
-                                                            <img src="{{ $food->swiperImages->first()->image_path }}" alt="{{ $food->swiperImages->first()->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                            <img src="{{ \App\Helpers\ImageHelper::src($food->swiperImages->first()->image_path) }}" alt="{{ $food->swiperImages->first()->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                                         @elseif($food->image)
-                                                            <img src="{{ $food->image }}" alt="{{ $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                            <img src="{{ \App\Helpers\ImageHelper::src($food->image) }}" alt="{{ $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                                         @else
                                                             <div class="w-full h-44 sm:h-56 md:h-96 bg-linear-to-br from-gray-300 to-gray-400 flex items-center justify-center">
                                                                 <i class="bi bi-image text-6xl text-gray-300"></i>
@@ -552,7 +552,7 @@
                                                                 <div class="swiper-wrapper">
                                                                     @foreach($food->swiperImages as $image)
                                                                         <div class="swiper-slide">
-                                                                            <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                                            <img src="{{ \App\Helpers\ImageHelper::src($image->image_path) }}" alt="{{ $image->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                                                         </div>
                                                                     @endforeach
                                                                 </div>
@@ -561,9 +561,9 @@
                                                                 <div class="swiper-button-prev swiper-button-prev-{{ $food->id }}"></div>
                                                             </div>
                                                         @elseif($hasSingleSwiperImage)
-                                                            <img src="{{ $food->swiperImages->first()->image_path }}" alt="{{ $food->swiperImages->first()->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                            <img src="{{ \App\Helpers\ImageHelper::src($food->swiperImages->first()->image_path) }}" alt="{{ $food->swiperImages->first()->title ?? $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                                         @elseif($food->image)
-                                                            <img src="{{ $food->image }}" alt="{{ $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                            <img src="{{ \App\Helpers\ImageHelper::src($food->image) }}" alt="{{ $food->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                                         @else
                                                             <div class="w-full h-44 sm:h-56 md:h-96 bg-linear-to-br from-green-100 to-emerald-200 flex items-center justify-center">
                                                                 <i class="bi bi-fire text-6xl text-green-600"></i>
@@ -680,7 +680,7 @@
                                                                 <div class="swiper-wrapper">
                                                                     @foreach($special->swiperImages as $image)
                                                                         <div class="swiper-slide">
-                                                                            <img src="{{ $image->image_path }}" alt="{{ $image->title ?? $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                                            <img src="{{ \App\Helpers\ImageHelper::src($image->image_path) }}" alt="{{ $image->title ?? $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                                                         </div>
                                                                     @endforeach
                                                                 </div>
@@ -689,9 +689,9 @@
                                                                 <div class="swiper-button-prev swiper-button-prev-special-{{ $special->id }}"></div>
                                                             </div>
                                                         @elseif($hasSingleSwiperImage)
-                                                            <img src="{{ $special->swiperImages->first()->image_path }}" alt="{{ $special->swiperImages->first()->title ?? $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                            <img src="{{ \App\Helpers\ImageHelper::src($special->swiperImages->first()->image_path) }}" alt="{{ $special->swiperImages->first()->title ?? $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                                         @elseif($special->image)
-                                                            <img src="{{ $special->image }}" alt="{{ $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover">
+                                                            <img src="{{ \App\Helpers\ImageHelper::src($special->image) }}" alt="{{ $special->name }}" class="w-full h-44 sm:h-56 md:h-96 object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                                         @else
                                                             <div class="text-center" :class="'bg-linear-to-br {{ $specialColor['bg'] }}'">
                                                                 <i class="bi {{ $specialColor['icon'] }} text-6xl mb-4 block" :class="'{{ $specialColor['icon'] === 'bi-fire' ? 'text-green-600' : 'text-blue-600' }}'"></i>
@@ -1299,4 +1299,3 @@
         }
     </script>
 </x-app-layout>
-

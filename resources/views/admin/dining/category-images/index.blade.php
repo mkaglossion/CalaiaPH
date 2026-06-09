@@ -28,7 +28,7 @@
         <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative">
             <div class="overflow-hidden rounded-xl mb-4 bg-linear-to-br from-gray-100 to-gray-200">
                 @if(isset($diningImages['messhall']))
-                    <img src="{{ $diningImages['messhall']->image_path }}" alt="Messhall" class="w-full h-48 object-cover transition hover:scale-105">
+                    <img src="{{ \App\Helpers\ImageHelper::src($diningImages['messhall']->image_path) }}" alt="Messhall" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                 @else
                     <div class="w-full h-48 flex items-center justify-center bg-gray-50">
                         <div class="text-center">
@@ -68,7 +68,7 @@
         <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative">
             <div class="overflow-hidden rounded-xl mb-4 bg-linear-to-br from-gray-100 to-gray-200">
                 @if(isset($diningImages['cook_your_own']))
-                    <img src="{{ $diningImages['cook_your_own']->image_path }}" alt="Cook Your Own" class="w-full h-48 object-cover transition hover:scale-105">
+                    <img src="{{ \App\Helpers\ImageHelper::src($diningImages['cook_your_own']->image_path) }}" alt="Cook Your Own" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                 @else
                     <div class="w-full h-48 flex items-center justify-center bg-gray-50">
                         <div class="text-center">
@@ -152,7 +152,7 @@
                                 {{ ($images->currentPage() - 1) * $images->perPage() + $index + 1 }}
                             </td>
                             <td class="px-3 sm:px-4 lg:px-6 py-4">
-                                <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-16 h-10 sm:w-20 sm:h-12 object-cover rounded-xl">
+                                <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" alt="{{ $img->title }}" class="w-16 h-10 sm:w-20 sm:h-12 object-cover rounded-xl" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                             </td>
                             <td class="px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $img->food->name ?? 'Untitled' }}</td>
                             <td class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $img->title ?? 'Untitled' }}</td>

@@ -192,9 +192,9 @@
                             <td class="px-6 py-4 font-medium text-gray-900">{{ $index + 1 }}</td>
                             <td class="px-6 py-4">
                                 @if(str_contains($img->image_path, '/video/'))
-                                    <video src="{{ $img->image_path }}" class="w-20 h-12 object-cover rounded" muted></video>
+                                    <video src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-20 h-12 object-cover rounded" muted></video>
                                 @else
-                                    <img src="{{ $img->image_path }}" class="w-20 h-12 object-cover rounded">
+                                    <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-20 h-12 object-cover rounded" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-gray-700">{{ $img->daytour_id ? $tours->find($img->daytour_id)->name ?? 'Unknown Package' : 'No Package' }}</td>

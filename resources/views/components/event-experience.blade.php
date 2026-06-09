@@ -41,9 +41,10 @@
                     {{-- IMAGE --}}
                     <div class="{{ $reverse ? 'md:order-2' : 'md:order-1' }}">
                         <img
-                            src="{{ asset($section->image_path) }}"
+                            src="{{ \App\Helpers\ImageHelper::src($section->image_path) }}"
                             alt="{{ $section->title }}"
                             class="w-full h-80 object-cover rounded-lg shadow-lg"
+                            onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
                         >
                     </div>
 

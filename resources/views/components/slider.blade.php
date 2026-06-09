@@ -5,7 +5,7 @@
   <div class="swiper-wrapper">
     @forelse($images ?? [] as $image)
       <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-        <img src="{{ $image->image_path }}" alt="{{ $image->title ?? 'Slider Image' }}" class="w-full h-full object-cover object-center" loading="lazy">
+        <img src="{{ \App\Helpers\ImageHelper::src($image->image_path) }}" alt="{{ $image->title ?? 'Slider Image' }}" class="w-full h-full object-cover object-center" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
         <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
         <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
           <div class="text-center px-4">
