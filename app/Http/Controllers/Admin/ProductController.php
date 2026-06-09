@@ -160,11 +160,26 @@ class ProductController extends Controller
      */
     public function destroy(string $id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::find($id);
+
+        if (!$product) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Product already deleted.',
+                ]);
+            }
+
+            return redirect()->route('admin.shop.shopitems')->with('success', 'Product already deleted.');
+        }
+
         $product->delete();
 
         if (request()->expectsJson()) {
-            return response()->json(['message' => 'Product deleted successfully.']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Product deleted successfully.',
+            ]);
         }
 
         return redirect()->route('admin.shop.shopitems')->with('success', 'Product deleted successfully.');

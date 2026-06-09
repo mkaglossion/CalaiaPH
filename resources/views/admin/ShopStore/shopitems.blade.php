@@ -376,12 +376,13 @@
                     '_method': 'DELETE'
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
+            .then(async response => {
+                const data = await response.json().catch(() => ({}));
+
+                if (response.ok && data.success !== false) {
                     Swal.fire(
                         'Deleted!',
-                        'Product has been deleted successfully.',
+                        data.message || 'Product has been deleted successfully.',
                         'success'
                     ).then(() => {
                         window.location.reload();
