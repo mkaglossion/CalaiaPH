@@ -19,6 +19,14 @@
             <button @click="showBookingModal = false" class="text-gray-400 hover:text-gray-600 text-2xl sm:text-3xl leading-none shrink-0 mt-0.5">&times;</button>
         </div>
 
+        <x-booking-progress
+            :steps="[
+                ['label' => 'Details', 'status' => 'current'],
+                ['label' => 'Payment', 'status' => 'pending'],
+                ['label' => 'Confirmation', 'status' => 'pending'],
+            ]"
+        />
+
         <!-- Error Messages -->
         <template x-if="errors.length > 0">
             <div class="px-4 sm:px-6 pt-4">

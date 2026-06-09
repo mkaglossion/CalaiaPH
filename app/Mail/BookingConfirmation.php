@@ -15,6 +15,7 @@ class BookingConfirmation extends Mailable implements ShouldQueue
 
     public $bookingData;
     public $selectedActivities;
+    public $selectedActivityPackages;
     public $selectedFoods;
     public $staycations;
     public $foods;
@@ -31,6 +32,7 @@ class BookingConfirmation extends Mailable implements ShouldQueue
     {
         $this->bookingData = $data['bookingData'] ?? [];
         $this->selectedActivities = $data['selectedActivities'] ?? [];
+        $this->selectedActivityPackages = $data['selectedActivityPackages'] ?? [];
         $this->selectedFoods = $data['selectedFoods'] ?? [];
         $this->staycations = $data['staycations'] ?? collect();
         $this->foods = $data['foods'] ?? collect();
@@ -61,6 +63,7 @@ class BookingConfirmation extends Mailable implements ShouldQueue
             with: [
                 'bookingData' => $this->bookingData,
                 'selectedActivities' => $this->selectedActivities,
+                'selectedActivityPackages' => $this->selectedActivityPackages,
                 'selectedFoods' => $this->selectedFoods,
                 'staycations' => $this->staycations,
                 'foods' => $this->foods,

@@ -21,6 +21,31 @@ $foodTotal = 0;
 $activitiesTotal = 0;
 $paymentSummary = [];
 $grandTotal = 0;
+$selectedActivityPackages = $selectedActivityPackages ?? ($bookingData['selected_activity_packages'] ?? []);
+$bookingFlowType = strtolower((string) ($bookingData['booking_type'] ?? $bookingData['type'] ?? ''));
+
+if (isset($isStaycation) && $isStaycation) {
+    $confirmationSteps = [
+        ['label' => 'Rooms', 'status' => 'completed'],
+        ['label' => 'Food', 'status' => 'completed'],
+        ['label' => 'Activities', 'status' => 'completed'],
+        ['label' => 'Payment', 'status' => 'completed'],
+        ['label' => 'Confirmation', 'status' => 'current'],
+    ];
+} elseif ($bookingFlowType === 'package') {
+    $confirmationSteps = [
+        ['label' => 'Details', 'status' => 'completed'],
+        ['label' => 'Payment', 'status' => 'completed'],
+        ['label' => 'Confirmation', 'status' => 'current'],
+    ];
+} else {
+    $confirmationSteps = [
+        ['label' => 'Details', 'status' => 'completed'],
+        ['label' => 'Activities', 'status' => 'completed'],
+        ['label' => 'Payment', 'status' => 'completed'],
+        ['label' => 'Confirmation', 'status' => 'current'],
+    ];
+}
 
 if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations'])) {
     // Use canonical payment summary when available.
@@ -63,6 +88,10 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
 
         $activitiesTotal = collect($selectedActivities ?? [])->sum(function($activity) {
             return (float) ($activity['price'] ?? 0) * (int) ($activity['guests'] ?? 1);
+        });
+
+        $activitiesTotal += collect($selectedActivityPackages ?? [])->sum(function($package) {
+            return (float) ($package['price'] ?? 0) * (int) ($package['quantity'] ?? 1);
         });
 
         if (!empty($selectedFoods)) {
@@ -113,49 +142,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
   <x-header active="confirmation"/>
 
   {{-- Progress Indicator --}}
-  <div class="bg-white shadow-sm border-b border-gray-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex items-center justify-center space-x-2 sm:space-x-4 max-w-md sm:max-w-lg mx-auto">
-        {{-- Step 1: Details --}}
-        <div class="flex flex-col items-center text-green-600">
-          <div class="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
-            <i class="bi bi-check-circle-fill text-sm"></i>
-          </div>
-          <span class="text-xs sm:text-sm font-medium text-center">Details</span>
-        </div>
-
-        <div class="flex-1 h-px bg-gray-300"></div>
-
-        {{-- Step 2: Activities --}}
-        <div class="flex flex-col items-center text-green-600">
-          <div class="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
-            <i class="bi bi-check-circle-fill text-sm"></i>
-          </div>
-          <span class="text-xs sm:text-sm font-medium text-center">Activities</span>
-        </div>
-
-        <div class="flex-1 h-px bg-gray-300"></div>
-
-        {{-- Step 3: Payment --}}
-        <div class="flex flex-col items-center text-green-600">
-          <div class="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
-            <i class="bi bi-check-circle-fill text-sm"></i>
-          </div>
-          <span class="text-xs sm:text-sm font-medium text-center">Payment</span>
-        </div>
-
-        <div class="flex-1 h-px bg-gray-300"></div>
-
-        {{-- Step 4: Confirmation (current) --}}
-        <div class="flex flex-col items-center text-[#8f5d54]">
-          <div class="w-6 h-6 sm:w-8 sm:h-8 bg-[#8f5d54] text-white rounded-full flex items-center justify-center text-xs sm:text-sm font-bold mb-1">
-            <i class="bi bi-check-circle-fill text-sm"></i>
-          </div>
-          <span class="text-xs sm:text-sm font-medium text-center">Confirmation</span>
-        </div>
-      </div>
-    </div>
-  </div>
+  <x-booking-progress :steps="$confirmationSteps" />
 
   {{-- Confirmation --}}
   <main class="py-6 sm:py-8 md:py-12 lg:py-16 min-h-[70vh]">
@@ -234,6 +221,23 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                         x {{ $activity['guests'] ?? 1 }}
                       @endif
                     </li>
+                  @endforeach
+                </ul>
+              </div>
+            @endif
+
+            @if (!empty($selectedActivityPackages))
+              <div class="mt-4 pt-4 border-t border-gray-200">
+                <h3 class="text-2xl font-medium text-gray-900 mb-2">Selected Activity Packages:</h3>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  @foreach ($selectedActivityPackages as $package)
+                    @php
+                      $packageName = $package['name'] ?? 'Unknown Package';
+                      $packagePrice = (float) ($package['price'] ?? 0);
+                      $packageQuantity = (int) ($package['quantity'] ?? 1);
+                      $packageTotal = $packagePrice * $packageQuantity;
+                    @endphp
+                    <li>â€¢ {{ $packageName }} - â‚±{{ number_format($packagePrice, 2) }} x {{ $packageQuantity }} = â‚±{{ number_format($packageTotal, 2) }}</li>
                   @endforeach
                 </ul>
               </div>

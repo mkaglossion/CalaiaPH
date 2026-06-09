@@ -7,6 +7,7 @@
     <title>Booking Receipt</title>
     @php
     $staycations = $staycations ?? collect();
+    $selectedActivityPackages = $selectedActivityPackages ?? [];
     @endphp
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
@@ -116,6 +117,21 @@
                             @endforeach
                         </ul>
                     @endif
+
+                    @if(!empty($selectedActivityPackages))
+                        <p><strong>Selected Activity Packages:</strong></p>
+                        <ul>
+                            @foreach($selectedActivityPackages as $package)
+                                @php
+                                $packageName = $package['name'] ?? 'Unknown Package';
+                                $packagePrice = (float) ($package['price'] ?? 0);
+                                $packageQuantity = (int) ($package['quantity'] ?? 1);
+                                $packageTotal = $packagePrice * $packageQuantity;
+                                @endphp
+                                <li>{{ $packageName }} - â‚±{{ number_format($packagePrice, 2) }} x {{ $packageQuantity }} = â‚±{{ number_format($packageTotal, 2) }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
                     
                     @php
                     $paymentSummary = (array) ($bookingData['payment_summary'] ?? []);
@@ -123,9 +139,16 @@
                     $foodTotal = $bookingData['final_totals']['food_total'] ?? 0;
                     $activitiesTotal = $bookingData['final_totals']['activities_total'] ?? 0;
                     $promoDiscount = (float) ($paymentSummary['promo_discount'] ?? ($bookingData['final_totals']['promo_discount'] ?? 0));
+
+                    if (empty($paymentSummary)) {
+                        $activitiesTotal += collect($selectedActivityPackages)->sum(function ($package) {
+                            return ((float) ($package['price'] ?? 0)) * ((int) ($package['quantity'] ?? 1));
+                        });
+                    }
+
                     $grandTotal = !empty($paymentSummary)
                         ? (float) ($paymentSummary['grand_total_paid'] ?? 0)
-                        : (float) ($bookingData['final_totals']['grand_total'] ?? 0);
+                        : (float) ($bookingData['final_totals']['grand_total'] ?? ($accommodationTotal + $foodTotal + $activitiesTotal));
                     @endphp
                     
                     @if($accommodationTotal > 0)
@@ -236,5 +259,3 @@
     </div>
 </body>
 </html>
-
-

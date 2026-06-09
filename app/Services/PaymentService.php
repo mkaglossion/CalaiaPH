@@ -366,6 +366,7 @@ class PaymentService
             Mail::to($paymentData['email'])->queue(new BookingConfirmation([
                 'bookingData' => $staycationBooking,
                 'selectedActivities' => $staycationBooking['selected_activities'] ?? [],
+                'selectedActivityPackages' => $staycationBooking['selected_activity_packages'] ?? [],
                 'selectedFoods' => $staycationBooking['selected_foods'] ?? [],
                 'staycations' => $staycations,
                 'foods' => $foods,

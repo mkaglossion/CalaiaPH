@@ -416,8 +416,8 @@ function packageCardData(pkg) {
 
                 if (response.ok && result.success) {
                     console.log('✨ Booking created successfully! ID:', result.booking_id);
-                    // Initialize PayMongo checkout directly
-                    await this.initializePayMongo(result.booking_id, bookingData);
+                    // Move to the payment confirmation step so the flow stays visible to the user.
+                    window.location.href = `/booking/payment-confirmation/${result.booking_id}`;
                 } else {
                     this.errors.push(result.message || 'Failed to create booking');
                     console.error('❌ Booking creation failed:', result);

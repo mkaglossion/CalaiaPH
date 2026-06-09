@@ -566,6 +566,7 @@ class BookingController extends Controller
         $data = [
             'bookingData' => $bookingData,
             'selectedActivities' => session($keys['selected_activities'], []),
+            'selectedActivityPackages' => session('selected_activity_packages', []),
         ];
 
         if (isset($keys['grand_total'])) {
@@ -1255,6 +1256,7 @@ class BookingController extends Controller
             $data = [
                 'bookingData' => $staycationBooking,
                 'selectedActivities' => $staycationBooking['selected_activities'] ?? [],
+                'selectedActivityPackages' => $staycationBooking['selected_activity_packages'] ?? [],
                 'selectedFoods' => $staycationBooking['selected_foods'] ?? [],
                 'foods' => $foods,
                 'staycations' => $staycations,
