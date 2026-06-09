@@ -7,6 +7,15 @@
     @php
         $booking->loadMissing('package');
         $package = $booking->package;
+        $packageName = $package?->name ?? 'Package';
+        $confirmationContent = $confirmationContent ?? app(\App\Services\BookingConfirmationContentService::class)->forType('package', [
+            'reference' => $booking->booking_reference,
+            'package' => $packageName,
+        ]);
+        $pageContent = $confirmationContent['page'] ?? [];
+        $nextStepsContent = $confirmationContent['next_steps'] ?? [];
+        $supportContent = $confirmationContent['support'] ?? [];
+        $buttonContent = $confirmationContent['buttons'] ?? [];
         $confirmationSteps = [
             ['label' => 'Details', 'status' => 'completed'],
             ['label' => 'Payment', 'status' => 'current'],
@@ -21,13 +30,13 @@
             <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8">
                 <header class="mb-6 sm:mb-8 text-center">
                     <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">
-                        Package Booking
+                        {{ $pageContent['eyebrow'] ?? 'Package Booking' }}
                     </p>
                     <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-[#8f5d54]">
-                        Confirm Your Payment
+                        {{ $pageContent['title'] ?? 'Confirm Your Payment' }}
                     </h1>
                     <p class="mt-2 text-sm sm:text-base text-gray-500 max-w-2xl mx-auto">
-                        Review the booking summary below before proceeding to secure checkout.
+                        {{ $pageContent['description'] ?? 'Review the booking summary below before proceeding to secure checkout.' }}
                     </p>
                 </header>
 
@@ -42,7 +51,7 @@
                                 </div>
                                 <div>
                                     <span class="font-medium text-gray-500">Package:</span>
-                                    <span class="ml-2 text-gray-900">{{ $package->name ?? 'Package' }}</span>
+                                    <span class="ml-2 text-gray-900">{{ $packageName }}</span>
                                 </div>
                                 <div>
                                     <span class="font-medium text-gray-500">Booking Date:</span>
@@ -67,6 +76,40 @@
                             <div class="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
                                 <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3">Special Requests</h2>
                                 <p class="text-sm text-gray-600 whitespace-pre-line">{{ $booking->special_requests }}</p>
+                            </div>
+                        @endif
+
+                        <div class="rounded-2xl border border-blue-200 bg-blue-50 p-5 sm:p-6">
+                            <h2 class="text-lg sm:text-xl font-semibold text-blue-900 mb-3">{{ $nextStepsContent['title'] ?? "What's Next?" }}</h2>
+                            <ul class="space-y-2 text-sm text-blue-800">
+                                @forelse(($nextStepsContent['items'] ?? []) as $step)
+                                    <li class="flex items-start gap-2">
+                                        <i class="bi bi-dot text-lg leading-none mt-0.5"></i>
+                                        <span>{{ $step }}</span>
+                                    </li>
+                                @empty
+                                    <li class="flex items-start gap-2">
+                                        <i class="bi bi-dot text-lg leading-none mt-0.5"></i>
+                                        <span>Review your booking details and total amount.</span>
+                                    </li>
+                                @endforelse
+                            </ul>
+                        </div>
+
+                        @if(!empty($supportContent['email']) || !empty($supportContent['phone']))
+                            <div class="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+                                <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3">{{ $supportContent['title'] ?? 'Need assistance?' }}</h2>
+                                <p class="text-sm text-gray-600">
+                                    {{ $supportContent['description'] ?? 'Reach us anytime if you need help with your package payment.' }}
+                                </p>
+                                <div class="mt-3 text-sm text-gray-700 space-y-1">
+                                    @if(!empty($supportContent['email']))
+                                        <p>Email: <a href="mailto:{{ $supportContent['email'] }}" class="text-[#8f5d54] hover:underline">{{ $supportContent['email'] }}</a></p>
+                                    @endif
+                                    @if(!empty($supportContent['phone']))
+                                        <p>Phone: <span class="font-medium">{{ $supportContent['phone'] }}</span></p>
+                                    @endif
+                                </div>
                             </div>
                         @endif
                     </section>
@@ -94,12 +137,12 @@
                             class="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#8f5d54] px-5 py-3 text-sm font-semibold text-white hover:bg-[#a0675a] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             <i class="bi bi-credit-card"></i>
-                            <span>Proceed to Payment</span>
+                            <span>{{ $buttonContent['payment'] ?? 'Proceed to Payment' }}</span>
                         </button>
 
                         <a href="{{ url('/packages') }}"
                            class="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-                            Back to Packages
+                            {{ $buttonContent['home'] ?? 'Back to Packages' }}
                         </a>
 
                         <p id="payment-error" class="mt-4 hidden rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"></p>

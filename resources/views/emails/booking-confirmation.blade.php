@@ -8,6 +8,14 @@
     @php
     $staycations = $staycations ?? collect();
     $selectedActivityPackages = $selectedActivityPackages ?? [];
+    $confirmationContent = $confirmationContent ?? app(\App\Services\BookingConfirmationContentService::class)->forBookingData($bookingData, [
+        'reference' => $bookingData['transaction_id'] ?? '',
+        'package' => $bookingData['package'] ?? '',
+    ]);
+    $pageContent = $confirmationContent['page'] ?? [];
+    $nextStepsContent = $confirmationContent['next_steps'] ?? [];
+    $supportContent = $confirmationContent['support'] ?? [];
+    $emailContent = $confirmationContent['email'] ?? [];
     @endphp
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
@@ -25,9 +33,9 @@
         </div>
 
         <div class="content">
-            <p>Dear {{ $customerInfo['first_name'] ?? $bookingData['first_name'] ?? 'Guest' }} {{ $customerInfo['last_name'] ?? $bookingData['last_name'] ?? '' }},</p>
+            <p>{{ ($emailContent['greeting'] ?? 'Dear') }} {{ $customerInfo['first_name'] ?? $bookingData['first_name'] ?? 'Guest' }} {{ $customerInfo['last_name'] ?? $bookingData['last_name'] ?? '' }},</p>
 
-            <p>Your booking has been successfully processed and confirmed. Below is your receipt. Thank you for choosing CalaiaPH!</p>
+            <p>{{ $emailContent['intro'] ?? 'Your booking has been successfully processed and confirmed. Below is your receipt. Thank you for choosing CalaiaPH!' }}</p>
 
             <div class="booking-details">
                 <h3>Booking Details:</h3>
@@ -219,6 +227,19 @@
             </div>
 
             <div class="booking-details">
+                <h3>{{ $nextStepsContent['title'] ?? "What's Next?" }}</h3>
+                <ul>
+                    @forelse(($nextStepsContent['items'] ?? []) as $step)
+                        <li>{{ $step }}</li>
+                    @empty
+                        <li>Keep this receipt for your records.</li>
+                        <li>Save the date in your calendar.</li>
+                        <li>Contact us if you need to make changes or have any questions.</li>
+                    @endforelse
+                </ul>
+            </div>
+
+            <div class="booking-details">
                 <h3>Payment Details:</h3>
                 <p><strong>Transaction ID:</strong> {{ $bookingData['transaction_id'] ?? 'N/A' }}</p>
                 <p><strong>Payment Method:</strong> {{ ucfirst($bookingData['payment_method'] ?? 'N/A') }}</p>
@@ -236,18 +257,11 @@
                 <p><strong>Total Amount Paid:</strong> â‚±{{ number_format($finalGrandTotal, 2) }}</p>
             </div>
 
-            <h3>What's Next?</h3>
-            <ul>
-                <li>Keep this receipt for your records.</li>
-                <li>Save the date in your calendar. We'll send reminders as your booking date approaches.</li>
-                <li>Contact us if you need to make changes or have any questions.</li>
-            </ul>
+            <p>{{ $emailContent['closing'] ?? 'We look forward to welcoming you to CalaiaPH!' }}</p>
 
             <p>If you have any questions or need to make changes, please contact us at:</p>
-            <p>Email: calaia.ph@gmail.com<br>
-            Phone: +63 905 129 4741</p>
-
-            <p>We look forward to welcoming you to CalaiaPH!</p>
+            <p>Email: {{ $supportContent['email'] ?? 'calaia.ph@gmail.com' }}<br>
+            Phone: {{ $supportContent['phone'] ?? '+63 905 129 4741' }}</p>
 
             <p>Best regards,<br>
             The CalaiaPH Team</p>

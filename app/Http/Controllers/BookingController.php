@@ -17,6 +17,7 @@ use App\Services\ValidationService;
 
 use App\Models\StaycationAccommodation;
 use App\Models\Staycation;
+use App\Models\Booking;
 use App\Models\Food;
 use App\Models\FoodPackage;
 use App\Models\Activity;
@@ -31,6 +32,7 @@ use App\Models\PricingConfig;
 use App\Models\StaycationInventory;
 use Carbon\Carbon;
 use App\Services\PricingService;
+use App\Services\BookingConfirmationContentService;
 use App\Models\BookingSetting;
 use App\Models\FoodPackageSetting;
 
@@ -587,6 +589,16 @@ class BookingController extends Controller
         if ($keys['is_type']) {
             $data[$keys['is_type']] = true;
         }
+
+        $contentType = 'dayvisit';
+        if ($type === 'staycation') {
+            $contentType = 'staycation';
+        }
+
+        $data['confirmationContent'] = app(BookingConfirmationContentService::class)->forType($contentType, [
+            'reference' => $bookingData['transaction_id'] ?? '',
+            'package' => $bookingData['package'] ?? '',
+        ]);
 
         // Clear sessions
         $sessionsToClear = [$keys['booking_data'], $keys['selected_activities']];
@@ -1252,6 +1264,10 @@ class BookingController extends Controller
             // Fetch food and staycation models for confirmation display
             $foods = Food::all();
             $staycations = Staycation::ordered()->get()->keyBy('id');
+            $confirmationContent = app(BookingConfirmationContentService::class)->forType('staycation', [
+                'reference' => $staycationBooking['transaction_id'] ?? '',
+                'package' => $staycationBooking['package'] ?? 'Staycation',
+            ]);
             
             $data = [
                 'bookingData' => $staycationBooking,
@@ -1262,7 +1278,8 @@ class BookingController extends Controller
                 'staycations' => $staycations,
                 'grandTotal' => $staycationBooking['final_totals']['grand_total'] ?? 0,
                 'customerInfo' => session('staycation_customer_info', []),
-                'isStaycation' => true
+                'isStaycation' => true,
+                'confirmationContent' => $confirmationContent,
             ];
             session()->forget(['booking', 'staycation_customer_info']);
             return view('booking.confirmation', $data);

@@ -23,6 +23,14 @@ $paymentSummary = [];
 $grandTotal = 0;
 $selectedActivityPackages = $selectedActivityPackages ?? ($bookingData['selected_activity_packages'] ?? []);
 $bookingFlowType = strtolower((string) ($bookingData['booking_type'] ?? $bookingData['type'] ?? ''));
+$confirmationContent = $confirmationContent ?? app(\App\Services\BookingConfirmationContentService::class)->forBookingData($bookingData, [
+    'reference' => $bookingData['transaction_id'] ?? '',
+    'package' => $bookingData['package'] ?? '',
+]);
+$pageContent = $confirmationContent['page'] ?? [];
+$nextStepsContent = $confirmationContent['next_steps'] ?? [];
+$supportContent = $confirmationContent['support'] ?? [];
+$buttonContent = $confirmationContent['buttons'] ?? [];
 
 if (isset($isStaycation) && $isStaycation) {
     $confirmationSteps = [
@@ -150,14 +158,17 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
       <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8 text-center">
         {{-- Success Icon --}}
         <div class="mb-6">
+          @if(!empty($pageContent['eyebrow']))
+            <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">{{ $pageContent['eyebrow'] }}</p>
+          @endif
           <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <i class="bi bi-check-circle-fill text-4xl text-green-600"></i>
           </div>
           <h1 class="text-2xl font-bold text-[#8f5d54] mb-2">
-            Booking Confirmed!
+            {{ $pageContent['title'] ?? 'Booking Confirmed!' }}
           </h1>
           <p class="text-xs text-gray-600">
-            Your booking has been successfully processed and confirmed.
+            {{ $pageContent['description'] ?? 'Your booking has been successfully processed and confirmed.' }}
           </p>
         </div>
 
@@ -577,20 +588,22 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
 
         {{-- Next Steps --}}
         <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
-          <h3 class="text-2xl font-semibold text-blue-900 mb-3">What's Next?</h3>
+          <h3 class="text-2xl font-semibold text-blue-900 mb-3">{{ $nextStepsContent['title'] ?? "What's Next?" }}</h3>
           <ul class="text-xs text-blue-800 space-y-2 text-left">
-            <li class="flex items-start">
-              <i class="bi bi-envelope mr-2 mt-0.5"></i>
-              <span>Check your email for a detailed confirmation and booking instructions.</span>
-            </li>
-            <li class="flex items-start">
-              <i class="bi bi-calendar-event mr-2 mt-0.5"></i>
-              <span>Save the date in your calendar. We'll send reminders as your booking date approaches.</span>
-            </li>
-            <li class="flex items-start">
-              <i class="bi bi-telephone mr-2 mt-0.5"></i>
-              <span>Contact us if you need to make changes or have any questions.</span>
-            </li>
+            @php
+              $nextStepIcons = ['bi-envelope', 'bi-calendar-event', 'bi-telephone'];
+            @endphp
+            @forelse(($nextStepsContent['items'] ?? []) as $index => $step)
+              <li class="flex items-start">
+                <i class="bi {{ $nextStepIcons[$index] ?? 'bi-dot' }} mr-2 mt-0.5"></i>
+                <span>{{ $step }}</span>
+              </li>
+            @empty
+              <li class="flex items-start">
+                <i class="bi bi-envelope mr-2 mt-0.5"></i>
+                <span>Check your email for a detailed confirmation and booking instructions.</span>
+              </li>
+            @endforelse
           </ul>
         </div>
 
@@ -599,21 +612,26 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
           <a href="{{ route('home') }}"
              class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#8f5d54] px-6 py-3 text-sm font-semibold text-white hover:bg-[#a0675a] transition-colors">
             <i class="bi bi-house"></i>
-            Return to Home
+            {{ $buttonContent['home'] ?? 'Return to Home' }}
           </a>
-          <button onclick="window.print()"
-                  class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-            <i class="bi bi-printer"></i>
-            Print Confirmation
-          </button>
+          @if(!empty($buttonContent['print']))
+            <button onclick="window.print()"
+                    class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+              <i class="bi bi-printer"></i>
+              {{ $buttonContent['print'] }}
+            </button>
+          @endif
         </div>
 
         {{-- Contact Info --}}
         <div class="mt-8 pt-6 border-t border-gray-200">
-          <p class="text-xs text-gray-500 mb-2">Need assistance?</p>
+          <p class="text-xs text-gray-500 mb-2">{{ $supportContent['title'] ?? 'Need assistance?' }}</p>
           <p class="text-xs text-gray-600">
-            Contact us at <a href="mailto:calaia.ph@gmail.com" class="text-[#8f5d54] hover:underline">calaia.ph@gmail.com</a>
-            or call <span class="font-medium">+63 905 129 4741</span>
+            {{ $supportContent['description'] ?? 'Reach us anytime if you need help with your booking.' }}
+            <a href="mailto:{{ $supportContent['email'] ?? 'calaia.ph@gmail.com' }}" class="text-[#8f5d54] hover:underline">{{ $supportContent['email'] ?? 'calaia.ph@gmail.com' }}</a>
+            @if(!empty($supportContent['phone']))
+              or call <span class="font-medium">{{ $supportContent['phone'] }}</span>
+            @endif
           </p>
         </div>
       </div>

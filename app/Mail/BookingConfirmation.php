@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Services\BookingConfirmationContentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -24,6 +25,7 @@ class BookingConfirmation extends Mailable implements ShouldQueue
     public $isStaycation;
     public $isDayvisit;
     public $isSpecialEvent;
+    public $confirmationContent;
 
     /**
      * Create a new message instance.
@@ -41,6 +43,11 @@ class BookingConfirmation extends Mailable implements ShouldQueue
         $this->isStaycation = $data['isStaycation'] ?? false;
         $this->isDayvisit = $data['isDayvisit'] ?? false;
         $this->isSpecialEvent = $data['isSpecialEvent'] ?? false;
+        $this->confirmationContent = $data['confirmationContent'] ?? app(BookingConfirmationContentService::class)
+            ->forBookingData($this->bookingData, [
+                'reference' => $this->bookingData['transaction_id'] ?? '',
+                'package' => $this->bookingData['package'] ?? '',
+            ]);
     }
 
     /**
@@ -49,7 +56,7 @@ class BookingConfirmation extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Booking Receipt - CalaiaPH',
+            subject: $this->confirmationContent['email']['subject'] ?? 'Booking Receipt - CalaiaPH',
         );
     }
 
@@ -72,6 +79,7 @@ class BookingConfirmation extends Mailable implements ShouldQueue
                 'isStaycation' => $this->isStaycation,
                 'isDayvisit' => $this->isDayvisit,
                 'isSpecialEvent' => $this->isSpecialEvent,
+                'confirmationContent' => $this->confirmationContent,
             ],
         );
     }

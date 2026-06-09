@@ -24,6 +24,7 @@ use App\Http\Controllers\PromoCodesController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminPackageBookingsController;
 use App\Http\Controllers\Admin\BookingSettingsController;
+use App\Http\Controllers\Admin\BookingConfirmationContentController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\InventoryManagementController;
 use App\Http\Controllers\Admin\DayTourInventoryController;
@@ -619,6 +620,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::put('/inventory/{inventory}', [InventoryController::class, 'update'])->name('admin.stay.inventory.update');
         Route::delete('/inventory/{inventory}', [InventoryController::class, 'delete'])->name('admin.stay.inventory.delete');
         // Removed redundant booking settings - now using centralized PricingConfig system
+    });
+    Route::prefix('/booking-confirmation')->group(function () {
+        Route::get('/', [BookingConfirmationContentController::class, 'index'])->name('admin.booking-confirmation.index');
+        Route::put('/{bookingType}', [BookingConfirmationContentController::class, 'update'])->name('admin.booking-confirmation.update');
     });
     Route::prefix('/do')->group(function () {
             Route::get('/activities', [AdminController::class, 'activity'])->name('admin.do.activities');

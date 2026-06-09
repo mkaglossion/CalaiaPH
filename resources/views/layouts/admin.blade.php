@@ -137,6 +137,7 @@
           ['title'=>'Pricing','icon'=>'coins','route'=>'admin.pricing.*','sub'=>[
             ['label'=>'Rate Matrix','route'=>'admin.pricingConfig.index'],
           ]],
+          ['title'=>'Booking Confirmation','icon'=>'file-text','route'=>'admin.booking-confirmation.index','active'=>'admin.booking-confirmation.*'],
           ['title'=>'Promo Codes','icon'=>'ticket','route'=>'admin.promo-codes.index'],
           ['title'=>'Settings','icon'=>'settings','route'=>'admin.settings.*','sub'=>[
             ['label'=>'Profile','route'=>'admin.settings.profile'],
@@ -188,10 +189,13 @@
               </div>
             </div>
           @else
+            @php
+              $activePattern = $item['active'] ?? $item['route'];
+            @endphp
             <a
               href="{{ route($item['route']) }}"
               @click="closeSidebar()"
-              class="flex items-center gap-3 px-3 py-2 rounded-lg transition {{ request()->routeIs($item['route']) ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]/80' }}"
+              class="flex items-center gap-3 px-3 py-2 rounded-lg transition {{ request()->routeIs($activePattern) ? 'bg-[#7a4d46] font-semibold' : 'hover:bg-[#7a4d46]/80' }}"
             >
               <i data-lucide="{{ $item['icon'] }}" class="w-5 h-5 shrink-0"></i>
               <span class="truncate">{{ $item['title'] }}</span>

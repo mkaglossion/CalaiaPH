@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\PackageBooking;
+use App\Services\BookingConfirmationContentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -15,6 +16,7 @@ class PackageBookingConfirmation extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public PackageBooking $booking;
+    public array $confirmationContent;
 
     /**
      * Create a new message instance.
@@ -22,6 +24,11 @@ class PackageBookingConfirmation extends Mailable implements ShouldQueue
     public function __construct(PackageBooking $booking)
     {
         $this->booking = $booking;
+        $packageName = $this->booking->package?->name ?? 'Package';
+        $this->confirmationContent = app(BookingConfirmationContentService::class)->forType('package', [
+            'reference' => $this->booking->booking_reference,
+            'package' => $packageName,
+        ]);
     }
 
     /**
@@ -30,7 +37,7 @@ class PackageBookingConfirmation extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Booking Confirmation - {$this->booking->booking_reference}",
+            subject: $this->confirmationContent['email']['subject'] ?? "Booking Confirmation - {$this->booking->booking_reference}",
         );
     }
 
@@ -44,6 +51,7 @@ class PackageBookingConfirmation extends Mailable implements ShouldQueue
             with: [
                 'booking' => $this->booking,
                 'package' => $this->booking->package,
+                'confirmationContent' => $this->confirmationContent,
             ],
         );
     }

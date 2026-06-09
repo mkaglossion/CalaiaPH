@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PackageBooking;
 use App\Services\PaymongoWebhookService;
+use App\Services\BookingConfirmationContentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
@@ -17,9 +18,15 @@ class PaymentController extends Controller
     {
         // Load the booking with package relationship
         $booking->load('package');
+        $packageName = $booking->package?->name ?? 'Package';
+        $confirmationContent = app(BookingConfirmationContentService::class)->forType('package', [
+            'reference' => $booking->booking_reference,
+            'package' => $packageName,
+        ]);
         
         return view('booking.payment-confirmation', [
-            'booking' => $booking
+            'booking' => $booking,
+            'confirmationContent' => $confirmationContent,
         ]);
     }
 
@@ -39,6 +46,7 @@ class PaymentController extends Controller
             }
 
             $booking = PackageBooking::with('package')->findOrFail($bookingId);
+            $packageName = $booking->package?->name ?? 'Package';
 
             // Create PayMongo checkout with booking details
             return $this->createCheckout(new \Illuminate\Http\Request([
@@ -46,7 +54,7 @@ class PaymentController extends Controller
                 'amount' => $booking->total_amount,
                 'email' => $booking->email,
                 'name' => $booking->first_name . ' ' . $booking->last_name,
-                'package_name' => $booking->package->name
+                'package_name' => $packageName
             ]));
         } catch (\Exception $e) {
             Log::error('Payment confirmation error: ' . $e->getMessage());
