@@ -1,6 +1,33 @@
 @extends('layouts.admin')
 
 @section('content')
+<style>
+    .undo-banner {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        padding: 16px 20px;
+        background: #374151;
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        z-index: 9998;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    .undo-banner button {
+        background: #fbbf24;
+        color: #1f2937;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    .undo-banner button:hover { background: #fcd34d; }
+</style>
+
 <div class="p-4 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl space-y-6">
 
     <h1 class="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
@@ -10,17 +37,50 @@
 
     @if(session('success'))
         <script>
-            toastr.success("{{ session('success') }}", 'Success');
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    title: 'Success!',
+                    text: @json(session('success')),
+                    icon: 'success',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            });
         </script>
     @endif
     @if(session('warning'))
         <script>
-            toastr.warning("{{ session('warning') }}", 'Warning');
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    title: 'Warning!',
+                    text: @json(session('warning')),
+                    icon: 'warning',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            });
         </script>
     @endif
     @if(session('error'))
         <script>
-            toastr.error("{{ session('error') }}", 'Error');
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    title: 'Error!',
+                    text: @json(session('error')),
+                    icon: 'error',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            });
         </script>
     @endif
 
@@ -158,13 +218,13 @@
                                             class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition">
                                             Edit
                                         </button>
-                                        <form action="{{ route('admin.peak-periods.destroy', $period->id) }}" method="POST" class="inline">
+                                        <form action="{{ route('admin.peak-periods.destroy', $period->id) }}" method="POST" class="inline" onsubmit="return queuePricingDelete(this, 'duration period', @js($period->name ?? 'Unnamed Duration'))">
                                             @csrf
                                             @method('DELETE')
                                             <button 
                                                 type="submit"
                                                 class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
-                                                onclick="return confirm('Delete this duration period?')">
+                                                >
                                                 Delete
                                             </button>
                                         </form>
@@ -321,13 +381,13 @@
                                         class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition">
                                         Edit
                                     </button>
-                                    <form action="{{ route('admin.holidays.destroy', $holiday->id) }}" method="POST" class="inline">
+                                    <form action="{{ route('admin.holidays.destroy', $holiday->id) }}" method="POST" class="inline" onsubmit="return queuePricingDelete(this, 'holiday', @js($holiday->name))">
                                         @csrf
                                         @method('DELETE')
                                         <button 
                                             type="submit"
                                             class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
-                                            onclick="return confirm('Delete this holiday?')">
+                                            >
                                             Delete
                                         </button>
                                     </form>
@@ -457,13 +517,13 @@
                                                     class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition">
                                                     Edit
                                                 </button>
-                                                <form action="{{ route('admin.pricing-configs.destroy', $config->id) }}" method="POST" class="inline">
+                                                <form action="{{ route('admin.pricing-configs.destroy', $config->id) }}" method="POST" class="inline" onsubmit="return queuePricingDelete(this, 'rate', @js($config->unit_type . ' - ' . $config->peakType->name . ' / ' . $config->dayType->name))">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button 
                                                         type="submit"
                                                         class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
-                                                        onclick="return confirm('Delete this rate?')">
+                                                        >
                                                         Delete
                                                     </button>
                                                 </form>
@@ -697,6 +757,68 @@
 </div>
 
 <script>
+    function queuePricingDelete(form, itemType, itemName) {
+        const existing = document.querySelector('.undo-banner');
+        if (existing) existing.remove();
+
+        const banner = document.createElement('div');
+        banner.className = 'undo-banner';
+
+        let secondsLeft = 4;
+        const safeItemType = String(itemType || 'item');
+        const safeItemName = String(itemName || '').trim() || 'Untitled';
+
+        banner.innerHTML = `
+            <span>${safeItemType.charAt(0).toUpperCase() + safeItemType.slice(1)} "${safeItemName}" marked for deletion</span>
+            <button type="button">Undo (${secondsLeft}s)</button>
+        `;
+
+        document.body.appendChild(banner);
+
+        const undoButton = banner.querySelector('button');
+        const timer = setInterval(() => {
+            secondsLeft--;
+            if (undoButton) {
+                undoButton.textContent = `Undo (${secondsLeft}s)`;
+            }
+
+            if (secondsLeft <= 0) {
+                clearInterval(timer);
+                banner.remove();
+                form.submit();
+            }
+        }, 1000);
+
+        undoButton?.addEventListener('click', () => {
+            clearInterval(timer);
+            banner.remove();
+        });
+
+        return false;
+    }
+
+    function escapePricingToastText(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function showPricingToast(title, message, icon = 'success') {
+        Swal.fire({
+            title,
+            html: escapePricingToastText(message).replace(/\n/g, '<br>'),
+            icon,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+        });
+    }
+
     // Duration Manager
     function durationManager() {
         return {
@@ -776,18 +898,18 @@
                     const data = await res.json();
                     
                     if (res.ok) {
-                        alert(data.message || (isUpdate ? 'Duration updated successfully!' : 'Duration added successfully!'));
+                        showPricingToast('Success!', data.message || (isUpdate ? 'Duration updated successfully!' : 'Duration added successfully!'), 'success');
                         this.closeModal();
                         window.location.reload();
                     } else if (data.errors) {
                         const errors = Object.values(data.errors).flat().join('\n');
-                        alert(errors);
+                        showPricingToast('Error!', errors, 'error');
                     } else {
-                        alert(data.message || 'Operation failed.');
+                        showPricingToast('Error!', data.message || 'Operation failed.', 'error');
                     }
                 } catch (err) {
                     console.error(err);
-                    alert('Error submitting duration.');
+                    showPricingToast('Error!', 'Error submitting duration.', 'error');
                 }
             }
         }
@@ -845,18 +967,18 @@
                     const data = await res.json();
                     
                     if (res.ok) {
-                        alert(data.message || (isUpdate ? 'Holiday updated successfully!' : 'Holiday added successfully!'));
+                        showPricingToast('Success!', data.message || (isUpdate ? 'Holiday updated successfully!' : 'Holiday added successfully!'), 'success');
                         this.closeModal();
                         window.location.reload();
                     } else if (data.errors) {
                         const errors = Object.values(data.errors).flat().join('\n');
-                        alert(errors);
+                        showPricingToast('Error!', errors, 'error');
                     } else {
-                        alert(data.message || 'Operation failed.');
+                        showPricingToast('Error!', data.message || 'Operation failed.', 'error');
                     }
                 } catch (err) {
                     console.error(err);
-                    alert('Error submitting holiday.');
+                    showPricingToast('Error!', 'Error submitting holiday.', 'error');
                 }
             }
         }
@@ -916,18 +1038,18 @@
                     const data = await res.json();
                     
                     if (res.ok) {
-                        alert(data.message || (isUpdate ? 'Rate updated successfully!' : 'Rate added successfully!'));
+                        showPricingToast('Success!', data.message || (isUpdate ? 'Rate updated successfully!' : 'Rate added successfully!'), 'success');
                         this.closeModal();
                         window.location.reload();
                     } else if (data.errors) {
                         const errors = Object.values(data.errors).flat().join('\n');
-                        alert(errors);
+                        showPricingToast('Error!', errors, 'error');
                     } else {
-                        alert(data.message || 'Operation failed.');
+                        showPricingToast('Error!', data.message || 'Operation failed.', 'error');
                     }
                 } catch (err) {
                     console.error(err);
-                    alert('Error submitting rate.');
+                    showPricingToast('Error!', 'Error submitting rate.', 'error');
                 }
             }
         }
