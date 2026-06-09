@@ -14,6 +14,7 @@ use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Schema;
 
@@ -306,8 +307,71 @@ class AdminBookingsController extends Controller
         
         return view('admin.bookings.index', compact('bookings', 'stats', 'statCardsData', 'paymentScope'));
     }
-    
-    public function show($id)
+
+    public function export(Request $request)
+    {
+        $pendingCutoff = $this->pendingCutoff();
+        $this->expireStalePendingBookings($pendingCutoff, app(PaymentService::class));
+
+        $paymentScope = $this->normalizePaymentScope($request);
+        $merged = $this->buildMergedBookingsCollection($request, $paymentScope, $pendingCutoff);
+
+        $generatedAt = now()->format('M d, Y H:i:s');
+        $filename = 'bookings-export-' . now()->format('Y-m-d-His') . '.xls';
+
+        $rows = $merged->map(function ($item) {
+            $checkin = $item->checkin_date instanceof Carbon
+                ? $item->checkin_date->format('M d, Y')
+                : ($item->checkin_date ? Carbon::parse($item->checkin_date)->format('M d, Y') : '');
+
+            $checkout = $item->checkout_date instanceof Carbon
+                ? $item->checkout_date->format('M d, Y')
+                : ($item->checkout_date ? Carbon::parse($item->checkout_date)->format('M d, Y') : 'N/A');
+
+            return [
+                'Type' => $item->display_type_label ?? ucfirst((string) ($item->booking_type ?? $item->resource_type ?? 'Booking')),
+                'Customer' => $item->display_customer_name ?? $item->customer_name ?? $item->full_name ?? '',
+                'Email' => $item->customer_email ?? $item->email ?? '',
+                'Phone' => $item->customer_phone ?? $item->phone ?? '',
+                'Reference' => $item->transaction_id ?? $item->booking_reference ?? '',
+                'Check-in' => $checkin,
+                'Check-out' => $checkout,
+                'Status' => $item->status ?? '',
+                'Payment' => $item->effective_payment_status ?? $item->payment_status ?? '',
+                'Amount' => (float) ($item->total_amount ?? 0),
+                'Created At' => optional($item->created_at)->format('M d, Y H:i'),
+            ];
+        })->values()->all();
+
+        $summaryRows = [
+            ['Metric' => 'Filtered Records', 'Value' => $merged->count()],
+            ['Metric' => 'Confirmed', 'Value' => $merged->where('status', 'confirmed')->count()],
+            ['Metric' => 'Completed', 'Value' => $merged->where('status', 'completed')->count()],
+            ['Metric' => 'Cancelled', 'Value' => $merged->where('status', 'cancelled')->count()],
+            ['Metric' => 'Paid', 'Value' => $merged->filter(fn ($item) => ($item->effective_payment_status ?? $item->payment_status ?? '') === 'paid')->count()],
+            ['Metric' => 'Pending', 'Value' => $merged->filter(fn ($item) => ($item->effective_payment_status ?? $item->payment_status ?? '') === 'pending')->count()],
+            ['Metric' => 'Total Amount', 'Value' => (float) $merged->sum(fn ($item) => (float) ($item->total_amount ?? 0))],
+        ];
+
+        $html = $this->renderExcelWorkbook([
+            [
+                'title' => 'Summary',
+                'headers' => ['Metric', 'Value'],
+                'rows' => $summaryRows,
+            ],
+            [
+                'title' => 'Bookings',
+                'headers' => ['Type', 'Customer', 'Email', 'Phone', 'Reference', 'Check-in', 'Check-out', 'Status', 'Payment', 'Amount', 'Created At'],
+                'rows' => $rows,
+            ],
+        ], 'Filtered bookings', $generatedAt);
+
+        return response($html, 200)
+            ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+
+    public function show(int $id)
     {
         $booking = Booking::findOrFail($id);
 
@@ -329,7 +393,7 @@ class AdminBookingsController extends Controller
         ));
     }
     
-    public function cancel($id)
+    public function cancel(int $id)
     {
         $booking = Booking::findOrFail($id);
         $oldStatus = $booking->status;
@@ -508,6 +572,296 @@ class AdminBookingsController extends Controller
         return view('admin.bookings.paymongo-webhooks', compact('events', 'stats', 'tableReady'));
     }
 
+    private function buildMergedBookingsCollection(Request $request, string $paymentScope, Carbon $pendingCutoff)
+    {
+        $bookingQuery = Booking::query();
+        $this->applyPaymentLifecycleFilters($bookingQuery, $request, $paymentScope, $pendingCutoff);
+
+        if ($request->filled('status')) {
+            $bookingQuery->where('status', $request->status);
+        }
+
+        if ($request->filled('booking_type')) {
+            if ($request->booking_type === 'staycation') {
+                $bookingQuery->whereIn('booking_type', Booking::STAYCATION_TYPES);
+            } else {
+                $bookingQuery->where('booking_type', $request->booking_type);
+            }
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $bookingQuery->where(function ($q) use ($search) {
+                $q->where('customer_name', 'like', "%{$search}%")
+                    ->orWhere('customer_email', 'like', "%{$search}%")
+                    ->orWhere('transaction_id', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('date_from')) {
+            $bookingQuery->where('checkin_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $bookingQuery->where('checkin_date', '<=', $request->date_to);
+        }
+
+        $bookingsCollection = $bookingQuery->orderBy('created_at', 'desc')->get()->map(function ($b) use ($pendingCutoff) {
+            $b->resource_type = 'booking';
+            $b->resource_id = $b->id;
+
+            $bookingData = $b->booking_data ?? [];
+            $foodItems = [];
+            $activityItems = [];
+            $petFee = 0;
+            $additionalAdultFee = 0;
+            $numPets = 0;
+            $hasPets = false;
+            $additionalAdults = 0;
+
+            if (!empty($bookingData['selected_foods'])) {
+                foreach ($bookingData['selected_foods'] as $food) {
+                    $foodItems[] = [
+                        'name' => $food['name'] ?? 'Unknown',
+                        'quantity' => (int) ($food['quantity'] ?? 1),
+                        'price' => (float) ($food['price'] ?? 0),
+                    ];
+                }
+            }
+
+            if (!empty($bookingData['selected_activities'])) {
+                foreach ($bookingData['selected_activities'] as $activity) {
+                    $activityItems[] = [
+                        'name' => $activity['name'] ?? 'Unknown',
+                        'quantity' => (int) ($activity['guests'] ?? $activity['quantity'] ?? 1),
+                        'price' => (float) ($activity['price'] ?? 0),
+                    ];
+                }
+            }
+
+            if (!empty($bookingData['selected_activity_packages'])) {
+                foreach ($bookingData['selected_activity_packages'] as $package) {
+                    $activityItems[] = [
+                        'name' => $package['name'] ?? 'Unknown Package',
+                        'quantity' => (int) ($package['quantity'] ?? 1),
+                        'price' => (float) ($package['price'] ?? 0),
+                    ];
+                }
+            }
+
+            if (!empty($bookingData['num_pets'])) {
+                $numPets = (int) ($bookingData['num_pets'] ?? 0);
+            }
+            if (!empty($bookingData['has_pets'])) {
+                $hasPets = (bool) ($bookingData['has_pets'] ?? false);
+            }
+            if (!empty($bookingData['pet_price'])) {
+                $petFee = (float) ($bookingData['pet_price'] ?? 0);
+            }
+
+            if (!empty($bookingData['additional_adults'])) {
+                $additionalAdults = (int) ($bookingData['additional_adults'] ?? 0);
+            }
+            if (!empty($bookingData['additional_adult_price'])) {
+                $additionalAdultFee = (float) ($bookingData['additional_adult_price'] ?? 0);
+            }
+            if (!empty($bookingData['mattress_price'])) {
+                $additionalAdultFee = (float) ($bookingData['mattress_price'] ?? 0);
+            }
+
+            $b->setAttribute('food_items', $foodItems);
+            $b->setAttribute('activity_items', $activityItems);
+            $b->setAttribute('pet_fee', $petFee);
+            $b->setAttribute('additional_adult_fee', $additionalAdultFee);
+            $b->setAttribute('num_pets', $numPets);
+            $b->setAttribute('has_pets', $hasPets);
+            $b->setAttribute('additional_adults', $additionalAdults);
+
+            return $this->applyDerivedPaymentLifecycleState($b, $pendingCutoff);
+        });
+
+        $packageQuery = PackageBooking::query();
+        $this->applyPaymentLifecycleFilters($packageQuery, $request, $paymentScope, $pendingCutoff);
+
+        if ($request->filled('status')) {
+            $packageQuery->where('status', $request->status);
+        }
+
+        if ($request->filled('booking_type')) {
+            if ($request->booking_type === 'package') {
+                $bookingQuery->whereRaw('1 = 0');
+            } else {
+                $packageQuery->whereRaw('1 = 0');
+            }
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $packageQuery->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('booking_reference', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('date_from')) {
+            $packageQuery->where('booking_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $packageQuery->where('booking_date', '<=', $request->date_to);
+        }
+
+        $packageCollection = $packageQuery->orderBy('created_at', 'desc')->get()->map(function ($pb) use ($pendingCutoff) {
+            $obj = new \stdClass();
+            $obj->id = $pb->id;
+            $obj->resource_type = 'package';
+            $obj->resource_id = $pb->id;
+            $obj->transaction_id = $pb->booking_reference;
+            $obj->created_at = $pb->created_at;
+            $obj->display_customer_name = $pb->full_name;
+            $obj->customer_email = $pb->email;
+            $obj->customer_phone = $pb->phone ?? null;
+            $obj->booking_type = 'package';
+            $obj->display_type_label = 'Package';
+            $obj->checkin_date = $pb->booking_date;
+            $obj->checkout_date = null;
+            $obj->total_amount = $pb->total_amount;
+            $obj->status = $pb->status;
+            $obj->payment_status = $pb->payment_status ?? 'pending';
+            $obj->id_for_routes = $pb->id;
+
+            $obj->food_items = [];
+            $obj->activity_items = [];
+            $obj->pet_fee = 0;
+            $obj->additional_adult_fee = 0;
+            $obj->num_pets = 0;
+            $obj->has_pets = false;
+            $obj->additional_adults = 0;
+
+            $bookingData = $pb->booking_data ?? [];
+            if (!empty($bookingData)) {
+                if (!empty($bookingData['selected_foods'])) {
+                    foreach ($bookingData['selected_foods'] as $food) {
+                        $obj->food_items[] = [
+                            'name' => $food['name'] ?? 'Unknown',
+                            'quantity' => (int) ($food['quantity'] ?? 1),
+                            'price' => (float) ($food['price'] ?? 0),
+                        ];
+                    }
+                }
+
+                if (!empty($bookingData['selected_activities'])) {
+                    foreach ($bookingData['selected_activities'] as $activity) {
+                        $obj->activity_items[] = [
+                            'name' => $activity['name'] ?? 'Unknown',
+                            'quantity' => (int) ($activity['guests'] ?? $activity['quantity'] ?? 1),
+                            'price' => (float) ($activity['price'] ?? 0),
+                        ];
+                    }
+                }
+
+                if (!empty($bookingData['selected_activity_packages'])) {
+                    foreach ($bookingData['selected_activity_packages'] as $package) {
+                        $obj->activity_items[] = [
+                            'name' => $package['name'] ?? 'Unknown Package',
+                            'quantity' => (int) ($package['quantity'] ?? 1),
+                            'price' => (float) ($package['price'] ?? 0),
+                        ];
+                    }
+                }
+
+                if (!empty($bookingData['num_pets'])) {
+                    $obj->num_pets = (int) ($bookingData['num_pets'] ?? 0);
+                }
+                if (!empty($bookingData['has_pets'])) {
+                    $obj->has_pets = (bool) ($bookingData['has_pets'] ?? false);
+                }
+                if (!empty($bookingData['pet_price'])) {
+                    $obj->pet_fee = (float) ($bookingData['pet_price'] ?? 0);
+                }
+
+                if (!empty($bookingData['additional_adults'])) {
+                    $obj->additional_adults = (int) ($bookingData['additional_adults'] ?? 0);
+                }
+                if (!empty($bookingData['additional_adult_price'])) {
+                    $obj->additional_adult_fee = (float) ($bookingData['additional_adult_price'] ?? 0);
+                }
+                if (!empty($bookingData['mattress_price'])) {
+                    $obj->additional_adult_fee = (float) ($bookingData['mattress_price'] ?? 0);
+                }
+            }
+
+            return $this->applyDerivedPaymentLifecycleState($obj, $pendingCutoff);
+        });
+
+        return $bookingsCollection->concat($packageCollection)->sortByDesc(function ($item) {
+            return $item->created_at;
+        })->values();
+    }
+
+    private function renderExcelWorkbook(array $sections, string $rangeLabel, string $generatedAt): string
+    {
+        $html = '<html><head><meta charset="UTF-8"></head><body style="font-family:Arial,sans-serif;font-size:12px;color:#111;">';
+        $html .= '<h1 style="font-size:20px;margin-bottom:6px;">CalaiaPH Admin Bookings Export</h1>';
+        $html .= '<p style="margin:0 0 18px 0;">Range: ' . e($rangeLabel) . ' | Generated: ' . e($generatedAt) . '</p>';
+
+        foreach ($sections as $section) {
+            $title = e($section['title'] ?? 'Section');
+            $headers = $section['headers'] ?? [];
+            $rows = $section['rows'] ?? [];
+
+            $html .= '<h2 style="font-size:16px;margin:20px 0 8px 0;">' . $title . '</h2>';
+            $html .= '<table border="1" cellspacing="0" cellpadding="4" style="border-collapse:collapse;width:100%;margin-bottom:18px;">';
+            $html .= '<thead><tr style="background:#f3f4f6;">';
+            foreach ($headers as $header) {
+                $html .= '<th style="text-align:left;">' . e($header) . '</th>';
+            }
+            $html .= '</tr></thead><tbody>';
+
+            if (empty($rows)) {
+                $html .= '<tr><td colspan="' . count($headers) . '">No rows found</td></tr>';
+            } else {
+                foreach ($rows as $row) {
+                    $html .= '<tr>';
+                    foreach ($headers as $header) {
+                        $value = is_array($row) ? ($row[$header] ?? '') : '';
+                        $html .= '<td>' . e($this->formatExcelValue($value)) . '</td>';
+                    }
+                    $html .= '</tr>';
+                }
+            }
+
+            $html .= '</tbody></table>';
+        }
+
+        $html .= '</body></html>';
+
+        return $html;
+    }
+
+    private function formatExcelValue(mixed $value): string
+    {
+        if ($value instanceof Carbon) {
+            return $value->format('M d, Y H:i');
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'Yes' : 'No';
+        }
+
+        if (is_float($value) || is_int($value)) {
+            return is_float($value)
+                ? number_format($value, 2, '.', '')
+                : (string) $value;
+        }
+
+        if ($value === null) {
+            return '';
+        }
+
+        return (string) $value;
+    }
+
     private function normalizePaymentScope(Request $request): string
     {
         $scope = (string) $request->query('payment_scope', 'operational');
@@ -515,7 +869,7 @@ class AdminBookingsController extends Controller
         return in_array($scope, ['operational', 'all', 'attempts'], true) ? $scope : 'operational';
     }
 
-    private function applyPaymentLifecycleFilters($query, Request $request, string $paymentScope, Carbon $pendingCutoff): void
+    private function applyPaymentLifecycleFilters(Builder $query, Request $request, string $paymentScope, Carbon $pendingCutoff): void
     {
         if ($request->filled('payment_status')) {
             $paymentStatus = (string) $request->string('payment_status');

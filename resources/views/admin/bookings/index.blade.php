@@ -11,6 +11,12 @@
             <h1 class="text-3xl font-semibold text-gray-900">Bookings</h1>
         </div>
         <div class="flex flex-wrap gap-3">
+            <a href="{{ route('admin.bookings.export', request()->query()) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white shadow hover:bg-amber-700 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v10m0 0l-4-4m4 4l4-4M5 21h14" />
+                </svg>
+                <span>Export Excel</span>
+            </a>
             <a href="{{ route('admin.bookings.paymongo-webhooks') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white shadow hover:bg-blue-700 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8M8 14h5M6 4h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z" />

@@ -321,10 +321,14 @@
           >
             <i data-lucide="circle-alert" class="w-5 h-5"></i>
             @php
-              $unreadAlerts = \App\Models\AdminSystemAlert::unresolvedCritical()->count();
+              $criticalAlerts = \App\Models\AdminSystemAlert::unresolvedCritical()->count();
+              $warningAlerts = \App\Models\AdminSystemAlert::unresolved()->where('severity', 'warning')->count();
+              $actionableAlerts = $criticalAlerts + $warningAlerts;
             @endphp
-            @if($unreadAlerts > 0)
-              <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            @if($actionableAlerts > 0)
+              <span class="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full text-[10px] font-semibold leading-4 text-white {{ $criticalAlerts > 0 ? 'bg-red-500' : 'bg-amber-500' }}">
+                {{ $actionableAlerts > 9 ? '9+' : $actionableAlerts }}
+              </span>
             @endif
           </button>
 
@@ -341,7 +345,7 @@
 
             <div class="max-h-64 overflow-y-auto">
               @php
-                $alerts = \App\Models\AdminSystemAlert::unresolvedCritical()->limit(5)->get();
+                $alerts = \App\Models\AdminSystemAlert::unresolvedForDashboard()->limit(5)->get();
               @endphp
 
               @forelse($alerts as $alert)
@@ -349,17 +353,22 @@
                   <div class="flex items-start gap-2">
                     <span
                       class="inline-block w-2 h-2 rounded-full mt-1"
-                      style="background-color: {{ $alert->severity === 'critical' ? '#dc2626' : '#f59e0b' }};"
+                      style="background-color: {{ $alert->severity === 'critical' ? '#dc2626' : ($alert->severity === 'warning' ? '#f59e0b' : '#3b82f6') }};"
                     ></span>
                     <div class="flex-1">
-                      <p class="text-sm font-medium text-gray-900">{{ ucfirst(str_replace('_', ' ', $alert->type)) }}</p>
+                      <div class="flex items-center gap-2">
+                        <p class="text-sm font-medium text-gray-900">{{ ucfirst(str_replace('_', ' ', $alert->type)) }}</p>
+                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {{ $alert->severity === 'critical' ? 'bg-red-100 text-red-700' : ($alert->severity === 'warning' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700') }}">
+                          {{ $alert->severity }}
+                        </span>
+                      </div>
                       <p class="text-xs text-gray-500 mt-1">{{ $alert->message }}</p>
                     </div>
                   </div>
                 </div>
               @empty
                 <div class="p-4 text-center text-gray-500 text-sm">
-                  No critical alerts
+                  No unresolved alerts
                 </div>
               @endforelse
             </div>

@@ -516,6 +516,7 @@ Route::middleware('auth')->group(function () {
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Main Sections
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/dashboard/export', [AdminDashboardController::class, 'export'])->name('admin.dashboard.export');
     Route::get('/reports', [AdminReportsController::class, 'index'])->name('admin.reports.index');
     Route::resource('users', AdminUsersController::class, ['names' => [
         'index' => 'admin.users.index',
@@ -528,6 +529,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Bookings Management
     Route::prefix('bookings')->group(function () {
         Route::get('/', [AdminBookingsController::class, 'index'])->name('admin.bookings.index');
+        Route::get('/export', [AdminBookingsController::class, 'export'])->name('admin.bookings.export');
         Route::get('/inventory', [InventoryManagementController::class, 'index'])->name('admin.bookings.inventory');
         Route::get('/paymongo-webhooks', [AdminBookingsController::class, 'paymongoWebhooks'])->name('admin.bookings.paymongo-webhooks');
 

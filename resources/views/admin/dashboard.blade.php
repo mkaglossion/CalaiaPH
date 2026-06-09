@@ -101,6 +101,15 @@
         Overview of users, bookings, revenue, and inventory
         @if(!empty($rangeLabel)) <span class="text-gray-400">·</span> <span class="font-medium">{{ $rangeLabel }}</span> @endif
       </p>
+      <div class="mt-3">
+        <a href="{{ route('admin.dashboard.export', request()->query()) }}"
+           class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v10m0 0l-4-4m4 4l4-4M5 21h14"/>
+          </svg>
+          <span>Export Excel</span>
+        </a>
+      </div>
       
       {{-- Keyboard shortcut notification --}}
       <div x-show="shortcutUsed" 
