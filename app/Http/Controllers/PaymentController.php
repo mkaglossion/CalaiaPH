@@ -250,7 +250,8 @@ class PaymentController extends Controller
                 
                 if ($booking) {
                     $booking->update([
-                        'status' => 'cancelled'
+                        'status' => 'cancelled',
+                        'payment_status' => 'failed',
                     ]);
                 }
             }

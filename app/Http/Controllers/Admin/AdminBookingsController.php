@@ -10,6 +10,7 @@ use App\Models\PackageBooking;
 use App\Models\PaymongoWebhookEvent;
 use App\Models\Staycation;
 use App\Models\StaycationInventory;
+use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -18,13 +19,18 @@ use Illuminate\Support\Facades\Schema;
 
 class AdminBookingsController extends Controller
 {
+    private const PENDING_WINDOW_MINUTES = 60;
+
     public function index(Request $request)
     {
+        $pendingCutoff = $this->pendingCutoff();
+        $this->expireStalePendingBookings($pendingCutoff, app(PaymentService::class));
+
         // Build Booking query with filters
         $bookingQuery = Booking::query();
         $paymentScope = $this->normalizePaymentScope($request);
 
-        $this->applyPaymentLifecycleFilters($bookingQuery, $request, $paymentScope);
+        $this->applyPaymentLifecycleFilters($bookingQuery, $request, $paymentScope, $pendingCutoff);
 
         if ($request->filled('status')) {
             $bookingQuery->where('status', $request->status);
@@ -54,7 +60,7 @@ class AdminBookingsController extends Controller
             $bookingQuery->where('checkin_date', '<=', $request->date_to);
         }
 
-        $bookingsCollection = $bookingQuery->orderBy('created_at', 'desc')->get()->map(function($b) {
+        $bookingsCollection = $bookingQuery->orderBy('created_at', 'desc')->get()->map(function($b) use ($pendingCutoff) {
             $b->resource_type = 'booking';
             $b->resource_id = $b->id;
             
@@ -133,12 +139,12 @@ class AdminBookingsController extends Controller
             $b->setAttribute('has_pets', $hasPets);
             $b->setAttribute('additional_adults', $additionalAdults);
             
-            return $b;
+            return $this->applyDerivedPaymentLifecycleState($b, $pendingCutoff);
         });
 
         // Build PackageBooking query with equivalent filters
         $packageQuery = PackageBooking::query();
-        $this->applyPaymentLifecycleFilters($packageQuery, $request, $paymentScope);
+        $this->applyPaymentLifecycleFilters($packageQuery, $request, $paymentScope, $pendingCutoff);
 
         if ($request->filled('status')) {
             $packageQuery->where('status', $request->status);
@@ -172,7 +178,7 @@ class AdminBookingsController extends Controller
             $packageQuery->where('booking_date', '<=', $request->date_to);
         }
 
-        $packageCollection = $packageQuery->orderBy('created_at', 'desc')->get()->map(function($pb) {
+        $packageCollection = $packageQuery->orderBy('created_at', 'desc')->get()->map(function($pb) use ($pendingCutoff) {
             $obj = new \stdClass();
             $obj->id = $pb->id; // preserve for direct use if needed
             $obj->resource_type = 'package';
@@ -260,7 +266,7 @@ class AdminBookingsController extends Controller
                 }
             }
             
-            return $obj;
+            return $this->applyDerivedPaymentLifecycleState($obj, $pendingCutoff);
         });
 
         // Merge both collections and sort by created_at desc
@@ -509,10 +515,31 @@ class AdminBookingsController extends Controller
         return in_array($scope, ['operational', 'all', 'attempts'], true) ? $scope : 'operational';
     }
 
-    private function applyPaymentLifecycleFilters($query, Request $request, string $paymentScope): void
+    private function applyPaymentLifecycleFilters($query, Request $request, string $paymentScope, Carbon $pendingCutoff): void
     {
         if ($request->filled('payment_status')) {
-            $query->where('payment_status', (string) $request->string('payment_status'));
+            $paymentStatus = (string) $request->string('payment_status');
+
+            if ($paymentStatus === 'pending') {
+                $query->where('payment_status', 'pending')
+                    ->whereNotIn('status', ['cancelled', 'completed'])
+                    ->where('created_at', '>=', $pendingCutoff);
+                return;
+            }
+
+            if ($paymentStatus === 'failed') {
+                $query->where(function ($attempts) use ($pendingCutoff) {
+                    $attempts->where('payment_status', 'failed')
+                        ->orWhere(function ($stalePending) use ($pendingCutoff) {
+                            $stalePending->where('payment_status', 'pending')
+                                ->whereNotIn('status', ['cancelled', 'completed'])
+                                ->where('created_at', '<', $pendingCutoff);
+                        });
+                });
+                return;
+            }
+
+            $query->where('payment_status', $paymentStatus);
             return;
         }
 
@@ -526,6 +553,66 @@ class AdminBookingsController extends Controller
         }
 
         $query->whereNotIn('payment_status', ['pending', 'failed']);
+    }
+
+    private function pendingCutoff(): Carbon
+    {
+        return now()->subMinutes(self::PENDING_WINDOW_MINUTES);
+    }
+
+    private function expireStalePendingBookings(Carbon $pendingCutoff, PaymentService $paymentService): void
+    {
+        Booking::query()
+            ->where('payment_method', 'paymongo')
+            ->where('payment_status', 'pending')
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('created_at', '<', $pendingCutoff)
+            ->orderBy('id')
+            ->get()
+            ->each(function (Booking $booking) use ($paymentService) {
+                $paymentService->failPendingBooking(
+                    $booking,
+                    $booking->paymongo_checkout_id,
+                    'expired',
+                    'stale_timeout'
+                );
+            });
+
+        PackageBooking::query()
+            ->where('status', 'pending_payment')
+            ->where(function ($query) {
+                $query->whereNull('payment_status')
+                    ->orWhere('payment_status', 'pending');
+            })
+            ->where('created_at', '<', $pendingCutoff)
+            ->orderBy('id')
+            ->get()
+            ->each(function (PackageBooking $booking) {
+                $booking->update([
+                    'payment_status' => 'failed',
+                    'status' => 'cancelled',
+                ]);
+            });
+    }
+
+    private function applyDerivedPaymentLifecycleState(object $booking, Carbon $pendingCutoff): object
+    {
+        $paymentStatus = strtolower((string) ($booking->payment_status ?? 'pending'));
+        $status = strtolower((string) ($booking->status ?? ''));
+        $attemptState = data_get($booking, 'booking_data.payment_attempt.state');
+        $createdAt = $booking->created_at instanceof Carbon ? $booking->created_at : Carbon::parse($booking->created_at);
+        $isStalePending = $paymentStatus === 'pending'
+            && !in_array($status, ['cancelled', 'completed'], true)
+            && $createdAt->lt($pendingCutoff);
+
+        $booking->effective_payment_status = $isStalePending ? 'failed' : $paymentStatus;
+        $booking->effective_attempt_state = $isStalePending
+            ? 'expired'
+            : ($attemptState ?: ($paymentStatus === 'pending' ? 'pending' : null));
+        $booking->is_stale_pending = $isStalePending;
+        $booking->is_live_pending = $paymentStatus === 'pending' && !$isStalePending;
+
+        return $booking;
     }
 
     private function extractSelectedPackages(array $bookingData): array

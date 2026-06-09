@@ -244,6 +244,7 @@ class PaymongoWebhookService
         if ($pb) {
             $pb->payment_status = 'failed';
             $pb->payment_reference = $paymentId;
+            $pb->status = 'cancelled';
             $pb->save();
             Log::warning("PackageBooking payment failed via webhook", ['id' => $pb->id]);
             return true;

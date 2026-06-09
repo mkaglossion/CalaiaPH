@@ -60,7 +60,8 @@ class PackageBookingController extends Controller
                 'email' => $validated['email'],
                 'special_requests' => $validated['special_requests'],
                 'total_amount' => $totalAmount,
-                'status' => 'pending_payment'
+                'status' => 'pending_payment',
+                'payment_status' => 'pending',
             ]);
 
             return response()->json([

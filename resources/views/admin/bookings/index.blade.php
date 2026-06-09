@@ -107,8 +107,8 @@
                 <select id="payment_status" name="payment_status" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                     <option value="">All</option>
                     <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
-                    <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                    <option value="failed" {{ request('payment_status') == 'failed' ? 'selected' : '' }}>Failed</option>
+                    <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending (Live)</option>
+                    <option value="failed" {{ request('payment_status') == 'failed' ? 'selected' : '' }}>Failed / Expired</option>
                 </select>
             </div>
             <div class="w-full sm:w-auto">
@@ -275,8 +275,8 @@
                         </td>
                         <td class="px-6 py-4 text-sm">
                             @php
-                                $paymentStatus = $booking->payment_status ?? 'pending';
-                                $attemptState = data_get($booking, 'booking_data.payment_attempt.state');
+                                $paymentStatus = $booking->effective_payment_status ?? $booking->payment_status ?? 'pending';
+                                $attemptState = $booking->effective_attempt_state ?? data_get($booking, 'booking_data.payment_attempt.state');
                                 $paymentColors = [
                                     'paid' => 'bg-green-100 text-green-800',
                                     'pending' => 'bg-yellow-100 text-yellow-800',

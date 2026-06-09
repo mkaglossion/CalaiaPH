@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Booking;
+use App\Models\PackageBooking;
 use App\Services\PaymentService;
 use Illuminate\Console\Command;
 
@@ -46,6 +47,25 @@ class ExpireStalePendingBookings extends Command
                 'expired',
                 'stale_timeout'
             );
+
+            $count++;
+        }
+
+        $packageBookings = PackageBooking::query()
+            ->where('status', 'pending_payment')
+            ->where(function ($query) {
+                $query->whereNull('payment_status')
+                    ->orWhere('payment_status', 'pending');
+            })
+            ->where('created_at', '<=', $cutoff)
+            ->orderBy('id')
+            ->get();
+
+        foreach ($packageBookings as $packageBooking) {
+            $packageBooking->update([
+                'payment_status' => 'failed',
+                'status' => 'cancelled',
+            ]);
 
             $count++;
         }
