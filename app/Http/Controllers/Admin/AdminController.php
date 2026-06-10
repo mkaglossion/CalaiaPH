@@ -39,6 +39,7 @@ use App\Models\ShopOrder;
 use App\Models\ShopSwiperImage;
 use App\Models\DayTourSwiperImage;
 use App\Models\DayTourInventory;
+use App\Services\PricingService;
 
 use Illuminate\Support\Facades\Log;
 
@@ -361,40 +362,73 @@ class AdminController extends Controller
     {
         // Get all staycations with their pricing configurations
         $staycations = Staycation::ordered()->get();
-
-        // Get current season type by checking today's date
-        $today = now()->format('Y-m-d');
-        $currentSeasonPeriod = \App\Models\PeakPeriod::where('start_date', '<=', $today)
-            ->where('end_date', '>=', $today)
+        $pricingService = app(PricingService::class);
+        $today = Carbon::today();
+        $currentSeasonPeriod = PeakPeriod::where('start_date', '<=', $today->format('Y-m-d'))
+            ->where('end_date', '>=', $today->format('Y-m-d'))
             ->with('peakType')
-            ->orderBy(\App\Models\PeakType::select('priority')->whereColumn('peak_types.id', 'peak_periods.peak_type_id'), 'desc')
+            ->orderBy(
+                PeakType::select('priority')->whereColumn('peak_types.id', 'peak_periods.peak_type_id'),
+                'desc'
+            )
             ->first();
 
-        $currentSeason = $currentSeasonPeriod ? $currentSeasonPeriod->peakType->name : 'Non-Peak';
+        $currentSeason = $pricingService->getSeasonType($today) ?? 'Non-Peak';
+        $currentDayType = $pricingService->getDayType($today);
+        $currentSeasonRange = $currentSeasonPeriod
+            ? [
+                'name' => $currentSeasonPeriod->name,
+                'start_date' => Carbon::parse($currentSeasonPeriod->start_date)->format('M j, Y'),
+                'end_date' => Carbon::parse($currentSeasonPeriod->end_date)->format('M j, Y'),
+            ]
+            : null;
+        $seasonKeyMap = [
+            'Non-Peak' => 'nonPeak',
+            'Peak' => 'peak',
+            'Super-Peak' => 'superPeak',
+        ];
+        $todaySeasonKey = $seasonKeyMap[$currentSeason] ?? 'nonPeak';
 
         // Group staycations by their pricing configurations
         $pricingByStaycation = [];
         foreach ($staycations as $staycation) {
             $name = $staycation->name;
-            $priceConfigs = $staycation->price_configs ?? [];
+            $rates = [
+                'nonPeak' => 0,
+                'peak' => 0,
+                'superPeak' => 0,
+            ];
 
-            if (!empty($priceConfigs) && isset($priceConfigs[0]['rates'])) {
-                $rates = $priceConfigs[0]['rates'];
-                $pricingByStaycation[$name] = [
-                    'nonPeak' => $rates['nonPeak'] ?? 0,
-                    'peak' => $rates['peak'] ?? 0,
-                    'superPeak' => $rates['superPeak'] ?? 0,
-                ];
-            } else {
-                $pricingByStaycation[$name] = [
-                    'nonPeak' => 0,
-                    'peak' => 0,
-                    'superPeak' => 0,
-                ];
+            foreach (($staycation->price_configs ?? []) as $config) {
+                if (!is_array($config) || !isset($config['rates']) || !is_array($config['rates'])) {
+                    continue;
+                }
+
+                foreach (array_keys($rates) as $rateKey) {
+                    $rateValue = (float) ($config['rates'][$rateKey] ?? 0);
+                    if ($rates[$rateKey] <= 0 && $rateValue > 0) {
+                        $rates[$rateKey] = $rateValue;
+                    }
+                }
             }
+
+            $currentPostedPrice = $pricingService->getStaycationRate($staycation, $today->copy(), $todaySeasonKey);
+            if ($currentPostedPrice <= 0) {
+                $currentPostedPrice = (float) ($staycation->price ?? 0);
+            }
+
+            $pricingByStaycation[$name] = $rates + [
+                'currentPostedPrice' => $currentPostedPrice,
+            ];
         }
 
-        return view('admin.stay.settings', compact('currentSeason', 'pricingByStaycation', 'staycations'));
+        return view('admin.stay.settings', compact(
+            'currentSeason',
+            'currentDayType',
+            'currentSeasonRange',
+            'pricingByStaycation',
+            'staycations'
+        ));
     }
 
     public function dayTourDays()

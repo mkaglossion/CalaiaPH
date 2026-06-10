@@ -2534,46 +2534,13 @@ class BookingController extends Controller
         }
         session(['booking' => $booking]);
 
-        // Determine season for the booking date range
+        // Use the check-in date season for the headline/base posted rate.
+        // Per-night pricing still resolves each date independently below.
         $checkinCarbon = \Carbon\Carbon::parse($checkin);
         $checkoutCarbon = \Carbon\Carbon::parse($checkout);
-        
-        // Find the highest priority peak period that overlaps with the booking dates
-        $overlappingPeriods = \App\Models\PeakPeriod::where(function($query) use ($checkin, $checkout) {
-            $query->whereBetween('start_date', [$checkin, $checkout])
-                  ->orWhereBetween('end_date', [$checkin, $checkout])
-                  ->orWhere(function($q) use ($checkin, $checkout) {
-                      $q->where('start_date', '<=', $checkin)
-                        ->where('end_date', '>=', $checkout);
-                  });
-        })
-        ->with('peakType')
-        ->get();
-        
-        $currentSeason = 'Non-Peak';
-        $highestPriority = -1;
-        
-        foreach ($overlappingPeriods as $period) {
-            $priority = $period->peakType->priority ?? 0;
-            if ($priority > $highestPriority) {
-                $highestPriority = $priority;
-                $currentSeason = $period->peakType->name;
-            }
-        }
-        
-        Log::info('Season for booking dates in staycationAvailability: ' . $currentSeason);
+        $currentSeason = $this->getSeasonTypeForDate($checkinCarbon);
 
-        // Map season to rate key
-        $seasonKeyMap = [
-            'Non-Peak' => 'nonPeak',
-            'Peak' => 'peak',
-            'Super-Peak' => 'superPeak'
-        ];
-        $seasonKey = $seasonKeyMap[$currentSeason] ?? 'nonPeak';
-        // Get weekend day IDs
-        $weekendDayIds = DayTypeDay::whereHas('dayType', fn($q) => $q->where('name', 'Weekend'))
-            ->pluck('weekday')
-            ->toArray();
+        Log::info('Season for staycationAvailability check-in date: ' . $currentSeason);
 
         // Get all staycations from admin panel
         $staycationsQuery = Staycation::with([
@@ -2801,6 +2768,10 @@ class BookingController extends Controller
                   });
         })
         ->with('peakType')
+        ->orderBy(
+            PeakType::select('priority')->whereColumn('peak_types.id', 'peak_periods.peak_type_id'),
+            'desc'
+        )
         ->get()
         ->map(function($period) {
             return [
@@ -3187,8 +3158,8 @@ class BookingController extends Controller
         $prices = [];
         foreach ($staycations as $staycation) {
             $checkinCarbon = \Carbon\Carbon::parse($checkin);
-            $season = $this->determineSeasonTypeForDate($checkinCarbon);
-            $seasonKey = str_replace('-', '', ucwords($season, '-')); // non-peak -> nonPeak
+            $season = $this->getSeasonTypeForDate($checkinCarbon);
+            $seasonKey = $this->mapSeasonToKey($season);
 
             $rate = $this->pricingService->getStaycationRate($staycation, $checkinCarbon, $seasonKey);
 

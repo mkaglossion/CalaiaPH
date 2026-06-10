@@ -28,7 +28,45 @@
         <h3 class="text-lg font-semibold text-blue-900 mb-2">Current Season</h3>
         <div class="flex items-center gap-2">
             <span class="text-2xl">{{ $currentSeason }}</span>
+            <span class="inline-flex items-center rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-blue-800 border border-blue-200">
+                {{ $currentDayType }}
+            </span>
             <span class="text-sm text-blue-700">(Today: {{ now()->format('M j, Y') }})</span>
+        </div>
+        @if($currentSeasonRange)
+            <p class="mt-2 text-sm text-blue-800">
+                Active configured range:
+                <span class="font-semibold">
+                    {{ $currentSeasonRange['start_date'] }} - {{ $currentSeasonRange['end_date'] }}
+                </span>
+                @if(!empty($currentSeasonRange['name']))
+                    <span class="text-blue-700">({{ $currentSeasonRange['name'] }})</span>
+                @endif
+            </p>
+        @else
+            <p class="mt-2 text-sm text-amber-700">
+                No active configured range found for today. Fallback season logic is being used.
+            </p>
+        @endif
+        <p class="mt-2 text-sm text-blue-800">
+            Today's posted prices below use the same pricing computation as the staycation booking availability page.
+        </p>
+    </div>
+
+    <div class="bg-white border rounded-lg p-6">
+        <h3 class="text-lg font-semibold mb-4">Today's Posted Rates</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            @foreach($pricingByStaycation as $staycationName => $rates)
+                <div class="border rounded-lg p-4">
+                    <div class="text-sm font-medium text-gray-800 mb-1">{{ $staycationName }}</div>
+                    <div class="text-2xl font-bold text-[#8f5d54]">
+                        ₱{{ number_format((float) ($rates['currentPostedPrice'] ?? 0), 0) }}
+                    </div>
+                    <div class="mt-1 text-xs text-gray-500">
+                        Based on {{ $currentSeason }} / {{ $currentDayType }}
+                    </div>
+                </div>
+            @endforeach
         </div>
     </div>
 

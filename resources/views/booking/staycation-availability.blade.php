@@ -2564,19 +2564,22 @@
                         currentDate.setDate(checkinDate.getDate() + i);
 
                         const dayShort = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
+                        const dateOnly = currentDate.toISOString().split('T')[0];
 
                         let season = 'Non-Peak';
                         for (const peak of peakPeriods) {
-                            const peakStart = new Date(peak.start_date);
-                            const peakEnd = new Date(peak.end_date);
-                            if (currentDate >= peakStart && currentDate <= peakEnd) {
+                            const peakStart = peak.start_date ? String(peak.start_date).split('T')[0] : '';
+                            const peakEnd = peak.end_date ? String(peak.end_date).split('T')[0] : '';
+                            if (peakStart && peakEnd && dateOnly >= peakStart && dateOnly <= peakEnd) {
                                 season = peak.peak_type_name || 'Peak';
                                 break;
                             }
                         }
 
                         const isWeekend = dayShort.toLowerCase() === 'sat' || dayShort.toLowerCase() === 'sun';
-                        const dateOnly = currentDate.toISOString().split('T')[0];
+                        const isPeakSeason = typeof season === 'string'
+                            && season.toLowerCase().includes('peak')
+                            && !season.toLowerCase().includes('non');
 
                         let rate = 0;
                         const datePricing = (roomDetail && roomDetail.date_pricing) ? roomDetail.date_pricing : {};
@@ -2585,11 +2588,11 @@
                             rate = parseFloat(datePricing[dateOnly]) || roomBasePrice;
                         } else if (dayTypePricing && Object.keys(dayTypePricing).length > 0) {
                             if (isWeekend) {
-                                rate = season === 'Peak'
+                                rate = isPeakSeason
                                     ? (dayTypePricing.peak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.regular || roomBasePrice)
                                     : (dayTypePricing.regular_weekend || dayTypePricing.regular || roomBasePrice);
                             } else {
-                                rate = season === 'Peak'
+                                rate = isPeakSeason
                                     ? (dayTypePricing.peak_weekday || dayTypePricing.peak || dayTypePricing.weekday || dayTypePricing.regular || roomBasePrice)
                                     : (dayTypePricing.regular_weekday || dayTypePricing.regular || roomBasePrice);
                             }
@@ -2672,19 +2675,22 @@
                         currentDate.setDate(checkinDate.getDate() + i);
 
                         const dayShort = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
+                        const dateOnly = currentDate.toISOString().split('T')[0];
 
                         let season = 'Non-Peak';
                         for (const peak of peakPeriods) {
-                            const peakStart = new Date(peak.start_date);
-                            const peakEnd = new Date(peak.end_date);
-                            if (currentDate >= peakStart && currentDate <= peakEnd) {
+                            const peakStart = peak.start_date ? String(peak.start_date).split('T')[0] : '';
+                            const peakEnd = peak.end_date ? String(peak.end_date).split('T')[0] : '';
+                            if (peakStart && peakEnd && dateOnly >= peakStart && dateOnly <= peakEnd) {
                                 season = peak.peak_type_name || 'Peak';
                                 break;
                             }
                         }
 
                         const isWeekend = dayShort.toLowerCase() === 'sat' || dayShort.toLowerCase() === 'sun';
-                        const dateOnly = currentDate.toISOString().split('T')[0];
+                        const isPeakSeason = typeof season === 'string'
+                            && season.toLowerCase().includes('peak')
+                            && !season.toLowerCase().includes('non');
 
                         let rate = 0;
                         const datePricing = (roomDetail && roomDetail.date_pricing) ? roomDetail.date_pricing : {};
@@ -2693,11 +2699,11 @@
                             rate = parseFloat(datePricing[dateOnly]) || basePrice;
                         } else if (dayTypePricing && Object.keys(dayTypePricing).length > 0) {
                             if (isWeekend) {
-                                rate = season === 'Peak'
+                                rate = isPeakSeason
                                     ? (dayTypePricing.peak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.regular || basePrice)
                                     : (dayTypePricing.regular_weekend || dayTypePricing.regular || basePrice);
                             } else {
-                                rate = season === 'Peak'
+                                rate = isPeakSeason
                                     ? (dayTypePricing.peak_weekday || dayTypePricing.peak || dayTypePricing.weekday || dayTypePricing.regular || basePrice)
                                     : (dayTypePricing.regular_weekday || dayTypePricing.regular || basePrice);
                             }
@@ -2867,6 +2873,10 @@
                         const datePricing = (roomDetail && roomDetail.date_pricing) ? roomDetail.date_pricing : {};
                         const dateOnlyStr = dateOnly;
 
+                        const isPeakSeason = typeof season === 'string'
+                            && season.toLowerCase().includes('peak')
+                            && !season.toLowerCase().includes('non');
+
                         if (datePricing[dateOnlyStr]) {
                             // Use specific date price override
                             rate = parseFloat(datePricing[dateOnlyStr]) || basePrice;
@@ -2874,12 +2884,12 @@
                             // Use dynamic pricing from roomDetail
                             if (isWeekend) {
                                 dayType = 'Weekend';
-                                rate = season === 'Peak'
+                                rate = isPeakSeason
                                     ? (dayTypePricing.peak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.regular || basePrice)
                                     : (dayTypePricing.regular_weekend || dayTypePricing.regular || basePrice);
                             } else {
                                 dayType = 'Weekday';
-                                rate = season === 'Peak'
+                                rate = isPeakSeason
                                     ? (dayTypePricing.peak_weekday || dayTypePricing.peak || dayTypePricing.weekday || dayTypePricing.regular || basePrice)
                                     : (dayTypePricing.regular_weekday || dayTypePricing.regular || basePrice);
                             }
