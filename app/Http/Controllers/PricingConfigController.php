@@ -253,12 +253,26 @@ class PricingConfigController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Check for overlaps with same or higher priority peak types
-        $overlapWarning = $this->checkPeakPeriodOverlap(
-            $request->peak_type_id,
+        $overlapError = $this->checkPeakPeriodOverlap(
             $request->start_date,
             $request->end_date
         );
+
+        if ($overlapError) {
+            $message = 'Invalid date range. This schedule overlaps with an existing season range.';
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'errors' => [
+                        'date_range' => [$message],
+                    ],
+                ], 422);
+            }
+
+            return redirect()->back()->with('error', $message)->withInput();
+        }
 
         $period = PeakPeriod::create([
             'peak_type_id' => $request->peak_type_id,
@@ -273,14 +287,9 @@ class PricingConfigController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Peak period added successfully' . ($overlapWarning ? '. Note: This period overlaps with existing periods.' : ''),
+                'message' => 'Peak period added successfully.',
                 'period' => $period,
-                'overlap_warning' => $overlapWarning
             ]);
-        }
-
-        if ($overlapWarning) {
-            return redirect()->back()->with('warning', 'Peak period added. Note: This period overlaps with existing periods.');
         }
 
         return redirect()->back()->with('success', 'Peak period added successfully.');
@@ -307,6 +316,28 @@ class PricingConfigController extends Controller
                 return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
             }
             return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $overlapError = $this->checkPeakPeriodOverlap(
+            $request->start_date,
+            $request->end_date,
+            $peakPeriod->id
+        );
+
+        if ($overlapError) {
+            $message = 'Invalid date range. This schedule overlaps with an existing season range.';
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'errors' => [
+                        'date_range' => [$message],
+                    ],
+                ], 422);
+            }
+
+            return redirect()->back()->with('error', $message)->withInput();
         }
 
         $peakPeriod->update($validator->validated());
@@ -341,17 +372,16 @@ class PricingConfigController extends Controller
     }
 
     /**
-     * Check for overlapping peak periods
+     * Check for overlapping peak periods.
+     *
+     * Overlapping season ranges are rejected to keep pricing unambiguous.
      * 
-     * Higher priority peak types (Super-Peak > Peak > Non-Peak) take precedence
-     * when overlaps occur
-     * 
-     * @param int $peakTypeId
      * @param string $startDate
      * @param string $endDate
+     * @param int|null $ignoreId
      * @return string|null
      */
-    private function checkPeakPeriodOverlap($peakTypeId, $startDate, $endDate)
+    private function checkPeakPeriodOverlap($startDate, $endDate, $ignoreId = null)
     {
         $newStart = Carbon::parse($startDate);
         $newEnd = Carbon::parse($endDate);
@@ -362,16 +392,25 @@ class PricingConfigController extends Controller
                       ->where('end_date', '>=', $newStart);
                 });
             })
-            ->where('id', '!=', request()->route('peakPeriod') ? request()->route('peakPeriod')->id : 0)
+            ->when($ignoreId, fn($query) => $query->where('id', '!=', $ignoreId))
             ->with('peakType')
+            ->orderBy('start_date')
             ->get();
 
         if ($overlaps->isEmpty()) {
             return null;
         }
 
-        $overlapNames = $overlaps->pluck('peakType.name')->unique()->implode(', ');
-        return "Overlaps with existing period(s): {$overlapNames}";
+        $overlapLabels = $overlaps->map(function ($period) {
+            $label = $period->peakType->name ?? 'Season';
+            if (!empty($period->name)) {
+                $label .= ' (' . $period->name . ')';
+            }
+
+            return $label . ' [' . $period->start_date . ' to ' . $period->end_date . ']';
+        })->implode(', ');
+
+        return "This date range overlaps with existing season range(s): {$overlapLabels}.";
     }
 
     /**

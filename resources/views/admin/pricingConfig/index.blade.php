@@ -26,6 +26,9 @@
         font-weight: 600;
     }
     .undo-banner button:hover { background: #fcd34d; }
+    .swal2-container {
+        z-index: 12000 !important;
+    }
 </style>
 
 <div class="p-4 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl space-y-6">
@@ -260,7 +263,7 @@
                 x-transition.opacity
                 x-cloak
                 @keydown.escape.window="closeModal()"
-                class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-9999 p-4"
+                class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             >
                 <div
                     @click.away="closeModal()"
@@ -274,6 +277,13 @@
                     <form @submit.prevent="submitForm" class="space-y-4">
                         @csrf
                         <template x-if="editMode">@method('PUT')</template>
+
+                        <div
+                            x-show="formError"
+                            x-cloak
+                            class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                            x-text="formError"
+                        ></div>
 
                         <div class="mb-4">
                             <span class="block font-semibold mb-2">Duration Type</span>
@@ -825,6 +835,8 @@
             modalOpen: false,
             editMode: false,
             selectedType: '',
+            formError: '',
+            submitting: false,
             predefinedTypes: @js($peakTypes->map(function($type) {
                 $colorClass = $type->name === 'Super-Peak' ? 'bg-red-600 text-white' : ($type->name === 'Peak' ? 'bg-yellow-500 text-white' : 'bg-green-600 text-white');
                 $borderClass = $type->name === 'Super-Peak' ? 'border-red-600' : ($type->name === 'Peak' ? 'border-yellow-500' : 'border-green-600');
@@ -846,6 +858,8 @@
             openModal() {
                 this.editMode = false;
                 this.selectedType = '';
+                this.formError = '';
+                this.submitting = false;
                 this.form = { id: null, peak_type_id: '', start_date: '', end_date: '', name: '' };
                 this.modalOpen = true;
             },
@@ -858,6 +872,8 @@
             editPeriod(id, peakTypeId, startDate, endDate, name) {
                 this.editMode = true;
                 this.selectedType = String(peakTypeId);
+                this.formError = '';
+                this.submitting = false;
                 this.form = {
                     id: id,
                     peak_type_id: String(peakTypeId),
@@ -872,15 +888,21 @@
                 this.modalOpen = false;
                 this.editMode = false;
                 this.selectedType = '';
+                this.formError = '';
+                this.submitting = false;
                 this.form = { id: null, peak_type_id: '', start_date: '', end_date: '', name: '' };
             },
             
             async submitForm() {
+                if (this.submitting) return;
+
                 const isUpdate = this.editMode && this.form.id;
                 const url = isUpdate
                     ? '{{ route("admin.peakPeriods.update", ":id") }}'.replace(':id', this.form.id)
                     : '{{ route("admin.peakPeriods.store") }}';
                 const method = isUpdate ? 'PUT' : 'POST';
+                this.formError = '';
+                this.submitting = true;
                 
                 try {
                     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -898,18 +920,23 @@
                     const data = await res.json();
                     
                     if (res.ok) {
-                        showPricingToast('Success!', data.message || (isUpdate ? 'Duration updated successfully!' : 'Duration added successfully!'), 'success');
                         this.closeModal();
+                        showPricingToast('Success!', data.message || (isUpdate ? 'Duration updated successfully!' : 'Duration added successfully!'), 'success');
                         window.location.reload();
                     } else if (data.errors) {
                         const errors = Object.values(data.errors).flat().join('\n');
+                        this.formError = errors || 'Operation failed.';
                         showPricingToast('Error!', errors, 'error');
                     } else {
-                        showPricingToast('Error!', data.message || 'Operation failed.', 'error');
+                        this.formError = data.message || 'Operation failed.';
+                        showPricingToast('Error!', this.formError, 'error');
                     }
                 } catch (err) {
                     console.error(err);
-                    showPricingToast('Error!', 'Error submitting duration.', 'error');
+                    this.formError = 'Error submitting duration.';
+                    showPricingToast('Error!', this.formError, 'error');
+                } finally {
+                    this.submitting = false;
                 }
             }
         }
