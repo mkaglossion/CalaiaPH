@@ -42,6 +42,54 @@
                 <p><strong>Name:</strong> {{ ($customerInfo['first_name'] ?? $bookingData['first_name'] ?? '') . ' ' . ($customerInfo['last_name'] ?? $bookingData['last_name'] ?? '') }}</p>
                 <p><strong>Email:</strong> {{ $customerInfo['email'] ?? $bookingData['email'] ?? '' }}</p>
                 @php
+                    $acceptances = $bookingData['acceptances'] ?? [];
+                @endphp
+                @if(!empty($acceptances))
+                    <p><strong>Accepted Agreements:</strong></p>
+                    <ul>
+                        @foreach($acceptances as $agreement)
+                            @php
+                                $agreementLabel = $agreement['label'] ?? 'Agreement';
+                                $acceptedAt = !empty($agreement['accepted_at']) ? \Carbon\Carbon::parse($agreement['accepted_at'])->format('M d, Y h:i A') : null;
+                                $agreementDetails = is_array($agreement['details'] ?? null) ? $agreement['details'] : [];
+                                $detailLabels = [
+                                    'participant_name' => 'Participant / Guest Name',
+                                    'birth_date' => 'Date of Birth',
+                                    'gender' => 'Gender',
+                                    'address' => 'Address',
+                                    'parent_guardian_name' => 'Parent / Guardian Name',
+                                    'emergency_contact_name' => 'Emergency Contact Name',
+                                    'emergency_contact_phone' => 'Emergency Contact Number',
+                                    'relationship_to_participant' => 'Relationship to Participant',
+                                    'signature_name' => 'Typed Name / Signature',
+                                    'signature_date' => 'Date',
+                                    'parent_signature_name' => 'Parent / Guardian Signature',
+                                    'child_ward_name' => 'Child / Ward Name',
+                                    'parent_signature_date' => 'Parent / Guardian Date',
+                                    'medical_condition' => 'Medical or Physical Condition',
+                                ];
+                            @endphp
+                            <li>
+                                {{ $agreementLabel }} - {{ !empty($agreement['accepted']) ? 'Accepted' : 'Not accepted' }}
+                                @if($acceptedAt)
+                                    ({{ $acceptedAt }})
+                                @endif
+                                @if(!empty($agreementDetails))
+                                    <ul>
+                                        @foreach($agreementDetails as $field => $value)
+                                            @if($value !== null && $value !== '')
+                                                <li>
+                                                    {{ $detailLabels[$field] ?? str_replace('_', ' ', ucfirst($field)) }}: {{ $value }}
+                                                </li>
+                                            @endif
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+                @php
                 // Use the passed isStaycation flag, default to false if not set
                 if (!isset($isStaycation)) {
                     $isStaycation = false;

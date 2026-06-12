@@ -318,6 +318,87 @@ class BookingController extends Controller
 
         return $accommodation['staycation']['price'] ?? 0;
     }
+
+    /**
+     * Build a canonical acceptance record for staycation checkout.
+     *
+     * Keeping the acceptances in the booking payload lets the confirmation email
+     * and admin views show exactly what the guest agreed to.
+     */
+    private function buildStaycationAcceptanceData(Request $request): array
+    {
+        $acceptedAt = now()->toDateTimeString();
+        $termsAccepted = $request->boolean('terms_and_policy_accepted') || $request->boolean('terms_accepted');
+        $waiverDetails = $this->buildCampWaiverSubmissionData($request);
+
+        return [
+            'terms_and_policy' => [
+                'accepted' => $termsAccepted,
+                'accepted_at' => $termsAccepted ? $acceptedAt : null,
+                'label' => 'Terms & Conditions and Cancellation Policy',
+                'source' => $request->boolean('terms_and_policy_accepted') ? 'terms_and_policy_accepted' : 'terms_accepted',
+                'version' => 'staycation-terms-v1',
+            ],
+            'camp_waiver' => [
+                'accepted' => $request->boolean('camp_waiver_accepted'),
+                'accepted_at' => $request->boolean('camp_waiver_accepted') ? $acceptedAt : null,
+                'label' => 'Camp Waiver and Release from Liability',
+                'source' => 'camp_waiver_accepted',
+                'version' => 'camp-waiver-v1',
+                'details' => $waiverDetails,
+            ],
+        ];
+    }
+
+    private function campWaiverRules(): array
+    {
+        return [
+            'camp_waiver_participant_name' => 'required|string|max:255',
+            'camp_waiver_birth_date' => 'required|date',
+            'camp_waiver_gender' => 'required|string|in:male,female,other,prefer_not_to_say',
+            'camp_waiver_address' => 'required|string|max:500',
+            'camp_waiver_parent_guardian_name' => 'nullable|string|max:255',
+            'camp_waiver_emergency_name' => 'required|string|max:255',
+            'camp_waiver_emergency_phone' => 'required|string|max:20',
+            'camp_waiver_relationship' => 'required|string|max:255',
+            'camp_waiver_medical_condition' => 'nullable|string|max:1000',
+            'camp_waiver_signature_name' => 'required|string|max:255',
+            'camp_waiver_signature_date' => 'required|date',
+            'camp_waiver_parent_signature_name' => 'nullable|string|max:255',
+            'camp_waiver_child_ward_name' => 'nullable|string|max:255',
+            'camp_waiver_parent_signature_date' => 'nullable|date',
+        ];
+    }
+
+    private function buildCampWaiverSubmissionData(Request $request): array
+    {
+        $fields = [
+            'participant_name' => 'camp_waiver_participant_name',
+            'birth_date' => 'camp_waiver_birth_date',
+            'gender' => 'camp_waiver_gender',
+            'address' => 'camp_waiver_address',
+            'parent_guardian_name' => 'camp_waiver_parent_guardian_name',
+            'emergency_contact_name' => 'camp_waiver_emergency_name',
+            'emergency_contact_phone' => 'camp_waiver_emergency_phone',
+            'relationship_to_participant' => 'camp_waiver_relationship',
+            'medical_condition' => 'camp_waiver_medical_condition',
+            'signature_name' => 'camp_waiver_signature_name',
+            'signature_date' => 'camp_waiver_signature_date',
+            'parent_signature_name' => 'camp_waiver_parent_signature_name',
+            'child_ward_name' => 'camp_waiver_child_ward_name',
+            'parent_signature_date' => 'camp_waiver_parent_signature_date',
+        ];
+
+        $submission = [];
+
+        foreach ($fields as $key => $inputKey) {
+            $value = trim((string) $request->input($inputKey, ''));
+            $submission[$key] = $value !== '' ? $value : null;
+        }
+
+        return $submission;
+    }
+
     public function debugSession()
     {
         // Dump the entire session
@@ -1247,8 +1328,16 @@ class BookingController extends Controller
         $vatService = app(\App\Services\VatService::class);
         $vatRate = $vatService->getCurrentVatRate();
         $vatRatePercentage = $vatService->getCurrentVatRatePercentage();
+        $confirmationContent = app(BookingConfirmationContentService::class)->forType('staycation', [
+            'reference' => $booking['transaction_id'] ?? '',
+            'package' => $booking['package'] ?? 'Staycation',
+        ]);
+        $campWaiverContent = app(BookingConfirmationContentService::class)->forType('campwaiver', [
+            'reference' => $booking['transaction_id'] ?? '',
+            'package' => $booking['package'] ?? 'Staycation',
+        ]);
 
-        return view('booking.staycation-payment', compact('booking', 'selectedFoods', 'foods', 'staycations', 'selectedActivities', 'selectedActivityPackages', 'vatRate', 'vatRatePercentage'));
+        return view('booking.staycation-payment', compact('booking', 'selectedFoods', 'foods', 'staycations', 'selectedActivities', 'selectedActivityPackages', 'vatRate', 'vatRatePercentage', 'confirmationContent', 'campWaiverContent'));
     }
 
     public function payment()
@@ -1314,6 +1403,18 @@ class BookingController extends Controller
             return redirect()->back()
                 ->withErrors(['terms_and_policy_accepted' => 'You must accept the booking terms and policy.'])
                 ->withInput();
+        }
+
+        if (!empty(session('booking', [])) && (session('booking.booking_type') === 'staycation')) {
+            if (!$request->boolean('camp_waiver_accepted')) {
+                return redirect()->back()
+                    ->withErrors(['camp_waiver_accepted' => 'You must accept the camp waiver before continuing.'])
+                    ->withInput();
+            }
+
+            $request->validate(array_merge($this->campWaiverRules(), [
+                'camp_waiver_accepted' => 'accepted',
+            ]));
         }
 
         // Use only trusted server-side session data.
@@ -1388,6 +1489,7 @@ class BookingController extends Controller
             'applied_promo_code' => 'nullable|string',
             'terms_and_policy_accepted' => 'sometimes|accepted',
             'terms_accepted' => 'sometimes|accepted',
+            'camp_waiver_accepted' => 'sometimes|accepted',
         ]);
 
         if (!$request->boolean('terms_and_policy_accepted') && !$request->boolean('terms_accepted')) {
@@ -1396,8 +1498,29 @@ class BookingController extends Controller
                 ->withInput();
         }
 
+        $requiresCampWaiver = !empty($booking) && (($booking['booking_type'] ?? null) === 'staycation');
+        if ($requiresCampWaiver && !$request->boolean('camp_waiver_accepted')) {
+            return redirect()->back()
+                ->withErrors(['camp_waiver_accepted' => 'You must accept the camp waiver before continuing.'])
+                ->withInput();
+        }
+
+        if ($requiresCampWaiver) {
+            $request->validate(array_merge($this->campWaiverRules(), [
+                'camp_waiver_accepted' => 'accepted',
+            ]));
+        }
+
         if (!empty($booking) && (($booking['booking_type'] ?? null) === 'staycation')) {
             $booking = $this->normalizeAndRecalculateStaycationBooking($booking);
+            session(['booking' => $booking]);
+        }
+
+        $acceptances = $requiresCampWaiver
+            ? $this->buildStaycationAcceptanceData($request)
+            : [];
+        if ($requiresCampWaiver) {
+            $booking['acceptances'] = $acceptances;
             session(['booking' => $booking]);
         }
 
@@ -1512,6 +1635,7 @@ class BookingController extends Controller
                 'phone' => $request->phone,
                 'special_requests' => $request->special_requests,
                 'cancellation_policy' => $request->cancellation_policy,
+                'acceptances' => $acceptances,
                 'payment_method' => $request->payment_method,
                 'promo_code' => $appliedPromo?->code,
                 'promo_discount' => $promoDiscount,

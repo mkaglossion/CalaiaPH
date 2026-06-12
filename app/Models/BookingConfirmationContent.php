@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BookingConfirmationContent extends Model
 {
-    public const TYPES = ['staycation', 'dayvisit', 'package'];
+    public const TYPES = ['staycation', 'campwaiver', 'dayvisit', 'package'];
 
     protected $fillable = [
         'booking_type',
@@ -22,6 +22,8 @@ class BookingConfirmationContent extends Model
         'home_button_label',
         'print_button_label',
         'payment_button_label',
+        'camp_waiver_title',
+        'camp_waiver_body',
         'email_subject',
         'email_greeting',
         'email_intro',
@@ -39,6 +41,7 @@ class BookingConfirmationContent extends Model
 
         return match ($type) {
             'staycation' => 'staycation',
+            'campwaiver', 'campwaiverform', 'campwaiverandreleasefromliability', 'campwaiverandrelease' => 'campwaiver',
             'package' => 'package',
             'dayvisit', 'daytour', 'regular' => 'dayvisit',
             default => 'dayvisit',

@@ -137,7 +137,9 @@
           ['title'=>'Pricing','icon'=>'coins','route'=>'admin.pricing.*','sub'=>[
             ['label'=>'Rate Matrix','route'=>'admin.pricingConfig.index'],
           ]],
-          ['title'=>'Booking Confirmation','icon'=>'file-text','route'=>'admin.booking-confirmation.index','active'=>'admin.booking-confirmation.*'],
+          ['title'=>'Booking Confirmation','icon'=>'file-text','route'=>'admin.booking-confirmation.index','sub'=>[
+            ['label'=>'Camp Waiver','route'=>'admin.booking-confirmation.index','params'=>['tab'=>'camp-waiver']],
+          ]],
           ['title'=>'Promo Codes','icon'=>'ticket','route'=>'admin.promo-codes.index'],
           ['title'=>'Settings','icon'=>'settings','route'=>'admin.settings.*','sub'=>[
             ['label'=>'Profile','route'=>'admin.settings.profile'],
@@ -177,10 +179,16 @@
 
               <div x-cloak x-show="open" x-transition class="pl-6 space-y-1">
                 @foreach($item['sub'] as $sub)
+                  @php
+                    $subParams = $sub['params'] ?? [];
+                    $subRouteActive = request()->routeIs($sub['route']) && (
+                      empty($subParams) || collect($subParams)->every(fn ($value, $key) => request()->query($key) == $value)
+                    );
+                  @endphp
                   <a
-                    href="{{ route($sub['route']) }}"
+                    href="{{ route($sub['route'], $subParams) }}"
                     @click="closeSidebar()"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg transition {{ request()->routeIs($sub['route']) ? 'text-yellow-200 bg-white/5' : 'hover:bg-white/5 hover:text-gray-100' }}"
+                    class="flex items-center gap-2 px-3 py-2 rounded-lg transition {{ $subRouteActive ? 'text-yellow-200 bg-white/5' : 'hover:bg-white/5 hover:text-gray-100' }}"
                   >
                     <i data-lucide="dot" class="w-4 h-4"></i>
                     <span class="truncate">{{ $sub['label'] }}</span>

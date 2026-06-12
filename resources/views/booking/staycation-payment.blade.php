@@ -66,6 +66,50 @@ $vatRate = $vatService->getCurrentVatRate();
 // Get selected activities from session
 $selectedActivities = $booking['selected_activities'] ?? [];
 $selectedActivityPackages = $booking['selected_activity_packages'] ?? [];
+
+// Dynamic confirmation CMS content, including the camp waiver copy
+$confirmationContent = $confirmationContent ?? app(\App\Services\BookingConfirmationContentService::class)->forType('staycation', [
+    'reference' => $booking['transaction_id'] ?? '',
+    'package' => $booking['package'] ?? 'Staycation',
+]);
+$campWaiverContent = $campWaiverContent ?? app(\App\Services\BookingConfirmationContentService::class)->forType('campwaiver', [
+    'reference' => $booking['transaction_id'] ?? '',
+    'package' => $booking['package'] ?? 'Staycation',
+]);
+$campWaiverService = app(\App\Services\BookingConfirmationContentService::class);
+$campWaiverTitle = trim((string) ($campWaiverContent['camp_waiver']['title'] ?? '')) !== '' ? $campWaiverContent['camp_waiver']['title'] : 'Camp Waiver and Release from Liability';
+$campWaiverBody = trim((string) ($campWaiverContent['camp_waiver']['body'] ?? '')) !== '' ? $campWaiverContent['camp_waiver']['body'] : $campWaiverService->defaultCampWaiverBody();
+$campWaiverInitial = [
+    'participant_name' => old('camp_waiver_participant_name', ''),
+    'birth_date' => old('camp_waiver_birth_date', ''),
+    'gender' => old('camp_waiver_gender', ''),
+    'address' => old('camp_waiver_address', ''),
+    'parent_guardian_name' => old('camp_waiver_parent_guardian_name', ''),
+    'emergency_name' => old('camp_waiver_emergency_name', ''),
+    'emergency_phone' => old('camp_waiver_emergency_phone', ''),
+    'relationship' => old('camp_waiver_relationship', ''),
+    'medical_condition' => old('camp_waiver_medical_condition', ''),
+    'signature_name' => old('camp_waiver_signature_name', ''),
+    'signature_date' => old('camp_waiver_signature_date', ''),
+    'parent_signature_name' => old('camp_waiver_parent_signature_name', ''),
+    'child_ward_name' => old('camp_waiver_child_ward_name', ''),
+    'parent_signature_date' => old('camp_waiver_parent_signature_date', ''),
+];
+$campWaiverHasErrors = collect([
+    'camp_waiver_accepted',
+    'camp_waiver_participant_name',
+    'camp_waiver_birth_date',
+    'camp_waiver_gender',
+    'camp_waiver_address',
+    'camp_waiver_emergency_name',
+    'camp_waiver_emergency_phone',
+    'camp_waiver_relationship',
+    'camp_waiver_signature_name',
+    'camp_waiver_signature_date',
+    'camp_waiver_parent_signature_name',
+    'camp_waiver_child_ward_name',
+    'camp_waiver_parent_signature_date',
+])->contains(fn ($field) => $errors->has($field));
 @endphp
 
 <script>
@@ -137,7 +181,13 @@ let vatRate = {{ $vatRate }};
               {{-- Payment Form --}}
               <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8">
                 <section aria-labelledby="payment-method-heading">
-                  <form action="{{ route('booking.initiatePayment') }}" method="POST" class="space-y-8">
+                  <form
+                    id="staycation-payment-form"
+                    action="{{ route('booking.initiatePayment') }}"
+                    method="POST"
+                    class="space-y-8"
+                    @submit="if (!validateCampWaiverBeforePayment()) { $event.preventDefault(); }"
+                  >
                     @csrf
 
                     {{-- Hidden Booking Data --}}
@@ -371,14 +421,108 @@ let vatRate = {{ $vatRate }};
                     {{-- Booking Terms & Policy Agreement --}}
                     <div
                       class="bg-yellow-50 border border-blue-200 rounded-xl p-4 sm:p-6"
-                      x-data="{ bookingPolicyModal: false }"
-                      @keydown.escape.window="bookingPolicyModal = false"
+                      x-data="{
+                        bookingPolicyModal: false,
+                        campWaiverModal: @js($campWaiverHasErrors),
+                        campWaiverStep: @js($campWaiverHasErrors ? 'fill' : 'read'),
+                        bookingPolicyAccepted: @js((bool) old('terms_and_policy_accepted')),
+                        campWaiverAccepted: @js((bool) old('camp_waiver_accepted')),
+                        campWaiver: @js($campWaiverInitial),
+                        requiredCampWaiverFields: [
+                          'participant_name',
+                          'birth_date',
+                          'gender',
+                          'relationship',
+                          'address',
+                          'emergency_name',
+                          'emergency_phone',
+                          'signature_name',
+                          'signature_date',
+                        ],
+                        displayValue(value) { return value && String(value).trim() !== '' ? value : '________________'; },
+                        genderLabel(value) {
+                          return ({
+                            male: 'Male',
+                            female: 'Female',
+                            other: 'Other',
+                            prefer_not_to_say: 'Prefer not to disclose',
+                          })[value] || '________________';
+                        },
+                        isCampWaiverFieldsComplete() {
+                          return this.requiredCampWaiverFields.every((field) => {
+                            return String(this.campWaiver[field] || '').trim() !== '';
+                          });
+                        },
+                        canProceedToPayment() {
+                          return this.bookingPolicyAccepted && this.campWaiverAccepted && this.isCampWaiverFieldsComplete();
+                        },
+                        getFirstMissingCampWaiverField() {
+                          if (!this.bookingPolicyAccepted) {
+                            return 'terms_and_policy';
+                          }
+
+                          if (!this.campWaiverAccepted) {
+                            return 'camp_waiver';
+                          }
+
+                          return this.requiredCampWaiverFields.find((field) => {
+                            return String(this.campWaiver[field] || '').trim() === '';
+                          }) || null;
+                        },
+                        showPaymentToast(message) {
+                          Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'warning',
+                            title: message,
+                            showConfirmButton: false,
+                            timer: 4500,
+                            timerProgressBar: true,
+                            customClass: {
+                              popup: 'rounded-xl shadow-lg',
+                            }
+                          });
+                        },
+                        validateCampWaiverBeforePayment() {
+                          const missingField = this.getFirstMissingCampWaiverField();
+
+                          if (!missingField) {
+                            return true;
+                          }
+
+                          if (missingField === 'terms_and_policy') {
+                            this.showPaymentToast('Please accept the terms and conditions before proceeding.');
+                            return false;
+                          }
+
+                          if (missingField === 'camp_waiver') {
+                            this.showPaymentToast('Please accept the camp waiver before proceeding.');
+                            return false;
+                          }
+                          this.campWaiverModal = true;
+                          this.campWaiverStep = 'fill';
+
+                          const missingElement = this.$el.querySelector(`#camp_waiver_${missingField}`);
+                          if (missingElement) {
+                            window.setTimeout(() => missingElement.focus(), 150);
+                          }
+
+                          this.showPaymentToast('Please complete the required camp waiver details before proceeding to payment.');
+                          return false;
+                        }
+                      }"
+                      @keydown.escape.window="bookingPolicyModal = false; campWaiverModal = false"
                     >
+                      <p class="mb-4 text-sm font-medium text-gray-700">
+                        Please read our terms and conditions, and camp waiver before proceeding.
+                      </p>
+
                       <div class="flex items-start">
                         <input
                           type="checkbox"
                           id="terms_and_policy"
                           name="terms_and_policy_accepted"
+                          x-model="bookingPolicyAccepted"
                           class="mt-1 mr-3 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-600"
                           {{ old('terms_and_policy_accepted') ? 'checked' : '' }}
                           required
@@ -403,6 +547,452 @@ let vatRate = {{ $vatRate }};
                       @error('terms_and_policy_accepted')
                         <p class="text-xs text-red-600 mt-2">{{ $message }}</p>
                       @enderror
+
+                      <div class="mt-5 rounded-xl border border-rose-200 bg-white/70 p-4 sm:p-6">
+                        <div class="flex items-start">
+                          <input
+                            type="checkbox"
+                            id="camp_waiver"
+                            name="camp_waiver_accepted"
+                            x-model="campWaiverAccepted"
+                            class="mt-1 mr-3 h-4 w-4 text-rose-600 border-gray-300 focus:ring-rose-600"
+                            {{ old('camp_waiver_accepted') ? 'checked' : '' }}
+                            required
+                          >
+                          <label for="camp_waiver" class="text-xs sm:text-sm text-gray-700 leading-relaxed">
+                            <strong>I agree to the {{ $campWaiverTitle }}</strong><br>
+                            I confirm that the details I entered in the camp waiver form are true and complete.
+                          </label>
+                        </div>
+
+                        <div class="mt-3 pl-7">
+                          <button
+                            type="button"
+                            class="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#8f5d54] hover:underline"
+                            @click="campWaiverStep = 'read'; campWaiverModal = true"
+                          >
+                            <i class="bi bi-pencil-square"></i>
+                            Review or edit camp waiver
+                          </button>
+                        </div>
+
+                        @error('camp_waiver_accepted')
+                          <p class="text-xs text-red-600 mt-2">{{ $message }}</p>
+                        @enderror
+                      </div>
+
+                      <div
+                        x-show="campWaiverModal"
+                        x-cloak
+                        x-transition.opacity
+                        class="fixed inset-0 z-9999 bg-black/50 p-4 sm:p-6 overflow-y-auto"
+                        @click.self="campWaiverModal = false"
+                      >
+                        <div class="mx-auto mt-4 sm:mt-10 mb-4 w-full max-w-6xl rounded-2xl bg-white shadow-2xl border border-gray-200 max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden">
+                          <div class="flex flex-wrap items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6">
+                            <div class="space-y-3">
+                              <div>
+                                <p class="text-xs font-semibold tracking-wide text-[#8f5d54]">CAMP WAIVER</p>
+                                <h3 class="mt-1 text-base sm:text-lg font-semibold text-gray-900">{{ $campWaiverTitle }}</h3>
+                              </div>
+
+                              <div class="flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors"
+                                  :class="campWaiverStep === 'read' ? 'border-[#8f5d54] bg-[#8f5d54] text-white' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'"
+                                  @click="campWaiverStep = 'read'"
+                                >
+                                  <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-[11px]">1</span>
+                                  Review waiver
+                                </button>
+                                <button
+                                  type="button"
+                                  class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors"
+                                  :class="campWaiverStep === 'fill' ? 'border-[#8f5d54] bg-[#8f5d54] text-white' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'"
+                                  @click="campWaiverStep = 'fill'"
+                                >
+                                  <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-[11px]">2</span>
+                                  Complete form
+                                </button>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                              @click="campWaiverModal = false"
+                              aria-label="Close camp waiver modal"
+                            >
+                              <i class="bi bi-x-lg"></i>
+                            </button>
+                          </div>
+
+                          <div class="flex-1 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
+                            <div class="space-y-6">
+                              <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
+                                <p class="text-sm font-semibold text-gray-900">How to complete this waiver</p>
+                                <p class="mt-1 text-xs sm:text-sm text-gray-600">
+                                  Best practice: read the waiver first, then complete the required details. Optional and guardian-related fields are grouped separately to keep the form cleaner on mobile.
+                                </p>
+                              </div>
+
+                              <div
+                                x-show="campWaiverStep === 'read'"
+                                x-cloak
+                                x-transition.opacity
+                                class="space-y-6"
+                              >
+                                <div class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+                                  <p class="text-sm font-semibold text-gray-900">Camp Waiver Text</p>
+                                  <div class="mt-3 max-h-[42vh] overflow-y-auto pr-1 space-y-4 text-sm leading-6 text-gray-700 whitespace-pre-line">
+                                    {!! nl2br(e($campWaiverBody)) !!}
+                                  </div>
+                                </div>
+
+                                <div class="grid gap-4 lg:grid-cols-3">
+                                  <div class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 lg:col-span-2">
+                                    <p class="text-sm font-semibold text-gray-900">Before you proceed</p>
+                                    <ul class="mt-3 space-y-2 text-sm text-gray-700">
+                                      <li>&bull; Make sure the guest information is complete and accurate.</li>
+                                      <li>&bull; For minors, the parent or guardian section will need to be filled out too.</li>
+                                      <li>&bull; After completing the form, review the live preview before checking the acceptance box.</li>
+                                    </ul>
+                                  </div>
+
+                                  <div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 sm:p-5">
+                                    <p class="text-sm font-semibold text-rose-900">Need to make changes?</p>
+                                    <p class="mt-1 text-xs sm:text-sm text-rose-800">
+                                      Switch to the form step anytime without closing the modal.
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div
+                                x-show="campWaiverStep === 'fill'"
+                                x-cloak
+                                x-transition.opacity
+                                class="space-y-6"
+                              >
+                                <div class="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+                                  <div class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+                                    <div class="mb-4 flex items-center justify-between gap-3">
+                                      <div>
+                                        <p class="text-sm font-semibold text-gray-900">Guest Information</p>
+                                        <p class="mt-1 text-xs sm:text-sm text-gray-600">Required details first, optional details below.</p>
+                                      </div>
+                                      <span class="rounded-full bg-rose-50 px-3 py-1 text-[11px] font-semibold text-rose-700">Required before checkout</span>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                      <div class="sm:col-span-2">
+                                        <label for="camp_waiver_participant_name" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                          Guest Full Name <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                          type="text"
+                                          id="camp_waiver_participant_name"
+                                          name="camp_waiver_participant_name"
+                                          x-model="campWaiver.participant_name"
+                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          placeholder="Juan Dela Cruz"
+                                          required
+                                        >
+                                      </div>
+
+                                      <div>
+                                        <label for="camp_waiver_birth_date" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                          Date of Birth <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                          type="date"
+                                          id="camp_waiver_birth_date"
+                                          name="camp_waiver_birth_date"
+                                          x-model="campWaiver.birth_date"
+                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          required
+                                        >
+                                      </div>
+
+                                      <div>
+                                        <label for="camp_waiver_gender" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                          Gender <span class="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                          id="camp_waiver_gender"
+                                          name="camp_waiver_gender"
+                                          x-model="campWaiver.gender"
+                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base bg-white focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          required
+                                        >
+                                          <option value="">Choose gender</option>
+                                          <option value="male">Male</option>
+                                          <option value="female">Female</option>
+                                          <option value="other">Other</option>
+                                          <option value="prefer_not_to_say">Prefer not to disclose</option>
+                                        </select>
+                                      </div>
+
+                                      <div class="sm:col-span-2">
+                                        <label for="camp_waiver_relationship" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                          Relationship to Guest <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                          type="text"
+                                          id="camp_waiver_relationship"
+                                          name="camp_waiver_relationship"
+                                          x-model="campWaiver.relationship"
+                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          placeholder="Self, parent, or guardian"
+                                          required
+                                        >
+                                      </div>
+
+                                      <div class="sm:col-span-2">
+                                        <label for="camp_waiver_address" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                          Residential Address <span class="text-red-500">*</span>
+                                        </label>
+                                        <textarea
+                                          id="camp_waiver_address"
+                                          name="camp_waiver_address"
+                                          x-model="campWaiver.address"
+                                          rows="3"
+                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          placeholder="Complete residential address"
+                                          required
+                                        ></textarea>
+                                      </div>
+
+                                      <div>
+                                        <label for="camp_waiver_emergency_name" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                          Emergency Contact Person <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                          type="text"
+                                          id="camp_waiver_emergency_name"
+                                          name="camp_waiver_emergency_name"
+                                          x-model="campWaiver.emergency_name"
+                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          placeholder="Full name of contact person"
+                                          required
+                                        >
+                                      </div>
+
+                                      <div>
+                                        <label for="camp_waiver_emergency_phone" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                          Emergency Contact Number <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                          type="tel"
+                                          id="camp_waiver_emergency_phone"
+                                          name="camp_waiver_emergency_phone"
+                                          x-model="campWaiver.emergency_phone"
+                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          placeholder="+63 9XX XXX XXXX"
+                                          required
+                                        >
+                                      </div>
+
+                                      <div class="sm:col-span-2">
+                                        <details class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                                          <summary class="cursor-pointer text-sm font-semibold text-gray-900">
+                                            Optional details and guardian section
+                                          </summary>
+                                          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                              <label for="camp_waiver_parent_guardian_name" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                                Parent / Guardian Full Name <span class="text-gray-400">(if applicable)</span>
+                                              </label>
+                                              <input
+                                                type="text"
+                                                id="camp_waiver_parent_guardian_name"
+                                                name="camp_waiver_parent_guardian_name"
+                                                x-model="campWaiver.parent_guardian_name"
+                                                class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                                placeholder="Required if the guest is a minor"
+                                              >
+                                            </div>
+
+                                            <div>
+                                              <label for="camp_waiver_parent_signature_name" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                                Parent / Guardian Name and Signature <span class="text-gray-400">(if under 18)</span>
+                                              </label>
+                                              <input
+                                                type="text"
+                                                id="camp_waiver_parent_signature_name"
+                                                name="camp_waiver_parent_signature_name"
+                                                x-model="campWaiver.parent_signature_name"
+                                                class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                                placeholder="Enter the full name of the parent or guardian"
+                                              >
+                                            </div>
+
+                                            <div>
+                                              <label for="camp_waiver_child_ward_name" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                                Name of Child or Ward <span class="text-gray-400">(if under 18)</span>
+                                              </label>
+                                              <input
+                                                type="text"
+                                                id="camp_waiver_child_ward_name"
+                                                name="camp_waiver_child_ward_name"
+                                                x-model="campWaiver.child_ward_name"
+                                                class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                                placeholder="Enter the full name of the child or ward"
+                                              >
+                                            </div>
+
+                                            <div>
+                                              <label for="camp_waiver_parent_signature_date" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                                Parent / Guardian Date <span class="text-gray-400">(if under 18)</span>
+                                              </label>
+                                              <input
+                                                type="date"
+                                                id="camp_waiver_parent_signature_date"
+                                                name="camp_waiver_parent_signature_date"
+                                                x-model="campWaiver.parent_signature_date"
+                                                class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                              >
+                                            </div>
+
+                                            <div class="sm:col-span-2">
+                                              <label for="camp_waiver_medical_condition" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                                Medical or Physical Condition <span class="text-gray-400">(optional)</span>
+                                              </label>
+                                              <textarea
+                                                id="camp_waiver_medical_condition"
+                                                name="camp_waiver_medical_condition"
+                                                x-model="campWaiver.medical_condition"
+                                                rows="3"
+                                                class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                                placeholder="List allergies, conditions, or restrictions, if any"
+                                              ></textarea>
+                                            </div>
+                                          </div>
+                                        </details>
+                                      </div>
+
+                                      <div>
+                                        <label for="camp_waiver_signature_name" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                          Signature Name <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                          type="text"
+                                          id="camp_waiver_signature_name"
+                                          name="camp_waiver_signature_name"
+                                          x-model="campWaiver.signature_name"
+                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          placeholder="Enter your full name"
+                                          required
+                                        >
+                                      </div>
+
+                                      <div>
+                                        <label for="camp_waiver_signature_date" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                          Signature Date <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                          type="date"
+                                          id="camp_waiver_signature_date"
+                                          name="camp_waiver_signature_date"
+                                          x-model="campWaiver.signature_date"
+                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          required
+                                        >
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div class="space-y-4">
+                                    <div class="rounded-2xl border border-gray-200 bg-[#faf7f4] p-4 sm:p-5">
+                                      <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                          <p class="text-sm font-semibold text-gray-900">Live Preview</p>
+                                          <p class="mt-1 text-xs sm:text-sm text-gray-600">
+                                            This updates as the guest fills out the form.
+                                          </p>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          class="text-xs font-semibold text-[#8f5d54] hover:underline"
+                                          @click="campWaiverStep = 'read'"
+                                        >
+                                          Review waiver text
+                                        </button>
+                                      </div>
+
+                                      <div class="mt-4 space-y-2 text-sm text-gray-800">
+                                        <div><span class="font-medium">Guest Full Name:</span> <span x-text="displayValue(campWaiver.participant_name)"></span></div>
+                                        <div class="grid gap-2 sm:grid-cols-2">
+                                          <div><span class="font-medium">Date of Birth:</span> <span x-text="displayValue(campWaiver.birth_date)"></span></div>
+                                          <div><span class="font-medium">Gender:</span> <span x-text="displayValue(genderLabel(campWaiver.gender))"></span></div>
+                                        </div>
+                                        <div><span class="font-medium">Residential Address:</span> <span x-text="displayValue(campWaiver.address)"></span></div>
+                                        <div><span class="font-medium">Parent/Guardian Full Name:</span> <span x-text="displayValue(campWaiver.parent_guardian_name)"></span></div>
+                                        <div><span class="font-medium">Emergency Contact Person:</span> <span x-text="displayValue(campWaiver.emergency_name)"></span></div>
+                                        <div><span class="font-medium">Emergency Contact Phone Number:</span> <span x-text="displayValue(campWaiver.emergency_phone)"></span></div>
+                                        <div><span class="font-medium">Relationship to Guest:</span> <span x-text="displayValue(campWaiver.relationship)"></span></div>
+                                        <div><span class="font-medium">Medical / Physical Condition:</span> <span x-text="displayValue(campWaiver.medical_condition)"></span></div>
+                                        <div class="pt-2 border-t border-gray-200">
+                                          <div><span class="font-medium">Guest Signature:</span> <span x-text="displayValue(campWaiver.signature_name)"></span></div>
+                                          <div><span class="font-medium">Signature Date:</span> <span x-text="displayValue(campWaiver.signature_date)"></span></div>
+                                        </div>
+                                        <div class="pt-2 border-t border-gray-200">
+                                          <div><span class="font-medium">Parent/Guardian Signature:</span> <span x-text="displayValue(campWaiver.parent_signature_name)"></span></div>
+                                          <div><span class="font-medium">Name of Child or Ward:</span> <span x-text="displayValue(campWaiver.child_ward_name)"></span></div>
+                                          <div><span class="font-medium">Date:</span> <span x-text="displayValue(campWaiver.parent_signature_date)"></span></div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+                                      <p class="text-sm font-semibold text-gray-900">Camp Waiver Text</p>
+                                      <div class="mt-3 max-h-[28vh] overflow-y-auto pr-1 space-y-4 text-sm leading-6 text-gray-700 whitespace-pre-line">
+                                        {!! nl2br(e($campWaiverBody)) !!}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="border-t border-gray-100 bg-white px-5 py-4 sm:px-6">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <p class="text-xs sm:text-sm text-gray-500">
+                                Read first, then complete the form. Keep the waiver open if you need to review it while filling out the details.
+                              </p>
+                              <div class="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+                                <button
+                                  type="button"
+                                  class="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                                  @click="campWaiverModal = false"
+                                >
+                                  Close
+                                </button>
+                                <button
+                                  type="button"
+                                  class="inline-flex items-center justify-center rounded-lg bg-[#8f5d54] px-4 py-2 text-sm font-semibold text-white hover:bg-[#a0675a]"
+                                  x-show="campWaiverStep === 'read'"
+                                  x-cloak
+                                  @click="campWaiverStep = 'fill'"
+                                >
+                                  Continue to form
+                                </button>
+                                <button
+                                  type="button"
+                                  class="inline-flex items-center justify-center rounded-lg bg-[#8f5d54] px-4 py-2 text-sm font-semibold text-white hover:bg-[#a0675a]"
+                                  x-show="campWaiverStep === 'fill'"
+                                  x-cloak
+                                  @click="campWaiverStep = 'read'"
+                                >
+                                  Back to review
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
                       <div
                         x-show="bookingPolicyModal"
@@ -495,17 +1085,30 @@ let vatRate = {{ $vatRate }};
 
                     {{-- Action Buttons --}}
                     <div class="pt-4 space-y-3">
+                      <div :class="canProceedToPayment() ? '' : 'cursor-not-allowed'">
                       <button
-                        type="submit"
-                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold text-white shadow-lg shadow-[#8f5d54]/20 hover:bg-[#a0675a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-all duration-300 transform hover:-translate-y-0.5"
+                        type="button"
+                        @click="if (validateCampWaiverBeforePayment()) { $el.closest('form').requestSubmit(); }"
+                        :disabled="!canProceedToPayment()"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold text-white shadow-lg shadow-[#8f5d54]/20 hover:bg-[#a0675a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-all duration-300 transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600 disabled:shadow-none disabled:hover:bg-gray-300 disabled:hover:translate-y-0 disabled:focus:ring-gray-300"
                       >
                         <i class="bi bi-lock-fill mr-2"></i>
                         <span>Complete Staycation Payment</span>
                         <span id="button-total" class="font-bold ml-2">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
                       </button>
+                      </div>
 
-                      <p class="mt-3 text-xs text-center text-gray-500">
-                        Your payment is secured with 256-bit SSL encryption. By proceeding, you agree to our terms of service.
+                      <div class="rounded-xl border border-gray-200 bg-white/70 px-4 py-3 text-center">
+                        <p x-show="canProceedToPayment()" x-cloak class="text-xs sm:text-sm font-medium text-green-700">
+                          Ready for payment.
+                        </p>
+                        <p x-show="!canProceedToPayment()" x-cloak class="text-xs sm:text-sm font-medium text-gray-600">
+                          Complete and accept the waiver form to enable payment.
+                        </p>
+                      </div>
+
+                      <p class="mt-2 text-xs text-center text-gray-500">
+                        Your payment is secured with 256-bit SSL encryption. By proceeding, you agree to our terms and conditions and camp waiver.
                       </p>
                     </div>
                   </form>

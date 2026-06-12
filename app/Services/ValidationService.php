@@ -54,8 +54,23 @@ class ValidationService
             'payment_method' => 'nullable|string|in:paymongo,qr,gcash,paymaya,bank,qrph,grab_pay,billease',
             'special_requests' => 'nullable|string|max:1000',
             'cancellation_policy' => 'nullable|string|in:standard,flexible,nonrefundable',
+            'camp_waiver_participant_name' => 'nullable|string|max:255',
+            'camp_waiver_birth_date' => 'nullable|date',
+            'camp_waiver_gender' => 'nullable|string|in:male,female,other,prefer_not_to_say',
+            'camp_waiver_address' => 'nullable|string|max:500',
+            'camp_waiver_emergency_name' => 'nullable|string|max:255',
+            'camp_waiver_emergency_phone' => 'nullable|string|max:20',
+            'camp_waiver_parent_guardian_name' => 'nullable|string|max:255',
+            'camp_waiver_relationship' => 'nullable|string|max:255',
+            'camp_waiver_medical_condition' => 'nullable|string|max:1000',
+            'camp_waiver_signature_name' => 'nullable|string|max:255',
+            'camp_waiver_signature_date' => 'nullable|date',
+            'camp_waiver_parent_signature_name' => 'nullable|string|max:255',
+            'camp_waiver_child_ward_name' => 'nullable|string|max:255',
+            'camp_waiver_parent_signature_date' => 'nullable|date',
             'terms_accepted' => 'sometimes|accepted',
             'terms_and_policy_accepted' => 'sometimes|accepted',
+            'camp_waiver_accepted' => 'sometimes|accepted',
         ];
     }
 

@@ -217,6 +217,55 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
               </div>
             </div>
 
+            @if(!empty($bookingData['acceptances'] ?? []))
+              <div class="mt-4 pt-4 border-t border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Accepted Agreements</h3>
+                <ul class="text-sm text-gray-600 space-y-1">
+                  @foreach($bookingData['acceptances'] as $agreement)
+                    @php
+                      $agreementLabel = $agreement['label'] ?? 'Agreement';
+                      $acceptedAt = !empty($agreement['accepted_at']) ? \Carbon\Carbon::parse($agreement['accepted_at'])->format('M d, Y h:i A') : null;
+                      $agreementDetails = is_array($agreement['details'] ?? null) ? $agreement['details'] : [];
+                      $detailLabels = [
+                          'participant_name' => 'Participant / Guest Name',
+                          'birth_date' => 'Date of Birth',
+                          'gender' => 'Gender',
+                          'address' => 'Address',
+                          'parent_guardian_name' => 'Parent / Guardian Name',
+                          'emergency_contact_name' => 'Emergency Contact Name',
+                          'emergency_contact_phone' => 'Emergency Contact Number',
+                          'relationship_to_participant' => 'Relationship to Participant',
+                          'signature_name' => 'Typed Name / Signature',
+                          'signature_date' => 'Date',
+                          'parent_signature_name' => 'Parent / Guardian Signature',
+                          'child_ward_name' => 'Child / Ward Name',
+                          'parent_signature_date' => 'Parent / Guardian Date',
+                          'medical_condition' => 'Medical or Physical Condition',
+                      ];
+                    @endphp
+                    <li>
+                      {{ $agreementLabel }} - {{ !empty($agreement['accepted']) ? 'Accepted' : 'Not accepted' }}
+                      @if($acceptedAt)
+                        ({{ $acceptedAt }})
+                      @endif
+                      @if(!empty($agreementDetails))
+                        <ul class="mt-1 ml-4 space-y-0.5 text-xs text-gray-500 list-disc">
+                          @foreach($agreementDetails as $field => $value)
+                            @if($value !== null && $value !== '')
+                              <li>
+                                <span class="font-medium text-gray-600">{{ $detailLabels[$field] ?? str_replace('_', ' ', ucfirst($field)) }}:</span>
+                                {{ $value }}
+                              </li>
+                            @endif
+                          @endforeach
+                        </ul>
+                      @endif
+                    </li>
+                  @endforeach
+                </ul>
+              </div>
+            @endif
+
             @if (!empty($selectedActivities))
               <div class="mt-4 pt-4 border-t border-gray-200">
                 <h3 class="text-2xl font-medium text-gray-900 mb-2">Selected Activities:</h3>

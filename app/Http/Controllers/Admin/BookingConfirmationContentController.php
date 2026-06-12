@@ -17,6 +17,7 @@ class BookingConfirmationContentController extends Controller
             'contents' => $contents,
             'types' => [
                 'staycation' => 'Staycation',
+                'camp-waiver' => 'Camp Waiver',
                 'dayvisit' => 'Day Visit',
                 'package' => 'Package',
             ],
@@ -25,50 +26,87 @@ class BookingConfirmationContentController extends Controller
 
     public function update(Request $request, string $bookingType, BookingConfirmationContentService $service)
     {
+        $rawBookingType = $bookingType;
         $bookingType = BookingConfirmationContent::normalizeType($bookingType);
 
-        $payload = data_get($request->input('contents', []), $bookingType, []);
+        $payload = data_get($request->input('contents', []), $rawBookingType, []);
+        $isCampWaiver = $bookingType === 'campwaiver';
 
-        $validated = $request->validate([
-            "contents.$bookingType.page_eyebrow" => ['nullable', 'string', 'max:120'],
-            "contents.$bookingType.page_title" => ['required', 'string', 'max:255'],
-            "contents.$bookingType.page_description" => ['nullable', 'string', 'max:2000'],
-            "contents.$bookingType.next_steps_title" => ['nullable', 'string', 'max:255'],
-            "contents.$bookingType.next_steps" => ['nullable', 'string', 'max:4000'],
-            "contents.$bookingType.support_title" => ['nullable', 'string', 'max:255'],
-            "contents.$bookingType.support_description" => ['nullable', 'string', 'max:2000'],
-            "contents.$bookingType.support_email" => ['nullable', 'email', 'max:255'],
-            "contents.$bookingType.support_phone" => ['nullable', 'string', 'max:50'],
-            "contents.$bookingType.home_button_label" => ['nullable', 'string', 'max:255'],
-            "contents.$bookingType.print_button_label" => ['nullable', 'string', 'max:255'],
-            "contents.$bookingType.payment_button_label" => ['nullable', 'string', 'max:255'],
-            "contents.$bookingType.email_subject" => ['nullable', 'string', 'max:255'],
-            "contents.$bookingType.email_greeting" => ['nullable', 'string', 'max:255'],
-            "contents.$bookingType.email_intro" => ['nullable', 'string', 'max:4000'],
-            "contents.$bookingType.email_closing" => ['nullable', 'string', 'max:4000'],
-        ]);
+        $rules = $isCampWaiver ? [
+            "contents.$rawBookingType.camp_waiver_title" => ['required', 'string', 'max:255'],
+            "contents.$rawBookingType.camp_waiver_body" => ['required', 'string', 'max:20000'],
+        ] : [
+            "contents.$rawBookingType.page_eyebrow" => ['nullable', 'string', 'max:120'],
+            "contents.$rawBookingType.page_title" => ['required', 'string', 'max:255'],
+            "contents.$rawBookingType.page_description" => ['nullable', 'string', 'max:2000'],
+            "contents.$rawBookingType.next_steps_title" => ['nullable', 'string', 'max:255'],
+            "contents.$rawBookingType.next_steps" => ['nullable', 'string', 'max:4000'],
+            "contents.$rawBookingType.support_title" => ['nullable', 'string', 'max:255'],
+            "contents.$rawBookingType.support_description" => ['nullable', 'string', 'max:2000'],
+            "contents.$rawBookingType.support_email" => ['nullable', 'email', 'max:255'],
+            "contents.$rawBookingType.support_phone" => ['nullable', 'string', 'max:50'],
+            "contents.$rawBookingType.home_button_label" => ['nullable', 'string', 'max:255'],
+            "contents.$rawBookingType.print_button_label" => ['nullable', 'string', 'max:255'],
+            "contents.$rawBookingType.payment_button_label" => ['nullable', 'string', 'max:255'],
+            "contents.$rawBookingType.camp_waiver_title" => ['nullable', 'string', 'max:255'],
+            "contents.$rawBookingType.camp_waiver_body" => ['nullable', 'string', 'max:20000'],
+            "contents.$rawBookingType.email_subject" => ['nullable', 'string', 'max:255'],
+            "contents.$rawBookingType.email_greeting" => ['nullable', 'string', 'max:255'],
+            "contents.$rawBookingType.email_intro" => ['nullable', 'string', 'max:4000'],
+            "contents.$rawBookingType.email_closing" => ['nullable', 'string', 'max:4000'],
+        ];
 
-        BookingConfirmationContent::updateOrCreate(
-            ['booking_type' => $bookingType],
-            [
-                'page_eyebrow' => $payload['page_eyebrow'] ?? null,
-                'page_title' => $payload['page_title'] ?? '',
-                'page_description' => $payload['page_description'] ?? null,
-                'next_steps_title' => $payload['next_steps_title'] ?? null,
-                'next_steps' => $this->normalizeLines($payload['next_steps'] ?? null),
-                'support_title' => $payload['support_title'] ?? null,
-                'support_description' => $payload['support_description'] ?? null,
-                'support_email' => $payload['support_email'] ?? null,
-                'support_phone' => $payload['support_phone'] ?? null,
-                'home_button_label' => $payload['home_button_label'] ?? null,
-                'print_button_label' => $payload['print_button_label'] ?? null,
-                'payment_button_label' => $payload['payment_button_label'] ?? null,
-                'email_subject' => $payload['email_subject'] ?? null,
-                'email_greeting' => $payload['email_greeting'] ?? null,
-                'email_intro' => $payload['email_intro'] ?? null,
-                'email_closing' => $payload['email_closing'] ?? null,
-            ]
-        );
+        $validated = $request->validate($rules);
+
+        if ($isCampWaiver) {
+            BookingConfirmationContent::updateOrCreate(
+                ['booking_type' => $bookingType],
+                [
+                    'page_eyebrow' => 'Booking Confirmation',
+                    'page_title' => $payload['camp_waiver_title'] ?? 'Camp Waiver',
+                    'page_description' => 'Manage the camp waiver shown to staycation guests before payment.',
+                    'next_steps_title' => null,
+                    'next_steps' => null,
+                    'support_title' => null,
+                    'support_description' => null,
+                    'support_email' => null,
+                    'support_phone' => null,
+                    'home_button_label' => null,
+                    'print_button_label' => null,
+                    'payment_button_label' => null,
+                    'camp_waiver_title' => $payload['camp_waiver_title'] ?? '',
+                    'camp_waiver_body' => $payload['camp_waiver_body'] ?? '',
+                    'email_subject' => null,
+                    'email_greeting' => null,
+                    'email_intro' => null,
+                    'email_closing' => null,
+                ]
+            );
+        } else {
+            BookingConfirmationContent::updateOrCreate(
+                ['booking_type' => $bookingType],
+                [
+                    'page_eyebrow' => $payload['page_eyebrow'] ?? null,
+                    'page_title' => $payload['page_title'] ?? '',
+                    'page_description' => $payload['page_description'] ?? null,
+                    'next_steps_title' => $payload['next_steps_title'] ?? null,
+                    'next_steps' => $this->normalizeLines($payload['next_steps'] ?? null),
+                    'support_title' => $payload['support_title'] ?? null,
+                    'support_description' => $payload['support_description'] ?? null,
+                    'support_email' => $payload['support_email'] ?? null,
+                    'support_phone' => $payload['support_phone'] ?? null,
+                    'home_button_label' => $payload['home_button_label'] ?? null,
+                    'print_button_label' => $payload['print_button_label'] ?? null,
+                    'payment_button_label' => $payload['payment_button_label'] ?? null,
+                    'camp_waiver_title' => $payload['camp_waiver_title'] ?? null,
+                    'camp_waiver_body' => $payload['camp_waiver_body'] ?? null,
+                    'email_subject' => $payload['email_subject'] ?? null,
+                    'email_greeting' => $payload['email_greeting'] ?? null,
+                    'email_intro' => $payload['email_intro'] ?? null,
+                    'email_closing' => $payload['email_closing'] ?? null,
+                ]
+            );
+        }
 
         $service->flushCache();
 

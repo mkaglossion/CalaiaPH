@@ -6,13 +6,19 @@
 @php
     $types = $types ?? [
         'staycation' => 'Staycation',
+        'camp-waiver' => 'Camp Waiver',
         'dayvisit' => 'Day Visit',
         'package' => 'Package',
     ];
     $hiddenTabs = ['dayvisit'];
+    $sidebarOnlyTabs = ['camp-waiver'];
+    $initialTab = request()->query('tab', 'staycation');
+    if (!array_key_exists($initialTab, $types)) {
+        $initialTab = 'staycation';
+    }
 @endphp
 
-<div class="space-y-6" x-data="{ activeTab: 'staycation' }">
+<div class="space-y-6" x-data="{ activeTab: @js($initialTab) }">
     <div class="flex flex-col gap-2">
         <h1 class="text-3xl font-semibold text-gray-800">Booking Confirmation CMS</h1>
         <p class="text-gray-600 max-w-3xl">
@@ -39,7 +45,7 @@
 
     <div class="flex flex-wrap gap-2 border-b border-gray-200">
         @foreach($types as $key => $label)
-            @if(in_array($key, $hiddenTabs, true))
+            @if(in_array($key, $hiddenTabs, true) || in_array($key, $sidebarOnlyTabs, true))
                 @continue
             @endif
             <button
@@ -74,9 +80,96 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('admin.booking-confirmation.update', $key) }}" class="space-y-8">
+            <form method="POST" action="{{ route('admin.booking-confirmation.update', $key) }}" class="space-y-8" x-data="{ campWaiverModal: false }">
                 @csrf
                 @method('PUT')
+
+                @if($key === 'camp-waiver')
+                    @php
+                        $campWaiverService = app(\App\Services\BookingConfirmationContentService::class);
+                        $campWaiver = $content['camp_waiver'] ?? [];
+                        $campWaiverTitle = trim((string) ($campWaiver['title'] ?? '')) !== '' ? $campWaiver['title'] : 'Camp Waiver and Release from Liability';
+                        $campWaiverBody = trim((string) ($campWaiver['body'] ?? '')) !== '' ? $campWaiver['body'] : $campWaiverService->defaultCampWaiverBody();
+                    @endphp
+
+                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Camp Waiver</h3>
+                        <p class="text-sm text-gray-600">
+                            Edit the waiver that stays separate from the staycation confirmation copy.
+                        </p>
+                        <button
+                            type="button"
+                            class="inline-flex items-center rounded-lg bg-[#8f5d54] px-5 py-3 text-sm font-semibold text-white hover:bg-[#a0675a] transition-colors"
+                            @click="campWaiverModal = true"
+                        >
+                            Open Camp Waiver Modal
+                        </button>
+                    </div>
+
+                    <div
+                        x-show="campWaiverModal"
+                        x-cloak
+                        x-transition.opacity
+                        class="fixed inset-0 z-50 bg-black/50 p-4 sm:p-6"
+                        @click.self="campWaiverModal = false"
+                    >
+                        <div class="mx-auto mt-6 w-full max-w-4xl rounded-2xl bg-white shadow-2xl border border-gray-200">
+                            <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 sm:px-6">
+                                <div>
+                                    <p class="text-xs font-semibold tracking-wide text-[#8f5d54]">CAMP WAIVER</p>
+                                    <h3 class="mt-1 text-base sm:text-lg font-semibold text-gray-900">Camp Waiver and Release from Liability</h3>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                                    @click="campWaiverModal = false"
+                                    aria-label="Close camp waiver modal"
+                                >
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+
+                            <div class="max-h-[75vh] overflow-y-auto px-5 py-4 sm:px-6 sm:py-5 space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Waiver Title <span class="text-red-500">*</span></label>
+                                    <input
+                                        type="text"
+                                        name="contents[{{ $key }}][camp_waiver_title]"
+                                        value="{{ old("contents.$key.camp_waiver_title", $campWaiverTitle) }}"
+                                        class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                        required
+                                    >
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Waiver Body <span class="text-red-500">*</span></label>
+                                    <textarea
+                                        name="contents[{{ $key }}][camp_waiver_body]"
+                                        rows="24"
+                                        class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54] font-mono text-sm"
+                                        placeholder="Paste the full camp waiver here"
+                                        required
+                                    >{{ old("contents.$key.camp_waiver_body", $campWaiverBody) }}</textarea>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end gap-3 border-t border-gray-100 px-5 py-4 sm:px-6">
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                                    @click="campWaiverModal = false"
+                                >
+                                    Cancel
+                                </button>
+                                <button type="submit" class="inline-flex items-center rounded-lg bg-[#8f5d54] px-5 py-3 text-sm font-semibold text-white hover:bg-[#a0675a] transition-colors">
+                                    Save Camp Waiver
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    @continue
+                @endif
 
                 <div class="grid gap-6 lg:grid-cols-2">
                     <div class="space-y-4">
