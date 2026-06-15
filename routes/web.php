@@ -933,3 +933,5 @@ Route::group(['middleware' => ['api.throttle:api_strict', 'api.security', 'xss']
 Route::get('/booking/payment-confirmation/{booking}/{token}', [PaymentController::class, 'showConfirmation'])->name('booking.payment-confirmation');
 Route::get('/booking/payment-success', [PaymentController::class, 'paymentSuccess'])->name('booking.payment-success');
 Route::get('/booking/payment-cancelled', [PaymentController::class, 'paymentCancelled'])->name('booking.payment-cancelled');
+Route::get('/booking/camp-waiver/{transactionId}', [BookingController::class, 'campWaiver'])->name('booking.camp-waiver');
+Route::get('/booking/camp-waiver/{transactionId}/pdf', [BookingController::class, 'campWaiverPdf'])->name('booking.camp-waiver.pdf');

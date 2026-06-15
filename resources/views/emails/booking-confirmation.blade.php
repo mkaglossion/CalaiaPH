@@ -16,6 +16,20 @@
     $nextStepsContent = $confirmationContent['next_steps'] ?? [];
     $supportContent = $confirmationContent['support'] ?? [];
     $emailContent = $confirmationContent['email'] ?? [];
+    $campWaiverAcceptance = collect($bookingData['acceptances'] ?? [])->first(function ($agreement) {
+        return ($agreement['source'] ?? '') === 'camp_waiver_accepted'
+            || strcasecmp((string) ($agreement['label'] ?? ''), 'Camp Waiver and Release from Liability') === 0;
+    });
+    $campWaiverTransactionId = $bookingData['transaction_id']
+        ?? data_get($bookingData, 'payment_data.reference_id')
+        ?? data_get($bookingData, 'payment_summary.reference_id')
+        ?? null;
+    $campWaiverUrl = !empty($campWaiverTransactionId) && $isStaycation
+        ? route('booking.camp-waiver', ['transactionId' => $campWaiverTransactionId])
+        : null;
+    $campWaiverPdfUrl = !empty($campWaiverTransactionId) && $isStaycation
+        ? route('booking.camp-waiver.pdf', ['transactionId' => $campWaiverTransactionId])
+        : null;
     @endphp
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
@@ -88,6 +102,12 @@
                             </li>
                         @endforeach
                     </ul>
+                @endif
+                @if($isStaycation && !empty($campWaiverUrl))
+                    <p><strong>Camp Waiver:</strong> <a href="{{ $campWaiverUrl }}">Open printable waiver</a></p>
+                    @if(!empty($campWaiverPdfUrl))
+                        <p><strong>Camp Waiver PDF:</strong> <a href="{{ $campWaiverPdfUrl }}">Download PDF</a></p>
+                    @endif
                 @endif
                 @php
                 // Use the passed isStaycation flag, default to false if not set
@@ -310,6 +330,10 @@
             <p>If you have any questions or need to make changes, please contact us at:</p>
             <p>Email: {{ $supportContent['email'] ?? 'calaia.ph@gmail.com' }}<br>
             Phone: {{ $supportContent['phone'] ?? '+63 905 129 4741' }}</p>
+
+            @if($isStaycation && !empty($campWaiverPdfUrl))
+                <p><strong>Camp Waiver PDF attached</strong> for your records.</p>
+            @endif
 
             <p>Best regards,<br>
             The CalaiaPH Team</p>

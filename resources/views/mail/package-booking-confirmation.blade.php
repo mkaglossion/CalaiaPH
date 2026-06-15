@@ -51,7 +51,6 @@ Support:
 - Email: {{ $supportContent['email'] ?? 'calaia.ph@gmail.com' }}
 - Phone: {{ $supportContent['phone'] ?? '+63 905 129 4741' }}
 @endif
-
 Thanks,<br>
 {{ config('app.name') }}
 </x-mail::message>

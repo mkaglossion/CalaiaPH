@@ -1,15 +1,15 @@
 {
   "resources/js/app.js": {
-    "file": "assets/app-DlccoykN.js",
+    "file": "assets/app-BFfGTYwM.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "css": [
-      "assets/app-Mtjc8Dyy.css"
+      "assets/app-BcB97f_B.css"
     ]
   },
   "resources/js/booking/staycation.js": {
-    "file": "assets/staycation-BSwZU-QC.js",
+    "file": "assets/staycation-CCv5JE6k.js",
     "name": "staycation",
     "src": "resources/js/booking/staycation.js",
     "isEntry": true

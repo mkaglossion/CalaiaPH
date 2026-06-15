@@ -35,6 +35,7 @@ use App\Services\PricingService;
 use App\Services\BookingConfirmationContentService;
 use App\Models\BookingSetting;
 use App\Models\FoodPackageSetting;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 
@@ -1394,6 +1395,62 @@ class BookingController extends Controller
         return redirect()->route('home')->with('error', 'No booking data found. Please start booking again.');
     }
 
+    public function campWaiver(string $transactionId)
+    {
+        $payload = $this->resolveCampWaiverPayload($transactionId);
+
+        return view('booking.camp-waiver', $payload);
+    }
+
+    public function campWaiverPdf(string $transactionId)
+    {
+        $payload = $this->resolveCampWaiverPayload($transactionId);
+        $filename = 'camp-waiver-' . $payload['booking']->transaction_id . '.pdf';
+
+        return Pdf::loadView('booking.camp-waiver-pdf', $payload)
+            ->setPaper('legal', 'portrait')
+            ->download($filename);
+    }
+
+    private function resolveCampWaiverPayload(string $transactionId): array
+    {
+        $booking = Booking::where('transaction_id', $transactionId)->firstOrFail();
+
+        abort_unless(in_array($booking->booking_type, Booking::STAYCATION_TYPES, true), 404);
+
+        $bookingData = is_array($booking->booking_data) ? $booking->booking_data : [];
+        $acceptances = $bookingData['acceptances'] ?? [];
+        $campWaiverAcceptance = collect($acceptances)->first(function ($agreement) {
+            return ($agreement['source'] ?? '') === 'camp_waiver_accepted'
+                || strcasecmp((string) ($agreement['label'] ?? ''), 'Camp Waiver and Release from Liability') === 0;
+        });
+
+        $confirmationContent = app(BookingConfirmationContentService::class)->forType('campwaiver', [
+            'reference' => $booking->transaction_id ?? '',
+            'package' => $bookingData['package'] ?? 'Staycation',
+        ]);
+
+        $customerInfo = $bookingData['customer_info'] ?? [];
+        if (empty($customerInfo)) {
+            $customerParts = preg_split('/\s+/', trim((string) $booking->customer_name), 2) ?: [];
+            $customerInfo = [
+                'first_name' => $customerParts[0] ?? '',
+                'last_name' => $customerParts[1] ?? '',
+                'email' => $booking->customer_email ?? '',
+                'phone' => $booking->customer_phone ?? '',
+            ];
+        }
+
+        return [
+            'booking' => $booking,
+            'bookingData' => $bookingData,
+            'customerInfo' => $customerInfo,
+            'campWaiverAcceptance' => $campWaiverAcceptance,
+            'confirmationContent' => $confirmationContent,
+            'waiverContent' => $confirmationContent['camp_waiver'] ?? [],
+        ];
+    }
+
 
     public function processPayment(Request $request)
     {
@@ -1848,6 +1905,12 @@ class BookingController extends Controller
                         'payment_reference' => $paymentReference,
                     ]);
 
+                    $this->syncConfirmedStaycationSession(
+                        $existingBooking->fresh(),
+                        $paymentData,
+                        $checkoutId
+                    );
+
                     session()->put($lockKey, true);
 
                     // Increment promo usage only after successful payment verification.
@@ -1908,6 +1971,48 @@ class BookingController extends Controller
             Log::error('PayMongo checkout verification failed: ' . $e->getMessage());
             return redirect()->route('booking.payment')->with('error', 'Payment verification failed.');
         }
+    }
+
+    private function syncConfirmedStaycationSession(Booking $booking, array $paymentData, string $checkoutId): void
+    {
+        if (!$this->canUseSession()) {
+            return;
+        }
+
+        $bookingData = is_array($booking->booking_data) ? $booking->booking_data : [];
+        $customerInfo = is_array($bookingData['customer_info'] ?? null) ? $bookingData['customer_info'] : [];
+        $resolvedCustomerInfo = array_merge($customerInfo, [
+            'first_name' => $paymentData['first_name'] ?? ($customerInfo['first_name'] ?? ''),
+            'last_name' => $paymentData['last_name'] ?? ($customerInfo['last_name'] ?? ''),
+            'name' => trim(
+                ($paymentData['first_name'] ?? ($customerInfo['first_name'] ?? '')) . ' ' .
+                ($paymentData['last_name'] ?? ($customerInfo['last_name'] ?? ''))
+            ),
+            'email' => $paymentData['email'] ?? ($customerInfo['email'] ?? ''),
+            'phone' => $paymentData['phone'] ?? ($customerInfo['phone'] ?? ''),
+        ]);
+
+        $bookingData['transaction_id'] = $booking->transaction_id;
+        $bookingData['payment_method'] = $booking->payment_method ?? ($paymentData['payment_method'] ?? 'paymongo');
+        $bookingData['payment_date'] = optional($booking->updated_at)->toDateTimeString() ?? now()->toDateTimeString();
+        $bookingData['paymongo_checkout_id'] = $checkoutId;
+        $bookingData['payment_reference'] = $booking->payment_reference ?? ($paymentData['payment_reference'] ?? null);
+        $bookingData['customer_info'] = $resolvedCustomerInfo;
+
+        $paymentSummary = is_array($bookingData['payment_summary'] ?? null) ? $bookingData['payment_summary'] : [];
+        $paymentSummary['checkout_id'] = $checkoutId;
+        $paymentSummary['grand_total_paid'] = (float) $booking->total_amount;
+        $bookingData['payment_summary'] = $paymentSummary;
+
+        $finalTotals = is_array($bookingData['final_totals'] ?? null) ? $bookingData['final_totals'] : [];
+        $finalTotals['grand_total'] = (float) $booking->total_amount;
+        $bookingData['final_totals'] = $finalTotals;
+
+        session([
+            'booking' => $bookingData,
+            'staycation_customer_info' => $resolvedCustomerInfo,
+            'staycation_selected_foods' => $bookingData['selected_foods'] ?? [],
+        ]);
     }
 
     public function paymentFailed(Request $request)

@@ -25,8 +25,7 @@ class AdminBookingConfirmationContentTest extends TestCase
         $response->assertSee("activeTab = 'camp-waiver'", false);
         $response->assertSee('Package Confirmation');
         $response->assertSee('Page Copy');
-        $response->assertSee('Camp Waiver');
         $response->assertSee('Save Package Content');
-        $response->assertSee('Save Camp Waiver');
+        $response->assertDontSee('Edit the camp waiver shown to package booking customers before payment.');
     }
 }

@@ -31,6 +31,21 @@ $pageContent = $confirmationContent['page'] ?? [];
 $nextStepsContent = $confirmationContent['next_steps'] ?? [];
 $supportContent = $confirmationContent['support'] ?? [];
 $buttonContent = $confirmationContent['buttons'] ?? [];
+$campWaiverAcceptance = collect($bookingData['acceptances'] ?? [])->first(function ($agreement) {
+    return ($agreement['source'] ?? '') === 'camp_waiver_accepted'
+        || strcasecmp((string) ($agreement['label'] ?? ''), 'Camp Waiver and Release from Liability') === 0;
+});
+$campWaiverTransactionId = $bookingData['transaction_id']
+    ?? data_get($bookingData, 'payment_data.reference_id')
+    ?? data_get($bookingData, 'payment_summary.reference_id')
+    ?? null;
+$showCampWaiverActions = (bool) (isset($isStaycation) && $isStaycation);
+$campWaiverUrl = $showCampWaiverActions && !empty($campWaiverTransactionId)
+    ? route('booking.camp-waiver', ['transactionId' => $campWaiverTransactionId])
+    : null;
+$campWaiverPdfUrl = $showCampWaiverActions && !empty($campWaiverTransactionId)
+    ? route('booking.camp-waiver.pdf', ['transactionId' => $campWaiverTransactionId])
+    : null;
 
 if (isset($isStaycation) && $isStaycation) {
     $confirmationSteps = [
@@ -635,6 +650,36 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
           @endif
         </div>
 
+        @if($showCampWaiverActions)
+          <div class="bg-[#f7f2f0] border border-[#e3d0cb] rounded-xl p-6 mb-6 text-left">
+            <h3 class="text-2xl font-semibold text-[#8f5d54] mb-2">Camp Waiver</h3>
+            <p class="text-sm text-gray-700">
+              Your camp waiver is ready for printing and download. Use the buttons below to open the printable copy or save the PDF.
+            </p>
+            <div class="mt-4 flex flex-col sm:flex-row gap-3">
+              @if(!empty($campWaiverUrl))
+                <a href="{{ $campWaiverUrl }}"
+                   target="_blank"
+                   rel="noopener"
+                   class="inline-flex items-center justify-center gap-2 rounded-lg border border-[#8f5d54] bg-white px-5 py-3 text-sm font-semibold text-[#8f5d54] hover:bg-[#f7f2f0] transition-colors">
+                  <i class="bi bi-file-earmark-text"></i>
+                  Print Camp Waiver
+                </a>
+              @endif
+              @if(!empty($campWaiverPdfUrl))
+                <a href="{{ $campWaiverPdfUrl }}"
+                   class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#8f5d54] px-5 py-3 text-sm font-semibold text-white hover:bg-[#a0675a] transition-colors">
+                  <i class="bi bi-filetype-pdf"></i>
+                  Download PDF
+                </a>
+              @endif
+              @if(empty($campWaiverUrl) && empty($campWaiverPdfUrl))
+                <p class="text-sm text-gray-600">The camp waiver copy will appear once the booking reference is available.</p>
+              @endif
+            </div>
+          </div>
+        @endif
+
         {{-- Next Steps --}}
         <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
           <h3 class="text-2xl font-semibold text-blue-900 mb-3">{{ $nextStepsContent['title'] ?? "What's Next?" }}</h3>
@@ -663,6 +708,22 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
             <i class="bi bi-house"></i>
             {{ $buttonContent['home'] ?? 'Return to Home' }}
           </a>
+          @if(!empty($campWaiverUrl))
+            <a href="{{ $campWaiverUrl }}"
+               target="_blank"
+               rel="noopener"
+               class="inline-flex items-center justify-center gap-2 rounded-lg border border-[#8f5d54] bg-white px-6 py-3 text-sm font-semibold text-[#8f5d54] hover:bg-[#f7f2f0] transition-colors">
+              <i class="bi bi-file-earmark-text"></i>
+              Print Camp Waiver
+            </a>
+          @endif
+          @if(!empty($campWaiverPdfUrl))
+            <a href="{{ $campWaiverPdfUrl }}"
+               class="inline-flex items-center justify-center gap-2 rounded-lg border border-[#8f5d54] bg-[#8f5d54] px-6 py-3 text-sm font-semibold text-white hover:bg-[#a0675a] transition-colors">
+              <i class="bi bi-filetype-pdf"></i>
+              Download PDF
+            </a>
+          @endif
           @if(!empty($buttonContent['print']))
             <button onclick="window.print()"
                     class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">

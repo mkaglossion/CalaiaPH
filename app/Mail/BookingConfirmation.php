@@ -6,9 +6,11 @@ use App\Services\BookingConfirmationContentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BookingConfirmation extends Mailable implements ShouldQueue
 {
@@ -91,6 +93,39 @@ class BookingConfirmation extends Mailable implements ShouldQueue
      */
     public function attachments(): array
     {
-        return [];
+        if (!$this->isStaycation) {
+            return [];
+        }
+
+        $filename = !empty($this->bookingData['transaction_id'])
+            ? 'camp-waiver-' . $this->bookingData['transaction_id'] . '.pdf'
+            : 'camp-waiver.pdf';
+
+        return [
+            Attachment::fromData(function () {
+                return Pdf::loadView('booking.camp-waiver-pdf', $this->campWaiverPdfPayload())
+                    ->setPaper('legal', 'portrait')
+                    ->output();
+            }, $filename)->withMime('application/pdf'),
+        ];
+    }
+
+    private function campWaiverPdfPayload(): array
+    {
+        $acceptances = $this->bookingData['acceptances'] ?? [];
+        $campWaiverAcceptance = collect($acceptances)->first(function ($agreement) {
+            return ($agreement['source'] ?? '') === 'camp_waiver_accepted'
+                || strcasecmp((string) ($agreement['label'] ?? ''), 'Camp Waiver and Release from Liability') === 0;
+        });
+
+        $customerInfo = $this->bookingData['customer_info'] ?? $this->customerInfo ?? [];
+
+        return [
+            'bookingData' => $this->bookingData,
+            'customerInfo' => $customerInfo,
+            'campWaiverAcceptance' => $campWaiverAcceptance ?? [],
+            'confirmationContent' => $this->confirmationContent,
+            'waiverContent' => $this->confirmationContent['camp_waiver'] ?? [],
+        ];
     }
 }
