@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Booking;
+use App\Models\AdminSystemAlert;
 use App\Models\Package;
 use App\Models\PackageBooking;
 use App\Services\PaymongoWebhookService;
@@ -206,5 +207,60 @@ class PaymongoWebhookTest extends TestCase
         $this->assertSame('2026-06-15', $booking->checkin_date->toDateString());
         $this->assertSame('2026-06-16', optional($booking->checkout_date)->toDateString());
         $this->assertSame('glamping', $booking->booking_data['staycation_category']);
+    }
+
+    public function test_payment_paid_event_without_booking_does_not_create_admin_alert(): void
+    {
+        $payload = [
+            'data' => [
+                'id' => 'evt_no_booking_payment_123',
+                'type' => 'event',
+                'attributes' => [
+                    'type' => 'payment.paid',
+                    'data' => [
+                        'id' => 'pay_no_booking_123',
+                        'type' => 'payment',
+                        'attributes' => [
+                            'status' => 'paid',
+                            'amount' => 1766000,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->assertFalse(PaymongoWebhookService::handleWebhook($payload));
+        $this->assertSame(0, AdminSystemAlert::count());
+    }
+
+    public function test_checkout_payment_success_without_booking_does_not_create_admin_alert(): void
+    {
+        $payload = [
+            'data' => [
+                'id' => 'evt_no_booking_checkout_123',
+                'type' => 'event',
+                'attributes' => [
+                    'type' => 'checkout_session.payment.paid',
+                    'data' => [
+                        'id' => 'cs_no_booking_123',
+                        'type' => 'checkout_session',
+                        'attributes' => [
+                            'payments' => [
+                                [
+                                    'id' => 'pay_no_booking_checkout_123',
+                                    'type' => 'payment',
+                                    'attributes' => [
+                                        'amount' => 1766000,
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->assertFalse(PaymongoWebhookService::handleWebhook($payload));
+        $this->assertSame(0, AdminSystemAlert::count());
     }
 }

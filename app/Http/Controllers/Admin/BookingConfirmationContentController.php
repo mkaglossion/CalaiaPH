@@ -17,9 +17,9 @@ class BookingConfirmationContentController extends Controller
             'contents' => $contents,
             'types' => [
                 'staycation' => 'Staycation',
+                'package' => 'Package',
                 'camp-waiver' => 'Camp Waiver',
                 'dayvisit' => 'Day Visit',
-                'package' => 'Package',
             ],
         ]);
     }

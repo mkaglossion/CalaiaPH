@@ -183,16 +183,11 @@ class PaymongoWebhookService
                 }
             }
 
-            \App\Models\AdminSystemAlert::create([
-                'type' => 'payment',
-                'severity' => 'critical',
-                'message' => "Payment received ({$paymentId}) but no booking found. Amount: " . ($amount/100) . " PHP. Reference: {$referenceNumber}",
-                'data' => [
-                    'payment_id' => $paymentId,
-                    'amount' => $amount,
-                    'reference' => $referenceNumber,
-                    'checkout_session_id' => $checkoutSessionId,
-                ]
+            Log::warning('Payment received but no booking found; skipping admin alert creation', [
+                'payment_id' => $paymentId,
+                'amount' => $amount,
+                'reference' => $referenceNumber,
+                'checkout_session_id' => $checkoutSessionId,
             ]);
         }
 
@@ -420,15 +415,10 @@ class PaymongoWebhookService
             }
         }
 
-        \App\Models\AdminSystemAlert::create([
-            'type' => 'payment',
-            'severity' => 'critical',
-            'message' => "Checkout payment succeeded ({$checkoutSessionId}) but no booking found. Amount: " . ($amount/100) . " PHP. Reference: {$referenceNumber}",
-            'data' => [
-                'checkout_session_id' => $checkoutSessionId,
-                'amount' => $amount,
-                'reference' => $referenceNumber,
-            ]
+        Log::warning('Checkout payment succeeded but no booking found; skipping admin alert creation', [
+            'checkout_session_id' => $checkoutSessionId,
+            'amount' => $amount,
+            'reference' => $referenceNumber,
         ]);
 
         return false;

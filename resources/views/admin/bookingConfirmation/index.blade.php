@@ -6,12 +6,11 @@
 @php
     $types = $types ?? [
         'staycation' => 'Staycation',
+        'package' => 'Package',
         'camp-waiver' => 'Camp Waiver',
         'dayvisit' => 'Day Visit',
-        'package' => 'Package',
     ];
     $hiddenTabs = ['dayvisit'];
-    $sidebarOnlyTabs = ['camp-waiver'];
     $initialTab = request()->query('tab', 'staycation');
     if (!array_key_exists($initialTab, $types)) {
         $initialTab = 'staycation';
@@ -45,7 +44,7 @@
 
     <div class="flex flex-wrap gap-2 border-b border-gray-200">
         @foreach($types as $key => $label)
-            @if(in_array($key, $hiddenTabs, true) || in_array($key, $sidebarOnlyTabs, true))
+            @if(in_array($key, $hiddenTabs, true))
                 @continue
             @endif
             <button
@@ -64,7 +63,8 @@
             @continue
         @endif
         @php
-            $content = $contents[$key] ?? [];
+            $contentKey = \App\Models\BookingConfirmationContent::normalizeType($key);
+            $content = $contents[$contentKey] ?? [];
             $page = $content['page'] ?? [];
             $nextSteps = implode("\n", $content['next_steps']['items'] ?? []);
             $support = $content['support'] ?? [];
@@ -167,109 +167,107 @@
                             </div>
                         </div>
                     </div>
+                @else
+                    <div class="grid gap-6 lg:grid-cols-2">
+                        <div class="space-y-4">
+                            <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Page Copy</h3>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Eyebrow</label>
+                                    <input type="text" name="contents[{{ $key }}][page_eyebrow]" value="{{ old("contents.$key.page_eyebrow", $page['eyebrow'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                                    <input type="text" name="contents[{{ $key }}][page_title]" value="{{ old("contents.$key.page_title", $page['title'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                    <textarea name="contents[{{ $key }}][page_description]" rows="3" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">{{ old("contents.$key.page_description", $page['description'] ?? '') }}</textarea>
+                                </div>
+                            </div>
 
-                    @continue
+                            <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Next Steps</h3>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
+                                    <input type="text" name="contents[{{ $key }}][next_steps_title]" value="{{ old("contents.$key.next_steps_title", $content['next_steps']['title'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Items</label>
+                                    <textarea name="contents[{{ $key }}][next_steps]" rows="5" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]" placeholder="One item per line">{{ old("contents.$key.next_steps", $nextSteps) }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Support Info</h3>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
+                                    <input type="text" name="contents[{{ $key }}][support_title]" value="{{ old("contents.$key.support_title", $support['title'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                    <textarea name="contents[{{ $key }}][support_description]" rows="3" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">{{ old("contents.$key.support_description", $support['description'] ?? '') }}</textarea>
+                                </div>
+                                <div class="grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Support Email</label>
+                                        <input type="email" name="contents[{{ $key }}][support_email]" value="{{ old("contents.$key.support_email", $support['email'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Support Phone</label>
+                                        <input type="text" name="contents[{{ $key }}][support_phone]" value="{{ old("contents.$key.support_phone", $support['phone'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Button Labels</h3>
+                                <div class="grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Primary Button</label>
+                                        <input type="text" name="contents[{{ $key }}][home_button_label]" value="{{ old("contents.$key.home_button_label", $buttons['home'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Secondary Button</label>
+                                        <input type="text" name="contents[{{ $key }}][print_button_label]" value="{{ old("contents.$key.print_button_label", $buttons['print'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Payment Button</label>
+                                    <input type="text" name="contents[{{ $key }}][payment_button_label]" value="{{ old("contents.$key.payment_button_label", $buttons['payment'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
+                                </div>
+                            </div>
+
+                            <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Email Copy</h3>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                                    <input type="text" name="contents[{{ $key }}][email_subject]" value="{{ old("contents.$key.email_subject", $email['subject'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Greeting</label>
+                                    <input type="text" name="contents[{{ $key }}][email_greeting]" value="{{ old("contents.$key.email_greeting", $email['greeting'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Intro</label>
+                                    <textarea name="contents[{{ $key }}][email_intro]" rows="4" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">{{ old("contents.$key.email_intro", $email['intro'] ?? '') }}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Closing</label>
+                                    <textarea name="contents[{{ $key }}][email_closing]" rows="3" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">{{ old("contents.$key.email_closing", $email['closing'] ?? '') }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="submit" class="inline-flex items-center rounded-lg bg-[#8f5d54] px-5 py-3 text-sm font-semibold text-white hover:bg-[#a0675a] transition-colors">
+                            Save {{ $label }} Content
+                        </button>
+                    </div>
                 @endif
-
-                <div class="grid gap-6 lg:grid-cols-2">
-                    <div class="space-y-4">
-                        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Page Copy</h3>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Eyebrow</label>
-                                <input type="text" name="contents[{{ $key }}][page_eyebrow]" value="{{ old("contents.$key.page_eyebrow", $page['eyebrow'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-                                <input type="text" name="contents[{{ $key }}][page_title]" value="{{ old("contents.$key.page_title", $page['title'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                <textarea name="contents[{{ $key }}][page_description]" rows="3" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">{{ old("contents.$key.page_description", $page['description'] ?? '') }}</textarea>
-                            </div>
-                        </div>
-
-                        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Next Steps</h3>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
-                                <input type="text" name="contents[{{ $key }}][next_steps_title]" value="{{ old("contents.$key.next_steps_title", $content['next_steps']['title'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Items</label>
-                                <textarea name="contents[{{ $key }}][next_steps]" rows="5" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]" placeholder="One item per line">{{ old("contents.$key.next_steps", $nextSteps) }}</textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Support Info</h3>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Heading</label>
-                                <input type="text" name="contents[{{ $key }}][support_title]" value="{{ old("contents.$key.support_title", $support['title'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                <textarea name="contents[{{ $key }}][support_description]" rows="3" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">{{ old("contents.$key.support_description", $support['description'] ?? '') }}</textarea>
-                            </div>
-                            <div class="grid gap-4 sm:grid-cols-2">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Support Email</label>
-                                    <input type="email" name="contents[{{ $key }}][support_email]" value="{{ old("contents.$key.support_email", $support['email'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Support Phone</label>
-                                    <input type="text" name="contents[{{ $key }}][support_phone]" value="{{ old("contents.$key.support_phone", $support['phone'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Button Labels</h3>
-                            <div class="grid gap-4 sm:grid-cols-2">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Primary Button</label>
-                                    <input type="text" name="contents[{{ $key }}][home_button_label]" value="{{ old("contents.$key.home_button_label", $buttons['home'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Secondary Button</label>
-                                    <input type="text" name="contents[{{ $key }}][print_button_label]" value="{{ old("contents.$key.print_button_label", $buttons['print'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Payment Button</label>
-                                <input type="text" name="contents[{{ $key }}][payment_button_label]" value="{{ old("contents.$key.payment_button_label", $buttons['payment'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
-                            </div>
-                        </div>
-
-                        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Email Copy</h3>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-                                <input type="text" name="contents[{{ $key }}][email_subject]" value="{{ old("contents.$key.email_subject", $email['subject'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Greeting</label>
-                                <input type="text" name="contents[{{ $key }}][email_greeting]" value="{{ old("contents.$key.email_greeting", $email['greeting'] ?? '') }}" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Intro</label>
-                                <textarea name="contents[{{ $key }}][email_intro]" rows="4" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">{{ old("contents.$key.email_intro", $email['intro'] ?? '') }}</textarea>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Closing</label>
-                                <textarea name="contents[{{ $key }}][email_closing]" rows="3" class="w-full rounded-lg border-gray-300 focus:border-[#8f5d54] focus:ring-[#8f5d54]">{{ old("contents.$key.email_closing", $email['closing'] ?? '') }}</textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="submit" class="inline-flex items-center rounded-lg bg-[#8f5d54] px-5 py-3 text-sm font-semibold text-white hover:bg-[#a0675a] transition-colors">
-                        Save {{ $label }} Content
-                    </button>
-                </div>
             </form>
         </div>
     @endforeach
