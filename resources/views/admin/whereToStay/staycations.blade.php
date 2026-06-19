@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Staycations Page CMS')
+@section('title', 'Staycation Rooms CMS')
 
 @section('content')
 
@@ -11,9 +11,9 @@
 >
 
     <h1 class="text-3xl sm:text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
-        Staycations Management
+        Staycation Room Management
     </h1>
-    <p class="text-gray-600 mb-8 sm:mb-10 text-sm sm:text-base">Manage all your accommodation options, capacity, pricing, and inventory.</p>
+    <p class="text-gray-600 mb-8 sm:mb-10 text-sm sm:text-base">Manage all your room options, capacity, pricing, and inventory.</p>
     @php
         $mobileLayoutStep1 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step1_availability')->value('value') ?? 3);
     @endphp
@@ -43,8 +43,8 @@
     {{-- Toolbar --}}
     <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-6">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Accommodations</h2>
-            <p class="text-gray-500 text-sm">View and edit all staycation options.</p>
+            <h2 class="text-2xl font-bold text-gray-800">Staycation Rooms</h2>
+            <p class="text-gray-500 text-sm">View and edit all room options.</p>
         </div>
 
         <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
@@ -85,7 +85,7 @@
                 @click="showStaycationModal = true; resetForm()"
                 class="px-3 py-2 sm:px-4 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition text-center text-sm sm:text-base"
             >
-                + Add Staycation
+                + Add Room
             </button>
         </div>
     </div>
@@ -95,7 +95,7 @@
         :class="canReorder ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-slate-200 bg-white/80 text-slate-600'"
     >
         <template x-if="canReorder">
-            <p>Featured mode uses the saved frontend order. Drag the cards below to update the order used on staycation booking pages.</p>
+                <p>Featured mode uses the saved frontend order. Drag the cards below to update the order used on room booking pages.</p>
         </template>
         <template x-if="!canReorder">
             <p>Card dragging is available only in `Featured (Saved Order)` mode so temporary name/price sorts do not overwrite your saved frontend order.</p>
@@ -124,8 +124,8 @@
                         type="button"
                         data-drag-handle
                         class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-500 shadow-sm transition hover:border-gray-300 hover:text-gray-700"
-                        aria-label="Drag to reorder staycation"
-                        title="Drag to reorder staycation"
+                        aria-label="Drag to reorder room"
+                        title="Drag to reorder room"
                     >
                         <svg
                             class="h-4 w-4"
@@ -147,7 +147,7 @@
                     <template x-if="staycation.image && staycation.image.trim() !== ''">
                         <img :src="staycation.image" 
                              class="w-full h-full object-cover transition hover:scale-105" 
-                             alt="staycation"
+                             alt="room"
                              onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                     </template>
                     <template x-if="!staycation.image || staycation.image.trim() === ''">
@@ -208,8 +208,8 @@
         <template x-if="staycations.length === 0">
             <div class="col-span-full text-center py-12 bg-white/70 backdrop-blur-lg rounded-2xl border border-gray-200">
                 <i class="bi bi-inbox text-5xl text-gray-300 mb-4 block"></i>
-                <p class="text-lg text-gray-600 font-semibold">No Staycations Yet</p>
-                <p class="text-gray-500 text-sm mt-1">Start by adding your first accommodation option.</p>
+                <p class="text-lg text-gray-600 font-semibold">No Rooms Yet</p>
+                <p class="text-gray-500 text-sm mt-1">Start by adding your first room.</p>
             </div>
         </template>
     </div>
@@ -217,15 +217,15 @@
     {{-- SWIPER IMAGES MANAGEMENT --}}
     <div class="flex justify-between items-end mb-6 mt-12">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Swiper Images Management</h2>
-            <p class="text-gray-500 text-sm">Photos that appear in the staycation carousel.</p>
+            <h2 class="text-2xl font-bold text-gray-800">Room Images Management</h2>
+            <p class="text-gray-500 text-sm">Photos that appear in the room carousel.</p>
         </div>
 
         <button 
             @click="showModal = true" 
             class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition"
         >
-            + Add Image
+            + Add Room Image
         </button>
     </div>
 
@@ -264,7 +264,7 @@
                 <tr>
                     <th class="px-6 py-4 text-sm font-semibold text-gray-700">#</th>
                     <th class="px-6 py-4 text-sm font-semibold text-gray-700">Preview</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Staycation Name</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Room Name</th>
                     <th class="px-6 py-4 text-sm font-semibold text-gray-700">Title</th>
                     <th class="px-6 py-4 text-sm font-semibold text-gray-700">Uploaded</th>
                     <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
@@ -312,15 +312,15 @@
                 class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
             >&times;</button>
 
-            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editModeStaycation ? 'Edit Staycation' : 'Add Staycation'"></h3>
+            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editModeStaycation ? 'Edit Room' : 'Add Room'"></h3>
 
             <form id="staycationForm" @submit.prevent="saveStaycation()" class="space-y-5">
                 @csrf
 
-                <!-- Staycation Name, Days, Adults & Children -->
+                <!-- Room Name, Days, Adults & Children -->
                 <div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6" :class="isSpecialStaycation ? 'lg:grid-cols-3' : ''">
                     <div>
-                        <label for="staycation_name" class="block text-sm font-medium mb-1">Staycation Name</label>
+                        <label for="staycation_name" class="block text-sm font-medium mb-1">Room Name</label>
                         <input type="text" id="staycation_name" name="name" autocomplete="off" x-model="form.name" @input="updateSpecialRoomStatus()" class="w-full border rounded px-3 py-2 h-10" placeholder="Premium Glamping Tent" required>
                         <p x-show="isSpecialStaycation" class="text-xs text-blue-600 mt-1">BYOT/Car Camping - No adults/children required</p>
                     </div>
@@ -356,13 +356,14 @@
 
                 <!-- Dynamic Price Configs -->
                 <div class="space-y-3">
-                    <span class="block text-sm font-medium">Price Configurations</span>
+                    <span class="block text-sm font-medium">Room Pricing Overrides</span>
+                    <p class="text-xs text-gray-500">Use room-specific rates here. Global seasonal rules are managed in Pricing Configuration.</p>
                     <template x-for="(config, index) in form.priceConfigs" :key="index">
                         <div class="border p-3 rounded space-y-2">
 
                             <!-- Config Name and Type -->
                             <div class="flex space-x-2 items-center">
-                                <input type="text" :id="'price_config_name_' + index" :name="'price_config_name_' + index" x-model="config.name" placeholder="Config Name (Weekend, Holiday, etc.)" class="flex-1 border rounded px-2 py-1" required>
+                                <input type="text" :id="'price_config_name_' + index" :name="'price_config_name_' + index" x-model="config.name" placeholder="Rule Name (Weekend, Holiday, etc.)" class="flex-1 border rounded px-2 py-1" required>
 
                                 <select :id="'price_config_type_' + index" :name="'price_config_type_' + index" x-model="config.type" class="border rounded px-2 py-1">
                                     <option value="day">Day Type</option>
@@ -425,7 +426,7 @@
                         </div>
                     </template>
 
-                    <button type="button" @click="addPriceConfig()" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">+ Add Price Config</button>
+                    <button type="button" @click="addPriceConfig()" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">+ Add Pricing Rule</button>
                 </div>
 
                 <!-- Image Upload Section -->
@@ -477,7 +478,7 @@
                 class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4 text-gray-900" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
+            <h3 class="text-lg font-semibold mb-4 text-gray-900" x-text="editImageMode ? 'Edit Room Image' : 'Upload New Room Image'"></h3>
 
             <form
                 id="swiperUploadForm"
@@ -503,8 +504,8 @@
 
                     if (!staycationId) {
                         Swal.fire({
-                            title: 'Missing Staycation',
-                            text: 'Please select a staycation.',
+                            title: 'Missing Room',
+                            text: 'Please select a room.',
                             icon: 'warning',
                             confirmButtonColor: '#3b82f6'
                         });
@@ -586,9 +587,9 @@
                 @csrf
                 <input type="hidden" name="_method" value="POST" x-bind:value="editImageMode ? 'PUT' : 'POST'">
                 <div class="mb-3">
-                    <label for="swiper_staycation_id" class="block font-semibold mb-1">Staycation</label>
+                    <label for="swiper_staycation_id" class="block font-semibold mb-1">Room</label>
                     <select id="swiper_staycation_id" name="staycation_id" x-ref="staycation" class="border rounded p-2 w-full" x-bind:value="editImageMode ? currentStaycationId : ''" required>
-                        <option value="">Select Staycation</option>
+                        <option value="">Select Room</option>
                         @foreach($staycations as $staycation)
                             <option value="{{ $staycation->id }}">{{ $staycation->name }}</option>
                         @endforeach
@@ -601,7 +602,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="swiper_image_file" class="block font-semibold mb-1">Upload Image/Video</label>
+                    <label for="swiper_image_file" class="block font-semibold mb-1">Upload Room Image/Video</label>
                     <input type="file" id="swiper_image_file" name="image" x-ref="image" accept="image/*,video/*" class="border rounded p-2 w-full" x-bind:required="!editImageMode">
                 </div>
 
@@ -616,15 +617,15 @@
     {{-- FEATURES MANAGEMENT --}}
     <div class="flex justify-between items-end mb-6 mt-12">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Features Management</h2>
-            <p class="text-gray-500 text-sm">Amenities and features for each staycation.</p>
+            <h2 class="text-2xl font-bold text-gray-800">Room Features Management</h2>
+            <p class="text-gray-500 text-sm">Amenities and features for each room.</p>
         </div>
 
         <button
             @click="resetTextForm(); showTextModal = true"
             class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition"
         >
-            + Add Features
+            + Add Room Features
         </button>
     </div>
 
@@ -634,7 +635,7 @@
             <thead class="bg-gray-100/70 backdrop-blur">
                 <tr>
                     <th class="px-6 py-4 text-sm font-semibold text-gray-700">#</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Staycation Name</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Room Name</th>
                     <th class="px-6 py-4 text-sm font-semibold text-gray-700">Features List</th>
                     <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
                 </tr>
@@ -697,7 +698,7 @@
                 class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4 text-gray-900" x-text="editMode ? 'Edit Features' : 'Add Features'"></h3>
+            <h3 class="text-lg font-semibold mb-4 text-gray-900" x-text="editMode ? 'Edit Room Features' : 'Add Room Features'"></h3>
 
             <form
                 id="textUploadForm"
@@ -710,7 +711,7 @@
                 </template>
 
                 <div class="mb-3">
-                    <label for="features_staycation_id" class="block font-semibold mb-1">Staycation</label>
+                    <label for="features_staycation_id" class="block font-semibold mb-1">Room</label>
                     <select
                         id="features_staycation_id"
                         name="staycation_id"
@@ -718,7 +719,7 @@
                         class="border rounded p-2 w-full"
                         required
                     >
-                        <option value="">Select Staycation</option>
+                        <option value="">Select Room</option>
                         @foreach($staycations as $staycation)
                             <option value="{{ $staycation->id }}">{{ $staycation->name }}</option>
                         @endforeach
@@ -736,7 +737,7 @@
                         placeholder="Enter each feature on a new line:&#10;LUXURY TENT SETUP&#10;GOURMET LUNCH SERVICE&#10;PRIVATE ATV EXPERIENCE&#10;GUIDED NATURE TOUR&#10;CUSTOM TEAM BUILDING"
                         required
                     ></textarea>
-                    <p class="text-xs text-gray-500 mt-1">Enter each feature on a separate line. These will be displayed as bullet points on the staycation pages.</p>
+                    <p class="text-xs text-gray-500 mt-1">Enter each feature on a separate line. These will be displayed as bullet points on the room pages.</p>
                 </div>
 
                 <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2">
@@ -902,13 +903,13 @@ function staycationManager() {
                 const payload = await response.json().catch(() => ({}));
 
                 if (!response.ok || payload.success === false) {
-                    throw new Error(payload.message || 'Failed to save staycation order.');
+                    throw new Error(payload.message || 'Failed to save room order.');
                 }
             } catch (error) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Order Not Saved',
-                    text: error.message || 'Failed to save staycation order.',
+                    text: error.message || 'Failed to save room order.',
                     confirmButtonColor: '#ef4444',
                 }).then(() => {
                     window.location.reload();
@@ -1083,7 +1084,7 @@ function staycationManager() {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Missing Field',
-                    text: 'Please enter a staycation name.',
+                    text: 'Please enter a room name.',
                     confirmButtonColor: '#3b82f6'
                 });
                 return;
@@ -1217,7 +1218,7 @@ function staycationManager() {
                     Swal.fire({
                         icon: 'success',
                         title: this.editModeStaycation ? 'Updated!' : 'Added!',
-                        text: data.message || (this.editModeStaycation ? 'Staycation updated successfully!' : 'Staycation added successfully!'),
+                        text: data.message || (this.editModeStaycation ? 'Room updated successfully!' : 'Room added successfully!'),
                         confirmButtonColor: '#2563eb'
                     }).then(() => {
                         // Simply reload the page to show the updated data
@@ -1251,7 +1252,7 @@ function staycationManager() {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Error submitting staycation: ' + (err.message || 'Unknown error'),
+                    text: 'Error submitting room: ' + (err.message || 'Unknown error'),
                     confirmButtonColor: '#ef4444'
                 });
             } finally {
@@ -1345,7 +1346,7 @@ function staycationManager() {
             if (!this.form.id) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Save the staycation first.',
+                    title: 'Save the room first.',
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
@@ -1376,7 +1377,7 @@ function staycationManager() {
             if (!this.form.id) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Save the staycation first.',
+                    title: 'Save the room first.',
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
@@ -1543,7 +1544,7 @@ function staycationManager() {
 
         deleteStaycation(id, route) {
             Swal.fire({
-                title: 'Delete Staycation?',
+                title: 'Delete Room?',
                 text: 'This action cannot be undone.',
                 icon: 'warning',
                 showCancelButton: true,
@@ -1564,7 +1565,7 @@ function staycationManager() {
                         Swal.fire({
                             icon: 'success',
                             title: 'Deleted!',
-                            text: 'Staycation deleted successfully.',
+                            text: 'Room deleted successfully.',
                             confirmButtonColor: '#2563eb'
                         }).then(() => {
                             window.location.reload();
@@ -1573,7 +1574,7 @@ function staycationManager() {
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
-                            text: 'Failed to delete staycation.'
+                            text: 'Failed to delete room.'
                         });
                     });
                 }

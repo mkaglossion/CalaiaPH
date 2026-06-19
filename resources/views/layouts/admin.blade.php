@@ -109,7 +109,7 @@
           // ]],
           ['title'=>'Where to Stay','icon'=>'building','route'=>'admin.stay.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.stay.wheretostay'],
-            ['label'=>'Variants','route'=>'admin.stay.staycations'],
+            ['label'=>'Staycation Rooms','route'=>'admin.stay.staycations'],
           ]],
           ['title'=>'Day Visit','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.do.whattodo'],
