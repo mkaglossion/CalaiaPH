@@ -514,8 +514,25 @@ let vatRate = {{ $vatRate }};
                       @keydown.escape.window="bookingPolicyModal = false; campWaiverModal = false"
                     >
                       <p class="mb-4 text-sm font-medium text-gray-700">
-                        Please read our terms and conditions, and camp waiver before proceeding.
+                        Please read our <a href="{{ route('privacy-notice') }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-[#8f5d54] hover:underline">privacy notice</a>, terms and conditions, and camp waiver before proceeding.
                       </p>
+
+                      <div class="mb-4 pl-0">
+                        <p class="text-sm font-semibold text-slate-900">Privacy Notice</p>
+                        <p class="mt-1 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                          We collect your name, email address, mobile number, booking details, and waiver information for booking processing, payment, confirmation, and customer support.
+                        </p>
+                        <ul class="mt-2 space-y-1 text-xs sm:text-sm text-slate-700 leading-relaxed list-disc list-inside">
+                          <li>Used only for reservation and payment-related purposes</li>
+                          <li>Shared only with service providers needed to complete your booking</li>
+                          <li>
+                            See the full
+                            <a href="{{ route('privacy-notice') }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-[#8f5d54] hover:underline">Privacy Notice</a>
+                            for details
+                          </li>
+                        </ul>
+                      </div>
+                      <div class="my-4 border-t border-gray-200"></div>
 
                       <div class="flex items-start">
                         <input
@@ -523,7 +540,7 @@ let vatRate = {{ $vatRate }};
                           id="terms_and_policy"
                           name="terms_and_policy_accepted"
                           x-model="bookingPolicyAccepted"
-                          class="mt-1 mr-3 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-600"
+                          class="mt-1 mr-3 h-4 w-4 shrink-0 text-blue-600 border-gray-300 focus:ring-blue-600"
                           {{ old('terms_and_policy_accepted') ? 'checked' : '' }}
                           required
                         >
@@ -548,32 +565,32 @@ let vatRate = {{ $vatRate }};
                         <p class="text-xs text-red-600 mt-2">{{ $message }}</p>
                       @enderror
 
-                      <div class="mt-5 rounded-xl border border-rose-200 bg-white/70 p-4 sm:p-6">
+                      <div class="mt-4 border-t border-gray-200 pt-4">
                         <div class="flex items-start">
                           <input
                             type="checkbox"
                             id="camp_waiver"
                             name="camp_waiver_accepted"
                             x-model="campWaiverAccepted"
-                            class="mt-1 mr-3 h-4 w-4 text-rose-600 border-gray-300 focus:ring-rose-600"
+                            class="mt-1 mr-3 h-4 w-4 shrink-0 text-rose-600 border-gray-300 focus:ring-rose-600"
                             {{ old('camp_waiver_accepted') ? 'checked' : '' }}
                             required
                           >
-                          <label for="camp_waiver" class="text-xs sm:text-sm text-gray-700 leading-relaxed">
-                            <strong>I agree to the {{ $campWaiverTitle }}</strong><br>
-                            I confirm that the details I entered in the camp waiver form are true and complete.
-                          </label>
-                        </div>
+                          <div class="min-w-0">
+                            <label for="camp_waiver" class="text-xs sm:text-sm text-gray-700 leading-relaxed block">
+                              <strong>I agree to the {{ $campWaiverTitle }}</strong><br>
+                              I confirm that the details I entered in the camp waiver form are true and complete.
+                            </label>
 
-                        <div class="mt-3 pl-7">
-                          <button
-                            type="button"
-                            class="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#8f5d54] hover:underline"
-                            @click="campWaiverStep = 'read'; campWaiverModal = true"
-                          >
-                            <i class="bi bi-pencil-square"></i>
-                            Review or edit camp waiver
-                          </button>
+                            <button
+                              type="button"
+                              class="mt-2 inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#8f5d54] hover:underline"
+                              @click="campWaiverStep = 'read'; campWaiverModal = true"
+                            >
+                              <i class="bi bi-pencil-square"></i>
+                              Review and complete camp waiver
+                            </button>
+                          </div>
                         </div>
 
                         @error('camp_waiver_accepted')
@@ -695,7 +712,7 @@ let vatRate = {{ $vatRate }};
                                           id="camp_waiver_participant_name"
                                           name="camp_waiver_participant_name"
                                           x-model="campWaiver.participant_name"
-                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                           placeholder="Juan Dela Cruz"
                                           required
                                         >
@@ -710,7 +727,7 @@ let vatRate = {{ $vatRate }};
                                           id="camp_waiver_birth_date"
                                           name="camp_waiver_birth_date"
                                           x-model="campWaiver.birth_date"
-                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                           required
                                         >
                                       </div>
@@ -723,7 +740,7 @@ let vatRate = {{ $vatRate }};
                                           id="camp_waiver_gender"
                                           name="camp_waiver_gender"
                                           x-model="campWaiver.gender"
-                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base bg-white focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                           required
                                         >
                                           <option value="">Choose gender</option>
@@ -743,7 +760,7 @@ let vatRate = {{ $vatRate }};
                                           id="camp_waiver_relationship"
                                           name="camp_waiver_relationship"
                                           x-model="campWaiver.relationship"
-                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                           placeholder="Self, parent, or guardian"
                                           required
                                         >
@@ -758,7 +775,7 @@ let vatRate = {{ $vatRate }};
                                           name="camp_waiver_address"
                                           x-model="campWaiver.address"
                                           rows="3"
-                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                           placeholder="Complete residential address"
                                           required
                                         ></textarea>
@@ -773,7 +790,7 @@ let vatRate = {{ $vatRate }};
                                           id="camp_waiver_emergency_name"
                                           name="camp_waiver_emergency_name"
                                           x-model="campWaiver.emergency_name"
-                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                           placeholder="Full name of contact person"
                                           required
                                         >
@@ -788,7 +805,7 @@ let vatRate = {{ $vatRate }};
                                           id="camp_waiver_emergency_phone"
                                           name="camp_waiver_emergency_phone"
                                           x-model="campWaiver.emergency_phone"
-                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                           placeholder="+63 9XX XXX XXXX"
                                           required
                                         >
@@ -799,59 +816,60 @@ let vatRate = {{ $vatRate }};
                                           <summary class="cursor-pointer text-sm font-semibold text-gray-900">
                                             Optional details and guardian section
                                           </summary>
-                                          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                          <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                              <label for="camp_waiver_parent_guardian_name" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                                                Parent / Guardian Full Name <span class="text-gray-400">(if applicable)</span>
+                                              <label for="camp_waiver_parent_guardian_name" class="block text-xs sm:text-sm font-medium text-gray-700">
+                                                Parent / Guardian Full Name
                                               </label>
+                                              <p class="mt-1 text-[11px] text-gray-400">(if applicable)</p>
                                               <input
                                                 type="text"
                                                 id="camp_waiver_parent_guardian_name"
                                                 name="camp_waiver_parent_guardian_name"
                                                 x-model="campWaiver.parent_guardian_name"
-                                                class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
-                                                placeholder="Required if the guest is a minor"
+                                                class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                               >
                                             </div>
 
                                             <div>
-                                              <label for="camp_waiver_parent_signature_name" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                                                Parent / Guardian Name and Signature <span class="text-gray-400">(if under 18)</span>
+                                              <label for="camp_waiver_parent_signature_name" class="block text-xs sm:text-sm font-medium text-gray-700">
+                                                Parent / Guardian Signature Name
                                               </label>
+                                              <p class="mt-1 text-[11px] text-gray-400">(if applicable)</p>
                                               <input
                                                 type="text"
                                                 id="camp_waiver_parent_signature_name"
                                                 name="camp_waiver_parent_signature_name"
                                                 x-model="campWaiver.parent_signature_name"
-                                                class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
-                                                placeholder="Enter the full name of the parent or guardian"
+                                                class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                               >
                                             </div>
 
                                             <div>
-                                              <label for="camp_waiver_child_ward_name" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                                                Name of Child or Ward <span class="text-gray-400">(if under 18)</span>
+                                              <label for="camp_waiver_child_ward_name" class="block text-xs sm:text-sm font-medium text-gray-700">
+                                                Name of Child or Ward
                                               </label>
+                                              <p class="mt-1 text-[11px] text-gray-400">(if under 18)</p>
                                               <input
                                                 type="text"
                                                 id="camp_waiver_child_ward_name"
                                                 name="camp_waiver_child_ward_name"
                                                 x-model="campWaiver.child_ward_name"
-                                                class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
-                                                placeholder="Enter the full name of the child or ward"
+                                                class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                               >
                                             </div>
 
                                             <div>
-                                              <label for="camp_waiver_parent_signature_date" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                                                Parent / Guardian Date <span class="text-gray-400">(if under 18)</span>
+                                              <label for="camp_waiver_parent_signature_date" class="block text-xs sm:text-sm font-medium text-gray-700">
+                                                Parent / Guardian Date
                                               </label>
+                                              <p class="mt-1 text-[11px] text-gray-400">(if under 18)</p>
                                               <input
                                                 type="date"
                                                 id="camp_waiver_parent_signature_date"
                                                 name="camp_waiver_parent_signature_date"
                                                 x-model="campWaiver.parent_signature_date"
-                                                class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                                class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                               >
                                             </div>
 
@@ -864,7 +882,7 @@ let vatRate = {{ $vatRate }};
                                                 name="camp_waiver_medical_condition"
                                                 x-model="campWaiver.medical_condition"
                                                 rows="3"
-                                                class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                                class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                                 placeholder="List allergies, conditions, or restrictions, if any"
                                               ></textarea>
                                             </div>
@@ -881,7 +899,7 @@ let vatRate = {{ $vatRate }};
                                           id="camp_waiver_signature_name"
                                           name="camp_waiver_signature_name"
                                           x-model="campWaiver.signature_name"
-                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                           placeholder="Enter your full name"
                                           required
                                         >
@@ -896,7 +914,7 @@ let vatRate = {{ $vatRate }};
                                           id="camp_waiver_signature_date"
                                           name="camp_waiver_signature_date"
                                           x-model="campWaiver.signature_date"
-                                          class="w-full rounded-lg border-gray-300 px-3 py-2.5 text-sm sm:text-base focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                          class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
                                           required
                                         >
                                       </div>
@@ -1087,8 +1105,7 @@ let vatRate = {{ $vatRate }};
                     <div class="pt-4 space-y-3">
                       <div :class="canProceedToPayment() ? '' : 'cursor-not-allowed'">
                       <button
-                        type="button"
-                        @click="if (validateCampWaiverBeforePayment()) { $el.closest('form').requestSubmit(); }"
+                        type="submit"
                         :disabled="!canProceedToPayment()"
                         class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold text-white shadow-lg shadow-[#8f5d54]/20 hover:bg-[#a0675a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-all duration-300 transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600 disabled:shadow-none disabled:hover:bg-gray-300 disabled:hover:translate-y-0 disabled:focus:ring-gray-300"
                       >
