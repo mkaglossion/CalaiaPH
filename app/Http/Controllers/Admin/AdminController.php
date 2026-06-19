@@ -109,10 +109,29 @@ class AdminController extends Controller
             ->first();
 
         $currentSeason = $currentSeasonPeriod ? $currentSeasonPeriod->peakType->name : 'Non-Peak';
+        $seasonKeyMap = [
+            'Non-Peak' => 'nonPeak',
+            'Peak' => 'peak',
+            'Super-Peak' => 'superPeak',
+        ];
+        $currentSeasonKey = $seasonKeyMap[$currentSeason] ?? 'nonPeak';
 
         $images = StaycationSwiperImage::with('staycation')->latest()->get();
         $texts = StaycationText::all();
-        return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts', 'currentSeason', 'sortBy', 'sortOptions'));
+        $pricingService = app(PricingService::class);
+        $todayCarbon = Carbon::today();
+
+        $staycations->transform(function ($staycation) use ($pricingService, $todayCarbon, $currentSeasonKey, $currentSeason) {
+            $staycation->setAttribute(
+                'current_rate_preview',
+                $pricingService->getStaycationRate($staycation, $todayCarbon, $currentSeasonKey)
+            );
+            $staycation->setAttribute('current_season_preview', $currentSeason);
+
+            return $staycation;
+        });
+
+        return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts', 'currentSeason', 'currentSeasonKey', 'sortBy', 'sortOptions'));
     }
 
     public function staycationInventory()

@@ -34,6 +34,18 @@ class StaycationController extends Controller
             'Super-Peak' => 'superPeak'
         ];
         $currentSeasonKey = $seasonKeyMap[$currentSeason] ?? 'nonPeak';
+
+        $pricingService = app(\App\Services\PricingService::class);
+        $todayCarbon = now();
+        $staycations->transform(function ($staycation) use ($pricingService, $todayCarbon, $currentSeasonKey, $currentSeason) {
+            $staycation->setAttribute(
+                'current_rate_preview',
+                $pricingService->getStaycationRate($staycation, $todayCarbon, $currentSeasonKey)
+            );
+            $staycation->setAttribute('current_season_preview', $currentSeason);
+
+            return $staycation;
+        });
         
         return view('admin.staycations', compact('staycations', 'currentSeason', 'currentSeasonKey'));
     }
@@ -81,51 +93,36 @@ class StaycationController extends Controller
 
         // Handle price configs
         $priceConfigs = [];
-        if ($request->has('priceConfigs')) {
-            $decodedConfigs = is_string($request->priceConfigs) ? json_decode($request->priceConfigs, true) : $request->priceConfigs;
+        if ($request->filled('priceConfigs')) {
+            $decodedConfigs = is_string($request->priceConfigs)
+                ? json_decode($request->priceConfigs, true)
+                : $request->priceConfigs;
 
-            if (is_array($decodedConfigs)) {
-                foreach ($decodedConfigs as $config) {
-                    $priceConfig = [];
+            if (!is_array($decodedConfigs)) {
+                return response()->json([
+                    'message' => 'Validation failed.',
+                    'errors' => [
+                        'priceConfigs' => ['Pricing rules must be a valid JSON array.']
+                    ]
+                ], 422);
+            }
 
-                    // Handle rates
-                    if (isset($config['rates'])) {
-                        // Config already has rates structure
-                        $priceConfig['rates'] = [
-                            'nonPeak' => (float)($config['rates']['nonPeak'] ?? 0),
-                            'peak' => (float)($config['rates']['peak'] ?? 0),
-                            'superPeak' => (float)($config['rates']['superPeak'] ?? 0),
-                        ];
-                    } elseif (isset($config['nonPeak']) || isset($config['peak']) || isset($config['superPeak'])) {
-                        // Legacy format
-                        $priceConfig['rates'] = [
-                            'nonPeak' => (float)($config['nonPeak'] ?? 0),
-                            'peak' => (float)($config['peak'] ?? 0),
-                            'superPeak' => (float)($config['superPeak'] ?? 0),
-                        ];
-                    }
+            [$priceConfigs, $priceConfigErrors] = $this->normalizePriceConfigs($decodedConfigs);
 
-                    // Handle other config properties
-                    if (isset($config['name'])) {
-                        $priceConfig['name'] = $config['name'];
-                    }
-                    if (isset($config['type'])) {
-                        $priceConfig['type'] = $config['type'];
-                    }
-                    if (isset($config['days']) && is_array($config['days'])) {
-                        $priceConfig['days'] = $config['days'];
-                    }
-                    if (isset($config['dates'])) {
-                        $priceConfig['dates'] = $config['dates'];
-                    }
-                    if (isset($config['multipleDates'])) {
-                        $priceConfig['multipleDates'] = $config['multipleDates'];
-                    }
+            if (!empty($priceConfigErrors)) {
+                return response()->json([
+                    'message' => 'Validation failed.',
+                    'errors' => $priceConfigErrors
+                ], 422);
+            }
 
-                    if (!empty($priceConfig)) {
-                        $priceConfigs[] = $priceConfig;
-                    }
-                }
+            if (empty($priceConfigs)) {
+                return response()->json([
+                    'message' => 'Validation failed.',
+                    'errors' => [
+                        'priceConfigs' => ['Please add at least one pricing rule.']
+                    ]
+                ], 422);
             }
         }
 
@@ -193,7 +190,7 @@ class StaycationController extends Controller
         $staycation = Staycation::create($staycationData);
 
         return response()->json([
-            'message' => 'Staycation added successfully.',
+            'message' => 'Room added successfully.',
             'id' => $staycation->id,
             'staycation' => [
                 'id' => $staycation->id,
@@ -261,51 +258,36 @@ class StaycationController extends Controller
 
         // Handle price configs
         $priceConfigs = [];
-        if ($request->has('priceConfigs')) {
-            $decodedConfigs = is_string($request->priceConfigs) ? json_decode($request->priceConfigs, true) : $request->priceConfigs;
+        if ($request->filled('priceConfigs')) {
+            $decodedConfigs = is_string($request->priceConfigs)
+                ? json_decode($request->priceConfigs, true)
+                : $request->priceConfigs;
 
-            if (is_array($decodedConfigs)) {
-                foreach ($decodedConfigs as $config) {
-                    $priceConfig = [];
+            if (!is_array($decodedConfigs)) {
+                return response()->json([
+                    'message' => 'Validation failed.',
+                    'errors' => [
+                        'priceConfigs' => ['Pricing rules must be a valid JSON array.']
+                    ]
+                ], 422);
+            }
 
-                    // Handle rates
-                    if (isset($config['rates'])) {
-                        // Config already has rates structure
-                        $priceConfig['rates'] = [
-                            'nonPeak' => (float)($config['rates']['nonPeak'] ?? 0),
-                            'peak' => (float)($config['rates']['peak'] ?? 0),
-                            'superPeak' => (float)($config['rates']['superPeak'] ?? 0),
-                        ];
-                    } elseif (isset($config['nonPeak']) || isset($config['peak']) || isset($config['superPeak'])) {
-                        // Legacy format
-                        $priceConfig['rates'] = [
-                            'nonPeak' => (float)($config['nonPeak'] ?? 0),
-                            'peak' => (float)($config['peak'] ?? 0),
-                            'superPeak' => (float)($config['superPeak'] ?? 0),
-                        ];
-                    }
+            [$priceConfigs, $priceConfigErrors] = $this->normalizePriceConfigs($decodedConfigs);
 
-                    // Handle other config properties
-                    if (isset($config['name'])) {
-                        $priceConfig['name'] = $config['name'];
-                    }
-                    if (isset($config['type'])) {
-                        $priceConfig['type'] = $config['type'];
-                    }
-                    if (isset($config['days']) && is_array($config['days'])) {
-                        $priceConfig['days'] = $config['days'];
-                    }
-                    if (isset($config['dates'])) {
-                        $priceConfig['dates'] = $config['dates'];
-                    }
-                    if (isset($config['multipleDates'])) {
-                        $priceConfig['multipleDates'] = $config['multipleDates'];
-                    }
+            if (!empty($priceConfigErrors)) {
+                return response()->json([
+                    'message' => 'Validation failed.',
+                    'errors' => $priceConfigErrors
+                ], 422);
+            }
 
-                    if (!empty($priceConfig)) {
-                        $priceConfigs[] = $priceConfig;
-                    }
-                }
+            if (empty($priceConfigs)) {
+                return response()->json([
+                    'message' => 'Validation failed.',
+                    'errors' => [
+                        'priceConfigs' => ['Please add at least one pricing rule.']
+                    ]
+                ], 422);
             }
         }
 
@@ -384,7 +366,7 @@ class StaycationController extends Controller
         $updatedStaycation = $staycation_list->fresh();
 
         return response()->json([
-            'message' => 'Staycation updated successfully.',
+            'message' => 'Room updated successfully.',
             'staycation' => [
                 'id' => $updatedStaycation->id,
                 'name' => $updatedStaycation->name,
@@ -439,6 +421,221 @@ class StaycationController extends Controller
     public function destroy(Staycation $staycation_list)
     {
         $staycation_list->delete();
-        return redirect()->back()->with('success', 'Staycation deleted successfully!');
+        return redirect()->back()->with('success', 'Room deleted successfully!');
+    }
+
+    private function normalizePriceConfigs(array $decodedConfigs): array
+    {
+        $priceConfigs = [];
+        $errors = [];
+        $dateCoverageByIndex = [];
+
+        foreach ($decodedConfigs as $index => $config) {
+            if (!is_array($config)) {
+                continue;
+            }
+
+            $normalized = [];
+
+            $rates = $config['rates'] ?? null;
+            if (is_array($rates)) {
+                $normalized['rates'] = [
+                    'nonPeak' => (float) ($rates['nonPeak'] ?? 0),
+                    'peak' => (float) ($rates['peak'] ?? 0),
+                    'superPeak' => (float) ($rates['superPeak'] ?? 0),
+                ];
+            } elseif (isset($config['nonPeak']) || isset($config['peak']) || isset($config['superPeak'])) {
+                $normalized['rates'] = [
+                    'nonPeak' => (float) ($config['nonPeak'] ?? 0),
+                    'peak' => (float) ($config['peak'] ?? 0),
+                    'superPeak' => (float) ($config['superPeak'] ?? 0),
+                ];
+            }
+
+            $name = trim((string) ($config['name'] ?? ''));
+            if ($name !== '') {
+                $normalized['name'] = $name;
+            }
+
+            $type = strtolower(trim((string) ($config['type'] ?? 'day')));
+            if (!in_array($type, ['day', 'date', 'range'], true)) {
+                $type = 'day';
+            }
+            $normalized['type'] = $type;
+
+            $dayPreset = strtolower(trim((string) ($config['dayPreset'] ?? 'custom')));
+            if (in_array($dayPreset, ['custom', 'weekdays', 'weekends', 'all'], true)) {
+                $normalized['dayPreset'] = $dayPreset;
+            }
+
+            if ($type === 'day') {
+                $days = $config['days'] ?? [];
+                if (!is_array($days)) {
+                    $days = [];
+                }
+                $days = array_values(array_filter(array_map(static fn ($day) => trim((string) $day), $days)));
+
+                if (empty($days)) {
+                    $presetDays = $this->getDayPresetDays($dayPreset);
+                    if (!empty($presetDays)) {
+                        $days = $presetDays;
+                    }
+                }
+
+                if (empty($days)) {
+                    $errors["priceConfigs.$index.days"] = ['Select at least one day for this pricing rule.'];
+                } else {
+                    $normalized['days'] = $days;
+                }
+            } elseif ($type === 'range') {
+                $startDate = trim((string) ($config['startDate'] ?? $config['start_date'] ?? ''));
+                $endDate = trim((string) ($config['endDate'] ?? $config['end_date'] ?? ''));
+                $days = $config['days'] ?? [];
+                if (!is_array($days)) {
+                    $days = [];
+                }
+                $days = array_values(array_filter(array_map(static fn ($day) => trim((string) $day), $days)));
+                if (empty($days)) {
+                    $presetDays = $this->getDayPresetDays($dayPreset);
+                    if (!empty($presetDays)) {
+                        $days = $presetDays;
+                    }
+                }
+
+                if ($startDate === '' || $endDate === '') {
+                    $errors["priceConfigs.$index.dateRange"] = ['Start date and end date are required for date range pricing.'];
+                } elseif ($startDate > $endDate) {
+                    $errors["priceConfigs.$index.dateRange"] = ['Start date must be before or equal to end date.'];
+                } else {
+                    $normalized['startDate'] = $startDate;
+                    $normalized['endDate'] = $endDate;
+                    if (!empty($days)) {
+                        $normalized['days'] = $days;
+                    }
+                }
+            } else {
+                $dates = $this->extractPriceConfigDates($config);
+                if (empty($dates)) {
+                    $errors["priceConfigs.$index.dates"] = ['Select at least one date for this pricing rule.'];
+                } else {
+                    $normalized['dates'] = count($dates) === 1 ? $dates[0] : implode(', ', $dates);
+                    if (count($dates) > 1) {
+                        $normalized['multipleDates'] = true;
+                    }
+                }
+            }
+
+            if (!empty($normalized['rates'])) {
+                $coverage = $this->buildPriceConfigDateCoverage($normalized);
+                if (!empty($coverage)) {
+                    foreach ($dateCoverageByIndex as $existingIndex => $existingCoverage) {
+                        if ($this->priceConfigCoverageOverlaps($coverage, $existingCoverage)) {
+                            $existingLabel = $priceConfigs[$existingIndex]['name'] ?? 'an existing pricing rule';
+                            $errors["priceConfigs.$index.dayPreset"] = [
+                                "This quick select overlaps with \"{$existingLabel}\". Please choose a different day pattern."
+                            ];
+                            continue 2;
+                        }
+                    }
+
+                    $dateCoverageByIndex[$index] = $coverage;
+                }
+
+                $priceConfigs[] = $normalized;
+            }
+        }
+
+        return [$priceConfigs, $errors];
+    }
+
+    private function buildPriceConfigDateCoverage(array $config): ?array
+    {
+        $type = strtolower(trim((string) ($config['type'] ?? 'day')));
+
+        if ($type === 'date') {
+            $dates = $this->extractPriceConfigDates($config);
+            if (empty($dates)) {
+                return null;
+            }
+
+            return array_fill_keys($dates, true);
+        }
+
+        if ($type === 'range') {
+            $startDate = trim((string) ($config['startDate'] ?? $config['start_date'] ?? ''));
+            $endDate = trim((string) ($config['endDate'] ?? $config['end_date'] ?? ''));
+            if ($startDate === '' || $endDate === '') {
+                return null;
+            }
+
+            $days = $config['days'] ?? [];
+            if (!is_array($days)) {
+                $days = [];
+            }
+            $days = array_values(array_filter(array_map(static fn ($day) => trim((string) $day), $days)));
+            $allowedDays = !empty($days) ? array_fill_keys($days, true) : null;
+
+            try {
+                $coverage = [];
+                $current = \Carbon\Carbon::parse($startDate)->startOfDay();
+                $end = \Carbon\Carbon::parse($endDate)->startOfDay();
+
+                while ($current->lte($end)) {
+                    $dayOfWeek = $current->format('D');
+                    if ($allowedDays === null || isset($allowedDays[$dayOfWeek])) {
+                        $coverage[$current->format('Y-m-d')] = true;
+                    }
+                    $current->addDay();
+                }
+
+                return empty($coverage) ? null : $coverage;
+            } catch (\Throwable $e) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    private function priceConfigCoverageOverlaps(array $currentCoverage, array $existingCoverage): bool
+    {
+        return !empty(array_intersect_key($currentCoverage, $existingCoverage));
+    }
+
+    private function getDayPresetDays(string $dayPreset): array
+    {
+        return match ($dayPreset) {
+            'weekdays' => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'],
+            'weekends' => ['Fri', 'Sat'],
+            'all' => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+            default => [],
+        };
+    }
+
+    private function extractPriceConfigDates(array $config): array
+    {
+        $rawDates = $config['dates'] ?? [];
+
+        if (is_array($rawDates)) {
+            $dates = $rawDates;
+        } else {
+            $dates = preg_split('/[,\n]+/', (string) $rawDates) ?: [];
+        }
+
+        $normalized = [];
+        foreach ($dates as $date) {
+            $date = trim((string) $date);
+            if ($date === '') {
+                continue;
+            }
+
+            try {
+                $normalized[] = \Carbon\Carbon::parse($date)->format('Y-m-d');
+            } catch (\Throwable $e) {
+                // Skip invalid date values and continue normalizing the rest.
+            }
+        }
+
+        return array_values(array_unique($normalized));
     }
 }

@@ -439,6 +439,40 @@ class PricingService
         return $matrix[$seasonType][$dayType] ?? null;
     }
 
+    private function getGlobalNightlyRate(\App\Models\Staycation $staycation, Carbon $date): ?float
+    {
+        $unitType = $this->resolveUnitTypeForStaycation($staycation);
+        if ($unitType === null) {
+            return null;
+        }
+
+        $nightlyRate = $this->calculateNightlyRate($unitType, $date->format('Y-m-d'));
+        if (($nightlyRate['success'] ?? false) && isset($nightlyRate['rate']) && is_numeric($nightlyRate['rate'])) {
+            return (float) $nightlyRate['rate'];
+        }
+
+        return null;
+    }
+
+    private function resolveUnitTypeForStaycation(\App\Models\Staycation $staycation): ?string
+    {
+        $type = strtolower(trim((string) ($staycation->type ?? '')));
+        if (in_array($type, ['glamping', 'camping'], true)) {
+            return $type;
+        }
+
+        $roomName = strtolower((string) ($staycation->name ?? ''));
+        if (str_contains($roomName, 'glamping') || str_contains($roomName, 'dome') || str_contains($roomName, 'bell')) {
+            return 'glamping';
+        }
+
+        if (str_contains($roomName, 'byot') || str_contains($roomName, 'camping') || str_contains($roomName, 'tent') || str_contains($roomName, 'car camping')) {
+            return 'camping';
+        }
+
+        return null;
+    }
+
     /**
      * Get staycation rate based on date, season, and day type
      *
@@ -453,64 +487,19 @@ class PricingService
     {
         $priceConfigs = $staycation->price_configs;
         if (empty($priceConfigs)) {
-            return $staycation->price ?? 0;
+            return $this->getGlobalNightlyRate($staycation, $checkinDate) ?? ($staycation->price ?? 0);
         }
 
-        $checkinDayOfWeek = $checkinDate->format('D'); // Mon, Tue, etc.
-        $checkinDateStr = $checkinDate->format('Y-m-d');
-        $dayType = in_array($checkinDayOfWeek, ['Sat', 'Sun']) ? 'weekend' : 'weekday';
-
-        // Helper to safely get rate from config
-        $getRate = function (array $config) use ($season): float {
-            if (!isset($config['rates']) || !is_array($config['rates'])) {
-                return 0;
-            }
-            return $config['rates'][$season] ?? 0;
-        };
-
-        // 1. Find config with specific date match
-        foreach ($priceConfigs as $config) {
-            if (!is_array($config)) {
-                continue;
-            }
-            $dates = $config['dates'] ?? [];
-            $dates = is_array($dates) ? $dates : [$dates];
-            if (!empty($dates) && in_array($checkinDateStr, $dates)) {
-                return $getRate($config);
-            }
-
-            $multipleDates = $config['multipleDates'] ?? null;
-            if (is_array($multipleDates) && !empty($multipleDates) && in_array($checkinDateStr, $multipleDates)) {
-                return $getRate($config);
-            }
+        $configuredRate = $staycation->getConfiguredRateForDate($checkinDate, $season);
+        if ($configuredRate !== null) {
+            return $configuredRate;
         }
 
-        // 2. Find config with day type (weekday/weekend) match - check before days
-        foreach ($priceConfigs as $config) {
-            if (!is_array($config)) {
-                continue;
-            }
-            if (($config['day_type'] ?? null) === $dayType) {
-                return $getRate($config);
-            }
+        $globalRate = $this->getGlobalNightlyRate($staycation, $checkinDate);
+        if ($globalRate !== null) {
+            return $globalRate;
         }
 
-        // 3. Find config with day-of-week match
-        foreach ($priceConfigs as $config) {
-            if (!is_array($config)) {
-                continue;
-            }
-            $days = $config['days'] ?? null;
-            if (is_array($days) && !empty($days) && in_array($checkinDayOfWeek, $days)) {
-                return $getRate($config);
-            }
-        }
-
-        // 4. Fallback to first config
-        $firstConfig = $priceConfigs[0] ?? null;
-        if (!$firstConfig || !isset($firstConfig['rates'])) {
-            return $staycation->price ?? 0;
-        }
-        return $getRate($firstConfig);
+        return $staycation->price ?? 0;
     }
 }

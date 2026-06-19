@@ -38,6 +38,10 @@
     </h1>
     <p class="text-gray-600">Manage your pricing rules, durations, holidays, and rate matrix.</p>
 
+    <div class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        This is the global rate matrix used as the default pricing source. Room-specific overrides are managed inside <strong>Staycation Rooms</strong>.
+    </div>
+
     @if(session('success'))
         <script>
             document.addEventListener('DOMContentLoaded', function() {

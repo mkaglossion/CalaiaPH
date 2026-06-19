@@ -2564,7 +2564,7 @@
                         currentDate.setDate(checkinDate.getDate() + i);
 
                         const dayShort = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
-                        const dateOnly = currentDate.toISOString().split('T')[0];
+                        const dateOnly = this.formatLocalDateKey(currentDate);
 
                         let season = 'Non-Peak';
                         for (const peak of peakPeriods) {
@@ -2576,7 +2576,7 @@
                             }
                         }
 
-                        const isWeekend = dayShort.toLowerCase() === 'sat' || dayShort.toLowerCase() === 'sun';
+                        const isWeekend = dayShort.toLowerCase() === 'fri' || dayShort.toLowerCase() === 'sat';
                         const isPeakSeason = typeof season === 'string'
                             && season.toLowerCase().includes('peak')
                             && !season.toLowerCase().includes('non');
@@ -2589,12 +2589,12 @@
                         } else if (dayTypePricing && Object.keys(dayTypePricing).length > 0) {
                             if (isWeekend) {
                                 rate = isPeakSeason
-                                    ? (dayTypePricing.peak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.regular || roomBasePrice)
-                                    : (dayTypePricing.regular_weekend || dayTypePricing.regular || roomBasePrice);
+                                    ? (dayTypePricing.peak_weekend || dayTypePricing.superPeak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.nonPeak_weekend || roomBasePrice)
+                                    : (dayTypePricing.nonPeak_weekend || dayTypePricing.weekend || roomBasePrice);
                             } else {
                                 rate = isPeakSeason
-                                    ? (dayTypePricing.peak_weekday || dayTypePricing.peak || dayTypePricing.weekday || dayTypePricing.regular || roomBasePrice)
-                                    : (dayTypePricing.regular_weekday || dayTypePricing.regular || roomBasePrice);
+                                    ? (dayTypePricing.peak_weekday || dayTypePricing.superPeak_weekday || dayTypePricing.peak || dayTypePricing.weekday || dayTypePricing.nonPeak_weekday || roomBasePrice)
+                                    : (dayTypePricing.nonPeak_weekday || dayTypePricing.weekday || roomBasePrice);
                             }
                         } else {
                             rate = isWeekend ? roomBasePrice + 1360 : roomBasePrice;
@@ -2675,7 +2675,7 @@
                         currentDate.setDate(checkinDate.getDate() + i);
 
                         const dayShort = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
-                        const dateOnly = currentDate.toISOString().split('T')[0];
+                        const dateOnly = this.formatLocalDateKey(currentDate);
 
                         let season = 'Non-Peak';
                         for (const peak of peakPeriods) {
@@ -2687,7 +2687,7 @@
                             }
                         }
 
-                        const isWeekend = dayShort.toLowerCase() === 'sat' || dayShort.toLowerCase() === 'sun';
+                        const isWeekend = dayShort.toLowerCase() === 'fri' || dayShort.toLowerCase() === 'sat';
                         const isPeakSeason = typeof season === 'string'
                             && season.toLowerCase().includes('peak')
                             && !season.toLowerCase().includes('non');
@@ -2700,12 +2700,12 @@
                         } else if (dayTypePricing && Object.keys(dayTypePricing).length > 0) {
                             if (isWeekend) {
                                 rate = isPeakSeason
-                                    ? (dayTypePricing.peak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.regular || basePrice)
-                                    : (dayTypePricing.regular_weekend || dayTypePricing.regular || basePrice);
+                                    ? (dayTypePricing.peak_weekend || dayTypePricing.superPeak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.nonPeak_weekend || basePrice)
+                                    : (dayTypePricing.nonPeak_weekend || dayTypePricing.weekend || basePrice);
                             } else {
                                 rate = isPeakSeason
-                                    ? (dayTypePricing.peak_weekday || dayTypePricing.peak || dayTypePricing.weekday || dayTypePricing.regular || basePrice)
-                                    : (dayTypePricing.regular_weekday || dayTypePricing.regular || basePrice);
+                                    ? (dayTypePricing.peak_weekday || dayTypePricing.superPeak_weekday || dayTypePricing.peak || dayTypePricing.weekday || dayTypePricing.nonPeak_weekday || basePrice)
+                                    : (dayTypePricing.nonPeak_weekday || dayTypePricing.weekday || basePrice);
                             }
                         } else {
                             rate = isWeekend ? basePrice + 1360 : basePrice;
@@ -2805,6 +2805,13 @@
                     return Math.max(0, Math.ceil((b - a) / (1000 * 60 * 60 * 24)));
                 },
 
+                formatLocalDateKey(dateObj) {
+                    const y = dateObj.getFullYear();
+                    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const d = String(dateObj.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                },
+
                 getPriceBreakdown(room) {
                     const breakdown = [];
 
@@ -2838,7 +2845,7 @@
 
                         // Determine season based on peak periods
                         let season = 'Non-Peak';
-                        const dateOnly = currentDate.toISOString().split('T')[0];
+                        const dateOnly = this.formatLocalDateKey(currentDate);
 
                         // Check if peak periods exist
                         if (peakPeriods && peakPeriods.length > 0) {
@@ -2862,7 +2869,7 @@
                         let dayType = 'Weekday';
                         let rate = 0;
                         const dayLower = (dayShort || '').toLowerCase();
-                        const isWeekend = dayLower === 'sat' || dayLower === 'sun' || dayLower === 'saturday' || dayLower === 'sunday';
+                        const isWeekend = dayLower === 'fri' || dayLower === 'sat' || dayLower === 'friday' || dayLower === 'saturday';
                         if (isWeekend) dayType = 'Weekend';
 
                         // Get price based on day type
@@ -2885,13 +2892,13 @@
                             if (isWeekend) {
                                 dayType = 'Weekend';
                                 rate = isPeakSeason
-                                    ? (dayTypePricing.peak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.regular || basePrice)
-                                    : (dayTypePricing.regular_weekend || dayTypePricing.regular || basePrice);
+                                    ? (dayTypePricing.peak_weekend || dayTypePricing.superPeak_weekend || dayTypePricing.peak || dayTypePricing.weekend || dayTypePricing.nonPeak_weekend || basePrice)
+                                    : (dayTypePricing.nonPeak_weekend || dayTypePricing.weekend || basePrice);
                             } else {
                                 dayType = 'Weekday';
                                 rate = isPeakSeason
-                                    ? (dayTypePricing.peak_weekday || dayTypePricing.peak || dayTypePricing.weekday || dayTypePricing.regular || basePrice)
-                                    : (dayTypePricing.regular_weekday || dayTypePricing.regular || basePrice);
+                                    ? (dayTypePricing.peak_weekday || dayTypePricing.superPeak_weekday || dayTypePricing.peak || dayTypePricing.weekday || dayTypePricing.nonPeak_weekday || basePrice)
+                                    : (dayTypePricing.nonPeak_weekday || dayTypePricing.weekday || basePrice);
                             }
                         } else {
                             // Fallback to default pricing
@@ -2956,7 +2963,7 @@
                             const start = new Date(peak.start_date);
                             const end = new Date(peak.end_date);
                             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                                const dateStr = d.toISOString().split('T')[0];
+                                const dateStr = this.formatLocalDateKey(d);
                                 peakTypeMap[dateStr] = peakTypeName;
                             }
                         }
@@ -3065,7 +3072,7 @@
                                 const start = new Date(peak.start_date);
                                 const end = new Date(peak.end_date);
                                 for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                                    const dateStr = d.toISOString().split('T')[0];
+                                    const dateStr = this.formatLocalDateKey(d);
                                     peakTypeMap[dateStr] = peakTypeName;
                                 }
                             }

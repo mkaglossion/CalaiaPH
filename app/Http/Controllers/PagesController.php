@@ -260,6 +260,8 @@ class PagesController extends Controller
                 $type = 'camping'; // default
             }
 
+            $pricingService = app(\App\Services\PricingService::class);
+
             // Calculate the proper total price for the entire stay
             $mockAcc = ['extra_mattress' => 1]; // Default quantity for display
             $totalPrice = $this->calculateStaycationRoomPrice($staycation, $checkin, $checkout, $mockAcc);
@@ -267,9 +269,7 @@ class PagesController extends Controller
             // Determine current season type and price for today
             $seasonType = $this->determineSeasonType($today);
             $rateKey = $seasonKeyMap[$seasonType] ?? 'nonPeak';
-            $config = $staycation->price_configs[0] ?? [];
-            $rates = $config['rates'] ?? [];
-            $currentPrice = $rates[$rateKey] ?? null;
+            $currentPrice = $pricingService->getStaycationRate($staycation, \Carbon\Carbon::parse($today), $rateKey);
 
             $roomDetails[$staycation->id] = [
                 'id' => $staycation->id,
@@ -317,6 +317,8 @@ class PagesController extends Controller
             ->pluck('weekday')
             ->toArray();
 
+        $pricingService = app(\App\Services\PricingService::class);
+
         // For BYOT/Car Camping, calculate base price per night per unit (quantity)
         if ($isBYOT || $isCarCamping) {
             $quantity = $acc['extra_mattress'] ?? 1;
@@ -325,9 +327,13 @@ class PagesController extends Controller
             while ($current->lt($checkout)) {
                 // Determine season type using centralized logic
                 $seasonType = $this->determineSeasonType($current);
+                $seasonKey = [
+                    'Non-Peak' => 'nonPeak',
+                    'Peak' => 'peak',
+                    'Super-Peak' => 'superPeak',
+                ][$seasonType] ?? 'nonPeak';
 
-                // Find applicable price config for this season
-                $rate = $this->getStaycationRateForSeason($staycation->price_configs, $seasonType);
+                $rate = $pricingService->getStaycationRate($staycation, $current, $seasonKey);
 
                 if ($rate > 0) {
                     // For BYOT/Car Camping: multiply rate by quantity
@@ -345,9 +351,13 @@ class PagesController extends Controller
             while ($current->lt($checkout)) {
                 // Determine season type using centralized logic
                 $seasonType = $this->determineSeasonType($current);
+                $seasonKey = [
+                    'Non-Peak' => 'nonPeak',
+                    'Peak' => 'peak',
+                    'Super-Peak' => 'superPeak',
+                ][$seasonType] ?? 'nonPeak';
 
-                // Find applicable price config for this season
-                $rate = $this->getStaycationRateForSeason($staycation->price_configs, $seasonType);
+                $rate = $pricingService->getStaycationRate($staycation, $current, $seasonKey);
 
                 if ($rate > 0) {
                     $total += $rate;

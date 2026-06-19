@@ -3024,8 +3024,8 @@ class BookingController extends Controller
         $dayTypePricing = [];
         
         if (!empty($priceConfigs)) {
-            $weekendDays = ['Sat', 'Sun'];
-            $weekdayDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+            $weekendDays = ['Fri', 'Sat'];
+            $weekdayDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
             
             $weekendRates = [];
             $weekdayRates = [];
@@ -3459,62 +3459,20 @@ class BookingController extends Controller
     // If $staycation is always a model, add the correct type hint. Assuming Staycation model:
     // private function calculatePrice(Staycation $staycation, string $date, int $guests = 2)
     {
-        // Use staycation's price_configs from admin panel
-        $priceConfigs = $staycation->price_configs ?? [];
+        $seasonType = $this->determineSeasonTypeForDate($date);
 
-        if (count($priceConfigs) > 0) {
-            // Determine day type and season type for the date
-            $dayType = $this->determineDayTypeForDate($date);
-            $seasonType = $this->determineSeasonTypeForDate($date);
+        // Map season types to rate keys
+        $rateKeyMap = [
+            'non-peak' => 'nonPeak',
+            'peak' => 'peak',
+            'super-peak' => 'superPeak'
+        ];
 
-            // Map season types to rate keys
-            $rateKeyMap = [
-                'non-peak' => 'nonPeak',
-                'peak' => 'peak',
-                'super-peak' => 'superPeak'
-            ];
+        $rateKey = $rateKeyMap[$seasonType] ?? 'nonPeak';
+        $configuredRate = $this->pricingService->getStaycationRate($staycation, \Carbon\Carbon::parse($date), $rateKey);
 
-            $rateKey = $rateKeyMap[$seasonType] ?? 'nonPeak';
-
-            // Find applicable price config for this date and day type
-            foreach ($priceConfigs as $config) {
-                $applies = false;
-
-                if (($config['type'] ?? 'day') === 'day') {
-                    // Check if day matches
-                    $configDays = $config['days'] ?? [];
-                    $dateDay = \Carbon\Carbon::parse($date)->format('D'); // Mon, Tue, etc.
-                    if (in_array($dateDay, $configDays)) {
-                        $applies = true;
-                    }
-                } elseif (($config['type'] ?? 'day') === 'date') {
-                    // Check specific dates
-                    $configDates = $config['dates'] ?? '';
-                    if (str_contains($configDates, $date) || $configDates === $date) {
-                        $applies = true;
-                    }
-                }
-
-                if ($applies) {
-                    $rates = $config['rates'] ?? [];
-                    $baseRate = $rates[$rateKey] ?? 0;
-
-                    // For staycations, price is fixed regardless of guests.
-                    if ($baseRate > 0) {
-                        return $baseRate;
-                    }
-                }
-            }
-
-            // If no specific config applies, use first config's rate
-            if (!empty($priceConfigs[0])) {
-                $config = $priceConfigs[0];
-                $rates = $config['rates'] ?? [];
-                $baseRate = $rates[$rateKey] ?? 0;
-                if ($baseRate > 0) {
-                    return $baseRate;
-                }
-            }
+        if ($configuredRate > 0) {
+            return $configuredRate;
         }
 
         // Fallback to staycation's price field if it exists

@@ -72,13 +72,13 @@
                 href="{{ route('admin.stay.settings') }}"
                 class="px-3 py-2 sm:px-4 rounded-xl bg-orange-600 text-white font-medium shadow hover:bg-orange-700 hover:shadow-lg transition text-center text-sm sm:text-base"
             >
-                📊 Pricing Overview
+                Pricing Overview
             </a>
             <a
                 href="{{ route('admin.booking-settings.index') }}"
                 class="px-3 py-2 sm:px-4 rounded-xl bg-green-600 text-white font-medium shadow hover:bg-green-700 hover:shadow-lg transition text-center text-sm sm:text-base"
             >
-                💰 Additional Fees
+                Additional Fees
             </a>
             <button
                 type="button"
@@ -171,7 +171,7 @@
                     
                     <template x-if="!staycation.name || (!staycation.name.toLowerCase().includes('byot') && !staycation.name.toLowerCase().includes('car camping') && !staycation.name.toLowerCase().includes('bring your own'))">
                         <div class="space-y-1">
-                            <p><span x-text="`Base included guests: ${staycation.included_guest_capacity || staycation.capacity || ((staycation.adults || 0) + (staycation.children || 0)) || 0}`"></span></p>
+                        <p><span x-text="`Base included guests: ${staycation.included_guest_capacity || staycation.capacity || ((staycation.adults || 0) + (staycation.children || 0)) || 0}`"></span></p>
                             <p><span x-text="`Max guests: ${staycation.max_guest_capacity || staycation.capacity || 'N/A'}`"></span></p>
                         </div>
                     </template>
@@ -180,18 +180,34 @@
                         <p class="text-blue-600 font-medium">Special Room: BYOT/Car Camping</p>
                     </template>
 
-                    <template x-if="staycation.price_configs && staycation.price_configs.length > 0">
-                        <div class="text-xs bg-green-50 border border-green-200 rounded p-2 mt-2">
-                            <p class="font-semibold text-green-700">Current Season: 
-                                <span>{{ $currentSeason }}</span>
+                    <div class="text-xs bg-green-50 border border-green-200 rounded p-2 mt-2">
+                        <p class="font-semibold text-green-700">Today's Rate:
+                            <span x-text="(() => { const rate = getAdminPreviewRate(staycation); return rate !== null ? '\u20B1' + new Intl.NumberFormat('en-US').format(rate) : 'No active rate today'; })()"></span>
+                        </p>
+                        <p class="text-gray-600 text-xs mt-1">
+                            Active season: <span>{{ $currentSeason }}</span>
+                        </p>
+                        <p class="text-gray-600 text-xs mt-1">
+                            Room override:
+                            <span x-text="staycation.price_configs && staycation.price_configs.length > 0 ? (staycation.price_configs[0]?.name || 'Seasonal rate') : 'Global pricing fallback'"></span>
+                        </p>
+                        <template x-if="!getAdminPreviewRate(staycation)">
+                            <p class="text-amber-700 text-xs mt-1">
+                                This room has pricing saved, but no matching pricing rule was found for today's date.
                             </p>
+                        </template>
+                        <template x-if="getConfiguredRateSummary(staycation)">
                             <p class="text-gray-600 text-xs mt-1">
-                                Non-Peak: <span class="price-nonpeak" x-text="(getUpdatedPrice(staycation.id)?.nonPeak !== undefined ? '₱' + new Intl.NumberFormat('en-US').format(getUpdatedPrice(staycation.id)?.nonPeak) : '₱' + new Intl.NumberFormat('en-US').format(staycation.price_configs[0]?.rates?.nonPeak || 0))"></span> | 
-                                Peak: <span class="price-peak" x-text="(getUpdatedPrice(staycation.id)?.peak !== undefined ? '₱' + new Intl.NumberFormat('en-US').format(getUpdatedPrice(staycation.id)?.peak) : '₱' + new Intl.NumberFormat('en-US').format(staycation.price_configs[0]?.rates?.peak || 0))"></span> | 
-                                Super Peak: <span class="price-superpeak" x-text="(getUpdatedPrice(staycation.id)?.superPeak !== undefined ? '₱' + new Intl.NumberFormat('en-US').format(getUpdatedPrice(staycation.id)?.superPeak) : '₱' + new Intl.NumberFormat('en-US').format(staycation.price_configs[0]?.rates?.superPeak || 0))"></span>
+                                Configured rates:
+                                <span x-text="(() => {
+                                    const rates = getConfiguredRateSummary(staycation);
+                                    if (!rates) return 'N/A';
+                                    const fmt = (n) => '\u20B1' + new Intl.NumberFormat('en-US').format(n);
+                                    return [rates.nonPeak ? fmt(rates.nonPeak) : null, rates.peak ? fmt(rates.peak) : null, rates.superPeak ? fmt(rates.superPeak) : null].filter(Boolean).join(' / ');
+                                })()"></span>
                             </p>
-                        </div>
-                    </template>
+                        </template>
+                    </div>
                 </div>
 
                 <p class="text-xs text-gray-400 mt-3" x-text="`Uploaded: ${new Date(staycation.created_at || new Date()).toLocaleDateString('en-US', {year: 'numeric', month: '2-digit', day: '2-digit'})}`"></p>
@@ -351,43 +367,75 @@
                     </div>
                 </div>
                 <div x-show="!isSpecialStaycation" class="text-xs text-gray-600 -mt-2">
-                    <span x-text="`Base included guests = ${Math.max(1, form.included_guest_capacity || 1)} • Extra bed starts from guest #${Math.max(1, form.included_guest_capacity || 1) + 1}`"></span>
+                    <span x-text="`Base included guests = ${Math.max(1, form.included_guest_capacity || 1)} - Extra bed starts from guest #${Math.max(1, form.included_guest_capacity || 1) + 1}`"></span>
                 </div>
 
                 <!-- Dynamic Price Configs -->
                 <div class="space-y-3">
                     <span class="block text-sm font-medium">Room Pricing Overrides</span>
                     <p class="text-xs text-gray-500">Use room-specific rates here. Global seasonal rules are managed in Pricing Configuration.</p>
-                    <template x-for="(config, index) in form.priceConfigs" :key="index">
-                        <div class="border p-3 rounded space-y-2">
+                    <div x-ref="priceConfigsList" class="space-y-3">
+                        <template x-for="(config, index) in form.priceConfigs" :key="config._uid || index">
+                        <div class="border p-3 rounded space-y-2 bg-white/70" :data-price-config-id="config._uid || index">
 
                             <!-- Config Name and Type -->
                             <div class="flex space-x-2 items-center">
-                                <input type="text" :id="'price_config_name_' + index" :name="'price_config_name_' + index" x-model="config.name" placeholder="Rule Name (Weekend, Holiday, etc.)" class="flex-1 border rounded px-2 py-1" required>
+                                <button
+                                    type="button"
+                                    data-price-config-handle
+                                    class="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded border border-gray-200 bg-gray-50 text-gray-500 hover:text-gray-700 hover:bg-gray-100 cursor-grab active:cursor-grabbing"
+                                    title="Drag to reorder pricing rule"
+                                    aria-label="Drag to reorder pricing rule"
+                                >
+                                    <i class="bi bi-grip-vertical"></i>
+                                </button>
+                                <input type="text" :id="'price_config_name_' + index" :name="'price_config_name_' + index" x-model="config.name" placeholder="Example: Standard Glamping - Peak Jan-Jun 2026" class="flex-1 border rounded px-2 py-1" required>
 
                                 <select :id="'price_config_type_' + index" :name="'price_config_type_' + index" x-model="config.type" class="border rounded px-2 py-1">
-                                    <option value="day">Day Type</option>
+                                    <option value="day">Day Pattern</option>
                                     <option value="date">Specific Dates</option>
+                                    <option value="range">Date Range</option>
                                 </select>
 
                                 <button type="button" @click="removePriceConfig(index)" class="text-red-500 font-bold">&times;</button>
                             </div>
 
+                            <p class="text-[11px] text-gray-500">
+                                Use `Day Pattern` for repeating weekday or weekend pricing, `Specific Dates` for holidays, and `Date Range` for seasonal blocks.
+                            </p>
 
-                            <!-- Days checkboxes -->
-                            <div x-show="config.type === 'day'" class="flex flex-wrap gap-1 sm:gap-2">
-                                <template x-for="day in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="day">
-                                    <label class="flex items-center space-x-1">
-                                        <input type="checkbox" :id="'day_' + day + '_' + index" :name="'day_' + day + '_' + index" :value="day" x-model="config.days">
-                                        <span class="text-sm" x-text="day"></span>
-                                    </label>
-                                </template>
+                            <!-- Day pattern controls -->
+                            <div x-show="config.type === 'day'" class="space-y-2">
+                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:items-end">
+                                    <div>
+                                        <label :for="'day_preset_' + index" class="block text-xs font-medium text-gray-600 mb-1">Quick Select</label>
+                                        <select :id="'day_preset_' + index" :name="'day_preset_' + index" x-model="config.dayPreset" @change="applyDayPreset(config, index)" class="w-full border rounded px-2 py-1">
+                                            <option value="custom">Custom days</option>
+                                            <option value="weekdays">Weekdays (Sun-Thu)</option>
+                                            <option value="weekends">Weekends (Fri-Sat)</option>
+                                            <option value="all">All days</option>
+                                        </select>
+                                    </div>
+                                    <p class="text-[11px] text-gray-500">
+                                        Pick a preset first, then fine-tune with the checkboxes below.
+                                    </p>
+                                </div>
+
+                                <div class="flex flex-wrap gap-1 sm:gap-2">
+                                    <template x-for="day in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="day">
+                                        <label class="flex items-center space-x-1 rounded border border-gray-200 px-2 py-1">
+                                            <input type="checkbox" :id="'day_' + day + '_' + index" :name="'day_' + day + '_' + index" :value="day" x-model="config.days" @change="config.dayPreset = 'custom'">
+                                            <span class="text-sm" x-text="day"></span>
+                                        </label>
+                                    </template>
+                                </div>
                             </div>
 
 
                             <!-- Dates input -->
                             <div x-show="config.type === 'date'" class="space-y-2">
                                 <label :for="'config_dates_' + index" class="block text-sm font-medium">Select Date(s)</label>
+                                <p class="text-xs text-gray-500">Use this for holidays, promos, or specific calendar dates.</p>
 
                                 <!-- Single date -->
                                 <template x-if="!config.multipleDates">
@@ -395,7 +443,7 @@
                                 </template>
 
                                 <!-- Multiple dates (comma-separated) -->
-                                <template x:if="config.multipleDates">
+                                <template x-if="config.multipleDates">
                                     <input type="text" :id="'config_dates_' + index" :name="'config_dates_' + index" x-model="config.dates" placeholder="YYYY-MM-DD, YYYY-MM-DD" class="w-full border rounded px-2 py-1">
                                 </template>
 
@@ -404,6 +452,46 @@
                                     <input type="checkbox" :id="'multiple_dates_' + index" :name="'multiple_dates_' + index" x-model="config.multipleDates">
                                     <span class="text-sm text-gray-600">Allow multiple dates (comma-separated)</span>
                                 </label>
+                            </div>
+
+                            <div x-show="config.type === 'range'" class="space-y-2">
+                                <label class="block text-sm font-medium">Date Range</label>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <div>
+                                        <label :for="'config_start_date_' + index" class="block text-xs text-gray-500 mb-1">Start Date</label>
+                                        <input type="date" :id="'config_start_date_' + index" :name="'config_start_date_' + index" x-model="config.startDate" class="w-full border rounded px-2 py-1">
+                                    </div>
+                                    <div>
+                                        <label :for="'config_end_date_' + index" class="block text-xs text-gray-500 mb-1">End Date</label>
+                                        <input type="date" :id="'config_end_date_' + index" :name="'config_end_date_' + index" x-model="config.endDate" class="w-full border rounded px-2 py-1">
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500">Covers every date from start to end, inclusive.</p>
+                                <div class="space-y-2 pt-1">
+                                    <label class="block text-sm font-medium">Applies To</label>
+                                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:items-end">
+                                        <div>
+                                            <label :for="'range_day_preset_' + index" class="block text-xs font-medium text-gray-600 mb-1">Quick Select</label>
+                                            <select :id="'range_day_preset_' + index" :name="'range_day_preset_' + index" x-model="config.dayPreset" @change="applyDayPreset(config, index)" class="w-full border rounded px-2 py-1">
+                                                <option value="custom">Custom days</option>
+                                                <option value="weekdays">Weekdays (Sun-Thu)</option>
+                                                <option value="weekends">Weekends (Fri-Sat)</option>
+                                                <option value="all">All days</option>
+                                            </select>
+                                        </div>
+                                        <p class="text-[11px] text-gray-500">
+                                            Use `Weekdays` and `Weekends` on separate rules when prices differ inside the same season range.
+                                        </p>
+                                    </div>
+                                    <div class="flex flex-wrap gap-1 sm:gap-2">
+                                        <template x-for="day in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']" :key="day">
+                                            <label class="flex items-center space-x-1 rounded border border-gray-200 px-2 py-1">
+                                                <input type="checkbox" :id="'range_day_' + day + '_' + index" :name="'range_day_' + day + '_' + index" :value="day" x-model="config.days" @change="config.dayPreset = 'custom'">
+                                                <span class="text-sm" x-text="day"></span>
+                                            </label>
+                                        </template>
+                                    </div>
+                                </div>
                             </div>
 
 
@@ -424,7 +512,8 @@
                             </div>
 
                         </div>
-                    </template>
+                        </template>
+                    </div>
 
                     <button type="button" @click="addPriceConfig()" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">+ Add Pricing Rule</button>
                 </div>
@@ -553,10 +642,9 @@
                             resetImageForm();
                             window.location.reload();
                         } else if (data.errors) {
-                            const errorMessages = Object.values(data.errors).flat().join('\n');
                             Swal.fire({
                                 title: 'Validation Error',
-                                text: errorMessages,
+                                text: Object.values(data.errors).flat().join('\n'),
                                 icon: 'error',
                                 confirmButtonColor: '#ef4444'
                             });
@@ -778,7 +866,9 @@ function staycationManager() {
         canReorder: @js(($sortBy ?? 'featured') === 'featured'),
         reorderEndpoint: @js(route('admin.staycation-list.reorder')),
         sortableInstance: null,
+        priceConfigSortable: null,
         isReordering: false,
+        currentSeasonKey: @js($currentSeasonKey),
         staycations: @js($staycations),
         form: {
             id: null,
@@ -807,6 +897,127 @@ function staycationManager() {
 
         getUpdatedPrice(staycationId) {
             return this.updatedPrices[staycationId];
+        },
+
+        formatLocalDateKey(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        },
+
+                getAdminPreviewRate(staycation) {
+                    const directRate = Number(staycation?.current_rate_preview);
+                    if (Number.isFinite(directRate) && directRate > 0) {
+                        return directRate;
+                    }
+
+            const configs = Array.isArray(staycation?.price_configs) ? staycation.price_configs : [];
+            if (configs.length === 0) {
+                return null;
+            }
+
+            const today = new Date();
+            const dateKey = this.formatLocalDateKey(today);
+            const dayMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const dayOfWeek = dayMap[today.getDay()];
+
+            const normalizeType = (config) => {
+                const type = String(config?.type || '').toLowerCase();
+                if (type === 'range' || config?.startDate || config?.start_date || config?.endDate || config?.end_date) {
+                    return 'range';
+                }
+                if (type === 'date' || config?.dates || config?.multipleDates) {
+                    return 'date';
+                }
+                return 'day';
+            };
+
+            const parseDates = (config) => {
+                const rawDates = config?.dates ?? [];
+                const list = Array.isArray(rawDates)
+                    ? rawDates
+                    : String(rawDates).split(/[,\n]+/);
+
+                return list
+                    .map((item) => String(item).trim())
+                    .filter(Boolean)
+                    .map((item) => {
+                        const parsed = new Date(item);
+                        return Number.isNaN(parsed.getTime()) ? item : this.formatLocalDateKey(parsed);
+                    });
+            };
+
+            const matchesConfig = (config) => {
+                const type = normalizeType(config);
+
+                if (type === 'date') {
+                    return parseDates(config).includes(dateKey);
+                }
+
+                if (type === 'range') {
+                    const start = config?.startDate || config?.start_date;
+                    const end = config?.endDate || config?.end_date;
+                    if (!start || !end) {
+                        return false;
+                    }
+
+                    const startKey = this.formatLocalDateKey(new Date(start));
+                    const endKey = this.formatLocalDateKey(new Date(end));
+                    if (dateKey < startKey || dateKey > endKey) {
+                        return false;
+                    }
+
+                    const days = Array.isArray(config?.days) ? config.days : [];
+                    return days.length === 0 || days.includes(dayOfWeek);
+                }
+
+                const days = Array.isArray(config?.days) ? config.days : [];
+                return days.length === 0 || days.includes(dayOfWeek);
+            };
+
+            for (const type of ['date', 'range', 'day']) {
+                for (const config of configs) {
+                    if (normalizeType(config) !== type) {
+                        continue;
+                    }
+
+                    if (matchesConfig(config)) {
+                        const rate = Number(config?.rates?.[this.currentSeasonKey] ?? 0);
+                        if (rate > 0) {
+                            return rate;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        },
+
+        getConfiguredRateSummary(staycation) {
+            const configs = Array.isArray(staycation?.price_configs) ? staycation.price_configs : [];
+            if (configs.length === 0) {
+                return null;
+            }
+
+            const summary = {
+                nonPeak: null,
+                peak: null,
+                superPeak: null
+            };
+
+            for (const config of configs) {
+                const rates = config?.rates || {};
+                if (summary.nonPeak === null && Number(rates.nonPeak) > 0) summary.nonPeak = Number(rates.nonPeak);
+                if (summary.peak === null && Number(rates.peak) > 0) summary.peak = Number(rates.peak);
+                if (summary.superPeak === null && Number(rates.superPeak) > 0) summary.superPeak = Number(rates.superPeak);
+            }
+
+            if (summary.nonPeak === null && summary.peak === null && summary.superPeak === null) {
+                return null;
+            }
+
+            return summary;
         },
 
         initialize() {
@@ -931,6 +1142,7 @@ function staycationManager() {
         },
 
         resetForm() {
+            this.destroyPriceConfigSortable();
             this.form = { id: null, name: '', days: 1, quantity: 1, adults: 1, children: 0, included_guest_capacity: 1, max_guest_capacity: 1, priceConfigs: [], image: null, imagePreview: null, existingImage: null, removeImage: false };
             this.editModeStaycation = false;
             this.isSpecialStaycation = false;
@@ -993,13 +1205,23 @@ function staycationManager() {
                 // Compute initial threshold and optionally auto capacity
                 this.updateThresholdFromQuantity();
                 this.form.priceConfigs = (staycation.price_configs || []).map(pc => {
-                    const datesStr = pc.dates || '';
+                    const datesStr = Array.isArray(pc.dates) ? pc.dates.join(', ') : (pc.dates || '');
+                    const parsedDates = datesStr
+                        .split(',')
+                        .map(date => date.trim())
+                        .filter(Boolean);
+                    const isRange = (pc.type || '').toLowerCase() === 'range' || !!pc.startDate || !!pc.endDate || !!pc.start_date || !!pc.end_date;
                     const isMultiple = datesStr.includes(',');
+                    const dayPreset = pc.dayPreset || this.inferDayPresetFromDays(pc.days || []);
                     return {
                         ...pc,
+                        _uid: pc._uid || this.generatePriceConfigId(),
                         name: pc.name || '',
-                        type: pc.type || 'day',
+                        type: isRange ? 'range' : (pc.type || 'day'),
                         days: pc.days || [],
+                        dayPreset,
+                        startDate: pc.startDate || pc.start_date || parsedDates[0] || '',
+                        endDate: pc.endDate || pc.end_date || parsedDates[parsedDates.length - 1] || '',
                         dates: datesStr,
                         multipleDates: isMultiple,
                         rates: pc.rates || { nonPeak: 0, peak: 0, superPeak: 0 }
@@ -1014,7 +1236,10 @@ function staycationManager() {
                 this.editModeStaycation = true;
                 this.showStaycationModal = true;
                 // Load preview for this staycation
-                this.$nextTick(() => this.loadInventoryPreview());
+                this.$nextTick(() => {
+                    this.loadInventoryPreview();
+                    this.initPriceConfigSortable();
+                });
             }
         },
 
@@ -1042,17 +1267,234 @@ function staycationManager() {
 
         addPriceConfig() {
             this.form.priceConfigs.push({
+                _uid: this.generatePriceConfigId(),
                 name: '',
                 type: 'day',
                 days: [],
+                dayPreset: 'custom',
+                startDate: '',
+                endDate: '',
                 dates: '',
                 multipleDates: false,
                 rates: { nonPeak: 0, peak: 0, superPeak: 0 }
             });
+            this.$nextTick(() => this.initPriceConfigSortable());
+        },
+
+        generatePriceConfigId() {
+            return `price-config-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        },
+
+        inferDayPresetFromDays(days) {
+            const normalizedDays = Array.from(new Set((days || []).map(day => String(day).trim()).filter(Boolean)));
+            const presets = {
+                weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'],
+                weekends: ['Fri', 'Sat'],
+                all: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+            };
+
+            for (const [preset, expectedDays] of Object.entries(presets)) {
+                if (expectedDays.length !== normalizedDays.length) {
+                    continue;
+                }
+
+                const matches = expectedDays.every(day => normalizedDays.includes(day));
+                if (matches) {
+                    return preset;
+                }
+            }
+
+            return 'custom';
+        },
+
+        getDaysForPreset(preset) {
+            const presets = {
+                weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'],
+                weekends: ['Fri', 'Sat'],
+                all: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                custom: []
+            };
+
+            return [...(presets[preset] || [])];
+        },
+
+        formatConfigCoverageKey(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        },
+
+        getConfigCoverage(config) {
+            const type = String(config?.type || 'day').toLowerCase();
+
+            if (type === 'date') {
+                const rawDates = config?.dates ?? [];
+                const list = Array.isArray(rawDates)
+                    ? rawDates
+                    : String(rawDates).split(/[,\n]+/);
+
+                const coverage = {};
+                list.forEach((item) => {
+                    const value = String(item).trim();
+                    if (!value) return;
+                    const parsed = new Date(value);
+                    if (!Number.isNaN(parsed.getTime())) {
+                        coverage[this.formatConfigCoverageKey(parsed)] = true;
+                    }
+                });
+
+                return Object.keys(coverage).length ? coverage : null;
+            }
+
+            if (type === 'range') {
+                const start = config?.startDate || config?.start_date;
+                const end = config?.endDate || config?.end_date;
+                if (!start || !end) {
+                    return null;
+                }
+
+                const days = Array.isArray(config?.days) ? config.days : [];
+                const selectedDays = days.length ? days : this.getDaysForPreset(config?.dayPreset || 'custom');
+                const allowedDays = selectedDays.length ? new Set(selectedDays) : null;
+
+                const coverage = {};
+                const startDate = new Date(start);
+                const endDate = new Date(end);
+                if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+                    return null;
+                }
+
+                const cursor = new Date(startDate);
+                while (cursor <= endDate) {
+                    const dayMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const day = dayMap[cursor.getDay()];
+                    if (!allowedDays || allowedDays.has(day)) {
+                        coverage[this.formatConfigCoverageKey(cursor)] = true;
+                    }
+                    cursor.setDate(cursor.getDate() + 1);
+                }
+
+                return Object.keys(coverage).length ? coverage : null;
+            }
+
+            return null;
+        },
+
+        coverageHasOverlap(currentCoverage, existingCoverage) {
+            return Object.keys(currentCoverage || {}).some((dateKey) => existingCoverage && existingCoverage[dateKey]);
+        },
+
+        findQuickSelectOverlap(config, currentIndex) {
+            const currentCoverage = this.getConfigCoverage(config);
+            if (!currentCoverage) {
+                return null;
+            }
+
+            for (const [index, otherConfig] of (this.form.priceConfigs || []).entries()) {
+                if (index === currentIndex) {
+                    continue;
+                }
+
+                const otherType = String(otherConfig?.type || 'day').toLowerCase();
+                if (!['date', 'range'].includes(otherType)) {
+                    continue;
+                }
+
+                const existingCoverage = this.getConfigCoverage(otherConfig);
+                if (existingCoverage && this.coverageHasOverlap(currentCoverage, existingCoverage)) {
+                    return {
+                        index,
+                        name: otherConfig?.name || `pricing rule #${index + 1}`
+                    };
+                }
+            }
+
+            return null;
+        },
+
+        applyDayPreset(config, index) {
+            const preset = config.dayPreset || 'custom';
+            config.days = this.getDaysForPreset(preset);
+
+            if (String(config.type || 'day').toLowerCase() === 'range') {
+                const overlap = this.findQuickSelectOverlap(config, index);
+                if (overlap) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Quick Select overlap',
+                        text: `This quick select overlaps with "${overlap.name}". Choose a different day pattern.`,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3200,
+                        timerProgressBar: true
+                    });
+                    config.dayPreset = 'custom';
+                    config.days = [];
+                }
+            }
         },
 
         removePriceConfig(index) {
             this.form.priceConfigs.splice(index, 1);
+            this.$nextTick(() => this.initPriceConfigSortable());
+        },
+
+        destroyPriceConfigSortable() {
+            if (this.priceConfigSortable) {
+                this.priceConfigSortable.destroy();
+                this.priceConfigSortable = null;
+            }
+        },
+
+        initPriceConfigSortable() {
+            this.$nextTick(() => {
+                if (this.priceConfigSortable) {
+                    this.priceConfigSortable.destroy();
+                    this.priceConfigSortable = null;
+                }
+
+                if (
+                    typeof Sortable === 'undefined' ||
+                    !this.$refs.priceConfigsList ||
+                    !this.form.priceConfigs ||
+                    this.form.priceConfigs.length < 2
+                ) {
+                    return;
+                }
+
+                this.priceConfigSortable = Sortable.create(this.$refs.priceConfigsList, {
+                    animation: 180,
+                    handle: '[data-price-config-handle]',
+                    draggable: '[data-price-config-id]',
+                    ghostClass: 'price-config-ghost',
+                    chosenClass: 'price-config-chosen',
+                    dragClass: 'price-config-drag',
+                    onEnd: () => {
+                        const orderedIds = Array.from(
+                            this.$refs.priceConfigsList.querySelectorAll('[data-price-config-id]')
+                        )
+                            .map((node) => node.dataset.priceConfigId)
+                            .filter(Boolean);
+
+                        if (orderedIds.length !== this.form.priceConfigs.length) {
+                            return;
+                        }
+
+                        const configMap = new Map(
+                            this.form.priceConfigs.map((config, index) => [
+                                config._uid || `fallback-${index}`,
+                                config
+                            ])
+                        );
+
+                        this.form.priceConfigs = orderedIds
+                            .map((id) => configMap.get(id))
+                            .filter(Boolean);
+                    }
+                });
+            });
         },
 
         handleImageUpload(event) {
@@ -1165,10 +1607,72 @@ function staycationManager() {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Missing Configuration',
-                    text: 'Please add at least one price configuration.',
+                    text: 'Please add at least one pricing rule.',
                     confirmButtonColor: '#3b82f6'
                 });
                 return;
+            }
+
+            for (const [index, config] of (this.form.priceConfigs || []).entries()) {
+                const configType = (config.type || 'day').toLowerCase();
+                const dayPreset = (config.dayPreset || 'custom').toLowerCase();
+
+                if (configType === 'day' && (!Array.isArray(config.days) || config.days.length === 0) && dayPreset !== 'custom') {
+                    config.days = this.getDaysForPreset(dayPreset);
+                }
+
+                if (configType === 'day' && (!Array.isArray(config.days) || config.days.length === 0)) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Incomplete Pricing Rule',
+                        text: `Please select at least one day for pricing rule #${index + 1}.`,
+                        confirmButtonColor: '#3b82f6'
+                    });
+                    return;
+                }
+
+                if (configType === 'range') {
+                    if (!config.startDate || !config.endDate) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Incomplete Pricing Rule',
+                            text: `Please set both start and end dates for pricing rule #${index + 1}.`,
+                            confirmButtonColor: '#3b82f6'
+                        });
+                        return;
+                    }
+
+                    if (config.startDate > config.endDate) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Invalid Date Range',
+                            text: `Start date must be before or equal to end date for pricing rule #${index + 1}.`,
+                            confirmButtonColor: '#3b82f6'
+                        });
+                        return;
+                    }
+
+                    const overlap = this.findQuickSelectOverlap(config, index);
+                    if (overlap) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Quick Select overlap',
+                            text: `This quick select overlaps with "${overlap.name}". Choose a different day pattern.`,
+                            confirmButtonColor: '#3b82f6'
+                        });
+                        return;
+                    }
+                }
+
+                if (configType === 'date' && !String(config.dates || '').trim()) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Incomplete Pricing Rule',
+                        text: `Please set a date for pricing rule #${index + 1}.`,
+                        confirmButtonColor: '#3b82f6'
+                    });
+                    return;
+                }
             }
 
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
@@ -1233,7 +1737,6 @@ function staycationManager() {
                         });
                     });
                     errorHtml += '</div>';
-                    
                     Swal.fire({
                         icon: 'error',
                         title: 'Validation Error',
@@ -1507,7 +2010,7 @@ function staycationManager() {
                     data.items.slice(0, 30).forEach(inv => {
                         const dateObj = new Date(inv.date);
                         const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                        const status = inv.is_available ? '✅ Available' : '🚫 Blocked';
+                        const status = inv.is_available ? 'Ã¢Å“â€¦ Available' : 'Ã°Å¸Å¡Â« Blocked';
                         html += `<tr class="border-b"><td class="py-1">${dateStr}</td><td class="text-center">${inv.min_quantity}</td><td class="text-center text-xs">${status}</td></tr>`;
                     });
                     html += '</table>';
@@ -1756,6 +2259,16 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 .staycation-card-chosen {
     transform: rotate(1deg) scale(1.01);
+}
+.price-config-ghost {
+    opacity: 0.45;
+}
+.price-config-chosen,
+.price-config-drag {
+    cursor: grabbing !important;
+}
+.price-config-chosen {
+    transform: rotate(0.5deg) scale(1.01);
 }
 </style>
 
