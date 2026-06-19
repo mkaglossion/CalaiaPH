@@ -11,8 +11,8 @@
             <p class="text-gray-600 text-sm mt-1">Dynamic pricing overview based on season types</p>
         </div>
         <div class="flex gap-2">
-            <a href="{{ route('admin.pricingConfig.index') }}" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 font-semibold">
-                ⚙️ Configure Pricing
+            <a href="{{ route('admin.seasonDurations.index') }}" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 font-semibold">
+                Season Durations
             </a>
             <a href="{{ route('admin.booking-settings.index') }}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-semibold">
                 💰 Additional Fees

@@ -26,12 +26,7 @@ use App\Models\DayTour;
 use App\Models\DayPackageText;
 use App\Models\StaycationAccommodation;
 use App\Models\AccommodationText;
-use App\Models\DayType;
-use App\Models\PeakType;
 use App\Models\PeakPeriod;
-use App\Models\Holiday;
-use App\Models\DurationSet;
-use App\Models\PricingConfig;
 use App\Models\FarmSwiperImage;
 use App\Models\FarmText;
 use App\Models\Product;
@@ -268,19 +263,6 @@ class AdminController extends Controller
         $texts = AccommodationText::all();
         $staycations = Staycation::ordered()->get(); // list of all activities for selection
         return view('admin.whereToStay.accommodations', compact('accommodations', 'texts', 'staycations'));
-    }
-
-    public function config()
-    {
-        $dayTypes = DayType::with('days')->get();
-        $peakTypes = PeakType::with('periods')->get();
-        $holidays = Holiday::all();
-        $durationSets = DurationSet::all();
-        $pricingConfigs = PricingConfig::with(['peakPeriod', 'holiday', 'durationSet', 'dayType'])->get();
-
-        return view('admin.pricingConfig.index', compact(
-            'dayTypes', 'peakTypes', 'holidays', 'durationSets', 'pricingConfigs'
-        ));
     }
 
     public function shopstore()

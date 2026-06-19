@@ -131,6 +131,21 @@ let vatRate = {{ $vatRate }};
               {{ session('success') }}
           </div>
       @endif
+      @if ($errors->any())
+          <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                  Swal.fire({
+                      toast: true,
+                      position: 'top-end',
+                      icon: 'warning',
+                      title: @json($errors->first()),
+                      showConfirmButton: false,
+                      timer: 4500,
+                      timerProgressBar: true
+                  });
+              });
+          </script>
+      @endif
     </div>
 
     <x-header active="booking" />
@@ -138,19 +153,19 @@ let vatRate = {{ $vatRate }};
     <div class="min-h-screen">
       <div class="pt-6 md:pt-12">
         {{-- Header --}}
-        <div class="text-center mb-10">
+        <div class="text-center mb-6 md:mb-10">
             <h1 class="text-2xl font-bold tracking-tight">Complete Staycation Payment</h1>
             <div class="border-b-2 border-gray-900 w-20 md:w-24 mx-auto my-3"></div>
             <p class="text-xs text-gray-500">Review your staycation details and complete your payment</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10 pb-12">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mx-0 md:mx-10 pb-12">
           {{-- Main content --}}
-          <div class="lg:col-span-2 order-2 lg:order-1">
+          <div class="md:col-span-2 order-first md:order-1">
             <div class="flex flex-col">
 
               {{-- Progress indicator --}}
-              <div class="mb-6">
+              <div class="mb-4 md:mb-6">
                   <div class="flex justify-between items-center mb-2">
                       <small class="text-gray-500 text-sm">Step 5 of 5: Payment & Checkout</small>
                       <small class="text-gray-500 text-sm">100% Complete</small>
@@ -161,7 +176,7 @@ let vatRate = {{ $vatRate }};
               </div>
 
               {{-- Navigation --}}
-              <div class="flex items-end justify-between my-3">
+              <div class="flex items-end justify-between mt-2 mb-3 md:my-3">
                 <a href="{{ $backUrl }}"
                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                     <i class="bi bi-arrow-left mr-2"></i>
@@ -178,6 +193,19 @@ let vatRate = {{ $vatRate }};
                 </div>
               </div>
 
+              <div class="md:hidden mb-6">
+                <x-booking-summary
+                    :booking="$booking"
+                    :staycations="$staycations"
+                    :selectedFoods="$selectedFoods"
+                    :foods="$foods"
+                    :selectedActivities="$selectedActivities"
+                    :selectedActivityPackages="$selectedActivityPackages"
+                    :showActivities="true"
+                    :showTrustElements="true"
+                />
+              </div>
+
               {{-- Payment Form --}}
               <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8">
                 <section aria-labelledby="payment-method-heading">
@@ -185,6 +213,7 @@ let vatRate = {{ $vatRate }};
                     id="staycation-payment-form"
                     action="{{ route('booking.initiatePayment') }}"
                     method="POST"
+                    novalidate
                     class="space-y-8"
                     @submit="if (!validateCampWaiverBeforePayment()) { $event.preventDefault(); }"
                   >
@@ -428,6 +457,17 @@ let vatRate = {{ $vatRate }};
                         bookingPolicyAccepted: @js((bool) old('terms_and_policy_accepted')),
                         campWaiverAccepted: @js((bool) old('camp_waiver_accepted')),
                         campWaiver: @js($campWaiverInitial),
+                        campWaiverFieldLabels: {
+                          participant_name: 'Guest Full Name',
+                          birth_date: 'Date of Birth',
+                          gender: 'Gender',
+                          relationship: 'Relationship to Guest',
+                          address: 'Residential Address',
+                          emergency_name: 'Emergency Contact Name',
+                          emergency_phone: 'Emergency Contact Number',
+                          signature_name: 'Signature Name',
+                          signature_date: 'Signature Date',
+                        },
                         requiredCampWaiverFields: [
                           'participant_name',
                           'birth_date',
@@ -469,6 +509,9 @@ let vatRate = {{ $vatRate }};
                             return String(this.campWaiver[field] || '').trim() === '';
                           }) || null;
                         },
+                        getCampWaiverFieldLabel(field) {
+                          return this.campWaiverFieldLabels[field] || 'Required field';
+                        },
                         showPaymentToast(message) {
                           Swal.fire({
                             toast: true,
@@ -491,12 +534,12 @@ let vatRate = {{ $vatRate }};
                           }
 
                           if (missingField === 'terms_and_policy') {
-                            this.showPaymentToast('Please accept the terms and conditions before proceeding.');
+                            this.showPaymentToast('Please accept the terms and conditions before proceeding to PayMongo payment.');
                             return false;
                           }
 
                           if (missingField === 'camp_waiver') {
-                            this.showPaymentToast('Please accept the camp waiver before proceeding.');
+                            this.showPaymentToast('Please accept the camp waiver before proceeding to PayMongo payment.');
                             return false;
                           }
                           this.campWaiverModal = true;
@@ -507,7 +550,7 @@ let vatRate = {{ $vatRate }};
                             window.setTimeout(() => missingElement.focus(), 150);
                           }
 
-                          this.showPaymentToast('Please complete the required camp waiver details before proceeding to payment.');
+                          this.showPaymentToast(`Please complete ${this.getCampWaiverFieldLabel(missingField)} before proceeding to PayMongo payment.`);
                           return false;
                         }
                       }"
@@ -817,59 +860,59 @@ let vatRate = {{ $vatRate }};
                                             Optional details and guardian section
                                           </summary>
                                           <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                              <label for="camp_waiver_parent_guardian_name" class="block text-xs sm:text-sm font-medium text-gray-700">
-                                                Parent / Guardian Full Name
+                                            <div class="flex flex-col h-full">
+                                              <label for="camp_waiver_parent_guardian_name" class="block text-xs sm:text-sm font-medium text-gray-700 leading-tight min-h-[2.75rem] md:min-h-[3rem]">
+                                                Guardian Full Name
                                               </label>
-                                              <p class="mt-1 text-[11px] text-gray-400">(if applicable)</p>
                                               <input
                                                 type="text"
                                                 id="camp_waiver_parent_guardian_name"
                                                 name="camp_waiver_parent_guardian_name"
                                                 x-model="campWaiver.parent_guardian_name"
                                                 class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                                placeholder="if applicable"
                                               >
                                             </div>
 
-                                            <div>
-                                              <label for="camp_waiver_parent_signature_name" class="block text-xs sm:text-sm font-medium text-gray-700">
-                                                Parent / Guardian Signature Name
+                                            <div class="flex flex-col h-full">
+                                              <label for="camp_waiver_parent_signature_name" class="block text-xs sm:text-sm font-medium text-gray-700 leading-tight min-h-[2.75rem] md:min-h-[3rem]">
+                                                Guardian Signature Name
                                               </label>
-                                              <p class="mt-1 text-[11px] text-gray-400">(if applicable)</p>
                                               <input
                                                 type="text"
                                                 id="camp_waiver_parent_signature_name"
                                                 name="camp_waiver_parent_signature_name"
                                                 x-model="campWaiver.parent_signature_name"
                                                 class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                                placeholder="if applicable"
                                               >
                                             </div>
 
-                                            <div>
-                                              <label for="camp_waiver_child_ward_name" class="block text-xs sm:text-sm font-medium text-gray-700">
+                                            <div class="flex flex-col h-full">
+                                              <label for="camp_waiver_child_ward_name" class="block text-xs sm:text-sm font-medium text-gray-700 leading-tight min-h-[2.75rem] md:min-h-[4rem]">
                                                 Name of Child or Ward
                                               </label>
-                                              <p class="mt-1 text-[11px] text-gray-400">(if under 18)</p>
                                               <input
                                                 type="text"
                                                 id="camp_waiver_child_ward_name"
                                                 name="camp_waiver_child_ward_name"
                                                 x-model="campWaiver.child_ward_name"
                                                 class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                                placeholder="if under 18"
                                               >
                                             </div>
 
-                                            <div>
-                                              <label for="camp_waiver_parent_signature_date" class="block text-xs sm:text-sm font-medium text-gray-700">
+                                            <div class="flex flex-col h-full">
+                                              <label for="camp_waiver_parent_signature_date" class="block text-xs sm:text-sm font-medium text-gray-700 leading-tight min-h-[2.75rem] md:min-h-[4rem]">
                                                 Parent / Guardian Date
                                               </label>
-                                              <p class="mt-1 text-[11px] text-gray-400">(if under 18)</p>
                                               <input
                                                 type="date"
                                                 id="camp_waiver_parent_signature_date"
                                                 name="camp_waiver_parent_signature_date"
                                                 x-model="campWaiver.parent_signature_date"
                                                 class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm sm:text-base text-gray-900 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+                                                placeholder="if under 18"
                                               >
                                             </div>
 
@@ -1106,22 +1149,13 @@ let vatRate = {{ $vatRate }};
                       <div :class="canProceedToPayment() ? '' : 'cursor-not-allowed'">
                       <button
                         type="submit"
-                        :disabled="!canProceedToPayment()"
-                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold text-white shadow-lg shadow-[#8f5d54]/20 hover:bg-[#a0675a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-all duration-300 transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600 disabled:shadow-none disabled:hover:bg-gray-300 disabled:hover:translate-y-0 disabled:focus:ring-gray-300"
+                        title="Proceed to PayMongo Payment"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold text-white shadow-lg shadow-[#8f5d54]/20 hover:bg-[#a0675a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8f5d54] transition-all duration-300 transform hover:-translate-y-0.5"
                       >
                         <i class="bi bi-lock-fill mr-2"></i>
-                        <span>Complete Staycation Payment</span>
+                        <span>Proceed to PayMongo Payment</span>
                         <span id="button-total" class="font-bold ml-2">₱{{ number_format($vatBreakdown['gross_amount'], 2) }}</span>
                       </button>
-                      </div>
-
-                      <div class="rounded-xl border border-gray-200 bg-white/70 px-4 py-3 text-center">
-                        <p x-show="canProceedToPayment()" x-cloak class="text-xs sm:text-sm font-medium text-green-700">
-                          Ready for payment.
-                        </p>
-                        <p x-show="!canProceedToPayment()" x-cloak class="text-xs sm:text-sm font-medium text-gray-600">
-                          Complete and accept the waiver form to enable payment.
-                        </p>
                       </div>
 
                       <p class="mt-2 text-xs text-center text-gray-500">
@@ -1135,7 +1169,7 @@ let vatRate = {{ $vatRate }};
           </div>
 
           {{-- Sidebar: booking summary --}}
-          <div class="lg:col-span-1 order-1 lg:order-2">
+          <div class="hidden md:block md:col-span-1 md:order-2">
             <x-booking-summary
                 :booking="$booking"
                 :staycations="$staycations"

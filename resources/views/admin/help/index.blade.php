@@ -107,11 +107,11 @@
             'articles' => [
                 [
                     'title' => 'Setting Prices',
-                    'body' => 'Manage rates for accommodations, activities, products, and services through the pricing or rate matrix configuration sections.'
+                    'body' => 'Manage rates for accommodations, activities, products, and services through the Season Durations and room pricing pages.'
                 ],
                 [
                     'title' => 'Holiday and Special Rates',
-                    'body' => 'Apply seasonal or holiday pricing where supported. Review schedules carefully before publishing changes.'
+                    'body' => 'Apply seasonal pricing through Season Durations, then review room-specific rates carefully before publishing changes.'
                 ],
                 [
                     'title' => 'Business Rules',

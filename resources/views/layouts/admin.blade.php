@@ -110,6 +110,8 @@
           ['title'=>'Where to Stay','icon'=>'building','route'=>'admin.stay.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.stay.wheretostay'],
             ['label'=>'Staycation Rooms','route'=>'admin.stay.staycations'],
+            ['label'=>'Season Durations','route'=>'admin.seasonDurations.index'],
+            ['label'=>'Additional Fees','route'=>'admin.booking-settings.index'],
           ]],
           ['title'=>'Day Visit','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.do.whattodo'],
@@ -133,9 +135,6 @@
             ['label'=>'Store Management','route'=>'admin.shop.shopitems'],
             ['label'=>'Orders','route'=>'admin.shop.orders'],
             ['label'=>'Inventory Monitor','route'=>'admin.inventory.shop']
-          ]],
-          ['title'=>'Pricing','icon'=>'coins','route'=>'admin.pricing.*','sub'=>[
-            ['label'=>'Rate Matrix','route'=>'admin.pricingConfig.index'],
           ]],
           ['title'=>'Booking Confirmation','icon'=>'file-text','route'=>'admin.booking-confirmation.index','sub'=>[
             ['label'=>'Staycation','route'=>'admin.booking-confirmation.index','params'=>['tab'=>'staycation']],

@@ -85,7 +85,7 @@ use App\Http\Controllers\Admin\FarmExperiencesController;
 use App\Http\Controllers\Admin\StaycationAccommodationController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\CartController;
-use App\Http\Controllers\PricingConfigController;
+use App\Http\Controllers\SeasonDurationController;
 use App\Http\Controllers\BookingCalendarController;
 use App\Http\Controllers\CheckInOutController;
 use Illuminate\Support\Facades\Session;
@@ -165,9 +165,9 @@ Route::middleware(['api.throttle:api', 'api.security'])->group(function () {
     Route::get('/api/day-tour-inventory/{dayTourId}', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getInventory'])->name('api.day-tour-inventory.get');
 
     // Pricing API routes
-    Route::get('api/pricing/peak-types', [PricingConfigController::class, 'getPeakTypes'])->name('api.pricing.peakTypes');
-    Route::get('api/pricing/holidays', [PricingConfigController::class, 'getHolidays'])->name('api.pricing.holidays');
-    Route::get('api/pricing/weekend-config', [PricingConfigController::class, 'getWeekendConfig'])->name('api.pricing.weekendConfig');
+    Route::get('api/pricing/peak-types', [SeasonDurationController::class, 'getPeakTypes'])->name('api.pricing.peakTypes');
+    Route::get('api/pricing/holidays', [SeasonDurationController::class, 'getHolidays'])->name('api.pricing.holidays');
+    Route::get('api/pricing/weekend-config', [SeasonDurationController::class, 'getWeekendConfig'])->name('api.pricing.weekendConfig');
 
     // Real-time pricing endpoints for calendar
     Route::post('api/pricing/day-tour', [BookingController::class, 'calculateDayTourPrice'])->name('api.pricing.dayTour');
@@ -705,42 +705,18 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
          Route::post('shop-swiper-images/bulk-delete', [ShopSwiperImageController::class, 'bulkDelete'])->name('admin.shop-swiper-images.bulk-delete');
      });
 
-     // ========== Pricing Configuration Routes ==========
+     // ========== Season Duration Routes ==========
     Route::prefix('/pricing')->group(function () {
-        // Main config page
-        Route::get('/config', [PricingConfigController::class, 'index'])->name('admin.pricingConfig.index');
+        // Main season durations page
+        Route::get('/season-durations', [SeasonDurationController::class, 'index'])->name('admin.seasonDurations.index');
+        Route::get('/config', function () {
+            return redirect()->route('admin.seasonDurations.index');
+        });
 
-        // Booking Settings (mattress, pet fees) - moved to bookings section
-
-        // Rate Matrix (Pricing Configs)
-        Route::get('pricing-configs', [PricingConfigController::class, 'index'])->name('pricing-configs.index');
-        Route::post('pricing-configs', [PricingConfigController::class, 'store'])->name('admin.pricing-configs.store');
-        Route::put('pricing-configs/{pricingConfig}', [PricingConfigController::class, 'update'])->name('admin.pricing-configs.update');
-        Route::delete('pricing-configs/{pricingConfig}', [PricingConfigController::class, 'destroy'])->name('admin.pricing-configs.destroy');
-
-        // Weekend/Weekday Configuration
-        Route::put('day-types', [PricingConfigController::class, 'updateDayTypes'])->name('admin.dayTypes.update');
-
-        // Peak Periods (Durations)
-        Route::post('peak-periods', [PricingConfigController::class, 'storePeakPeriod'])->name('admin.peakPeriods.store');
-        Route::put('peak-periods/{peakPeriod}', [PricingConfigController::class, 'updatePeakPeriod'])->name('admin.peakPeriods.update');
-        Route::delete('peak-periods/{peakPeriod}', [PricingConfigController::class, 'destroyPeakPeriod'])->name('admin.peak-periods.destroy');
-
-        // Holidays
-        Route::post('holidays', [PricingConfigController::class, 'storeHoliday'])->name('admin.holidays.store');
-        Route::put('holidays/{holiday}', [PricingConfigController::class, 'updateHoliday'])->name('admin.holidays.update');
-        Route::delete('holidays/{holiday}', [PricingConfigController::class, 'destroyHoliday'])->name('admin.holidays.destroy');
-
-        // Price Calculator (API)
-        Route::post('calculate-price', [PricingConfigController::class, 'calculatePrice'])->name('admin.pricing.calculate');
-
-        // Seed Peak Types
-        Route::get('seed-peak-types', [PricingConfigController::class, 'seedPeakTypes'])->name('admin.pricing.seedPeakTypes');
-
-        // API Endpoints (admin context - different names to avoid conflicts)
-        Route::get('api/peak-types', [PricingConfigController::class, 'getPeakTypes'])->name('admin.api.pricing.peakTypes');
-        Route::get('api/holidays', [PricingConfigController::class, 'getHolidays'])->name('admin.api.pricing.holidays');
-        Route::get('api/weekend-config', [PricingConfigController::class, 'getWeekendConfig'])->name('admin.api.pricing.weekendConfig');
+        // Season duration CRUD
+        Route::post('peak-periods', [SeasonDurationController::class, 'storePeakPeriod'])->name('admin.seasonDurations.periods.store');
+        Route::put('peak-periods/{peakPeriod}', [SeasonDurationController::class, 'updatePeakPeriod'])->name('admin.seasonDurations.periods.update');
+        Route::delete('peak-periods/{peakPeriod}', [SeasonDurationController::class, 'destroyPeakPeriod'])->name('admin.seasonDurations.periods.destroy');
     });
 
     // ========== Admin CRUD Routes ==========

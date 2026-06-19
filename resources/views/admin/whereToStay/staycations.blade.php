@@ -69,10 +69,10 @@
             </form>
 
             <a
-                href="{{ route('admin.stay.settings') }}"
+                href="{{ route('admin.seasonDurations.index') }}"
                 class="px-3 py-2 sm:px-4 rounded-xl bg-orange-600 text-white font-medium shadow hover:bg-orange-700 hover:shadow-lg transition text-center text-sm sm:text-base"
             >
-                Pricing Overview
+                Season Durations
             </a>
             <a
                 href="{{ route('admin.booking-settings.index') }}"
@@ -230,6 +230,19 @@
         </template>
     </div>
 
+    <div class="mt-8 rounded-xl border border-indigo-200 bg-indigo-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+            <h3 class="text-sm font-semibold text-indigo-900">Season Durations</h3>
+            <p class="text-xs text-indigo-700 mt-1">Manage peak and season date ranges used by room pricing.</p>
+        </div>
+        <a
+            href="{{ route('admin.seasonDurations.index') }}"
+            class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition"
+        >
+            Open Season Durations
+        </a>
+    </div>
+
     {{-- SWIPER IMAGES MANAGEMENT --}}
     <div class="flex justify-between items-end mb-6 mt-12">
         <div>
@@ -373,7 +386,7 @@
                 <!-- Dynamic Price Configs -->
                 <div class="space-y-3">
                     <span class="block text-sm font-medium">Room Pricing Overrides</span>
-                    <p class="text-xs text-gray-500">Use room-specific rates here. Global seasonal rules are managed in Pricing Configuration.</p>
+                    <p class="text-xs text-gray-500">Use room-specific rates here. Season durations are managed in Season Durations.</p>
                     <div x-ref="priceConfigsList" class="space-y-3">
                         <template x-for="(config, index) in form.priceConfigs" :key="config._uid || index">
                         <div class="border p-3 rounded space-y-2 bg-white/70" :data-price-config-id="config._uid || index">
@@ -383,11 +396,23 @@
                                 <button
                                     type="button"
                                     data-price-config-handle
-                                    class="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded border border-gray-200 bg-gray-50 text-gray-500 hover:text-gray-700 hover:bg-gray-100 cursor-grab active:cursor-grabbing"
+                                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-500 shadow-sm transition hover:border-gray-300 hover:text-gray-700 active:cursor-grabbing"
                                     title="Drag to reorder pricing rule"
                                     aria-label="Drag to reorder pricing rule"
                                 >
-                                    <i class="bi bi-grip-vertical"></i>
+                                    <svg
+                                        class="h-4 w-4"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                        aria-hidden="true"
+                                    >
+                                        <circle cx="6" cy="5" r="1.4" />
+                                        <circle cx="6" cy="10" r="1.4" />
+                                        <circle cx="6" cy="15" r="1.4" />
+                                        <circle cx="14" cy="5" r="1.4" />
+                                        <circle cx="14" cy="10" r="1.4" />
+                                        <circle cx="14" cy="15" r="1.4" />
+                                    </svg>
                                 </button>
                                 <input type="text" :id="'price_config_name_' + index" :name="'price_config_name_' + index" x-model="config.name" placeholder="Example: Standard Glamping - Peak Jan-Jun 2026" class="flex-1 border rounded px-2 py-1" required>
 

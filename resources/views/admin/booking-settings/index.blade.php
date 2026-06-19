@@ -6,7 +6,7 @@
 
 <div class="container mx-auto p-6 space-y-8">
 
-    <h1 class="text-2xl font-bold">Booking Additional Fees Settings</h1>
+    <h1 class="text-2xl font-bold">Staycation Fees</h1>
 
     <p class="text-gray-600 text-sm mb-6">Configure extra mattress and pet fees for staycation bookings. These settings apply to all regular accommodations.</p>
 
