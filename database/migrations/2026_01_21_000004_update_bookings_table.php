@@ -50,7 +50,7 @@ return new class extends Migration
                     $table->enum('payment_status', ['pending', 'paid', 'failed', 'refunded'])->default('pending')->after('payment_method');
                 }
                 if (!Schema::hasColumn('bookings', 'status')) {
-                    $table->enum('status', ['confirmed', 'cancelled', 'completed'])->default('confirmed')->after('payment_status');
+                    $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed'])->default('confirmed')->after('payment_status');
                 }
             });
             
@@ -90,7 +90,7 @@ return new class extends Migration
                 $table->decimal('total_amount', 10, 2)->default(0);
                 $table->string('payment_method')->nullable();
                 $table->enum('payment_status', ['pending', 'paid', 'failed', 'refunded'])->default('pending');
-                $table->enum('status', ['confirmed', 'cancelled', 'completed'])->default('confirmed');
+                $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed'])->default('confirmed');
                 $table->timestamps();
                 
                 $table->index('transaction_id');

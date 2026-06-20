@@ -43,7 +43,7 @@ class StaycationWaiverTest extends TestCase
     {
         config()->set('services.paymongo.secret_key', 'sk_test_123');
 
-        $this->mock(PaymentService::class, function ($mock) {
+        $this->partialMock(PaymentService::class, function ($mock) {
             $mock->shouldReceive('createCheckout')
                 ->once()
                 ->andReturn((object) [
