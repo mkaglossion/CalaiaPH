@@ -1414,7 +1414,15 @@ class BookingController extends Controller
 
     private function resolveCampWaiverPayload(string $transactionId): array
     {
-        $booking = Booking::where('transaction_id', $transactionId)->firstOrFail();
+        $booking = Booking::where('transaction_id', $transactionId)->first();
+
+        if (!$booking) {
+            if ($this->isCampWaiverPreviewTransactionId($transactionId)) {
+                return $this->campWaiverPreviewPayload($transactionId);
+            }
+
+            abort(404);
+        }
 
         abort_unless(in_array($booking->booking_type, Booking::STAYCATION_TYPES, true), 404);
 
@@ -1446,6 +1454,59 @@ class BookingController extends Controller
             'bookingData' => $bookingData,
             'customerInfo' => $customerInfo,
             'campWaiverAcceptance' => $campWaiverAcceptance,
+            'confirmationContent' => $confirmationContent,
+            'waiverContent' => $confirmationContent['camp_waiver'] ?? [],
+        ];
+    }
+
+    private function isCampWaiverPreviewTransactionId(string $transactionId): bool
+    {
+        return str_starts_with($transactionId, 'PREVIEW-');
+    }
+
+    private function campWaiverPreviewPayload(string $transactionId): array
+    {
+        $booking = new Booking([
+            'transaction_id' => $transactionId,
+            'customer_name' => 'Juan Dela Cruz',
+            'customer_email' => 'juan@example.com',
+            'customer_phone' => '+63 900 000 0000',
+            'booking_type' => 'staycation',
+            'booking_data' => [
+                'transaction_id' => $transactionId,
+                'package' => 'Staycation',
+                'customer_info' => [
+                    'first_name' => 'Juan',
+                    'last_name' => 'Dela Cruz',
+                    'email' => 'juan@example.com',
+                    'phone' => '+63 900 000 0000',
+                ],
+                'acceptances' => [[
+                    'source' => 'camp_waiver_accepted',
+                    'label' => 'Camp Waiver and Release from Liability',
+                    'accepted' => true,
+                    'accepted_at' => now()->toDateTimeString(),
+                    'details' => [
+                        'participant_name' => 'Juan Dela Cruz',
+                        'signature_name' => 'Juan Dela Cruz',
+                        'signature_date' => now()->toDateString(),
+                    ],
+                ]],
+            ],
+        ]);
+        $booking->exists = true;
+
+        $bookingData = is_array($booking->booking_data) ? $booking->booking_data : [];
+        $confirmationContent = app(BookingConfirmationContentService::class)->forType('campwaiver', [
+            'reference' => $transactionId,
+            'package' => 'Staycation',
+        ]);
+
+        return [
+            'booking' => $booking,
+            'bookingData' => $bookingData,
+            'customerInfo' => $bookingData['customer_info'] ?? [],
+            'campWaiverAcceptance' => collect($bookingData['acceptances'] ?? [])->first(),
             'confirmationContent' => $confirmationContent,
             'waiverContent' => $confirmationContent['camp_waiver'] ?? [],
         ];

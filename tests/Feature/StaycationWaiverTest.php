@@ -259,5 +259,64 @@ class StaycationWaiverTest extends TestCase
 
         $response->assertOk();
         $this->assertStringContainsString('application/pdf', (string) $response->headers->get('content-type'));
+
+        $pdfText = $this->extractPdfText($response->getContent());
+
+        $this->assertStringContainsString('TXN-2026-0004', $pdfText);
+        $this->assertStringContainsString('Juan Dela Cruz', $pdfText);
+        $this->assertStringContainsString('juan@example.com', $pdfText);
+        $this->assertStringContainsString('IV. MEDICAL AUTHORIZATION', $pdfText);
+        $this->assertStringNotContainsString('Waiver Text Continued', $pdfText);
+    }
+
+    public function test_camp_waiver_preview_transaction_renders_without_404(): void
+    {
+        $response = $this->get(route('booking.camp-waiver', ['transactionId' => 'PREVIEW-STAY-0001']));
+
+        $response->assertOk();
+        $response->assertSee('Camp Waiver and Release from Liability');
+        $response->assertSee('Print Camp Waiver');
+    }
+
+    public function test_camp_waiver_preview_pdf_downloads_without_404(): void
+    {
+        $response = $this->get(route('booking.camp-waiver.pdf', ['transactionId' => 'PREVIEW-STAY-0001']));
+
+        $response->assertOk();
+        $this->assertStringContainsString('application/pdf', (string) $response->headers->get('content-type'));
+    }
+
+    private function extractPdfText(string $pdf): string
+    {
+        preg_match_all('/stream\r?\n(.*?)endstream/s', $pdf, $matches);
+
+        $text = '';
+
+        foreach ($matches[1] as $stream) {
+            $decoded = null;
+
+            foreach (['gzuncompress', 'gzinflate', 'gzdecode'] as $decoder) {
+                if (!function_exists($decoder)) {
+                    continue;
+                }
+
+                try {
+                    $decoded = $decoder($stream);
+                    if ($decoded !== false && $decoded !== null) {
+                        break;
+                    }
+                } catch (\Throwable $e) {
+                    $decoded = null;
+                }
+            }
+
+            if ($decoded === null || $decoded === false) {
+                continue;
+            }
+
+            $text .= str_replace("\0", '', (string) $decoded) . "\n";
+        }
+
+        return $text;
     }
 }

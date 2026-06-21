@@ -188,9 +188,7 @@
                         type="submit"
                         :disabled="isLoading"
                         class="w-full sm:flex-1 px-3 sm:px-4 py-3 sm:py-3.5 text-sm sm:text-base rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center">
-                        <span class="inline-block">
-                            Add Event
-                        </span>
+                        <span class="inline-block" x-text="isEditing ? 'Update Event' : 'Add Event'"></span>
                     </button>
                 </div>
             </form>
@@ -226,6 +224,7 @@ function specialEventsManager() {
             description: '',
             features: '',
             image: null,
+            public_id: null,
             imageFile: null,
             imagePreview: null
         },
@@ -244,6 +243,7 @@ function specialEventsManager() {
                 description: event.description,
                 features: event.features,
                 image: event.image,
+                public_id: event.public_id || null,
                 imageFile: null,
                 imagePreview: null
             };
@@ -274,6 +274,7 @@ function specialEventsManager() {
                 description: '',
                 features: '',
                 image: null,
+                public_id: null,
                 imageFile: null,
                 imagePreview: null
             };
@@ -284,46 +285,74 @@ function specialEventsManager() {
             if (this.isLoading) return; // Prevent double submission
             
             this.isLoading = true;
+            const wasEditing = this.isEditing;
             const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const formData = new FormData();
 
-            formData.append('name', this.form.name);
-            formData.append('description', this.form.description);
-            formData.append('features', this.form.features);
-
-            if (this.form.imageFile) {
-                formData.append('image', this.form.imageFile);
-            }
-
             try {
-                const url = this.isEditing 
-                    ? `/api/special-events/${this.form.id}`
-                    : '/api/special-events';
+                const url = this.isEditing
+                    ? `{{ url('/admin/event-list') }}/${this.form.id}`
+                    : '{{ route('event-list.store') }}';
 
-                let method = 'POST';
+                let imageUrl = this.form.image;
+                let publicId = this.form.public_id;
+
+                if (this.form.imageFile) {
+                    const uploadData = new FormData();
+                    uploadData.append('image', this.form.imageFile);
+
+                    const uploadResponse = await fetch('/api/special-events/upload-image', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json',
+                        },
+                        body: uploadData
+                    });
+
+                    const uploadResult = await uploadResponse.json();
+
+                    if (!uploadResponse.ok || !uploadResult.success) {
+                        throw new Error(uploadResult.message || 'Image upload failed');
+                    }
+
+                    imageUrl = uploadResult.imageUrl;
+                    publicId = uploadResult.public_id;
+                }
+
+                formData.append('name', this.form.name);
+                formData.append('description', this.form.description);
+                formData.append('features', this.form.features);
+                if (imageUrl) {
+                    formData.append('image', imageUrl);
+                }
+                if (publicId) {
+                    formData.append('public_id', publicId);
+                }
                 if (this.isEditing) {
                     formData.append('_method', 'PUT');
                 }
 
                 const response = await fetch(url, {
-                    method: method,
+                    method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json',
                     },
-                    body: formData
+                    body: formData,
+                    credentials: 'same-origin'
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
                     // Update events list
-                    if (this.isEditing) {
-                        const index = this.events.findIndex(e => e.id === this.form.id);
-                        if (index !== -1) {
-                            this.events[index] = data.event;
-                        }
+                    if (wasEditing) {
+                        this.events = this.events.map((event) => (
+                            event.id === this.form.id ? data.event : event
+                        ));
                     } else {
-                        this.events.push(data.event);
+                        this.events = [...this.events, data.event];
                     }
                     
                     // Close modal and reset form first
@@ -334,12 +363,12 @@ function specialEventsManager() {
                     Swal.fire({
                         icon: 'success',
                         title: 'Success!',
-                        text: this.isEditing ? 'Event updated successfully!' : 'Event created successfully!',
+                        text: wasEditing ? 'Event updated successfully!' : 'Event created successfully!',
                         confirmButtonColor: '#2563eb',
                         allowOutsideClick: false,
                         allowEscapeKey: false
                     }).then(() => {
-                        // Nothing to do here, just close the alert
+                        window.location.replace(`${window.location.pathname}?updated=${Date.now()}`);
                     });
                 } else {
                     let errorMessage = data.message || 'Error saving event';
@@ -382,7 +411,7 @@ function specialEventsManager() {
                     this.isLoading = true;
                     const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                     
-                    fetch(`/api/special-events/${eventId}`, {
+                    fetch(`{{ url('/admin/event-list') }}/${eventId}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': csrf,

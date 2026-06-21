@@ -66,9 +66,9 @@
       <section class="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200 sm:p-8">
         <div class="border-b border-slate-200 pb-5">
           <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Booking Reference</p>
-          <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 class="text-3xl font-bold text-[#8f5d54]">{{ $waiverTitle }}</h2>
+            <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+              <h2 class="text-3xl font-bold text-[#8f5d54]" data-preview-slot="camp_waiver.title">{{ $waiverTitle }}</h2>
               <p class="mt-2 text-sm text-slate-600">This copy reflects the waiver accepted before PayMongo payment confirmation.</p>
             </div>
             <div class="rounded-2xl bg-[#f7f2f0] px-4 py-3 text-sm text-slate-700">
@@ -120,7 +120,7 @@
 
         <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
           <h3 class="text-lg font-semibold text-slate-900">Waiver Text</h3>
-          <div class="mt-3 whitespace-pre-line text-sm leading-7 text-slate-700">
+          <div class="mt-3 whitespace-pre-line text-sm leading-7 text-slate-700" data-preview-slot="camp_waiver.body">
             {{ $waiverBody }}
           </div>
         </div>

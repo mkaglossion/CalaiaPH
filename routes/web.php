@@ -626,6 +626,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     });
     Route::prefix('/booking-confirmation')->group(function () {
         Route::get('/', [BookingConfirmationContentController::class, 'index'])->name('admin.booking-confirmation.index');
+        Route::get('/preview', [BookingConfirmationContentController::class, 'preview'])->name('admin.booking-confirmation.preview');
         Route::put('/{bookingType}', [BookingConfirmationContentController::class, 'update'])->name('admin.booking-confirmation.update');
     });
     Route::prefix('/do')->group(function () {
@@ -779,7 +780,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         ]
     ])->only(['store', 'show', 'update', 'destroy']);
     Route::resource('menu-list', MenuController::class)->only(['store', 'show', 'destroy']);
-    Route::resource('event-list', EventController::class)->only(['store', 'destroy']);
+    Route::resource('event-list', EventController::class)->only(['store', 'update', 'destroy']);
     Route::resource('farmInfo-list', FarmInfoController::class)->only(['store', 'destroy']);
     Route::resource('products', ProductController::class);
 

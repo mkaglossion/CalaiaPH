@@ -16,8 +16,14 @@ class ApiSecurity
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check for valid JSON content type for POST/PUT/PATCH requests
-        if (config('security.require_json_content_type') && in_array($request->method(), ['POST', 'PUT', 'PATCH']) && !$request->isJson()) {
+        // Check for valid JSON content type for POST/PUT/PATCH requests.
+        // Allow multipart form uploads so admin forms can upload files safely.
+        if (
+            config('security.require_json_content_type')
+            && in_array($request->method(), ['POST', 'PUT', 'PATCH'])
+            && !$request->isJson()
+            && !$this->isMultipartForm($request)
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Request must be JSON formatted',
@@ -117,5 +123,18 @@ class ApiSecurity
         }
 
         return false;
+    }
+
+    /**
+     * Check if the request is a multipart form upload.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return bool
+     */
+    protected function isMultipartForm(Request $request): bool
+    {
+        $contentType = (string) $request->header('Content-Type', '');
+
+        return stripos($contentType, 'multipart/form-data') !== false;
     }
 }

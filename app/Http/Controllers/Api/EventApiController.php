@@ -27,7 +27,10 @@ class EventApiController extends Controller
             $filePath = $file->getRealPath();
 
             try {
-                $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
+                $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
+                    'folder' => env('CLOUDINARY_UPLOAD_FOLDER', 'special_events'),
+                    'resource_type' => 'auto',
+                ]);
                 return response()->json([
                     'success' => true,
                     'imageUrl' => $uploadResult['secure_url'],
@@ -59,10 +62,11 @@ class EventApiController extends Controller
                 'name' => 'required|string|max:255',
                 'description' => 'required|string',
                 'features' => 'required|string',
-                'image' => 'nullable|string|url' // URL from Cloudinary, not a file
+                'image' => 'nullable|string|max:2048',
+                'public_id' => 'nullable|string|max:255',
             ]);
 
-            $event = Event::create($validated);
+            $event = Event::create($validated)->fresh();
 
             return response()->json([
                 'message' => 'Event created successfully',
@@ -82,14 +86,26 @@ class EventApiController extends Controller
     public function update(Request $request, Event $event)
     {
         try {
+            $oldPublicId = $event->public_id;
+
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'description' => 'required|string',
                 'features' => 'required|string',
-                'image' => 'nullable|string|url' // URL from Cloudinary, not a file
+                'image' => 'nullable|string|max:2048',
+                'public_id' => 'nullable|string|max:255',
             ]);
 
             $event->update($validated);
+            $event->refresh();
+
+            if (!empty($validated['public_id']) && !empty($oldPublicId) && $validated['public_id'] !== $oldPublicId) {
+                try {
+                    Cloudinary::uploadApi()->destroy($oldPublicId);
+                } catch (\Exception $e) {
+                    // Keep the event update successful even if cleanup fails.
+                }
+            }
 
             return response()->json([
                 'message' => 'Event updated successfully',

@@ -173,16 +173,16 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
       <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8 text-center">
         {{-- Success Icon --}}
         <div class="mb-6">
-          @if(!empty($pageContent['eyebrow']))
-            <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2">{{ $pageContent['eyebrow'] }}</p>
-          @endif
+          <p class="text-xs sm:text-sm font-medium tracking-[0.2em] uppercase text-gray-400 mb-2" data-preview-slot="page.eyebrow">
+            {{ $pageContent['eyebrow'] ?? 'CalaiaPH Staycation' }}
+          </p>
           <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <i class="bi bi-check-circle-fill text-4xl text-green-600"></i>
           </div>
-          <h1 class="text-2xl font-bold text-[#8f5d54] mb-2">
+          <h1 class="text-2xl font-bold text-[#8f5d54] mb-2" data-preview-slot="page.title">
             {{ $pageContent['title'] ?? 'Booking Confirmed!' }}
           </h1>
-          <p class="text-xs text-gray-600">
+          <p class="text-xs text-gray-600" data-preview-slot="page.description">
             {{ $pageContent['description'] ?? 'Your booking has been successfully processed and confirmed.' }}
           </p>
         </div>
@@ -682,8 +682,8 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
 
         {{-- Next Steps --}}
         <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
-          <h3 class="text-2xl font-semibold text-blue-900 mb-3">{{ $nextStepsContent['title'] ?? "What's Next?" }}</h3>
-          <ul class="text-xs text-blue-800 space-y-2 text-left">
+          <h3 class="text-2xl font-semibold text-blue-900 mb-3" data-preview-slot="next_steps.title">{{ $nextStepsContent['title'] ?? "What's Next?" }}</h3>
+          <ul class="text-xs text-blue-800 space-y-2 text-left" data-preview-list="next-steps" data-preview-list-style="confirmation">
             @php
               $nextStepIcons = ['bi-envelope', 'bi-calendar-event', 'bi-telephone'];
             @endphp
@@ -706,41 +706,25 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
           <a href="{{ route('home') }}"
              class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#8f5d54] px-6 py-3 text-sm font-semibold text-white hover:bg-[#a0675a] transition-colors">
             <i class="bi bi-house"></i>
-            {{ $buttonContent['home'] ?? 'Return to Home' }}
+            <span data-preview-slot="buttons.home">{{ $buttonContent['home'] ?? 'Return to Home' }}</span>
           </a>
-          @if(!empty($campWaiverUrl))
-            <a href="{{ $campWaiverUrl }}"
-               target="_blank"
-               rel="noopener"
-               class="inline-flex items-center justify-center gap-2 rounded-lg border border-[#8f5d54] bg-white px-6 py-3 text-sm font-semibold text-[#8f5d54] hover:bg-[#f7f2f0] transition-colors">
-              <i class="bi bi-file-earmark-text"></i>
-              Print Camp Waiver
-            </a>
-          @endif
-          @if(!empty($campWaiverPdfUrl))
-            <a href="{{ $campWaiverPdfUrl }}"
-               class="inline-flex items-center justify-center gap-2 rounded-lg border border-[#8f5d54] bg-[#8f5d54] px-6 py-3 text-sm font-semibold text-white hover:bg-[#a0675a] transition-colors">
-              <i class="bi bi-filetype-pdf"></i>
-              Download PDF
-            </a>
-          @endif
           @if(!empty($buttonContent['print']))
-            <button onclick="window.print()"
+              <button onclick="window.print()"
                     class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-              <i class="bi bi-printer"></i>
-              {{ $buttonContent['print'] }}
+                <i class="bi bi-printer"></i>
+              <span data-preview-slot="buttons.print">{{ $buttonContent['print'] }}</span>
             </button>
           @endif
         </div>
 
         {{-- Contact Info --}}
         <div class="mt-8 pt-6 border-t border-gray-200">
-          <p class="text-xs text-gray-500 mb-2">{{ $supportContent['title'] ?? 'Need assistance?' }}</p>
+          <p class="text-xs text-gray-500 mb-2" data-preview-slot="support.title">{{ $supportContent['title'] ?? 'Need assistance?' }}</p>
           <p class="text-xs text-gray-600">
-            {{ $supportContent['description'] ?? 'Reach us anytime if you need help with your booking.' }}
-            <a href="mailto:{{ $supportContent['email'] ?? 'calaia.ph@gmail.com' }}" class="text-[#8f5d54] hover:underline">{{ $supportContent['email'] ?? 'calaia.ph@gmail.com' }}</a>
+            <span data-preview-slot="support.description">{{ $supportContent['description'] ?? 'Reach us anytime if you need help with your booking.' }}</span>
+            <a href="mailto:{{ $supportContent['email'] ?? 'calaia.ph@gmail.com' }}" class="text-[#8f5d54] hover:underline" data-preview-slot="support.email">{{ $supportContent['email'] ?? 'calaia.ph@gmail.com' }}</a>
             @if(!empty($supportContent['phone']))
-              or call <span class="font-medium">{{ $supportContent['phone'] }}</span>
+              or call <span class="font-medium" data-preview-slot="support.phone">{{ $supportContent['phone'] }}</span>
             @endif
           </p>
         </div>
