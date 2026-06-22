@@ -28,6 +28,7 @@ use App\Models\PackageSwiperImage;
 use App\Models\Product;
 use App\Models\Activity;
 use App\Models\Staycation;
+use App\Models\StaycationText;
 use App\Models\StaycationInventory;
 use App\Models\DayTourInventory;
 use App\Models\Holiday;
@@ -165,7 +166,7 @@ class PagesController extends Controller
         })->toArray();
 
         // Get all staycations from admin panel
-        $staycations = Staycation::with([
+        $staycations = Staycation::ordered()->with([
             'texts',
             'swiperImages'
         ])->get();
@@ -182,12 +183,6 @@ class PagesController extends Controller
         $checkoutCarbon = \Carbon\Carbon::parse($checkout);
 
         $today = now();
-        // Map season type to rate key
-        $seasonKeyMap = [
-            'Non-Peak' => 'nonPeak',
-            'Peak' => 'peak',
-            'Super-Peak' => 'superPeak'
-        ];
 
         foreach ($staycations as $staycation) {
             $totalNights = $checkinCarbon->diffInDays($checkoutCarbon);
@@ -243,7 +238,7 @@ class PagesController extends Controller
             ];
 
             // Prepare room details for display
-            $description = $staycation->texts->first()->description ?? 'Experience the beauty of nature with our premium accommodation options.';
+            $description = $this->resolveStaycationDescription($staycation);
             $image = $staycation->image ?? asset('assets/images/carousel/Glamping-1.jpg');
 
             $name = strtolower((string) $staycation->name);
@@ -260,16 +255,13 @@ class PagesController extends Controller
                 $type = 'camping'; // default
             }
 
-            $pricingService = app(\App\Services\PricingService::class);
-
             // Calculate the proper total price for the entire stay
             $mockAcc = ['extra_mattress' => 1]; // Default quantity for display
             $totalPrice = $this->calculateStaycationRoomPrice($staycation, $checkin, $checkout, $mockAcc);
 
-            // Determine current season type and price for today
+            // Determine current season type and a display rate for today
             $seasonType = $this->determineSeasonType($today);
-            $rateKey = $seasonKeyMap[$seasonType] ?? 'nonPeak';
-            $currentPrice = $pricingService->getStaycationRate($staycation, \Carbon\Carbon::parse($today), $rateKey);
+            $currentPrice = $this->getStaycationDisplayRate($staycation, \Carbon\Carbon::parse($today), $seasonType);
 
             $roomDetails[$staycation->id] = [
                 'id' => $staycation->id,
@@ -287,10 +279,175 @@ class PagesController extends Controller
             ];
         }
 
-        $data = compact('swiperImages', 'texts', 'staycations', 'availability', 'roomDetails', 'checkin', 'checkout');
+        $vrData = [
+            'glamping' => $this->defaultVrData('glamping'),
+            'camping' => $this->defaultVrData('camping'),
+        ];
+
+        foreach ($staycations as $staycation) {
+            $roomType = strtolower(trim((string) ($roomDetails[$staycation->id]['type'] ?? $staycation->type ?? 'camping')));
+            $vrData[(string) $staycation->id] = $this->buildVrDataForStaycation($staycation, $roomType);
+        }
+
+        $data = compact('swiperImages', 'texts', 'staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'vrData');
         $data['active'] = 'staycation';
         
         return view('staycation', $data);
+    }
+
+    private function resolveStaycationDescription(Staycation $staycation): string
+    {
+        $textRecord = $staycation->texts->first(function ($text) {
+            $section = strtolower(trim((string) ($text->section ?? '')));
+            return !in_array($section, ['features', 'vr'], true);
+        });
+
+        $description = preg_replace('/\s+/', ' ', trim((string) ($textRecord?->content ?? '')));
+
+        return $description !== ''
+            ? $description
+            : 'Experience the beauty of nature with our premium accommodation options.';
+    }
+
+    private function buildVrDataForStaycation(Staycation $staycation, string $roomType): array
+    {
+        $fallback = $this->defaultVrData($roomType, $staycation->name ?? ucfirst($roomType));
+        $vrTexts = $staycation->texts
+            ->filter(fn ($text) => strtolower(trim((string) ($text->section ?? ''))) === 'vr')
+            ->values();
+
+        $latestText = $vrTexts->sortByDesc('id')->first();
+        $decoded = $latestText ? $this->decodeVrContent($latestText->content) : [];
+        $images = [];
+        $seen = [];
+
+        foreach ($vrTexts->sortBy('id') as $vrText) {
+            $json = $this->decodeVrContent($vrText->content);
+
+            $rawImages = is_array($json['images'] ?? null) ? $json['images'] : [];
+            foreach ($rawImages as $image) {
+                if (!is_array($image)) {
+                    continue;
+                }
+
+                $src = trim((string) ($image['src'] ?? ''));
+                if ($src === '') {
+                    continue;
+                }
+
+                $key = trim((string) ($image['public_id'] ?? $src));
+                if ($key !== '' && isset($seen[$key])) {
+                    continue;
+                }
+
+                if ($key !== '') {
+                    $seen[$key] = true;
+                }
+
+                $images[] = [
+                    'src' => \App\Helpers\ImageHelper::src($src),
+                    'title' => $this->sanitizeVrSlideLabel((string) ($image['title'] ?? '')),
+                    'desc' => $this->sanitizeVrSlideDescription((string) ($image['desc'] ?? '')),
+                    'width' => (int) ($image['width'] ?? 0),
+                    'height' => (int) ($image['height'] ?? 0),
+                    'isPanoramic' => (bool) ($image['isPanoramic'] ?? false),
+                ];
+            }
+        }
+
+        $badgeLabel = trim((string) ($decoded['badgeLabel'] ?? $decoded['badge_label'] ?? ''));
+        if ($badgeLabel === '') {
+            $badgeLabel = $roomType === 'glamping' ? 'Glamping' : 'Camping';
+        }
+
+        return [
+            'roomName' => $staycation->name ?? $fallback['roomName'],
+            'roomType' => $roomType,
+            'title' => $this->sanitizeVrSlideLabel((string) ($decoded['title'] ?? '')),
+            'description' => $this->sanitizeVrSlideDescription((string) ($decoded['description'] ?? '')),
+            'badgeLabel' => $badgeLabel,
+            'badgeStyle' => $decoded['badgeStyle'] ?? $fallback['badgeStyle'],
+            'headerStyle' => $decoded['headerStyle'] ?? $fallback['headerStyle'],
+            'headerIcon' => $decoded['headerIcon'] ?? $fallback['headerIcon'],
+            'images' => $images,
+        ];
+    }
+
+    private function decodeVrContent(?string $content): array
+    {
+        if (!is_string($content) || trim($content) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($content, true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private function sanitizeVrSlideLabel(string $value): string
+    {
+        $label = trim($value);
+        if ($label === '' || $this->looksLikeVrUploadSlug($label) || preg_match('/^slide\s+\d+$/i', $label)) {
+            return '';
+        }
+
+        return $label;
+    }
+
+    private function sanitizeVrSlideDescription(string $value): string
+    {
+        $desc = trim($value);
+        if ($desc === '' || $this->looksLikeVrUploadSlug($desc) || preg_match('/^slide\s+\d+$/i', $desc)) {
+            return '';
+        }
+
+        return $desc;
+    }
+
+    private function looksLikeVrUploadSlug(string $value): bool
+    {
+        $text = trim($value);
+        if ($text === '') {
+            return true;
+        }
+
+        if (strlen($text) < 12) {
+            return false;
+        }
+
+        if (preg_match('/\s/', $text)) {
+            return false;
+        }
+
+        return (bool) preg_match('/^[a-z0-9_-]+$/i', $text);
+    }
+
+    private function defaultVrData(string $roomType, ?string $roomName = null): array
+    {
+        $roomType = $roomType === 'glamping' ? 'glamping' : 'camping';
+
+        if ($roomType === 'glamping') {
+            return [
+                'roomName' => $roomName ?? 'Glamping',
+                'title' => '',
+                'description' => '',
+                'badgeLabel' => 'Glamping',
+                'badgeStyle' => 'background:rgba(167,94,62,0.10);color:#a75e3e',
+                'headerStyle' => 'background:#a75e3e;color:white',
+                'headerIcon' => 'bi bi-house-heart-fill',
+                'images' => [],
+            ];
+        }
+
+        return [
+            'roomName' => $roomName ?? 'Camping',
+            'title' => '',
+            'description' => '',
+            'badgeLabel' => 'Camping',
+            'badgeStyle' => 'background:rgba(0,132,141,0.10);color:#00848d',
+            'headerStyle' => 'background:#00848d;color:white',
+            'headerIcon' => 'bi bi-tree-fill',
+            'images' => [],
+        ];
     }
 
     private function calculateStaycationRoomPrice(Staycation $staycation, string $checkinDate, string $checkoutDate, array &$acc): float
@@ -478,6 +635,51 @@ class PagesController extends Controller
         $rates = $config['rates'] ?? [];
 
         return (float)($rates[$rateKey] ?? 0);
+    }
+
+    /**
+     * Resolve a room price for display on the frontend.
+     *
+     * This prefers the live season/date-based rate, then falls back to any
+     * configured seasonal rate, then the room's base price, then the first
+     * positive configured rate it can find.
+     */
+    private function getStaycationDisplayRate(Staycation $staycation, Carbon $date, string $seasonType): float
+    {
+        $pricingService = app(\App\Services\PricingService::class);
+        $seasonKeyMap = [
+            'Non-Peak' => 'nonPeak',
+            'Peak' => 'peak',
+            'Super-Peak' => 'superPeak',
+        ];
+
+        $rateKey = $seasonKeyMap[$seasonType] ?? 'nonPeak';
+        $currentRate = (float) $pricingService->getStaycationRate($staycation, $date, $rateKey);
+        if ($currentRate > 0) {
+            return $currentRate;
+        }
+
+        $seasonRate = $this->getStaycationRateForSeason($staycation->price_configs ?? [], $seasonType);
+        if ($seasonRate > 0) {
+            return $seasonRate;
+        }
+
+        $basePrice = (float) ($staycation->price ?? 0);
+        if ($basePrice > 0) {
+            return $basePrice;
+        }
+
+        foreach ($staycation->price_configs ?? [] as $config) {
+            $rates = $config['rates'] ?? [];
+            foreach (['nonPeak', 'peak', 'superPeak'] as $seasonKey) {
+                $rate = (float) ($rates[$seasonKey] ?? 0);
+                if ($rate > 0) {
+                    return $rate;
+                }
+            }
+        }
+
+        return 0;
     }
 
     public function activities()

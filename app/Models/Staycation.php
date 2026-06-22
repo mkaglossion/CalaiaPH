@@ -154,7 +154,14 @@ class Staycation extends Model
             return 'range';
         }
 
-        if ($type === 'date' || isset($config['dates']) || isset($config['multipleDates'])) {
+        $rawDates = $config['dates'] ?? null;
+        $multipleDates = $config['multipleDates'] ?? null;
+
+        if (
+            $type === 'date'
+            || (!empty($rawDates) && $rawDates !== [])
+            || (!empty($multipleDates) && $multipleDates !== false)
+        ) {
             return 'date';
         }
 

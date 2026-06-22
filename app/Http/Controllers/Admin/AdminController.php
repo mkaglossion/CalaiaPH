@@ -112,7 +112,7 @@ class AdminController extends Controller
         $currentSeasonKey = $seasonKeyMap[$currentSeason] ?? 'nonPeak';
 
         $images = StaycationSwiperImage::with('staycation')->latest()->get();
-        $texts = StaycationText::all();
+        $texts = $this->normalizeStaycationTexts(StaycationText::with('staycation')->orderBy('id')->get());
         $pricingService = app(PricingService::class);
         $todayCarbon = Carbon::today();
 
@@ -127,6 +127,69 @@ class AdminController extends Controller
         });
 
         return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts', 'currentSeason', 'currentSeasonKey', 'sortBy', 'sortOptions'));
+    }
+
+    private function normalizeStaycationTexts($texts)
+    {
+        return $texts
+            ->groupBy(function ($text) {
+                $section = strtolower(trim((string) ($text->section ?? '')));
+                return $section . '|' . (string) ($text->staycation_id ?? '');
+            })
+            ->map(function ($group) {
+                $latest = $group->sortByDesc('id')->first();
+                if (!$latest) {
+                    return null;
+                }
+
+                if (strtolower(trim((string) ($latest->section ?? ''))) === 'vr') {
+                    $merged = $this->mergeVrTextGroup($group, $latest);
+                    $latest = clone $latest;
+                    $latest->content = json_encode($merged, JSON_UNESCAPED_SLASHES);
+                }
+
+                return $latest;
+            })
+            ->filter()
+            ->values();
+    }
+
+    private function mergeVrTextGroup($group, $latest)
+    {
+        $merged = $this->decodeJsonTextContent($latest->content);
+        $merged['images'] = [];
+        $seen = [];
+
+        foreach ($group->sortBy('id') as $text) {
+            $content = $this->decodeJsonTextContent($text->content);
+            $images = is_array($content['images'] ?? null) ? $content['images'] : [];
+
+            foreach ($images as $image) {
+                if (!is_array($image)) {
+                    continue;
+                }
+
+                $key = trim((string) ($image['public_id'] ?? $image['src'] ?? ''));
+                if ($key === '' || isset($seen[$key])) {
+                    continue;
+                }
+
+                $seen[$key] = true;
+                $merged['images'][] = $image;
+            }
+        }
+
+        return $merged;
+    }
+
+    private function decodeJsonTextContent(?string $content): array
+    {
+        if (!is_string($content) || trim($content) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($content, true);
+        return is_array($decoded) ? $decoded : [];
     }
 
     public function staycationInventory()

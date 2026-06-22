@@ -230,19 +230,6 @@
         </template>
     </div>
 
-    <div class="mt-8 rounded-xl border border-indigo-200 bg-indigo-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-            <h3 class="text-sm font-semibold text-indigo-900">Season Durations</h3>
-            <p class="text-xs text-indigo-700 mt-1">Manage peak and season date ranges used by room pricing.</p>
-        </div>
-        <a
-            href="{{ route('admin.seasonDurations.index') }}"
-            class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition"
-        >
-            Open Season Durations
-        </a>
-    </div>
-
     {{-- SWIPER IMAGES MANAGEMENT --}}
     <div class="flex justify-between items-end mb-6 mt-12">
         <div>
@@ -744,6 +731,10 @@
 
     {{-- Features Table --}}
     <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+        @php
+            $featureTexts = $texts->where('section', 'features');
+            $vrTexts = $texts->where('section', 'vr')->values();
+        @endphp
         <table class="w-full text-left">
             <thead class="bg-gray-100/70 backdrop-blur">
                 <tr>
@@ -754,7 +745,7 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
-                @forelse($texts as $index => $text)
+                @forelse($featureTexts as $index => $text)
                     <tr class="hover:bg-gray-50/70 transition">
                         <td class="px-6 py-4 text-sm text-gray-900">{{ $index + 1 }}</td>
                         <td class="px-6 py-4 font-medium text-gray-900">{{ $text->staycation->name ?? 'Untitled' }}</td>
@@ -873,6 +864,297 @@
         </div>
     </div>
 
+    {{-- VR PREVIEW MANAGEMENT --}}
+    <div class="flex justify-between items-end mb-6 mt-12">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Virtual Reality Management</h2>
+            <p class="text-gray-500 text-sm">Manage VR title, badge, and panorama slides for each room.</p>
+        </div>
+
+        <button
+            @click="resetVrTextForm(); showVrTextModal = true"
+            class="px-4 py-2 rounded-xl bg-indigo-600 text-white font-medium shadow hover:bg-indigo-700 hover:shadow-lg transition"
+        >
+            + Add VR Content
+        </button>
+    </div>
+
+    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+        <table class="w-full text-left">
+            <thead class="bg-gray-100/70 backdrop-blur">
+                <tr>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">#</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Room Name</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Badge</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Slides</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                @forelse($vrTexts as $index => $text)
+                    @php
+                        $vrConfig = json_decode($text->content ?? '', true) ?: [];
+                        $slides = collect($vrConfig['images'] ?? []);
+                        $badgeLabel = $vrConfig['badgeLabel'] ?? (isset($vrConfig['roomType']) ? ucfirst((string) $vrConfig['roomType']) : ucfirst((string) ($text->staycation->type ?? '')));
+                    @endphp
+                    <tr class="hover:bg-gray-50/70 transition">
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ $index + 1 }}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ $text->staycation->name ?? 'Untitled' }}</td>
+                        <td class="px-6 py-4 text-gray-600 text-sm">
+                            @if(!empty($badgeLabel))
+                                <span class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-700">{{ $badgeLabel }}</span>
+                            @else
+                                <span class="text-gray-400 italic">No badge set</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 text-sm">
+                            <span class="inline-flex items-center rounded-full bg-slate-50 px-3 py-1 text-sm font-medium text-slate-700">
+                                {{ $slides->count() }} {{ $slides->count() === 1 ? 'slide' : 'slides' }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right space-x-4">
+                            <button
+                                type="button"
+                                x-on:click="editVrText($el, {{ $text->id }}, @js($text->staycation_id), @js($text->title))"
+                                data-content="{!! htmlspecialchars($text->content ?? '', ENT_QUOTES) !!}"
+                                class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                            >
+                                Edit
+                            </button>
+                            <button
+                                type="button"
+                                class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                                @click="deleteText({{ $text->id }}, '{{ route('admin.staycation-text.destroy', $text->id) }}')"
+                            >
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="px-6 py-6 text-center text-gray-500">No VR content added yet.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    <div
+        x-show="showVrTextModal"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        x-transition.opacity
+    >
+        <div
+            @click.away="showVrTextModal = false; resetVrTextForm()"
+            class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-2xl p-5 sm:p-6 relative border border-gray-200 max-h-[90vh] overflow-auto"
+        >
+            <button
+                @click="showVrTextModal = false; resetVrTextForm()"
+                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+            >&times;</button>
+
+            <h3 class="text-lg font-semibold mb-4 text-gray-900" x-text="editVrMode ? 'Edit VR Content' : 'Add VR Content'"></h3>
+
+            <form
+                id="vrTextUploadForm"
+                class="space-y-5"
+                @submit.prevent="saveVrText()"
+            >
+                @csrf
+                <template x-if="editVrMode">
+                    <input type="hidden" name="_method" value="PUT">
+                </template>
+
+                <div class="mb-3">
+                    <label for="vr_staycation_id" class="block font-semibold mb-1">Room</label>
+                    <select
+                        id="vr_staycation_id"
+                        name="staycation_id"
+                        x-model="vrForm.staycation_id"
+                        class="border rounded p-2 w-full"
+                        required
+                    >
+                        <option value="">Select Room</option>
+                        @foreach($staycations as $staycation)
+                            <option value="{{ $staycation->id }}">{{ $staycation->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="vr_badge_label" class="block text-sm font-medium mb-1">Badge Label</label>
+                        <input
+                            type="text"
+                            id="vr_badge_label"
+                            x-model="vrForm.badge_label"
+                            class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            placeholder="Glamping or Camping"
+                            required
+                        >
+                    </div>
+                    <div>
+                        <label for="vr_room_type" class="block text-sm font-medium mb-1">Room Type</label>
+                        <select
+                            id="vr_room_type"
+                            x-model="vrForm.room_type"
+                            class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            @change="vrForm.badge_label = $event.target.value === 'camping' ? 'Camping' : 'Glamping'"
+                        >
+                            <option value="glamping">Glamping</option>
+                            <option value="camping">Camping</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="vr_title" class="block font-semibold mb-1">VR Title</label>
+                    <input
+                        type="text"
+                        id="vr_title"
+                        x-model="vrForm.title"
+                        class="border rounded p-2 w-full"
+                        placeholder="Virtual Reality Preview"
+                    >
+                </div>
+
+                <div class="mb-3">
+                    <label for="vr_description" class="block font-semibold mb-1">Description</label>
+                    <textarea
+                        id="vr_description"
+                        x-model="vrForm.description"
+                        rows="4"
+                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        placeholder="Short intro shown under the VR viewer"
+                    ></textarea>
+                </div>
+
+                <div class="mb-4 space-y-3">
+                    <div
+                        class="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-indigo-400 hover:bg-indigo-50/40"
+                        @dragover.prevent
+                        @drop.prevent="handleVrSlideDrop($event)"
+                    >
+                        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="space-y-2">
+                                <div>
+                                    <p class="font-medium text-gray-900">Upload Panorama Slides</p>
+                                    <p class="text-xs text-gray-500">Each image becomes one slide in the VR viewer.</p>
+                                </div>
+                                <p class="text-xs text-gray-500">
+                                    Recommended: equirectangular 360 images at 4096 x 2048 or at least 3000 x 1500, JPG or WEBP, one scene per file.
+                                </p>
+                                <p class="text-xs font-medium text-amber-700" x-show="editVrMode && vrForm.slides.length">
+                                    Drag to reorder. Use the X button to remove a slide before saving.
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <label
+                                    for="vr_images"
+                                    class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+                                >
+                                    Choose files
+                                </label>
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
+                                    @click="clearVrSlideSelection()"
+                                    x-show="vrForm.slides.some(slide => slide.kind === 'new')"
+                                >
+                                    Clear selection
+                                </button>
+                            </div>
+                        </div>
+
+                        <input
+                            id="vr_images"
+                            x-ref="vrImagesInput"
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            class="sr-only"
+                            @change="handleVrSlideFiles($event)"
+                            :required="!editVrMode"
+                        >
+
+                        <div class="mt-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                            <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">Slides</p>
+                                    <p class="text-xs text-gray-500">Drag to reorder. Delete any slide you do not want saved.</p>
+                                </div>
+                                <p class="text-xs text-gray-500" x-text="`${vrForm.slides.length} slide(s)`"></p>
+                            </div>
+
+                            <div x-show="vrForm.slides.length" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                <template x-for="(slide, index) in vrForm.slides" :key="slide.id">
+                                    <div
+                                        class="group rounded-xl border border-gray-200 bg-gray-50 p-3 shadow-sm transition hover:border-indigo-300 hover:bg-white"
+                                        draggable="true"
+                                        @dragstart="startVrSlideDrag(index)"
+                                        @dragover.prevent
+                                        @drop.prevent="dropVrSlide(index)"
+                                        @dragend="endVrSlideDrag()"
+                                    >
+                                        <div class="flex items-start gap-3">
+                                            <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
+                                                <img
+                                                    :src="slide.previewUrl || slide.src"
+                                                    class="h-full w-full object-cover"
+                                                    :alt="getVrSlideLabel(slide, index)"
+                                                >
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-center gap-2">
+                                                    <p class="truncate text-sm font-medium text-gray-900" x-text="getVrSlideLabel(slide, index)"></p>
+                                                    <span
+                                                        class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                                                        :class="slide.kind === 'existing' ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'"
+                                                        x-text="slide.kind === 'existing' ? 'Saved' : 'New'"
+                                                    ></span>
+                                                </div>
+                                                <p class="mt-1 text-xs text-gray-500" x-text="slide.isPanoramic ? 'Panoramic' : 'Standard image'"></p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                class="rounded-full p-1 text-gray-400 transition hover:bg-gray-100 hover:text-red-600"
+                                                @click="removeVrSlide(index)"
+                                                aria-label="Remove slide"
+                                            >
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div x-show="!vrForm.slides.length" class="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500">
+                                No slides yet. Choose files to start building the VR sequence.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2">
+                    <button
+                        type="button"
+                        @click="showVrTextModal = false; resetVrTextForm()"
+                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 text-sm w-full sm:w-auto"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 text-sm w-full sm:w-auto"
+                    >
+                        <span x-text="editVrMode ? 'Update' : 'Add'"></span>
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -884,6 +1166,8 @@ function staycationManager() {
         editModeStaycation: false,
         showTextModal: false,
         editMode: false,
+        showVrTextModal: false,
+        editVrMode: false,
         editImageMode: false,
         currentImageId: null,
         currentStaycationId: '',
@@ -915,6 +1199,16 @@ function staycationManager() {
             priceConfigs: [],
             images: []
         },
+        vrForm: {
+            id: null,
+            staycation_id: '',
+            title: 'VR Preview',
+            badge_label: 'Glamping',
+            room_type: 'glamping',
+            description: '',
+            slides: []
+        },
+        draggedVrSlideIndex: null,
 
         computedThreshold: 0,
         isSpecialStaycation: false,
@@ -1190,6 +1484,24 @@ function staycationManager() {
             this.editMode = false;
         },
 
+        resetVrTextForm() {
+            this.vrForm = {
+                id: null,
+                staycation_id: '',
+                title: 'VR Preview',
+                badge_label: 'Glamping',
+                room_type: 'glamping',
+                description: '',
+                slides: []
+            };
+            this.editVrMode = false;
+            this.draggedVrSlideIndex = null;
+            if (this.$refs.vrImagesInput) {
+                this.$refs.vrImagesInput.value = '';
+            }
+            this.revokeVrSlidePreviews();
+        },
+
         editImage(id, staycationId, title) {
             this.currentImageId = id;
             this.currentStaycationId = staycationId;
@@ -1207,6 +1519,170 @@ function staycationManager() {
             this.form.text = el.getAttribute('data-content') || '';
             this.editMode = true;
             this.showTextModal = true;
+        },
+
+        parseVrContent(rawContent) {
+            if (!rawContent) {
+                return {};
+            }
+
+            try {
+                return JSON.parse(rawContent);
+            } catch (e) {
+                return {};
+            }
+        },
+
+        revokeVrSlidePreviews() {
+            const slides = Array.isArray(this.vrForm.slides) ? this.vrForm.slides : [];
+            slides.forEach((slide) => {
+                if (slide?.kind !== 'new') {
+                    return;
+                }
+
+                const url = slide?.previewUrl;
+                if (!url) {
+                    return;
+                }
+                try {
+                    URL.revokeObjectURL(url);
+                } catch (e) {
+                    // Ignore invalid or already revoked object URLs.
+                }
+            });
+        },
+
+        createVrSlideFromExisting(image, index) {
+            const title = String(image?.title || '').trim();
+            const desc = String(image?.desc || '').trim();
+            return {
+                id: `existing-${index}-${Date.now()}`,
+                kind: 'existing',
+                src: image?.src || '',
+                previewUrl: image?.src || '',
+                public_id: image?.public_id || '',
+                title: title && !/^slide\s+\d+$/i.test(title) ? title : '',
+                desc: desc && !/^slide\s+\d+$/i.test(desc) ? desc : '',
+                width: Number(image?.width || 0),
+                height: Number(image?.height || 0),
+                isPanoramic: Boolean(image?.isPanoramic),
+            };
+        },
+
+        createVrSlideFromFile(file, index) {
+            const previewUrl = URL.createObjectURL(file);
+            const title = String(file?.name || '').trim();
+            return {
+                id: `new-${index}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                kind: 'new',
+                src: previewUrl,
+                previewUrl,
+                file,
+                public_id: '',
+                title: '',
+                desc: '',
+                width: 0,
+                height: 0,
+                isPanoramic: false,
+                fileName: title,
+            };
+        },
+
+        getVrSlideLabel(slide, index) {
+            const title = String(slide?.title || '').trim();
+            if (title) {
+                return title;
+            }
+
+            return `Slide ${index + 1}`;
+        },
+
+        handleVrSlideFiles(event) {
+            const files = Array.from(event?.target?.files || []);
+            if (!files.length) {
+                return;
+            }
+
+            const newSlides = files.map((file, index) => this.createVrSlideFromFile(file, index));
+            this.vrForm.slides = [...this.vrForm.slides, ...newSlides];
+            if (this.$refs.vrImagesInput) {
+                this.$refs.vrImagesInput.value = '';
+            }
+        },
+
+        handleVrSlideDrop(event) {
+            const files = Array.from(event?.dataTransfer?.files || []);
+            if (!files.length) {
+                return;
+            }
+
+            const newSlides = files.map((file, index) => this.createVrSlideFromFile(file, index));
+            this.vrForm.slides = [...this.vrForm.slides, ...newSlides];
+        },
+
+        startVrSlideDrag(index) {
+            this.draggedVrSlideIndex = index;
+        },
+
+        dropVrSlide(targetIndex) {
+            const fromIndex = this.draggedVrSlideIndex;
+            if (fromIndex === null || fromIndex === undefined || fromIndex === targetIndex) {
+                return;
+            }
+
+            const slides = Array.isArray(this.vrForm.slides) ? [...this.vrForm.slides] : [];
+            if (fromIndex < 0 || fromIndex >= slides.length || targetIndex < 0 || targetIndex >= slides.length) {
+                return;
+            }
+
+            const [moved] = slides.splice(fromIndex, 1);
+            slides.splice(targetIndex, 0, moved);
+            this.vrForm.slides = slides;
+            this.draggedVrSlideIndex = targetIndex;
+        },
+
+        endVrSlideDrag() {
+            this.draggedVrSlideIndex = null;
+        },
+
+        removeVrSlide(index) {
+            const slides = Array.isArray(this.vrForm.slides) ? [...this.vrForm.slides] : [];
+            if (index < 0 || index >= slides.length) {
+                return;
+            }
+
+            const [removed] = slides.splice(index, 1);
+            if (removed?.kind === 'new' && removed?.previewUrl) {
+                try {
+                    URL.revokeObjectURL(removed.previewUrl);
+                } catch (e) {}
+            }
+
+            this.vrForm.slides = slides;
+        },
+
+        clearVrSlideSelection() {
+            this.revokeVrSlidePreviews();
+            this.vrForm.slides = this.vrForm.slides.filter((slide) => slide?.kind === 'existing');
+            if (this.$refs.vrImagesInput) {
+                this.$refs.vrImagesInput.value = '';
+            }
+        },
+
+        editVrText(el, id, staycationId, title) {
+            this.resetVrTextForm();
+            this.vrForm.id = id;
+            this.vrForm.staycation_id = staycationId;
+            this.editVrMode = true;
+
+            const vrContent = this.parseVrContent(el.getAttribute('data-content') || '');
+            const images = Array.isArray(vrContent.images) ? vrContent.images : [];
+            this.vrForm.title = vrContent.title || title || 'VR Preview';
+            this.vrForm.room_type = vrContent.roomType || vrContent.room_type || 'glamping';
+            this.vrForm.badge_label = vrContent.badgeLabel || vrContent.badge_label || (this.vrForm.room_type === 'camping' ? 'Camping' : 'Glamping');
+            this.vrForm.description = vrContent.description || '';
+            this.vrForm.slides = images.map((image, index) => this.createVrSlideFromExisting(image, index));
+            this.showVrTextModal = true;
         },
 
 
@@ -1859,6 +2335,106 @@ function staycationManager() {
                 });
             } finally {
                 this.isLoading = false;
+            }
+        },
+
+        async saveVrText() {
+            this.isLoading = true;
+
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+            const formData = new FormData();
+            const slides = Array.isArray(this.vrForm.slides) ? this.vrForm.slides : [];
+            const payload = {
+                title: this.vrForm.title || 'VR Preview',
+                badgeLabel: this.vrForm.badge_label || (this.vrForm.room_type === 'camping' ? 'Camping' : 'Glamping'),
+                roomType: this.vrForm.room_type || 'glamping',
+                description: this.vrForm.description || '',
+                slides: slides.map((slide, index) => ({
+                    id: slide.id || `slide-${index}`,
+                    kind: slide.kind || 'existing',
+                    src: slide.src || '',
+                    public_id: slide.public_id || '',
+                    title: slide.title || '',
+                    desc: slide.desc || '',
+                    width: Number(slide.width || 0),
+                    height: Number(slide.height || 0),
+                    isPanoramic: Boolean(slide.isPanoramic),
+                })),
+            };
+
+            formData.append('staycation_id', this.vrForm.staycation_id);
+            formData.append('section', 'vr');
+            formData.append('title', payload.title);
+            formData.append('vr_slide_payload', JSON.stringify(payload.slides));
+
+            slides
+                .filter((slide) => slide.kind === 'new' && slide.file)
+                .forEach((slide) => {
+                    formData.append('vr_images[]', slide.file);
+                });
+
+            formData.append('badge_label', payload.badgeLabel);
+            formData.append('room_type', payload.roomType);
+            formData.append('description', payload.description);
+
+            let url = '{{ route("admin.staycation-text.store") }}';
+            let method = 'POST';
+            if (this.editVrMode && this.vrForm.id) {
+                url = `{{ url('/admin/staycation-text') }}/${this.vrForm.id}`;
+                formData.append('_method', 'PUT');
+            }
+
+            const btn = document.querySelector('#vrTextUploadForm button[type=submit]');
+            btn.innerText = this.editVrMode ? 'Updating...' : 'Adding...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                    body: formData,
+                    credentials: 'same-origin'
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    Swal.fire({
+                        icon: "success",
+                        title: this.editVrMode ? "Updated!" : "Added!",
+                        text: data.message || (this.editVrMode ? "VR content updated successfully!" : "VR content added successfully!"),
+                        confirmButtonColor: "#4f46e5"
+                    }).then(() => {
+                        this.resetVrTextForm();
+                        this.showVrTextModal = false;
+                        window.location.reload();
+                    });
+                } else if (data.errors) {
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Validation Error",
+                        html: Object.values(data.errors).flat().join("<br>")
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Failed",
+                        text: data.message || "Operation failed."
+                    });
+                }
+            } catch(err) {
+                console.error(err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error submitting VR content.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2600
+                });
+            } finally {
+                this.isLoading = false;
+                btn.innerText = this.editVrMode ? 'Update' : 'Add';
+                btn.disabled = false;
             }
         },
 
