@@ -14,54 +14,6 @@
     </h1>
     <p class="text-gray-600 mb-10">Manage the image slider and content displayed on your Special Events page.</p>
 
-    @php
-        $resolveSpecialText = function (string $label, string $fallback = '') use ($texts) {
-            $match = collect($texts ?? [])->first(function ($item) use ($label) {
-                $itemLabel = strtolower((string) ($item->label ?? $item->title ?? ''));
-                return $itemLabel === strtolower($label);
-            });
-
-            $value = trim((string) ($match->text ?? $match->content ?? ''));
-            return $value !== '' ? $value : $fallback;
-        };
-
-        $specialEventsPageTitle = $resolveSpecialText('special_events_title', 'Our Special Events');
-        $specialEventsPageIntro = $resolveSpecialText('special_events_intro', 'From intimate weddings to grand corporate celebrations, our beautiful farm setting provides the perfect backdrop for your special occasion.');
-    @endphp
-
-    {{-- ============================================================= --}}
-    {{-- PAGE COPY --}}
-    {{-- ============================================================= --}}
-    <div class="mb-10 rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-6 shadow-sm">
-        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900">Special Events Page Copy</h2>
-                <p class="text-gray-500 text-sm">Controls the hero heading and intro on the public Special Events page.</p>
-            </div>
-
-            <button
-                type="button"
-                @click="saveSpecialEventsCopy()"
-                class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
-                Save Special Events Copy
-            </button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div>
-                <label for="special_events_title" class="block font-semibold mb-2 text-gray-700">Section Title</label>
-                <input id="special_events_title" type="text" x-model="pageCopy.title" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Our Special Events">
-            </div>
-
-            <div>
-                <label for="special_events_intro" class="block font-semibold mb-2 text-gray-700">Section Intro</label>
-                <textarea id="special_events_intro" x-model="pageCopy.intro" rows="4" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="From intimate weddings to grand corporate celebrations..."></textarea>
-            </div>
-        </div>
-
-        <p class="mt-4 text-xs text-gray-500">Saved as <code>special_events_title</code> and <code>special_events_intro</code>.</p>
-    </div>
-
     {{-- ============================================================= --}}
     {{-- SWIPER IMAGES SECTION --}}
     {{-- ============================================================= --}}
@@ -187,6 +139,56 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    <hr class="my-10 border-gray-300">
+
+    @php
+        $resolveSpecialText = function (string $label, string $fallback = '') use ($texts) {
+            $match = collect($texts ?? [])->first(function ($item) use ($label) {
+                $itemLabel = strtolower((string) ($item->label ?? $item->title ?? ''));
+                return $itemLabel === strtolower($label);
+            });
+
+            $value = trim((string) ($match->text ?? $match->content ?? ''));
+            return $value !== '' ? $value : $fallback;
+        };
+
+        $specialEventsPageTitle = $resolveSpecialText('special_events_title', 'Our Special Events');
+        $specialEventsPageIntro = $resolveSpecialText('special_events_intro', 'From intimate weddings to grand corporate celebrations, our beautiful farm setting provides the perfect backdrop for your special occasion.');
+    @endphp
+
+    {{-- ============================================================= --}}
+    {{-- PAGE COPY --}}
+    {{-- ============================================================= --}}
+    <div class="mb-10 rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-6 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Special Events Page Copy</h2>
+                <p class="text-gray-500 text-sm">Controls the hero heading and intro on the public Special Events page.</p>
+            </div>
+
+            <button
+                type="button"
+                @click="saveSpecialEventsCopy()"
+                class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+                Save Special Events Copy
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div>
+                <label for="special_events_title" class="block font-semibold mb-2 text-gray-700">Section Title</label>
+                <input id="special_events_title" type="text" x-model="pageCopy.title" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Our Special Events">
+            </div>
+
+            <div>
+                <label for="special_events_intro" class="block font-semibold mb-2 text-gray-700">Section Intro</label>
+                <textarea id="special_events_intro" x-model="pageCopy.intro" rows="4" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="From intimate weddings to grand corporate celebrations..."></textarea>
+            </div>
+        </div>
+
+        <p class="mt-4 text-xs text-gray-500">Saved as <code>special_events_title</code> and <code>special_events_intro</code>.</p>
     </div>
 
 

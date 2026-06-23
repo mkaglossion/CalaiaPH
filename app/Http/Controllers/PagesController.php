@@ -17,6 +17,7 @@ use App\Models\DoText;
 use App\Models\FoodText;
 use App\Models\SpecialText;
 use App\Models\FarmText;
+use App\Models\ShopText;
 
 use App\Models\Food;
 use App\Models\Menu;
@@ -903,6 +904,14 @@ class PagesController extends Controller
 
     public function farm()
     {
+        $swiperImages = FarmSwiperImage::all();
+        $texts = FarmText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
+            return [strtolower($field) => $content];
+        })->toArray();
+
+        $farmPageTitle = $this->pageTextValue($texts, ['farm_page_title', 'title', 'heading'], 'Our Sustainable Farming');
+        $farmPageIntro = $this->pageTextValue($texts, ['farm_page_intro', 'intro', 'subtitle', 'description'], 'Discover how we raise livestock and grow produce with respect for nature and animal welfare');
+
         // Get farm experiences from database
         $farmExperiences = \App\Models\FarmExperience::orderBy('sort_order')->get()->map(function($exp) {
             return [
@@ -918,7 +927,10 @@ class PagesController extends Controller
             ];
         })->toArray();
         
-        return $this->renderPage(FarmSwiperImage::class, FarmText::class, 'farm', 'farm', 'label', 'text', compact('farmExperiences'));
+        $data = compact('swiperImages', 'texts', 'farmExperiences', 'farmPageTitle', 'farmPageIntro');
+        $data['active'] = 'farm';
+
+        return view('farm', $data);
     }
 
     public function ourStory()
@@ -929,9 +941,12 @@ class PagesController extends Controller
     public function shop()
     {
         $swiperImages = \App\Models\ShopSwiperImage::all();
-        $texts = \App\Models\FarmText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
+        $texts = ShopText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
+
+        $shopPageTitle = $this->pageTextValue($texts, ['shop_page_title', 'title', 'heading'], 'Shop Our Products');
+        $shopPageIntro = $this->pageTextValue($texts, ['shop_page_intro', 'intro', 'subtitle', 'description'], 'Farm-fresh produce and quality frozen goods delivered straight from our fields to your table');
 
         // Fetch active products by category
         $allProducts = \App\Models\Product::where('is_active', true)
@@ -942,7 +957,7 @@ class PagesController extends Controller
         $frozenProducts = $allProducts->where('category', 'frozen');
         $freshProducts = $allProducts->where('category', 'fresh');
 
-        $data = compact('swiperImages', 'texts', 'frozenProducts', 'freshProducts');
+        $data = compact('swiperImages', 'texts', 'frozenProducts', 'freshProducts', 'shopPageTitle', 'shopPageIntro');
         $data['active'] = 'shop';
 
         return view('shop', $data);

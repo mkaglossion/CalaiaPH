@@ -18,8 +18,8 @@
           <div class="max-w-4xl mx-auto">
             <x-section-header
               id="sustainable-farming-heading"
-              title="Our Sustainable Farming"
-              subtitle="Discover how we raise livestock and grow produce with respect for nature and animal welfare"
+              :title="$farmPageTitle ?? 'Our Sustainable Farming'"
+              :subtitle="$farmPageIntro ?? 'Discover how we raise livestock and grow produce with respect for nature and animal welfare'"
             />
           </div>
 

@@ -53,6 +53,7 @@ use App\Http\Controllers\Admin\FoodTextController;
 use App\Http\Controllers\Admin\SpecialTextController;
 use App\Http\Controllers\Admin\PackageTextController;
 use App\Http\Controllers\Admin\FarmTextController;
+use App\Http\Controllers\Admin\ShopTextController;
 use App\Http\Controllers\Admin\ActivityTextController;
 use App\Http\Controllers\Admin\StaycationTextController;
 use App\Http\Controllers\Admin\MenuTextController;
@@ -694,12 +695,14 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
              Route::get('/experiences', [FarmExperiencesController::class, 'index'])->name('admin.farm.experiences');
              Route::post('/experiences/save', [FarmExperiencesController::class, 'save'])->name('admin.farm.experiences.save');
              Route::post('/experiences/upload-image', [FarmExperiencesController::class, 'uploadImage'])->name('admin.farm.experiences.uploadImage');
+             Route::post('/copy', [FarmTextController::class, 'saveCopy'])->name('admin.farm.copy.store');
      });
 
      Route::prefix('/shop')->group(function () {
          Route::get('/shopstore', [AdminController::class, 'shopstore'])->name('admin.shop.shopstore');
          Route::get('/shopitems', [AdminController::class, 'shopitems'])->name('admin.shop.shopitems');
          Route::get('/orders', [AdminController::class, 'shopOrders'])->name('admin.shop.orders');
+         Route::post('/copy', [ShopTextController::class, 'saveCopy'])->name('admin.shop.copy.store');
          Route::resource('shop-swiper-images', ShopSwiperImageController::class, ['names' => [
              'store' => 'admin.shop-swiper-images.store',
              'update' => 'admin.shop-swiper-images.update',
@@ -732,6 +735,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::resource('food-texts', FoodTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('special-texts', SpecialTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('farm-texts', FarmTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('shop-texts', ShopTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('activity-text', ActivityTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('staycation-text', StaycationTextController::class, [
         'names' => [

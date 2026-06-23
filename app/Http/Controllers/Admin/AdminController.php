@@ -31,6 +31,7 @@ use App\Models\FarmSwiperImage;
 use App\Models\FarmText;
 use App\Models\Product;
 use App\Models\ShopOrder;
+use App\Models\ShopText;
 use App\Models\ShopSwiperImage;
 use App\Models\DayTourSwiperImage;
 use App\Models\DayTourInventory;
@@ -331,7 +332,7 @@ class AdminController extends Controller
     public function shopstore()
     {
         $images = ShopSwiperImage::all();
-        $texts = FarmText::all();
+        $texts = ShopText::latest()->get();
         return view('admin.ShopStore.shopstore', compact('images', 'texts'));
     }
 

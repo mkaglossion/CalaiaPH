@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\FarmText;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class FarmTextController extends Controller
 {
@@ -49,5 +50,29 @@ class FarmTextController extends Controller
         $FarmText->delete();
 
         return redirect()->back()->with('success', 'Text content deleted successfully.');
+    }
+
+    public function saveCopy(Request $request)
+    {
+        $validated = $request->validate([
+            'page_title' => 'nullable|string|max:255',
+            'page_intro' => 'nullable|string',
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            FarmText::updateOrCreate(
+                ['label' => 'farm_page_title'],
+                ['text' => $validated['page_title'] ?? '']
+            );
+
+            FarmText::updateOrCreate(
+                ['label' => 'farm_page_intro'],
+                ['text' => $validated['page_intro'] ?? '']
+            );
+        });
+
+        return response()->json([
+            'message' => 'Farm page copy saved successfully.',
+        ]);
     }
 }

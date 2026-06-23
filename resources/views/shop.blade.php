@@ -1,6 +1,6 @@
 <x-page-layout
-    title="CalaiaPH - Shop"
-    description="Shop farm-fresh produce and quality frozen goods from CalaiaPH. Fresh vegetables, pasture-raised meats, and natural products delivered to you."
+    title="CalaiaPH - {{ $shopPageTitle ?? 'Shop Our Products' }}"
+    description="{{ $shopPageIntro ?? 'Farm-fresh produce and quality frozen goods delivered straight from our fields to your table' }}"
     keywords="shop, farm fresh produce, frozen goods, organic vegetables, pasture-raised meat, CalaiaPH shop, Philippines farm products"
     active-header="shop"
 >
@@ -17,8 +17,8 @@
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <x-section-header
               id="shop-products-heading"
-              title="Shop Our Products"
-              subtitle="Farm-fresh produce and quality frozen goods delivered straight from our fields to your table"
+              title="{{ $shopPageTitle ?? 'Shop Our Products' }}"
+              subtitle="{{ $shopPageIntro ?? 'Farm-fresh produce and quality frozen goods delivered straight from our fields to your table' }}"
           />
 
           <x-shop-products />
