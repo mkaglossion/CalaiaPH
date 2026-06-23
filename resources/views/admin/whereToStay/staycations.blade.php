@@ -1053,7 +1053,7 @@
                                     for="vr_images"
                                     class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
                                 >
-                                    Choose files
+                                    Choose one or more files
                                 </label>
                                 <button
                                     type="button"
@@ -1074,7 +1074,6 @@
                             multiple
                             class="sr-only"
                             @change="handleVrSlideFiles($event)"
-                            :required="!editVrMode"
                         >
 
                         <div class="mt-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -2019,6 +2018,37 @@ function staycationManager() {
             }
         },
 
+        syncStaycationState(updatedStaycation) {
+            if (!updatedStaycation || updatedStaycation.id === undefined || updatedStaycation.id === null) {
+                return;
+            }
+
+            const normalized = { ...updatedStaycation };
+            const current = Array.isArray(this.staycations) ? [...this.staycations] : [];
+            const index = current.findIndex((staycation) => Number(staycation.id) === Number(normalized.id));
+
+            if (index === -1) {
+                current.push(normalized);
+            } else {
+                current.splice(index, 1, {
+                    ...current[index],
+                    ...normalized
+                });
+            }
+
+            current.sort((a, b) => {
+                const aOrder = Number(a.sort_order ?? 0);
+                const bOrder = Number(b.sort_order ?? 0);
+                if (aOrder !== bOrder) {
+                    return aOrder - bOrder;
+                }
+
+                return Number(a.id ?? 0) - Number(b.id ?? 0);
+            });
+
+            this.staycations = current;
+        },
+
 
 
         saveStaycation: async function() {
@@ -2176,6 +2206,8 @@ function staycationManager() {
                 }
             }
 
+            this.isLoading = true;
+
             const csrf = document.querySelector('meta[name=csrf-token]').getAttribute('content');
             const formData = new FormData();
             formData.append('_token', csrf);
@@ -2219,15 +2251,15 @@ function staycationManager() {
                 const data = await res.json();
                 
                 if (res.ok) {
-                    // Success - reload the page to show updated data
+                    this.syncStaycationState(data.staycation);
+                    this.showStaycationModal = false;
+                    this.resetForm();
+
                     Swal.fire({
                         icon: 'success',
                         title: this.editModeStaycation ? 'Updated!' : 'Added!',
                         text: data.message || (this.editModeStaycation ? 'Room updated successfully!' : 'Room added successfully!'),
                         confirmButtonColor: '#2563eb'
-                    }).then(() => {
-                        // Simply reload the page to show the updated data
-                        window.location.reload();
                     });
                 } else if (data.errors) {
                     let errorHtml = '<div style="text-align: left;">';
@@ -2260,6 +2292,7 @@ function staycationManager() {
                     confirmButtonColor: '#ef4444'
                 });
             } finally {
+                this.isLoading = false;
                 btn.innerText = this.editModeStaycation ? 'Update' : 'Add';
                 btn.disabled = false;
             }
@@ -2344,6 +2377,18 @@ function staycationManager() {
             const csrf = document.querySelector('meta[name=csrf-token]').content;
             const formData = new FormData();
             const slides = Array.isArray(this.vrForm.slides) ? this.vrForm.slides : [];
+
+            if (!this.editVrMode && slides.length === 0) {
+                this.isLoading = false;
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No slides selected',
+                    text: 'Please add at least one panorama slide before saving.',
+                    confirmButtonColor: '#4f46e5'
+                });
+                return;
+            }
+
             const payload = {
                 title: this.vrForm.title || 'VR Preview',
                 badgeLabel: this.vrForm.badge_label || (this.vrForm.room_type === 'camping' ? 'Camping' : 'Glamping'),
