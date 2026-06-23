@@ -87,10 +87,17 @@
     {{-- ============================================================= --}}
     {{-- TEXT CONTENT SECTION --}}
     {{-- ============================================================= --}}
+    @php
+        $contentTexts = collect($texts ?? [])->reject(function ($item) {
+            $label = strtolower((string) ($item->label ?? $item->title ?? ''));
+            return str_starts_with($label, 'special_events_');
+        })->values();
+    @endphp
+
     <div class="flex justify-between items-end mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
-            <p class="text-gray-500 text-sm">Paragraphs and captions displayed on the Special Events page.</p>
+            <p class="text-gray-500 text-sm">Paragraphs and captions displayed in the Special Events hero slider.</p>
         </div>
 
         <button 
@@ -111,7 +118,7 @@
             </thead>
 
             <tbody class="divide-y divide-gray-200">
-                @forelse($texts as $text)
+                @forelse($contentTexts as $text)
                     <tr class="hover:bg-gray-50/70 transition">
                         <td class="px-6 py-4 font-medium text-gray-900">
                             {{ $text->title ?: 'No Label' }}
@@ -156,6 +163,12 @@
 
         $specialEventsPageTitle = $resolveSpecialText('special_events_title', 'Our Special Events');
         $specialEventsPageIntro = $resolveSpecialText('special_events_intro', 'From intimate weddings to grand corporate celebrations, our beautiful farm setting provides the perfect backdrop for your special occasion.');
+        $specialEventsCtaTitle = $resolveSpecialText('special_events_cta_title', 'Have a Custom Event in Mind?');
+        $specialEventsCtaIntro = $resolveSpecialText('special_events_cta_intro', 'We specialize in creating bespoke experiences tailored to your unique vision. From intimate gatherings to grand celebrations, let us bring your dream event to life.');
+        $specialEventsCtaPrimaryLabel = $resolveSpecialText('special_events_cta_primary_label', 'Plan Custom Event');
+        $specialEventsCtaPrimaryUrl = $resolveSpecialText('special_events_cta_primary_url', 'https://m.me/410774518796277');
+        $specialEventsCtaSecondaryLabel = $resolveSpecialText('special_events_cta_secondary_label', 'Email Us Now');
+        $specialEventsCtaSecondaryUrl = $resolveSpecialText('special_events_cta_secondary_url', 'https://mail.google.com/mail/?view=cm&fs=1&to=calaia.ph@gmail.com');
     @endphp
 
     {{-- ============================================================= --}}
@@ -188,7 +201,54 @@
             </div>
         </div>
 
-        <p class="mt-4 text-xs text-gray-500">Saved as <code>special_events_title</code> and <code>special_events_intro</code>.</p>
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">CTA Content</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div>
+                    <label for="special_events_cta_title" class="block font-semibold mb-2 text-gray-700">CTA Title</label>
+                    <input id="special_events_cta_title" type="text" x-model="pageCopy.ctaTitle" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Have a Custom Event in Mind?">
+                </div>
+
+                <div>
+                    <label for="special_events_cta_intro" class="block font-semibold mb-2 text-gray-700">CTA Intro</label>
+                    <textarea id="special_events_cta_intro" x-model="pageCopy.ctaIntro" rows="4" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="We specialize in creating bespoke experiences..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">CTA Buttons</h3>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div>
+                    <label for="special_events_cta_primary_label" class="block font-semibold mb-2 text-gray-700">Primary Button Label</label>
+                    <input id="special_events_cta_primary_label" type="text" x-model="pageCopy.ctaPrimaryLabel" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Plan Custom Event">
+                </div>
+
+                <div>
+                    <label for="special_events_cta_secondary_label" class="block font-semibold mb-2 text-gray-700">Secondary Button Label</label>
+                    <input id="special_events_cta_secondary_label" type="text" x-model="pageCopy.ctaSecondaryLabel" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Email Us Now">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+                <div>
+                    <label for="special_events_cta_primary_url" class="block font-semibold mb-2 text-gray-700">Primary Button URL</label>
+                    <input id="special_events_cta_primary_url" type="text" x-model="pageCopy.ctaPrimaryUrl" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white font-mono text-sm" placeholder="https://m.me/410774518796277">
+                    <p class="mt-2 text-xs text-gray-500">Use the Messenger URL or any destination URL.</p>
+                </div>
+
+                <div>
+                    <label for="special_events_cta_secondary_url" class="block font-semibold mb-2 text-gray-700">Secondary Button URL</label>
+                    <input id="special_events_cta_secondary_url" type="text" x-model="pageCopy.ctaSecondaryUrl" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white font-mono text-sm" placeholder="https://mail.google.com/mail/?view=cm&fs=1&to=calaia.ph@gmail.com">
+                    <p class="mt-2 text-xs text-gray-500">Use the Gmail compose URL or any destination URL.</p>
+                </div>
+            </div>
+        </div>
+
+        <p class="mt-4 text-xs text-gray-500">
+            Saved as <code>special_events_title</code>, <code>special_events_intro</code>, and CTA fields for the card buttons.
+        </p>
     </div>
 
 
@@ -302,10 +362,16 @@ function specialEventsManager() {
         currentImageId: null,
         currentImageTitle: '',
         selectedImages: [],
-        texts: @js($texts),
+        texts: @js($contentTexts->values()),
         pageCopy: @js([
             'title' => $specialEventsPageTitle,
             'intro' => $specialEventsPageIntro,
+            'ctaTitle' => $specialEventsCtaTitle,
+            'ctaIntro' => $specialEventsCtaIntro,
+            'ctaPrimaryLabel' => $specialEventsCtaPrimaryLabel,
+            'ctaPrimaryUrl' => $specialEventsCtaPrimaryUrl,
+            'ctaSecondaryLabel' => $specialEventsCtaSecondaryLabel,
+            'ctaSecondaryUrl' => $specialEventsCtaSecondaryUrl,
         ]),
         form: { id: null, title: '', content: '' },
 
@@ -539,6 +605,12 @@ function specialEventsManager() {
                 const payload = {
                     page_title: this.pageCopy.title,
                     page_intro: this.pageCopy.intro,
+                    cta_title: this.pageCopy.ctaTitle,
+                    cta_intro: this.pageCopy.ctaIntro,
+                    cta_primary_label: this.pageCopy.ctaPrimaryLabel,
+                    cta_primary_url: this.pageCopy.ctaPrimaryUrl,
+                    cta_secondary_label: this.pageCopy.ctaSecondaryLabel,
+                    cta_secondary_url: this.pageCopy.ctaSecondaryUrl,
                 };
 
                 const res = await fetch('{{ route('admin.specialEvents.copy.store') }}', {

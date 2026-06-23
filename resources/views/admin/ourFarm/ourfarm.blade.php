@@ -87,6 +87,13 @@
     {{-- ============================================================= --}}
     {{-- TEXT CONTENT SECTION --}}
     {{-- ============================================================= --}}
+    @php
+        $contentTexts = collect($texts ?? [])->reject(function ($item) {
+            $label = strtolower((string) ($item->label ?? $item->title ?? ''));
+            return str_starts_with($label, 'farm_page_');
+        })->values();
+    @endphp
+
     <div class="flex justify-between items-end mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
@@ -111,7 +118,7 @@
             </thead>
 
             <tbody class="divide-y divide-gray-200">
-                @forelse($texts as $text)
+                @forelse($contentTexts as $text)
                     <tr class="hover:bg-gray-50/70 transition">
                         <td class="px-6 py-4 font-medium text-gray-900">
                             {{ $text->title ?: 'No Label' }}
@@ -302,7 +309,7 @@ function farmManager() {
         currentImageId: null,
         currentImageTitle: '',
         selectedImages: [],
-        texts: @js($texts),
+        texts: @js($contentTexts->values()),
         pageCopy: @js([
             'title' => $farmPageTitle,
             'intro' => $farmPageIntro,

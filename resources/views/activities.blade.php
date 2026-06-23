@@ -10,7 +10,7 @@
     @endpush
 
    {{-- Hero Slider --}}
-    <x-hero-slider :images="$swiperImages" :texts="$texts" />
+    <x-hero-slider :images="$swiperImages" />
 
     {{-- ========= PACKAGES SECTION (MERGED FROM /packages) ========= --}}
     <main id="main">

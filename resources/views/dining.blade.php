@@ -29,7 +29,7 @@
     @endpush
 
     {{-- Hero Slider --}}
-    <x-hero-slider :images="$swiperImages" :texts="$texts" />
+    <x-hero-slider :images="$swiperImages" />
 
     {{-- Dining Overview Section --}}
     <section class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">

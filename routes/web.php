@@ -56,6 +56,7 @@ use App\Http\Controllers\Admin\FarmTextController;
 use App\Http\Controllers\Admin\ShopTextController;
 use App\Http\Controllers\Admin\ActivityTextController;
 use App\Http\Controllers\Admin\StaycationTextController;
+use App\Http\Controllers\Admin\StaycationPageTextController;
 use App\Http\Controllers\Admin\MenuTextController;
 use App\Http\Controllers\Admin\EventTextController;
 use App\Http\Controllers\Admin\EventExperienceSectionController;
@@ -614,6 +615,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     });
     Route::prefix('/stay')->group(function () {
         Route::get('/where-to-stay', [AdminPagesController::class, 'whereToStay'])->name('admin.stay.wheretostay');
+        Route::post('/copy', [StaycationPageTextController::class, 'saveCopy'])->name('admin.stay.copy.store');
         Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.stay.staycations');
         Route::get('/accommodations', [AdminController::class, 'staycationAccommodation'])->name('admin.stay.accommodations');
         Route::get('/settings', [AdminController::class, 'staySettings'])->name('admin.stay.settings');
@@ -641,6 +643,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
                 'destroy' => 'admin.activity-packages.destroy'
             ]]);
             Route::get('/what-to-do', [AdminPagesController::class, 'whatToDo'])->name('admin.do.whattodo');
+            Route::post('/copy', [DoTextController::class, 'saveCopy'])->name('admin.do.copy.store');
     });
     Route::prefix('/food')->group(function () {
             Route::get('/food-and-beverage', [AdminPagesController::class, 'foodAndBeverage'])->name('admin.food.foodandbeverage');

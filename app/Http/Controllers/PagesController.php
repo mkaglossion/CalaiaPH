@@ -13,6 +13,7 @@ use App\Models\StaySwiperImage;
 use App\Models\HomeText;
 use App\Models\DayTourText;
 use App\Models\StayText;
+use App\Models\StaycationPageText;
 use App\Models\DoText;
 use App\Models\FoodText;
 use App\Models\SpecialText;
@@ -165,6 +166,13 @@ class PagesController extends Controller
         $texts = StayText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
+        $pageCopyTexts = StaycationPageText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
+            return [strtolower($field) => $content];
+        })->toArray();
+
+        $staycationPageLabel = $this->pageTextValue($pageCopyTexts, ['staycation_page_label'], 'Staycation Options');
+        $staycationPageTitle = $this->pageTextValue($pageCopyTexts, ['staycation_page_title'], 'All Glamping & Camping');
+        $staycationPageIntro = $this->pageTextValue($pageCopyTexts, ['staycation_page_intro'], 'Browse every room directly on the page. The category modals are still available below if you want the full feature list and gallery.');
 
         // Get all staycations from admin panel
         $staycations = Staycation::ordered()->with([
@@ -290,7 +298,7 @@ class PagesController extends Controller
             $vrData[(string) $staycation->id] = $this->buildVrDataForStaycation($staycation, $roomType);
         }
 
-        $data = compact('swiperImages', 'texts', 'staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'vrData');
+        $data = compact('swiperImages', 'texts', 'pageCopyTexts', 'staycationPageLabel', 'staycationPageTitle', 'staycationPageIntro', 'staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'vrData');
         $data['active'] = 'staycation';
         
         return view('staycation', $data);
@@ -687,9 +695,16 @@ class PagesController extends Controller
     {
         // Get swiper images and texts for the hero slider
         $swiperImages = DoSwiperImage::all();
-        $texts = DoText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
-            return [strtolower($field) => $content];
-        })->toArray();
+        $texts = DoText::orderByDesc('id')
+            ->get()
+            ->unique(function ($item) {
+                return strtolower(trim((string) ($item->label ?? '')));
+            })
+            ->reverse()
+            ->mapWithKeys(function ($item) {
+                return [strtolower((string) ($item->label ?? '')) => $item->text];
+            })
+            ->toArray();
 
         $packagesSectionTitle = $this->pageTextValue($texts, [
             'packages_title',
@@ -895,8 +910,26 @@ class PagesController extends Controller
 
         $specialEventsPageTitle = $this->pageTextValue($texts, ['special_events_title', 'title', 'heading'], 'Our Special Events');
         $specialEventsPageIntro = $this->pageTextValue($texts, ['special_events_intro', 'intro', 'subtitle', 'description'], 'From intimate weddings to grand corporate celebrations, our beautiful farm setting provides the perfect backdrop for your special occasion.');
+        $specialEventsCtaTitle = $this->pageTextValue($texts, ['special_events_cta_title', 'cta_title'], 'Have a Custom Event in Mind?');
+        $specialEventsCtaIntro = $this->pageTextValue($texts, ['special_events_cta_intro', 'cta_intro'], 'We specialize in creating bespoke experiences tailored to your unique vision. From intimate gatherings to grand celebrations, let us bring your dream event to life.');
+        $specialEventsCtaPrimaryLabel = $this->pageTextValue($texts, ['special_events_cta_primary_label', 'cta_primary_label'], 'Plan Custom Event');
+        $specialEventsCtaPrimaryUrl = $this->pageTextValue($texts, ['special_events_cta_primary_url', 'cta_primary_url'], 'https://m.me/410774518796277');
+        $specialEventsCtaSecondaryLabel = $this->pageTextValue($texts, ['special_events_cta_secondary_label', 'cta_secondary_label'], 'Email Us Now');
+        $specialEventsCtaSecondaryUrl = $this->pageTextValue($texts, ['special_events_cta_secondary_url', 'cta_secondary_url'], 'https://mail.google.com/mail/?view=cm&fs=1&to=calaia.ph@gmail.com');
 
-        $data = compact('swiperImages', 'texts', 'events', 'specialEventsPageTitle', 'specialEventsPageIntro');
+        $data = compact(
+            'swiperImages',
+            'texts',
+            'events',
+            'specialEventsPageTitle',
+            'specialEventsPageIntro',
+            'specialEventsCtaTitle',
+            'specialEventsCtaIntro',
+            'specialEventsCtaPrimaryLabel',
+            'specialEventsCtaPrimaryUrl',
+            'specialEventsCtaSecondaryLabel',
+            'specialEventsCtaSecondaryUrl'
+        );
         $data['active'] = 'special-events';
 
         return view('special-events', $data);

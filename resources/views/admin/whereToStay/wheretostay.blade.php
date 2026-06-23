@@ -8,6 +8,17 @@
     x-data="stayManager()"
     class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
 >
+    @php
+        $staycationPageCopyLabel = trim((string) (($pageCopyTexts['staycation_page_label'] ?? '') ?? '')) !== ''
+            ? $pageCopyTexts['staycation_page_label']
+            : 'Staycation Options';
+        $staycationPageCopyTitle = trim((string) (($pageCopyTexts['staycation_page_title'] ?? '') ?? '')) !== ''
+            ? $pageCopyTexts['staycation_page_title']
+            : 'All Glamping & Camping';
+        $staycationPageCopyIntro = trim((string) (($pageCopyTexts['staycation_page_intro'] ?? '') ?? '')) !== ''
+            ? $pageCopyTexts['staycation_page_intro']
+            : 'Browse every room directly on the page. The category modals are still available below if you want the full feature list and gallery.';
+    @endphp
 
     <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
         Page Information
@@ -141,6 +152,58 @@
         </table>
     </div>
 
+    <hr class="my-10 border-gray-300">
+
+    <div class="mb-10 rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-6 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Staycation Page Copy</h2>
+                <p class="text-gray-500 text-sm">Controls the section heading and intro on the public Staycation page.</p>
+            </div>
+
+            <button
+                type="button"
+                @click="savePageCopy()"
+                class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+                Save Staycation Copy
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div>
+                <label for="staycation_page_label" class="block font-semibold mb-2 text-gray-700">Section Label</label>
+                <input
+                    id="staycation_page_label"
+                    type="text"
+                    x-model="pageCopy.label"
+                    class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white"
+                    placeholder="Staycation Options">
+            </div>
+
+            <div>
+                <label for="staycation_page_title" class="block font-semibold mb-2 text-gray-700">Section Title</label>
+                <input
+                    id="staycation_page_title"
+                    type="text"
+                    x-model="pageCopy.title"
+                    class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white"
+                    placeholder="All Glamping & Camping">
+            </div>
+
+            <div class="lg:col-span-2">
+                <label for="staycation_page_intro" class="block font-semibold mb-2 text-gray-700">Section Intro</label>
+                <textarea
+                    id="staycation_page_intro"
+                    x-model="pageCopy.intro"
+                    rows="4"
+                    class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white"
+                    placeholder="Browse every room directly on the page."></textarea>
+            </div>
+        </div>
+
+        <p class="mt-4 text-xs text-gray-500">Saved as <code>staycation_page_label</code>, <code>staycation_page_title</code>, and <code>staycation_page_intro</code>.</p>
+    </div>
+
 
     {{-- ============================================================= --}}
     {{-- MODALS --}}
@@ -253,7 +316,20 @@ function stayManager() {
         currentImageTitle: '',
         selectedImages: [],
         texts: @js($texts),
+        pageCopy: {
+            label: @js($staycationPageCopyLabel),
+            title: @js($staycationPageCopyTitle),
+            intro: @js($staycationPageCopyIntro),
+        },
         form: { id: null, title: '', content: '' },
+
+        init() {
+            this.pageCopy = {
+                label: this.pageCopy.label || 'Staycation Options',
+                title: this.pageCopy.title || 'All Glamping & Camping',
+                intro: this.pageCopy.intro || 'Browse every room directly on the page. The category modals are still available below if you want the full feature list and gallery.',
+            };
+        },
 
         selectAll() {
             this.selectedImages = @js($images->pluck('id')->toArray());
@@ -471,6 +547,64 @@ function stayManager() {
                     icon: "error",
                     title: "Unexpected Error",
                     text: "Something went wrong."
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async savePageCopy() {
+            this.isLoading = true;
+
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+            const formData = new FormData();
+            formData.append('page_label', this.pageCopy.label ?? '');
+            formData.append('page_title', this.pageCopy.title ?? '');
+            formData.append('page_intro', this.pageCopy.intro ?? '');
+
+            try {
+                const res = await fetch('{{ route('admin.stay.copy.store') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const raw = await res.text();
+                let data = {};
+                try {
+                    data = raw ? JSON.parse(raw) : {};
+                } catch (_) {
+                    data = {};
+                }
+
+                if (res.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saved!',
+                        text: data.message || 'Staycation page copy updated successfully.',
+                        confirmButtonColor: '#2563eb'
+                    }).then(() => window.location.reload());
+                } else if (data.errors) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Validation Error',
+                        html: Object.values(data.errors).flat().join('<br>')
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to save staycation page copy.'
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Unexpected Error',
+                    text: 'Something went wrong.'
                 });
             } finally {
                 this.isLoading = false;

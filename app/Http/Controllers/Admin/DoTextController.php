@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DoText;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DoTextController extends Controller
 {
@@ -49,5 +50,35 @@ class DoTextController extends Controller
         $DoText->delete();
 
         return redirect()->back()->with('success', 'Text content deleted successfully.');
+    }
+
+    public function saveCopy(Request $request)
+    {
+        $validated = $request->validate([
+            'page_title' => 'nullable|string|max:255',
+            'page_intro' => 'nullable|string',
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            $titleText = DoText::updateOrCreate(
+                ['label' => 'packages_title'],
+                ['text' => trim((string) ($validated['page_title'] ?? ''))]
+            );
+            DoText::where('label', 'packages_title')
+                ->where('id', '!=', $titleText->id)
+                ->delete();
+
+            $introText = DoText::updateOrCreate(
+                ['label' => 'packages_intro'],
+                ['text' => trim((string) ($validated['page_intro'] ?? ''))]
+            );
+            DoText::where('label', 'packages_intro')
+                ->where('id', '!=', $introText->id)
+                ->delete();
+        });
+
+        return response()->json([
+            'message' => 'Activities page copy saved successfully.',
+        ]);
     }
 }

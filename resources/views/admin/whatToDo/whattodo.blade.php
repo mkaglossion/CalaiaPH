@@ -88,6 +88,13 @@
     {{-- ============================================================= --}}
     {{-- TEXT CONTENT SECTION --}}
     {{-- ============================================================= --}}
+    @php
+        $contentTexts = collect($texts ?? [])->reject(function ($item) {
+            $label = strtolower((string) ($item->label ?? $item->title ?? ''));
+            return str_starts_with($label, 'packages_');
+        })->values();
+    @endphp
+
     <div class="flex justify-between items-end mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
@@ -112,7 +119,7 @@
             </thead>
 
             <tbody class="divide-y divide-gray-200">
-                @forelse($texts as $text)
+                @forelse($contentTexts as $text)
                     <tr class="hover:bg-gray-50/70 transition">
                         <td class="px-6 py-4 font-medium text-gray-900">
                             {{ $text->title ?: 'No Label' }}
@@ -831,13 +838,13 @@ function whatToDoManager() {
         },
 
         getTextValue(label, fallback = '') {
-            const text = this.texts.find(t => (t.title || '').toLowerCase() === label.toLowerCase());
-            const value = text?.content?.trim();
+            const text = this.texts.find(t => ((t.label || t.title || '').toLowerCase() === label.toLowerCase()));
+            const value = (text?.text ?? text?.content ?? '').trim();
             return value ? value : fallback;
         },
 
         getTextEntry(label) {
-            return this.texts.find(t => (t.title || '').toLowerCase() === label.toLowerCase()) || null;
+            return this.texts.find(t => ((t.label || t.title || '').toLowerCase() === label.toLowerCase())) || null;
         },
 
         resetImageForm() {
@@ -936,7 +943,11 @@ function whatToDoManager() {
         editText(id) {
             const text = this.texts.find(t => t.id === id);
             if (text) {
-                this.form = { id: text.id, title: text.title, content: text.content };
+                this.form = {
+                    id: text.id,
+                    title: text.label ?? text.title ?? '',
+                    content: text.text ?? text.content ?? ''
+                };
                 this.editMode = true;
                 this.showTextModal = true;
             }
@@ -946,13 +957,39 @@ function whatToDoManager() {
             this.isLoading = true;
 
             try {
-                await this.upsertTextEntry('packages_title', this.activitiesCopy.title);
-                await this.upsertTextEntry('packages_intro', this.activitiesCopy.intro);
+                const csrf = document.querySelector('meta[name=csrf-token]').content;
+                const formData = new FormData();
+                formData.append('page_title', this.activitiesCopy.title ?? '');
+                formData.append('page_intro', this.activitiesCopy.intro ?? '');
+
+                const res = await fetch('{{ route('admin.do.copy.store') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const raw = await res.text();
+                let data = {};
+                try {
+                    data = raw ? JSON.parse(raw) : {};
+                } catch (_) {
+                    data = {};
+                }
+
+                if (!res.ok) {
+                    const message = data.errors
+                        ? Object.values(data.errors).flat().join('<br>')
+                        : (data.message || 'Failed to save activities copy.');
+                    throw new Error(message);
+                }
 
                 Swal.fire({
                     icon: 'success',
                     title: 'Saved!',
-                    text: 'Activities page copy updated successfully.',
+                    text: data.message || 'Activities page copy updated successfully.',
                     confirmButtonColor: '#2563eb'
                 }).then(() => {
                     window.location.reload();

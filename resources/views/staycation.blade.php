@@ -10,11 +10,11 @@
       <section id="staycation-rooms" class="container mx-auto max-w-7xl px-4 py-10">
         <div class="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <p class="text-sm font-semibold uppercase tracking-[0.3em]" style="color:#8f6a60;">Staycation Options</p>
-            <h2 class="mt-2 font-extrabold uppercase tracking-wide staycation-heading text-3xl md:text-5xl">All Glamping & Camping</h2>
+            <p class="text-sm font-semibold uppercase tracking-[0.3em]" style="color:#8f6a60;">{{ $staycationPageLabel ?? 'Staycation Options' }}</p>
+            <h2 class="mt-2 font-extrabold uppercase tracking-wide staycation-heading text-3xl md:text-5xl">{{ $staycationPageTitle ?? 'All Glamping & Camping' }}</h2>
           </div>
           <p class="max-w-2xl text-sm leading-6 text-gray-600 md:text-base">
-            Browse every room directly on the page. The category modals are still available below if you want the full feature list and gallery.
+            {{ $staycationPageIntro ?? 'Browse every room directly on the page. The category modals are still available below if you want the full feature list and gallery.' }}
           </p>
         </div>
 

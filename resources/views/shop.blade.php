@@ -9,7 +9,7 @@
     @endpush
 
     {{-- Hero Slider --}}
-    <x-hero-slider :images="$swiperImages" :texts="$texts" />
+    <x-hero-slider :images="$swiperImages" />
 
     <main id="main" class="">
       {{-- SECTION: Shop Our Products --}}
