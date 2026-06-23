@@ -677,6 +677,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::prefix('/special-events')->group(function () {
         Route::get('/', [AdminPagesController::class, 'specialEvents'])->name('admin.specialEvents.specialevents');
         Route::get('/manager', [AdminController::class, 'specialEventsManager'])->name('admin.specialEvents.manager');
+        Route::post('/copy', [SpecialTextController::class, 'saveCopy'])->name('admin.specialEvents.copy.store');
     });
     Route::prefix('/event-experience')->group(function () {
         Route::get('/', [AdminController::class, 'eventExperience'])->name('admin.eventExperience.sections');

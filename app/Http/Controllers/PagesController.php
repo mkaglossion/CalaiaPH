@@ -886,8 +886,19 @@ class PagesController extends Controller
 
     public function specialEvents()
     {
+        $swiperImages = SpecialSwiperImage::all();
+        $texts = SpecialText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
+            return [strtolower($field) => $content];
+        })->toArray();
         $events = Event::with(['swiperImages', 'texts'])->get();
-        return $this->renderPage(SpecialSwiperImage::class, SpecialText::class, 'special-events', 'special-events', 'label', 'text', compact('events'));
+
+        $specialEventsPageTitle = $this->pageTextValue($texts, ['special_events_title', 'title', 'heading'], 'Our Special Events');
+        $specialEventsPageIntro = $this->pageTextValue($texts, ['special_events_intro', 'intro', 'subtitle', 'description'], 'From intimate weddings to grand corporate celebrations, our beautiful farm setting provides the perfect backdrop for your special occasion.');
+
+        $data = compact('swiperImages', 'texts', 'events', 'specialEventsPageTitle', 'specialEventsPageIntro');
+        $data['active'] = 'special-events';
+
+        return view('special-events', $data);
     }
 
     public function farm()

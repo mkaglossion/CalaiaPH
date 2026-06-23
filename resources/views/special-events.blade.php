@@ -17,8 +17,8 @@
       <section class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div class="max-w-7xl mx-auto">
           <x-section-header
-            title="Our Special Events"
-            subtitle="From intimate weddings to grand corporate celebrations, our beautiful farm setting provides the perfect backdrop for your special occasion."
+            :title="$specialEventsPageTitle ?? 'Our Special Events'"
+            :subtitle="$specialEventsPageIntro ?? 'From intimate weddings to grand corporate celebrations, our beautiful farm setting provides the perfect backdrop for your special occasion.'"
           />
 
           @if($events->count() > 0)

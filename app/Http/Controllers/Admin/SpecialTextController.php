@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SpecialText;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SpecialTextController extends Controller
 {
@@ -49,5 +50,29 @@ class SpecialTextController extends Controller
         $SpecialText->delete();
 
         return redirect()->back()->with('success', 'Text content deleted successfully.');
+    }
+
+    public function saveCopy(Request $request)
+    {
+        $validated = $request->validate([
+            'page_title' => 'nullable|string|max:255',
+            'page_intro' => 'nullable|string',
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            SpecialText::updateOrCreate(
+                ['label' => 'special_events_title'],
+                ['text' => $validated['page_title'] ?? '']
+            );
+
+            SpecialText::updateOrCreate(
+                ['label' => 'special_events_intro'],
+                ['text' => $validated['page_intro'] ?? '']
+            );
+        });
+
+        return response()->json([
+            'message' => 'Special events page copy saved successfully.',
+        ]);
     }
 }
