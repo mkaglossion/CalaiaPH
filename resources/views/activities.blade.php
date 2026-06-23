@@ -14,17 +14,13 @@
 
     {{-- ========= PACKAGES SECTION (MERGED FROM /packages) ========= --}}
     <main id="main">
-      <section class="container mx-auto px-4 py-12 md:py-16">
+      <section class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div class="max-w-7xl mx-auto">
-          <div class="mb-10 text-center">
-            <h2 class="text-3xl md:text-4xl font-bold text-brand mb-3">
-              Day Packages
-            </h2>
-            <p class="text-base md:text-lg text-[#5f524c] max-w-2xl mx-auto">
-              Start with our curated package options, then explore activities you can add to your stay.
-            </p>
-            <hr class="border-t-2 border-[#a97464] mt-6 w-48 mx-auto rounded-full">
-          </div>
+          <x-section-header
+            :title="$packagesSectionTitle ?? 'Day Packages'"
+            :subtitle="$packagesSectionIntro ?? 'Start with our curated package options, then explore activities you can add to your stay.'"
+            dividerClass="bg-brand"
+          />
 
           @if($packages->count() > 0)
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 auto-rows-max">
@@ -50,7 +46,7 @@
           <h2 class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center">
             Enhance your stay with our fun-filled activities.
           </h2>
-          <hr class="border-t-2 border-[#a97464] mt-6 mb-10 w-180 mx-auto rounded-full">
+          <hr class="border-t-2 border-brand mt-6 mb-10 w-180 mx-auto rounded-full">
 
           <div class="space-y-12">
 

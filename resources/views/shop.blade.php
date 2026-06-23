@@ -13,14 +13,13 @@
 
     <main id="main" class="">
       {{-- SECTION: Shop Our Products --}}
-      <section id="shop" class="shop-section py-16" aria-labelledby="shop-products-heading">
-        <div class="container mx-auto px-4 max-w-7xl">
+      <section id="shop" class="shop-section py-12 md:py-16" aria-labelledby="shop-products-heading">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <x-section-header
               id="shop-products-heading"
               title="Shop Our Products"
               subtitle="Farm-fresh produce and quality frozen goods delivered straight from our fields to your table"
           />
-          <hr class="border-t-2 border-[#a97464] mt-6 mb-10 w-180 mx-auto rounded-full">
 
           <x-shop-products />
         </div>

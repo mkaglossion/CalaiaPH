@@ -4,8 +4,9 @@
     'subtitle' => '',
     'id' => null,
     'centered' => true,
-    'titleSize' => 'text-3xl md:text-4xl',
-    'subtitleSize' => 'text-lg md:text-xl'
+    'titleSize' => 'text-3xl sm:text-4xl md:text-5xl',
+    'subtitleSize' => 'text-base md:text-lg',
+    'dividerClass' => 'bg-brand'
 ])
 
 <header class="{{ $centered ? 'text-center' : '' }} mb-12" {{ $id ? 'id="' . $id . '"' : '' }}>
@@ -15,8 +16,12 @@
         </h2>
     @endif
 
+    @if($title && $subtitle)
+        <div class="w-20 md:w-24 h-1 {{ $dividerClass }} mx-auto mb-5 md:mb-6 rounded-full" aria-hidden="true"></div>
+    @endif
+
     @if($subtitle)
-        <p class="mt-6 {{ $subtitleSize }} text-brand max-w-3xl {{ $centered ? 'mx-auto text-center' : '' }}" style="">
+        <p class="{{ $subtitleSize }} text-gray-700 max-w-3xl leading-relaxed {{ $centered ? 'mx-auto text-center' : '' }}" style="">
             {{ $subtitle }}
         </p>
     @endif

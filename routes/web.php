@@ -669,6 +669,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
                 'store' => 'admin.dining.category-images.store',
                 'destroy' => 'admin.dining.category-images.destroy'
             ]]);
+            Route::post('category-images/copy', [DiningCategoryImageController::class, 'saveCopy'])->name('admin.dining.category-images.copy.store');
     });
     Route::prefix('/events')->group(function () {
         Route::get('/events', [AdminController::class, 'event'])->name('admin.events.events');

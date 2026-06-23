@@ -6,6 +6,7 @@
 
 <div
     x-data="whatToDoManager()"
+    x-init="init()"
     class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
 >
 
@@ -13,7 +14,6 @@
         Page Information
     </h1>
     <p class="text-gray-600 mb-10">Manage the image slider and content displayed on your What to Do page.</p>
-
 
     {{-- ============================================================= --}}
     {{-- SWIPER IMAGES SECTION --}}
@@ -143,6 +143,45 @@
     </div>
 
     <hr class="my-10 border-gray-300">
+
+    <div class="mb-10 rounded-2xl border border-gray-200 bg-white/60 backdrop-blur p-6 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Activities Page Copy</h2>
+            </div>
+
+            <button
+                type="button"
+                @click="saveActivitiesCopy()"
+                class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+                Save Activities Copy
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div>
+                <label for="packages_title" class="block font-semibold mb-2 text-gray-700">Section Title</label>
+                <input
+                    id="packages_title"
+                    type="text"
+                    x-model="activitiesCopy.title"
+                    class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white"
+                    placeholder="Day Packages">
+            </div>
+
+            <div>
+                <label for="packages_intro" class="block font-semibold mb-2 text-gray-700">Section Intro</label>
+                <textarea
+                    id="packages_intro"
+                    x-model="activitiesCopy.intro"
+                    rows="4"
+                    class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white"
+                    placeholder="Start with our curated package options, then explore activities you can add to your stay."></textarea>
+            </div>
+        </div>
+
+        <p class="text-xs text-gray-500 mt-3">Saved as <code>packages_title</code> and <code>packages_intro</code>.</p>
+    </div>
 
     {{-- ============================================================= --}}
     {{-- MANAGE PACKAGES (EMBEDDED) --}}
@@ -765,7 +804,18 @@ function whatToDoManager() {
         currentImageTitle: '',
         selectedImages: [],
         texts: @js($texts),
+        activitiesCopy: {
+            title: '',
+            intro: '',
+        },
         form: { id: null, title: '', content: '' },
+
+        init() {
+            this.activitiesCopy = {
+                title: this.getTextValue('packages_title', 'Day Packages'),
+                intro: this.getTextValue('packages_intro', 'Start with our curated package options, then explore activities you can add to your stay.'),
+            };
+        },
 
         selectAll() {
             this.selectedImages = @js($images->pluck('id')->toArray());
@@ -778,6 +828,16 @@ function whatToDoManager() {
         resetForm() {
             this.form = { id: null, title: '', content: '' };
             this.editMode = false;
+        },
+
+        getTextValue(label, fallback = '') {
+            const text = this.texts.find(t => (t.title || '').toLowerCase() === label.toLowerCase());
+            const value = text?.content?.trim();
+            return value ? value : fallback;
+        },
+
+        getTextEntry(label) {
+            return this.texts.find(t => (t.title || '').toLowerCase() === label.toLowerCase()) || null;
         },
 
         resetImageForm() {
@@ -880,6 +940,72 @@ function whatToDoManager() {
                 this.editMode = true;
                 this.showTextModal = true;
             }
+        },
+
+        async saveActivitiesCopy() {
+            this.isLoading = true;
+
+            try {
+                await this.upsertTextEntry('packages_title', this.activitiesCopy.title);
+                await this.upsertTextEntry('packages_intro', this.activitiesCopy.intro);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Saved!',
+                    text: 'Activities page copy updated successfully.',
+                    confirmButtonColor: '#2563eb'
+                }).then(() => {
+                    window.location.reload();
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error?.message || 'Failed to save activities copy.'
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async upsertTextEntry(label, content) {
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+            const entry = this.getTextEntry(label);
+            const formData = new FormData();
+            formData.append('title', label);
+            formData.append('content', content ?? '');
+
+            let url = '{{ route('do-texts.store') }}';
+            if (entry?.id) {
+                url = `/admin/do-texts/${entry.id}`;
+                formData.append('_method', 'PUT');
+            }
+
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const raw = await res.text();
+            let data = {};
+            try {
+                data = raw ? JSON.parse(raw) : {};
+            } catch (_) {
+                data = {};
+            }
+
+            if (!res.ok) {
+                const message = data.errors
+                    ? Object.values(data.errors).flat().join('<br>')
+                    : (data.message || 'Unable to save text content.');
+                throw new Error(message);
+            }
+
+            return data;
         },
 
         async bulkDelete() {

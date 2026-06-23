@@ -690,6 +690,19 @@ class PagesController extends Controller
             return [strtolower($field) => $content];
         })->toArray();
 
+        $packagesSectionTitle = $this->pageTextValue($texts, [
+            'packages_title',
+            'heading',
+            'title',
+        ], 'Day Packages');
+
+        $packagesSectionIntro = $this->pageTextValue($texts, [
+            'packages_intro',
+            'intro',
+            'subtitle',
+            'description',
+        ], 'Start with our curated package options, then explore activities you can add to your stay.');
+
         // Temporarily merge packages into activities page (shown first).
         $packages = Package::with(['contents', 'images', 'inventory'])
             ->where('is_active', true)
@@ -699,10 +712,22 @@ class PagesController extends Controller
         $activities = Activity::with('swiperImages')->get();
         $slidesByCategory = $this->formatActivitiesForSlides($activities, $activities);
 
-        $data = compact('swiperImages', 'texts', 'slidesByCategory', 'packages');
+        $data = compact('swiperImages', 'texts', 'slidesByCategory', 'packages', 'packagesSectionTitle', 'packagesSectionIntro');
         $data['active'] = 'activities';
         
         return view('activities', $data);
+    }
+
+    private function pageTextValue(array $texts, array $keys, string $fallback): string
+    {
+        foreach ($keys as $key) {
+            $value = trim((string) ($texts[strtolower((string) $key)] ?? ''));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return $fallback;
     }
 
     /**
@@ -830,20 +855,25 @@ class PagesController extends Controller
             ->where('is_active', true)
             ->get();
         $diningCategoryImages = DiningCategoryImage::all()->keyBy('category');
-        $diningDetails = [
-            'Harvest Your Own – Pick and cook farm-fresh ingredients',
-            'Cochinillo – Whole roast pig (pre-order required)',
-            'Fresh farm-to-table ingredients available',
-            'Guided cooking sessions with our chefs'
-        ];
-        
+
         // Only get hero swiper images (food_id is null), not Learn More modal images
         $swiperImages = FoodSwiperImage::whereNull('food_id')->get();
         $texts = FoodText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
-        
-        $data = compact('swiperImages', 'texts', 'messHallFoods', 'cookYourOwnFoods', 'diningCategoryImages', 'diningDetails');
+
+        $diningPageTitle = $this->pageTextValue($texts, ['dining_page_title'], 'Dining at CalaiaPH');
+        $diningPageIntro = $this->pageTextValue($texts, ['dining_page_intro'], 'Experience farm-to-table dining in our elegant mess hall or enjoy cooking your own fresh ingredients straight from our farm. Perfect for celebrations, family gatherings, and intimate dinners.');
+        $messHallTitle = $this->pageTextValue($texts, ['dining_messhall_title'], 'Mess Hall Dining');
+        $messHallIntro = $this->pageTextValue($texts, ['dining_messhall_intro'], 'Our spacious and elegant mess hall is perfect for group dining and special occasions. Let our chefs prepare delicious farm-to-table meals using the freshest ingredients from our farm.');
+        $cookYourOwnTitle = $this->pageTextValue($texts, ['dining_cook_title'], 'Cook Your Own Experience');
+        $cookYourOwnIntro = $this->pageTextValue($texts, ['dining_cook_intro'], 'Enjoy cooking your own fresh ingredients harvested directly from our farm. Choose premium, locally sourced ingredients and create your own meal with guidance from our team.');
+        $ctaTitle = $this->pageTextValue($texts, ['dining_cta_title'], 'Ready to Dine With Us?');
+        $ctaIntro = $this->pageTextValue($texts, ['dining_cta_intro'], 'Message us to reserve your dining experience. We can accommodate lunch, dinner, group events, and special arrangements.');
+        $ctaButton = $this->pageTextValue($texts, ['dining_cta_button'], 'Make a Reservation on Messenger');
+        $ctaNote = $this->pageTextValue($texts, ['dining_cta_note'], 'Available for lunch and dinner reservations. Message us for inquiries.');
+
+        $data = compact('swiperImages', 'texts', 'messHallFoods', 'cookYourOwnFoods', 'diningCategoryImages', 'diningPageTitle', 'diningPageIntro', 'messHallTitle', 'messHallIntro', 'cookYourOwnTitle', 'cookYourOwnIntro', 'ctaTitle', 'ctaIntro', 'ctaButton', 'ctaNote');
         $data['active'] = 'dining';
         
         return view('dining', $data);
