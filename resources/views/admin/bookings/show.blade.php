@@ -220,7 +220,10 @@
             <div class="bg-white p-6 rounded-lg shadow">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">Payment Information</h2>
                 @php
+                    $paymentStatus = strtolower((string) ($booking->payment_status ?? 'pending'));
                     $attemptState = data_get($booking, 'booking_data.payment_attempt.state');
+                    $isPendingExpired = in_array($paymentStatus, ['pending', 'failed'], true)
+                        || in_array($attemptState, ['pending', 'expired', 'failed'], true);
                     $attemptLabel = match ($attemptState) {
                         'expired' => 'Expired Attempt',
                         'failed' => 'Failed Attempt',
@@ -244,14 +247,17 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-500">Payment Status</label>
                         @php
-                            $paymentBadge = match ($booking->payment_status) {
+                            $paymentBadge = $isPendingExpired ? 'bg-amber-100 text-amber-800' : match ($paymentStatus) {
                                 'paid' => 'bg-green-100 text-green-800',
                                 'failed' => 'bg-red-100 text-red-800',
+                                'refunded' => 'bg-purple-100 text-purple-800',
                                 default => 'bg-yellow-100 text-yellow-800',
                             };
+                            $paymentLabel = $isPendingExpired ? 'Pending/Expired' : ucfirst($paymentStatus);
                         @endphp
                         <span class="inline-block mt-1 px-3 py-1 text-sm font-semibold rounded-full {{ $paymentBadge }}">
                             {{ ucfirst($booking->payment_status) }}
+                            {{ $paymentLabel }}
                         </span>
                         @if($attemptLabel)
                         <span class="inline-block mt-1 ml-2 px-3 py-1 text-sm font-semibold rounded-full bg-slate-100 text-slate-700">

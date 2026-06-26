@@ -63,7 +63,7 @@
     aria-label="Admin sidebar"
   >
     {{-- Brand / Top --}}
-    <div class="px-6 py-4 border-b border-white/10 flex items-center">
+    <div class="px-6 h-16 border-b border-white/10 flex items-center justify-between">
       <h1 class="flex-1 text-center text-4xl font-bold tracking-wide whitespace-nowrap">
         <a href="{{ route('admin.dashboard') }}" class="inline-block hover:opacity-90 transition">
           Admin Panel

@@ -30,6 +30,9 @@ class AdminBookingsController extends Controller
         // Build Booking query with filters
         $bookingQuery = Booking::query();
         $paymentScope = $this->normalizePaymentScope($request);
+        if ($request->filled('status') && !$request->filled('payment_status')) {
+            $paymentScope = 'all';
+        }
 
         $this->applyPaymentLifecycleFilters($bookingQuery, $request, $paymentScope, $pendingCutoff);
 
@@ -283,26 +286,61 @@ class AdminBookingsController extends Controller
         $bookings = new LengthAwarePaginator($slice, $total, $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]);
         
         $confirmed = $merged->where('status', 'confirmed')->count();
+        $active = $confirmed;
         $cancelled = $merged->where('status', 'cancelled')->count();
         $completed = $merged->where('status', 'completed')->count();
+        $pending = $merged->filter(fn ($item) => strtolower((string) ($item->effective_payment_status ?? $item->payment_status ?? '')) === 'pending')->count();
         $total = $merged->count();
         $today = $merged->filter(fn ($item) => $item->created_at instanceof Carbon && $item->created_at->isToday())->count();
         
         $stats = [
             'total' => $total,
+            'active' => $active,
             'confirmed' => $confirmed,
             'cancelled' => $cancelled,
             'completed' => $completed,
+            'pending' => $pending,
             'today' => $today,
         ];
         
         // Stats for stat cards with subtitles
         $statCardsData = [
-            ['label' => 'Total Bookings', 'value' => $total, 'subtitle' => ''],
-            ['label' => 'Confirmed', 'value' => $confirmed, 'subtitle' => 'Confirmed: ' . $confirmed],
-            ['label' => 'Completed', 'value' => $completed, 'subtitle' => 'Completed: ' . $completed],
-            ['label' => 'Cancelled', 'value' => $cancelled, 'subtitle' => 'Cancelled: ' . $cancelled],
-            ['label' => 'Today', 'value' => $today, 'subtitle' => ''],
+            [
+                'label' => 'Active Bookings',
+                'value' => $active,
+                'subtitle' => 'Confirmed operational bookings',
+                'icon' => 'calendar-check-2',
+                'iconBg' => 'bg-blue-50',
+                'iconClass' => 'text-blue-600',
+                'href' => route('admin.bookings.index', ['status' => 'confirmed']),
+            ],
+            [
+                'label' => 'Completed',
+                'value' => $completed,
+                'subtitle' => 'Checked out bookings',
+                'icon' => 'check-circle-2',
+                'iconBg' => 'bg-emerald-50',
+                'iconClass' => 'text-emerald-600',
+                'href' => route('admin.bookings.index', ['status' => 'completed']),
+            ],
+            [
+                'label' => 'Cancelled',
+                'value' => $cancelled,
+                'subtitle' => 'Voided reservations',
+                'icon' => 'ban',
+                'iconBg' => 'bg-rose-50',
+                'iconClass' => 'text-rose-600',
+                'href' => route('admin.bookings.index', ['status' => 'cancelled']),
+            ],
+            [
+                'label' => 'Today',
+                'value' => $today,
+                'subtitle' => 'Created today',
+                'icon' => 'sun',
+                'iconBg' => 'bg-amber-50',
+                'iconClass' => 'text-amber-600',
+                'href' => route('admin.bookings.index', ['date_from' => now()->toDateString(), 'date_to' => now()->toDateString()]),
+            ],
         ];
         
         return view('admin.bookings.index', compact('bookings', 'stats', 'statCardsData', 'paymentScope'));
@@ -314,6 +352,9 @@ class AdminBookingsController extends Controller
         $this->expireStalePendingBookings($pendingCutoff, app(PaymentService::class));
 
         $paymentScope = $this->normalizePaymentScope($request);
+        if ($request->filled('status') && !$request->filled('payment_status')) {
+            $paymentScope = 'all';
+        }
         $merged = $this->buildMergedBookingsCollection($request, $paymentScope, $pendingCutoff);
 
         $generatedAt = now()->format('M d, Y H:i:s');
@@ -462,11 +503,51 @@ class AdminBookingsController extends Controller
         $inventoryData = [];
         $dailyTotals = [];
         
+        $staycationIds = $staycations->pluck('id')->all();
+        
+        $bookingsQuery = Booking::query()
+            ->whereIn('booking_type', Booking::STAYCATION_TYPES)
+            ->whereIn('status', ['confirmed', 'completed'])
+            ->whereIn('checkin_date', $sliceDates)
+            ->get();
+        
+        $packagesBookedByDateStaycation = [];
+        $packagesBookedByDate = [];
+        
+        foreach ($bookingsQuery as $booking) {
+            $checkinDate = $booking->checkin_date instanceof Carbon
+                ? $booking->checkin_date->toDateString()
+                : Carbon::parse($booking->checkin_date)->toDateString();
+            
+            $bookingData = $booking->booking_data ?? [];
+            $accommodations = $bookingData['accommodations'] ?? [];
+            
+            foreach ($accommodations as $accommodation) {
+                $staycationId = $accommodation['room_id'] ?? $accommodation['id'] ?? null;
+                if ($staycationId) {
+                    $dateKey = $checkinDate;
+                    $packagesBookedByDateStaycation[$staycationId][$dateKey] = ($packagesBookedByDateStaycation[$staycationId][$dateKey] ?? 0) + 1;
+                }
+            }
+            
+            if (!isset($packagesBookedByDate[$checkinDate])) {
+                $packagesBookedByDate[$checkinDate] = 0;
+            }
+            $packagesBookedByDate[$checkinDate] += count($accommodations);
+        }
+        
         foreach ($staycations as $staycation) {
             $inventories = StaycationInventory::where('staycation_id', $staycation->id)
                 ->whereIn('date', $sliceDates)
                 ->orderBy('date')
                 ->get();
+            
+            $inventories = $inventories->map(function ($inventory) use ($packagesBookedByDateStaycation) {
+                $dateKey = Carbon::parse($inventory->date)->toDateString();
+                $packagesBooked = $packagesBookedByDateStaycation[$inventory->staycation_id][$dateKey] ?? 0;
+                $inventory->packages_booked = $packagesBooked;
+                return $inventory;
+            });
             
             $inventoryData[$staycation->id] = [
                 'staycation' => $staycation,
@@ -484,12 +565,14 @@ class AdminBookingsController extends Controller
                         'total_quantity' => 0,
                         'booked_quantity' => 0,
                         'available_quantity' => 0,
+                        'packages_booked' => 0,
                     ];
                 }
 
                 $dailyTotals[$dateKey]['total_quantity'] += $inventory->total_quantity;
                 $dailyTotals[$dateKey]['booked_quantity'] += $inventory->booked_quantity;
                 $dailyTotals[$dateKey]['available_quantity'] += $inventory->available_quantity;
+                $dailyTotals[$dateKey]['packages_booked'] += $inventory->packages_booked ?? 0;
             }
         }
 
@@ -864,15 +947,20 @@ class AdminBookingsController extends Controller
 
     private function normalizePaymentScope(Request $request): string
     {
-        $scope = (string) $request->query('payment_scope', 'operational');
+        $scope = (string) $request->query('payment_scope', 'all');
 
-        return in_array($scope, ['operational', 'all', 'attempts'], true) ? $scope : 'operational';
+        return in_array($scope, ['operational', 'all', 'attempts'], true) ? $scope : 'all';
     }
 
     private function applyPaymentLifecycleFilters(Builder $query, Request $request, string $paymentScope, Carbon $pendingCutoff): void
     {
         if ($request->filled('payment_status')) {
             $paymentStatus = (string) $request->string('payment_status');
+
+            if ($paymentStatus === 'attempts') {
+                $query->whereIn('payment_status', ['pending', 'failed']);
+                return;
+            }
 
             if ($paymentStatus === 'pending') {
                 $query->where('payment_status', 'pending')

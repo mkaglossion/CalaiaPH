@@ -70,6 +70,7 @@
                                         </th>
                                         <th class="px-6 py-3 text-left font-semibold text-gray-700">Date</th>
                                         <th class="px-6 py-3 text-left font-semibold text-gray-700" x-text="'{{ $staycation->name }}' === 'BYOT' || '{{ $staycation->name }}' === 'Car Camping' ? 'Total Slots' : 'Total Rooms'"></th>
+                                        <th class="px-6 py-3 text-left font-semibold text-gray-700">Booked</th>
                                         <th class="px-6 py-3 text-left font-semibold text-gray-700">Available</th>
                                         <th class="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
                                         <th class="px-6 py-3 text-left font-semibold text-gray-700">Actions</th>
@@ -93,6 +94,7 @@
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 font-semibold text-gray-900" x-text="inv.total_quantity ?? 0"></td>
+                                            <td class="px-6 py-4 font-semibold text-gray-900" x-text="inv.packages_booked ?? 0"></td>
                                             <td class="px-6 py-4">
                                                 <span class="font-semibold" :class="(inv.available_quantity ?? 0) > 0 ? 'text-green-600' : 'text-red-600'" x-text="inv.available_quantity ?? 0"></span>
                                             </td>
@@ -121,7 +123,7 @@
                                         </tr>
                                     </template>
                                     <tr x-show="getPaginatedInventory({{ $staycation->id }}, getStaycationInventory({{ $staycation->id }})).length === 0">
-                                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
                                             <p>No inventory configured yet</p>
                                         </td>
                                     </tr>

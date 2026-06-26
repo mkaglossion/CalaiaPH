@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Booking;
@@ -22,6 +23,18 @@ class AdminDashboardController extends Controller
         [$start, $end, $rangeLabel, $range] = $this->resolveDateRange($request);
         $pendingWindowMinutes = 60;
         $pendingCutoff = now()->subMinutes($pendingWindowMinutes);
+        $applyRange = function (Builder $query, string $dateColumn) use ($start, $end) {
+            return $query->when(
+                $start && $end,
+                fn ($q) => $q->whereBetween($dateColumn, [$start->toDateString(), $end->toDateString()])
+            );
+        };
+        $applyRecentRange = function (Builder $query) use ($start, $end) {
+            return $query->when(
+                $start && $end,
+                fn ($q) => $q->whereBetween('created_at', [$start, $end])
+            );
+        };
 
         // -----------------------------
         // USERS (1 query)
@@ -41,27 +54,42 @@ class AdminDashboardController extends Controller
         // -----------------------------
         // BOOKINGS + REVENUE (2 queries: Booking + PackageBooking)
         // -----------------------------
-        $base = Booking::query()
-            ->whereNotIn('payment_status', ['pending', 'failed'])
-            ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
-        $packageBase = PackageBooking::query()
-            ->whereNotIn('payment_status', ['pending', 'failed'])
-            ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
-        $pendingBase = Booking::query()
-            ->where('payment_status', 'pending')
-            ->whereNotIn('status', ['cancelled', 'completed'])
-            ->where('created_at', '>=', $pendingCutoff)
-            ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
-        $pendingPackageBase = PackageBooking::query()
-            ->where('payment_status', 'pending')
-            ->whereNotIn('status', ['cancelled', 'completed'])
-            ->where('created_at', '>=', $pendingCutoff)
-            ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
+        $base = $applyRange(
+            Booking::query()->whereNotIn('payment_status', ['pending', 'failed']),
+            'checkin_date'
+        );
+        $packageBase = $applyRange(
+            PackageBooking::query()->whereNotIn('payment_status', ['pending', 'failed']),
+            'booking_date'
+        );
+        $pendingBase = $applyRange(
+            Booking::query()
+                ->where('payment_status', 'pending')
+                ->whereNotIn('status', ['cancelled', 'completed'])
+                ->where('created_at', '>=', $pendingCutoff),
+            'checkin_date'
+        );
+        $pendingPackageBase = $applyRange(
+            PackageBooking::query()
+                ->where('payment_status', 'pending')
+                ->whereNotIn('status', ['cancelled', 'completed'])
+                ->where('created_at', '>=', $pendingCutoff),
+            'booking_date'
+        );
+        $attemptBase = $applyRange(
+            Booking::query()->whereIn('payment_status', ['pending', 'failed']),
+            'checkin_date'
+        );
+        $attemptPackageBase = $applyRange(
+            PackageBooking::query()->whereIn('payment_status', ['pending', 'failed']),
+            'booking_date'
+        );
 
         $agg = (clone $base)->selectRaw("
             COUNT(*) as total_bookings,
             SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as active_bookings,
             SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_bookings,
+            SUM(CASE WHEN payment_status = 'refunded' THEN 1 ELSE 0 END) as refunded_bookings,
 
             SUM(CASE WHEN status != 'cancelled' AND payment_status = 'paid' THEN total_amount ELSE 0 END) as total_revenue,
             SUM(CASE WHEN status != 'cancelled' AND payment_status = 'pending' THEN total_amount ELSE 0 END) as pending_revenue,
@@ -72,6 +100,7 @@ class AdminDashboardController extends Controller
             COUNT(*) as total_bookings,
             SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as active_bookings,
             SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_bookings,
+            SUM(CASE WHEN payment_status = 'refunded' THEN 1 ELSE 0 END) as refunded_bookings,
 
             SUM(CASE WHEN status != 'cancelled' AND payment_status = 'paid' THEN total_amount ELSE 0 END) as total_revenue,
             SUM(CASE WHEN status = 'completed' AND payment_status = 'paid' THEN total_amount ELSE 0 END) as completed_revenue,
@@ -85,6 +114,14 @@ class AdminDashboardController extends Controller
             COUNT(*) as pending_bookings,
             SUM(total_amount) as pending_revenue
         ")->first();
+        $attemptAgg = (clone $attemptBase)->selectRaw("
+            COUNT(*) as payment_attempts
+            , SUM(total_amount) as attempt_amount
+        ")->first();
+        $attemptPackageAgg = (clone $attemptPackageBase)->selectRaw("
+            COUNT(*) as payment_attempts
+            , SUM(total_amount) as attempt_amount
+        ")->first();
 
         $totalBookings     = (int) $agg->total_bookings + (int) $packageAgg->total_bookings;
         $activeBookings    = (int) $agg->active_bookings + (int) $packageAgg->active_bookings;
@@ -93,10 +130,21 @@ class AdminDashboardController extends Controller
         $totalRevenue      = (float) $agg->total_revenue + (float) $packageAgg->total_revenue;
         $pendingRevenue    = (float) $pendingAgg->pending_revenue + (float) $pendingPackageAgg->pending_revenue;
         $pendingBookings   = (int) $pendingAgg->pending_bookings + (int) $pendingPackageAgg->pending_bookings;
+        $paymentAttempts   = (int) $attemptAgg->payment_attempts + (int) $attemptPackageAgg->payment_attempts;
+        $attemptAmount     = (float) $attemptAgg->attempt_amount + (float) $attemptPackageAgg->attempt_amount;
         $completedRevenue  = (float) $agg->completed_revenue + (float) $packageAgg->completed_revenue;
         $refundedRevenue   = (float) $agg->refunded_revenue + (float) $packageAgg->refunded_revenue;
+        $refundedBookings  = (int) $agg->refunded_bookings + (int) $packageAgg->refunded_bookings;
 
-        $netRevenue        = $totalRevenue - $refundedRevenue;
+        $netRevenue        = $completedRevenue - $refundedRevenue;
+        $periodDays = max(1, (int) $start->copy()->startOfDay()->diffInDays($end->copy()->startOfDay()) + 1);
+        $previousEnd = $start->copy()->subDay()->endOfDay();
+        $previousStart = $previousEnd->copy()->subDays($periodDays - 1)->startOfDay();
+        $previousCompletedRevenue = $this->getCompletedRevenueForRange($previousStart, $previousEnd);
+        $completedRevenueChangePercent = $previousCompletedRevenue > 0
+            ? (($completedRevenue - $previousCompletedRevenue) / $previousCompletedRevenue) * 100
+            : ($completedRevenue > 0 ? 100 : 0);
+        $completedRevenueComparisonLabel = $periodDays === 1 ? 'vs previous day' : "vs previous {$periodDays} days";
 
         // -----------------------------
         // INVENTORY (2 queries: Products + Foods)
@@ -117,10 +165,25 @@ class AdminDashboardController extends Controller
         $totalFoods    = (int) $foodsAgg->total_foods;
         $lowStockFoods = (int) $foodsAgg->low_stock_foods;
 
+        $today = now()->toDateString();
+        $todayCheckInsBooking = Booking::query()
+            ->whereDate('checkin_date', $today)
+            ->where('status', '!=', 'cancelled')
+            ->count();
+
+        $todayCheckInsPackage = PackageBooking::query()
+            ->whereDate('booking_date', $today)
+            ->where('status', '!=', 'cancelled')
+            ->count();
+
+        $todayCheckIns = $todayCheckInsBooking + $todayCheckInsPackage;
+
         // -----------------------------
         // RECENT BOOKINGS (2 queries: Booking + PackageBooking)
         // -----------------------------
-        $recentBookings = (clone $base)
+        $recentBookings = $applyRecentRange(
+            Booking::query()->whereNotIn('payment_status', ['pending', 'failed'])
+        )
             ->latest()
             ->take(6)
             ->get()
@@ -129,7 +192,9 @@ class AdminDashboardController extends Controller
                 return $booking;
             })
             ->concat(
-                (clone $packageBase)
+                $applyRecentRange(
+                    PackageBooking::query()->whereNotIn('payment_status', ['pending', 'failed'])
+                )
                     ->latest()
                     ->take(6)
                     ->get()
@@ -168,6 +233,9 @@ class AdminDashboardController extends Controller
             ->sortBy(fn($row) => sprintf('%04d-%02d', $row->year, $row->month))
             ->values();
 
+        $bookingOverviewSeries = $this->buildBookingOverviewSeries($start, $end);
+        $revenueSummarySeries = $this->buildRevenueSummarySeries($start, $end);
+
         // -----------------------------------------------
         // SYSTEM ALERTS (Unresolved Critical + Warnings)
         // -----------------------------------------------
@@ -189,9 +257,10 @@ class AdminDashboardController extends Controller
             'rangeLabel', 'start', 'end', 'range',
             'clientUsers', 'totalUsers', 'verifiedUsers', 'adminUsers',
             'totalBookings', 'activeBookings', 'completedBookings',
-            'netRevenue', 'totalRevenue', 'pendingRevenue', 'pendingBookings', 'pendingWindowMinutes', 'completedRevenue', 'refundedRevenue',
+            'netRevenue', 'totalRevenue', 'pendingRevenue', 'pendingBookings', 'paymentAttempts', 'attemptAmount', 'pendingWindowMinutes', 'completedRevenue', 'refundedRevenue', 'refundedBookings', 'todayCheckIns',
+            'completedRevenueChangePercent', 'completedRevenueComparisonLabel',
             'totalProducts', 'totalFoods', 'lowStockProducts', 'lowStockFoods',
-            'recentBookings', 'monthlyBookings', 'systemAlerts', 'recentActivity'
+            'recentBookings', 'monthlyBookings', 'bookingOverviewSeries', 'revenueSummarySeries', 'systemAlerts', 'recentActivity'
         ));
     }
 
@@ -200,6 +269,12 @@ class AdminDashboardController extends Controller
         [$start, $end, $rangeLabel, $range] = $this->resolveDateRange($request);
         $pendingWindowMinutes = 60;
         $pendingCutoff = now()->subMinutes($pendingWindowMinutes);
+        $applyRange = function (Builder $query, string $dateColumn) use ($start, $end) {
+            return $query->when(
+                $start && $end,
+                fn ($q) => $q->whereBetween($dateColumn, [$start->toDateString(), $end->toDateString()])
+            );
+        };
 
         $usersAgg = User::query()->selectRaw("
             COUNT(*) as total_users,
@@ -208,22 +283,28 @@ class AdminDashboardController extends Controller
             SUM(CASE WHEN user_type = 'client' THEN 1 ELSE 0 END) as client_users
         ")->first();
 
-        $base = Booking::query()
-            ->whereNotIn('payment_status', ['pending', 'failed'])
-            ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
-        $packageBase = PackageBooking::query()
-            ->whereNotIn('payment_status', ['pending', 'failed'])
-            ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
-        $pendingBase = Booking::query()
-            ->where('payment_status', 'pending')
-            ->whereNotIn('status', ['cancelled', 'completed'])
-            ->where('created_at', '>=', $pendingCutoff)
-            ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
-        $pendingPackageBase = PackageBooking::query()
-            ->where('payment_status', 'pending')
-            ->whereNotIn('status', ['cancelled', 'completed'])
-            ->where('created_at', '>=', $pendingCutoff)
-            ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]));
+        $base = $applyRange(
+            Booking::query()->whereNotIn('payment_status', ['pending', 'failed']),
+            'checkin_date'
+        );
+        $packageBase = $applyRange(
+            PackageBooking::query()->whereNotIn('payment_status', ['pending', 'failed']),
+            'booking_date'
+        );
+        $pendingBase = $applyRange(
+            Booking::query()
+                ->where('payment_status', 'pending')
+                ->whereNotIn('status', ['cancelled', 'completed'])
+                ->where('created_at', '>=', $pendingCutoff),
+            'checkin_date'
+        );
+        $pendingPackageBase = $applyRange(
+            PackageBooking::query()
+                ->where('payment_status', 'pending')
+                ->whereNotIn('status', ['cancelled', 'completed'])
+                ->where('created_at', '>=', $pendingCutoff),
+            'booking_date'
+        );
 
         $agg = (clone $base)->selectRaw("
             COUNT(*) as total_bookings,
@@ -273,7 +354,7 @@ class AdminDashboardController extends Controller
         $pendingBookings   = (int) $pendingAgg->pending_bookings + (int) $pendingPackageAgg->pending_bookings;
         $completedRevenue  = (float) $agg->completed_revenue + (float) $packageAgg->completed_revenue;
         $refundedRevenue   = (float) $agg->refunded_revenue + (float) $packageAgg->refunded_revenue;
-        $netRevenue        = $totalRevenue - $refundedRevenue;
+        $netRevenue        = $completedRevenue - $refundedRevenue;
         $totalProducts     = (int) $productsAgg->total_products;
         $lowStockProducts  = (int) $productsAgg->low_stock_products;
         $totalFoods        = (int) $foodsAgg->total_foods;
@@ -389,7 +470,7 @@ class AdminDashboardController extends Controller
                     ['Net Revenue', $netRevenue],
                     ['Total Revenue', $totalRevenue],
                     ['Pending Revenue', $pendingRevenue],
-                    ['Pending Bookings', $pendingBookings],
+                    ['Pending Booking', $pendingBookings],
                     ['Completed Revenue', $completedRevenue],
                     ['Refunded Revenue', $refundedRevenue],
                     ['Total Products', $totalProducts],
@@ -432,11 +513,14 @@ class AdminDashboardController extends Controller
 
     private function resolveDateRange(Request $request): array
     {
-        $range = $request->string('range', '30d')->toString();
+        $range = $request->string('range', '7d')->toString();
+        if (!$request->has('range') && $request->filled('from') && $request->filled('to')) {
+            $range = 'custom';
+        }
 
         $end = now()->endOfDay();
         $start = null;
-        $label = 'Last 30 Days';
+        $label = 'Last 7 Days';
 
         if ($range === 'today') {
             $start = now()->startOfDay();
@@ -461,7 +545,7 @@ class AdminDashboardController extends Controller
 
             $start = Carbon::parse($request->from)->startOfDay();
             $end = Carbon::parse($request->to)->endOfDay();
-            $label = $start->format('M d, Y') . ' – ' . $end->format('M d, Y');
+            $label = $start->format('M d, Y') . ' - ' . $end->format('M d, Y');
         }
 
         return [$start, $end, $label, $range];
@@ -479,6 +563,119 @@ class AdminDashboardController extends Controller
             ->groupBy('year', 'month')
             ->orderBy('year')
             ->orderBy('month')
+            ->get();
+    }
+
+    private function buildBookingOverviewSeries(?Carbon $start = null, ?Carbon $end = null): \Illuminate\Support\Collection
+    {
+        $start = ($start?->copy() ?? now()->subDays(6))->startOfDay();
+        $end = ($end?->copy() ?? now())->endOfDay();
+
+        $bookingCounts = $this->getDailyBookingOverviewCounts(
+            Booking::query()->whereBetween('checkin_date', [$start->toDateString(), $end->toDateString()]),
+            'checkin_date'
+        )->keyBy('day');
+        $packageCounts = $this->getDailyBookingOverviewCounts(
+            PackageBooking::query()->whereBetween('booking_date', [$start->toDateString(), $end->toDateString()]),
+            'booking_date'
+        )->keyBy('day');
+
+        return collect(CarbonPeriod::create($start, '1 day', $end))->map(function (Carbon $date) use ($bookingCounts, $packageCounts) {
+            $key = $date->toDateString();
+            $bookingRow = $bookingCounts->get($key);
+            $packageRow = $packageCounts->get($key);
+
+            return (object) [
+                'key' => $key,
+                'label' => $date->format('M d'),
+                'upcoming' => (int) ($bookingRow->upcoming_count ?? 0) + (int) ($packageRow->upcoming_count ?? 0),
+                'recent' => (int) ($bookingRow->recent_count ?? 0) + (int) ($packageRow->recent_count ?? 0),
+                'pending' => (int) ($bookingRow->pending_count ?? 0) + (int) ($packageRow->pending_count ?? 0),
+                'refund' => (int) ($bookingRow->refund_count ?? 0) + (int) ($packageRow->refund_count ?? 0),
+                'total' => (int) ($bookingRow->total_count ?? 0) + (int) ($packageRow->total_count ?? 0),
+            ];
+        })->values();
+    }
+
+    private function getCompletedRevenueForRange(Carbon $start, Carbon $end): float
+    {
+        $bookingRevenue = Booking::query()
+            ->whereBetween('checkin_date', [$start->toDateString(), $end->toDateString()])
+            ->where('status', 'completed')
+            ->where('payment_status', 'paid')
+            ->sum('total_amount');
+
+        $packageRevenue = PackageBooking::query()
+            ->whereBetween('booking_date', [$start->toDateString(), $end->toDateString()])
+            ->where('status', 'completed')
+            ->where('payment_status', 'paid')
+            ->sum('total_amount');
+
+        return (float) $bookingRevenue + (float) $packageRevenue;
+    }
+
+    private function getDailyBookingOverviewCounts(Builder $query, string $dateColumn)
+    {
+        $driver = DB::connection()->getDriverName();
+        $dayExpr = $driver === 'sqlite' ? "date({$dateColumn})" : "DATE({$dateColumn})";
+
+        return $query
+            ->selectRaw("
+                {$dayExpr} as day,
+                SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as upcoming_count,
+                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as recent_count,
+                SUM(CASE WHEN payment_status = 'pending' THEN 1 ELSE 0 END) as pending_count,
+                SUM(CASE WHEN payment_status = 'refunded' THEN 1 ELSE 0 END) as refund_count,
+                COUNT(*) as total_count
+            ")
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+    }
+
+    private function buildRevenueSummarySeries(?Carbon $start = null, ?Carbon $end = null): \Illuminate\Support\Collection
+    {
+        $start = ($start?->copy() ?? now()->subDays(6))->startOfDay();
+        $end = ($end?->copy() ?? now())->endOfDay();
+
+        $bookingRows = $this->getDailyRevenueSummaryCounts(
+            Booking::query()->whereBetween('checkin_date', [$start->toDateString(), $end->toDateString()]),
+            'checkin_date'
+        )->keyBy('day');
+        $packageRows = $this->getDailyRevenueSummaryCounts(
+            PackageBooking::query()->whereBetween('booking_date', [$start->toDateString(), $end->toDateString()]),
+            'booking_date'
+        )->keyBy('day');
+
+        return collect(CarbonPeriod::create($start, '1 day', $end))->map(function (Carbon $date) use ($bookingRows, $packageRows) {
+            $key = $date->toDateString();
+            $bookingRow = $bookingRows->get($key);
+            $packageRow = $packageRows->get($key);
+
+            return (object) [
+                'key' => $key,
+                'label' => $date->format('M d'),
+                'completed' => (float) ($bookingRow->completed_revenue ?? 0) + (float) ($packageRow->completed_revenue ?? 0),
+                'pending' => (float) ($bookingRow->pending_revenue ?? 0) + (float) ($packageRow->pending_revenue ?? 0),
+                'refund' => (float) ($bookingRow->refund_revenue ?? 0) + (float) ($packageRow->refund_revenue ?? 0),
+            ];
+        })->values();
+    }
+
+    private function getDailyRevenueSummaryCounts(Builder $query, string $dateColumn)
+    {
+        $driver = DB::connection()->getDriverName();
+        $dayExpr = $driver === 'sqlite' ? "date({$dateColumn})" : "DATE({$dateColumn})";
+
+        return $query
+            ->selectRaw("
+                {$dayExpr} as day,
+                SUM(CASE WHEN status = 'completed' AND payment_status = 'paid' THEN total_amount ELSE 0 END) as completed_revenue,
+                SUM(CASE WHEN status NOT IN ('cancelled', 'completed') AND payment_status IN ('pending', 'failed') THEN total_amount ELSE 0 END) as pending_revenue,
+                SUM(CASE WHEN payment_status = 'refunded' THEN total_amount ELSE 0 END) as refund_revenue
+            ")
+            ->groupBy('day')
+            ->orderBy('day')
             ->get();
     }
 

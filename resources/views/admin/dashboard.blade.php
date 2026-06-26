@@ -1,73 +1,126 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
-@section('title', 'Dashboard')
+@section('title', 'Dashboard Overview')
 
 @section('content')
 @php
-  $fmtMoney = fn($v) => '₱' . number_format((float) $v, 2);
+  $fmtMoney = fn($v) => html_entity_decode('&#8369;') . number_format((float) $v, 2);
   $fmtInt   = fn($v) => number_format((int) $v);
 
   $from = request('from');
   $to = request('to');
+  $dateRangeParams = [];
 
-  $statCards = [
-    [
-      'label' => 'Users',
-      'value' => $fmtInt($clientUsers),
-      'accent' => 'border-blue-600',
-      'valueClass' => 'text-blue-600',
-      'bg' => 'bg-gray-50',
-      'borderColor' => 'border-blue-600',
-      'meta' => [
-        ['Total', $fmtInt($totalUsers)],
-        ['Verified', $fmtInt($verifiedUsers)],
-        ['Admins', $fmtInt($adminUsers)],
-      ],
-    ],
-    [
-      'label' => 'Total Bookings',
-      'value' => $fmtInt($totalBookings),
-      'accent' => 'border-green-500',
-      'valueClass' => 'text-green-600',
-      'metaInline' => 'Active: '.$fmtInt($activeBookings).' · Completed: '.$fmtInt($completedBookings),
-    ],
-    [
-      'label' => 'Net Revenue',
-      'value' => $fmtMoney($netRevenue),
-      'accent' => 'border-yellow-500',
-      'valueClass' => 'text-yellow-600',
-      'meta' => array_values(array_filter([
-        ['Total', $fmtMoney($totalRevenue)],
-        $refundedRevenue > 0 ? ['Refunds', '-'.$fmtMoney($refundedRevenue), 'text-red-600'] : null,
-        $pendingRevenue > 0 ? ['Live Pending', $fmtMoney($pendingRevenue), 'text-blue-600'] : null,
-      ])),
-    ],
-    [
-      'label' => 'Products & Foods',
-      'value' => $fmtInt($totalProducts + $totalFoods),
-      'accent' => 'border-purple-500',
-      'valueClass' => 'text-purple-600',
-      'metaInline' => 'Products: '.$fmtInt($totalProducts).' · Foods: '.$fmtInt($totalFoods),
-    ],
-  ];
+  if (!empty($start) && !empty($end)) {
+    $dateRangeParams = [
+      'date_from' => optional($start)->toDateString(),
+      'date_to' => optional($end)->toDateString(),
+    ];
+  }
+
+  $rangeShortLabel = $range === 'custom' ? 'Custom' : ($range === 'today' ? 'Today' : ($range === '7d' ? '7 Days' : '30 Days'));
+  $completedRevenueChangePercent = (float) ($completedRevenueChangePercent ?? 0);
+  $completedRevenueTrendUp = $completedRevenueChangePercent >= 0;
+  $completedRevenueTrendClass = $completedRevenueTrendUp ? 'text-emerald-600' : 'text-rose-600';
+  $completedRevenueTrendIcon = $completedRevenueTrendUp ? 'arrow-up' : 'arrow-down';
 
   $revenueTiles = [
-    ['label' => 'Completed Bookings', 'value' => $fmtMoney($completedRevenue), 'class' => 'text-green-600'],
-    ['label' => 'Pending Payments',   'value' => $fmtMoney($pendingRevenue),   'class' => 'text-blue-600', 'href' => route('admin.bookings.index', ['payment_scope' => 'attempts', 'payment_status' => 'pending']), 'hint' => ($pendingBookings ?? 0) > 0 ? $fmtInt($pendingBookings).' live attempt(s), expires after '.($pendingWindowMinutes ?? 60).' min' : 'Auto-expires after '.($pendingWindowMinutes ?? 60).' min'],
-    ['label' => 'Total Refunds',      'value' => $fmtMoney($refundedRevenue),  'class' => 'text-red-600'],
+    ['label' => 'Completed Revenue', 'value' => $fmtMoney($completedRevenue), 'description' => 'From completed bookings', 'bg' => 'bg-blue-50/70', 'labelClass' => 'text-blue-600'],
+    ['label' => 'Pending Revenue',   'value' => $fmtMoney($attemptAmount),   'description' => 'Potential from pending, abandoned & expired', 'bg' => 'bg-orange-50/70', 'labelClass' => 'text-orange-600'],
+    ['label' => 'Refund Amount',     'value' => $fmtMoney($refundedRevenue), 'description' => 'From refunded bookings', 'bg' => 'bg-purple-50/70', 'labelClass' => 'text-purple-600'],
   ];
 
   $userTiles = [
-    ['label' => 'Active Customers', 'value' => $fmtInt($clientUsers),  'class' => 'text-blue-600'],
-    ['label' => 'Verified Users',   'value' => $fmtInt($verifiedUsers),'class' => 'text-green-600', 'hint' => $verifiedUsers === 0 ? 'Email verification needed' : null],
-    ['label' => 'Admin Users',      'value' => $fmtInt($adminUsers),   'class' => 'text-purple-600'],
+    ['label' => 'Active Customers', 'value' => $fmtInt($clientUsers),  'description' => 'Users with active bookings', 'icon' => 'user', 'valueClass' => 'text-blue-600', 'iconBg' => 'bg-blue-100', 'iconClass' => 'text-blue-600'],
+    ['label' => 'Verified Users',   'value' => $fmtInt($verifiedUsers), 'description' => $verifiedUsers === 0 ? 'Email verification needed' : 'Email verification completed', 'icon' => 'shield-check', 'valueClass' => 'text-emerald-600', 'iconBg' => 'bg-emerald-100', 'iconClass' => 'text-emerald-600'],
+    ['label' => 'Admin Users',      'value' => $fmtInt($adminUsers),    'description' => 'System administrators', 'icon' => 'shield', 'valueClass' => 'text-purple-600', 'iconBg' => 'bg-purple-100', 'iconClass' => 'text-purple-600'],
   ];
+
+  $bookingOverviewSeries = $bookingOverviewSeries ?? collect();
+  $revenueSummarySeries = $revenueSummarySeries ?? collect();
+  $bookingOverviewMax = max(1, (int) $bookingOverviewSeries->map(fn ($row) => max(
+    (int) ($row->upcoming ?? 0),
+    (int) ($row->recent ?? 0),
+    (int) ($row->pending ?? 0),
+    (int) ($row->refund ?? 0)
+  ))->max());
+  $bookingTickStep = max(1, (int) ceil($bookingOverviewMax / 4));
+  $bookingCountTicks = $bookingOverviewMax <= 5
+    ? collect(range($bookingOverviewMax, 0))
+    : collect(range(0, (int) ceil($bookingOverviewMax / $bookingTickStep)))
+        ->map(fn ($index) => max(0, $bookingOverviewMax - ($bookingTickStep * $index)))
+        ->push(0)
+        ->unique()
+        ->sortDesc()
+        ->values();
+  $bookingAmountOverviewMax = max(1, (float) $revenueSummarySeries->map(fn ($row) => max(
+    (float) ($row->completed ?? 0),
+    (float) ($row->pending ?? 0),
+    (float) ($row->refund ?? 0)
+  ))->max());
+  $bookingOverviewCount = max(1, $bookingOverviewSeries->count());
+  $bookingLabelStep = max(1, (int) ceil($bookingOverviewCount / 10));
+  $bookingChartWidth = 1120;
+  $bookingChartHeight = 360;
+  $bookingChartLeft = 64;
+  $bookingChartRight = 28;
+  $bookingChartTop = 28;
+  $bookingChartBottom = 48;
+  $bookingChartPlotHeight = $bookingChartHeight - $bookingChartTop - $bookingChartBottom;
+  $bookingAxisLabel = function (float|int $value) {
+    if ($value >= 1000) {
+      return rtrim(rtrim(number_format($value / 1000, 2), '0'), '.') . 'K';
+    }
+
+    return number_format((int) $value);
+  };
+  $bookingMoneyAxisLabel = function (float|int $value) {
+    $peso = html_entity_decode('&#8369;');
+
+    if ($value >= 1000000) {
+      return $peso . rtrim(rtrim(number_format($value / 1000000, 1), '0'), '.') . 'M';
+    }
+
+    if ($value >= 1000) {
+      return $peso . rtrim(rtrim(number_format($value / 1000, 1), '0'), '.') . 'K';
+    }
+
+    return $peso . number_format((int) $value);
+  };
+  $bookingChartLine = function (string $key) use ($bookingOverviewSeries, $bookingOverviewCount, $bookingOverviewMax, $bookingChartWidth, $bookingChartHeight, $bookingChartLeft, $bookingChartRight, $bookingChartTop, $bookingChartBottom, $bookingChartPlotHeight) {
+    $points = [];
+    foreach ($bookingOverviewSeries as $index => $row) {
+      $value = (int) ($row->{$key} ?? 0);
+      $x = $bookingOverviewCount === 1
+        ? $bookingChartLeft
+        : $bookingChartLeft + (($bookingChartWidth - $bookingChartLeft - $bookingChartRight) * ($index / ($bookingOverviewCount - 1)));
+      $y = $bookingChartHeight - $bookingChartBottom - ($bookingChartPlotHeight * ($value / $bookingOverviewMax));
+      $points[] = number_format($x, 2, '.', '') . ',' . number_format($y, 2, '.', '');
+    }
+
+    return implode(' ', $points);
+  };
+  $bookingAmountChartLine = function (string $key) use ($revenueSummarySeries, $bookingOverviewCount, $bookingAmountOverviewMax, $bookingChartWidth, $bookingChartHeight, $bookingChartLeft, $bookingChartRight, $bookingChartTop, $bookingChartBottom, $bookingChartPlotHeight) {
+    $points = [];
+    foreach ($revenueSummarySeries as $index => $row) {
+      $value = (float) ($row->{$key} ?? 0);
+      $x = $bookingOverviewCount === 1
+        ? $bookingChartLeft
+        : $bookingChartLeft + (($bookingChartWidth - $bookingChartLeft - $bookingChartRight) * ($index / ($bookingOverviewCount - 1)));
+      $y = $bookingChartHeight - $bookingChartBottom - ($bookingChartPlotHeight * ($value / $bookingAmountOverviewMax));
+      $points[] = number_format($x, 2, '.', '') . ',' . number_format($y, 2, '.', '');
+    }
+
+    return implode(' ', $points);
+  };
 
   $actions = [
     [
       'href' => route('admin.bookings.index'),
       'title' => 'Manage Bookings',
       'desc' => 'View and manage all bookings',
+      'bg' => 'bg-gray-50 hover:bg-gray-100',
+      'iconClass' => 'text-gray-900',
       'bg' => 'bg-blue-50 hover:bg-blue-100',
       'iconClass' => 'text-blue-600',
       'path' => 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
@@ -76,14 +129,18 @@
       'href' => route('admin.users.index'),
       'title' => 'Manage Users',
       'desc' => 'View and manage user accounts',
-      'bg' => 'bg-green-50 hover:bg-green-100',
-      'iconClass' => 'text-green-600',
+      'bg' => 'bg-gray-50 hover:bg-gray-100',
+      'iconClass' => 'text-gray-900',
+      'bg' => 'bg-emerald-50 hover:bg-emerald-100',
+      'iconClass' => 'text-emerald-600',
       'path' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z',
     ],
     [
       'href' => route('admin.bookings.inventory'),
       'title' => 'Inventory',
       'desc' => 'Check inventory levels',
+      'bg' => 'bg-gray-50 hover:bg-gray-100',
+      'iconClass' => 'text-gray-900',
       'bg' => 'bg-purple-50 hover:bg-purple-100',
       'iconClass' => 'text-purple-600',
       'path' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
@@ -96,10 +153,13 @@
   {{-- Header + Date Filter --}}
   <header x-data="dashboard()" x-init="init()" class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
     <div class="min-w-0 flex-1">
-      <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Admin Dashboard</h1>
+      <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Dashboard Overview</h1>
       <p class="text-sm text-gray-500 mt-1">
-        Overview of users, bookings, revenue, and inventory
-        @if(!empty($rangeLabel)) <span class="text-gray-400">·</span> <span class="font-medium">{{ $rangeLabel }}</span> @endif
+        Monitor bookings, revenue, and operations performance
+        @if(!empty($rangeLabel)) <span class="text-gray-400">&middot;</span> <span class="font-medium">{{ $rangeLabel }}</span> @endif
+      </p>
+      <p class="mt-2 text-xs text-gray-400">
+        Booking and revenue metrics follow the selected date range. Users and inventory stay global.
       </p>
       <div class="mt-3">
         <a href="{{ route('admin.dashboard.export', request()->query()) }}"
@@ -121,7 +181,7 @@
            x-transition:leave-start="opacity-100 transform translate-y-0"
            x-transition:leave-end="opacity-0 transform -translate-y-2"
            class="mt-2 text-sm text-green-600 font-medium">
-        ⚡ Keyboard shortcut applied!
+        Shortcut applied!
       </div>
     </div>
 
@@ -204,7 +264,7 @@
                 @mousedown="keyboardEnabled = false"
                 @mouseup="keyboardEnabled = true"
                 @mouseleave="keyboardEnabled = true">
-          <kbd class="px-1 py-0.5 text-xs bg-gray-100 border border-gray-300 rounded text-gray-700">⌘</kbd>
+          <kbd class="px-1 py-0.5 text-xs bg-gray-100 border border-gray-300 rounded text-gray-700">&#8984;</kbd>
         </button>
         <div x-show="showShortcuts" 
              x-cloak
@@ -223,28 +283,28 @@
                 <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">Ctrl</kbd> + 
                 <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">1</kbd>
               </div>
-              <span class="text-gray-600">→ Today</span>
+              <span class="text-gray-600">&rarr; Today</span>
             </div>
             <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
               <div class="flex items-center gap-1">
                 <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">Ctrl</kbd> + 
                 <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">2</kbd>
               </div>
-              <span class="text-gray-600">→ 7 Days</span>
+              <span class="text-gray-600">&rarr; 7 Days</span>
             </div>
             <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
               <div class="flex items-center gap-1">
                 <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">Ctrl</kbd> + 
                 <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">3</kbd>
               </div>
-              <span class="text-gray-600">→ 30 Days</span>
+              <span class="text-gray-600">&rarr; 30 Days</span>
             </div>
             <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
               <div class="flex items-center gap-1">
                 <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">Ctrl</kbd> + 
                 <kbd class="px-1 py-0.5 text-xs bg-gray-100 border rounded">4</kbd>
               </div>
-              <span class="text-gray-600">→ Custom</span>
+              <span class="text-gray-600">&rarr; Custom</span>
             </div>
           </div>
         </div>
@@ -362,17 +422,77 @@
 
   {{-- Key Metrics --}}
   <section aria-label="Key metrics">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-4 gap-4 lg:gap-6 min-w-0">
-      @foreach($statCards as $c)
+    @php
+      $overviewCards = [
+        [
+          'label' => 'Active Bookings',
+          'value' => $fmtInt($activeBookings),
+          'description' => 'Confirmed reservations',
+          'icon' => 'calendar-days',
+          'href' => route('admin.bookings.index', ['status' => 'confirmed']),
+          'iconBg' => 'bg-blue-50',
+          'iconClass' => 'text-blue-600',
+          'footerLabel' => 'View details',
+          'footerHref' => route('admin.bookings.index', ['status' => 'confirmed']),
+          'footerTone' => 'text-blue-600',
+          'footerBg' => 'bg-blue-50/60',
+        ],
+        [
+          'label' => 'Completed Bookings',
+          'value' => $fmtInt($completedBookings),
+          'description' => 'Checked-out reservations',
+          'icon' => 'clipboard-check',
+          'href' => route('admin.bookings.index', array_merge($dateRangeParams, ['status' => 'completed'])),
+          'iconBg' => 'bg-emerald-50',
+          'iconClass' => 'text-emerald-600',
+          'footerLabel' => 'View details',
+          'footerHref' => route('admin.bookings.index', array_merge($dateRangeParams, ['status' => 'completed'])),
+          'footerTone' => 'text-emerald-600',
+          'footerBg' => 'bg-emerald-50/60',
+        ],
+        [
+          'label' => 'Pending Booking',
+          'value' => $fmtInt($paymentAttempts),
+          'description' => 'Abandoned & expired',
+          'icon' => 'clock-3',
+          'href' => route('admin.bookings.index', array_merge($dateRangeParams, ['payment_scope' => 'attempts'])),
+          'iconBg' => 'bg-orange-50',
+          'iconClass' => 'text-orange-500',
+          'footerLabel' => 'View details',
+          'footerHref' => route('admin.bookings.index', array_merge($dateRangeParams, ['payment_scope' => 'attempts'])),
+          'footerTone' => 'text-orange-600',
+          'footerBg' => 'bg-orange-50/60',
+        ],
+        [
+          'label' => "Today's Check-ins",
+          'value' => $fmtInt($todayCheckIns),
+          'description' => 'Reservations scheduled today',
+          'icon' => 'calendar-check-2',
+          'href' => route('admin.bookings.index', array_merge($dateRangeParams, ['date_from' => now()->toDateString(), 'date_to' => now()->toDateString()])),
+          'iconBg' => 'bg-blue-50',
+          'iconClass' => 'text-blue-600',
+          'footerLabel' => 'View details',
+          'footerHref' => route('admin.bookings.index', array_merge($dateRangeParams, ['date_from' => now()->toDateString(), 'date_to' => now()->toDateString()])),
+          'footerTone' => 'text-blue-600',
+          'footerBg' => 'bg-blue-50/60',
+        ],
+      ];
+    @endphp
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      @foreach($overviewCards as $card)
         <x-admin.stat-card
-          :label="$c['label']"
-          :value="$c['value']"
-          :accent="$c['accent']"
-          :value-class="$c['valueClass']"
-          :bg="$c['bg'] ?? 'bg-white'"
-          :border-color="$c['borderColor'] ?? 'border-gray-100'"
-          :meta="$c['meta'] ?? null"
-          :meta-inline="$c['metaInline'] ?? null"
+          :label="$card['label']"
+          :value="$card['value']"
+          :description="$card['description']"
+          :icon="$card['icon']"
+          :href="$card['href']"
+          :icon-bg="$card['iconBg']"
+          :icon-class="$card['iconClass']"
+          :footer-label="$card['footerLabel']"
+          :footer-href="$card['footerHref']"
+          :footer-tone="$card['footerTone']"
+          :footer-bg="$card['footerBg']"
+          bg="bg-white"
         />
       @endforeach
     </div>
@@ -395,7 +515,7 @@
               @if($lowStockProducts > 0) {{ $lowStockProducts }} product(s) @endif
               @if($lowStockProducts > 0 && $lowStockFoods > 0) and @endif
               @if($lowStockFoods > 0) {{ $lowStockFoods }} food item(s) @endif
-              have low stock (≤10 units).
+              have low stock (&le;10 units).
             </p>
             <p class="text-xs text-yellow-700 mt-1">Consider restocking soon to avoid order issues.</p>
           </div>
@@ -404,52 +524,294 @@
     </section>
   @endif
 
-  {{-- Analytics --}}
-  <section aria-label="Analytics tiles">
+  <section aria-label="Revenue, user and booking overview" class="space-y-6">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
+      <x-admin.section-card title="Revenue Summary" icon="banknote" :action-text="$rangeShortLabel" class="h-full">
+        <div class="flex h-full flex-col justify-between gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            @foreach($revenueTiles as $tile)
+              <div class="flex min-h-50 flex-col justify-start rounded-xl {{ $tile['bg'] }} p-4 shadow-[0_1px_0_rgba(15,23,42,0.02)]">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] {{ $tile['labelClass'] }}">{{ $tile['label'] }}</p>
+                <p class="mt-1.5 text-2xl font-semibold tracking-tight text-gray-900">{{ $tile['value'] }}</p>
+                <p class="mt-2 text-sm leading-6 text-gray-500">{{ $tile['description'] }}</p>
+              </div>
+            @endforeach
+          </div>
 
-      <x-admin.section-card title="Revenue Analytics">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          @foreach($revenueTiles as $t)
-            @php
-              $tileTag = !empty($t['href']) ? 'a' : 'div';
-              $tileClasses = 'rounded-2xl bg-gray-50 p-4 text-center';
-              if (!empty($t['href'])) {
-                  $tileClasses .= ' block hover:bg-blue-50 transition';
-              }
-            @endphp
-            <{{ $tileTag }} @if(!empty($t['href'])) href="{{ $t['href'] }}" @endif class="{{ $tileClasses }}">
-              <p class="text-xs uppercase tracking-wide text-gray-500">{{ $t['label'] }}</p>
-              <p class="mt-2 text-xl font-extrabold {{ $t['class'] }}">{{ $t['value'] }}</p>
-              @if(!empty($t['hint']))
-                <p class="mt-1 text-xs text-gray-500">{{ $t['hint'] }}</p>
-              @endif
-            </{{ $tileTag }}>
-          @endforeach
-        </div>
-      </x-admin.section-card>
-
-      <x-admin.section-card title="User Analytics">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          @foreach($userTiles as $t)
-            <div class="rounded-2xl bg-gray-50 p-4 text-center">
-              <p class="text-xs uppercase tracking-wide text-gray-500">{{ $t['label'] }}</p>
-              <p class="mt-2 text-xl font-extrabold {{ $t['class'] }}">{{ $t['value'] }}</p>
-              @if(!empty($t['hint']))
-                <p class="mt-1 text-xs text-orange-600">{{ $t['hint'] }}</p>
-              @endif
+          <div class="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 flex min-h-18 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-3">
+              <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white text-gray-700 ring-1 ring-gray-200">
+                <i data-lucide="badge-dollar-sign" class="h-5 w-5"></i>
+              </span>
+              <div>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">Total Revenue (Completed)</p>
+                <p class="text-xl font-semibold tracking-tight text-gray-900">{{ $fmtMoney($completedRevenue) }}</p>
+              </div>
             </div>
-          @endforeach
+            <div class="text-left sm:text-right">
+              <p class="inline-flex items-center gap-1 text-sm font-semibold {{ $completedRevenueTrendClass }}">
+                <i data-lucide="{{ $completedRevenueTrendIcon }}" class="h-4 w-4"></i>
+                <span>{{ number_format(abs($completedRevenueChangePercent), 1) }}%</span>
+              </p>
+              <p class="text-xs text-gray-500">{{ $completedRevenueComparisonLabel ?? 'vs previous period' }}</p>
+            </div>
+          </div>
         </div>
       </x-admin.section-card>
 
+      <x-admin.section-card title="User Summary" icon="users" class="h-full">
+        <div class="flex h-full flex-col justify-between gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            @foreach($userTiles as $tile)
+              <div class="flex min-h-50 flex-col items-center justify-start rounded-xl bg-gray-50/80 p-4 text-center shadow-[0_1px_0_rgba(15,23,42,0.02)]">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">{{ $tile['label'] }}</p>
+                <p class="mt-2 text-2xl font-semibold tracking-tight {{ $tile['valueClass'] }}">{{ $tile['value'] }}</p>
+                <p class="mt-2 min-h-10 text-sm leading-5 text-gray-500">{{ $tile['description'] }}</p>
+                <div class="mt-4 mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full {{ $tile['iconBg'] }}">
+                  <i data-lucide="{{ $tile['icon'] }}" class="h-6 w-6 {{ $tile['iconClass'] }}"></i>
+                </div>
+              </div>
+            @endforeach
+          </div>
+
+          <div class="rounded-xl border border-gray-100 bg-blue-50/30 px-4 py-3 flex min-h-18 items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
+                <i data-lucide="users" class="h-5 w-5"></i>
+              </span>
+              <div>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">Total Users</p>
+                <p class="text-xl font-semibold tracking-tight text-gray-900">{{ $fmtInt($totalUsers) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </x-admin.section-card>
     </div>
+
+    <x-admin.section-card
+      title="Bookings Overview"
+      subtitle="Summary of bookings status for the selected period."
+      icon="bar-chart-3"
+      :action-text="$rangeShortLabel"
+    >
+      <div x-data="{ mode: 'count' }">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+            <button type="button"
+                    @click="mode = 'count'"
+                    class="rounded-md px-3 py-1.5 text-sm font-medium transition"
+                    :class="mode === 'count' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'">
+              Count
+            </button>
+            <button type="button"
+                    @click="mode = 'amount'"
+                    class="rounded-md px-3 py-1.5 text-sm font-medium transition"
+                    :class="mode === 'amount' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'">
+              Amount
+            </button>
+          </div>
+
+          <p class="text-xs text-gray-500" x-show="mode === 'count'">Booking count by status</p>
+          <p class="text-xs text-gray-500" x-show="mode === 'amount'" x-cloak>Booked amount by booking date</p>
+        </div>
+
+        <div x-show="mode === 'count'">
+          <div class="flex flex-wrap items-center justify-center gap-8 text-xs text-gray-600">
+            <div class="inline-flex items-center gap-2">
+              <span class="h-1.5 w-5 rounded-full bg-blue-500"></span>
+              <span>Upcoming</span>
+            </div>
+            <div class="inline-flex items-center gap-2">
+              <span class="h-1.5 w-5 rounded-full bg-emerald-500"></span>
+              <span>Recent</span>
+            </div>
+            <div class="inline-flex items-center gap-2">
+              <span class="h-1.5 w-5 rounded-full bg-amber-500"></span>
+              <span>Pending</span>
+            </div>
+            <div class="inline-flex items-center gap-2">
+              <span class="h-1.5 w-5 rounded-full bg-violet-500"></span>
+              <span>Refund</span>
+            </div>
+          </div>
+
+      @if($bookingOverviewSeries->count() > 0)
+        <div class="mt-5 overflow-x-auto rounded-2xl bg-gray-50/40 p-3 ring-1 ring-gray-100">
+          <div class="min-w-250">
+            <svg viewBox="0 0 {{ $bookingChartWidth }} {{ $bookingChartHeight }}" class="h-80 w-full text-gray-300 lg:h-88" role="img" aria-label="Bookings overview chart">
+              <defs>
+                <linearGradient id="booking-grid-line" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#e5e7eb" stop-opacity="1" />
+                  <stop offset="100%" stop-color="#e5e7eb" stop-opacity="0.35" />
+                </linearGradient>
+              </defs>
+
+              @foreach($bookingCountTicks as $gridValue)
+                @php
+                  $fraction = $bookingOverviewMax > 0 ? ((int) $gridValue / $bookingOverviewMax) : 0;
+                  $y = $bookingChartHeight - $bookingChartBottom - ($bookingChartPlotHeight * $fraction);
+                @endphp
+                <text x="0" y="{{ number_format($y + 4, 2, '.', '') }}" class="fill-gray-500 text-[12px]">{{ $bookingAxisLabel($gridValue) }}</text>
+                <line x1="{{ $bookingChartLeft }}" y1="{{ number_format($y, 2, '.', '') }}" x2="{{ $bookingChartWidth - $bookingChartRight }}" y2="{{ number_format($y, 2, '.', '') }}" stroke="url(#booking-grid-line)" stroke-width="1" />
+              @endforeach
+
+              @php
+                $seriesMeta = [
+                  ['key' => 'upcoming', 'stroke' => '#2563eb'],
+                  ['key' => 'recent', 'stroke' => '#059669'],
+                  ['key' => 'pending', 'stroke' => '#f59e0b'],
+                  ['key' => 'refund', 'stroke' => '#a855f7'],
+                ];
+              @endphp
+
+              @foreach($seriesMeta as $series)
+                <polyline
+                  fill="none"
+                  stroke="{{ $series['stroke'] }}"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  points="{{ $bookingChartLine($series['key']) }}"
+                />
+              @endforeach
+
+              @foreach($bookingOverviewSeries as $index => $row)
+                @php
+                  $x = $bookingOverviewCount === 1
+                    ? $bookingChartLeft
+                    : $bookingChartLeft + (($bookingChartWidth - $bookingChartLeft - $bookingChartRight) * ($index / ($bookingOverviewCount - 1)));
+                  $points = [
+                    ['value' => (int) ($row->upcoming ?? 0), 'stroke' => '#2563eb'],
+                    ['value' => (int) ($row->recent ?? 0), 'stroke' => '#059669'],
+                    ['value' => (int) ($row->pending ?? 0), 'stroke' => '#f59e0b'],
+                    ['value' => (int) ($row->refund ?? 0), 'stroke' => '#a855f7'],
+                  ];
+                @endphp
+                @foreach($points as $point)
+                  @php
+                    $y = $bookingChartHeight - $bookingChartBottom - ($bookingChartPlotHeight * ($point['value'] / $bookingOverviewMax));
+                  @endphp
+                  <circle cx="{{ number_format($x, 2, '.', '') }}" cy="{{ number_format($y, 2, '.', '') }}" r="3.75" fill="{{ $point['stroke'] }}" fill-opacity="0.95" />
+                @endforeach
+              @endforeach
+
+              @foreach($bookingOverviewSeries as $index => $row)
+                @if($index % $bookingLabelStep === 0 || $index === $bookingOverviewSeries->count() - 1)
+                  @php
+                    $x = $bookingOverviewCount === 1
+                      ? $bookingChartLeft
+                      : $bookingChartLeft + (($bookingChartWidth - $bookingChartLeft - $bookingChartRight) * ($index / ($bookingOverviewCount - 1)));
+                  @endphp
+                  <text x="{{ number_format($x, 2, '.', '') }}" y="{{ $bookingChartHeight - 10 }}" text-anchor="middle" class="fill-gray-500 text-[12px]">{{ $row->label }}</text>
+                @endif
+              @endforeach
+            </svg>
+          </div>
+        </div>
+      @else
+        <p class="py-10 text-center text-sm text-gray-500">No booking data available</p>
+      @endif
+        </div>
+
+        <div x-show="mode === 'amount'" x-cloak>
+          <div class="flex flex-wrap items-center justify-center gap-8 text-xs text-gray-600">
+            <div class="inline-flex items-center gap-2">
+              <span class="h-1.5 w-5 rounded-full bg-blue-500"></span>
+              <span>Completed Revenue</span>
+            </div>
+            <div class="inline-flex items-center gap-2">
+              <span class="h-1.5 w-5 rounded-full bg-amber-500"></span>
+              <span>Pending Amount</span>
+            </div>
+            <div class="inline-flex items-center gap-2">
+              <span class="h-1.5 w-5 rounded-full bg-violet-500"></span>
+              <span>Refund Amount</span>
+            </div>
+          </div>
+
+          @if($revenueSummarySeries->count() > 0)
+            <div class="mt-5 overflow-x-auto rounded-2xl bg-gray-50/40 p-3 ring-1 ring-gray-100">
+              <div class="min-w-250">
+                <svg viewBox="0 0 {{ $bookingChartWidth }} {{ $bookingChartHeight }}" class="h-80 w-full text-gray-300 lg:h-88" role="img" aria-label="Booking value overview chart">
+                  <defs>
+                    <linearGradient id="booking-value-grid-line" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#e5e7eb" stop-opacity="1" />
+                      <stop offset="100%" stop-color="#e5e7eb" stop-opacity="0.35" />
+                    </linearGradient>
+                  </defs>
+
+                  @foreach([1, .75, .5, .25, 0] as $fraction)
+                    @php
+                      $gridValue = $bookingAmountOverviewMax * $fraction;
+                      $y = $bookingChartHeight - $bookingChartBottom - ($bookingChartPlotHeight * $fraction);
+                    @endphp
+                    <text x="0" y="{{ number_format($y + 4, 2, '.', '') }}" class="fill-gray-500 text-[12px]">{{ $bookingMoneyAxisLabel($gridValue) }}</text>
+                    <line x1="{{ $bookingChartLeft }}" y1="{{ number_format($y, 2, '.', '') }}" x2="{{ $bookingChartWidth - $bookingChartRight }}" y2="{{ number_format($y, 2, '.', '') }}" stroke="url(#booking-value-grid-line)" stroke-width="1" />
+                  @endforeach
+
+                  @php
+                    $amountSeriesMeta = [
+                      ['key' => 'completed', 'stroke' => '#2563eb'],
+                      ['key' => 'pending', 'stroke' => '#f59e0b'],
+                      ['key' => 'refund', 'stroke' => '#a855f7'],
+                    ];
+                  @endphp
+
+                  @foreach($amountSeriesMeta as $series)
+                    <polyline
+                      fill="none"
+                      stroke="{{ $series['stroke'] }}"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      points="{{ $bookingAmountChartLine($series['key']) }}"
+                    />
+                  @endforeach
+
+                  @foreach($revenueSummarySeries as $index => $row)
+                    @php
+                      $x = $bookingOverviewCount === 1
+                        ? $bookingChartLeft
+                        : $bookingChartLeft + (($bookingChartWidth - $bookingChartLeft - $bookingChartRight) * ($index / ($bookingOverviewCount - 1)));
+                      $points = [
+                        ['value' => (float) ($row->completed ?? 0), 'stroke' => '#2563eb'],
+                        ['value' => (float) ($row->pending ?? 0), 'stroke' => '#f59e0b'],
+                        ['value' => (float) ($row->refund ?? 0), 'stroke' => '#a855f7'],
+                      ];
+                    @endphp
+                    @foreach($points as $point)
+                      @php
+                        $y = $bookingChartHeight - $bookingChartBottom - ($bookingChartPlotHeight * ($point['value'] / $bookingAmountOverviewMax));
+                      @endphp
+                      <circle cx="{{ number_format($x, 2, '.', '') }}" cy="{{ number_format($y, 2, '.', '') }}" r="3.75" fill="{{ $point['stroke'] }}" fill-opacity="0.95" />
+                    @endforeach
+                  @endforeach
+
+                  @foreach($revenueSummarySeries as $index => $row)
+                    @if($index % $bookingLabelStep === 0 || $index === $revenueSummarySeries->count() - 1)
+                      @php
+                        $x = $bookingOverviewCount === 1
+                          ? $bookingChartLeft
+                          : $bookingChartLeft + (($bookingChartWidth - $bookingChartLeft - $bookingChartRight) * ($index / ($bookingOverviewCount - 1)));
+                      @endphp
+                      <text x="{{ number_format($x, 2, '.', '') }}" y="{{ $bookingChartHeight - 10 }}" text-anchor="middle" class="fill-gray-500 text-[12px]">{{ $row->label }}</text>
+                    @endif
+                  @endforeach
+                </svg>
+              </div>
+            </div>
+          @else
+            <p class="py-10 text-center text-sm text-gray-500">No booking value data available</p>
+          @endif
+        </div>
+      </div>
+    </x-admin.section-card>
   </section>
 
   {{-- Recent Bookings + Monthly Bookings --}}
-  <section aria-label="Bookings overview">
+  <section aria-label="Bookings overview details">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
-
       <x-admin.section-card title="Recent Bookings" action-text="View all" :action-href="route('admin.bookings.index')">
         @if($recentBookings->count() > 0)
           <div class="divide-y divide-gray-100">
@@ -460,7 +822,7 @@
                     {{ $booking->display_customer_name }}
                   </p>
                   <p class="text-sm text-gray-500">
-                    {{ $booking->booking_type }} · {{ $booking->checkin_date->format('M d, Y') }}
+                    {{ $booking->booking_type }} &middot; {{ $booking->checkin_date->format('M d, Y') }}
                   </p>
                 </div>
 
@@ -505,7 +867,6 @@
           <p class="text-gray-500 text-center py-10">No booking data available</p>
         @endif
       </x-admin.section-card>
-
     </div>
   </section>
 
@@ -534,7 +895,7 @@
         </div>
         <div class="mt-4 pt-3 border-t border-gray-100">
           <a href="{{ route('admin.settings.alerts') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
-            View All Alerts →
+             View All Alerts &rarr;
           </a>
         </div>
       @else
@@ -570,7 +931,7 @@
         </div>
         <div class="mt-4 pt-3 border-t border-gray-100">
           <a href="{{ route('admin.settings.activity-log') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
-            View Full Log →
+             View Full Log &rarr;
           </a>
         </div>
       @else
