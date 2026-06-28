@@ -93,7 +93,9 @@
           ['title'=>'Bookings','icon'=>'calendar-check','route'=>'admin.bookings.*','sub'=>[
             ['label'=>'All Bookings','route'=>'admin.bookings.index'],
             ['label'=>'Unified Inventory','route'=>'admin.bookings.inventory'],
-            ['label'=>'PayMongo Logs','route'=>'admin.bookings.paymongo-webhooks'],
+            ['label'=>'Staycation Bookings','route'=>'admin.bookings.staycations'],
+            ['label'=>'Food Bookings','route'=>'admin.bookings.foodandbeverage'],
+            ['label'=>'Activities Bookings','route'=>'admin.bookings.activities'],
           ]],
           //['title'=>'Reservation Monitor','icon'=>'bell-ring','route'=>'admin.reservations.*','sub'=>[
           //  ['label'=>'Monitor','route'=>'admin.reservations.monitor'],
@@ -158,7 +160,7 @@
             @php
               $isAnySubActive = false;
               foreach($item['sub'] as $sub){
-                if(request()->routeIs($sub['route'])){
+                if(\Illuminate\Support\Facades\Route::has($sub['route']) && request()->routeIs($sub['route'])){
                   $isAnySubActive = true;
                   break;
                 }
@@ -180,6 +182,7 @@
 
               <div x-cloak x-show="open" x-transition class="pl-6 space-y-1">
                 @foreach($item['sub'] as $sub)
+                  @if(\Illuminate\Support\Facades\Route::has($sub['route']))
                   @php
                     $subParams = $sub['params'] ?? [];
                     $subRouteActive = request()->routeIs($sub['route']) && (
@@ -190,10 +193,11 @@
                     href="{{ route($sub['route'], $subParams) }}"
                     @click="closeSidebar()"
                     class="flex items-center gap-2 px-3 py-2 rounded-lg transition {{ $subRouteActive ? 'text-yellow-200 bg-white/5' : 'hover:bg-white/5 hover:text-gray-100' }}"
-                  >
-                    <i data-lucide="dot" class="w-4 h-4"></i>
-                    <span class="truncate">{{ $sub['label'] }}</span>
-                  </a>
+                    >
+                      <i data-lucide="dot" class="w-4 h-4"></i>
+                      <span class="truncate">{{ $sub['label'] }}</span>
+                    </a>
+                  @endif
                 @endforeach
               </div>
             </div>

@@ -947,9 +947,9 @@ class AdminBookingsController extends Controller
 
     private function normalizePaymentScope(Request $request): string
     {
-        $scope = (string) $request->query('payment_scope', 'all');
+        $scope = (string) $request->query('payment_scope', 'operational');
 
-        return in_array($scope, ['operational', 'all', 'attempts'], true) ? $scope : 'all';
+        return in_array($scope, ['operational', 'all', 'attempts'], true) ? $scope : 'operational';
     }
 
     private function applyPaymentLifecycleFilters(Builder $query, Request $request, string $paymentScope, Carbon $pendingCutoff): void

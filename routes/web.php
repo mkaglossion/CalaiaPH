@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminUsersController;
 use App\Http\Controllers\Admin\AdminBookingsController;
+use App\Http\Controllers\Admin\AdminBookingMonitoringController;
 use App\Http\Controllers\Admin\AdminStaycationsController;
 use App\Http\Controllers\Admin\AdminActivitiesController;
 use App\Http\Controllers\Admin\AdminReportsController;
@@ -534,6 +535,12 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/export', [AdminBookingsController::class, 'export'])->name('admin.bookings.export');
         Route::get('/inventory', [InventoryManagementController::class, 'index'])->name('admin.bookings.inventory');
         Route::get('/paymongo-webhooks', [AdminBookingsController::class, 'paymongoWebhooks'])->name('admin.bookings.paymongo-webhooks');
+        Route::get('/staycations', [AdminBookingMonitoringController::class, 'staycations'])->name('admin.bookings.staycations');
+        Route::get('/staycations/export', [AdminBookingMonitoringController::class, 'exportStaycations'])->name('admin.bookings.staycations.export');
+        Route::get('/food-and-beverage', [AdminBookingMonitoringController::class, 'foodAndBeverage'])->name('admin.bookings.foodandbeverage');
+        Route::get('/food-and-beverage/export', [AdminBookingMonitoringController::class, 'exportFoodAndBeverage'])->name('admin.bookings.foodandbeverage.export');
+        Route::get('/activities', [AdminBookingMonitoringController::class, 'activities'])->name('admin.bookings.activities');
+        Route::get('/activities/export', [AdminBookingMonitoringController::class, 'exportActivities'])->name('admin.bookings.activities.export');
 
         // Booking Extra Fees (mattress, pet fees) - must come before {id} route
         Route::get('/extra-fees', [BookingSettingsController::class, 'index'])->name('admin.booking-settings.index');

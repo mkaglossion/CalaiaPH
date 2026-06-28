@@ -26,7 +26,7 @@ class AdminDashboardController extends Controller
         $applyRange = function (Builder $query, string $dateColumn) use ($start, $end) {
             return $query->when(
                 $start && $end,
-                fn ($q) => $q->whereBetween($dateColumn, [$start->toDateString(), $end->toDateString()])
+                fn ($q) => $q->whereBetween($dateColumn, [$start, $end])
             );
         };
         $applyRecentRange = function (Builder $query) use ($start, $end) {
@@ -56,33 +56,33 @@ class AdminDashboardController extends Controller
         // -----------------------------
         $base = $applyRange(
             Booking::query()->whereNotIn('payment_status', ['pending', 'failed']),
-            'checkin_date'
+            'created_at'
         );
         $packageBase = $applyRange(
             PackageBooking::query()->whereNotIn('payment_status', ['pending', 'failed']),
-            'booking_date'
+            'created_at'
         );
         $pendingBase = $applyRange(
             Booking::query()
                 ->where('payment_status', 'pending')
                 ->whereNotIn('status', ['cancelled', 'completed'])
                 ->where('created_at', '>=', $pendingCutoff),
-            'checkin_date'
+            'created_at'
         );
         $pendingPackageBase = $applyRange(
             PackageBooking::query()
                 ->where('payment_status', 'pending')
                 ->whereNotIn('status', ['cancelled', 'completed'])
                 ->where('created_at', '>=', $pendingCutoff),
-            'booking_date'
+            'created_at'
         );
         $attemptBase = $applyRange(
             Booking::query()->whereIn('payment_status', ['pending', 'failed']),
-            'checkin_date'
+            'created_at'
         );
         $attemptPackageBase = $applyRange(
             PackageBooking::query()->whereIn('payment_status', ['pending', 'failed']),
-            'booking_date'
+            'created_at'
         );
 
         $agg = (clone $base)->selectRaw("
@@ -272,7 +272,7 @@ class AdminDashboardController extends Controller
         $applyRange = function (Builder $query, string $dateColumn) use ($start, $end) {
             return $query->when(
                 $start && $end,
-                fn ($q) => $q->whereBetween($dateColumn, [$start->toDateString(), $end->toDateString()])
+                fn ($q) => $q->whereBetween($dateColumn, [$start, $end])
             );
         };
 
@@ -285,25 +285,25 @@ class AdminDashboardController extends Controller
 
         $base = $applyRange(
             Booking::query()->whereNotIn('payment_status', ['pending', 'failed']),
-            'checkin_date'
+            'created_at'
         );
         $packageBase = $applyRange(
             PackageBooking::query()->whereNotIn('payment_status', ['pending', 'failed']),
-            'booking_date'
+            'created_at'
         );
         $pendingBase = $applyRange(
             Booking::query()
                 ->where('payment_status', 'pending')
                 ->whereNotIn('status', ['cancelled', 'completed'])
                 ->where('created_at', '>=', $pendingCutoff),
-            'checkin_date'
+            'created_at'
         );
         $pendingPackageBase = $applyRange(
             PackageBooking::query()
                 ->where('payment_status', 'pending')
                 ->whereNotIn('status', ['cancelled', 'completed'])
                 ->where('created_at', '>=', $pendingCutoff),
-            'booking_date'
+            'created_at'
         );
 
         $agg = (clone $base)->selectRaw("
