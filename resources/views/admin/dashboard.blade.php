@@ -409,19 +409,19 @@
   ];
 @endphp
 
-<div x-data="dashboard(@js($range))" x-init="init()" class="space-y-4 lg:space-y-5">
-  <section class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+<div x-data="dashboard(@js($range))" x-init="init()" class="space-y-3 lg:space-y-4">
+  <section class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
     <div>
-      <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Dashboard Overview</h1>
-      <p class="mt-1 text-sm text-slate-500">Monitor your bookings, revenue, and overall performance.</p>
+      <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Dashboard Overview</h1>
+      <p class="mt-1 text-xs text-slate-500 sm:text-sm">Monitor your bookings, revenue, and overall performance.</p>
     </div>
 
-    <form method="GET" @submit="isLoading = true" class="flex w-full flex-col gap-3 xl:w-auto xl:items-end">
+    <form method="GET" @submit="isLoading = true" class="flex w-full flex-col gap-2.5 xl:w-auto xl:items-end">
       <input type="hidden" name="sales_view" value="{{ $salesView }}">
 
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center">
         <div class="relative">
-          <div class="pointer-events-none inline-flex min-w-55 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm">
+          <div class="pointer-events-none inline-flex min-w-55 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-medium text-slate-700 shadow-sm sm:text-sm">
             <i data-lucide="calendar-days" class="h-4 w-4 text-slate-500"></i>
             <span class="sm:truncate sm:whitespace-nowrap">{{ $rangeDisplay }}</span>
             <i data-lucide="chevron-down" class="ml-auto h-4 w-4 text-slate-400"></i>
@@ -440,7 +440,7 @@
 
         <a
           href="{{ route('admin.dashboard.export', request()->query()) }}"
-          class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:text-sm"
         >
           <i data-lucide="download" class="h-4 w-4"></i>
           <span>Export</span>
@@ -450,23 +450,23 @@
       <div
         x-show="range === 'custom'"
         x-cloak
-        class="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center"
+        class="flex flex-col gap-2.5 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center"
       >
         <input
           type="date"
           name="from"
           value="{{ $from }}"
-          class="rounded-xl border-slate-200 text-sm text-slate-700 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+          class="rounded-xl border-slate-200 text-xs text-slate-700 focus:border-[#8f5d54] focus:ring-[#8f5d54] sm:text-sm"
         >
         <input
           type="date"
           name="to"
           value="{{ $to }}"
-          class="rounded-xl border-slate-200 text-sm text-slate-700 focus:border-[#8f5d54] focus:ring-[#8f5d54]"
+          class="rounded-xl border-slate-200 text-xs text-slate-700 focus:border-[#8f5d54] focus:ring-[#8f5d54] sm:text-sm"
         >
         <button
           type="submit"
-          class="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          class="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-slate-800 sm:text-sm"
         >
           Apply
         </button>
@@ -474,24 +474,24 @@
     </form>
   </section>
 
-  <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+  <section class="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-4">
     @foreach($overviewCards as $card)
       <a
         href="{{ $card['href'] }}"
-        class="group rounded-3xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+        class="group rounded-3xl border border-slate-200 bg-white p-3.5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
       >
-        <div class="flex items-start gap-4">
+        <div class="flex items-start gap-3.5">
           <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl {{ $card['iconWrap'] }}">
             <i data-lucide="{{ $card['icon'] }}" class="h-6 w-6"></i>
           </span>
           <div class="min-w-0">
-            <p class="text-sm font-semibold text-slate-900 sm:truncate sm:whitespace-nowrap">{{ $card['label'] }}</p>
-            <p class="mt-2 whitespace-nowrap text-[1.65rem] font-bold leading-none text-slate-900 sm:text-[1.8rem]">{{ $card['value'] }}</p>
-            <p class="mt-2 text-[0.95rem] text-slate-500 sm:truncate sm:whitespace-nowrap">{{ $card['description'] }}</p>
+            <p class="text-xs font-semibold text-slate-900 sm:text-sm sm:truncate sm:whitespace-nowrap">{{ $card['label'] }}</p>
+            <p class="mt-2 whitespace-nowrap text-[1.35rem] font-bold leading-none text-slate-900 sm:text-[1.55rem]">{{ $card['value'] }}</p>
+            <p class="mt-2 text-[0.85rem] text-slate-500 sm:text-sm sm:truncate sm:whitespace-nowrap">{{ $card['description'] }}</p>
           </div>
         </div>
 
-        <div class="mt-5 flex items-center justify-between border-t border-slate-100 pt-3 text-sm font-semibold {{ $card['linkTone'] }}">
+        <div class="mt-5 flex items-center justify-between border-t border-slate-100 pt-3 text-xs font-semibold sm:text-sm {{ $card['linkTone'] }}">
           <span>View details</span>
           <i data-lucide="chevron-right" class="h-4 w-4 transition group-hover:translate-x-1"></i>
         </div>
@@ -500,7 +500,7 @@
   </section>
 
   @if($lowStockProducts > 0 || $lowStockFoods > 0)
-    <section class="rounded-3xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
+    <section class="rounded-3xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900 shadow-sm sm:text-sm">
       <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-3">
           <i data-lucide="triangle-alert" class="h-5 w-5 text-amber-600"></i>
@@ -518,40 +518,40 @@
   @endif
 
   <section class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-    <div class="flex items-center justify-between border-b border-slate-100 px-4 py-4 sm:px-5">
+    <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3.5 sm:px-5">
       <div class="flex items-center gap-2">
         <span class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500">
           <i data-lucide="circle-dollar-sign" class="h-4 w-4"></i>
         </span>
-        <h2 class="text-lg font-semibold text-slate-900 sm:whitespace-nowrap">Revenue Summary</h2>
+        <h2 class="text-base font-semibold text-slate-900 sm:text-lg sm:whitespace-nowrap">Revenue Summary</h2>
       </div>
-      <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm">
+      <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm sm:text-sm">
         <span class="sm:whitespace-nowrap">{{ $rangeShortLabel }}</span>
         <i data-lucide="chevron-down" class="h-4 w-4 text-slate-400"></i>
       </span>
     </div>
 
-    <div class="grid grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-2 sm:px-5 lg:grid-cols-4">
+    <div class="grid grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-2 sm:px-5 lg:grid-cols-4">
       @foreach($revenueTiles as $index => $tile)
-        <div class="rounded-2xl bg-slate-50/70 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
-          <p class="text-sm font-semibold {{ $tile['accent'] }} sm:truncate sm:whitespace-nowrap">{{ $tile['label'] }}</p>
+        <div class="rounded-2xl bg-slate-50/70 px-3.5 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+          <p class="text-xs font-semibold {{ $tile['accent'] }} sm:text-sm sm:truncate sm:whitespace-nowrap">{{ $tile['label'] }}</p>
           <div class="mt-3 flex items-center gap-2">
-            <p class="text-[1.65rem] font-bold leading-none tracking-tight text-slate-900 sm:text-[1.8rem]">{{ $tile['value'] }}</p>
+            <p class="text-[1.35rem] font-bold leading-none tracking-tight text-slate-900 sm:text-[1.55rem]">{{ $tile['value'] }}</p>
             @if($index === 0)
-              <span class="inline-flex items-center gap-1 whitespace-nowrap text-xs font-semibold sm:text-sm {{ $revenueChangeUp ? 'text-emerald-600' : 'text-red-500' }}">
+              <span class="inline-flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold sm:text-xs {{ $revenueChangeUp ? 'text-emerald-600' : 'text-red-500' }}">
                 <i data-lucide="{{ $revenueChangeUp ? 'trending-up' : 'trending-down' }}" class="h-3 w-3 sm:h-3.5 sm:w-3.5"></i>
                 <span>{{ $revenueChangeLabel }}</span>
               </span>
             @endif
           </div>
-          <p class="mt-3 text-sm text-slate-500 sm:truncate sm:whitespace-nowrap">{{ $tile['caption'] }}</p>
-          <p class="mt-1 text-[0.95rem] leading-6 text-slate-500">{{ $tile['meta'] }}</p>
+          <p class="mt-3 text-xs text-slate-500 sm:text-sm sm:truncate sm:whitespace-nowrap">{{ $tile['caption'] }}</p>
+          <p class="mt-1 text-[0.85rem] leading-5 text-slate-500">{{ $tile['meta'] }}</p>
         </div>
       @endforeach
     </div>
 
     <div class="px-4 pb-4 sm:px-5 sm:pb-5">
-      <div class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
+      <div class="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-500 sm:text-sm">
         <span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-500">
           <i data-lucide="info" class="h-3.5 w-3.5"></i>
         </span>
@@ -561,29 +561,29 @@
   </section>
 
   <section class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-    <div class="flex items-center justify-between border-b border-slate-100 px-4 py-4 sm:px-5">
+    <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3.5 sm:px-5">
       <div class="flex items-center gap-2">
         <i data-lucide="sparkles" class="h-5 w-5 text-slate-500"></i>
-        <h2 class="text-lg font-semibold text-slate-900 sm:whitespace-nowrap">Sales Report by Category</h2>
+        <h2 class="text-base font-semibold text-slate-900 sm:text-lg sm:whitespace-nowrap">Sales Report by Category</h2>
       </div>
-      <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700">
+      <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 sm:text-sm">
         <span class="sm:whitespace-nowrap">{{ $rangeShortLabel }}</span>
         <i data-lucide="chevron-down" class="h-4 w-4 text-slate-400"></i>
       </span>
     </div>
 
-    <div class="grid grid-cols-1 gap-4 px-4 py-4 md:grid-cols-2 xl:grid-cols-4 sm:px-5">
+    <div class="grid grid-cols-1 gap-3.5 px-4 py-3.5 md:grid-cols-2 xl:grid-cols-4 sm:px-5">
       @foreach($salesCategoryCards as $card)
-        <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div class="flex items-start gap-4">
+        <div class="rounded-3xl border border-slate-200 bg-white p-3.5 shadow-sm">
+          <div class="flex items-start gap-3.5">
             <span class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl {{ $card['tone'] }}">
               <i data-lucide="{{ $card['icon'] }}" class="h-5 w-5"></i>
             </span>
             <div class="min-w-0">
-              <p class="text-sm font-semibold text-slate-900 sm:truncate sm:whitespace-nowrap">{{ $card['label'] }}</p>
-              <p class="mt-2.5 whitespace-nowrap text-[1.65rem] font-bold leading-none text-slate-900 sm:text-[1.8rem]">{{ $card['value'] }}</p>
-              <p class="mt-3 text-[0.95rem] text-slate-500 sm:truncate sm:whitespace-nowrap">{{ $card['share'] }}</p>
-              <p class="mt-1 text-[0.95rem] text-slate-500 sm:truncate sm:whitespace-nowrap">{{ $card['count'] }}</p>
+              <p class="text-xs font-semibold text-slate-900 sm:text-sm sm:truncate sm:whitespace-nowrap">{{ $card['label'] }}</p>
+              <p class="mt-2.5 whitespace-nowrap text-[1.35rem] font-bold leading-none text-slate-900 sm:text-[1.55rem]">{{ $card['value'] }}</p>
+              <p class="mt-3 text-[0.85rem] text-slate-500 sm:text-sm sm:truncate sm:whitespace-nowrap">{{ $card['share'] }}</p>
+              <p class="mt-1 text-[0.85rem] text-slate-500 sm:text-sm sm:truncate sm:whitespace-nowrap">{{ $card['count'] }}</p>
             </div>
           </div>
         </div>
@@ -593,10 +593,10 @@
 
   <section class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
     <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div class="flex items-center justify-between border-b border-slate-100 px-4 py-4 sm:px-5">
-        <h2 class="text-lg font-semibold text-slate-900 sm:whitespace-nowrap">Revenue Trend</h2>
-        <label class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700">
-          <select onchange="window.location=this.value" class="border-0 bg-transparent pr-5 text-sm font-medium text-slate-700 focus:ring-0">
+      <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3.5 sm:px-5">
+        <h2 class="text-base font-semibold text-slate-900 sm:text-lg sm:whitespace-nowrap">Revenue Trend</h2>
+        <label class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 sm:text-sm">
+          <select onchange="window.location=this.value" class="border-0 bg-transparent pr-5 text-xs font-medium text-slate-700 focus:ring-0 sm:text-sm">
             @foreach($salesViewOptions as $option)
               <option value="{{ $option['url'] }}" @selected($salesView === $option['value'])>{{ $option['label'] }}</option>
             @endforeach
@@ -604,13 +604,13 @@
         </label>
       </div>
 
-      <div x-data="chartHoverCard({{ $revenueChartWidth }}, {{ $revenueChartHeight }}, 'money')" @mouseleave="clearActive()" class="px-4 py-4 sm:px-5">
+      <div x-data="chartHoverCard({{ $revenueChartWidth }}, {{ $revenueChartHeight }}, 'money')" @mouseleave="clearActive()" class="px-4 py-3.5 sm:px-5">
         @if($revenueSummarySeries->count() > 0)
           <div class="mb-2.5 flex items-center gap-2 text-xs font-medium text-slate-600">
             <span class="h-1.5 w-5 rounded-full bg-blue-600"></span>
             <span class="sm:whitespace-nowrap">Revenue ({{ $peso }})</span>
           </div>
-          <div class="overflow-x-auto rounded-3xl bg-[linear-gradient(180deg,#f8fbff_0%,#f8fafc_100%)] p-2.5">
+          <div class="overflow-x-auto rounded-3xl bg-[linear-gradient(180deg,#f8fbff_0%,#f8fafc_100%)] p-2">
             <div class="relative" style="min-width: {{ $revenueChartWidth }}px;">
               <svg viewBox="0 0 {{ $revenueChartWidth }} {{ $revenueChartHeight }}" class="h-72 w-full" role="img" aria-label="Revenue trend chart">
                 <defs>
@@ -624,7 +624,7 @@
                     $gridValue = $revenueChartMax * $fraction;
                     $y = $revenueChartHeight - $revenueChartBottom - ($revenueChartPlotHeight * $fraction);
                   @endphp
-                  <text x="0" y="{{ number_format($y + 4, 2, '.', '') }}" class="fill-slate-400 text-[13px] font-medium">{{ $fmtCompactMoney($gridValue) }}</text>
+                  <text x="0" y="{{ number_format($y + 4, 2, '.', '') }}" class="fill-slate-400 text-sm font-medium lg:text-base">{{ $fmtCompactMoney($gridValue) }}</text>
                   <line x1="{{ $revenueChartLeft }}" y1="{{ number_format($y, 2, '.', '') }}" x2="{{ $revenueChartWidth - $revenueChartRight }}" y2="{{ number_format($y, 2, '.', '') }}" stroke="#e2e8f0" stroke-dasharray="4 6" />
                 @endforeach
 
@@ -648,33 +648,33 @@
                   @endphp
                   <circle cx="{{ number_format($x, 2, '.', '') }}" cy="{{ number_format($y, 2, '.', '') }}" r="5" fill="#2563eb" stroke="#ffffff" stroke-width="2" class="cursor-pointer" @mouseenter="setActive(@js($payload))" @focus="setActive(@js($payload))" @click="setActive(@js($payload))" tabindex="0" />
                   @if($index % $revenueLabelStep === 0 || $index === $revenueSummarySeries->count() - 1)
-                    <text x="{{ number_format($x, 2, '.', '') }}" y="{{ $revenueChartHeight - 12 }}" text-anchor="middle" class="fill-slate-500 text-[13px] font-medium">{{ $row->label }}</text>
+                    <text x="{{ number_format($x, 2, '.', '') }}" y="{{ $revenueChartHeight - 12 }}" text-anchor="middle" class="fill-slate-500 text-sm font-medium lg:text-base">{{ $row->label }}</text>
                   @endif
                 @endforeach
               </svg>
 
               <div x-show="activePoint" x-cloak class="pointer-events-none absolute z-20 hidden min-w-28 -translate-x-1/2 -translate-y-full rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-lg md:block" :style="tooltipStyle">
-                <p class="text-base font-bold text-slate-900" x-text="formatValue(activePoint?.amount ?? 0)"></p>
+                <p class="text-base font-bold text-slate-900 lg:text-lg" x-text="formatValue(activePoint?.amount ?? 0)"></p>
                 <p class="text-xs text-slate-500" x-text="activePoint?.label ?? ''"></p>
               </div>
             </div>
           </div>
-          <div x-show="activePoint" x-cloak class="mt-2.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm md:hidden">
-            <p class="font-bold text-slate-900" x-text="formatValue(activePoint?.amount ?? 0)"></p>
+          <div x-show="activePoint" x-cloak class="mt-2.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm md:hidden sm:text-sm">
+            <p class="text-base font-bold text-slate-900 lg:text-lg" x-text="formatValue(activePoint?.amount ?? 0)"></p>
             <p class="text-xs text-slate-500" x-text="activePoint?.label ?? ''"></p>
           </div>
         @else
-          <div class="flex min-h-72 items-center justify-center text-sm text-slate-500">No revenue data available.</div>
+          <div class="flex min-h-72 items-center justify-center text-xs text-slate-500 sm:text-sm">No revenue data available.</div>
         @endif
       </div>
     </div>
 
     <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div class="border-b border-slate-100 px-4 py-4 sm:px-5">
-        <h2 class="text-lg font-semibold text-slate-900 sm:whitespace-nowrap">Sales Distribution</h2>
+      <div class="border-b border-slate-100 px-4 py-3.5 sm:px-5">
+        <h2 class="text-base font-semibold text-slate-900 sm:text-lg sm:whitespace-nowrap">Sales Distribution</h2>
       </div>
 
-      <div class="grid grid-cols-1 gap-5 px-4 py-5 sm:px-5 lg:grid-cols-[208px_minmax(0,1fr)] lg:items-center">
+      <div class="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 lg:grid-cols-[208px_minmax(0,1fr)] lg:items-center">
         <div class="flex justify-center lg:justify-self-end lg:pr-1">
           <svg viewBox="0 0 200 200" class="h-50 w-50 lg:h-54 lg:w-54" role="img" aria-label="Sales distribution">
             <circle cx="100" cy="100" r="{{ $salesDistributionRadius }}" fill="none" stroke="#e5e7eb" stroke-width="22"></circle>
@@ -701,16 +701,16 @@
           </svg>
         </div>
 
-        <div class="space-y-5 lg:pl-2">
+        <div class="space-y-4 lg:pl-2">
           @foreach($salesDistributionItems as $item)
             <div class="grid grid-cols-[16px_minmax(0,1fr)_auto] items-start gap-3">
               <span class="mt-1 h-3 w-3 rounded-full" style="background-color: {{ $item->color }};"></span>
               <div class="min-w-0">
-                <p class="font-medium text-slate-800 sm:truncate sm:whitespace-nowrap">{{ $item->label }}</p>
+                <p class="text-xs font-medium text-slate-800 sm:text-sm sm:truncate sm:whitespace-nowrap">{{ $item->label }}</p>
               </div>
               <div class="text-right">
-                <p class="whitespace-nowrap text-[1.4rem] font-semibold leading-none text-slate-900">{{ number_format($item->percent, 0) }}%</p>
-                <p class="mt-1.5 whitespace-nowrap text-[17px] font-medium leading-none text-slate-600">{{ $fmtMoney($item->amount) }}</p>
+                <p class="whitespace-nowrap text-[1.05rem] font-semibold leading-none text-slate-900 sm:text-[1.2rem]">{{ number_format($item->percent, 0) }}%</p>
+                <p class="mt-1.5 whitespace-nowrap text-xs font-medium leading-none text-slate-600 sm:text-sm">{{ $fmtMoney($item->amount) }}</p>
               </div>
             </div>
           @endforeach
@@ -720,10 +720,10 @@
   </section>
 
   <section class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-    <div class="flex items-center justify-between border-b border-slate-100 px-4 py-4 sm:px-5">
-      <h2 class="text-lg font-semibold text-slate-900 sm:whitespace-nowrap">Bookings Overview (Count)</h2>
-      <label class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700">
-        <select onchange="window.location=this.value" class="border-0 bg-transparent pr-5 text-sm font-medium text-slate-700 focus:ring-0">
+    <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3.5 sm:px-5">
+      <h2 class="text-base font-semibold text-slate-900 sm:text-lg sm:whitespace-nowrap">Bookings Overview (Count)</h2>
+      <label class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 sm:text-sm">
+        <select onchange="window.location=this.value" class="border-0 bg-transparent pr-5 text-xs font-medium text-slate-700 focus:ring-0 sm:text-sm">
           @foreach($salesViewOptions as $option)
             <option value="{{ $option['url'] }}" @selected($salesView === $option['value'])>{{ $option['label'] }}</option>
           @endforeach
@@ -731,9 +731,9 @@
       </label>
     </div>
 
-    <div class="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 xl:grid-cols-[minmax(0,1fr)_240px]">
+    <div class="grid grid-cols-1 gap-3.5 px-4 py-3.5 sm:px-5 xl:grid-cols-[minmax(0,1fr)_240px]">
       <div x-data="chartHoverCard({{ $bookingChartWidth }}, {{ $bookingChartHeight }}, 'count')" @mouseleave="clearActive()">
-        <div class="mb-4 flex flex-wrap items-center gap-5 text-xs font-medium text-slate-600">
+        <div class="mb-4 flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600">
           @foreach($bookingSeriesMeta as $series)
             <div class="inline-flex items-center gap-2">
               <span class="h-2 w-5 rounded-full" style="background-color: {{ $series['stroke'] }};"></span>
@@ -743,7 +743,7 @@
         </div>
 
         @if($bookingOverviewChartItems->count() > 0)
-          <div class="overflow-x-auto rounded-3xl bg-slate-50 p-3">
+          <div class="overflow-x-auto rounded-3xl bg-slate-50 p-2.5">
             <div class="relative min-w-190">
               <svg viewBox="0 0 {{ $bookingChartWidth }} {{ $bookingChartHeight }}" class="h-80 w-full" role="img" aria-label="Bookings overview chart">
                 @foreach(range(4, 0) as $step)
@@ -751,7 +751,7 @@
                     $gridValue = $bookingTickStep * $step;
                     $y = $bookingChartHeight - $bookingChartBottom - ($bookingChartPlotHeight * ($gridValue / $bookingOverviewMax));
                   @endphp
-                  <text x="0" y="{{ number_format($y + 4, 2, '.', '') }}" class="fill-slate-400 text-[12px]">{{ number_format($gridValue) }}</text>
+                  <text x="0" y="{{ number_format($y + 4, 2, '.', '') }}" class="fill-slate-400 text-sm lg:text-base">{{ number_format($gridValue) }}</text>
                   <line x1="{{ $bookingChartLeft }}" y1="{{ number_format($y, 2, '.', '') }}" x2="{{ $bookingChartWidth - $bookingChartRight }}" y2="{{ number_format($y, 2, '.', '') }}" stroke="#e2e8f0" stroke-dasharray="4 6" />
                 @endforeach
 
@@ -781,36 +781,36 @@
                   @endforeach
 
                   @if($index % $bookingLabelStep === 0 || $index === $bookingOverviewChartItems->count() - 1)
-                    <text x="{{ number_format($x, 2, '.', '') }}" y="{{ $bookingChartHeight - 10 }}" text-anchor="middle" class="fill-slate-500 text-[12px]">{{ $row->label }}</text>
+                    <text x="{{ number_format($x, 2, '.', '') }}" y="{{ $bookingChartHeight - 10 }}" text-anchor="middle" class="fill-slate-500 text-sm lg:text-base">{{ $row->label }}</text>
                   @endif
                 @endforeach
               </svg>
 
               <div x-show="activePoint" x-cloak class="pointer-events-none absolute z-20 hidden min-w-32 -translate-x-1/2 -translate-y-full rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-lg md:block" :style="tooltipStyle">
-                <p class="text-base font-bold text-slate-900" x-text="formatValue(activePoint?.amount ?? 0)"></p>
+                <p class="text-base font-bold text-slate-900 lg:text-lg" x-text="formatValue(activePoint?.amount ?? 0)"></p>
                 <p class="text-xs text-slate-500" x-text="activePoint?.label ?? ''"></p>
               </div>
             </div>
           </div>
-          <div x-show="activePoint" x-cloak class="mt-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm md:hidden">
-            <p class="font-bold text-slate-900" x-text="formatValue(activePoint?.amount ?? 0)"></p>
+          <div x-show="activePoint" x-cloak class="mt-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm md:hidden sm:text-sm">
+            <p class="text-base font-bold text-slate-900 lg:text-lg" x-text="formatValue(activePoint?.amount ?? 0)"></p>
             <p class="text-xs text-slate-500" x-text="activePoint?.label ?? ''"></p>
           </div>
         @else
-          <div class="flex min-h-80 items-center justify-center text-sm text-slate-500">No booking trend data available.</div>
+          <div class="flex min-h-80 items-center justify-center text-xs text-slate-500 sm:text-sm">No booking trend data available.</div>
         @endif
       </div>
 
       <div class="rounded-2xl border border-slate-200 bg-white">
-        <div class="flex items-center justify-between px-4 py-4">
-          <p class="text-sm font-medium text-slate-500 sm:whitespace-nowrap">Total Bookings</p>
-          <p class="text-[1.7rem] font-semibold leading-none text-slate-900 sm:whitespace-nowrap">{{ $fmtInt($bookingSummaryTotal) }}</p>
+        <div class="flex items-center justify-between px-4 py-3.5">
+          <p class="text-xs font-medium text-slate-500 sm:text-sm sm:whitespace-nowrap">Total Bookings</p>
+          <p class="text-[1.35rem] font-semibold leading-none text-slate-900 sm:text-[1.55rem] sm:whitespace-nowrap">{{ $fmtInt($bookingSummaryTotal) }}</p>
         </div>
 
         @foreach($bookingSummaryBreakdown as $card)
-          <div class="flex items-center justify-between border-t border-slate-100 px-4 py-4">
-            <p class="text-sm font-medium text-slate-600 sm:whitespace-nowrap">{{ $card['label'] }}</p>
-            <p class="text-lg font-semibold {{ $card['tone'] }} sm:whitespace-nowrap">{{ $card['count'] }} ({{ $card['percent'] }}%)</p>
+          <div class="flex items-center justify-between border-t border-slate-100 px-4 py-3.5">
+            <p class="text-xs font-medium text-slate-600 sm:text-sm sm:whitespace-nowrap">{{ $card['label'] }}</p>
+            <p class="text-sm font-semibold {{ $card['tone'] }} sm:text-base sm:whitespace-nowrap">{{ $card['count'] }} ({{ $card['percent'] }}%)</p>
           </div>
         @endforeach
 
@@ -824,30 +824,30 @@
 
   <section class="grid grid-cols-1 gap-4 xl:grid-cols-2">
     <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div class="flex items-center justify-between border-b border-slate-100 px-4 py-4 sm:px-5">
-        <h2 class="text-lg font-semibold text-slate-900 sm:whitespace-nowrap">Recent Bookings</h2>
-        <a href="{{ route('admin.bookings.index') }}" class="text-sm font-medium text-[#8f5d54]">View all</a>
+      <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3.5 sm:px-5">
+        <h2 class="text-xs font-semibold leading-tight text-slate-900 sm:text-sm lg:text-lg sm:whitespace-nowrap">Recent Bookings</h2>
+        <a href="{{ route('admin.bookings.index') }}" class="text-xs font-medium text-[#8f5d54] sm:text-sm">View all</a>
       </div>
 
-      <div class="space-y-3 px-4 py-4 sm:px-5">
+      <div class="space-y-2 px-4 py-3.5 sm:px-5 lg:px-5 lg:py-3.5">
         @forelse($recentBookingCards as $booking)
-          <a href="{{ $booking['href'] }}" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 transition hover:bg-slate-50">
+          <a href="{{ $booking['href'] }}" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 transition hover:bg-slate-50 lg:gap-3.5 lg:p-3">
             <img
               src="{{ \App\Helpers\ImageHelper::src($booking['image'] ?? null) }}"
               alt="{{ $booking['name'] }}"
-              class="h-14 w-14 shrink-0 rounded-xl object-cover"
+              class="h-14 w-14 shrink-0 rounded-xl object-cover lg:h-14 lg:w-14"
               onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
             >
             <div class="min-w-0 flex-1">
-              <p class="truncate font-semibold text-slate-900">{{ $booking['name'] }}</p>
+              <p class="truncate text-sm font-semibold text-slate-900 sm:text-base lg:text-base">{{ $booking['name'] }}</p>
               @if(!empty($booking['item']))
-                <p class="mt-0.5 truncate text-sm font-medium text-slate-700">{{ $booking['item'] }}</p>
+                <p class="mt-0.5 truncate text-xs font-medium text-slate-700 sm:text-sm lg:text-sm">{{ $booking['item'] }}</p>
               @endif
-              <p class="mt-0.5 text-sm text-slate-500 sm:truncate sm:whitespace-nowrap">{{ $booking['meta'] }}</p>
+              <p class="mt-0.5 text-xs text-slate-500 sm:text-sm lg:text-sm sm:truncate sm:whitespace-nowrap">{{ $booking['meta'] }}</p>
             </div>
             <div class="text-right">
               <span class="inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold {{ $booking['statusTone'] }}">{{ $booking['status'] }}</span>
-              <p class="mt-1.5 whitespace-nowrap text-sm font-semibold text-slate-900">{{ $booking['amount'] }}</p>
+              <p class="mt-1.5 whitespace-nowrap text-xs font-semibold text-slate-900 sm:text-sm lg:text-sm">{{ $booking['amount'] }}</p>
             </div>
           </a>
         @empty
@@ -857,23 +857,23 @@
     </div>
 
     <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div class="flex items-center justify-between border-b border-slate-100 px-4 py-4 sm:px-5">
-        <h2 class="text-lg font-semibold text-slate-900 sm:whitespace-nowrap">Recent Admin Activity</h2>
-        <a href="{{ route('admin.settings.activity-log') }}" class="text-sm font-medium text-[#8f5d54]">View all</a>
+      <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3.5 sm:px-5">
+        <h2 class="text-xs font-semibold leading-tight text-slate-900 sm:text-sm lg:text-lg sm:whitespace-nowrap">Recent Admin Activity</h2>
+        <a href="{{ route('admin.settings.activity-log') }}" class="text-xs font-medium text-[#8f5d54] sm:text-sm">View all</a>
       </div>
 
-      <div class="space-y-4 px-4 py-4 sm:px-5">
+      <div class="space-y-2.5 px-4 py-3.5 sm:px-5 lg:px-5 lg:py-3.5">
         @forelse($activityCards as $activity)
-          <div class="flex items-start gap-3">
-            <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600">{{ $activity['initials'] }}</span>
+          <div class="flex items-start gap-3 lg:gap-3.5">
+            <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600 lg:h-8 lg:w-8 lg:text-xs">{{ $activity['initials'] }}</span>
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
-                <p class="font-semibold text-slate-900 sm:truncate sm:whitespace-nowrap">{{ $activity['title'] }}</p>
-                <p class="text-sm text-slate-500 sm:truncate sm:whitespace-nowrap">{{ $activity['actor'] }}</p>
+                <p class="text-sm font-semibold text-slate-900 sm:text-base lg:text-base sm:truncate sm:whitespace-nowrap">{{ $activity['title'] }}</p>
+                <p class="text-xs text-slate-500 sm:text-sm lg:text-sm sm:truncate sm:whitespace-nowrap">{{ $activity['actor'] }}</p>
               </div>
-              <p class="mt-1 text-sm text-slate-500 sm:truncate sm:whitespace-nowrap">{{ $activity['meta'] }}</p>
+              <p class="mt-1 text-xs text-slate-500 sm:text-sm lg:text-sm sm:truncate sm:whitespace-nowrap">{{ $activity['meta'] }}</p>
             </div>
-            <p class="shrink-0 whitespace-nowrap text-xs text-slate-400">{{ $activity['time'] }}</p>
+            <p class="shrink-0 whitespace-nowrap text-[11px] text-slate-400 sm:text-xs lg:text-xs">{{ $activity['time'] }}</p>
           </div>
         @empty
           <div class="flex min-h-72 items-center justify-center text-sm text-slate-500">No recent admin activity recorded.</div>
@@ -883,29 +883,29 @@
   </section>
 
   <section class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-    <div class="border-b border-slate-100 px-4 py-4 sm:px-5">
-      <h2 class="text-lg font-semibold text-slate-900 sm:whitespace-nowrap">Quick Actions</h2>
+    <div class="border-b border-slate-100 px-4 py-3.5 sm:px-5">
+      <h2 class="text-base font-semibold text-slate-900 sm:text-lg sm:whitespace-nowrap">Quick Actions</h2>
     </div>
 
-    <div class="grid grid-cols-1 gap-4 px-4 py-4 sm:grid-cols-2 xl:grid-cols-5 sm:px-5">
+    <div class="grid grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 sm:px-5">
       @foreach($quickActions as $action)
-        <a href="{{ $action['href'] }}" class="group rounded-2xl border border-slate-200 bg-white px-4 py-4 transition hover:border-slate-300 hover:bg-slate-50">
-          <div class="flex items-center gap-3">
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 {{ $action['tone'] }}">
-              <i data-lucide="{{ $action['icon'] }}" class="h-5 w-5"></i>
+        <a href="{{ $action['href'] }}" class="group rounded-2xl border border-slate-200 bg-white px-3 py-2.5 transition hover:border-slate-300 hover:bg-slate-50">
+          <div class="flex items-center gap-2.5">
+            <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 {{ $action['tone'] }}">
+              <i data-lucide="{{ $action['icon'] }}" class="h-4 w-4"></i>
             </span>
             <div class="min-w-0 flex-1">
-              <p class="font-semibold text-slate-900 sm:truncate sm:whitespace-nowrap">{{ $action['title'] }}</p>
-              <p class="mt-1 text-sm text-slate-500 sm:truncate sm:whitespace-nowrap">{{ $action['description'] }}</p>
+              <p class="text-sm font-semibold leading-tight text-slate-900 lg:text-base">{{ $action['title'] }}</p>
+              <p class="mt-0.5 text-xs leading-tight text-slate-500 sm:text-sm lg:text-base">{{ $action['description'] }}</p>
             </div>
-            <i data-lucide="chevron-right" class="h-4 w-4 text-slate-400 transition group-hover:translate-x-1"></i>
+            <i data-lucide="chevron-right" class="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-1"></i>
           </div>
         </a>
       @endforeach
     </div>
   </section>
 
-  <footer class="flex flex-col gap-2 px-1 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+  <footer class="flex flex-col gap-2 px-1 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:text-sm">
     <p class="sm:truncate sm:whitespace-nowrap">All amounts are in PHP ({{ $peso }}) and based on completed payments only.</p>
     <p class="sm:whitespace-nowrap">Last updated: {{ $lastUpdatedAt->format('M j, Y g:i A') }}</p>
   </footer>
