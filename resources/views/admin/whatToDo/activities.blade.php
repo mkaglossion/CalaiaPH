@@ -63,15 +63,23 @@
     </div>
 
     @if(session('success'))
-        <script>
-            toastr.success("{{ session('success') }}", 'Success');
-        </script>
+        <div
+            data-admin-flash
+            data-admin-flash-library="toastr"
+            data-admin-flash-title="Success"
+            data-admin-flash-type="success"
+            data-admin-flash-message="{{ e(session('success')) }}"
+        ></div>
     @endif
 
     @if(session('error'))
-        <script>
-            toastr.error("{{ session('error') }}", 'Error');
-        </script>
+        <div
+            data-admin-flash
+            data-admin-flash-library="toastr"
+            data-admin-flash-title="Error"
+            data-admin-flash-type="error"
+            data-admin-flash-message="{{ e(session('error')) }}"
+        ></div>
     @endif
 
     {{-- ============================================================= --}}
@@ -1318,7 +1326,7 @@ function activityManager() {
             
             try {
                 this.loadAvailableActivities();
-                const res = await fetch(`/admin/activity-packages/${id}/edit`, {
+                const res = await fetch(`/admin/do/activity-packages/${id}/edit`, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json'
@@ -1399,7 +1407,7 @@ function activityManager() {
 
             let url = '{{ route("admin.activity-packages.store") }}';
             if (this.editPackageMode && this.packageForm.id) {
-                url = `/admin/activity-packages/${this.packageForm.id}`;
+                url = `/admin/do/activity-packages/${this.packageForm.id}`;
                 formData.append('_method', 'PUT');
             }
 
@@ -1445,7 +1453,7 @@ function activityManager() {
                     const csrf = document.querySelector('meta[name=csrf-token]').content;
                     this.isLoading = true;
 
-                    fetch(`/admin/activity-packages/${id}`, {
+                    fetch(`/admin/do/activity-packages/${id}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': csrf,

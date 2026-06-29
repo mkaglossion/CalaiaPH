@@ -560,21 +560,7 @@ class AdminBookingMonitoringController extends Controller
 
     private function referenceCell(string $reference, ?Carbon $scheduleDate, string $monitoringStatus, bool $isPending): string
     {
-        $badges = [
-            $this->badge($this->monitoringLabel($monitoringStatus), $this->monitoringBadgeClass($monitoringStatus)),
-        ];
-
-        if ($scheduleDate instanceof Carbon && $scheduleDate->isToday()) {
-            $badges[] = $this->badge('Today', 'bg-amber-100 text-amber-800');
-        } elseif ($scheduleDate instanceof Carbon && $scheduleDate->isFuture()) {
-            $badges[] = $this->badge('Upcoming', 'bg-blue-100 text-blue-800');
-        }
-
-        if ($isPending && $monitoringStatus !== 'pending') {
-            $badges[] = $this->badge('Pending', 'bg-yellow-100 text-yellow-800');
-        }
-
-        return '<div class="space-y-2"><div class="text-sm font-semibold text-gray-900">' . e($reference) . '</div><div class="flex flex-wrap gap-2">' . implode('', $badges) . '</div></div>';
+        return '<div class="text-sm font-semibold text-gray-900">' . e($reference) . '</div>';
     }
 
     private function guestCell(string $name, ?string $contact, ?string $email): string

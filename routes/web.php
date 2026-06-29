@@ -60,6 +60,7 @@ use App\Http\Controllers\Admin\StaycationTextController;
 use App\Http\Controllers\Admin\StaycationPageTextController;
 use App\Http\Controllers\Admin\MenuTextController;
 use App\Http\Controllers\Admin\EventTextController;
+use App\Http\Controllers\Admin\EventSectionController;
 use App\Http\Controllers\Admin\EventExperienceSectionController;
 use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\FarmInfoTextController;
@@ -756,6 +757,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     ])->only(['store', 'update', 'destroy']);
     Route::resource('menu-text', MenuTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-text', EventTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('event-sections', EventSectionController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-experience-sections', EventExperienceSectionController::class)->only(['store', 'update', 'destroy']);
     Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('day-text', DayPackageTextController::class)->only(['store', 'update', 'destroy']);
@@ -795,9 +797,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
             'destroy' => 'admin.staycation-list.destroy'
         ]
     ])->only(['store', 'show', 'update', 'destroy']);
-    Route::resource('menu-list', MenuController::class)->only(['store', 'show', 'destroy']);
+    Route::resource('menu-list', MenuController::class)->only(['store', 'show', 'update', 'destroy']);
     Route::resource('event-list', EventController::class)->only(['store', 'update', 'destroy']);
-    Route::resource('farmInfo-list', FarmInfoController::class)->only(['store', 'destroy']);
+    Route::resource('farmInfo-list', FarmInfoController::class)->only(['store', 'update', 'destroy']);
     Route::resource('products', ProductController::class);
 
     // Other CRUD

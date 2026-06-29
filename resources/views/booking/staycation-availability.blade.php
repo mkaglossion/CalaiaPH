@@ -317,11 +317,14 @@
                     {{-- Select Rate Type --}}
                     @php
                       $defaultPolicy = old('cancellation_policy', session('booking.cancellation_policy', 'flexible'));
+                      $showRateTypeSelector = false;
                     @endphp
 
-                    <div class="space-y-4 bg-white rounded-2xl shadow-lg p-6 mb-6">
-                      <x-rate-type-selector :default-policy="$defaultPolicy" />
-                    </div>
+                    @if($showRateTypeSelector)
+                      <div class="space-y-4 bg-white rounded-2xl shadow-lg p-6 mb-6">
+                        <x-rate-type-selector :default-policy="$defaultPolicy" />
+                      </div>
+                    @endif
 
                     {{-- Room Slots + Controls --}}
                     <div class="mb-6">
