@@ -15,7 +15,7 @@ class VersionHelper
             return self::$displayResolved;
         }
 
-        return self::$displayResolved = 'v' . self::baseVersion();
+        return self::$displayResolved = 'v' . self::full();
     }
 
     public static function full(): string
@@ -24,20 +24,13 @@ class VersionHelper
             return self::$fullResolved;
         }
 
-        $baseVersion = self::baseVersion();
-        $gitHash = self::gitShortHash();
+        $version = self::versionFromGitTag();
 
-        if ($gitHash === null) {
-            return self::$fullResolved = $baseVersion;
+        if ($version !== null) {
+            return self::$fullResolved = $version;
         }
 
-        $version = $baseVersion . '+' . $gitHash;
-
-        if (self::isDirty()) {
-            $version .= '-dirty';
-        }
-
-        return self::$fullResolved = $version;
+        return self::$fullResolved = self::baseVersion();
     }
 
     public static function baseVersion(): string
@@ -47,18 +40,23 @@ class VersionHelper
         return $version !== '' ? $version : '1.1.0';
     }
 
-    private static function gitShortHash(): ?string
+    private static function versionFromGitTag(): ?string
     {
-        $output = self::runGitCommand(['git', 'rev-parse', '--short=8', 'HEAD']);
+        $output = self::runGitCommand(['git', 'describe', '--tags', '--long', '--match', 'v[0-9]*']);
 
-        return $output !== null && $output !== '' ? $output : null;
-    }
+        if ($output === null || $output === '') {
+            return null;
+        }
 
-    private static function isDirty(): bool
-    {
-        $output = self::runGitCommand(['git', 'status', '--porcelain']);
+        if (! preg_match('/^v(\d+)\.(\d+)\.(\d+)-(\d+)-g[0-9a-f]+$/i', $output, $matches)) {
+            return null;
+        }
 
-        return $output !== null && trim($output) !== '';
+        $major = (int) $matches[1];
+        $minor = (int) $matches[2];
+        $patch = (int) $matches[3] + (int) $matches[4];
+
+        return $major . '.' . $minor . '.' . $patch;
     }
 
     private static function runGitCommand(array $command): ?string

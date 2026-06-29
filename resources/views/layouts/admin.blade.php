@@ -272,7 +272,7 @@
         <i data-lucide="building-2" class="h-10 w-10 shrink-0 text-white/95"></i>
         <div class="min-w-0 leading-tight">
           <p class="truncate text-sm font-semibold text-white">Calaia Booking System</p>
-          <p class="truncate text-xs text-white/75">{{ \App\Helpers\VersionHelper::display() }}</p>
+          <p class="truncate text-xs text-white/75">v{{ \App\Helpers\VersionHelper::full() }}</p>
         </div>
       </div>
     </div>
