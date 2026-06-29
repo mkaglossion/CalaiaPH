@@ -268,6 +268,13 @@
     </div>
 
     <div class="px-6 py-4 border-t border-white/10">
+      <div class="flex items-center gap-3">
+        <i data-lucide="building-2" class="h-10 w-10 shrink-0 text-white/95"></i>
+        <div class="min-w-0 leading-tight">
+          <p class="truncate text-sm font-semibold text-white">Calaia Booking System</p>
+          <p class="truncate text-xs text-white/75">Version 1.1.0</p>
+        </div>
+      </div>
     </div>
   </aside>
 

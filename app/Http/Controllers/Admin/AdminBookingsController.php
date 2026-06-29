@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
+use App\Models\ActivityPackage;
 use App\Models\AdminActivityLog;
 use App\Models\Booking;
 use App\Models\DayTour;
+use App\Models\Food;
 use App\Models\PackageBooking;
 use App\Models\PaymongoWebhookEvent;
 use App\Models\Staycation;
@@ -416,7 +419,7 @@ class AdminBookingsController extends Controller
     {
         $booking = Booking::findOrFail($id);
 
-        $staycations = Staycation::all()->keyBy('id');
+        $staycations = Staycation::with('swiperImages')->get()->keyBy('id');
         $bookingData = is_array($booking->booking_data) ? $booking->booking_data : [];
 
         $selectedPackages = $this->extractSelectedPackages($bookingData);
@@ -424,13 +427,27 @@ class AdminBookingsController extends Controller
         $singleActivities = $this->extractSelectedActivities($bookingData);
         $activityPackages = $this->extractSelectedActivityPackages($bookingData);
 
+        $foodIds = collect($foodItems)->pluck('id')->filter()->unique()->values()->all();
+        $activityIds = collect($singleActivities)->pluck('id')->filter()->unique()->values()->all();
+        $activityPackageIds = collect($activityPackages)->pluck('package_id')->filter()->unique()->values()->all();
+        $dayTourPackageIds = collect($selectedPackages)->pluck('package_id')->filter()->unique()->values()->all();
+
+        $foodImages = !empty($foodIds) ? Food::whereIn('id', $foodIds)->pluck('image', 'id')->all() : [];
+        $activityImages = !empty($activityIds) ? Activity::whereIn('id', $activityIds)->pluck('image', 'id')->all() : [];
+        $activityPackageImages = !empty($activityPackageIds) ? \App\Models\ActivityPackage::whereIn('id', $activityPackageIds)->pluck('image', 'id')->all() : [];
+        $dayTourImages = !empty($dayTourPackageIds) ? DayTour::whereIn('id', $dayTourPackageIds)->pluck('image', 'id')->all() : [];
+
         return view('admin.bookings.show', compact(
             'booking',
             'staycations',
             'selectedPackages',
             'foodItems',
             'singleActivities',
-            'activityPackages'
+            'activityPackages',
+            'foodImages',
+            'activityImages',
+            'activityPackageImages',
+            'dayTourImages'
         ));
     }
     
@@ -1067,6 +1084,8 @@ class AdminBookingsController extends Controller
                     $pricePerPerson = (float) ($package['price_per_person'] ?? 0);
 
                     return [
+                        'id' => $package['id'] ?? null,
+                        'package_id' => $package['package_id'] ?? null,
                         'name' => (string) ($package['name'] ?? 'Selected Package'),
                         'guests' => $guests,
                         'quantity' => $quantity,
@@ -1094,6 +1113,8 @@ class AdminBookingsController extends Controller
         $pricePerPerson = $guests > 0 ? round($totalPrice / $guests, 2) : $totalPrice;
 
         return [[
+            'id' => $packageId,
+            'package_id' => is_numeric($packageId) ? (int) $packageId : null,
             'name' => $packageName,
             'guests' => $guests,
             'quantity' => 1,
@@ -1111,6 +1132,7 @@ class AdminBookingsController extends Controller
                 $unitPrice = (float) ($food['price'] ?? 0);
 
                 return [
+                    'id' => $food['id'] ?? null,
                     'name' => (string) $food['name'],
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
@@ -1130,6 +1152,7 @@ class AdminBookingsController extends Controller
                 $unitPrice = (float) ($activity['price'] ?? 0);
 
                 return [
+                    'id' => $activity['id'] ?? null,
                     'name' => (string) $activity['name'],
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
@@ -1149,6 +1172,8 @@ class AdminBookingsController extends Controller
                 $unitPrice = (float) ($package['price'] ?? 0);
 
                 return [
+                    'id' => $package['id'] ?? null,
+                    'package_id' => $package['package_id'] ?? null,
                     'name' => (string) $package['name'],
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,

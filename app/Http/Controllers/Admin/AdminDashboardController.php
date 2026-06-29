@@ -9,8 +9,10 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Booking;
 use App\Models\PackageBooking;
+use App\Models\DayTour;
 use App\Models\Product;
 use App\Models\Food;
+use App\Models\Staycation;
 use App\Models\AdminSystemAlert;
 use App\Models\AdminActivityLog;
 use Illuminate\Support\Facades\DB;
@@ -136,6 +138,29 @@ class AdminDashboardController extends Controller
         $completedRevenue  = (float) $agg->completed_revenue + (float) $packageAgg->completed_revenue;
         $refundedRevenue   = (float) $agg->refunded_revenue + (float) $packageAgg->refunded_revenue;
         $refundedBookings  = (int) $agg->refunded_bookings + (int) $packageAgg->refunded_bookings;
+        $summaryCompletedBookings = $applyRecentRange(
+            Booking::query()
+                ->where('status', 'completed')
+                ->where('payment_status', 'paid')
+        )->count() + $applyRecentRange(
+            PackageBooking::query()
+                ->where('status', 'completed')
+                ->where('payment_status', 'paid')
+        )->count();
+        $summaryClosedBookings = $applyRecentRange(
+            Booking::query()->where(function (Builder $query) {
+                $query
+                    ->whereIn('status', ['cancelled', 'expired', 'abandoned'])
+                    ->orWhere('payment_status', 'failed');
+            })
+        )->count() + $applyRecentRange(
+            PackageBooking::query()->where(function (Builder $query) {
+                $query
+                    ->whereIn('status', ['cancelled', 'expired', 'abandoned'])
+                    ->orWhere('payment_status', 'failed');
+            })
+        )->count();
+        $summaryTotalBookings = $summaryCompletedBookings + $pendingBookings + $summaryClosedBookings;
 
         $netRevenue        = $completedRevenue - $refundedRevenue;
         $periodDays = max(1, (int) $start->copy()->startOfDay()->diffInDays($end->copy()->startOfDay()) + 1);
@@ -180,24 +205,21 @@ class AdminDashboardController extends Controller
         $todayCheckIns = $todayCheckInsBooking + $todayCheckInsPackage;
 
         // -----------------------------
-        // RECENT BOOKINGS (2 queries: Booking + PackageBooking)
+        // RECENT BOOKINGS (all statuses, with room/package info)
         // -----------------------------
-        $recentBookings = $applyRecentRange(
-            Booking::query()->whereNotIn('payment_status', ['pending', 'failed'])
-        )
+        $recentBookings = $applyRecentRange(Booking::query())
             ->latest()
-            ->take(6)
+            ->take(12)
             ->get()
             ->map(function ($booking) {
                 $booking->display_customer_name = $booking->display_customer_name;
                 return $booking;
             })
             ->concat(
-                $applyRecentRange(
-                    PackageBooking::query()->whereNotIn('payment_status', ['pending', 'failed'])
-                )
+                $applyRecentRange(PackageBooking::query())
+                    ->with('package')
                     ->latest()
-                    ->take(6)
+                    ->take(12)
                     ->get()
                     ->map(function ($booking) {
                         $booking->display_customer_name = $booking->full_name;
@@ -208,6 +230,45 @@ class AdminDashboardController extends Controller
             )
             ->sortByDesc('created_at')
             ->take(6)
+            ->values();
+        $recentStaycationIds = $recentBookings
+            ->filter(fn ($booking) => $booking instanceof Booking)
+            ->flatMap(function (Booking $booking) {
+                return collect(data_get($booking->booking_data, 'accommodations', []))
+                    ->map(fn ($accommodation) => is_array($accommodation) ? ($accommodation['room_id'] ?? $accommodation['id'] ?? null) : null)
+                    ->filter();
+            })
+            ->unique()
+            ->values();
+        $recentDayTourIds = $recentBookings
+            ->filter(fn ($booking) => $booking instanceof Booking)
+            ->flatMap(function (Booking $booking) {
+                $bookingData = $booking->booking_data ?? [];
+                $ids = collect([
+                    $bookingData['package_id'] ?? null,
+                    data_get($bookingData, 'packages.0.package_id'),
+                    data_get($bookingData, 'packages.0.daytour_id'),
+                    data_get($bookingData, 'packages.0.id'),
+                ]);
+
+                return $ids->filter();
+            })
+            ->unique()
+            ->values();
+        $recentStaycations = $recentStaycationIds->isNotEmpty()
+            ? Staycation::query()->with('swiperImages')->whereIn('id', $recentStaycationIds)->get()->keyBy('id')
+            : collect();
+        $recentDayTours = $recentDayTourIds->isNotEmpty()
+            ? DayTour::query()->with('swiperImages')->whereIn('id', $recentDayTourIds)->get()->keyBy('id')
+            : collect();
+        $recentBookings = $recentBookings
+            ->map(function ($booking) use ($recentStaycations, $recentDayTours) {
+                $booking->setAttribute('recent_booking_item', $this->resolveRecentBookingItemName($booking, $recentStaycations, $recentDayTours));
+                $booking->setAttribute('recent_booking_image', $this->resolveRecentBookingImage($booking, $recentStaycations, $recentDayTours));
+                $booking->setAttribute('recent_booking_meta', $this->resolveRecentBookingMeta($booking));
+
+                return $booking;
+            })
             ->values();
 
         // -----------------------------
@@ -247,9 +308,9 @@ class AdminDashboardController extends Controller
                 'key' => $row->key,
                 'label' => $row->label,
                 'upcoming' => (int) $row->upcoming,
-                'recent' => (int) $row->recent,
+                'completed' => (int) $row->completed,
                 'pending' => (int) $row->pending,
-                'refund' => (int) $row->refund,
+                'cancelled' => (int) $row->cancelled,
                 'total' => (int) $row->total,
                 'completed_amount' => $completedAmount,
                 'pending_amount' => $pendingAmount,
@@ -289,6 +350,7 @@ class AdminDashboardController extends Controller
             'clientUsers', 'totalUsers', 'verifiedUsers', 'adminUsers',
             'totalBookings', 'activeBookings', 'completedBookings',
             'netRevenue', 'totalRevenue', 'pendingRevenue', 'pendingBookings', 'paymentAttempts', 'attemptAmount', 'pendingWindowMinutes', 'completedRevenue', 'refundedRevenue', 'refundedBookings', 'todayCheckIns',
+            'summaryCompletedBookings', 'summaryClosedBookings', 'summaryTotalBookings',
             'completedRevenueChangePercent', 'completedRevenueComparisonLabel',
             'totalProducts', 'totalFoods', 'lowStockProducts', 'lowStockFoods',
             'recentBookings', 'monthlyBookings', 'bookingOverviewSeries', 'revenueSummarySeries', 'bookingOverviewChartItems', 'salesView',
@@ -604,6 +666,7 @@ class AdminDashboardController extends Controller
     {
         $start = ($start?->copy() ?? now()->subDays(6))->startOfDay();
         $end = ($end?->copy() ?? now())->endOfDay();
+        $pendingCutoff = now()->subMinutes(60);
 
         $bookingCounts = $this->getDailyBookingOverviewCounts(
             Booking::query()->whereBetween('checkin_date', [$start->toDateString(), $end->toDateString()]),
@@ -616,14 +679,16 @@ class AdminDashboardController extends Controller
         $bookingPendingCounts = $this->getDailyPendingOverviewCounts(
             Booking::query()
                 ->where('payment_status', 'pending')
-                ->whereNotIn('status', ['cancelled', 'completed'])
+                ->whereNotIn('status', ['cancelled', 'completed', 'expired', 'abandoned'])
+                ->where('created_at', '>=', $pendingCutoff)
                 ->whereBetween('created_at', [$start, $end]),
             'created_at'
         )->keyBy('day');
         $packagePendingCounts = $this->getDailyPendingOverviewCounts(
             PackageBooking::query()
                 ->where('payment_status', 'pending')
-                ->whereNotIn('status', ['cancelled', 'completed'])
+                ->whereNotIn('status', ['cancelled', 'completed', 'expired', 'abandoned'])
+                ->where('created_at', '>=', $pendingCutoff)
                 ->whereBetween('created_at', [$start, $end]),
             'created_at'
         )->keyBy('day');
@@ -639,9 +704,9 @@ class AdminDashboardController extends Controller
                 'key' => $key,
                 'label' => $date->format('M d'),
                 'upcoming' => (int) ($bookingRow->upcoming_count ?? 0) + (int) ($packageRow->upcoming_count ?? 0),
-                'recent' => (int) ($bookingRow->recent_count ?? 0) + (int) ($packageRow->recent_count ?? 0),
+                'completed' => (int) ($bookingRow->completed_count ?? 0) + (int) ($packageRow->completed_count ?? 0),
                 'pending' => (int) ($pendingBookingRow->pending_count ?? 0) + (int) ($pendingPackageRow->pending_count ?? 0),
-                'refund' => (int) ($bookingRow->refund_count ?? 0) + (int) ($packageRow->refund_count ?? 0),
+                'cancelled' => (int) ($bookingRow->cancelled_count ?? 0) + (int) ($packageRow->cancelled_count ?? 0),
                 'total' => (int) ($bookingRow->total_count ?? 0) + (int) ($packageRow->total_count ?? 0),
             ];
         })->values();
@@ -673,8 +738,8 @@ class AdminDashboardController extends Controller
             ->selectRaw("
                 {$dayExpr} as day,
                 SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as upcoming_count,
-                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as recent_count,
-                SUM(CASE WHEN payment_status = 'refunded' THEN 1 ELSE 0 END) as refund_count,
+                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_count,
+                SUM(CASE WHEN status IN ('cancelled', 'expired', 'abandoned') THEN 1 ELSE 0 END) as cancelled_count,
                 COUNT(*) as total_count
             ")
             ->groupBy('day')
@@ -695,6 +760,238 @@ class AdminDashboardController extends Controller
             ->groupBy('day')
             ->orderBy('day')
             ->get();
+    }
+
+    private function resolveRecentBookingImage(object $booking, \Illuminate\Support\Collection $staycations, \Illuminate\Support\Collection $dayTours): ?string
+    {
+        if ($booking instanceof PackageBooking) {
+            return $booking->package?->image
+                ?: $booking->package?->images?->first()?->image_path;
+        }
+
+        if (! $booking instanceof Booking) {
+            return null;
+        }
+
+        $bookingData = $booking->booking_data ?? [];
+
+        if ($booking->isStaycationFamilyBooking()) {
+            $firstAccommodation = collect($bookingData['accommodations'] ?? [])->first(fn ($accommodation) => is_array($accommodation));
+            if (is_array($firstAccommodation)) {
+                $embeddedImage = trim((string) (
+                    data_get($firstAccommodation, 'staycation.image')
+                    ?? data_get($firstAccommodation, 'staycation.swiper_images.0.image_path')
+                    ?? $firstAccommodation['image']
+                    ?? $firstAccommodation['image_path']
+                    ?? ''
+                ));
+
+                if ($embeddedImage !== '') {
+                    return $embeddedImage;
+                }
+
+                $staycationId = $firstAccommodation['room_id'] ?? $firstAccommodation['id'] ?? null;
+                if ($staycationId && $staycations->has($staycationId)) {
+                    $staycation = $staycations->get($staycationId);
+
+                    return $staycation?->image
+                        ?: $staycation?->swiperImages?->first()?->image_path;
+                }
+            }
+        }
+
+        $firstPackage = collect($bookingData['packages'] ?? [])->first(fn ($package) => is_array($package));
+        if (is_array($firstPackage)) {
+            $embeddedImage = trim((string) (
+                $firstPackage['image']
+                ?? $firstPackage['image_path']
+                ?? data_get($firstPackage, 'package.image')
+                ?? data_get($firstPackage, 'swiper_images.0.image_path')
+                ?? ''
+            ));
+
+            if ($embeddedImage !== '') {
+                return $embeddedImage;
+            }
+
+            $dayTourId = $firstPackage['package_id'] ?? $firstPackage['daytour_id'] ?? $firstPackage['id'] ?? null;
+            if ($dayTourId && $dayTours->has($dayTourId)) {
+                $dayTour = $dayTours->get($dayTourId);
+
+                return $dayTour?->image
+                    ?: $dayTour?->swiperImages?->first()?->image_path;
+            }
+        }
+
+        $dayTourId = $bookingData['package_id'] ?? null;
+        if ($dayTourId && $dayTours->has($dayTourId)) {
+            $dayTour = $dayTours->get($dayTourId);
+
+            return $dayTour?->image
+                ?: $dayTour?->swiperImages?->first()?->image_path;
+        }
+
+        return null;
+    }
+
+    private function resolveRecentBookingItemName(object $booking, \Illuminate\Support\Collection $staycations, \Illuminate\Support\Collection $dayTours): ?string
+    {
+        if ($booking instanceof PackageBooking) {
+            return $booking->package?->name ?: 'Selected Package';
+        }
+
+        if (! $booking instanceof Booking) {
+            return null;
+        }
+
+        $bookingData = $booking->booking_data ?? [];
+
+        if ($booking->isStaycationFamilyBooking()) {
+            $firstAccommodation = collect($bookingData['accommodations'] ?? [])->first(fn ($accommodation) => is_array($accommodation));
+            if (is_array($firstAccommodation)) {
+                $embeddedName = trim((string) (
+                    data_get($firstAccommodation, 'staycation.name')
+                    ?? $firstAccommodation['name']
+                    ?? $firstAccommodation['accommodation_name']
+                    ?? ''
+                ));
+
+                if ($embeddedName !== '') {
+                    return $embeddedName;
+                }
+
+                $staycationId = $firstAccommodation['room_id'] ?? $firstAccommodation['id'] ?? null;
+                if ($staycationId && $staycations->has($staycationId)) {
+                    return $staycations->get($staycationId)?->name;
+                }
+            }
+        }
+
+        $firstPackage = collect($bookingData['packages'] ?? [])->first(fn ($package) => is_array($package));
+        if (is_array($firstPackage)) {
+            $embeddedName = trim((string) ($firstPackage['name'] ?? ''));
+            if ($embeddedName !== '') {
+                return $embeddedName;
+            }
+
+            $dayTourId = $firstPackage['package_id'] ?? $firstPackage['daytour_id'] ?? $firstPackage['id'] ?? null;
+            if ($dayTourId && $dayTours->has($dayTourId)) {
+                return $dayTours->get($dayTourId)?->name;
+            }
+        }
+
+        $dayTourId = $bookingData['package_id'] ?? null;
+        if ($dayTourId && $dayTours->has($dayTourId)) {
+            return $dayTours->get($dayTourId)?->name;
+        }
+
+        return $booking->display_type_label ?? ucfirst((string) $booking->booking_type);
+    }
+
+    private function resolveRecentBookingMeta(object $booking): string
+    {
+        $isPackage = $booking instanceof PackageBooking;
+        $bookingDate = $isPackage ? optional($booking->booking_date) : optional($booking->checkin_date);
+        $parts = [$bookingDate ? $bookingDate->format('M j, Y') : 'No date'];
+
+        if ($booking instanceof Booking && $booking->isStaycationFamilyBooking() && $booking->display_nights) {
+            $nights = (int) $booking->display_nights;
+            $parts[] = $nights . ' ' . ($nights === 1 ? 'Night' : 'Nights');
+        }
+
+        $guestParts = [];
+        $bookingData = $booking->booking_data ?? [];
+        $accommodations = collect($bookingData['accommodations'] ?? [])->filter(fn ($a) => is_array($a));
+
+        if ($booking instanceof PackageBooking) {
+            $guests = (int) ($booking->total_guests ?? 0);
+            if ($guests > 0) {
+                $guestParts[] = $guests . ' Guest' . ($guests > 1 ? 's' : '');
+            }
+        } elseif ($accommodations->isNotEmpty()) {
+            $totalAdults = (int) $accommodations->sum(fn ($a) => (int) ($a['adults'] ?? 0));
+            $totalChildren = (int) $accommodations->sum(fn ($a) => (int) ($a['children'] ?? $a['children_total'] ?? 0));
+            $totalPets = (int) $accommodations->sum(function (array $a) {
+                $petCount = $a['num_pets'] ?? $a['pet_count'] ?? null;
+                if (is_numeric($petCount)) {
+                    return (int) $petCount;
+                }
+
+                $petValue = $a['pets'] ?? $a['pet'] ?? null;
+                if (is_numeric($petValue)) {
+                    return (int) $petValue;
+                }
+
+                if (is_string($petValue) && strtolower($petValue) === 'yes') {
+                    return 1;
+                }
+
+                if (is_bool($petValue) && $petValue) {
+                    return 1;
+                }
+
+                return 0;
+            });
+            if ($totalAdults > 0) {
+                $guestParts[] = $totalAdults . ' Adult' . ($totalAdults > 1 ? 's' : '');
+            }
+            if ($totalChildren > 0) {
+                $guestParts[] = $totalChildren . ' Child' . ($totalChildren > 1 ? 'ren' : '');
+            }
+            if ($totalPets > 0) {
+                $guestParts[] = $totalPets . ' Pet' . ($totalPets > 1 ? 's' : '');
+            }
+        }
+
+        if (empty($guestParts)) {
+            $guestParts[] = '1 Guest';
+        }
+
+        $parts[] = implode(', ', $guestParts);
+
+        return implode(' · ', array_filter($parts));
+    }
+
+    private function resolveRecentBookingGuestCount(object $booking): int
+    {
+        if ($booking instanceof PackageBooking) {
+            return max(0, (int) ($booking->total_guests ?? 0));
+        }
+
+        if (! $booking instanceof Booking) {
+            return 0;
+        }
+
+        $bookingData = $booking->booking_data ?? [];
+        $guestCount = (int) data_get($bookingData, 'total_guests', data_get($bookingData, 'adults_total', data_get($bookingData, 'guests', 0)));
+
+        if ($guestCount > 0) {
+            return $guestCount;
+        }
+
+        $accommodations = collect($bookingData['accommodations'] ?? [])->filter(fn ($accommodation) => is_array($accommodation));
+        if ($accommodations->isNotEmpty()) {
+            $guestCount = (int) $accommodations->sum(function (array $accommodation) {
+                return (int) ($accommodation['adults'] ?? 0)
+                    + (int) ($accommodation['children'] ?? $accommodation['children_total'] ?? 0);
+            });
+        }
+
+        if ($guestCount > 0) {
+            return $guestCount;
+        }
+
+        $selectedPackages = collect($bookingData['packages'] ?? [])->filter(fn ($package) => is_array($package));
+        if ($selectedPackages->isNotEmpty()) {
+            $guestCount = (int) $selectedPackages->sum(function (array $package) {
+                $guests = (int) ($package['guests'] ?? 0);
+                $quantity = max(1, (int) ($package['quantity'] ?? 1));
+
+                return $guests > 0 ? ($guests * $quantity) : $quantity;
+            });
+        }
+
+        return max(0, $guestCount);
     }
 
     private function buildRevenueSummarySeries(?Carbon $start = null, ?Carbon $end = null): \Illuminate\Support\Collection

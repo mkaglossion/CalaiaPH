@@ -109,9 +109,10 @@ Alpine.data('dashboard', (initialRange = 'today') => ({
   },
 }))
 
-Alpine.data('chartHoverCard', (chartWidth = 1, chartHeight = 1) => ({
+Alpine.data('chartHoverCard', (chartWidth = 1, chartHeight = 1, displayMode = 'money') => ({
   chartWidth,
   chartHeight,
+  displayMode,
   activePoint: null,
   tooltipX: 0,
   tooltipY: 0,
@@ -134,6 +135,12 @@ Alpine.data('chartHoverCard', (chartWidth = 1, chartHeight = 1) => ({
 
   clearActive() {
     this.activePoint = null
+  },
+
+  formatValue(value) {
+    return this.displayMode === 'count'
+      ? this.formatCount(value)
+      : this.formatMoney(value)
   },
 
   formatMoney(value) {

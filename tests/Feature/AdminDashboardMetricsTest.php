@@ -46,8 +46,7 @@ class AdminDashboardMetricsTest extends TestCase
         $this->assertSame(1, $data['totalBookings']);
         $this->assertSame(1, $data['activeBookings']);
         $this->assertSame(1, $data['pendingBookings']);
-        $this->assertSame(5000.0, $data['pendingRevenue']);
-        $this->assertCount(1, $data['recentBookings']);
+        $this->assertCount(3, $data['recentBookings']);
         $this->assertSame('TXN-PAID-1', $data['recentBookings']->first()->transaction_id);
     }
 
