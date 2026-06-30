@@ -55,7 +55,13 @@ jobs:
       - name: Prepare application
         run: |
           cp .env.example .env
+          mkdir -p bootstrap/cache
           mkdir -p database
+          mkdir -p storage/framework/cache/data
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/testing
+          mkdir -p storage/framework/views
+          mkdir -p storage/logs
           touch database/database.sqlite
           php artisan key:generate --force --ansi
 
