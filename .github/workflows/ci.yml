@@ -5,6 +5,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -76,3 +80,14 @@ jobs:
 
       - name: Run tests
         run: php artisan test
+
+      - name: Upload Laravel logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: laravel-debug-artifacts
+          path: |
+            storage/logs
+            storage/framework/testing
+            bootstrap/cache
+          if-no-files-found: ignore
