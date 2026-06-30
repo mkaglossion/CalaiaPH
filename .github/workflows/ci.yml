@@ -13,23 +13,23 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      APP_ENV: testing
-      APP_KEY: base64:46PO1xTmXYCEw9sR7VdTOiB7kWbEu9MWFQw0WHDHwQ0=
-      APP_URL: http://127.0.0.1:8000/
-      APP_MAINTENANCE_DRIVER: file
-      APP_MAINTENANCE_STORE: database
-      BCRYPT_ROUNDS: 4
-      BROADCAST_CONNECTION: null
-      CACHE_STORE: array
-      DB_CONNECTION: sqlite
+      APP_ENV: "testing"
+      APP_KEY: "base64:46PO1xTmXYCEw9sR7VdTOiB7kWbEu9MWFQw0WHDHwQ0="
+      APP_URL: "http://127.0.0.1:8000/"
+      APP_MAINTENANCE_DRIVER: "file"
+      APP_MAINTENANCE_STORE: "database"
+      BCRYPT_ROUNDS: "4"
+      BROADCAST_CONNECTION: "log"
+      CACHE_STORE: "array"
+      DB_CONNECTION: "sqlite"
       DB_DATABASE: ":memory:"
-      FILESYSTEM_DISK: local
-      MAIL_MAILER: array
-      QUEUE_CONNECTION: sync
-      SESSION_DRIVER: array
-      PULSE_ENABLED: false
-      TELESCOPE_ENABLED: false
-      NIGHTWATCH_ENABLED: false
+      FILESYSTEM_DISK: "local"
+      MAIL_MAILER: "array"
+      QUEUE_CONNECTION: "sync"
+      SESSION_DRIVER: "array"
+      PULSE_ENABLED: "false"
+      TELESCOPE_ENABLED: "false"
+      NIGHTWATCH_ENABLED: "false"
 
     steps:
       - name: Checkout code
