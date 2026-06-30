@@ -19,7 +19,6 @@ use App\Http\Controllers\Admin\AdminBookingsController;
 use App\Http\Controllers\Admin\AdminBookingMonitoringController;
 use App\Http\Controllers\Admin\AdminStaycationsController;
 use App\Http\Controllers\Admin\AdminActivitiesController;
-use App\Http\Controllers\Admin\AdminReportsController;
 use App\Http\Controllers\Admin\AdminPagesController;
 use App\Http\Controllers\PromoCodesController;
 use App\Http\Controllers\Admin\AdminController;
@@ -521,7 +520,6 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Main Sections
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/dashboard/export', [AdminDashboardController::class, 'export'])->name('admin.dashboard.export');
-    Route::get('/reports', [AdminReportsController::class, 'index'])->name('admin.reports.index');
     Route::resource('users', AdminUsersController::class, ['names' => [
         'index' => 'admin.users.index',
         'show' => 'admin.users.show',
