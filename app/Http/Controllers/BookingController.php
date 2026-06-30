@@ -3680,8 +3680,9 @@ class BookingController extends Controller
     /**
      * Additional adult count is automatic and based on adult headcount only.
      * Rule:
-     * - Base included adults: 4
-     * - Additional adults allowed: up to 2 (adult #5 and #6)
+     * - base included adults come from included_guest_capacity
+     * - extra adults are capped by max_guest_capacity
+     * - children do not count as additional adults
      */
     protected function resolveAdditionalAdultCount(Staycation $staycation, int $adults): int
     {
@@ -3689,8 +3690,8 @@ class BookingController extends Controller
             return 0;
         }
 
-        $baseIncludedAdults = 4;
-        $maxAdditionalAdults = 2;
+        $baseIncludedAdults = $this->resolveIncludedGuestCapacity($staycation);
+        $maxAdditionalAdults = max(0, $this->resolveMaxGuestCapacity($staycation) - $baseIncludedAdults);
         $adultCount = max(1, $adults);
         $adultOverflow = max(0, $adultCount - $baseIncludedAdults);
 

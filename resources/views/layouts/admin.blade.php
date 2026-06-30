@@ -113,6 +113,7 @@
             ['label'=>'Pages Information','route'=>'admin.stay.wheretostay'],
             ['label'=>'Staycation Rooms','route'=>'admin.stay.staycations'],
             ['label'=>'Season Durations','route'=>'admin.seasonDurations.index'],
+            ['label'=>'Seasonal Pricing','route'=>'admin.stay.settings'],
             ['label'=>'Additional Fees','route'=>'admin.booking-settings.index'],
           ]],
           ['title'=>'Day Visit','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[

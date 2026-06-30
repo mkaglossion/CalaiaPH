@@ -27,6 +27,7 @@ use App\Models\DayPackageText;
 use App\Models\StaycationAccommodation;
 use App\Models\AccommodationText;
 use App\Models\PeakPeriod;
+use App\Models\PeakType;
 use App\Models\FarmSwiperImage;
 use App\Models\FarmText;
 use App\Models\Product;
