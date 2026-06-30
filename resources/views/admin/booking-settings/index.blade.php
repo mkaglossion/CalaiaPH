@@ -1,9 +1,6 @@
 @extends('layouts.admin')
 
 @section('content')
-<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <div class="container mx-auto p-6 space-y-8">
 
     <h1 class="text-2xl font-bold">Staycation Additional Fees</h1>
@@ -119,115 +116,5 @@
             </div>
         </form>
     </div>
-
-</div>
-
-<script>
-document.getElementById('bookingSettingsForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const mattressPrice = document.getElementById('mattress_price_per_night').value;
-    const petPrice = document.getElementById('pet_price').value;
-    const maxPets = document.getElementById('max_pets_per_room').value;
-
-    // Validation
-    if (!mattressPrice || mattressPrice < 0) {
-        Swal.fire({
-            title: 'Validation Error',
-            text: 'Extra Mattress Fee must be a positive number',
-            icon: 'error',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-        return;
-    }
-
-    if (!petPrice || petPrice < 0) {
-        Swal.fire({
-            title: 'Validation Error',
-            text: 'Pet Fee must be a positive number',
-            icon: 'error',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-        return;
-    }
-
-    if (!maxPets || maxPets < 1 || maxPets > 10) {
-        Swal.fire({
-            title: 'Validation Error',
-            text: 'Maximum Pets must be between 1 and 10',
-            icon: 'error',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-        return;
-    }
-
-    // Show loading state
-    const saveBtn = document.getElementById('saveBtn');
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
-
-    // Submit the form
-    const form = document.getElementById('bookingSettingsForm');
-    const formData = new FormData(form);
-
-    fetch(form.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(data => Promise.reject(data));
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Success toast
-        Swal.fire({
-            title: 'Success!',
-            text: 'Booking settings updated successfully.',
-            icon: 'success',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        }).then(() => {
-            location.reload();
-        });
-    })
-    .catch(error => {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = 'Save Settings';
-
-        const errorMessage = error.message || 'Failed to update settings';
-        Swal.fire({
-            title: 'Error!',
-            text: errorMessage,
-            icon: 'error',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-    });
-});
-</script>
 
 @endsection

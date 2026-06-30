@@ -13,10 +13,12 @@ use App\Models\StaySwiperImage;
 use App\Models\HomeText;
 use App\Models\DayTourText;
 use App\Models\StayText;
+use App\Models\StaycationPageText;
 use App\Models\DoText;
 use App\Models\FoodText;
 use App\Models\SpecialText;
 use App\Models\FarmText;
+use App\Models\ShopText;
 
 use App\Models\Food;
 use App\Models\Menu;
@@ -164,6 +166,13 @@ class PagesController extends Controller
         $texts = StayText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
+        $pageCopyTexts = StaycationPageText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
+            return [strtolower($field) => $content];
+        })->toArray();
+
+        $staycationPageLabel = $this->pageTextValue($pageCopyTexts, ['staycation_page_label'], 'Staycation Options');
+        $staycationPageTitle = $this->pageTextValue($pageCopyTexts, ['staycation_page_title'], 'All Glamping & Camping');
+        $staycationPageIntro = $this->pageTextValue($pageCopyTexts, ['staycation_page_intro'], 'Browse every room directly on the page. The category modals are still available below if you want the full feature list and gallery.');
 
         // Get all staycations from admin panel
         $staycations = Staycation::ordered()->with([
@@ -289,7 +298,7 @@ class PagesController extends Controller
             $vrData[(string) $staycation->id] = $this->buildVrDataForStaycation($staycation, $roomType);
         }
 
-        $data = compact('swiperImages', 'texts', 'staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'vrData');
+        $data = compact('swiperImages', 'texts', 'pageCopyTexts', 'staycationPageLabel', 'staycationPageTitle', 'staycationPageIntro', 'staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'vrData');
         $data['active'] = 'staycation';
         
         return view('staycation', $data);
@@ -686,9 +695,29 @@ class PagesController extends Controller
     {
         // Get swiper images and texts for the hero slider
         $swiperImages = DoSwiperImage::all();
-        $texts = DoText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
-            return [strtolower($field) => $content];
-        })->toArray();
+        $texts = DoText::orderByDesc('id')
+            ->get()
+            ->unique(function ($item) {
+                return strtolower(trim((string) ($item->label ?? '')));
+            })
+            ->reverse()
+            ->mapWithKeys(function ($item) {
+                return [strtolower((string) ($item->label ?? '')) => $item->text];
+            })
+            ->toArray();
+
+        $packagesSectionTitle = $this->pageTextValue($texts, [
+            'packages_title',
+            'heading',
+            'title',
+        ], 'Day Packages');
+
+        $packagesSectionIntro = $this->pageTextValue($texts, [
+            'packages_intro',
+            'intro',
+            'subtitle',
+            'description',
+        ], 'Start with our curated package options, then explore activities you can add to your stay.');
 
         // Temporarily merge packages into activities page (shown first).
         $packages = Package::with(['contents', 'images', 'inventory'])
@@ -699,10 +728,22 @@ class PagesController extends Controller
         $activities = Activity::with('swiperImages')->get();
         $slidesByCategory = $this->formatActivitiesForSlides($activities, $activities);
 
-        $data = compact('swiperImages', 'texts', 'slidesByCategory', 'packages');
+        $data = compact('swiperImages', 'texts', 'slidesByCategory', 'packages', 'packagesSectionTitle', 'packagesSectionIntro');
         $data['active'] = 'activities';
         
         return view('activities', $data);
+    }
+
+    private function pageTextValue(array $texts, array $keys, string $fallback): string
+    {
+        foreach ($keys as $key) {
+            $value = trim((string) ($texts[strtolower((string) $key)] ?? ''));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return $fallback;
     }
 
     /**
@@ -830,20 +871,25 @@ class PagesController extends Controller
             ->where('is_active', true)
             ->get();
         $diningCategoryImages = DiningCategoryImage::all()->keyBy('category');
-        $diningDetails = [
-            'Harvest Your Own – Pick and cook farm-fresh ingredients',
-            'Cochinillo – Whole roast pig (pre-order required)',
-            'Fresh farm-to-table ingredients available',
-            'Guided cooking sessions with our chefs'
-        ];
-        
+
         // Only get hero swiper images (food_id is null), not Learn More modal images
         $swiperImages = FoodSwiperImage::whereNull('food_id')->get();
         $texts = FoodText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
-        
-        $data = compact('swiperImages', 'texts', 'messHallFoods', 'cookYourOwnFoods', 'diningCategoryImages', 'diningDetails');
+
+        $diningPageTitle = $this->pageTextValue($texts, ['dining_page_title'], 'Dining at CalaiaPH');
+        $diningPageIntro = $this->pageTextValue($texts, ['dining_page_intro'], 'Experience farm-to-table dining in our elegant mess hall or enjoy cooking your own fresh ingredients straight from our farm. Perfect for celebrations, family gatherings, and intimate dinners.');
+        $messHallTitle = $this->pageTextValue($texts, ['dining_messhall_title'], 'Mess Hall Dining');
+        $messHallIntro = $this->pageTextValue($texts, ['dining_messhall_intro'], 'Our spacious and elegant mess hall is perfect for group dining and special occasions. Let our chefs prepare delicious farm-to-table meals using the freshest ingredients from our farm.');
+        $cookYourOwnTitle = $this->pageTextValue($texts, ['dining_cook_title'], 'Cook Your Own Experience');
+        $cookYourOwnIntro = $this->pageTextValue($texts, ['dining_cook_intro'], 'Enjoy cooking your own fresh ingredients harvested directly from our farm. Choose premium, locally sourced ingredients and create your own meal with guidance from our team.');
+        $ctaTitle = $this->pageTextValue($texts, ['dining_cta_title'], 'Ready to Dine With Us?');
+        $ctaIntro = $this->pageTextValue($texts, ['dining_cta_intro'], 'Message us to reserve your dining experience. We can accommodate lunch, dinner, group events, and special arrangements.');
+        $ctaButton = $this->pageTextValue($texts, ['dining_cta_button'], 'Make a Reservation on Messenger');
+        $ctaNote = $this->pageTextValue($texts, ['dining_cta_note'], 'Available for lunch and dinner reservations. Message us for inquiries.');
+
+        $data = compact('swiperImages', 'texts', 'messHallFoods', 'cookYourOwnFoods', 'diningCategoryImages', 'diningPageTitle', 'diningPageIntro', 'messHallTitle', 'messHallIntro', 'cookYourOwnTitle', 'cookYourOwnIntro', 'ctaTitle', 'ctaIntro', 'ctaButton', 'ctaNote');
         $data['active'] = 'dining';
         
         return view('dining', $data);
@@ -856,12 +902,49 @@ class PagesController extends Controller
 
     public function specialEvents()
     {
+        $swiperImages = SpecialSwiperImage::all();
+        $texts = SpecialText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
+            return [strtolower($field) => $content];
+        })->toArray();
         $events = Event::with(['swiperImages', 'texts'])->get();
-        return $this->renderPage(SpecialSwiperImage::class, SpecialText::class, 'special-events', 'special-events', 'label', 'text', compact('events'));
+
+        $specialEventsPageTitle = $this->pageTextValue($texts, ['special_events_title', 'title', 'heading'], 'Our Special Events');
+        $specialEventsPageIntro = $this->pageTextValue($texts, ['special_events_intro', 'intro', 'subtitle', 'description'], 'From intimate weddings to grand corporate celebrations, our beautiful farm setting provides the perfect backdrop for your special occasion.');
+        $specialEventsCtaTitle = $this->pageTextValue($texts, ['special_events_cta_title', 'cta_title'], 'Have a Custom Event in Mind?');
+        $specialEventsCtaIntro = $this->pageTextValue($texts, ['special_events_cta_intro', 'cta_intro'], 'We specialize in creating bespoke experiences tailored to your unique vision. From intimate gatherings to grand celebrations, let us bring your dream event to life.');
+        $specialEventsCtaPrimaryLabel = $this->pageTextValue($texts, ['special_events_cta_primary_label', 'cta_primary_label'], 'Plan Custom Event');
+        $specialEventsCtaPrimaryUrl = $this->pageTextValue($texts, ['special_events_cta_primary_url', 'cta_primary_url'], 'https://m.me/410774518796277');
+        $specialEventsCtaSecondaryLabel = $this->pageTextValue($texts, ['special_events_cta_secondary_label', 'cta_secondary_label'], 'Email Us Now');
+        $specialEventsCtaSecondaryUrl = $this->pageTextValue($texts, ['special_events_cta_secondary_url', 'cta_secondary_url'], 'https://mail.google.com/mail/?view=cm&fs=1&to=calaia.ph@gmail.com');
+
+        $data = compact(
+            'swiperImages',
+            'texts',
+            'events',
+            'specialEventsPageTitle',
+            'specialEventsPageIntro',
+            'specialEventsCtaTitle',
+            'specialEventsCtaIntro',
+            'specialEventsCtaPrimaryLabel',
+            'specialEventsCtaPrimaryUrl',
+            'specialEventsCtaSecondaryLabel',
+            'specialEventsCtaSecondaryUrl'
+        );
+        $data['active'] = 'special-events';
+
+        return view('special-events', $data);
     }
 
     public function farm()
     {
+        $swiperImages = FarmSwiperImage::all();
+        $texts = FarmText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
+            return [strtolower($field) => $content];
+        })->toArray();
+
+        $farmPageTitle = $this->pageTextValue($texts, ['farm_page_title', 'title', 'heading'], 'Our Sustainable Farming');
+        $farmPageIntro = $this->pageTextValue($texts, ['farm_page_intro', 'intro', 'subtitle', 'description'], 'Discover how we raise livestock and grow produce with respect for nature and animal welfare');
+
         // Get farm experiences from database
         $farmExperiences = \App\Models\FarmExperience::orderBy('sort_order')->get()->map(function($exp) {
             return [
@@ -877,7 +960,10 @@ class PagesController extends Controller
             ];
         })->toArray();
         
-        return $this->renderPage(FarmSwiperImage::class, FarmText::class, 'farm', 'farm', 'label', 'text', compact('farmExperiences'));
+        $data = compact('swiperImages', 'texts', 'farmExperiences', 'farmPageTitle', 'farmPageIntro');
+        $data['active'] = 'farm';
+
+        return view('farm', $data);
     }
 
     public function ourStory()
@@ -888,9 +974,12 @@ class PagesController extends Controller
     public function shop()
     {
         $swiperImages = \App\Models\ShopSwiperImage::all();
-        $texts = \App\Models\FarmText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
+        $texts = ShopText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
+
+        $shopPageTitle = $this->pageTextValue($texts, ['shop_page_title', 'title', 'heading'], 'Shop Our Products');
+        $shopPageIntro = $this->pageTextValue($texts, ['shop_page_intro', 'intro', 'subtitle', 'description'], 'Farm-fresh produce and quality frozen goods delivered straight from our fields to your table');
 
         // Fetch active products by category
         $allProducts = \App\Models\Product::where('is_active', true)
@@ -901,7 +990,7 @@ class PagesController extends Controller
         $frozenProducts = $allProducts->where('category', 'frozen');
         $freshProducts = $allProducts->where('category', 'fresh');
 
-        $data = compact('swiperImages', 'texts', 'frozenProducts', 'freshProducts');
+        $data = compact('swiperImages', 'texts', 'frozenProducts', 'freshProducts', 'shopPageTitle', 'shopPageIntro');
         $data['active'] = 'shop';
 
         return view('shop', $data);

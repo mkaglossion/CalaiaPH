@@ -1,46 +1,57 @@
 @props([
   'label' => '',
   'value' => '',
-  'accent' => 'border-blue-500',
-  'valueClass' => 'text-blue-600',
+  'valueClass' => 'text-gray-900',
   'bg' => 'bg-white',
-  'borderColor' => 'border-gray-100',
-  'meta' => null,
-  'metaInline' => null,
+  'icon' => null,
+  'iconClass' => 'text-gray-900',
+  'iconBg' => 'bg-gray-100',
+  'description' => null,
+  'href' => null,
+  'footerLabel' => null,
+  'footerHref' => null,
+  'footerTone' => 'text-gray-700',
+  'footerBg' => 'bg-gray-50',
 ])
 
-<div {{ $attributes->merge([
-  'class' => "{$bg} rounded-2xl shadow-sm border {$borderColor} p-4 sm:p-6 border-l-4 {$accent} min-w-0"
-]) }}>
-  <h3 class="text-sm font-semibold text-gray-700 truncate">{{ $label }}</h3>
+@php
+  $footerHref = $footerHref ?? $href;
+  $tag = $href ? 'a' : 'div';
+  $classes = trim(implode(' ', array_filter([
+    $bg,
+    'rounded-xl shadow-sm border border-gray-100',
+    'p-5 sm:p-6 min-w-0 transition duration-200',
+    $href ? 'hover:bg-gray-50/60 hover:shadow-md' : '',
+  ])));
+@endphp
 
-  <p class="mt-2 font-extrabold {{ $valueClass }}
-            text-2xl sm:text-3xl 2xl:text-4xl
-            wrap-break-word">
-    {{ $value }}
-  </p>
+<{{ $tag }}
+  @if($href) href="{{ $href }}" @endif
+  {{ $attributes->merge(['class' => $classes]) }}
+>
+  <div class="flex items-start gap-4 min-w-0">
+    @if($icon)
+      <div class="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-xl {{ $iconBg }}">
+        <i data-lucide="{{ $icon }}" class="h-7 w-7 {{ $iconClass }}"></i>
+      </div>
+    @endif
 
-  @if($metaInline)
-    <p class="mt-3 text-sm text-gray-500 wrap-break-word">
-      {{ $metaInline }}
-    </p>
+    <div class="min-w-0 flex-1">
+      <h3 class="text-[11px] font-semibold uppercase tracking-[0.22em] text-gray-500 truncate">{{ $label }}</h3>
+      <p class="mt-1.5 text-3xl font-semibold tracking-tight {{ $valueClass }} wrap-break-word">{{ $value }}</p>
+
+      @if($description)
+        <p class="mt-2 text-sm text-gray-500">{{ $description }}</p>
+      @endif
+    </div>
+  </div>
+
+  @if($footerLabel)
+    <div class="mt-5 px-4 py-3 flex items-center justify-center gap-3 border-t border-gray-100">
+      <span class="inline-flex items-center gap-2 text-sm font-medium {{ $footerTone }}">
+        <span>{{ $footerLabel }}</span>
+        <i data-lucide="chevron-right" class="h-4 w-4"></i>
+      </span>
+    </div>
   @endif
-
-  @if(is_array($meta) && count($meta))
-    <dl class="mt-3 space-y-1 text-sm text-gray-500">
-      @foreach($meta as $row)
-        @php
-          $k = $row[0] ?? '';
-          $v = $row[1] ?? '';
-          $cls = $row[2] ?? 'text-gray-500';
-        @endphp
-        <div class="flex items-center justify-between gap-3 min-w-0">
-          <dt class="truncate">{{ $k }}</dt>
-          <dd class="font-medium {{ $cls }} shrink-0">
-            {{ $v }}
-          </dd>
-        </div>
-      @endforeach
-    </dl>
-  @endif
-</div>
+</{{ $tag }}>

@@ -63,7 +63,7 @@
     aria-label="Admin sidebar"
   >
     {{-- Brand / Top --}}
-    <div class="px-6 py-4 border-b border-white/10 flex items-center">
+    <div class="px-6 h-16 border-b border-white/10 flex items-center justify-between">
       <h1 class="flex-1 text-center text-4xl font-bold tracking-wide whitespace-nowrap">
         <a href="{{ route('admin.dashboard') }}" class="inline-block hover:opacity-90 transition">
           Admin Panel
@@ -93,7 +93,9 @@
           ['title'=>'Bookings','icon'=>'calendar-check','route'=>'admin.bookings.*','sub'=>[
             ['label'=>'All Bookings','route'=>'admin.bookings.index'],
             ['label'=>'Unified Inventory','route'=>'admin.bookings.inventory'],
-            ['label'=>'PayMongo Logs','route'=>'admin.bookings.paymongo-webhooks'],
+            ['label'=>'Staycation Bookings','route'=>'admin.bookings.staycations'],
+            ['label'=>'Food Bookings','route'=>'admin.bookings.foodandbeverage'],
+            ['label'=>'Activities Bookings','route'=>'admin.bookings.activities'],
           ]],
           //['title'=>'Reservation Monitor','icon'=>'bell-ring','route'=>'admin.reservations.*','sub'=>[
           //  ['label'=>'Monitor','route'=>'admin.reservations.monitor'],
@@ -111,6 +113,7 @@
             ['label'=>'Pages Information','route'=>'admin.stay.wheretostay'],
             ['label'=>'Staycation Rooms','route'=>'admin.stay.staycations'],
             ['label'=>'Season Durations','route'=>'admin.seasonDurations.index'],
+            ['label'=>'Seasonal Pricing','route'=>'admin.stay.settings'],
             ['label'=>'Additional Fees','route'=>'admin.booking-settings.index'],
           ]],
           ['title'=>'Day Visit','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
@@ -158,7 +161,7 @@
             @php
               $isAnySubActive = false;
               foreach($item['sub'] as $sub){
-                if(request()->routeIs($sub['route'])){
+                if(\Illuminate\Support\Facades\Route::has($sub['route']) && request()->routeIs($sub['route'])){
                   $isAnySubActive = true;
                   break;
                 }
@@ -180,6 +183,7 @@
 
               <div x-cloak x-show="open" x-transition class="pl-6 space-y-1">
                 @foreach($item['sub'] as $sub)
+                  @if(\Illuminate\Support\Facades\Route::has($sub['route']))
                   @php
                     $subParams = $sub['params'] ?? [];
                     $subRouteActive = request()->routeIs($sub['route']) && (
@@ -190,10 +194,11 @@
                     href="{{ route($sub['route'], $subParams) }}"
                     @click="closeSidebar()"
                     class="flex items-center gap-2 px-3 py-2 rounded-lg transition {{ $subRouteActive ? 'text-yellow-200 bg-white/5' : 'hover:bg-white/5 hover:text-gray-100' }}"
-                  >
-                    <i data-lucide="dot" class="w-4 h-4"></i>
-                    <span class="truncate">{{ $sub['label'] }}</span>
-                  </a>
+                    >
+                      <i data-lucide="dot" class="w-4 h-4"></i>
+                      <span class="truncate">{{ $sub['label'] }}</span>
+                    </a>
+                  @endif
                 @endforeach
               </div>
             </div>
@@ -214,8 +219,63 @@
       </div>
     </nav>
 
-    {{-- Bottom --}}
+    {{-- Mobile Profile Section --}}
+    <div class="md:hidden px-3 mt-0">
+      <div x-data="{ profileOpen: false }" class="space-y-1">
+        <button
+          type="button"
+          @click="profileOpen = !profileOpen"
+          @keydown.escape="profileOpen = false"
+          class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition"
+          aria-haspopup="menu"
+          :aria-expanded="profileOpen"
+        >
+          <div class="relative w-8 h-8">
+            <div class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center text-sm font-semibold">
+              {{ substr(Auth::user()->first_name, 0, 1) }}
+            </div>
+            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#8f5d54]"></span>
+          </div>
+          <span class="text-sm font-medium text-white truncate flex-1">{{ Auth::user()->first_name }}</span>
+          <i data-lucide="chevron-down" class="w-4 h-4 text-white transition-transform" :class="profileOpen ? 'rotate-180' : ''"></i>
+        </button>
+
+        <div
+          x-cloak
+          x-show="profileOpen"
+          @click.outside="profileOpen = false"
+          @keydown.escape="profileOpen = false"
+          x-transition
+          class="pl-4 space-y-1"
+        >
+          <a href="{{ route('admin.settings.profile') }}" @click="closeSidebar()" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition">
+            <i data-lucide="user" class="w-4 h-4"></i>
+            My Profile
+          </a>
+          <a href="{{ route('admin.settings.password') }}" @click="closeSidebar()" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition">
+            <i data-lucide="lock" class="w-4 h-4"></i>
+            Change Password
+          </a>
+          <a href="{{ route('admin.settings.activity-log') }}" @click="closeSidebar()" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition">
+            <i data-lucide="history" class="w-4 h-4"></i>
+            Activity Log
+          </a>
+          <a href="{{ route('logout') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-200 hover:bg-white/10 transition">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+            Log Out
+          </a>
+        </div>
+      </div>
+    </div>
+
     <div class="px-6 py-4 border-t border-white/10">
+      <div class="flex items-center gap-3">
+        <i data-lucide="building-2" class="h-10 w-10 shrink-0 text-white/95"></i>
+        <div class="min-w-0 leading-tight">
+          <p class="truncate text-sm font-semibold text-white">Calaia Booking System</p>
+          <p class="truncate text-xs text-white/75">v{{ \App\Helpers\VersionHelper::full() }}</p>
+        </div>
+      </div>
     </div>
   </aside>
 

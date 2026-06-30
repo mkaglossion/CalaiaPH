@@ -10,11 +10,11 @@
       <section id="staycation-rooms" class="container mx-auto max-w-7xl px-4 py-10">
         <div class="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <p class="text-sm font-semibold uppercase tracking-[0.3em]" style="color:#8f6a60;">Staycation Options</p>
-            <h2 class="mt-2 font-extrabold uppercase tracking-wide staycation-heading text-3xl md:text-5xl">All Glamping & Camping</h2>
+            <p class="text-sm font-semibold uppercase tracking-[0.3em]" style="color:#8f6a60;">{{ $staycationPageLabel ?? 'Staycation Options' }}</p>
+            <h2 class="mt-2 font-extrabold uppercase tracking-wide staycation-heading text-3xl md:text-5xl">{{ $staycationPageTitle ?? 'All Glamping & Camping' }}</h2>
           </div>
           <p class="max-w-2xl text-sm leading-6 text-gray-600 md:text-base">
-            Browse every room directly on the page. The category modals are still available below if you want the full feature list and gallery.
+            {{ $staycationPageIntro ?? 'Browse every room directly on the page. The category modals are still available below if you want the full feature list and gallery.' }}
           </p>
         </div>
 
@@ -47,11 +47,11 @@
                   <div class="swiper-wrapper">
                     @forelse(($staycation->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" alt="{{ $img->title ?? $staycation->name }}" class="h-72 w-full object-cover sm:h-88 lg:h-104" onerror="this.onerror=null; this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" alt="{{ $img->title ?? $staycation->name }}" class="h-[20rem] w-full object-cover sm:h-88 lg:h-104" onerror="this.onerror=null; this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @empty
                       <div class="swiper-slide">
-                        <div class="flex h-72 w-full items-center justify-center bg-gray-100 text-gray-400 sm:h-88 lg:h-104">No image uploaded</div>
+                        <div class="flex h-[20rem] w-full items-center justify-center bg-gray-100 text-gray-400 sm:h-88 lg:h-104">No image uploaded</div>
                       </div>
                     @endforelse
                   </div>
@@ -188,11 +188,11 @@
                       <div class="swiper-wrapper">
                         @forelse(($staycation->swiperImages ?? []) as $img)
                           <div class="swiper-slide">
-                            <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="h-72 w-full object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? $staycation->name }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                            <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="h-[20rem] w-full object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? $staycation->name }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                           </div>
                         @empty
                           <div class="swiper-slide">
-                            <div class="flex h-72 w-full items-center justify-center bg-gray-100 text-gray-400 sm:h-80 md:h-104">No image uploaded</div>
+                            <div class="flex h-[20rem] w-full items-center justify-center bg-gray-100 text-gray-400 sm:h-80 md:h-104">No image uploaded</div>
                           </div>
                         @endforelse
                       </div>
@@ -260,7 +260,7 @@
                     @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-72 object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Standard Glamping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-[20rem] object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Standard Glamping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -308,7 +308,7 @@
                     @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-72 object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Premium Glamping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-[20rem] object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Premium Glamping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -371,7 +371,7 @@
                     @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-72 object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Dome Tent' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-[20rem] object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Dome Tent' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -426,7 +426,7 @@
                     @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-72 object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Bell Tent' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-[20rem] object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Bell Tent' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -481,7 +481,7 @@
                     @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-72 object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'BYOT' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-[20rem] object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'BYOT' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -536,7 +536,7 @@
                     @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-72 object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Car Camping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-[20rem] object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Car Camping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -593,7 +593,7 @@
         <div class="relative mx-3 flex max-h-[93dvh] min-h-0 w-[min(96vw,66rem)] flex-col overflow-hidden rounded-2xl bg-black shadow-2xl sm:mx-4">
           {{-- Header --}}
           <div class="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4" style="background:rgba(255,255,255,0.05)">
-            <h3 class="text-white font-semibold"><i class="bi bi-eye me-2"></i>Virtual Reality Preview</h3>
+            <h3 class="text-white font-semibold"><i class="bi bi-eye me-2"></i>360 Panorama Preview</h3>
             <button class="p-2 rounded hover:bg-white/10 text-white" @click="closeVR()"><i class="bi bi-x-lg"></i></button>
           </div>
 
@@ -608,29 +608,52 @@
                 </div>
               </div>
               <div class="space-y-4 p-3 sm:p-4">
-                <div x-show="(vrData.images || []).length > 0" class="relative h-[clamp(16rem,34vh,26rem)] w-full overflow-hidden rounded-xl bg-black sm:h-[clamp(18rem,36vh,28rem)] lg:h-[clamp(20rem,38vh,30rem)]">
-                  <div class="swiper h-full w-full relative" data-swiper="modal" data-vr-swiper>
-                    <div class="swiper-wrapper h-full">
-                      <template x-for="(image, index) in vrData.images || []" :key="index">
-                        <div class="swiper-slide h-full">
-                          <img :src="image.src" class="h-full w-full object-cover" :alt="image.title || vrData.roomName || 'VR image'" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
-                        </div>
-                      </template>
+                <div x-show="(vrData.images || []).length > 0" class="relative h-[clamp(19rem,39vh,27rem)] w-full overflow-hidden rounded-xl bg-black sm:h-[clamp(20rem,39vh,29rem)] lg:h-[clamp(22rem,42vh,33rem)]">
+                  <div
+                    x-ref="vrPanoramaViewport"
+                    class="relative h-full w-full overflow-hidden"
+                    style="touch-action:none;"
+                    @pointerdown.prevent="startVRPanorama($event)"
+                    @pointermove.prevent="moveVRPanorama($event)"
+                    @pointerup.prevent="endVRPanorama()"
+                    @pointercancel.prevent="endVRPanorama()"
+                    @lostpointercapture="endVRPanorama()"
+                  >
+                    <div
+                      class="absolute inset-0"
+                      style="will-change: background-position;"
+                      :style="getVRPanoramaStyle()"
+                    ></div>
+                    <div class="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent"></div>
+                    <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 to-transparent"></div>
+                    <div x-show="getCurrentVRImage()?.isPanoramic" class="absolute left-3 top-3 rounded-full bg-black/55 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80">
+                      Drag to look around
                     </div>
-                    <button type="button" aria-label="Previous slide" class="absolute top-1/2 -translate-y-1/2 left-3 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-prev>
+                    <button
+                      type="button"
+                      aria-label="Previous scene"
+                      class="absolute left-3 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-black/60 text-white shadow transition hover:bg-black/75"
+                      @click.stop="prevVRScene()"
+                      x-show="(vrData.images || []).length > 1"
+                    >
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M15 6l-6 6 6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
                     </button>
-                    <button type="button" aria-label="Next slide" class="absolute top-1/2 -translate-y-1/2 right-3 z-10 grid place-items-center w-10 h-10 rounded-full bg-black/60 text-white shadow" data-custom-next>
+                    <button
+                      type="button"
+                      aria-label="Next scene"
+                      class="absolute right-3 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-black/60 text-white shadow transition hover:bg-black/75"
+                      @click.stop="nextVRScene()"
+                      x-show="(vrData.images || []).length > 1"
+                    >
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path d="M9 6l6 6-6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
                     </button>
-                    <div class="swiper-pagination"></div>
                   </div>
                 </div>
-                <div x-show="!(vrData.images || []).length" class="flex h-[clamp(16rem,34vh,26rem)] items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/5 px-4 py-6 text-sm text-white/60 sm:h-[clamp(18rem,36vh,28rem)] lg:h-[clamp(20rem,38vh,30rem)]">
+                <div x-show="!(vrData.images || []).length" class="flex h-[clamp(19rem,39vh,27rem)] items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/5 px-4 py-6 text-sm text-white/60 sm:h-[clamp(20rem,39vh,29rem)] lg:h-[clamp(22rem,42vh,33rem)]">
                   No VR media uploaded yet.
                 </div>
                 <div class="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-5">
@@ -692,6 +715,11 @@
           vrBadgeStyle: '',
           vrHeaderStyle: '',
           vrHeaderIcon: 'bi bi-eye',
+          vrPanoramaOffset: 50,
+          vrPanoramaDragging: false,
+          vrPanoramaPointerId: null,
+          vrPanoramaStartX: 0,
+          vrPanoramaStartOffset: 50,
           vrSwiper: null,
           vrSwiperListener: null,
           book(url){
@@ -765,13 +793,10 @@
               : 'background:#00848d;color:white');
             this.vrHeaderIcon = this.vrData.headerIcon || (type === 'glamping' ? 'bi bi-house-heart-fill' : 'bi bi-tree-fill');
             this.vrCurrentIndex = 0;
+            this.resetVRPanorama();
             this.vrOpen = true;
             document.body.style.overflow = 'hidden';
             this.$nextTick(() => {
-              if ((this.vrData.images || []).length > 0 && typeof initModalSwipers === 'function') {
-                initModalSwipers();
-              }
-              this.bindVRSwiper();
               this.updateVRCounter();
               this.updateVRInfo();
             });
@@ -788,11 +813,100 @@
             this.vrBadgeStyle = '';
             this.vrHeaderStyle = '';
             this.vrHeaderIcon = 'bi bi-eye';
+            this.resetVRPanorama();
             this.updateVRCounter();
             this.updateVRInfo();
           },
           getVRData(roomId, type){
             return window.vrData?.[roomId] || window.vrData?.[type] || {};
+          },
+          getCurrentVRImage(){
+            return this.vrData.images?.[this.vrCurrentIndex] || {};
+          },
+          getVRPanoramaStyle(){
+            const currentImage = this.getCurrentVRImage();
+            const src = currentImage?.src || '';
+            const isPanoramic = Boolean(currentImage?.isPanoramic);
+
+            if (!src) {
+              return {
+                backgroundColor: '#000000'
+              };
+            }
+
+            return {
+              backgroundImage: `url(${JSON.stringify(src)})`,
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: isPanoramic ? 'auto 100%' : 'cover',
+              backgroundPosition: isPanoramic ? `${this.vrPanoramaOffset}% center` : 'center center'
+            };
+          },
+          resetVRPanorama(){
+            this.vrPanoramaOffset = 50;
+            this.vrPanoramaDragging = false;
+            this.vrPanoramaPointerId = null;
+            this.vrPanoramaStartX = 0;
+            this.vrPanoramaStartOffset = 50;
+          },
+          startVRPanorama(event){
+            const currentImage = this.getCurrentVRImage();
+            if (!(this.vrData.images || []).length || !currentImage?.isPanoramic) {
+              return;
+            }
+
+            this.vrPanoramaDragging = true;
+            this.vrPanoramaPointerId = event.pointerId;
+            this.vrPanoramaStartX = event.clientX;
+            this.vrPanoramaStartOffset = this.vrPanoramaOffset;
+
+            try {
+              event.currentTarget?.setPointerCapture?.(event.pointerId);
+            } catch (e) {}
+          },
+          moveVRPanorama(event){
+            if (!this.vrPanoramaDragging || !this.getCurrentVRImage()?.isPanoramic) {
+              return;
+            }
+
+            const viewport = this.$refs.vrPanoramaViewport;
+            const width = viewport?.getBoundingClientRect?.().width || 1;
+            const deltaPercent = ((event.clientX - this.vrPanoramaStartX) / width) * 100;
+            const nextOffset = this.vrPanoramaStartOffset + deltaPercent;
+            this.vrPanoramaOffset = Math.max(0, Math.min(100, nextOffset));
+          },
+          endVRPanorama(){
+            this.vrPanoramaDragging = false;
+            this.vrPanoramaPointerId = null;
+          },
+          setVRScene(index){
+            const scenes = Array.isArray(this.vrData.images) ? this.vrData.images : [];
+            if (!scenes.length) {
+              return;
+            }
+
+            const nextIndex = Math.max(0, Math.min(index, scenes.length - 1));
+            this.vrCurrentIndex = nextIndex;
+            this.resetVRPanorama();
+            this.updateVRCounter();
+            this.updateVRInfo();
+          },
+          prevVRScene(){
+            const scenes = Array.isArray(this.vrData.images) ? this.vrData.images : [];
+            if (scenes.length < 2) {
+              return;
+            }
+
+            const nextIndex = this.vrCurrentIndex <= 0 ? scenes.length - 1 : this.vrCurrentIndex - 1;
+            this.setVRScene(nextIndex);
+          },
+          nextVRScene(){
+            const scenes = Array.isArray(this.vrData.images) ? this.vrData.images : [];
+            if (scenes.length < 2) {
+              return;
+            }
+
+            const nextIndex = this.vrCurrentIndex >= scenes.length - 1 ? 0 : this.vrCurrentIndex + 1;
+            this.setVRScene(nextIndex);
           },
           bindVRSwiper(){
             const el = document.querySelector('[data-vr-swiper]');
@@ -836,7 +950,7 @@
             counterEl.textContent = imageCount > 0 ? `${this.vrCurrentIndex + 1} / ${imageCount}` : '';
           },
           updateVRInfo(){
-            const currentImage = this.vrData.images?.[this.vrCurrentIndex] || {};
+            const currentImage = this.getCurrentVRImage();
             const fallbackDesc = this.vrData.description || '';
             const roomName = this.vrData.roomName || this.vrData.title || '';
             const rawSlideTitle = String(currentImage.title || '').trim();
@@ -888,7 +1002,7 @@
             const swiper = new Swiper(el, {
               slidesPerView: 1,
               loop: enableLoop,
-              autoplay: el.hasAttribute('data-vr-swiper') && totalSlides > 1 ? { delay: 3500, disableOnInteraction: false } : false,
+              autoplay: false,
               navigation: { nextEl: el.querySelector('[data-custom-next]'), prevEl: el.querySelector('[data-custom-prev]') },
               pagination: { el: el.querySelector('.swiper-pagination'), clickable: true },
             });

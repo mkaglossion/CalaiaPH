@@ -87,6 +87,13 @@
     {{-- ============================================================= --}}
     {{-- TEXT CONTENT SECTION --}}
     {{-- ============================================================= --}}
+    @php
+        $contentTexts = collect($texts ?? [])->reject(function ($item) {
+            $label = strtolower((string) ($item->label ?? $item->title ?? ''));
+            return str_starts_with($label, 'shop_page_');
+        })->values();
+    @endphp
+
     <div class="flex justify-between items-end mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
@@ -111,7 +118,7 @@
             </thead>
 
             <tbody class="divide-y divide-gray-200">
-                @forelse($texts as $text)
+                @forelse($contentTexts as $text)
                     <tr class="hover:bg-gray-50/70 transition">
                         <td class="px-6 py-4 font-medium text-gray-900">
                             {{ $text->title ?: 'No Label' }}
@@ -127,7 +134,7 @@
                                 @click="editText({{ $text->id }})">Edit</button>
                             <button 
                                 class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
-                                @click="deleteText({{ $text->id }}, '{{ route('farm-texts.destroy', $text->id) }}')">Delete</button>
+                                @click="deleteText({{ $text->id }}, '{{ route('shop-texts.destroy', $text->id) }}')">Delete</button>
                         </td>
                     </tr>
                 @empty
@@ -139,6 +146,56 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    <hr class="my-10 border-gray-300">
+
+    @php
+        $resolveShopText = function (string $label, string $fallback = '') use ($texts) {
+            $match = collect($texts ?? [])->first(function ($item) use ($label) {
+                $itemLabel = strtolower((string) ($item->label ?? $item->title ?? ''));
+                return $itemLabel === strtolower($label);
+            });
+
+            $value = trim((string) ($match->text ?? $match->content ?? ''));
+            return $value !== '' ? $value : $fallback;
+        };
+
+        $shopPageTitle = $resolveShopText('shop_page_title', 'Shop Our Products');
+        $shopPageIntro = $resolveShopText('shop_page_intro', 'Farm-fresh produce and quality frozen goods delivered straight from our fields to your table');
+    @endphp
+
+    {{-- ============================================================= --}}
+    {{-- PAGE COPY --}}
+    {{-- ============================================================= --}}
+    <div class="mb-10 rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-6 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Shop Page Copy</h2>
+                <p class="text-gray-500 text-sm">Controls the hero heading and intro on the public Shop page.</p>
+            </div>
+
+            <button
+                type="button"
+                @click="saveShopCopy()"
+                class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+                Save Shop Copy
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div>
+                <label for="shop_page_title" class="block font-semibold mb-2 text-gray-700">Section Title</label>
+                <input id="shop_page_title" type="text" x-model="pageCopy.title" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Shop Our Products">
+            </div>
+
+            <div>
+                <label for="shop_page_intro" class="block font-semibold mb-2 text-gray-700">Section Intro</label>
+                <textarea id="shop_page_intro" x-model="pageCopy.intro" rows="4" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Farm-fresh produce and quality frozen goods delivered straight from our fields to your table"></textarea>
+            </div>
+        </div>
+
+        <p class="mt-4 text-xs text-gray-500">Saved as <code>shop_page_title</code> and <code>shop_page_intro</code>.</p>
     </div>
 
 
@@ -252,7 +309,11 @@ function shopstoreManager() {
         currentImageId: null,
         currentImageTitle: '',
         selectedImages: [],
-        texts: @js($texts),
+        texts: @js($contentTexts->values()),
+        pageCopy: @js([
+            'title' => $shopPageTitle,
+            'intro' => $shopPageIntro,
+        ]),
         form: { id: null, title: '', content: '' },
 
         selectAll() {
@@ -429,10 +490,10 @@ function shopstoreManager() {
             formData.append('title', this.form.title);
             formData.append('content', this.form.content);
 
-            let url = '{{ route('farm-texts.store') }}';
+            let url = '{{ route('shop-texts.store') }}';
 
             if (this.editMode && this.form.id) {
-                url = `/admin/farm-texts/${this.form.id}`;
+                url = `/admin/shop-texts/${this.form.id}`;
                 formData.append('_method', 'PUT');
             }
 
@@ -464,6 +525,60 @@ function shopstoreManager() {
                         icon: "warning",
                         title: "Validation Error",
                         html: Object.values(data.errors).flat().join("<br>")
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Unexpected Error",
+                    text: "Something went wrong."
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async saveShopCopy() {
+            this.isLoading = true;
+
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+            const formData = new FormData();
+
+            formData.append('page_title', this.pageCopy.title || '');
+            formData.append('page_intro', this.pageCopy.intro || '');
+
+            try {
+                const res = await fetch('{{ route('admin.shop.copy.store') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Saved!",
+                        text: data.message || "Shop copy saved successfully!",
+                        confirmButtonColor: "#2563eb"
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else if (data.errors) {
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Validation Error",
+                        html: Object.values(data.errors).flat().join("<br>")
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Failed",
+                        text: data.message || "Failed to save shop copy."
                     });
                 }
             } catch (err) {

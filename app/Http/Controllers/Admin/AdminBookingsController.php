@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
+use App\Models\ActivityPackage;
 use App\Models\AdminActivityLog;
 use App\Models\Booking;
 use App\Models\DayTour;
+use App\Models\Food;
 use App\Models\PackageBooking;
 use App\Models\PaymongoWebhookEvent;
 use App\Models\Staycation;
@@ -30,6 +33,9 @@ class AdminBookingsController extends Controller
         // Build Booking query with filters
         $bookingQuery = Booking::query();
         $paymentScope = $this->normalizePaymentScope($request);
+        if ($request->filled('status') && !$request->filled('payment_status')) {
+            $paymentScope = 'all';
+        }
 
         $this->applyPaymentLifecycleFilters($bookingQuery, $request, $paymentScope, $pendingCutoff);
 
@@ -283,26 +289,61 @@ class AdminBookingsController extends Controller
         $bookings = new LengthAwarePaginator($slice, $total, $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]);
         
         $confirmed = $merged->where('status', 'confirmed')->count();
+        $active = $confirmed;
         $cancelled = $merged->where('status', 'cancelled')->count();
         $completed = $merged->where('status', 'completed')->count();
+        $pending = $merged->filter(fn ($item) => strtolower((string) ($item->effective_payment_status ?? $item->payment_status ?? '')) === 'pending')->count();
         $total = $merged->count();
         $today = $merged->filter(fn ($item) => $item->created_at instanceof Carbon && $item->created_at->isToday())->count();
         
         $stats = [
             'total' => $total,
+            'active' => $active,
             'confirmed' => $confirmed,
             'cancelled' => $cancelled,
             'completed' => $completed,
+            'pending' => $pending,
             'today' => $today,
         ];
         
         // Stats for stat cards with subtitles
         $statCardsData = [
-            ['label' => 'Total Bookings', 'value' => $total, 'subtitle' => ''],
-            ['label' => 'Confirmed', 'value' => $confirmed, 'subtitle' => 'Confirmed: ' . $confirmed],
-            ['label' => 'Completed', 'value' => $completed, 'subtitle' => 'Completed: ' . $completed],
-            ['label' => 'Cancelled', 'value' => $cancelled, 'subtitle' => 'Cancelled: ' . $cancelled],
-            ['label' => 'Today', 'value' => $today, 'subtitle' => ''],
+            [
+                'label' => 'Active Bookings',
+                'value' => $active,
+                'subtitle' => 'Confirmed operational bookings',
+                'icon' => 'calendar-check-2',
+                'iconBg' => 'bg-blue-50',
+                'iconClass' => 'text-blue-600',
+                'href' => route('admin.bookings.index', ['status' => 'confirmed']),
+            ],
+            [
+                'label' => 'Completed',
+                'value' => $completed,
+                'subtitle' => 'Checked out bookings',
+                'icon' => 'check-circle-2',
+                'iconBg' => 'bg-emerald-50',
+                'iconClass' => 'text-emerald-600',
+                'href' => route('admin.bookings.index', ['status' => 'completed']),
+            ],
+            [
+                'label' => 'Cancelled',
+                'value' => $cancelled,
+                'subtitle' => 'Voided reservations',
+                'icon' => 'ban',
+                'iconBg' => 'bg-rose-50',
+                'iconClass' => 'text-rose-600',
+                'href' => route('admin.bookings.index', ['status' => 'cancelled']),
+            ],
+            [
+                'label' => 'Today',
+                'value' => $today,
+                'subtitle' => 'Created today',
+                'icon' => 'sun',
+                'iconBg' => 'bg-amber-50',
+                'iconClass' => 'text-amber-600',
+                'href' => route('admin.bookings.index', ['date_from' => now()->toDateString(), 'date_to' => now()->toDateString()]),
+            ],
         ];
         
         return view('admin.bookings.index', compact('bookings', 'stats', 'statCardsData', 'paymentScope'));
@@ -314,6 +355,9 @@ class AdminBookingsController extends Controller
         $this->expireStalePendingBookings($pendingCutoff, app(PaymentService::class));
 
         $paymentScope = $this->normalizePaymentScope($request);
+        if ($request->filled('status') && !$request->filled('payment_status')) {
+            $paymentScope = 'all';
+        }
         $merged = $this->buildMergedBookingsCollection($request, $paymentScope, $pendingCutoff);
 
         $generatedAt = now()->format('M d, Y H:i:s');
@@ -375,7 +419,7 @@ class AdminBookingsController extends Controller
     {
         $booking = Booking::findOrFail($id);
 
-        $staycations = Staycation::all()->keyBy('id');
+        $staycations = Staycation::with('swiperImages')->get()->keyBy('id');
         $bookingData = is_array($booking->booking_data) ? $booking->booking_data : [];
 
         $selectedPackages = $this->extractSelectedPackages($bookingData);
@@ -383,13 +427,27 @@ class AdminBookingsController extends Controller
         $singleActivities = $this->extractSelectedActivities($bookingData);
         $activityPackages = $this->extractSelectedActivityPackages($bookingData);
 
+        $foodIds = collect($foodItems)->pluck('id')->filter()->unique()->values()->all();
+        $activityIds = collect($singleActivities)->pluck('id')->filter()->unique()->values()->all();
+        $activityPackageIds = collect($activityPackages)->pluck('package_id')->filter()->unique()->values()->all();
+        $dayTourPackageIds = collect($selectedPackages)->pluck('package_id')->filter()->unique()->values()->all();
+
+        $foodImages = !empty($foodIds) ? Food::whereIn('id', $foodIds)->pluck('image', 'id')->all() : [];
+        $activityImages = !empty($activityIds) ? Activity::whereIn('id', $activityIds)->pluck('image', 'id')->all() : [];
+        $activityPackageImages = !empty($activityPackageIds) ? \App\Models\ActivityPackage::whereIn('id', $activityPackageIds)->pluck('image', 'id')->all() : [];
+        $dayTourImages = !empty($dayTourPackageIds) ? DayTour::whereIn('id', $dayTourPackageIds)->pluck('image', 'id')->all() : [];
+
         return view('admin.bookings.show', compact(
             'booking',
             'staycations',
             'selectedPackages',
             'foodItems',
             'singleActivities',
-            'activityPackages'
+            'activityPackages',
+            'foodImages',
+            'activityImages',
+            'activityPackageImages',
+            'dayTourImages'
         ));
     }
     
@@ -462,11 +520,51 @@ class AdminBookingsController extends Controller
         $inventoryData = [];
         $dailyTotals = [];
         
+        $staycationIds = $staycations->pluck('id')->all();
+        
+        $bookingsQuery = Booking::query()
+            ->whereIn('booking_type', Booking::STAYCATION_TYPES)
+            ->whereIn('status', ['confirmed', 'completed'])
+            ->whereIn('checkin_date', $sliceDates)
+            ->get();
+        
+        $packagesBookedByDateStaycation = [];
+        $packagesBookedByDate = [];
+        
+        foreach ($bookingsQuery as $booking) {
+            $checkinDate = $booking->checkin_date instanceof Carbon
+                ? $booking->checkin_date->toDateString()
+                : Carbon::parse($booking->checkin_date)->toDateString();
+            
+            $bookingData = $booking->booking_data ?? [];
+            $accommodations = $bookingData['accommodations'] ?? [];
+            
+            foreach ($accommodations as $accommodation) {
+                $staycationId = $accommodation['room_id'] ?? $accommodation['id'] ?? null;
+                if ($staycationId) {
+                    $dateKey = $checkinDate;
+                    $packagesBookedByDateStaycation[$staycationId][$dateKey] = ($packagesBookedByDateStaycation[$staycationId][$dateKey] ?? 0) + 1;
+                }
+            }
+            
+            if (!isset($packagesBookedByDate[$checkinDate])) {
+                $packagesBookedByDate[$checkinDate] = 0;
+            }
+            $packagesBookedByDate[$checkinDate] += count($accommodations);
+        }
+        
         foreach ($staycations as $staycation) {
             $inventories = StaycationInventory::where('staycation_id', $staycation->id)
                 ->whereIn('date', $sliceDates)
                 ->orderBy('date')
                 ->get();
+            
+            $inventories = $inventories->map(function ($inventory) use ($packagesBookedByDateStaycation) {
+                $dateKey = Carbon::parse($inventory->date)->toDateString();
+                $packagesBooked = $packagesBookedByDateStaycation[$inventory->staycation_id][$dateKey] ?? 0;
+                $inventory->packages_booked = $packagesBooked;
+                return $inventory;
+            });
             
             $inventoryData[$staycation->id] = [
                 'staycation' => $staycation,
@@ -484,12 +582,14 @@ class AdminBookingsController extends Controller
                         'total_quantity' => 0,
                         'booked_quantity' => 0,
                         'available_quantity' => 0,
+                        'packages_booked' => 0,
                     ];
                 }
 
                 $dailyTotals[$dateKey]['total_quantity'] += $inventory->total_quantity;
                 $dailyTotals[$dateKey]['booked_quantity'] += $inventory->booked_quantity;
                 $dailyTotals[$dateKey]['available_quantity'] += $inventory->available_quantity;
+                $dailyTotals[$dateKey]['packages_booked'] += $inventory->packages_booked ?? 0;
             }
         }
 
@@ -874,6 +974,11 @@ class AdminBookingsController extends Controller
         if ($request->filled('payment_status')) {
             $paymentStatus = (string) $request->string('payment_status');
 
+            if ($paymentStatus === 'attempts') {
+                $query->whereIn('payment_status', ['pending', 'failed']);
+                return;
+            }
+
             if ($paymentStatus === 'pending') {
                 $query->where('payment_status', 'pending')
                     ->whereNotIn('status', ['cancelled', 'completed'])
@@ -979,6 +1084,8 @@ class AdminBookingsController extends Controller
                     $pricePerPerson = (float) ($package['price_per_person'] ?? 0);
 
                     return [
+                        'id' => $package['id'] ?? null,
+                        'package_id' => $package['package_id'] ?? null,
                         'name' => (string) ($package['name'] ?? 'Selected Package'),
                         'guests' => $guests,
                         'quantity' => $quantity,
@@ -1006,6 +1113,8 @@ class AdminBookingsController extends Controller
         $pricePerPerson = $guests > 0 ? round($totalPrice / $guests, 2) : $totalPrice;
 
         return [[
+            'id' => $packageId,
+            'package_id' => is_numeric($packageId) ? (int) $packageId : null,
             'name' => $packageName,
             'guests' => $guests,
             'quantity' => 1,
@@ -1023,6 +1132,7 @@ class AdminBookingsController extends Controller
                 $unitPrice = (float) ($food['price'] ?? 0);
 
                 return [
+                    'id' => $food['id'] ?? null,
                     'name' => (string) $food['name'],
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
@@ -1042,6 +1152,7 @@ class AdminBookingsController extends Controller
                 $unitPrice = (float) ($activity['price'] ?? 0);
 
                 return [
+                    'id' => $activity['id'] ?? null,
                     'name' => (string) $activity['name'],
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
@@ -1061,6 +1172,8 @@ class AdminBookingsController extends Controller
                 $unitPrice = (float) ($package['price'] ?? 0);
 
                 return [
+                    'id' => $package['id'] ?? null,
+                    'package_id' => $package['package_id'] ?? null,
                     'name' => (string) $package['name'],
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,

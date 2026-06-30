@@ -7,6 +7,7 @@ use App\Models\DayTourSwiperImage;
 use App\Models\DayTourText;
 use App\Models\StaySwiperImage;
 use App\Models\StayText;
+use App\Models\StaycationPageText;
 use App\Models\DoSwiperImage;
 use App\Models\DoText;
 use App\Models\FoodSwiperImage;
@@ -65,16 +66,27 @@ class AdminPagesController extends Controller
         } else {
             $images = $imageModel::all();
         }
-        $texts = $textModel::all();
+        $texts = $textModel::orderByDesc('id')
+            ->get()
+            ->unique(function ($item) {
+                return strtolower(trim((string) ($item->label ?? $item->title ?? '')));
+            })
+            ->reverse()
+            ->values();
+        $pageCopyTexts = [];
 
         if ($page === 'whatToDo') {
             $mainPackages = Package::orderBy('created_at', 'asc')->get();
             $mainPackagesTotal = Package::count();
             $packages = Package::orderBy('created_at', 'asc')->paginate(15);
             $extraData = compact('mainPackages', 'mainPackagesTotal', 'packages');
+        } elseif ($page === 'whereToStay') {
+            $pageCopyTexts = StaycationPageText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
+                return [strtolower($field) => $content];
+            })->toArray();
         }
 
-        return view($view, compact('images', 'texts') + $extraData);
+        return view($view, compact('images', 'texts', 'pageCopyTexts') + $extraData);
     }
 
     public function items()

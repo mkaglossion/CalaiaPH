@@ -16,9 +16,9 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminUsersController;
 use App\Http\Controllers\Admin\AdminBookingsController;
+use App\Http\Controllers\Admin\AdminBookingMonitoringController;
 use App\Http\Controllers\Admin\AdminStaycationsController;
 use App\Http\Controllers\Admin\AdminActivitiesController;
-use App\Http\Controllers\Admin\AdminReportsController;
 use App\Http\Controllers\Admin\AdminPagesController;
 use App\Http\Controllers\PromoCodesController;
 use App\Http\Controllers\Admin\AdminController;
@@ -53,10 +53,13 @@ use App\Http\Controllers\Admin\FoodTextController;
 use App\Http\Controllers\Admin\SpecialTextController;
 use App\Http\Controllers\Admin\PackageTextController;
 use App\Http\Controllers\Admin\FarmTextController;
+use App\Http\Controllers\Admin\ShopTextController;
 use App\Http\Controllers\Admin\ActivityTextController;
 use App\Http\Controllers\Admin\StaycationTextController;
+use App\Http\Controllers\Admin\StaycationPageTextController;
 use App\Http\Controllers\Admin\MenuTextController;
 use App\Http\Controllers\Admin\EventTextController;
+use App\Http\Controllers\Admin\EventSectionController;
 use App\Http\Controllers\Admin\EventExperienceSectionController;
 use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\FarmInfoTextController;
@@ -517,7 +520,6 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Main Sections
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/dashboard/export', [AdminDashboardController::class, 'export'])->name('admin.dashboard.export');
-    Route::get('/reports', [AdminReportsController::class, 'index'])->name('admin.reports.index');
     Route::resource('users', AdminUsersController::class, ['names' => [
         'index' => 'admin.users.index',
         'show' => 'admin.users.show',
@@ -532,6 +534,12 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/export', [AdminBookingsController::class, 'export'])->name('admin.bookings.export');
         Route::get('/inventory', [InventoryManagementController::class, 'index'])->name('admin.bookings.inventory');
         Route::get('/paymongo-webhooks', [AdminBookingsController::class, 'paymongoWebhooks'])->name('admin.bookings.paymongo-webhooks');
+        Route::get('/staycations', [AdminBookingMonitoringController::class, 'staycations'])->name('admin.bookings.staycations');
+        Route::get('/staycations/export', [AdminBookingMonitoringController::class, 'exportStaycations'])->name('admin.bookings.staycations.export');
+        Route::get('/food-and-beverage', [AdminBookingMonitoringController::class, 'foodAndBeverage'])->name('admin.bookings.foodandbeverage');
+        Route::get('/food-and-beverage/export', [AdminBookingMonitoringController::class, 'exportFoodAndBeverage'])->name('admin.bookings.foodandbeverage.export');
+        Route::get('/activities', [AdminBookingMonitoringController::class, 'activities'])->name('admin.bookings.activities');
+        Route::get('/activities/export', [AdminBookingMonitoringController::class, 'exportActivities'])->name('admin.bookings.activities.export');
 
         // Booking Extra Fees (mattress, pet fees) - must come before {id} route
         Route::get('/extra-fees', [BookingSettingsController::class, 'index'])->name('admin.booking-settings.index');
@@ -613,6 +621,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     });
     Route::prefix('/stay')->group(function () {
         Route::get('/where-to-stay', [AdminPagesController::class, 'whereToStay'])->name('admin.stay.wheretostay');
+        Route::post('/copy', [StaycationPageTextController::class, 'saveCopy'])->name('admin.stay.copy.store');
         Route::get('/staycations', [AdminController::class, 'staycation'])->name('admin.stay.staycations');
         Route::get('/accommodations', [AdminController::class, 'staycationAccommodation'])->name('admin.stay.accommodations');
         Route::get('/settings', [AdminController::class, 'staySettings'])->name('admin.stay.settings');
@@ -640,6 +649,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
                 'destroy' => 'admin.activity-packages.destroy'
             ]]);
             Route::get('/what-to-do', [AdminPagesController::class, 'whatToDo'])->name('admin.do.whattodo');
+            Route::post('/copy', [DoTextController::class, 'saveCopy'])->name('admin.do.copy.store');
     });
     Route::prefix('/food')->group(function () {
             Route::get('/food-and-beverage', [AdminPagesController::class, 'foodAndBeverage'])->name('admin.food.foodandbeverage');
@@ -669,6 +679,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
                 'store' => 'admin.dining.category-images.store',
                 'destroy' => 'admin.dining.category-images.destroy'
             ]]);
+            Route::post('category-images/copy', [DiningCategoryImageController::class, 'saveCopy'])->name('admin.dining.category-images.copy.store');
     });
     Route::prefix('/events')->group(function () {
         Route::get('/events', [AdminController::class, 'event'])->name('admin.events.events');
@@ -676,6 +687,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::prefix('/special-events')->group(function () {
         Route::get('/', [AdminPagesController::class, 'specialEvents'])->name('admin.specialEvents.specialevents');
         Route::get('/manager', [AdminController::class, 'specialEventsManager'])->name('admin.specialEvents.manager');
+        Route::post('/copy', [SpecialTextController::class, 'saveCopy'])->name('admin.specialEvents.copy.store');
     });
     Route::prefix('/event-experience')->group(function () {
         Route::get('/', [AdminController::class, 'eventExperience'])->name('admin.eventExperience.sections');
@@ -692,12 +704,14 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
              Route::get('/experiences', [FarmExperiencesController::class, 'index'])->name('admin.farm.experiences');
              Route::post('/experiences/save', [FarmExperiencesController::class, 'save'])->name('admin.farm.experiences.save');
              Route::post('/experiences/upload-image', [FarmExperiencesController::class, 'uploadImage'])->name('admin.farm.experiences.uploadImage');
+             Route::post('/copy', [FarmTextController::class, 'saveCopy'])->name('admin.farm.copy.store');
      });
 
      Route::prefix('/shop')->group(function () {
          Route::get('/shopstore', [AdminController::class, 'shopstore'])->name('admin.shop.shopstore');
          Route::get('/shopitems', [AdminController::class, 'shopitems'])->name('admin.shop.shopitems');
          Route::get('/orders', [AdminController::class, 'shopOrders'])->name('admin.shop.orders');
+         Route::post('/copy', [ShopTextController::class, 'saveCopy'])->name('admin.shop.copy.store');
          Route::resource('shop-swiper-images', ShopSwiperImageController::class, ['names' => [
              'store' => 'admin.shop-swiper-images.store',
              'update' => 'admin.shop-swiper-images.update',
@@ -730,6 +744,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::resource('food-texts', FoodTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('special-texts', SpecialTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('farm-texts', FarmTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('shop-texts', ShopTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('activity-text', ActivityTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('staycation-text', StaycationTextController::class, [
         'names' => [
@@ -740,6 +755,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     ])->only(['store', 'update', 'destroy']);
     Route::resource('menu-text', MenuTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-text', EventTextController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('event-sections', EventSectionController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-experience-sections', EventExperienceSectionController::class)->only(['store', 'update', 'destroy']);
     Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('day-text', DayPackageTextController::class)->only(['store', 'update', 'destroy']);
@@ -779,9 +795,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
             'destroy' => 'admin.staycation-list.destroy'
         ]
     ])->only(['store', 'show', 'update', 'destroy']);
-    Route::resource('menu-list', MenuController::class)->only(['store', 'show', 'destroy']);
+    Route::resource('menu-list', MenuController::class)->only(['store', 'show', 'update', 'destroy']);
     Route::resource('event-list', EventController::class)->only(['store', 'update', 'destroy']);
-    Route::resource('farmInfo-list', FarmInfoController::class)->only(['store', 'destroy']);
+    Route::resource('farmInfo-list', FarmInfoController::class)->only(['store', 'update', 'destroy']);
     Route::resource('products', ProductController::class);
 
     // Other CRUD

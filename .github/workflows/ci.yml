@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      APP_ENV: "testing"
+      APP_KEY: "base64:46PO1xTmXYCEw9sR7VdTOiB7kWbEu9MWFQw0WHDHwQ0="
+      APP_URL: "http://127.0.0.1:8000/"
+      APP_MAINTENANCE_DRIVER: "file"
+      APP_MAINTENANCE_STORE: "database"
+      BCRYPT_ROUNDS: "4"
+      BROADCAST_CONNECTION: "log"
+      CACHE_STORE: "array"
+      DB_CONNECTION: "sqlite"
+      DB_DATABASE: ":memory:"
+      FILESYSTEM_DISK: "local"
+      MAIL_MAILER: "array"
+      QUEUE_CONNECTION: "sync"
+      SESSION_DRIVER: "array"
+      PULSE_ENABLED: "false"
+      TELESCOPE_ENABLED: "false"
+      NIGHTWATCH_ENABLED: "false"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, dom, fileinfo, sqlite3, pdo_sqlite, bcmath, intl, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          mkdir -p bootstrap/cache
+          mkdir -p database
+          mkdir -p storage/framework/cache/data
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/testing
+          mkdir -p storage/framework/views
+          mkdir -p storage/logs
+          touch database/database.sqlite
+          php artisan key:generate --force --ansi
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Run migrations
+        run: php artisan migrate --force --ansi
+
+      - name: Run tests
+        run: php artisan test
+
+      - name: Upload Laravel logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: laravel-debug-artifacts
+          path: |
+            storage/logs
+            storage/framework/testing
+            bootstrap/cache
+          if-no-files-found: ignore

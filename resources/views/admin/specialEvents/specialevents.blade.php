@@ -87,10 +87,17 @@
     {{-- ============================================================= --}}
     {{-- TEXT CONTENT SECTION --}}
     {{-- ============================================================= --}}
+    @php
+        $contentTexts = collect($texts ?? [])->reject(function ($item) {
+            $label = strtolower((string) ($item->label ?? $item->title ?? ''));
+            return str_starts_with($label, 'special_events_');
+        })->values();
+    @endphp
+
     <div class="flex justify-between items-end mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
-            <p class="text-gray-500 text-sm">Paragraphs and captions displayed on the Special Events page.</p>
+            <p class="text-gray-500 text-sm">Paragraphs and captions displayed in the Special Events hero slider.</p>
         </div>
 
         <button 
@@ -111,7 +118,7 @@
             </thead>
 
             <tbody class="divide-y divide-gray-200">
-                @forelse($texts as $text)
+                @forelse($contentTexts as $text)
                     <tr class="hover:bg-gray-50/70 transition">
                         <td class="px-6 py-4 font-medium text-gray-900">
                             {{ $text->title ?: 'No Label' }}
@@ -139,6 +146,109 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    <hr class="my-10 border-gray-300">
+
+    @php
+        $resolveSpecialText = function (string $label, string $fallback = '') use ($texts) {
+            $match = collect($texts ?? [])->first(function ($item) use ($label) {
+                $itemLabel = strtolower((string) ($item->label ?? $item->title ?? ''));
+                return $itemLabel === strtolower($label);
+            });
+
+            $value = trim((string) ($match->text ?? $match->content ?? ''));
+            return $value !== '' ? $value : $fallback;
+        };
+
+        $specialEventsPageTitle = $resolveSpecialText('special_events_title', 'Our Special Events');
+        $specialEventsPageIntro = $resolveSpecialText('special_events_intro', 'From intimate weddings to grand corporate celebrations, our beautiful farm setting provides the perfect backdrop for your special occasion.');
+        $specialEventsCtaTitle = $resolveSpecialText('special_events_cta_title', 'Have a Custom Event in Mind?');
+        $specialEventsCtaIntro = $resolveSpecialText('special_events_cta_intro', 'We specialize in creating bespoke experiences tailored to your unique vision. From intimate gatherings to grand celebrations, let us bring your dream event to life.');
+        $specialEventsCtaPrimaryLabel = $resolveSpecialText('special_events_cta_primary_label', 'Plan Custom Event');
+        $specialEventsCtaPrimaryUrl = $resolveSpecialText('special_events_cta_primary_url', 'https://m.me/410774518796277');
+        $specialEventsCtaSecondaryLabel = $resolveSpecialText('special_events_cta_secondary_label', 'Email Us Now');
+        $specialEventsCtaSecondaryUrl = $resolveSpecialText('special_events_cta_secondary_url', 'https://mail.google.com/mail/?view=cm&fs=1&to=calaia.ph@gmail.com');
+    @endphp
+
+    {{-- ============================================================= --}}
+    {{-- PAGE COPY --}}
+    {{-- ============================================================= --}}
+    <div class="mb-10 rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-6 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Special Events Page Copy</h2>
+                <p class="text-gray-500 text-sm">Controls the hero heading and intro on the public Special Events page.</p>
+            </div>
+
+            <button
+                type="button"
+                @click="saveSpecialEventsCopy()"
+                class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+                Save Special Events Copy
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div>
+                <label for="special_events_title" class="block font-semibold mb-2 text-gray-700">Section Title</label>
+                <input id="special_events_title" type="text" x-model="pageCopy.title" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Our Special Events">
+            </div>
+
+            <div>
+                <label for="special_events_intro" class="block font-semibold mb-2 text-gray-700">Section Intro</label>
+                <textarea id="special_events_intro" x-model="pageCopy.intro" rows="4" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="From intimate weddings to grand corporate celebrations..."></textarea>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">CTA Content</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div>
+                    <label for="special_events_cta_title" class="block font-semibold mb-2 text-gray-700">CTA Title</label>
+                    <input id="special_events_cta_title" type="text" x-model="pageCopy.ctaTitle" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Have a Custom Event in Mind?">
+                </div>
+
+                <div>
+                    <label for="special_events_cta_intro" class="block font-semibold mb-2 text-gray-700">CTA Intro</label>
+                    <textarea id="special_events_cta_intro" x-model="pageCopy.ctaIntro" rows="4" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="We specialize in creating bespoke experiences..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">CTA Buttons</h3>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div>
+                    <label for="special_events_cta_primary_label" class="block font-semibold mb-2 text-gray-700">Primary Button Label</label>
+                    <input id="special_events_cta_primary_label" type="text" x-model="pageCopy.ctaPrimaryLabel" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Plan Custom Event">
+                </div>
+
+                <div>
+                    <label for="special_events_cta_secondary_label" class="block font-semibold mb-2 text-gray-700">Secondary Button Label</label>
+                    <input id="special_events_cta_secondary_label" type="text" x-model="pageCopy.ctaSecondaryLabel" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Email Us Now">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+                <div>
+                    <label for="special_events_cta_primary_url" class="block font-semibold mb-2 text-gray-700">Primary Button URL</label>
+                    <input id="special_events_cta_primary_url" type="text" x-model="pageCopy.ctaPrimaryUrl" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white font-mono text-sm" placeholder="https://m.me/410774518796277">
+                    <p class="mt-2 text-xs text-gray-500">Use the Messenger URL or any destination URL.</p>
+                </div>
+
+                <div>
+                    <label for="special_events_cta_secondary_url" class="block font-semibold mb-2 text-gray-700">Secondary Button URL</label>
+                    <input id="special_events_cta_secondary_url" type="text" x-model="pageCopy.ctaSecondaryUrl" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white font-mono text-sm" placeholder="https://mail.google.com/mail/?view=cm&fs=1&to=calaia.ph@gmail.com">
+                    <p class="mt-2 text-xs text-gray-500">Use the Gmail compose URL or any destination URL.</p>
+                </div>
+            </div>
+        </div>
+
+        <p class="mt-4 text-xs text-gray-500">
+            Saved as <code>special_events_title</code>, <code>special_events_intro</code>, and CTA fields for the card buttons.
+        </p>
     </div>
 
 
@@ -252,7 +362,17 @@ function specialEventsManager() {
         currentImageId: null,
         currentImageTitle: '',
         selectedImages: [],
-        texts: @js($texts),
+        texts: @js($contentTexts->values()),
+        pageCopy: @js([
+            'title' => $specialEventsPageTitle,
+            'intro' => $specialEventsPageIntro,
+            'ctaTitle' => $specialEventsCtaTitle,
+            'ctaIntro' => $specialEventsCtaIntro,
+            'ctaPrimaryLabel' => $specialEventsCtaPrimaryLabel,
+            'ctaPrimaryUrl' => $specialEventsCtaPrimaryUrl,
+            'ctaSecondaryLabel' => $specialEventsCtaSecondaryLabel,
+            'ctaSecondaryUrl' => $specialEventsCtaSecondaryUrl,
+        ]),
         form: { id: null, title: '', content: '' },
 
         selectAll() {
@@ -471,6 +591,66 @@ function specialEventsManager() {
                     icon: "error",
                     title: "Unexpected Error",
                     text: "Something went wrong."
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async saveSpecialEventsCopy() {
+            this.isLoading = true;
+
+            try {
+                const csrf = document.querySelector('meta[name=csrf-token]').content;
+                const payload = {
+                    page_title: this.pageCopy.title,
+                    page_intro: this.pageCopy.intro,
+                    cta_title: this.pageCopy.ctaTitle,
+                    cta_intro: this.pageCopy.ctaIntro,
+                    cta_primary_label: this.pageCopy.ctaPrimaryLabel,
+                    cta_primary_url: this.pageCopy.ctaPrimaryUrl,
+                    cta_secondary_label: this.pageCopy.ctaSecondaryLabel,
+                    cta_secondary_url: this.pageCopy.ctaSecondaryUrl,
+                };
+
+                const res = await fetch('{{ route('admin.specialEvents.copy.store') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const raw = await res.text();
+                let data = {};
+                try {
+                    data = raw ? JSON.parse(raw) : {};
+                } catch (_) {
+                    data = {};
+                }
+
+                if (!res.ok) {
+                    const message = data.errors
+                        ? Object.values(data.errors).flat().join("<br>")
+                        : (data.message || 'Failed to save special events copy.');
+                    throw new Error(message);
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Saved!',
+                    text: 'Special events page copy updated successfully.',
+                    confirmButtonColor: '#2563eb'
+                }).then(() => {
+                    window.location.reload();
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error?.message || 'Failed to save special events copy.'
                 });
             } finally {
                 this.isLoading = false;

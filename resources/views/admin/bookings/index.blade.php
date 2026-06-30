@@ -39,40 +39,18 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-        @php
-            // Explicit chip styles keep icons visible even if utility classes are not available.
-            $statCards = [
-                array_merge($statCardsData[0], ['accent' => 'border-slate-700 text-slate-900', 'chip' => 'bg-slate-700 text-white', 'chipStyle' => 'background-color:#0f172a;color:#fff;', 'icon' => 'grid']),
-                array_merge($statCardsData[1], ['accent' => 'border-emerald-600 text-emerald-900', 'chip' => 'bg-emerald-600 text-white', 'chipStyle' => 'background-color:#059669;color:#fff;', 'icon' => 'check']),
-                array_merge($statCardsData[2], ['accent' => 'border-blue-600 text-blue-900', 'chip' => 'bg-blue-600 text-white', 'chipStyle' => 'background-color:#1d4ed8;color:#fff;', 'icon' => 'flag']),
-                array_merge($statCardsData[3], ['accent' => 'border-rose-600 text-rose-900', 'chip' => 'bg-rose-600 text-white', 'chipStyle' => 'background-color:#e11d48;color:#fff;', 'icon' => 'ban']),
-                array_merge($statCardsData[4], ['accent' => 'border-amber-600 text-amber-900', 'chip' => 'bg-amber-500 text-white', 'chipStyle' => 'background-color:#f59e0b;color:#fff;', 'icon' => 'sun']),
-            ];
-        @endphp
-        @foreach($statCards as $card)
-        <div class="p-4 rounded-xl shadow-sm bg-white border {{ $card['accent'] }} flex items-center gap-3">
-            <span class="inline-flex items-center justify-center w-10 h-10 rounded-full {{ $card['chip'] }} shadow-sm" style="{{ $card['chipStyle'] ?? '' }}">
-                @if($card['icon'] === 'grid')
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>
-                @elseif($card['icon'] === 'check')
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                @elseif($card['icon'] === 'flag')
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5v16M5 5h10l-2 4 4 4H5"/></svg>
-                @elseif($card['icon'] === 'ban')
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M5 19L19 5"/></svg>
-                @elseif($card['icon'] === 'sun')
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-                @endif
-            </span>
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $card['label'] }}</p>
-                <p class="text-2xl font-bold text-gray-900">{{ $card['value'] }}</p>
-                @if(isset($card['subtitle']) && $card['subtitle'])
-                <p class="text-xs text-gray-500 mt-0.5">{{ $card['subtitle'] }}</p>
-                @endif
-            </div>
-        </div>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        @foreach($statCardsData as $card)
+            <x-admin.stat-card
+                :label="$card['label']"
+                :value="$card['value']"
+                :description="$card['subtitle'] ?? ''"
+                :icon="$card['icon'] ?? null"
+                :icon-bg="$card['iconBg'] ?? 'bg-gray-50'"
+                :icon-class="$card['iconClass'] ?? 'text-gray-900'"
+                :href="$card['href'] ?? null"
+                bg="bg-white"
+            />
         @endforeach
     </div>
 
@@ -92,7 +70,7 @@
                 </div>
             </div>
             <div class="w-full sm:w-auto">
-                <label for="status" class="block text-xs font-semibold text-gray-600 mb-1">Status</label>
+                <label for="status" class="block text-xs font-semibold text-gray-600 mb-1">Booking Status</label>
                 <select id="status" name="status" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                     <option value="">All</option>
                     <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
@@ -101,15 +79,7 @@
                 </select>
             </div>
             <div class="w-full sm:w-auto">
-                <label for="payment_scope" class="block text-xs font-semibold text-gray-600 mb-1">Records</label>
-                <select id="payment_scope" name="payment_scope" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
-                    <option value="operational" {{ ($paymentScope ?? 'operational') === 'operational' ? 'selected' : '' }}>Operational Only</option>
-                    <option value="attempts" {{ ($paymentScope ?? 'operational') === 'attempts' ? 'selected' : '' }}>Payment Attempts</option>
-                    <option value="all" {{ ($paymentScope ?? 'operational') === 'all' ? 'selected' : '' }}>All Records</option>
-                </select>
-            </div>
-            <div class="w-full sm:w-auto">
-                <label for="payment_status" class="block text-xs font-semibold text-gray-600 mb-1">Payment</label>
+                <label for="payment_status" class="block text-xs font-semibold text-gray-600 mb-1">Payment Status</label>
                 <select id="payment_status" name="payment_status" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                     <option value="">All</option>
                     <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>

@@ -317,11 +317,14 @@
                     {{-- Select Rate Type --}}
                     @php
                       $defaultPolicy = old('cancellation_policy', session('booking.cancellation_policy', 'flexible'));
+                      $showRateTypeSelector = false;
                     @endphp
 
-                    <div class="space-y-4 bg-white rounded-2xl shadow-lg p-6 mb-6">
-                      <x-rate-type-selector :default-policy="$defaultPolicy" />
-                    </div>
+                    @if($showRateTypeSelector)
+                      <div class="space-y-4 bg-white rounded-2xl shadow-lg p-6 mb-6">
+                        <x-rate-type-selector :default-policy="$defaultPolicy" />
+                      </div>
+                    @endif
 
                     {{-- Room Slots + Controls --}}
                     <div class="mb-6">
@@ -1950,10 +1953,6 @@
                 getRoomIncludedCapacity(roomId) {
                     const lookupId = String(roomId).includes('_') ? String(roomId).split('_')[0] : roomId;
                     const roomDetail = this.roomDetailsMap && this.roomDetailsMap[lookupId] ? this.roomDetailsMap[lookupId] : null;
-                    const roomType = String(roomDetail?.type || '').toLowerCase();
-                    if (roomType === 'glamping') {
-                        return 4;
-                    }
                     const adultsLimit = Math.max(0, parseInt(roomDetail?.adults_limit || 0, 10) || 0);
 
                     if ((parseInt(roomDetail?.included_guest_capacity || 0, 10) || 0) > 0) {
@@ -1988,9 +1987,7 @@
                     const included = this.getRoomIncludedCapacity(lookupKey);
                     const maxAdditionalAdults = this.getRoomMaxExtraMattress(lookupKey);
                     const adults = Math.max(1, parseInt(room.adults || 1, 10) || 1);
-                    const children = Math.max(0, parseInt(room.children || 0, 10) || 0);
-                    const totalGuests = adults + children;
-                    const overflow = Math.max(0, totalGuests - included);
+                    const overflow = Math.max(0, adults - included);
 
                     return Math.max(0, Math.min(maxAdditionalAdults, overflow));
                 },

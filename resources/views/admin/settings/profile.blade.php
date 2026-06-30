@@ -173,36 +173,22 @@
 </div>
 
 @if(session('success'))
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({
-                title: 'Success!',
-                text: "{{ session('success') }}",
-                icon: 'success',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
-        });
-    </script>
+    <div
+        data-admin-flash
+        data-admin-flash-library="swal"
+        data-admin-flash-title="Success!"
+        data-admin-flash-type="success"
+        data-admin-flash-message="{{ e(session('success')) }}"
+    ></div>
 @endif
 
 @if(session('error'))
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({
-                title: 'Error!',
-                text: "{{ session('error') }}",
-                icon: 'error',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
-        });
-    </script>
+    <div
+        data-admin-flash
+        data-admin-flash-library="swal"
+        data-admin-flash-title="Error!"
+        data-admin-flash-type="error"
+        data-admin-flash-message="{{ e(session('error')) }}"
+    ></div>
 @endif
 @endsection

@@ -38,10 +38,10 @@ class SocialLoginTest extends TestCase
         Socialite::shouldReceive('driver')->once()->with('google')->andReturn($provider);
 
         $response = $this
-            ->withSession(['url.intended' => 'http://localhost/packages'])
+            ->withSession(['url.intended' => route('packages')])
             ->get(route('auth.google.callback', ['code' => 'code', 'state' => 'state']));
 
-        $response->assertRedirect('http://localhost/packages');
+        $response->assertRedirect(route('packages'));
         $this->assertAuthenticatedAs($user->fresh());
         $this->assertSame('google', $user->fresh()->provider_name);
         $this->assertSame('google-123', $user->fresh()->provider_id);
@@ -71,10 +71,10 @@ class SocialLoginTest extends TestCase
         Socialite::shouldReceive('driver')->once()->with('google')->andReturn($provider);
 
         $response = $this
-            ->withSession(['url.intended' => 'http://localhost/home'])
+            ->withSession(['url.intended' => route('home')])
             ->get(route('auth.google.callback', ['code' => 'code', 'state' => 'state']));
 
-        $response->assertRedirect('http://localhost/home');
+        $response->assertRedirect(route('home'));
         $response->assertSessionHas('error', 'This social login is only available for customer accounts.');
         $this->assertGuest();
         $this->assertNull($admin->fresh()->provider_name);
@@ -95,10 +95,10 @@ class SocialLoginTest extends TestCase
         Socialite::shouldReceive('driver')->once()->with('facebook')->andReturn($provider);
 
         $response = $this
-            ->withSession(['url.intended' => 'http://localhost/home'])
+            ->withSession(['url.intended' => route('home')])
             ->get(route('auth.facebook.callback', ['code' => 'code', 'state' => 'state']));
 
-        $response->assertRedirect('http://localhost/home');
+        $response->assertRedirect(route('home'));
         $response->assertSessionHas(
             'error',
             'Your Facebook account did not provide an email address. Please use your regular login or choose another provider.'

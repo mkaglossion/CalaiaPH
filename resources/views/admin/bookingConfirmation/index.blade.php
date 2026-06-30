@@ -34,37 +34,24 @@
     </div>
 
     @if(session('success'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    title: 'Success!',
-                    text: @json(session('success')),
-                    icon: 'success',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true
-                });
-            });
-        </script>
+        <div
+            data-admin-flash
+            data-admin-flash-library="swal"
+            data-admin-flash-title="Success!"
+            data-admin-flash-type="success"
+            data-admin-flash-message="{{ e(session('success')) }}"
+        ></div>
     @endif
 
     @if($errors->any())
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    title: 'Error!',
-                    html: @json(implode('<br>', $errors->all())),
-                    icon: 'error',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 4000,
-                    timerProgressBar: true
-                });
-            });
-        </script>
+        <div
+            data-admin-flash
+            data-admin-flash-library="swal"
+            data-admin-flash-title="Error!"
+            data-admin-flash-type="error"
+            data-admin-flash-html="1"
+            data-admin-flash-message="{{ e(implode("\n", $errors->all())) }}"
+        ></div>
     @endif
 
     <div class="flex flex-wrap gap-2 border-b border-gray-200">
@@ -114,7 +101,6 @@
                 method="POST"
                 action="{{ route('admin.booking-confirmation.update', $key) }}"
                 class="space-y-8"
-                x-data="{ campWaiverModal: false }"
                 @input.debounce.450ms="refreshPreview($event.currentTarget)"
                 @change.debounce.450ms="refreshPreview($event.currentTarget)"
             >
@@ -424,207 +410,4 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-    window.bookingConfirmationCms = (initialTab) => ({
-        activeTab: initialTab,
-        previewOpen: false,
-        previewTitle: '',
-        previewUrl: '',
-        previewForm: null,
-        previewTab: '',
-        previewRefreshTimer: null,
-        extractPreviewTab(form) {
-            try {
-                const path = new URL(form.action, window.location.origin).pathname.split('/').filter(Boolean);
-                return path[path.length - 1] || 'staycation';
-            } catch (error) {
-                return 'staycation';
-            }
-        },
-        buildPreviewData(form) {
-            const formData = new FormData(form);
-            const tab = this.previewTab || this.extractPreviewTab(form);
-            const prefix = `contents[${tab}]`;
-            const read = (field) => {
-                const value = formData.get(`${prefix}[${field}]`);
-                return typeof value === 'string' ? value.trim() : '';
-            };
-            const splitLines = (value) => value
-                .split(/\r?\n/)
-                .map((line) => line.trim())
-                .filter(Boolean);
-
-            return {
-                tab,
-                page: {
-                    eyebrow: read('page_eyebrow'),
-                    title: read('page_title'),
-                    description: read('page_description'),
-                },
-                nextSteps: {
-                    title: read('next_steps_title'),
-                    items: splitLines(read('next_steps')),
-                },
-                support: {
-                    title: read('support_title'),
-                    description: read('support_description'),
-                    email: read('support_email'),
-                    phone: read('support_phone'),
-                },
-                buttons: {
-                    home: read('home_button_label'),
-                    print: read('print_button_label'),
-                    payment: read('payment_button_label'),
-                },
-                campWaiver: {
-                    title: read('camp_waiver_title'),
-                    body: read('camp_waiver_body'),
-                },
-            };
-        },
-        openPreview(url, title, form) {
-            if (!form || !this.$refs.previewFrame) {
-                return;
-            }
-
-            this.previewUrl = url;
-            this.previewTitle = title;
-            this.previewForm = form;
-            this.previewTab = this.extractPreviewTab(form);
-            this.previewOpen = true;
-            this.loadPreview();
-        },
-        refreshPreview(form) {
-            if (!this.previewOpen || !this.previewUrl || !form) {
-                return;
-            }
-
-            clearTimeout(this.previewRefreshTimer);
-            this.previewRefreshTimer = setTimeout(() => {
-                const nextTab = this.extractPreviewTab(form);
-                const frame = this.$refs.previewFrame;
-                const frameDoc = frame?.contentDocument || frame?.contentWindow?.document;
-                const shouldReload = !frameDoc || !frameDoc.body || this.previewTab !== nextTab;
-
-                this.previewForm = form;
-                this.previewTab = nextTab;
-
-                if (shouldReload) {
-                    this.loadPreview();
-                    return;
-                }
-
-                this.applyPreviewData();
-            }, 450);
-        },
-        loadPreview() {
-            if (!this.$refs.previewFrame || !this.previewUrl || !this.previewForm) {
-                return;
-            }
-
-            const previewUrl = new URL(this.previewUrl, window.location.origin);
-            previewUrl.searchParams.set('_preview', Date.now().toString());
-
-            this.$refs.previewFrame.onload = () => {
-                this.applyPreviewData();
-            };
-            this.$refs.previewFrame.src = previewUrl.toString();
-        },
-        applyPreviewData() {
-            const frame = this.$refs.previewFrame;
-            const doc = frame?.contentDocument || frame?.contentWindow?.document;
-
-            if (!doc || !this.previewForm) {
-                return;
-            }
-
-            const data = this.buildPreviewData(this.previewForm);
-
-            if (data.tab === 'camp-waiver') {
-                this.applyCampWaiverPreview(doc, data);
-                return;
-            }
-
-            this.applyConfirmationPreview(doc, data);
-        },
-        applyConfirmationPreview(doc, data) {
-            this.setSlotText(doc, 'page.eyebrow', data.page.eyebrow);
-            this.setSlotText(doc, 'page.title', data.page.title);
-            this.setSlotText(doc, 'page.description', data.page.description);
-            this.setSlotText(doc, 'next_steps.title', data.nextSteps.title);
-            this.updateNextStepsList(doc, data.nextSteps.items, data.tab === 'package' ? 'package' : 'confirmation');
-            this.setSlotText(doc, 'support.title', data.support.title);
-            this.setSlotText(doc, 'support.description', data.support.description);
-            this.setLinkSlot(doc, 'support.email', data.support.email, 'mailto:');
-            this.setSlotText(doc, 'support.phone', data.support.phone);
-            this.setSlotText(doc, 'buttons.home', data.buttons.home);
-            this.setSlotText(doc, 'buttons.print', data.buttons.print);
-            this.setSlotText(doc, 'buttons.payment', data.buttons.payment);
-        },
-        applyCampWaiverPreview(doc, data) {
-            this.setSlotText(doc, 'camp_waiver.title', data.campWaiver.title);
-            this.setSlotText(doc, 'camp_waiver.body', data.campWaiver.body);
-        },
-        setSlotText(doc, slot, value) {
-            if (!value) {
-                return;
-            }
-
-            const el = doc.querySelector(`[data-preview-slot="${slot}"]`);
-            if (el) {
-                el.textContent = value;
-            }
-        },
-        setLinkSlot(doc, slot, value, prefix) {
-            if (!value) {
-                return;
-            }
-
-            const el = doc.querySelector(`[data-preview-slot="${slot}"]`);
-            if (el) {
-                el.textContent = value;
-                if (prefix) {
-                    el.setAttribute('href', `${prefix}${value}`);
-                }
-            }
-        },
-        updateNextStepsList(doc, items, style) {
-            const list = doc.querySelector('[data-preview-list="next-steps"]');
-            if (!list || !Array.isArray(items) || items.length === 0) {
-                return;
-            }
-
-            const iconClasses = style === 'package'
-                ? ['bi-dot']
-                : ['bi-envelope', 'bi-calendar-event', 'bi-telephone'];
-
-            list.replaceChildren(...items.map((item, index) => {
-                const li = doc.createElement('li');
-                li.className = style === 'package'
-                    ? 'flex items-start gap-2'
-                    : 'flex items-start';
-
-                const icon = doc.createElement('i');
-                icon.className = style === 'package'
-                    ? 'bi bi-dot text-lg leading-none mt-0.5'
-                    : `bi ${iconClasses[index] || 'bi-dot'} mr-2 mt-0.5`;
-
-                const span = doc.createElement('span');
-                span.textContent = item;
-
-                li.append(icon, span);
-                return li;
-            }));
-        },
-        closePreview() {
-            this.previewOpen = false;
-            this.previewUrl = '';
-            this.previewForm = null;
-            this.previewTab = '';
-            clearTimeout(this.previewRefreshTimer);
-        }
-    });
-</script>
-@endpush
 @endsection

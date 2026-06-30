@@ -87,6 +87,13 @@
     {{-- ============================================================= --}}
     {{-- TEXT CONTENT SECTION --}}
     {{-- ============================================================= --}}
+    @php
+        $contentTexts = collect($texts ?? [])->reject(function ($item) {
+            $label = strtolower((string) ($item->label ?? $item->title ?? ''));
+            return str_starts_with($label, 'farm_page_');
+        })->values();
+    @endphp
+
     <div class="flex justify-between items-end mb-6">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
@@ -111,7 +118,7 @@
             </thead>
 
             <tbody class="divide-y divide-gray-200">
-                @forelse($texts as $text)
+                @forelse($contentTexts as $text)
                     <tr class="hover:bg-gray-50/70 transition">
                         <td class="px-6 py-4 font-medium text-gray-900">
                             {{ $text->title ?: 'No Label' }}
@@ -139,6 +146,56 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    <hr class="my-10 border-gray-300">
+
+    @php
+        $resolveFarmText = function (string $label, string $fallback = '') use ($texts) {
+            $match = collect($texts ?? [])->first(function ($item) use ($label) {
+                $itemLabel = strtolower((string) ($item->label ?? $item->title ?? ''));
+                return $itemLabel === strtolower($label);
+            });
+
+            $value = trim((string) ($match->text ?? $match->content ?? ''));
+            return $value !== '' ? $value : $fallback;
+        };
+
+        $farmPageTitle = $resolveFarmText('farm_page_title', 'Our Sustainable Farming');
+        $farmPageIntro = $resolveFarmText('farm_page_intro', 'Discover how we raise livestock and grow produce with respect for nature and animal welfare');
+    @endphp
+
+    {{-- ============================================================= --}}
+    {{-- PAGE COPY --}}
+    {{-- ============================================================= --}}
+    <div class="mb-10 rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-6 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Farm Page Copy</h2>
+                <p class="text-gray-500 text-sm">Controls the hero heading and intro on the public Farm page.</p>
+            </div>
+
+            <button
+                type="button"
+                @click="saveFarmCopy()"
+                class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+                Save Farm Copy
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div>
+                <label for="farm_page_title" class="block font-semibold mb-2 text-gray-700">Section Title</label>
+                <input id="farm_page_title" type="text" x-model="pageCopy.title" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Our Sustainable Farming">
+            </div>
+
+            <div>
+                <label for="farm_page_intro" class="block font-semibold mb-2 text-gray-700">Section Intro</label>
+                <textarea id="farm_page_intro" x-model="pageCopy.intro" rows="4" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Discover how we raise livestock and grow produce with respect for nature and animal welfare"></textarea>
+            </div>
+        </div>
+
+        <p class="mt-4 text-xs text-gray-500">Saved as <code>farm_page_title</code> and <code>farm_page_intro</code>.</p>
     </div>
 
 
@@ -252,7 +309,11 @@ function farmManager() {
         currentImageId: null,
         currentImageTitle: '',
         selectedImages: [],
-        texts: @js($texts),
+        texts: @js($contentTexts->values()),
+        pageCopy: @js([
+            'title' => $farmPageTitle,
+            'intro' => $farmPageIntro,
+        ]),
         form: { id: null, title: '', content: '' },
 
         selectAll() {
@@ -471,6 +532,60 @@ function farmManager() {
                     icon: "error",
                     title: "Unexpected Error",
                     text: "Something went wrong."
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async saveFarmCopy() {
+            this.isLoading = true;
+
+            try {
+                const csrf = document.querySelector('meta[name=csrf-token]').content;
+                const payload = {
+                    page_title: this.pageCopy.title,
+                    page_intro: this.pageCopy.intro,
+                };
+
+                const res = await fetch('{{ route('admin.farm.copy.store') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const raw = await res.text();
+                let data = {};
+                try {
+                    data = raw ? JSON.parse(raw) : {};
+                } catch (_) {
+                    data = {};
+                }
+
+                if (!res.ok) {
+                    const message = data.errors
+                        ? Object.values(data.errors).flat().join('<br>')
+                        : (data.message || 'Failed to save farm copy.');
+                    throw new Error(message);
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Saved!',
+                    text: 'Farm page copy updated successfully.',
+                    confirmButtonColor: '#2563eb'
+                }).then(() => {
+                    window.location.reload();
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error?.message || 'Failed to save farm copy.'
                 });
             } finally {
                 this.isLoading = false;

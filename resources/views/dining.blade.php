@@ -29,21 +29,15 @@
     @endpush
 
     {{-- Hero Slider --}}
-    <x-hero-slider :images="$swiperImages" :texts="$texts" />
+    <x-hero-slider :images="$swiperImages" />
 
     {{-- Dining Overview Section --}}
     <section class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-10 md:mb-12">
-                <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-[#97655A] mb-4">
-                    Dining at CalaiaPH
-                </h1>
-                <div class="w-20 md:w-24 h-1 bg-[#97655A]/30 mx-auto mb-5 md:mb-6"></div>
-                <p class="text-base md:text-lg text-gray-700 max-w-3xl mx-auto leading-relaxed">
-                    Experience farm-to-table dining in our elegant mess hall or enjoy cooking your own fresh ingredients
-                    straight from our farm. Perfect for celebrations, family gatherings, and intimate dinners.
-                </p>
-            </div>
+            <x-section-header
+                :title="$diningPageTitle ?? 'Dining at CalaiaPH'"
+                :subtitle="$diningPageIntro ?? 'Experience farm-to-table dining in our elegant mess hall or enjoy cooking your own fresh ingredients straight from our farm. Perfect for celebrations, family gatherings, and intimate dinners.'"
+            />
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
                 {{-- Mess Hall Card --}}
@@ -62,10 +56,9 @@
                         </div>
                     </div>
                     <div class="p-6 md:p-8">
-                        <h2 class="text-2xl md:text-3xl font-bold text-[#97655A] mb-4">Mess Hall Dining</h2>
+                        <h2 class="text-2xl md:text-3xl font-bold text-[#97655A] mb-4">{{ $messHallTitle ?? 'Mess Hall Dining' }}</h2>
                         <p class="text-sm md:text-base text-gray-600 leading-relaxed">
-                            Our spacious and elegant mess hall is perfect for group dining and special occasions.
-                            Let our chefs prepare delicious farm-to-table meals using the freshest ingredients from our farm.
+                            {{ $messHallIntro ?? 'Our spacious and elegant mess hall is perfect for group dining and special occasions. Let our chefs prepare delicious farm-to-table meals using the freshest ingredients from our farm.' }}
                         </p>
                     </div>
                 </div>
@@ -86,10 +79,9 @@
                         </div>
                     </div>
                     <div class="p-6 md:p-8">
-                        <h2 class="text-2xl md:text-3xl font-bold text-[#97655A] mb-4">Cook Your Own Experience</h2>
+                        <h2 class="text-2xl md:text-3xl font-bold text-[#97655A] mb-4">{{ $cookYourOwnTitle ?? 'Cook Your Own Experience' }}</h2>
                         <p class="text-sm md:text-base text-gray-600 leading-relaxed">
-                            Enjoy cooking your own fresh ingredients harvested directly from our farm.
-                            Choose premium, locally sourced ingredients and create your own meal with guidance from our team.
+                            {{ $cookYourOwnIntro ?? 'Enjoy cooking your own fresh ingredients harvested directly from our farm. Choose premium, locally sourced ingredients and create your own meal with guidance from our team.' }}
                         </p>
                     </div>
                 </div>
@@ -104,12 +96,11 @@
                 <i class="fas fa-utensils text-4xl md:text-5xl opacity-80 mb-4 block"></i>
 
                 <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
-                    Ready to Dine With Us?
+                    {{ $ctaTitle ?? 'Ready to Dine With Us?' }}
                 </h2>
 
                 <p class="text-base md:text-lg mb-8 opacity-90 max-w-2xl mx-auto">
-                    Message us to reserve your dining experience. We can accommodate lunch, dinner,
-                    group events, and special arrangements.
+                    {{ $ctaIntro ?? 'Message us to reserve your dining experience. We can accommodate lunch, dinner, group events, and special arrangements.' }}
                 </p>
 
                 <a href="https://m.me/calaiaph"
@@ -117,11 +108,11 @@
                    rel="noopener noreferrer"
                    class="inline-flex w-full sm:w-auto items-center justify-center px-6 md:px-8 py-4 bg-[#0084ff] hover:bg-[#0073e0] text-white font-semibold rounded-xl transition-all duration-300 gap-3 shadow-lg text-base md:text-lg">
                     <i class="fab fa-facebook-messenger text-xl md:text-2xl"></i>
-                    Make a Reservation on Messenger
+                    {{ $ctaButton ?? 'Make a Reservation on Messenger' }}
                 </a>
 
                 <p class="text-xs sm:text-sm mt-6 opacity-75">
-                    Available for lunch and dinner reservations. Message us for inquiries.
+                    {{ $ctaNote ?? 'Available for lunch and dinner reservations. Message us for inquiries.' }}
                 </p>
             </div>
         </div>

@@ -9,20 +9,18 @@
     @endpush
 
     {{-- Hero Slider --}}
-    <x-hero-slider :images="$swiperImages" :texts="$texts" />
+    <x-hero-slider :images="$swiperImages" />
 
     <main id="main" class="">
       {{-- SECTION: Our Sustainable Farming --}}
       <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="sustainable-farming-heading">
-        <div class="container mx-auto px-4 max-w-7xl">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <div class="max-w-4xl mx-auto">
-            <h2 class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center">
-              Our Sustainable Farming
-            </h2>
-            <p class="mt-6 text-lg text-brand max-w-3xl mx-auto text-center">
-              Discover how we raise livestock and grow produce with respect for nature and animal welfare
-            </p>
-            <hr class="border-t-2 border-[#a97464] mt-6 mb-10 w-180 mx-auto rounded-full">
+            <x-section-header
+              id="sustainable-farming-heading"
+              :title="$farmPageTitle ?? 'Our Sustainable Farming'"
+              :subtitle="$farmPageIntro ?? 'Discover how we raise livestock and grow produce with respect for nature and animal welfare'"
+            />
           </div>
 
           {{-- ============================================================
@@ -260,15 +258,13 @@
 
       {{-- SECTION: Farm Experiences --}}
       <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="farm-experiences-heading">
-        <div class="container mx-auto px-4 max-w-7xl">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <div class="max-w-4xl mx-auto">
-            <h2 id="farm-experiences-heading" class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center">
-              Farm Experiences
-            </h2>
-            <p class="mt-6 text-lg text-brand max-w-3xl mx-auto">
-              Connect with your food and learn about sustainable agriculture through hands-on activities
-            </p>
-            <hr class="border-t-2 border-[#a97464] mt-6 mb-10 w-180 mx-auto rounded-full">
+            <x-section-header
+              id="farm-experiences-heading"
+              title="Farm Experiences"
+              subtitle="Connect with your food and learn about sustainable agriculture through hands-on activities"
+            />
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

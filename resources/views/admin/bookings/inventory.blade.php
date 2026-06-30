@@ -77,6 +77,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Available Slots</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booked</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilization</th>
                     </tr>
@@ -106,6 +107,9 @@
                                     {{ $daily['available_quantity'] }}
                                 </span>
                             </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                {{ $daily['packages_booked'] ?? 0 }}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if($daily['available_quantity'] == 0)
                                 <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Fully Booked</span>
@@ -127,7 +131,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">
                                 <i class="fas fa-calendar-times text-3xl mb-2"></i>
                                 <p>No inventory data for this date range</p>
                             </td>
@@ -153,6 +157,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available Slots</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booked</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilization</th>
                     </tr>
@@ -182,6 +187,9 @@
                                 {{ $inventory->available_quantity }}
                             </span>
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                            {{ $inventory->packages_booked ?? 0 }}
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if($inventory->available_quantity == 0)
                             <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Fully Booked</span>
@@ -203,7 +211,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
                             <i class="fas fa-calendar-times text-3xl mb-2"></i>
                             <p>No inventory data for this date range</p>
                         </td>
@@ -215,7 +223,7 @@
         <!-- Summary Stats -->
         @if($data['inventories']->count() > 0)
         <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
                     <p class="text-xs text-gray-500">Total Days</p>
                     <p class="text-lg font-semibold text-gray-900">{{ $data['inventories']->count() }}</p>
@@ -227,6 +235,10 @@
                 <div>
                     <p class="text-xs text-gray-500">Total Available Slots</p>
                     <p class="text-lg font-semibold text-green-600">{{ $data['inventories']->sum('available_quantity') }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Total Booked</p>
+                    <p class="text-lg font-semibold text-blue-600">{{ $data['inventories']->sum('packages_booked') }}</p>
                 </div>
                 <div>
                     <p class="text-xs text-gray-500">Avg. Utilization</p>

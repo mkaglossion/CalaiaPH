@@ -46,9 +46,89 @@ class AdminDashboardMetricsTest extends TestCase
         $this->assertSame(1, $data['totalBookings']);
         $this->assertSame(1, $data['activeBookings']);
         $this->assertSame(1, $data['pendingBookings']);
-        $this->assertSame(5000.0, $data['pendingRevenue']);
-        $this->assertCount(1, $data['recentBookings']);
+        $this->assertCount(3, $data['recentBookings']);
         $this->assertSame('TXN-PAID-1', $data['recentBookings']->first()->transaction_id);
+    }
+
+    public function test_dashboard_builds_sales_report_for_completed_and_pending_revenue(): void
+    {
+        Booking::create(array_merge($this->bookingAttributes('TXN-SALES-1', 'paid', 'confirmed'), [
+            'booking_data' => [
+                'final_totals' => [
+                    'accommodation_total' => 3000,
+                    'food_total' => 500,
+                    'activities_total' => 700,
+                ],
+                'selected_foods' => [
+                    [
+                        'name' => 'Burger Set',
+                        'quantity' => 1,
+                        'price' => 500,
+                    ],
+                ],
+                'selected_activities' => [
+                    [
+                        'name' => 'Kayak Ride',
+                        'guests' => 1,
+                        'price' => 700,
+                    ],
+                ],
+            ],
+            'total_amount' => 4200,
+        ]));
+
+        Booking::create(array_merge($this->bookingAttributes('TXN-SALES-2', 'pending', 'pending'), [
+            'total_amount' => 1000,
+        ]));
+
+        Booking::create(array_merge($this->bookingAttributes('TXN-SALES-3', 'pending', 'cancelled'), [
+            'total_amount' => 2400,
+        ]));
+
+        $view = app(AdminDashboardController::class)->index(
+            Request::create('/admin/dashboard', 'GET', [
+                'range' => '7d',
+                'sales_view' => 'weekly',
+            ])
+        );
+        $data = $view->getData();
+
+        $this->assertSame('weekly', $data['salesView']);
+        $this->assertSame('Sales trend', $data['salesTrendLabel']);
+        $this->assertSame(2, $data['salesTotalTransactions']);
+        $this->assertSame(4200.0, $data['salesTotalAmount']);
+        $this->assertSame(3400.0, $data['salesPendingRevenue']);
+        $this->assertCount(6, $data['salesReportCards']);
+        $this->assertSame('Total Sales', $data['salesReportCards'][0]['label']);
+        $this->assertSame(1, $data['salesReportCards'][0]['count']);
+        $this->assertSame(1, $data['salesReportCards'][1]['count']);
+        $this->assertSame(1, $data['salesReportCards'][2]['count']);
+        $this->assertSame(1, $data['salesReportCards'][3]['count']);
+        $this->assertCount(3, $data['salesDistributionSeries']);
+        $this->assertSame('Staycation', $data['salesDistributionSeries'][0]->label);
+        $this->assertSame('Food & Beverage', $data['salesDistributionSeries'][1]->label);
+        $this->assertSame('Activities', $data['salesDistributionSeries'][2]->label);
+        $this->assertNotEmpty($data['salesReportSeries']);
+    }
+
+    public function test_dashboard_booking_overview_includes_pending_attempts_in_the_selected_range(): void
+    {
+        Booking::create(array_merge($this->bookingAttributes('TXN-PENDING-OVERVIEW-1', 'pending', 'confirmed'), [
+            'checkin_date' => now()->addDays(40)->toDateString(),
+            'checkout_date' => now()->addDays(41)->toDateString(),
+            'total_amount' => 2000,
+        ]));
+
+        $view = app(AdminDashboardController::class)->index(
+            Request::create('/admin/dashboard', 'GET', [
+                'range' => '30d',
+            ])
+        );
+
+        $data = $view->getData();
+
+        $this->assertSame(1, $data['pendingBookings']);
+        $this->assertSame(1, collect($data['bookingOverviewChartItems'])->sum('pending'));
     }
 
     private function bookingAttributes(string $transactionId, string $paymentStatus, string $status): array
