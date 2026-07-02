@@ -23,7 +23,9 @@ class AdminDashboardController extends Controller
     public function index(Request $request)
     {
         [$start, $end, $rangeLabel, $range] = $this->resolveDateRange($request);
-        $salesView = $this->normalizeSalesView($request->query('sales_view', 'daily'));
+        $defaultChartView = $this->chartViewFromRange($range, 'daily');
+        $salesView = $this->normalizeSalesView($request->query('sales_view', $defaultChartView));
+        $bookingView = $this->normalizeSalesView($request->query('booking_view', $defaultChartView));
         $pendingWindowMinutes = 60;
         $pendingCutoff = now()->subMinutes($pendingWindowMinutes);
         $applyRange = function (Builder $query, string $dateColumn) use ($start, $end) {
@@ -135,6 +137,7 @@ class AdminDashboardController extends Controller
         $pendingBookings   = (int) $pendingAgg->pending_bookings + (int) $pendingPackageAgg->pending_bookings;
         $paymentAttempts   = (int) $attemptAgg->payment_attempts + (int) $attemptPackageAgg->payment_attempts;
         $attemptAmount     = (float) $attemptAgg->attempt_amount + (float) $attemptPackageAgg->attempt_amount;
+        $closedAttemptBookings = max(0, $paymentAttempts - $pendingBookings);
         $completedRevenue  = (float) $agg->completed_revenue + (float) $packageAgg->completed_revenue;
         $refundedRevenue   = (float) $agg->refunded_revenue + (float) $packageAgg->refunded_revenue;
         $refundedBookings  = (int) $agg->refunded_bookings + (int) $packageAgg->refunded_bookings;
@@ -295,7 +298,7 @@ class AdminDashboardController extends Controller
             ->sortBy(fn($row) => sprintf('%04d-%02d', $row->year, $row->month))
             ->values();
 
-        $bookingOverviewSeries = $this->buildBookingOverviewSeries($start, $end);
+        $bookingOverviewSeries = $this->buildBookingOverviewSeries($start, $end, $bookingView);
         $revenueSummarySeries = $this->buildRevenueSummarySeries($start, $end);
         $revenueSummaryByKey = $revenueSummarySeries->keyBy('key');
         $bookingOverviewChartItems = $bookingOverviewSeries->map(function ($row) use ($revenueSummaryByKey) {
@@ -309,7 +312,7 @@ class AdminDashboardController extends Controller
                 'label' => $row->label,
                 'upcoming' => (int) $row->upcoming,
                 'completed' => (int) $row->completed,
-                'pending' => (int) $row->pending,
+                'active' => (int) $row->active,
                 'cancelled' => (int) $row->cancelled,
                 'total' => (int) $row->total,
                 'completed_amount' => $completedAmount,
@@ -327,6 +330,8 @@ class AdminDashboardController extends Controller
         $salesTotalAmount = $salesReport['totalAmount'];
         $salesTrendLabel = $salesReport['trendLabel'];
         $salesModeOptions = $salesReport['modeOptions'];
+        $salesCategoryCards = $salesReport['categoryCards'];
+        $salesTrendChartSeries = $salesReport['trendChart'];
 
         // -----------------------------------------------
         // SYSTEM ALERTS (Unresolved Critical + Warnings)
@@ -349,13 +354,14 @@ class AdminDashboardController extends Controller
             'rangeLabel', 'start', 'end', 'range',
             'clientUsers', 'totalUsers', 'verifiedUsers', 'adminUsers',
             'totalBookings', 'activeBookings', 'completedBookings',
-            'netRevenue', 'totalRevenue', 'pendingRevenue', 'pendingBookings', 'paymentAttempts', 'attemptAmount', 'pendingWindowMinutes', 'completedRevenue', 'refundedRevenue', 'refundedBookings', 'todayCheckIns',
+            'netRevenue', 'totalRevenue', 'pendingRevenue', 'pendingBookings', 'paymentAttempts', 'attemptAmount', 'closedAttemptBookings', 'pendingWindowMinutes', 'completedRevenue', 'refundedRevenue', 'refundedBookings', 'todayCheckIns',
             'summaryCompletedBookings', 'summaryClosedBookings', 'summaryTotalBookings',
             'completedRevenueChangePercent', 'completedRevenueComparisonLabel',
             'totalProducts', 'totalFoods', 'lowStockProducts', 'lowStockFoods',
             'recentBookings', 'monthlyBookings', 'bookingOverviewSeries', 'revenueSummarySeries', 'bookingOverviewChartItems', 'salesView',
             'salesReportCards', 'salesReportSeries', 'salesDistributionSeries', 'salesPendingRevenue', 'salesTotalTransactions',
             'salesTotalAmount', 'salesTrendLabel', 'salesModeOptions',
+            'salesCategoryCards', 'salesTrendChartSeries', 'bookingView',
             'systemAlerts', 'recentActivity'
         ));
     }
@@ -363,6 +369,7 @@ class AdminDashboardController extends Controller
     public function export(Request $request)
     {
         [$start, $end, $rangeLabel, $range] = $this->resolveDateRange($request);
+        $salesView = $this->chartViewFromRange($range, $request->query('sales_view', 'daily'));
         $pendingWindowMinutes = 60;
         $pendingCutoff = now()->subMinutes($pendingWindowMinutes);
         $applyRange = function (Builder $query, string $dateColumn) use ($start, $end) {
@@ -662,11 +669,11 @@ class AdminDashboardController extends Controller
             ->get();
     }
 
-    private function buildBookingOverviewSeries(?Carbon $start = null, ?Carbon $end = null): \Illuminate\Support\Collection
+    private function buildBookingOverviewSeries(?Carbon $start = null, ?Carbon $end = null, string $salesView = 'daily'): \Illuminate\Support\Collection
     {
         $start = ($start?->copy() ?? now()->subDays(6))->startOfDay();
         $end = ($end?->copy() ?? now())->endOfDay();
-        $pendingCutoff = now()->subMinutes(60);
+        $salesView = $this->normalizeSalesView($salesView);
 
         $bookingCounts = $this->getDailyBookingOverviewCounts(
             Booking::query()->whereBetween('checkin_date', [$start->toDateString(), $end->toDateString()]),
@@ -676,40 +683,87 @@ class AdminDashboardController extends Controller
             PackageBooking::query()->whereBetween('booking_date', [$start->toDateString(), $end->toDateString()]),
             'booking_date'
         )->keyBy('day');
-        $bookingPendingCounts = $this->getDailyPendingOverviewCounts(
-            Booking::query()
-                ->where('payment_status', 'pending')
-                ->whereNotIn('status', ['cancelled', 'completed', 'expired', 'abandoned'])
-                ->where('created_at', '>=', $pendingCutoff)
-                ->whereBetween('created_at', [$start, $end]),
-            'created_at'
-        )->keyBy('day');
-        $packagePendingCounts = $this->getDailyPendingOverviewCounts(
-            PackageBooking::query()
-                ->where('payment_status', 'pending')
-                ->whereNotIn('status', ['cancelled', 'completed', 'expired', 'abandoned'])
-                ->where('created_at', '>=', $pendingCutoff)
-                ->whereBetween('created_at', [$start, $end]),
-            'created_at'
-        )->keyBy('day');
+        $upcomingCounts = $this->getDailyUpcomingOverviewCounts($start, $end)->keyBy('day');
+        $activeCounts = $this->getDailyActiveOverviewCounts($start, $end)->keyBy('day');
 
-        return collect(CarbonPeriod::create($start, '1 day', $end))->map(function (Carbon $date) use ($bookingCounts, $packageCounts, $bookingPendingCounts, $packagePendingCounts) {
+        $dailySeries = collect(CarbonPeriod::create($start, '1 day', $end))->map(function (Carbon $date) use ($bookingCounts, $packageCounts, $upcomingCounts, $activeCounts) {
             $key = $date->toDateString();
             $bookingRow = $bookingCounts->get($key);
             $packageRow = $packageCounts->get($key);
-            $pendingBookingRow = $bookingPendingCounts->get($key);
-            $pendingPackageRow = $packagePendingCounts->get($key);
+            $upcomingRow = $upcomingCounts->get($key);
+            $activeRow = $activeCounts->get($key);
 
             return (object) [
                 'key' => $key,
                 'label' => $date->format('M d'),
-                'upcoming' => (int) ($bookingRow->upcoming_count ?? 0) + (int) ($packageRow->upcoming_count ?? 0),
+                'upcoming' => (int) ($upcomingRow->upcoming_count ?? 0),
                 'completed' => (int) ($bookingRow->completed_count ?? 0) + (int) ($packageRow->completed_count ?? 0),
-                'pending' => (int) ($pendingBookingRow->pending_count ?? 0) + (int) ($pendingPackageRow->pending_count ?? 0),
+                'active' => (int) ($activeRow->active_count ?? 0),
                 'cancelled' => (int) ($bookingRow->cancelled_count ?? 0) + (int) ($packageRow->cancelled_count ?? 0),
                 'total' => (int) ($bookingRow->total_count ?? 0) + (int) ($packageRow->total_count ?? 0),
             ];
         })->values();
+
+        if ($salesView === 'daily') {
+            return $dailySeries;
+        }
+
+        $periodStart = match ($salesView) {
+            'weekly' => $start->copy()->startOfWeek(),
+            'monthly' => $start->copy()->startOfMonth(),
+            default => $start->copy()->startOfDay(),
+        };
+        $periodEnd = match ($salesView) {
+            'weekly' => $end->copy()->endOfWeek(),
+            'monthly' => $end->copy()->endOfMonth(),
+            default => $end->copy()->endOfDay(),
+        };
+        $interval = match ($salesView) {
+            'weekly' => '1 week',
+            'monthly' => '1 month',
+            default => '1 day',
+        };
+
+        $buckets = collect(CarbonPeriod::create($periodStart, $interval, $periodEnd))->mapWithKeys(function (Carbon $date) use ($salesView) {
+            $bucketDate = $this->salesBucketDate($date, $salesView);
+            $key = $bucketDate->format('Y-m-d');
+
+            return [$key => (object) [
+                'key' => $key,
+                'label' => $this->salesBucketLabel($bucketDate, $salesView),
+                'upcoming' => 0,
+                'completed' => 0,
+                'active' => 0,
+                'cancelled' => 0,
+                'total' => 0,
+            ]];
+        })->all();
+
+        foreach ($dailySeries as $row) {
+            $date = Carbon::parse($row->key);
+            $bucketDate = $this->salesBucketDate($date, $salesView);
+            $key = $bucketDate->format('Y-m-d');
+
+            if (! isset($buckets[$key])) {
+                $buckets[$key] = (object) [
+                    'key' => $key,
+                    'label' => $this->salesBucketLabel($bucketDate, $salesView),
+                    'upcoming' => 0,
+                    'completed' => 0,
+                    'active' => 0,
+                    'cancelled' => 0,
+                    'total' => 0,
+                ];
+            }
+
+            $buckets[$key]->upcoming += (int) $row->upcoming;
+            $buckets[$key]->completed += (int) $row->completed;
+            $buckets[$key]->active += (int) $row->active;
+            $buckets[$key]->cancelled += (int) $row->cancelled;
+            $buckets[$key]->total += (int) $row->total;
+        }
+
+        return collect($buckets)->sortBy('key')->values();
     }
 
     private function getCompletedRevenueForRange(Carbon $start, Carbon $end): float
@@ -745,6 +799,132 @@ class AdminDashboardController extends Controller
             ->groupBy('day')
             ->orderBy('day')
             ->get();
+    }
+
+    private function getDailyActiveOverviewCounts(Carbon $start, Carbon $end): \Illuminate\Support\Collection
+    {
+        $dayKeys = collect(CarbonPeriod::create($start, '1 day', $end))
+            ->mapWithKeys(fn (Carbon $date) => [$date->toDateString() => 0])
+            ->all();
+
+        $staycationBookings = Booking::query()
+            ->where('status', 'confirmed')
+            ->whereNotIn('payment_status', ['pending', 'failed', 'refunded'])
+            ->whereDate('checkin_date', '<=', $end->toDateString())
+            ->where(function (Builder $query) use ($start) {
+                $query
+                    ->whereDate('checkout_date', '>=', $start->toDateString())
+                    ->orWhereNull('checkout_date');
+            })
+            ->get(['checkin_date', 'checkout_date']);
+
+        foreach ($staycationBookings as $booking) {
+            $checkin = $booking->checkin_date instanceof Carbon
+                ? $booking->checkin_date->copy()->startOfDay()
+                : null;
+
+            if (! $checkin) {
+                continue;
+            }
+
+            $checkout = $booking->checkout_date instanceof Carbon
+                ? $booking->checkout_date->copy()->startOfDay()
+                : $checkin->copy();
+
+            $activeStart = $checkin->greaterThan($start) ? $checkin->copy() : $start->copy();
+            $activeEnd = $checkout->lessThan($end) ? $checkout->copy() : $end->copy();
+
+            if ($activeEnd->lessThan($activeStart)) {
+                continue;
+            }
+
+            for ($day = $activeStart->copy(); $day->lessThanOrEqualTo($activeEnd); $day->addDay()) {
+                $key = $day->toDateString();
+
+                if (array_key_exists($key, $dayKeys)) {
+                    $dayKeys[$key]++;
+                }
+            }
+        }
+
+        $packageBookings = PackageBooking::query()
+            ->where('status', 'confirmed')
+            ->whereNotIn('payment_status', ['pending', 'failed', 'refunded'])
+            ->whereBetween('booking_date', [$start->toDateString(), $end->toDateString()])
+            ->get(['booking_date']);
+
+        foreach ($packageBookings as $booking) {
+            $key = optional($booking->booking_date)->toDateString();
+
+            if ($key !== null && array_key_exists($key, $dayKeys)) {
+                $dayKeys[$key]++;
+            }
+        }
+
+        return collect($dayKeys)
+            ->map(fn (int $count, string $day) => (object) [
+                'day' => $day,
+                'active_count' => $count,
+            ])
+            ->values();
+    }
+
+    private function getDailyUpcomingOverviewCounts(Carbon $start, Carbon $end): \Illuminate\Support\Collection
+    {
+        $dayKeys = collect(CarbonPeriod::create($start, '1 day', $end))
+            ->mapWithKeys(fn (Carbon $date) => [$date->toDateString() => 0])
+            ->all();
+
+        $staycationBookings = Booking::query()
+            ->where('status', 'confirmed')
+            ->whereNotIn('payment_status', ['pending', 'failed', 'refunded'])
+            ->whereBetween('checkin_date', [$start->toDateString(), $end->toDateString()])
+            ->get(['checkin_date']);
+
+        foreach ($staycationBookings as $booking) {
+            $checkin = $booking->checkin_date instanceof Carbon
+                ? $booking->checkin_date->copy()->startOfDay()
+                : null;
+
+            if (! $checkin) {
+                continue;
+            }
+
+            foreach (CarbonPeriod::create($start, '1 day', $end) as $day) {
+                if ($day->lt($checkin)) {
+                    $dayKeys[$day->toDateString()]++;
+                }
+            }
+        }
+
+        $packageBookings = PackageBooking::query()
+            ->where('status', 'confirmed')
+            ->whereNotIn('payment_status', ['pending', 'failed', 'refunded'])
+            ->whereBetween('booking_date', [$start->toDateString(), $end->toDateString()])
+            ->get(['booking_date']);
+
+        foreach ($packageBookings as $booking) {
+            $bookingDate = $booking->booking_date instanceof Carbon
+                ? $booking->booking_date->copy()->startOfDay()
+                : null;
+
+            if (! $bookingDate) {
+                continue;
+            }
+
+            foreach (CarbonPeriod::create($start, '1 day', $end) as $day) {
+                if ($day->lt($bookingDate)) {
+                    $dayKeys[$day->toDateString()]++;
+                }
+            }
+        }
+
+        return collect($dayKeys)
+            ->map(fn (int $count, string $day) => (object) [
+                'day' => $day,
+                'upcoming_count' => $count,
+            ])
+            ->values();
     }
 
     private function getDailyPendingOverviewCounts(Builder $query, string $dateColumn)
@@ -1032,6 +1212,11 @@ class AdminDashboardController extends Controller
         $salesEntries = $this->collectSalesEntries($start, $end);
         $completedEntries = $salesEntries->filter(fn (object $entry) => $entry->is_completed)->values();
         $pendingEntries = $salesEntries->filter(fn (object $entry) => $entry->is_pending)->values();
+        $refundEntries = $this->collectRefundEntries($start, $end);
+        $completedRevenue = (float) $completedEntries->sum(fn (object $entry) => (float) $entry->total_amount);
+        $refundedRevenue = (float) $refundEntries->sum(fn (object $entry) => (float) $entry->amount);
+        $categoryCards = $this->buildSalesCategoryCards($completedEntries, $completedRevenue, $refundEntries, $refundedRevenue);
+        $trendChartSeries = $this->buildSalesTrendChartSeries($completedEntries, $refundEntries, $salesView, $start, $end);
 
         $salesReportCards = [
             $this->salesCardData(
@@ -1084,7 +1269,179 @@ class AdminDashboardController extends Controller
             'totalAmount' => (float) $completedEntries->sum(fn (object $entry) => (float) $entry->total_amount),
             'trendLabel' => $this->salesTrendLabel($salesView),
             'modeOptions' => $this->salesModeOptions(),
+            'categoryCards' => $categoryCards,
+            'trendChart' => $trendChartSeries,
         ];
+    }
+
+    private function collectRefundEntries(Carbon $start, Carbon $end): \Illuminate\Support\Collection
+    {
+        $bookings = Booking::query()
+            ->whereBetween('created_at', [$start, $end])
+            ->where('payment_status', 'refunded')
+            ->get()
+            ->map(fn (Booking $booking) => $this->buildRefundSalesEntry($booking))
+            ->filter()
+            ->values();
+
+        $packageBookings = PackageBooking::query()
+            ->whereBetween('created_at', [$start, $end])
+            ->where('payment_status', 'refunded')
+            ->get()
+            ->map(fn (PackageBooking $booking) => $this->buildRefundSalesEntry($booking))
+            ->filter()
+            ->values();
+
+        return $bookings
+            ->concat($packageBookings)
+            ->sortByDesc('date')
+            ->values();
+    }
+
+    private function buildRefundSalesEntry(Booking|PackageBooking $booking): ?object
+    {
+        $paymentStatus = strtolower((string) ($booking->payment_status ?? ''));
+        $status = strtolower((string) ($booking->status ?? ''));
+
+        if ($paymentStatus !== 'refunded' || in_array($status, ['cancelled', 'expired', 'abandoned'], true)) {
+            return null;
+        }
+
+        $date = $booking->created_at instanceof Carbon ? $booking->created_at : Carbon::parse($booking->created_at);
+
+        return (object) [
+            'date' => $date,
+            'amount' => (float) ($booking->total_amount ?? 0),
+        ];
+    }
+
+    private function buildSalesCategoryCards(\Illuminate\Support\Collection $completedEntries, float $completedRevenue, \Illuminate\Support\Collection $refundEntries, float $refundedRevenue): \Illuminate\Support\Collection
+    {
+        $categories = collect([
+            [
+                'label' => 'Staycation Revenue',
+                'amount' => (float) $completedEntries->sum(fn (object $entry) => (float) $entry->staycation_amount),
+                'count' => (int) $completedEntries->filter(fn (object $entry) => (float) $entry->staycation_amount > 0)->count(),
+                'countLabel' => 'booking',
+                'icon' => 'bed-double',
+                'tone' => 'bg-blue-50 text-blue-600',
+            ],
+            [
+                'label' => 'Food & Beverage Revenue',
+                'amount' => (float) $completedEntries->sum(fn (object $entry) => (float) $entry->food_amount),
+                'count' => (int) $completedEntries->filter(fn (object $entry) => (float) $entry->food_amount > 0)->count(),
+                'countLabel' => 'order',
+                'icon' => 'utensils-crossed',
+                'tone' => 'bg-emerald-50 text-emerald-600',
+            ],
+            [
+                'label' => 'Activities Revenue',
+                'amount' => (float) $completedEntries->sum(fn (object $entry) => (float) $entry->activity_amount),
+                'count' => (int) $completedEntries->filter(fn (object $entry) => (float) $entry->activity_amount > 0)->count(),
+                'countLabel' => 'booking',
+                'icon' => 'trees',
+                'tone' => 'bg-amber-50 text-amber-600',
+            ],
+            [
+                'label' => 'Refund Amount',
+                'amount' => $refundedRevenue,
+                'count' => (int) $refundEntries->count(),
+                'countLabel' => 'refund',
+                'icon' => 'rotate-ccw',
+                'tone' => 'bg-violet-50 text-violet-600',
+            ],
+        ]);
+
+        return $categories->map(function (array $category) use ($completedRevenue) {
+            $base = $completedRevenue > 0 ? $completedRevenue : 0.0;
+            $percent = $base > 0 ? (($category['amount'] / $base) * 100) : 0;
+
+            return (object) [
+                'label' => $category['label'],
+                'amount' => (float) $category['amount'],
+                'count' => (int) $category['count'],
+                'countLabel' => $category['countLabel'],
+                'percent' => $percent,
+                'icon' => $category['icon'],
+                'tone' => $category['tone'],
+            ];
+        })->values();
+    }
+
+    private function buildSalesTrendChartSeries(\Illuminate\Support\Collection $completedEntries, \Illuminate\Support\Collection $refundEntries, string $salesView, Carbon $start, Carbon $end): \Illuminate\Support\Collection
+    {
+        $salesView = $this->normalizeSalesView($salesView);
+        $periodStart = match ($salesView) {
+            'weekly' => $start->copy()->startOfWeek(),
+            'monthly' => $start->copy()->startOfMonth(),
+            default => $start->copy()->startOfDay(),
+        };
+        $periodEnd = match ($salesView) {
+            'weekly' => $end->copy()->endOfWeek(),
+            'monthly' => $end->copy()->endOfMonth(),
+            default => $end->copy()->endOfDay(),
+        };
+        $interval = match ($salesView) {
+            'weekly' => '1 week',
+            'monthly' => '1 month',
+            default => '1 day',
+        };
+
+        $buckets = collect(CarbonPeriod::create($periodStart, $interval, $periodEnd))->mapWithKeys(function (Carbon $date) use ($salesView) {
+            $bucketDate = $this->salesBucketDate($date, $salesView);
+            $key = $bucketDate->format('Y-m-d');
+
+            return [$key => (object) [
+                'key' => $key,
+                'label' => $this->salesBucketLabel($bucketDate, $salesView),
+                'staycation' => 0.0,
+                'food' => 0.0,
+                'activities' => 0.0,
+                'refunds' => 0.0,
+            ]];
+        })->all();
+
+        foreach ($completedEntries as $entry) {
+            $date = $entry->date instanceof Carbon ? $entry->date : Carbon::parse($entry->date);
+            $bucketDate = $this->salesBucketDate($date, $salesView);
+            $key = $bucketDate->format('Y-m-d');
+
+            if (! isset($buckets[$key])) {
+                $buckets[$key] = (object) [
+                    'key' => $key,
+                    'label' => $this->salesBucketLabel($bucketDate, $salesView),
+                    'staycation' => 0.0,
+                    'food' => 0.0,
+                    'activities' => 0.0,
+                    'refunds' => 0.0,
+                ];
+            }
+
+            $buckets[$key]->staycation += (float) ($entry->staycation_amount ?? 0);
+            $buckets[$key]->food += (float) ($entry->food_amount ?? 0);
+            $buckets[$key]->activities += (float) ($entry->activity_amount ?? 0);
+        }
+
+        foreach ($refundEntries as $entry) {
+            $date = $entry->date instanceof Carbon ? $entry->date : Carbon::parse($entry->date);
+            $bucketDate = $this->salesBucketDate($date, $salesView);
+            $key = $bucketDate->format('Y-m-d');
+
+            if (! isset($buckets[$key])) {
+                $buckets[$key] = (object) [
+                    'key' => $key,
+                    'label' => $this->salesBucketLabel($bucketDate, $salesView),
+                    'staycation' => 0.0,
+                    'food' => 0.0,
+                    'activities' => 0.0,
+                    'refunds' => 0.0,
+                ];
+            }
+
+            $buckets[$key]->refunds += (float) ($entry->amount ?? 0);
+        }
+
+        return collect($buckets)->sortBy('key')->values();
     }
 
     private function collectSalesEntries(Carbon $start, Carbon $end): \Illuminate\Support\Collection
@@ -1307,6 +1664,16 @@ class AdminDashboardController extends Controller
         $value = strtolower(trim((string) $value));
 
         return in_array($value, ['daily', 'weekly', 'monthly'], true) ? $value : 'daily';
+    }
+
+    private function chartViewFromRange(string $range, mixed $fallback = 'daily'): string
+    {
+        return match ($range) {
+            'today' => 'daily',
+            '7d' => 'weekly',
+            '30d' => 'monthly',
+            default => $this->normalizeSalesView($fallback),
+        };
     }
 
     private function salesBucketDate(Carbon $date, string $salesView): Carbon

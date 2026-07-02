@@ -111,24 +111,47 @@ class AdminDashboardMetricsTest extends TestCase
         $this->assertNotEmpty($data['salesReportSeries']);
     }
 
-    public function test_dashboard_booking_overview_includes_pending_attempts_in_the_selected_range(): void
+    public function test_dashboard_booking_overview_counts_active_bookings_in_the_selected_range_without_touching_pending_kpi(): void
     {
-        Booking::create(array_merge($this->bookingAttributes('TXN-PENDING-OVERVIEW-1', 'pending', 'confirmed'), [
-            'checkin_date' => now()->addDays(40)->toDateString(),
-            'checkout_date' => now()->addDays(41)->toDateString(),
+        Booking::create(array_merge($this->bookingAttributes('TXN-ACTIVE-OVERVIEW-1', 'paid', 'confirmed'), [
+            'checkin_date' => now()->toDateString(),
+            'checkout_date' => now()->toDateString(),
+        ]));
+
+        Booking::create(array_merge($this->bookingAttributes('TXN-UPCOMING-OVERVIEW-1', 'paid', 'confirmed'), [
+            'checkin_date' => now()->addDays(5)->toDateString(),
+            'checkout_date' => now()->addDays(6)->toDateString(),
             'total_amount' => 2000,
+        ]));
+
+        Booking::create(array_merge($this->bookingAttributes('TXN-PENDING-OVERVIEW-1', 'pending', 'confirmed'), [
+            'checkin_date' => now()->toDateString(),
+            'checkout_date' => now()->addDays(1)->toDateString(),
+            'total_amount' => 1500,
+        ]));
+
+        Booking::create(array_merge($this->bookingAttributes('TXN-CLOSED-OVERVIEW-1', 'failed', 'cancelled'), [
+            'checkin_date' => now()->subDay()->toDateString(),
+            'checkout_date' => now()->toDateString(),
+            'total_amount' => 900,
         ]));
 
         $view = app(AdminDashboardController::class)->index(
             Request::create('/admin/dashboard', 'GET', [
-                'range' => '30d',
+                'range' => 'custom',
+                'from' => now()->subDays(2)->toDateString(),
+                'to' => now()->addDays(10)->toDateString(),
             ])
         );
 
         $data = $view->getData();
+        $todayRow = collect($data['bookingOverviewChartItems'])->firstWhere('key', now()->toDateString());
 
         $this->assertSame(1, $data['pendingBookings']);
-        $this->assertSame(1, collect($data['bookingOverviewChartItems'])->sum('pending'));
+        $this->assertSame(1, $data['closedAttemptBookings']);
+
+        $this->assertSame(1, (int) ($todayRow->active ?? 0));
+        $this->assertSame(1, (int) ($todayRow->upcoming ?? 0));
     }
 
     private function bookingAttributes(string $transactionId, string $paymentStatus, string $status): array

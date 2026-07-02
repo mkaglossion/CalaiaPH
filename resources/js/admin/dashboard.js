@@ -1,7 +1,9 @@
 import Alpine from 'alpinejs'
 
-Alpine.data('dashboard', (initialRange = 'today') => ({
+Alpine.data('dashboard', (initialRange = 'today', initialSalesView = 'daily', initialBookingView = 'daily') => ({
   range: initialRange,
+  salesView: initialSalesView,
+  bookingView: initialBookingView,
   isLoading: false,
   autoRefresh: false,
   refreshInterval: null,
@@ -89,23 +91,79 @@ Alpine.data('dashboard', (initialRange = 'today') => ({
     }, 200)
   },
 
-  setRange(newRange) {
-    this.range = newRange
+  submitFilterForm() {
+    const form = this.$refs.filterForm
+
+    if (!form) {
+      return
+    }
+
+    const rangeInput = form.querySelector('select[name="range"]')
+    const salesViewInput = form.querySelector('input[name="sales_view"]')
+    const bookingViewInput = form.querySelector('input[name="booking_view"]')
+
+    if (rangeInput) {
+      rangeInput.value = this.range
+    }
+
+    if (salesViewInput) {
+      salesViewInput.value = this.salesView
+    }
+
+    if (bookingViewInput) {
+      bookingViewInput.value = this.bookingView
+    }
+
     this.isLoading = true
 
-    if (newRange !== 'custom') {
-      const form = document.querySelector('form')
-      const input = form.querySelector('input[name="range"]') || document.createElement('input')
-      input.type = 'hidden'
-      input.name = 'range'
-      input.value = newRange
-      if (!form.querySelector('input[name="range"]')) {
-        form.appendChild(input)
-      } else {
-        form.querySelector('input[name="range"]').value = newRange
-      }
-      form.submit()
+    if (typeof form.requestSubmit === 'function') {
+      form.requestSubmit()
+      return
     }
+
+    form.submit()
+  },
+
+  mapRangeToChartView(range) {
+    switch (range) {
+      case 'today':
+        return 'daily'
+      case '7d':
+        return 'weekly'
+      case '30d':
+        return 'monthly'
+      default:
+        return this.salesView
+    }
+  },
+
+  setRange(newRange) {
+    this.range = newRange
+
+    if (newRange !== 'custom') {
+      const mappedView = this.mapRangeToChartView(newRange)
+      this.salesView = mappedView
+      this.bookingView = mappedView
+      this.submitFilterForm()
+    }
+  },
+
+  setSalesView(newSalesView, event = null) {
+    if (event) {
+      event.preventDefault()
+    }
+
+    this.salesView = newSalesView
+    this.submitFilterForm()
+  },
+
+  setBookingView(newBookingView, event = null) {
+    if (event) {
+      event.preventDefault()
+    }
+
+    this.bookingView = newBookingView
+    this.submitFilterForm()
   },
 }))
 
