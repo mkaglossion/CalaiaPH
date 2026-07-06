@@ -2850,7 +2850,7 @@ function staycationManager() {
 // Real-time inventory updates for admin panel
 document.addEventListener('DOMContentLoaded', function() {
     // Only initialize Echo if it's available (Laravel Echo is loaded)
-    if (typeof window.Echo !== 'undefined') {
+    if (window.Echo && typeof window.Echo.channel === 'function') {
         // Listen for inventory updates
         window.Echo.channel('inventory')
             .listen('.inventory.updated', (e) => {

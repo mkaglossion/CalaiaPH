@@ -58,6 +58,16 @@
   $revenueChangeUp = $completedRevenueChangePercent >= 0;
   $revenueChangeLabel = ($revenueChangeUp ? '+' : '') . number_format($completedRevenueChangePercent, 1) . '%';
   $lastUpdatedAt = optional($recentActivity->first())->created_at ?? now();
+  $bookingOverviewUpcomingTotal = max(0, (int) $bookingOverviewChartItems->sum('upcoming'));
+  $bookingOverviewCompletedTotal = max(0, (int) $bookingOverviewChartItems->sum('completed'));
+  $bookingOverviewActiveTotal = max(0, (int) $bookingOverviewChartItems->sum('active'));
+  $bookingOverviewCancelledTotal = max(0, (int) $bookingOverviewChartItems->sum('cancelled'));
+  $bookingDistributionCounts = [
+    'completed' => $bookingOverviewCompletedTotal,
+    'active' => $bookingOverviewActiveTotal,
+    'cancelled' => $bookingOverviewCancelledTotal,
+  ];
+  $bookingSummaryTotal = max(0, (int) array_sum($bookingDistributionCounts));
 
   $overviewCards = [
     [
@@ -71,7 +81,7 @@
     ],
     [
       'label' => 'Completed',
-      'value' => $fmtInt($completedBookings),
+      'value' => $fmtInt($bookingOverviewCompletedTotal),
       'description' => 'Checked-out reservations',
       'icon' => 'badge-check',
       'iconWrap' => 'bg-emerald-50 text-emerald-600',
@@ -89,7 +99,7 @@
     ],
     [
       'label' => 'Closed',
-      'value' => $fmtInt($closedAttemptBookings),
+      'value' => $fmtInt($bookingOverviewCancelledTotal),
       'description' => 'Failed or expired attempts',
       'icon' => 'x-circle',
       'iconWrap' => 'bg-rose-50 text-rose-600',
@@ -288,7 +298,7 @@
   $bookingOverviewMax = max(1, (int) $bookingOverviewChartItems->map(fn ($row) => max(
     (int) ($row->upcoming ?? 0),
     (int) ($row->completed ?? 0),
-    (int) ($row->pending ?? 0),
+    (int) ($row->active ?? 0),
     (int) ($row->cancelled ?? 0)
   ))->max());
   $bookingTickStep = max(1, (int) ceil($bookingOverviewMax / 4));
@@ -325,14 +335,6 @@
     ['key' => 'active', 'label' => 'Today Active', 'stroke' => '#f97316', 'tone' => 'text-orange-500'],
     ['key' => 'cancelled', 'label' => 'Closed', 'stroke' => '#ef4444', 'tone' => 'text-red-500'],
   ]);
-
-  $latestBookingOverview = $bookingOverviewChartItems->last();
-  $bookingDistributionCounts = [
-    'completed' => max(0, (int) ($summaryCompletedBookings ?? 0)),
-    'active' => max(0, (int) ($latestBookingOverview->active ?? 0)),
-    'cancelled' => max(0, (int) ($summaryClosedBookings ?? 0)),
-  ];
-  $bookingSummaryTotal = max(0, (int) array_sum($bookingDistributionCounts));
   $bookingSummaryBaseRows = $bookingSeriesMeta
     ->reject(fn (array $series) => $series['key'] === 'upcoming')
     ->values()
