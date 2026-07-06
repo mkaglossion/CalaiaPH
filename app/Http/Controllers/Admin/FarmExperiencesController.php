@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\FarmExperience;
 use Illuminate\Http\Request;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class FarmExperiencesController extends Controller
@@ -46,22 +47,40 @@ class FarmExperiencesController extends Controller
                 return response()->json(['message' => 'Invalid request', 'success' => false], 400);
             }
 
-            // Clear existing experiences and save new ones
-            FarmExperience::truncate();
-            
-            foreach ($experiences as $index => $exp) {
-                FarmExperience::create([
-                    'title' => $exp['title'] ?? '',
-                    'desc' => $exp['desc'] ?? '',
-                    'time' => $exp['time'] ?? '',
-                    'capacity' => $exp['capacity'] ?? '',
-                    'icon' => $exp['icon'] ?? 'people',
-                    'cta' => $exp['cta'] ?? '',
-                    'badge' => $exp['badge'] ?? null,
-                    'img' => $exp['img'] ?? null,
-                    'sort_order' => $index,
-                ]);
-            }
+            DB::transaction(function () use ($experiences) {
+                $keptIds = [];
+
+                foreach ($experiences as $index => $exp) {
+                    $payload = [
+                        'title' => $exp['title'] ?? '',
+                        'desc' => $exp['desc'] ?? '',
+                        'time' => $exp['time'] ?? '',
+                        'capacity' => $exp['capacity'] ?? '',
+                        'icon' => $exp['icon'] ?? 'people',
+                        'cta' => $exp['cta'] ?? '',
+                        'badge' => $exp['badge'] ?? null,
+                        'img' => $exp['img'] ?? null,
+                        'sort_order' => $index,
+                    ];
+
+                    $experienceId = isset($exp['id']) ? (int) $exp['id'] : null;
+
+                    if ($experienceId && $experienceId > 0) {
+                        $model = FarmExperience::updateOrCreate(
+                            ['id' => $experienceId],
+                            $payload
+                        );
+                    } else {
+                        $model = FarmExperience::create($payload);
+                    }
+
+                    $keptIds[] = $model->id;
+                }
+
+                if (!empty($keptIds)) {
+                    FarmExperience::whereNotIn('id', $keptIds)->delete();
+                }
+            });
 
             return response()->json([
                 'message' => 'Experiences saved successfully',

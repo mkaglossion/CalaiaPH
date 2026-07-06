@@ -61,8 +61,11 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 php artisan migrate               # Run all migrations
 php artisan migrate:rollback      # Rollback last migration
 php artisan migrate:refresh       # Reset and re-run migrations
-php artisan migrate:fresh --seed  # Drop tables and reseed
 php artisan db:seed               # Run seeders only
+
+Destructive database commands:
+- `php artisan migrate:fresh --seed` drops all tables before reseeding.
+- Use only when you intentionally want to erase the current database.
 
 php artisan make:model ModelName            # Create a model
 php artisan make:model ModelName -mcf       # Model + Migration + Controller + Factory
@@ -77,6 +80,12 @@ php artisan optimize:clear   # Clear all caches
 php artisan config:clear     # Clear config cache
 php artisan config:cache     # Cache configuration
 php artisan route:clear      # Clear route cache
+
+Safe local DB flow:
+- `php artisan test` uses isolated testing config and should not touch local MariaDB.
+- `tools/db-safe.ps1 -DumpPath "<dump.sql>" -Force` backs up `calaiaph`, imports the dump into a new DB copy, verifies it, and prints the phpMyAdmin URL.
+- `tools/db-safe.ps1 -RestoreDatabase <name>` checks an existing restore copy.
+- Add `-Force` to skip the confirmation prompt during import.
 
 php artisan serve            # Start local dev server
 php artisan route:list       # List all routes

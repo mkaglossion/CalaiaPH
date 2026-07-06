@@ -103,7 +103,7 @@ class TestimonialController extends Controller
         $testimonial = Testimonial::find($id);
 
         if (!$testimonial) {
-            return response()->json(['message' => 'Testimonial not found.'], 404);
+            return response()->json(['message' => 'Testimonial already deleted.']);
         }
 
         $this->destroyUpload($testimonial->image_public_id ?? null);

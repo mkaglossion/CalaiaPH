@@ -18,9 +18,6 @@ class DayTypeDaySeeder extends Seeder
             return; // Skip if DayTypes not seeded yet
         }
 
-        // Clear existing mappings
-        DayTypeDay::truncate();
-
         // Weekend: Fri (5), Sat (6)
         $weekendDays = [5, 6];
 
@@ -28,17 +25,17 @@ class DayTypeDaySeeder extends Seeder
         $weekdayDays = [0, 1, 2, 3, 4];
 
         foreach ($weekendDays as $day) {
-            DayTypeDay::create([
+            DayTypeDay::updateOrCreate([
                 'day_type_id' => $weekend->id,
                 'weekday' => $day,
-            ]);
+            ], []);
         }
 
         foreach ($weekdayDays as $day) {
-            DayTypeDay::create([
+            DayTypeDay::updateOrCreate([
                 'day_type_id' => $weekday->id,
                 'weekday' => $day,
-            ]);
+            ], []);
         }
     }
 }

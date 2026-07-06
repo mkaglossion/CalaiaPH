@@ -106,8 +106,11 @@ class EventExperienceSectionController extends Controller
      */
     public function destroy($id)
     {
-        $eventExperienceSection = EventExperienceSection::findOrFail($id);
-        $eventExperienceSection->delete();
+        $eventExperienceSection = EventExperienceSection::find($id);
+
+        if ($eventExperienceSection) {
+            $eventExperienceSection->delete();
+        }
 
         return response()->json(['message' => 'Section deleted successfully.']);
     }

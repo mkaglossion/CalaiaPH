@@ -9,12 +9,7 @@ use Cloudinary\Cloudinary;
 
 class ShopSwiperImageController extends Controller
 {
-    protected $cloudinary;
-
-    public function __construct()
-    {
-        $this->cloudinary = new Cloudinary();
-    }
+    protected ?Cloudinary $cloudinary = null;
 
     /**
      * Store a newly created resource in storage.
@@ -32,7 +27,7 @@ class ShopSwiperImageController extends Controller
 
         try {
             // Upload to Cloudinary
-            $uploadedFile = $this->cloudinary->uploadApi()->upload(
+            $uploadedFile = $this->cloudinary()->uploadApi()->upload(
                 $file->getRealPath(),
                 [
                     'folder' => 'CalaiaPH/shop-swipers',
@@ -78,12 +73,19 @@ class ShopSwiperImageController extends Controller
      */
     public function destroy($id)
     {
-        $image = ShopSwiperImage::findOrFail($id);
+        $image = ShopSwiperImage::find($id);
+
+        if (!$image) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Image already deleted.',
+            ]);
+        }
 
         try {
             // Delete from Cloudinary
             if ($image->public_id) {
-                $this->cloudinary->uploadApi()->destroy($image->public_id);
+                $this->cloudinary()->uploadApi()->destroy($image->public_id);
             }
 
             // Delete from database
@@ -107,7 +109,7 @@ class ShopSwiperImageController extends Controller
                 $image = ShopSwiperImage::find($id);
                 if ($image) {
                     if ($image->public_id) {
-                        $this->cloudinary->uploadApi()->destroy($image->public_id);
+                        $this->cloudinary()->uploadApi()->destroy($image->public_id);
                     }
                     $image->delete();
                 }
@@ -117,5 +119,14 @@ class ShopSwiperImageController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    private function cloudinary(): Cloudinary
+    {
+        if ($this->cloudinary instanceof Cloudinary) {
+            return $this->cloudinary;
+        }
+
+        return $this->cloudinary = new Cloudinary();
     }
 }

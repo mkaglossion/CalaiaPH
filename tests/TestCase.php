@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Str;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -19,5 +20,27 @@ abstract class TestCase extends BaseTestCase
         } catch (\Exception $e) {
             // ignore cache issues in certain environments
         }
+    }
+
+    protected function postWithCsrf(string $uri, array $data = [], array $session = [], ?string $from = null)
+    {
+        $token = Str::random(40);
+        $request = $from ? $this->from($from) : $this;
+
+        return $request
+            ->withSession(array_merge($session, ['_token' => $token]))
+            ->withHeaders(['X-CSRF-TOKEN' => $token])
+            ->post($uri, array_merge(['_token' => $token], $data));
+    }
+
+    protected function postJsonWithCsrf(string $uri, array $data = [], array $session = [], ?string $from = null)
+    {
+        $token = Str::random(40);
+        $request = $from ? $this->from($from) : $this;
+
+        return $request
+            ->withSession(array_merge($session, ['_token' => $token]))
+            ->withHeaders(['X-CSRF-TOKEN' => $token])
+            ->postJson($uri, array_merge(['_token' => $token], $data));
     }
 }

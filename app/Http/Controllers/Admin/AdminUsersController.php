@@ -43,8 +43,12 @@ class AdminUsersController extends Controller
 
     public function destroy($id)
     {
-        $user = User::findOrFail($id);
-        $user->delete();
+        $user = User::find($id);
+
+        if ($user) {
+            $user->delete();
+        }
+
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
     }
 }

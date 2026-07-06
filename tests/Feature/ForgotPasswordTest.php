@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class ForgotPasswordTest extends TestCase
@@ -39,14 +40,15 @@ class ForgotPasswordTest extends TestCase
      */
     public function test_forgot_password_with_valid_user_email(): void
     {
+        Mail::fake();
+
         $user = User::factory()->create();
 
-        $response = $this->post('/forgot-password', [
+        $response = $this->postWithCsrf('/forgot-password', [
             'email' => $user->email,
         ]);
 
-        // Response should be successful (either 200 or redirect)
-        $response->assertStatus(200);
+        $response->assertOk();
     }
 
     /**
@@ -54,7 +56,7 @@ class ForgotPasswordTest extends TestCase
      */
     public function test_forgot_password_with_invalid_email(): void
     {
-        $response = $this->post('/forgot-password', [
+        $response = $this->postWithCsrf('/forgot-password', [
             'email' => 'nonexistent@example.com',
         ]);
 
@@ -67,7 +69,7 @@ class ForgotPasswordTest extends TestCase
      */
     public function test_forgot_password_email_required(): void
     {
-        $response = $this->post('/forgot-password', []);
+        $response = $this->postWithCsrf('/forgot-password', []);
 
         $response->assertSessionHasErrors('email');
     }
@@ -77,7 +79,7 @@ class ForgotPasswordTest extends TestCase
      */
     public function test_forgot_password_email_must_be_valid_format(): void
     {
-        $response = $this->post('/forgot-password', [
+        $response = $this->postWithCsrf('/forgot-password', [
             'email' => 'not-an-email',
         ]);
 

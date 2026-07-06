@@ -51,12 +51,14 @@ class AccommodationTextController extends Controller
 
     public function destroy($id)
     {
-        $accommodationText = AccommodationText::findOrFail($id);
-        $accommodationText->delete();
+        $accommodationText = AccommodationText::find($id);
+
+        if ($accommodationText) {
+            $accommodationText->delete();
+        }
 
         return back()->with('success', 'Text deleted successfully!');
     }
 }
-
 
 

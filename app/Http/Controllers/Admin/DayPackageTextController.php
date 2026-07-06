@@ -51,8 +51,11 @@ class DayPackageTextController extends Controller
 
     public function destroy($id)
     {
-        $dayPackageText = DayPackageText::findOrFail($id);
-        $dayPackageText->delete();
+        $dayPackageText = DayPackageText::find($id);
+
+        if ($dayPackageText) {
+            $dayPackageText->delete();
+        }
 
         return back()->with('success', 'Text deleted successfully!');
     }

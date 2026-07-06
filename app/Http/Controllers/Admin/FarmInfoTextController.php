@@ -52,8 +52,11 @@ class FarmInfoTextController extends Controller
 
     public function destroy($id)
     {
-        $farmInfoText = FarmInfoText::findOrFail($id);
-        $farmInfoText->delete();
+        $farmInfoText = FarmInfoText::find($id);
+
+        if ($farmInfoText) {
+            $farmInfoText->delete();
+        }
 
         return back()->with('success', 'Text deleted successfully!');
     }

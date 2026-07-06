@@ -28,7 +28,7 @@ class PromoCodeValidationTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->postJson(route('api.promo-codes.apply'), [
+        $response = $this->postJsonWithCsrf(route('api.promo-codes.apply'), [
             'code' => 'WELCOME10',
             'booking_total' => 5000,
         ]);

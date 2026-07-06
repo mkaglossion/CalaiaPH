@@ -26,7 +26,7 @@ class TestimonialRatingTest extends TestCase
 
         // Test each rating from 1 to 5 in admin panel
         for ($rating = 1; $rating <= 5; $rating++) {
-            $response = $this->actingAs($admin)->postJson('/admin/testimonials', [
+            $response = $this->actingAs($admin)->postJsonWithCsrf('/admin/testimonials', [
                 'name' => 'Test User',
                 'position' => 'Guest',
                 'content' => 'Great experience!',
@@ -45,7 +45,7 @@ class TestimonialRatingTest extends TestCase
         $admin = $this->createAdminUser();
 
         // Test rating 0 (should fail)
-        $response = $this->actingAs($admin)->postJson('/admin/testimonials', [
+        $response = $this->actingAs($admin)->postJsonWithCsrf('/admin/testimonials', [
             'name' => 'Test User',
             'position' => 'Guest',
             'content' => 'Great experience!',
@@ -55,7 +55,7 @@ class TestimonialRatingTest extends TestCase
         $response->assertJsonValidationErrors(['rating']);
 
         // Test rating 6 (should fail)
-        $response = $this->actingAs($admin)->postJson('/admin/testimonials', [
+        $response = $this->actingAs($admin)->postJsonWithCsrf('/admin/testimonials', [
             'name' => 'Test User',
             'position' => 'Guest',
             'content' => 'Great experience!',
