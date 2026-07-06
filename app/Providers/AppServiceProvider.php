@@ -27,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
             return false;
         });
 
+        if (app()->runningInConsole() && ! app()->runningUnitTests()) {
+            return;
+        }
+
         View::share('systemSettings', SystemSetting::cachedData());
     }
 }

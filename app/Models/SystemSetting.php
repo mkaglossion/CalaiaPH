@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class SystemSetting extends Model
 {
@@ -60,11 +61,15 @@ class SystemSetting extends Model
 
     public static function current(): ?self
     {
-        if (!Schema::hasTable('system_settings')) {
+        if (! static::hasTableSafely()) {
             return null;
         }
 
-        return static::query()->first();
+        try {
+            return static::query()->first();
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     public static function currentData(): array
@@ -80,7 +85,7 @@ class SystemSetting extends Model
 
     public static function cachedData(): array
     {
-        if (!Schema::hasTable('system_settings')) {
+        if (! static::hasTableSafely()) {
             return static::defaults();
         }
 
@@ -104,5 +109,14 @@ class SystemSetting extends Model
     {
         Cache::forget(static::cacheKey());
         return static::cachedData();
+    }
+
+    private static function hasTableSafely(): bool
+    {
+        try {
+            return Schema::hasTable('system_settings');
+        } catch (Throwable) {
+            return false;
+        }
     }
 }
