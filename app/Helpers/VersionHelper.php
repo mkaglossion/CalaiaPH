@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use Illuminate\Support\Facades\File;
 use Symfony\Component\Process\Process;
 
 class VersionHelper
@@ -24,6 +25,12 @@ class VersionHelper
             return self::$fullResolved;
         }
 
+        $version = self::versionFromStoredFile();
+
+        if ($version !== null) {
+            return self::$fullResolved = $version;
+        }
+
         $version = self::versionFromGitTag();
 
         if ($version !== null) {
@@ -38,6 +45,46 @@ class VersionHelper
         $version = trim((string) config('app.version', '1.1.0'));
 
         return $version !== '' ? $version : '1.1.0';
+    }
+
+    public static function sourceVersion(): string
+    {
+        $version = self::versionFromGitTag();
+
+        return $version ?? self::baseVersion();
+    }
+
+    public static function syncStoredVersion(): string
+    {
+        $version = self::sourceVersion();
+        $path = self::storedVersionPath();
+
+        File::ensureDirectoryExists(dirname($path));
+        File::put($path, $version . PHP_EOL);
+
+        self::$fullResolved = $version;
+        self::$displayResolved = 'v' . $version;
+
+        return $version;
+    }
+
+    public static function resetCache(): void
+    {
+        self::$displayResolved = null;
+        self::$fullResolved = null;
+    }
+
+    private static function versionFromStoredFile(): ?string
+    {
+        $path = self::storedVersionPath();
+
+        if (! File::exists($path)) {
+            return null;
+        }
+
+        $version = trim((string) File::get($path));
+
+        return self::isValidVersion($version) ? $version : null;
     }
 
     private static function versionFromGitTag(): ?string
@@ -57,6 +104,16 @@ class VersionHelper
         $patch = (int) $matches[3] + (int) $matches[4];
 
         return $major . '.' . $minor . '.' . $patch;
+    }
+
+    private static function storedVersionPath(): string
+    {
+        return storage_path('app/version.txt');
+    }
+
+    private static function isValidVersion(string $version): bool
+    {
+        return preg_match('/^\d+\.\d+\.\d+$/', $version) === 1;
     }
 
     private static function runGitCommand(array $command): ?string

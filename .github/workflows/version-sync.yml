@@ -1,0 +1,54 @@
+name: Sync Version Artifact
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, dom, fileinfo, bcmath, intl, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          mkdir -p bootstrap/cache
+          mkdir -p database
+          mkdir -p storage/framework/cache/data
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/testing
+          mkdir -p storage/framework/views
+          mkdir -p storage/logs
+          touch database/database.sqlite
+          php artisan key:generate --force --ansi
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Sync version file
+        run: php artisan app:sync-version --ansi
+
+      - name: Upload version artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: version-file
+          path: storage/app/version.txt
+          if-no-files-found: error

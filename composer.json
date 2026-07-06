@@ -46,6 +46,16 @@
         }
     },
     "scripts": {
+        "sync-version": [
+            "@php artisan app:sync-version --ansi"
+        ],
+        "deploy": [
+            "@php artisan optimize:clear --ansi",
+            "@php artisan app:sync-version --ansi",
+            "@php artisan config:cache --ansi",
+            "@php artisan route:cache --ansi",
+            "@php artisan view:cache --ansi"
+        ],
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
