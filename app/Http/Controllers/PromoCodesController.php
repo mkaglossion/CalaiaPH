@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\PromoCode;
+use App\Models\PromoCodeUsage;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -17,6 +18,11 @@ class PromoCodesController extends Controller
         // If it's an AJAX request, return JSON
         if ($request->ajax()) {
             try {
+                $usagePromoId = $request->filled('promo_id') ? (int) $request->promo_id : null;
+                $usageFrom = $request->filled('usage_from') ? $request->string('usage_from')->toString() : null;
+                $usageTo = $request->filled('usage_to') ? $request->string('usage_to')->toString() : null;
+                PromoCode::syncAutomaticStatus();
+
                 $query = PromoCode::query();
 
                 if ($request->filled('search')) {
@@ -33,9 +39,54 @@ class PromoCodesController extends Controller
                 }
 
                 $promoCodes = $query->orderBy('created_at', 'desc')->paginate(15);
+                $verifiedUsageCounts = $this->buildVerifiedUsageCounts();
+                $analytics = $this->buildAnalytics($verifiedUsageCounts);
+                $recentUsages = $this->buildRecentUsages($usagePromoId, $usageFrom, $usageTo);
+                $selectedPromo = $usagePromoId ? PromoCode::find($usagePromoId) : null;
+                $promoItems = collect($promoCodes->items())->map(function (PromoCode $promo) use ($verifiedUsageCounts) {
+                    $verifiedUsageCount = (int) ($verifiedUsageCounts[$promo->id] ?? 0);
+                    $remainingUses = $promo->usage_limit !== null
+                        ? max(0, (int) $promo->usage_limit - $verifiedUsageCount)
+                        : null;
+
+                    return [
+                        'id' => $promo->id,
+                        'code' => $promo->code,
+                        'name' => $promo->name,
+                        'discount_type' => $promo->discount_type,
+                        'discount_value' => $promo->discount_value,
+                        'start_date' => $promo->start_date?->toDateString(),
+                        'end_date' => $promo->end_date?->toDateString(),
+                        'usage_limit' => $promo->usage_limit,
+                        'usage_count' => $verifiedUsageCount,
+                        'verified_usage_count' => $verifiedUsageCount,
+                        'remaining_uses' => $remainingUses,
+                        'is_active' => (bool) $promo->is_active,
+                        'description' => $promo->description,
+                        'created_at' => $promo->created_at?->toDateTimeString(),
+                        'updated_at' => $promo->updated_at?->toDateTimeString(),
+                    ];
+                })->all();
 
                 return response()->json([
-                    'data' => $promoCodes->items(),
+                    'data' => $promoItems,
+                    'analytics' => $analytics,
+                    'recent_usages' => $recentUsages,
+                    'usage_filters' => [
+                        'from' => $usageFrom,
+                        'to' => $usageTo,
+                    ],
+                    'selected_promo' => $selectedPromo ? [
+                        'id' => $selectedPromo->id,
+                        'code' => $selectedPromo->code,
+                        'name' => $selectedPromo->name,
+                        'usage_count' => (int) ($verifiedUsageCounts[$selectedPromo->id] ?? 0),
+                        'usage_limit' => $selectedPromo->usage_limit,
+                        'remaining_uses' => $selectedPromo->usage_limit !== null
+                            ? max(0, (int) $selectedPromo->usage_limit - (int) ($verifiedUsageCounts[$selectedPromo->id] ?? 0))
+                            : null,
+                        'is_active' => (bool) $selectedPromo->is_active,
+                    ] : null,
                     'meta' => [
                         'current_page' => $promoCodes->currentPage(),
                         'last_page' => $promoCodes->lastPage(),
@@ -56,6 +107,13 @@ class PromoCodesController extends Controller
                         'error' => 'Database table not found',
                         'message' => 'Please run: php artisan migrate',
                         'data' => [],
+                        'analytics' => $this->emptyAnalytics(),
+                        'recent_usages' => [],
+                        'usage_filters' => [
+                            'from' => null,
+                            'to' => null,
+                        ],
+                        'selected_promo' => null,
                         'meta' => [
                             'current_page' => 1,
                             'last_page' => 1,
@@ -70,6 +128,160 @@ class PromoCodesController extends Controller
 
         // Return the view for regular requests
         return view('admin.promo-codes.index');
+    }
+
+    private function buildAnalytics(array $verifiedUsageCounts = []): array
+    {
+        $today = today()->toDateString();
+        $promoQuery = PromoCode::query();
+        $verifiedUsageCounts = $verifiedUsageCounts ?: $this->buildVerifiedUsageCounts();
+
+        $totalPromoCodes = (clone $promoQuery)->count();
+        $activePromoCodes = (clone $promoQuery)->where('is_active', true)->count();
+        $inactivePromoCodes = (clone $promoQuery)->where('is_active', false)->count();
+        $expiredPromoCodes = (clone $promoQuery)->whereDate('end_date', '<', $today)->count();
+        $usageLimitReached = (clone $promoQuery)
+            ->whereNotNull('usage_limit')
+            ->get(['id', 'usage_limit'])
+            ->filter(function (PromoCode $promo) use ($verifiedUsageCounts) {
+                return (int) ($verifiedUsageCounts[$promo->id] ?? 0) >= (int) $promo->usage_limit;
+            })
+            ->count();
+        $expiringSoon = (clone $promoQuery)
+            ->whereDate('end_date', '>=', $today)
+            ->whereDate('end_date', '<=', today()->addDays(7)->toDateString())
+            ->count();
+        $totalUses = array_sum($verifiedUsageCounts);
+        $totalUsageLimit = (clone $promoQuery)
+            ->whereNotNull('usage_limit')
+            ->sum('usage_limit');
+        $remainingUses = (clone $promoQuery)
+            ->whereNotNull('usage_limit')
+            ->get(['id', 'usage_limit'])
+            ->sum(fn (PromoCode $promo) => max(0, (int) $promo->usage_limit - (int) ($verifiedUsageCounts[$promo->id] ?? 0)));
+
+        $topPromo = (clone $promoQuery)
+            ->get(['id', 'code', 'name', 'usage_limit', 'is_active', 'updated_at'])
+            ->sort(function (PromoCode $a, PromoCode $b) use ($verifiedUsageCounts) {
+                $aCount = (int) ($verifiedUsageCounts[$a->id] ?? 0);
+                $bCount = (int) ($verifiedUsageCounts[$b->id] ?? 0);
+
+                if ($aCount === $bCount) {
+                    return $b->updated_at <=> $a->updated_at;
+                }
+
+                return $bCount <=> $aCount;
+            })
+            ->first();
+
+        return [
+            'total_promo_codes' => $totalPromoCodes,
+            'active_promo_codes' => $activePromoCodes,
+            'inactive_promo_codes' => $inactivePromoCodes,
+            'expired_promo_codes' => $expiredPromoCodes,
+            'usage_limit_reached' => $usageLimitReached,
+            'expiring_soon' => $expiringSoon,
+            'total_uses' => $totalUses,
+            'total_usage_limit' => $totalUsageLimit,
+            'remaining_uses' => $remainingUses,
+            'top_promo' => $topPromo ? [
+                'id' => $topPromo->id,
+                'code' => $topPromo->code,
+                'name' => $topPromo->name,
+                'usage_count' => (int) ($verifiedUsageCounts[$topPromo->id] ?? 0),
+                'usage_limit' => $topPromo->usage_limit,
+                'is_active' => (bool) $topPromo->is_active,
+                'remaining_uses' => $topPromo->usage_limit !== null
+                    ? max(0, (int) $topPromo->usage_limit - (int) ($verifiedUsageCounts[$topPromo->id] ?? 0))
+                    : null,
+            ] : null,
+        ];
+    }
+
+    private function buildVerifiedUsageCounts(?array $promoIds = null): array
+    {
+        $query = PromoCodeUsage::query()
+            ->selectRaw('promo_code_id, COUNT(*) as usage_count')
+            ->groupBy('promo_code_id');
+
+        if (!empty($promoIds)) {
+            $query->whereIn('promo_code_id', $promoIds);
+        }
+
+        return $query
+            ->pluck('usage_count', 'promo_code_id')
+            ->map(fn ($count) => (int) $count)
+            ->all();
+    }
+
+    private function buildRecentUsages(?int $promoId = null, ?string $usageFrom = null, ?string $usageTo = null): array
+    {
+        $query = PromoCodeUsage::query()
+            ->with([
+                'promoCode:id,code,name',
+                'booking:id,transaction_id,customer_name,payment_status,status,total_amount,created_at',
+            ]);
+
+        if ($promoId) {
+            $query->where('promo_code_id', $promoId);
+        }
+
+        if (!empty($usageFrom)) {
+            $query->whereDate('created_at', '>=', $usageFrom);
+        }
+
+        if (!empty($usageTo)) {
+            $query->whereDate('created_at', '<=', $usageTo);
+        }
+
+        return $query
+            ->orderByDesc('created_at')
+            ->limit($promoId ? 50 : 20)
+            ->get()
+            ->map(function (PromoCodeUsage $usage) {
+                return [
+                    'id' => $usage->id,
+                    'promo_code' => $usage->promoCode?->code,
+                    'promo_name' => $usage->promoCode?->name,
+                    'booking_id' => $usage->booking_id,
+                    'booking_transaction_id' => $usage->booking_transaction_id,
+                    'checkout_id' => $usage->checkout_id,
+                    'payment_reference' => $usage->payment_reference,
+                    'discount_amount' => (float) ($usage->discount_amount ?? 0),
+                    'created_at' => $usage->created_at?->toDateTimeString(),
+                    'booking_url' => $usage->booking_id ? route('admin.bookings.show', $usage->booking_id) : null,
+                    'booking' => $usage->booking ? [
+                        'transaction_id' => $usage->booking->transaction_id,
+                        'customer_name' => $usage->booking->customer_name,
+                        'customer_email' => $usage->booking->customer_email,
+                        'customer_phone' => $usage->booking->customer_phone,
+                        'payment_status' => $usage->booking->payment_status,
+                        'status' => $usage->booking->status,
+                        'booking_type' => $usage->booking->booking_type,
+                        'checkin_date' => optional($usage->booking->checkin_date)->toDateString(),
+                        'checkout_date' => optional($usage->booking->checkout_date)->toDateString(),
+                        'total_amount' => $usage->booking->total_amount,
+                        'created_at' => $usage->booking->created_at?->toDateTimeString(),
+                    ] : null,
+                ];
+            })
+            ->all();
+    }
+
+    private function emptyAnalytics(): array
+    {
+        return [
+            'total_promo_codes' => 0,
+            'active_promo_codes' => 0,
+            'inactive_promo_codes' => 0,
+            'expired_promo_codes' => 0,
+            'usage_limit_reached' => 0,
+            'expiring_soon' => 0,
+            'total_uses' => 0,
+            'total_usage_limit' => 0,
+            'remaining_uses' => 0,
+            'top_promo' => null,
+        ];
     }
 
     /**
@@ -210,6 +422,8 @@ class PromoCodesController extends Controller
         $bookingTotal = (float) $request->booking_total;
 
         try {
+            PromoCode::syncAutomaticStatus();
+
             $promoCode = PromoCode::whereRaw('UPPER(code) = ?', [$code])->first();
 
             if (!$promoCode) {
@@ -241,7 +455,8 @@ class PromoCodesController extends Controller
                 ], 400);
             }
 
-            if ($promoCode->usage_limit && $promoCode->usage_count >= $promoCode->usage_limit) {
+            $verifiedUsageCount = $promoCode->verifiedUsageCount();
+            if ($promoCode->usage_limit && $verifiedUsageCount >= $promoCode->usage_limit) {
                 return response()->json([
                     'valid' => false,
                     'message' => 'Promo code usage limit exceeded.'

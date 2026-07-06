@@ -45,4 +45,35 @@ class PromoCodeValidationTest extends TestCase
 
         Carbon::setTestNow();
     }
+
+    public function test_apply_endpoint_rejects_expired_promo_code(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-07-06 10:00:00', config('app.timezone')));
+
+        PromoCode::create([
+            'code' => 'FLASH50',
+            'name' => 'Flash Sale 50%',
+            'discount_type' => 'percentage',
+            'discount_value' => 50,
+            'start_date' => '2026-05-09',
+            'end_date' => '2026-05-10',
+            'usage_limit' => null,
+            'usage_count' => 0,
+            'min_booking_amount' => null,
+            'is_active' => true,
+        ]);
+
+        $response = $this->postJsonWithCsrf(route('api.promo-codes.apply'), [
+            'code' => 'FLASH50',
+            'booking_total' => 5000,
+        ]);
+
+        $response->assertStatus(400)
+            ->assertJson([
+                'valid' => false,
+                'message' => 'Promo code is not active.',
+            ]);
+
+        Carbon::setTestNow();
+    }
 }

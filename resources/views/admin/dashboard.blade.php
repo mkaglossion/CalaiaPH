@@ -46,7 +46,7 @@
     'today' => 'Today',
     '30d' => '30 Days',
     'custom' => 'Custom',
-    default => '7 Days',
+    default => '30 Days',
   };
 
   $rangeDisplay = $start && $end

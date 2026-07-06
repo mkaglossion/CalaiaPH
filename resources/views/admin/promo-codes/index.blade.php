@@ -114,6 +114,8 @@
         </div>
     </div>
 
+    <div id="promo-analytics-panel" class="mb-6 sm:mb-8"></div>
+
     {{-- Promo Codes Table Section --}}
     <div class="mt-8 sm:mt-12">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sm:gap-0 mb-4 sm:mb-6">
@@ -160,6 +162,56 @@
                 </table>
             </div>
         </div>
+    </div>
+
+    <div class="mt-8 sm:mt-10">
+        <div class="flex items-end justify-between gap-3 mb-4">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Recent Promo Usage</h2>
+                <p class="text-gray-500 text-xs sm:text-sm">Latest successful bookings that consumed a promo code.</p>
+            </div>
+        </div>
+        <div class="mb-4 grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div class="rounded-xl border border-gray-200 bg-white/70 p-3 sm:p-4 shadow-sm">
+                <label for="usage_from" class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">From</label>
+                <input
+                    type="date"
+                    id="usage_from"
+                    x-model="usageFrom"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                >
+            </div>
+            <div class="rounded-xl border border-gray-200 bg-white/70 p-3 sm:p-4 shadow-sm">
+                <label for="usage_to" class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">To</label>
+                <input
+                    type="date"
+                    id="usage_to"
+                    x-model="usageTo"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                >
+            </div>
+            <div class="flex flex-wrap gap-2 sm:gap-3 items-end">
+                <button
+                    type="button"
+                    @click="applyUsageDateFilter()"
+                    class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                    Apply Filter
+                </button>
+                <button
+                    type="button"
+                    @click="resetUsageDateFilter()"
+                    class="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50">
+                    Reset
+                </button>
+                <button
+                    type="button"
+                    @click="exportUsageCsv()"
+                    class="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100">
+                    Export CSV
+                </button>
+            </div>
+        </div>
+        <div id="promo-usage-history-panel" class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur"></div>
     </div>
 
     {{-- Add/Edit Modal --}}
@@ -302,6 +354,12 @@ function promoCrud() {
         loading: false,
         searchQuery: '',
         promoCodes: [],
+        analytics: {},
+        recentUsages: [],
+        selectedPromoId: null,
+        selectedPromo: null,
+        usageFrom: '',
+        usageTo: '',
         pendingDelete: null,
         
         form: {
@@ -363,7 +421,7 @@ function promoCrud() {
             });
         },
         
-        async loadPromoCodes() {
+        async loadPromoCodes(promoId = null, usageFrom = null, usageTo = null) {
             const tbody = document.getElementById('promo-codes-tbody');
             tbody.innerHTML = `
                 <tr>
@@ -377,7 +435,20 @@ function promoCrud() {
             `;
 
             try {
-                const response = await fetch(`{{ route('admin.promo-codes.index') }}`, {
+                const params = new URLSearchParams();
+                if (promoId) {
+                    params.set('promo_id', promoId);
+                }
+                if (usageFrom) {
+                    params.set('usage_from', usageFrom);
+                }
+                if (usageTo) {
+                    params.set('usage_to', usageTo);
+                }
+
+                const response = await fetch(params.toString()
+                    ? `{{ route('admin.promo-codes.index') }}?${params.toString()}`
+                    : `{{ route('admin.promo-codes.index') }}`, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json'
@@ -389,24 +460,319 @@ function promoCrud() {
                     document.getElementById('db-notice').classList.remove('hidden');
                     this.showToast(data.message, 'warning');
                     this.promoCodes = [];
+                    this.analytics = this.emptyAnalytics();
+                    this.recentUsages = [];
+                    this.selectedPromoId = null;
+                    this.selectedPromo = null;
+                    this.usageFrom = '';
+                    this.usageTo = '';
                 } else {
                     document.getElementById('db-notice').classList.add('hidden');
                     this.promoCodes = data.data || (Array.isArray(data) ? data : []);
+                    this.analytics = data.analytics || this.emptyAnalytics();
+                    this.recentUsages = data.recent_usages || [];
+                    this.selectedPromoId = promoId || null;
+                    this.selectedPromo = data.selected_promo || null;
+                    this.usageFrom = data.usage_filters?.from || usageFrom || '';
+                    this.usageTo = data.usage_filters?.to || usageTo || '';
                 }
                 this.renderTable();
+                this.renderAnalytics();
+                this.renderUsageHistory();
             } catch (error) {
                 document.getElementById('error-alert').classList.remove('hidden');
                 document.getElementById('error-message').textContent = error.message;
                 this.showToast('Error loading promo codes: ' + error.message, 'error');
                 this.promoCodes = [];
+                this.analytics = this.emptyAnalytics();
+                this.recentUsages = [];
+                this.selectedPromoId = null;
+                this.selectedPromo = null;
+                this.usageFrom = '';
+                this.usageTo = '';
                 this.renderTable();
+                this.renderAnalytics();
+                this.renderUsageHistory();
             }
+        },
+
+        clearUsageFilter() {
+            this.usageFrom = '';
+            this.usageTo = '';
+            this.loadPromoCodes();
+        },
+
+        filterPromoUsage(promoId) {
+            this.loadPromoCodes(promoId, this.usageFrom, this.usageTo);
+        },
+
+        applyUsageDateFilter() {
+            this.loadPromoCodes(this.selectedPromoId, this.usageFrom, this.usageTo);
+        },
+
+        resetUsageDateFilter() {
+            this.usageFrom = '';
+            this.usageTo = '';
+            this.loadPromoCodes(this.selectedPromoId);
+        },
+
+        exportUsageCsv() {
+            const rows = this.recentUsages || [];
+            if (!rows.length) {
+                this.showToast('No usage rows to export', 'info');
+                return;
+            }
+
+            const headers = ['Promo Code', 'Promo Name', 'Customer', 'Email', 'Booking ID', 'Transaction ID', 'Checkout ID', 'Payment Reference', 'Discount', 'Used At', 'Booking URL'];
+            const lines = [
+                headers.join(',')
+            ];
+
+            rows.forEach((usage) => {
+                const values = [
+                    usage.promo_code || '',
+                    usage.promo_name || '',
+                    usage.booking?.customer_name || '',
+                    usage.booking?.customer_email || '',
+                    usage.booking_id || '',
+                    usage.booking_transaction_id || '',
+                    usage.checkout_id || '',
+                    usage.payment_reference || '',
+                    (usage.discount_amount ?? 0).toString(),
+                    usage.created_at || '',
+                    usage.booking_url || ''
+                ].map(value => `"${String(value).replace(/"/g, '""')}"`);
+                lines.push(values.join(','));
+            });
+
+            const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = this.selectedPromo?.code
+                ? `promo-usage-${this.selectedPromo.code.toLowerCase()}.csv`
+                : 'promo-usage-history.csv';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
         },
         
         filterPromoCodes() {
             this.renderTable();
         },
-        
+
+        emptyAnalytics() {
+            return {
+                total_promo_codes: 0,
+                active_promo_codes: 0,
+                inactive_promo_codes: 0,
+                expired_promo_codes: 0,
+                usage_limit_reached: 0,
+                expiring_soon: 0,
+                total_uses: 0,
+                total_usage_limit: 0,
+                remaining_uses: 0,
+                top_promo: null
+            };
+        },
+
+        formatMoney(value) {
+            const amount = Number(value || 0);
+            return `₱${amount.toLocaleString('en-PH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })}`;
+        },
+
+        renderAnalytics() {
+            const panel = document.getElementById('promo-analytics-panel');
+            if (!panel) return;
+
+            const analytics = this.analytics || this.emptyAnalytics();
+            const topPromo = analytics.top_promo;
+
+            panel.innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+                    <div class="rounded-xl border border-gray-200 bg-white/80 p-4 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-500">Total Codes</p>
+                                <p class="mt-1 text-2xl font-bold text-gray-900">${analytics.total_promo_codes ?? 0}</p>
+                            </div>
+                            <div class="rounded-full bg-blue-100 p-3 text-blue-600">
+                                <i class="bi bi-ticket-perforated text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 bg-white/80 p-4 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-500">Active</p>
+                                <p class="mt-1 text-2xl font-bold text-green-700">${analytics.active_promo_codes ?? 0}</p>
+                            </div>
+                            <div class="rounded-full bg-green-100 p-3 text-green-700">
+                                <i class="bi bi-check-circle text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 bg-white/80 p-4 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-500">Total Uses</p>
+                                <p class="mt-1 text-2xl font-bold text-blue-700">${analytics.total_uses ?? 0}</p>
+                            </div>
+                            <div class="rounded-full bg-blue-100 p-3 text-blue-700">
+                                <i class="bi bi-graph-up-arrow text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 bg-white/80 p-4 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-500">Remaining Uses</p>
+                                <p class="mt-1 text-2xl font-bold text-amber-700">${analytics.remaining_uses ?? 0}</p>
+                            </div>
+                            <div class="rounded-full bg-amber-100 p-3 text-amber-700">
+                                <i class="bi bi-hourglass-split text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-4">
+                    <div class="rounded-xl border border-gray-200 bg-white/80 p-4 shadow-sm">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Usage Cap Reached</p>
+                        <p class="mt-2 text-2xl font-bold text-red-600">${analytics.usage_limit_reached ?? 0}</p>
+                        <p class="mt-1 text-sm text-gray-500">Promos that already hit their limit.</p>
+                    </div>
+                    <div class="rounded-xl border border-gray-200 bg-white/80 p-4 shadow-sm">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Expiring Soon</p>
+                        <p class="mt-2 text-2xl font-bold text-orange-600">${analytics.expiring_soon ?? 0}</p>
+                        <p class="mt-1 text-sm text-gray-500">Ends within the next 7 days.</p>
+                    </div>
+                    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white/80 shadow-sm">
+                        ${
+                            topPromo
+                                ? `
+                                    <button
+                                        type="button"
+                                        class="block w-full p-4 text-left transition hover:bg-blue-50/70 cursor-pointer"
+                                        onclick="window.promoCrudInstance.filterPromoUsage(${topPromo.id})"
+                                        title="View usage history for ${this.escapeHtml(topPromo.code || '')}">
+                                        <p class="text-xs uppercase tracking-wide text-gray-500">Top Promo</p>
+                                        <p class="mt-2 text-lg font-bold text-gray-900">${this.escapeHtml(topPromo.code || '')}</p>
+                                        <p class="text-sm text-gray-600">${this.escapeHtml(topPromo.name || '')}</p>
+                                        <p class="mt-2 text-sm text-gray-500">${topPromo.usage_count ?? 0}${topPromo.usage_limit ? ` / ${topPromo.usage_limit} used` : ' uses recorded'}</p>
+                                        ${topPromo.remaining_uses !== null && topPromo.remaining_uses !== undefined ? `<p class="text-sm text-gray-500">${topPromo.remaining_uses} left</p>` : ''}
+                                        <p class="mt-3 text-xs font-semibold text-blue-600">Click to view usage history</p>
+                                    </button>
+                                `
+                                : '<div class="p-4"><p class="text-xs uppercase tracking-wide text-gray-500">Top Promo</p><p class="mt-2 text-sm text-gray-500">No usage yet.</p></div>'
+                        }
+                    </div>
+                </div>
+            `;
+        },
+
+        renderUsageHistory() {
+            const panel = document.getElementById('promo-usage-history-panel');
+            if (!panel) return;
+
+            const rows = this.recentUsages || [];
+            const selectedPromo = this.selectedPromo;
+            const scopeLabel = selectedPromo
+                ? `Promo usage for ${this.escapeHtml(selectedPromo.code || '')}`
+                : 'Recent Promo Usage';
+            const scopeMeta = selectedPromo
+                ? `${this.escapeHtml(selectedPromo.name || '')} • ${selectedPromo.usage_count ?? 0}${selectedPromo.usage_limit ? ` / ${selectedPromo.usage_limit} used` : ' uses'}`
+                : 'Latest successful bookings that consumed a promo code.';
+
+            const headerHtml = `
+                <div class="px-6 py-5 border-b border-gray-200 bg-white/70">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-gray-800">${scopeLabel}</h3>
+                            <p class="text-sm text-gray-500">${scopeMeta}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">${rows.length} record${rows.length === 1 ? '' : 's'}</span>
+                            ${selectedPromo && selectedPromo.remaining_uses !== null && selectedPromo.remaining_uses !== undefined ? `<span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">${selectedPromo.remaining_uses} left</span>` : ''}
+                            ${selectedPromo ? '<button type="button" class="text-sm font-semibold text-blue-600 hover:text-blue-700" onclick="window.promoCrudInstance.clearUsageFilter()">View all</button>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (rows.length === 0) {
+                const emptyMessage = selectedPromo && (selectedPromo.usage_count ?? 0) > 0
+                    ? 'This promo has usage count, but no history log rows were found yet. Older bookings may predate usage logging, or the current date filter may be too narrow.'
+                    : selectedPromo
+                        ? 'Successful bookings for this promo will appear here.'
+                        : 'Successful bookings that use a promo will appear here.';
+
+                panel.innerHTML = `
+                    ${headerHtml}
+                    <div class="px-6 py-10 text-center text-gray-500">
+                        <i class="bi bi-clock-history text-3xl text-gray-300"></i>
+                        <p class="mt-3 font-medium">${selectedPromo ? 'No usage found for this promo yet' : 'No promo usage history yet'}</p>
+                        <p class="text-sm">${emptyMessage}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            panel.innerHTML = `
+                ${headerHtml}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm">
+                        <thead class="bg-gray-100/70 backdrop-blur">
+                            <tr>
+                                <th class="px-3 sm:px-4 py-3 font-semibold text-gray-700">Promo</th>
+                                <th class="px-3 sm:px-4 py-3 font-semibold text-gray-700">Booking</th>
+                                <th class="px-3 sm:px-4 py-3 font-semibold text-gray-700">Transaction</th>
+                                <th class="px-3 sm:px-4 py-3 font-semibold text-gray-700">Checkout</th>
+                                <th class="px-3 sm:px-4 py-3 font-semibold text-gray-700">Reference</th>
+                                <th class="px-3 sm:px-4 py-3 font-semibold text-gray-700 text-right">Discount</th>
+                                <th class="px-3 sm:px-4 py-3 font-semibold text-gray-700">Used At</th>
+                                <th class="px-3 sm:px-4 py-3 font-semibold text-gray-700 text-right">Booking Link</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            ${rows.map((usage) => `
+                                <tr class="bg-white/70 hover:bg-gray-50/80 transition">
+                                    <td class="px-3 sm:px-4 py-3">
+                                        <div class="font-medium text-gray-900">${this.escapeHtml(usage.promo_code || '')}</div>
+                                        <div class="text-xs text-gray-500">${this.escapeHtml(usage.promo_name || '')}</div>
+                                    </td>
+                                    <td class="px-3 sm:px-4 py-3">
+                                        ${
+                                            usage.booking_url
+                                                ? `<a href="${usage.booking_url}" class="block font-medium text-blue-700 hover:text-blue-800 hover:underline" target="_blank" rel="noopener">${this.escapeHtml(usage.booking?.customer_name || '-')}</a>`
+                                                : `<div class="font-medium text-gray-900">${this.escapeHtml(usage.booking?.customer_name || '-')}</div>`
+                                        }
+                                        <div class="text-xs text-gray-500">${this.escapeHtml(usage.booking?.customer_email || '')}</div>
+                                        <div class="text-xs text-gray-500">#${this.escapeHtml(String(usage.booking_id || '-'))}</div>
+                                        <div class="text-xs text-gray-500">${this.escapeHtml((usage.booking?.payment_status || '-') + ' / ' + (usage.booking?.status || '-'))}</div>
+                                    </td>
+                                    <td class="px-3 sm:px-4 py-3 font-mono text-xs text-gray-700">${this.escapeHtml(usage.booking_transaction_id || '')}</td>
+                                    <td class="px-3 sm:px-4 py-3 font-mono text-xs text-gray-700">${this.escapeHtml(usage.checkout_id || '-')}</td>
+                                    <td class="px-3 sm:px-4 py-3 font-mono text-xs text-gray-700">${this.escapeHtml(usage.payment_reference || '-')}</td>
+                                    <td class="px-3 sm:px-4 py-3 text-right font-semibold text-blue-700">${this.formatMoney(usage.discount_amount || 0)}</td>
+                                    <td class="px-3 sm:px-4 py-3 text-xs text-gray-500 whitespace-nowrap">${this.formatDateTime(usage.created_at)}</td>
+                                    <td class="px-3 sm:px-4 py-3 text-right">
+                                        ${usage.booking_url
+                                            ? `<a href="${usage.booking_url}" class="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i>View</a>`
+                                            : '<span class="text-xs text-gray-400">-</span>'
+                                        }
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        },
+
         renderTable() {
             const tbody = document.getElementById('promo-codes-tbody');
             if (!tbody) return;
@@ -444,6 +810,10 @@ function promoCrud() {
                 const statusBadge = isActive
                     ? '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i class="bi bi-check-circle-fill mr-1 text-xs"></i>Active</span>'
                     : '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i class="bi bi-x-circle-fill mr-1 text-xs"></i>Inactive</span>';
+
+                const usageBadge = promo.usage_limit
+                    ? `<span class="font-medium text-gray-700">${promo.usage_count ?? 0}/${promo.usage_limit} used</span>`
+                    : '<span class="text-green-600 font-medium">Unlimited</span>';
                 
                 return `
                     <tr class="hover:bg-gray-50/70 transition border-b border-gray-200 last:border-b-0">
@@ -464,13 +834,19 @@ function promoCrud() {
                             ${this.formatDate(promo.start_date)}<br><span class="text-xs">to ${this.formatDate(promo.end_date)}</span>
                         </td>
                         <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-xs">
-                            ${promo.usage_limit ? `<span class="font-medium">${promo.usage_limit}</span> max uses` : '<span class="text-green-600">Unlimited</span>'}
+                            ${usageBadge}
                         </td>
                         <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             ${statusBadge}
                         </td>
                         <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-right sticky right-0 bg-white/60 md:bg-transparent z-10 md:z-auto">
                             <div class="flex justify-end gap-2 sm:gap-3 md:gap-4 flex-nowrap">
+                                <button type="button"
+                                        class="text-emerald-600 font-semibold hover:text-emerald-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline"
+                                        @click="filterPromoUsage(${promo.id})"
+                                        title="View Usage History">
+                                    <span class="hidden sm:inline">History</span><span class="sm:hidden">Hist</span>
+                                </button>
                                 <button type="button"
                                         class="text-blue-600 font-semibold hover:text-blue-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline"
                                         @click="openEdit(${promo.id})"
@@ -742,7 +1118,19 @@ function promoCrud() {
                 year: 'numeric'
             });
         },
-        
+
+        formatDateTime(dateStr) {
+            if (!dateStr) return '—';
+            const date = new Date(dateStr);
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+        },
+
         escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>]/g, function(m) {

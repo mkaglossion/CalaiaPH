@@ -28,6 +28,11 @@ class Kernel extends ConsoleKernel
             ->dailyAt('01:00')
             ->withoutOverlapping()
             ->onOneServer();
+
+        $schedule->command('promo-codes:sync-expired')
+            ->dailyAt('00:10')
+            ->withoutOverlapping()
+            ->onOneServer();
     }
 
     /**

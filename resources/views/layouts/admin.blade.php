@@ -116,7 +116,7 @@
             ['label'=>'Seasonal Pricing','route'=>'admin.stay.settings'],
             ['label'=>'Additional Fees','route'=>'admin.booking-settings.index'],
           ]],
-          ['title'=>'Day Visit','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
+          ['title'=>'Day Pacakages & Activities','icon'=>'map-pin','route'=>'admin.do.*','sub'=>[
             ['label'=>'Pages Information','route'=>'admin.do.whattodo'],
             ['label'=>'Activities Management','route'=>'admin.do.activities']
           ]],

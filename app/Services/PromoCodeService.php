@@ -60,6 +60,8 @@ class PromoCodeService
      */
     public function validateAndCalculateDiscount(string $code, float $bookingAmount): ?array
     {
+        PromoCode::syncAutomaticStatus();
+
         $promoCode = PromoCode::active()
             ->where('code', $code)
             ->validForAmount($bookingAmount)
@@ -100,9 +102,7 @@ class PromoCodeService
      */
     protected function getUsageCount(PromoCode $promoCode): int
     {
-        // This would typically check against a usage log table
-        // For now, return 0 as we don't have usage tracking yet
-        return 0;
+        return $promoCode->verifiedUsageCount();
     }
 
     /**

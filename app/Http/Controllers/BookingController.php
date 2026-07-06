@@ -28,6 +28,8 @@ use App\Models\DayType;
 use App\Models\DayTypeDay;
 use App\Models\PeakPeriod;
 use App\Models\PeakType;
+use App\Models\PromoCode;
+use App\Models\PromoCodeUsage;
 use App\Models\PricingConfig;
 use App\Models\StaycationInventory;
 use Carbon\Carbon;
@@ -1263,6 +1265,8 @@ class BookingController extends Controller
             return ['discount' => 0.0, 'promo' => null];
         }
 
+        \App\Models\PromoCode::syncAutomaticStatus();
+
         $promo = \App\Models\PromoCode::find($promoId);
         if (!$promo || strtoupper((string) $promo->code) !== strtoupper(trim($promoCode))) {
             return ['discount' => 0.0, 'promo' => null];
@@ -1974,13 +1978,11 @@ class BookingController extends Controller
 
                     session()->put($lockKey, true);
 
-                    // Increment promo usage only after successful payment verification.
-                    if (!empty($paymentData['promo_id'])) {
-                        $promo = \App\Models\PromoCode::find($paymentData['promo_id']);
-                        if ($promo && (!$promo->usage_limit || $promo->usage_count < $promo->usage_limit)) {
-                            $promo->increment('usage_count');
-                        }
-                    }
+                    $this->applySuccessfulPromoUsage(
+                        !empty($paymentData['promo_id']) ? PromoCode::find($paymentData['promo_id']) : null,
+                        $existingBooking->fresh(),
+                        $paymentData
+                    );
 
                     // Clear session
                     session()->forget(['staycation_booking_data', 'staycation_payment_data']);
@@ -2013,13 +2015,11 @@ class BookingController extends Controller
                 }
                 Cache::forget('paymongo_checkout_reference:' . $checkoutId);
 
-                // Increment promo usage only after successful payment verification.
-                if (!empty($paymentData['promo_id'])) {
-                    $promo = \App\Models\PromoCode::find($paymentData['promo_id']);
-                    if ($promo && (!$promo->usage_limit || $promo->usage_count < $promo->usage_limit)) {
-                        $promo->increment('usage_count');
-                    }
-                }
+                $this->applySuccessfulPromoUsage(
+                    !empty($paymentData['promo_id']) ? PromoCode::find($paymentData['promo_id']) : null,
+                    Booking::where('transaction_id', $referenceId)->first(),
+                    $paymentData
+                );
 
                 // Clear session
                 session()->forget(['staycation_booking_data', 'staycation_payment_data']);
@@ -2074,6 +2074,63 @@ class BookingController extends Controller
             'staycation_customer_info' => $resolvedCustomerInfo,
             'staycation_selected_foods' => $bookingData['selected_foods'] ?? [],
         ]);
+    }
+
+    private function recordPromoUsage(PromoCode $promo, ?Booking $booking, array $paymentData): void
+    {
+        $transactionId = $booking?->transaction_id ?? ($paymentData['reference_id'] ?? null);
+
+        if (empty($transactionId)) {
+            return;
+        }
+
+        PromoCodeUsage::updateOrCreate(
+            [
+                'promo_code_id' => $promo->id,
+                'booking_transaction_id' => $transactionId,
+            ],
+            [
+                'booking_id' => $booking?->id,
+                'checkout_id' => $paymentData['checkout_id'] ?? $paymentData['checkout_session_id'] ?? null,
+                'payment_reference' => $paymentData['payment_reference'] ?? null,
+                'discount_amount' => (float) ($paymentData['promo_discount'] ?? 0),
+            ]
+        );
+    }
+
+    private function applySuccessfulPromoUsage(?PromoCode $promo, ?Booking $booking, array $paymentData): void
+    {
+        if (!$promo) {
+            return;
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($promo, $booking, $paymentData) {
+            $lockedPromo = PromoCode::whereKey($promo->id)->lockForUpdate()->first();
+
+            if (!$lockedPromo) {
+                return;
+            }
+
+            $verifiedUsageCount = PromoCodeUsage::where('promo_code_id', $lockedPromo->id)->count();
+
+            if ($lockedPromo->usage_limit && $verifiedUsageCount >= $lockedPromo->usage_limit) {
+                $lockedPromo->forceFill([
+                    'usage_count' => $verifiedUsageCount,
+                ])->save();
+
+                return;
+            }
+
+            $this->recordPromoUsage($lockedPromo, $booking, $paymentData);
+
+            $verifiedUsageCount = PromoCodeUsage::where('promo_code_id', $lockedPromo->id)->count();
+
+            $lockedPromo->forceFill([
+                'usage_count' => $verifiedUsageCount,
+            ])->save();
+        });
+
+        PromoCode::syncAutomaticStatus();
     }
 
     public function paymentFailed(Request $request)

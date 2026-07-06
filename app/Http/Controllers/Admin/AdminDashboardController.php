@@ -616,14 +616,14 @@ class AdminDashboardController extends Controller
 
     private function resolveDateRange(Request $request): array
     {
-        $range = $request->string('range', '7d')->toString();
+        $range = $request->string('range', '30d')->toString();
         if (!$request->has('range') && $request->filled('from') && $request->filled('to')) {
             $range = 'custom';
         }
 
         $end = now()->endOfDay();
         $start = null;
-        $label = 'Last 7 Days';
+        $label = 'Last 30 Days';
 
         if ($range === 'today') {
             $start = now()->startOfDay();
@@ -671,7 +671,7 @@ class AdminDashboardController extends Controller
 
     private function buildBookingOverviewSeries(?Carbon $start = null, ?Carbon $end = null, string $salesView = 'daily'): \Illuminate\Support\Collection
     {
-        $start = ($start?->copy() ?? now()->subDays(6))->startOfDay();
+        $start = ($start?->copy() ?? now()->subDays(29))->startOfDay();
         $end = ($end?->copy() ?? now())->endOfDay();
         $salesView = $this->normalizeSalesView($salesView);
 
@@ -1176,7 +1176,7 @@ class AdminDashboardController extends Controller
 
     private function buildRevenueSummarySeries(?Carbon $start = null, ?Carbon $end = null): \Illuminate\Support\Collection
     {
-        $start = ($start?->copy() ?? now()->subDays(6))->startOfDay();
+        $start = ($start?->copy() ?? now()->subDays(29))->startOfDay();
         $end = ($end?->copy() ?? now())->endOfDay();
 
         $bookingRows = $this->getDailyRevenueSummaryCounts(
@@ -1205,7 +1205,7 @@ class AdminDashboardController extends Controller
 
     private function buildSalesReport(?Carbon $start, ?Carbon $end, string $salesView, float $pendingRevenue = 0.0): array
     {
-        $start = $start?->copy() ?? now()->subDays(6)->startOfDay();
+        $start = $start?->copy() ?? now()->subDays(29)->startOfDay();
         $end = $end?->copy() ?? now()->endOfDay();
         $salesView = $this->normalizeSalesView($salesView);
 

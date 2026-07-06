@@ -26,6 +26,7 @@ class PromoCodeResource extends JsonResource
             'usage_limit' => $this->usage_limit,
             'min_booking_amount' => $this->min_booking_amount,
             'is_active' => $this->is_active,
+            'remaining_uses' => $this->remaining_uses,
             'description' => $this->description,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
