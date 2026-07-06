@@ -2955,7 +2955,7 @@ class BookingController extends Controller
 
             // Prepare room details for display
             $description = $staycation->texts->first()->description ?? 'Experience the beauty of nature with our premium accommodation options.';
-            $image = $staycation->image ?? asset('assets/images/carousel/Glamping-1.jpg');
+            $image = $staycation->image ?? \App\Helpers\ImageHelper::placeholder();
 
             $name = strtolower((string) $staycation->name);
             $storedType = strtolower((string) ($staycation->type ?? ''));

@@ -1,3 +1,12 @@
+@php
+  $footerTitle = trim((string) ($systemSettings['footer_title'] ?? ''));
+  $footerTitle = $footerTitle !== '' ? $footerTitle : 'CALAIA FARM';
+  $footerDescription = trim((string) ($systemSettings['footer_description'] ?? ''));
+  $footerDescription = $footerDescription !== ''
+    ? $footerDescription
+    : "Your perfect getaway destination for relaxation and adventure.\nExperience nature at its finest in Calaca, Batangas.";
+@endphp
+
 <footer class="bg-brand-dark text-white mt-0">
   <!-- Social Media Banner -->
   <div class="bg-brand-light py-4">
@@ -34,10 +43,9 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Company Info -->
         <div class="text-center md:text-left">
-          <h3 class="text-xl font-bold uppercase mb-3">CALAIA FARM</h3>
-          <p class="text-gray-200 leading-relaxed text-base" style="">
-            Your perfect getaway destination for relaxation and adventure.
-            Experience nature at its finest in Calaca, Batangas.
+          <h3 class="text-xl font-bold uppercase mb-3">{{ $footerTitle }}</h3>
+          <p class="text-gray-200 leading-relaxed text-base whitespace-pre-line">
+            {{ $footerDescription }}
           </p>
         </div>
 

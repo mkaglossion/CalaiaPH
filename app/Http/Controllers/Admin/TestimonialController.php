@@ -4,125 +4,206 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Testimonial;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use App\Models\TestimonialSectionSetting;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Throwable;
 
 class TestimonialController extends Controller
 {
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
             'content' => 'required|string',
             'image_path' => 'nullable|string|max:255',
-            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:10240',
             'order' => 'nullable|integer',
-            'rating' => 'nullable|integer|min:1|max:5'
+            'rating' => 'nullable|integer|min:1|max:5',
         ]);
 
-        $imagePath = $request->image_path ?: '';
+        $avatarUpload = $this->storeUpload($request->file('image_file'), 'testimonials/avatars');
 
-        // Handle file upload to Cloudinary
-        if ($request->hasFile('image_file')) {
-            $file = $request->file('image_file');
-            $filePath = $file->getRealPath();
-            $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
-            $imagePath = $uploadResult['secure_url'];
-        }
-
-        Testimonial::create([
-            'name' => $request->name,
-            'position' => $request->position,
-            'content' => $request->content,
-            'image_path' => $imagePath,
-            'order' => $request->order ?? 0,
+        $testimonial = Testimonial::create([
+            'name' => $validated['name'],
+            'position' => $validated['position'],
+            'content' => $validated['content'],
+            'image_path' => $avatarUpload['url'] ?? ($validated['image_path'] ?? null),
+            'avatar' => $avatarUpload['url'] ?? ($validated['image_path'] ?? null),
+            'image_public_id' => $avatarUpload['public_id'] ?? null,
+            'order' => $validated['order'] ?? 0,
             'status' => 'approved',
-            'rating' => $request->rating ?? 5
+            'rating' => $validated['rating'] ?? 5,
         ]);
 
-        return response()->json(['message' => 'Testimonial added successfully.']);
+        return response()->json([
+            'message' => 'Testimonial added successfully.',
+            'testimonial' => $testimonial->fresh(),
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, $id)
     {
         $testimonial = Testimonial::find($id);
-        
+
         if (!$testimonial) {
             return response()->json(['message' => 'Testimonial not found.'], 404);
         }
-
-        Log::info('Update testimonial called', [
-            'testimonial_id' => $testimonial->id,
-            'request_data' => $request->all()
-        ]);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
             'content' => 'required|string',
             'image_path' => 'nullable|string|max:255',
-            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'image_file' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:10240',
             'remove_image' => 'nullable|in:1',
             'order' => 'nullable|integer',
-            'rating' => 'nullable|integer|min:1|max:5'
+            'rating' => 'nullable|integer|min:1|max:5',
         ]);
 
-        Log::info('Validation passed', ['validated' => $validated]);
-
         $data = [
-            'name' => $request->name,
-            'position' => $request->position,
-            'content' => $request->content,
-            'order' => $request->order ?? 0,
-            'rating' => $request->rating ?? 5
+            'name' => $validated['name'],
+            'position' => $validated['position'],
+            'content' => $validated['content'],
+            'order' => $validated['order'] ?? 0,
+            'rating' => $validated['rating'] ?? 5,
         ];
 
-        // Handle image operations
-        if ($request->remove_image) {
-            $data['image_path'] = '';
+        $currentAvatarPath = $testimonial->image_path ?: $testimonial->avatar;
+
+        if ($request->boolean('remove_image')) {
+            $this->destroyUpload($testimonial->image_public_id ?? null);
+            $data['image_path'] = null;
+            $data['avatar'] = null;
+            $data['image_public_id'] = null;
         } elseif ($request->hasFile('image_file')) {
-            $file = $request->file('image_file');
-            $filePath = $file->getRealPath();
-            $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
-            $data['image_path'] = $uploadResult['secure_url'];
+            $this->destroyUpload($testimonial->image_public_id ?? null);
+            $avatarUpload = $this->storeUpload($request->file('image_file'), 'testimonials/avatars');
+            $data['image_path'] = $avatarUpload['url'] ?? $currentAvatarPath;
+            $data['avatar'] = $avatarUpload['url'] ?? $currentAvatarPath;
+            $data['image_public_id'] = $avatarUpload['public_id'] ?? null;
         } else {
-            $data['image_path'] = $request->image_path ?: $testimonial->image_path;
+            $data['image_path'] = $validated['image_path'] ?: $currentAvatarPath;
+            $data['avatar'] = $validated['image_path'] ?: $currentAvatarPath;
+            $data['image_public_id'] = $testimonial->image_public_id;
         }
 
-        Log::info('Data to update', ['data' => $data]);
-
-        $updated = $testimonial->update($data);
-
-        $fresh = $testimonial->fresh();
-        Log::info('Update result', ['updated' => $updated, 'testimonial_after' => $fresh ? $fresh->toArray() : null]);
+        $testimonial->update($data);
 
         return response()->json([
             'message' => 'Testimonial updated successfully.',
-            'testimonial' => $fresh
+            'testimonial' => $testimonial->fresh(),
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy($id)
     {
         $testimonial = Testimonial::find($id);
-        
+
         if (!$testimonial) {
             return response()->json(['message' => 'Testimonial not found.'], 404);
         }
 
+        $this->destroyUpload($testimonial->image_public_id ?? null);
+
         $testimonial->delete();
 
         return response()->json(['message' => 'Testimonial deleted successfully.']);
+    }
+
+    public function updateSectionBackground(Request $request)
+    {
+        $request->validate([
+            'background_image_file' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:10240',
+            'remove_background_image' => 'nullable|in:1',
+        ]);
+
+        $setting = TestimonialSectionSetting::query()->first();
+        $hasUpload = $request->hasFile('background_image_file');
+        $shouldRemove = $request->boolean('remove_background_image');
+
+        if (!$setting && !$hasUpload && !$shouldRemove) {
+            return $this->respondToBackgroundUpdate($request, 'No testimonial background changes were made.');
+        }
+
+        if (!$setting) {
+            $setting = new TestimonialSectionSetting();
+        }
+
+        if ($shouldRemove) {
+            $this->destroyUpload($setting->background_image_public_id ?? null);
+            $setting->background_image_path = null;
+            $setting->background_image_public_id = null;
+        } elseif ($hasUpload) {
+            $this->destroyUpload($setting->background_image_public_id ?? null);
+            $upload = $this->storeUpload($request->file('background_image_file'), 'testimonials/backgrounds');
+            $setting->background_image_path = $upload['url'] ?? null;
+            $setting->background_image_public_id = $upload['public_id'] ?? null;
+        } else {
+            return $this->respondToBackgroundUpdate($request, 'No testimonial background changes were made.');
+        }
+
+        $setting->save();
+
+        return $this->respondToBackgroundUpdate($request, 'Testimonials section background updated successfully.', $setting);
+    }
+
+    private function storeUpload(?UploadedFile $file, string $folder = 'uploads'): array
+    {
+        if (!$file) {
+            return [];
+        }
+
+        try {
+            $options = [
+                'resource_type' => 'image',
+            ];
+
+            if ($folder !== '') {
+                $options['folder'] = $folder;
+            }
+
+            $uploadResult = Cloudinary::uploadApi()->upload($file->getRealPath(), $options);
+
+            return [
+                'url' => $uploadResult['secure_url'] ?? null,
+                'public_id' => $uploadResult['public_id'] ?? null,
+            ];
+        } catch (Throwable $e) {
+            report($e);
+            throw $e;
+        }
+    }
+
+    private function destroyUpload(?string $publicId): void
+    {
+        if (empty($publicId)) {
+            return;
+        }
+
+        try {
+            Cloudinary::uploadApi()->destroy($publicId, [
+                'resource_type' => 'image',
+            ]);
+        } catch (Throwable $e) {
+            report($e);
+        }
+    }
+
+    private function respondToBackgroundUpdate(Request $request, string $message, ?TestimonialSectionSetting $setting = null)
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'section_background' => $setting ? [
+                    'background_image_path' => $setting->background_image_path,
+                    'background_image_public_id' => $setting->background_image_public_id,
+                ] : null,
+            ]);
+        }
+
+        return back()->with('success', $message);
     }
 }

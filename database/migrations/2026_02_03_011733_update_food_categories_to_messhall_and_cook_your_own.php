@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
@@ -10,10 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First, expand ENUM to include 'messhall' alongside existing values
-        if (DB::getDriverName() !== 'sqlite') {
-            DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('breakfast', 'lunch', 'dinner', 'package', 'special', 'cook_your_own', 'messhall') DEFAULT 'package'");
-        }
+        Schema::table('foods', function (Blueprint $table) {
+            $table->string('category', 50)->default('package')->change();
+        });
         
         // Then, update all existing breakfast, lunch, dinner, package, special items to messhall
         DB::table('foods')
@@ -24,10 +25,6 @@ return new class extends Migration
             ->orWhere('category', 'special')
             ->update(['category' => 'messhall']);
         
-        // Finally, shrink ENUM to only accept 'messhall' and 'cook_your_own'
-        if (DB::getDriverName() !== 'sqlite') {
-            DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('messhall', 'cook_your_own') DEFAULT 'messhall'");
-        }
     }
 
     /**
@@ -35,19 +32,13 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // First expand ENUM to include old values
-        if (DB::getDriverName() !== 'sqlite') {
-            DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('breakfast', 'lunch', 'dinner', 'package', 'special', 'cook_your_own', 'messhall') DEFAULT 'package'");
-        }
+        Schema::table('foods', function (Blueprint $table) {
+            $table->string('category', 50)->default('package')->change();
+        });
         
         // Restore old categories from messhall (we'll default them back to package)
         DB::table('foods')
             ->where('category', 'messhall')
             ->update(['category' => 'package']);
-        
-        // Finally shrink ENUM back to original
-        if (DB::getDriverName() !== 'sqlite') {
-            DB::statement("ALTER TABLE foods MODIFY COLUMN category ENUM('breakfast', 'lunch', 'dinner', 'package', 'special', 'cook_your_own') DEFAULT 'package'");
-        }
     }
 };

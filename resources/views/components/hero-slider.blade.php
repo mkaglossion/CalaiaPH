@@ -12,15 +12,35 @@
     @if(count($images) > 0)
       @php $texts_array = array_values($texts); $labels_array = array_keys($texts); @endphp
       @foreach($images as $index => $image)
+      @php
+        $imagePath = $image->image_path ?? $image;
+        $isPrimarySlide = $index === 0;
+        $optimizedSrc = \App\Helpers\CloudinaryHelper::swiperSlide($imagePath) ?? \App\Helpers\ImageHelper::src($imagePath);
+        $optimizedSrcset = \App\Helpers\CloudinaryHelper::srcset($imagePath);
+      @endphp
       <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
         @if(str_contains($image->image_path ?? $image, '/video/'))
-          <video src="{{ \App\Helpers\ImageHelper::src($image->image_path ?? $image) }}" class="w-full h-full object-cover object-center" autoplay muted loop loading="lazy"></video>
+          <video
+            src="{{ \App\Helpers\ImageHelper::src($imagePath) }}"
+            class="w-full h-full object-cover object-center"
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+          ></video>
         @else
           <img
-            src="{{ \App\Helpers\ImageHelper::src($image->image_path ?? $image) }}"
+            src="{{ $optimizedSrc }}"
+            @if($optimizedSrcset)
+              srcset="{{ $optimizedSrcset }}"
+              sizes="100vw"
+            @endif
             alt="{{ $image->title ?? 'Slide Image' }}"
             class="w-full h-full object-cover object-center"
-            loading="lazy"
+            loading="{{ $isPrimarySlide ? 'eager' : 'lazy' }}"
+            fetchpriority="{{ $isPrimarySlide ? 'high' : 'auto' }}"
+            decoding="async"
             onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
           >
         @endif

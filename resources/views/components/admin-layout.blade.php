@@ -15,7 +15,7 @@
     <meta name="description" content="{{ $description }}">
     <meta name="keywords" content="{{ $keywords }}">
     <meta name="author" content="CalaiaPH">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    @include('layouts.partials.favicon')
     @vite(['resources/js/app.js'])
     <title>{{ $title }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">

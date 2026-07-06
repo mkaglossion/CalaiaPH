@@ -1,11 +1,24 @@
 @php
   $testimonials = \App\Models\Testimonial::active()->ordered()->get();
+  $sectionBackground = \App\Models\TestimonialSectionSetting::current();
+  $bgImage = $sectionBackground?->background_image_path;
+  $bgImageUrl = $bgImage
+    ? \App\Helpers\CloudinaryHelper::swiperSlide($bgImage)
+    : null;
 @endphp
 
 @if($testimonials->count() > 0)
 <section class="relative py-12 min-h-125"
-  style="background: linear-gradient(rgba(143, 93, 84, 0.5), rgba(143, 93, 84, 0.5)),
-  url('/assets/images/carousel/our-farm.jpg'); background-size: cover; background-position: center; background-attachment: fixed;">
+  style="
+    @if($bgImageUrl)
+      background: linear-gradient(rgba(143, 93, 84, 0.5), rgba(143, 93, 84, 0.5)), url('{{ e($bgImageUrl) }}');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    @else
+      background: linear-gradient(135deg, rgba(143, 93, 84, 0.88), rgba(106, 74, 47, 0.92));
+    @endif
+  ">
 
   <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-10">
@@ -34,9 +47,22 @@
               >
                 {{-- avatar circle (like screenshot) --}}
                 <div class="mx-auto mb-7 w-20 h-20 rounded-full overflow-hidden bg-[#7a7a7a] flex items-center justify-center">
-                  @if(!empty($testimonial->image_path))
-                    <img src="{{ \App\Helpers\ImageHelper::src($testimonial->image_path) }}" alt="{{ $testimonial->name }}"
-                         class="w-full h-full object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                  @php
+                    $testimonialImage = $testimonial->image_path ?: $testimonial->avatar;
+                    $testimonialImageUrl = $testimonialImage
+                      ? \App\Helpers\CloudinaryHelper::thumbnail($testimonialImage, 300)
+                      : null;
+                  @endphp
+                  @if($testimonialImageUrl)
+                    <img
+                      src="{{ $testimonialImageUrl }}"
+                      alt="{{ $testimonial->name }}"
+                      class="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    >
+                  @else
+                    <i data-lucide="user" class="w-6 h-6 text-white/70"></i>
                   @endif
                 </div>
 

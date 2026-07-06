@@ -3,6 +3,11 @@
 @php
   $cart = session('cart', []);
   $cartCount = 0;
+  $logoSource = $systemSettings['logo_url'] ?? null;
+  $desktopLogo = $logoSource
+    ? \App\Helpers\CloudinaryHelper::optimize($logoSource, 420, false, false, 'good')
+    : null;
+  $mobileLogo = $desktopLogo;
 
   if (is_array($cart)) {
     foreach ($cart as $item) {
@@ -86,11 +91,17 @@
     <!-- ✅ DESKTOP LOGO ROW (ABOVE NAV) -->
     <div class="hidden md:flex justify-center py-3">
       <a href="{{ url('/') }}" class="inline-flex items-center justify-center">
-        <img
-          src="{{ asset('assets/logo/CALAIA LOGO WHITE_1.png') }}"
-          alt="CALAIA LOGO WHITE_1"
-          class="h-20 w-auto object-contain"
-        >
+        @if($desktopLogo)
+          <img
+            src="{{ $desktopLogo }}"
+            alt="{{ $systemSettings['app_name'] ?? 'Calaia PH' }}"
+            class="h-20 w-auto object-contain"
+          >
+        @else
+          <span class="text-xl font-semibold tracking-[0.35em] text-white uppercase">
+            {{ $systemSettings['app_name'] ?? 'Calaia PH' }}
+          </span>
+        @endif
       </a>
     </div>
 
@@ -214,11 +225,17 @@
     <div class="md:hidden flex items-center justify-between py-3">
       <!-- Logo -->
       <a href="{{ url('/') }}" class="inline-flex items-center">
-        <img
-          src="{{ asset('assets/logo/CALAIA LOGO WHITE_1.png') }}"
-          alt="CALAIA LOGO WHITE_1"
-          class="h-16 w-auto object-contain"
-        >
+        @if($mobileLogo)
+          <img
+            src="{{ $mobileLogo }}"
+            alt="{{ $systemSettings['app_name'] ?? 'Calaia PH' }}"
+            class="h-16 w-auto object-contain"
+          >
+        @else
+          <span class="text-base font-semibold tracking-[0.25em] text-white uppercase">
+            {{ $systemSettings['app_name'] ?? 'Calaia PH' }}
+          </span>
+        @endif
       </a>
 
       <!-- Actions + Hamburger -->

@@ -13,6 +13,76 @@
     </h1>
     <p class="text-gray-600 mb-10">Manage customer testimonials displayed on the homepage.</p>
 
+    @php
+        $sectionBackgroundImage = $sectionBackground?->background_image_path;
+        $sectionBackgroundPreview = $sectionBackgroundImage
+            ? \App\Helpers\CloudinaryHelper::swiperSlide($sectionBackgroundImage)
+            : null;
+    @endphp
+
+    <div class="bg-white/70 backdrop-blur-lg border border-gray-200 rounded-2xl shadow-md p-6 mb-6">
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <div class="max-w-xl">
+                <h2 class="text-2xl font-bold text-gray-800">Testimonials Section Background</h2>
+                <p class="mt-2 text-sm text-gray-500">
+                    Upload one Cloudinary image for the homepage testimonials section. This keeps the public UI consistent while letting admins change the backdrop anytime.
+                </p>
+            </div>
+
+            <form
+                id="sectionBackgroundForm"
+                @submit.prevent="saveSectionBackground"
+                class="w-full lg:max-w-xl space-y-4"
+            >
+                @csrf
+                @method('PUT')
+
+                <div class="border-2 border-dashed border-emerald-300 rounded-xl p-6 bg-emerald-50/40">
+                    <div class="flex flex-col gap-4">
+                        <template x-if="sectionBackground.preview || sectionBackground.current">
+                            <img
+                                :src="getSectionBackgroundPreviewUrl()"
+                                alt="Testimonials section background preview"
+                                class="w-full h-44 rounded-xl object-cover shadow"
+                            >
+                        </template>
+
+                        <template x-if="!sectionBackground.preview && !sectionBackground.current">
+                            <div class="flex flex-col items-center gap-2 text-center">
+                                <i data-lucide="image" class="w-8 h-8 text-emerald-400"></i>
+                                <p class="text-gray-600 font-medium">Click to upload the testimonials background</p>
+                                <p class="text-xs text-gray-500">Landscape JPG, PNG, WEBP up to 10MB</p>
+                            </div>
+                        </template>
+
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                            <label class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-300 bg-white text-sm font-medium text-emerald-700 cursor-pointer hover:bg-emerald-50 transition">
+                                <input type="file" name="background_image_file" accept="image/*" class="hidden" x-ref="sectionBackgroundInput" @change="handleSectionBackgroundUpload">
+                                <i data-lucide="upload" class="w-4 h-4"></i>
+                                <span>Choose image</span>
+                            </label>
+
+                            @if($sectionBackgroundImage)
+                                <label class="inline-flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                                    <input type="checkbox" x-model="sectionBackground.remove" class="rounded">
+                                    <span>Remove current background</span>
+                                </label>
+                            @endif
+
+                            <button
+                                type="submit"
+                                class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition"
+                            >
+                                <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                                Save Background
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="flex justify-between items-end mb-6">
          <div>
              <h2 class="text-2xl font-bold text-gray-800">Customer Testimonials</h2>
@@ -82,8 +152,8 @@
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
                                     <div class="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center mr-3">
-                                        @if($testimonial->image_path)
-                                            <img src="{{ $testimonial->image_path }}" alt="{{ $testimonial->name }}"
+                                        @if($testimonial->image_path || $testimonial->avatar)
+                                            <img src="{{ $testimonial->image_path ?? $testimonial->avatar }}" alt="{{ $testimonial->name }}"
                                                  class="w-full h-full object-cover">
                                         @else
                                             <i data-lucide="user" class="w-6 h-6 text-gray-400"></i>
@@ -121,7 +191,7 @@
                                         data-name="{{ $testimonial->name }}"
                                         data-position="{{ $testimonial->position }}"
                                         data-content="{{ $testimonial->content }}"
-                                        data-image-path="{{ $testimonial->image_path }}"
+                                        data-image-path="{{ $testimonial->image_path ?? $testimonial->avatar }}"
                                         data-order="{{ $testimonial->order }}"
                                         data-rating="{{ $testimonial->rating }}"
                                         data-status="{{ $testimonial->status }}"
@@ -296,6 +366,14 @@ function testimonialsManager() {
             remove_avatar: false
         },
         avatarFile: null,
+        avatarUploadPromise: null,
+        sectionBackground: {
+            current: @js($sectionBackgroundPreview),
+            preview: null,
+            remove: false
+        },
+        sectionBackgroundFile: null,
+        sectionBackgroundUploadPromise: null,
 
         resetForm() {
             this.form = {
@@ -319,6 +397,17 @@ function testimonialsManager() {
                 this.avatarFile = file;
                 this.form.avatar_preview = URL.createObjectURL(file);
                 this.form.remove_avatar = false;
+                this.avatarUploadPromise = this.prepareImageUpload(file, {
+                    maxWidth: 720,
+                    maxHeight: 720,
+                    quality: 0.84,
+                }).then((compressedFile) => {
+                    this.avatarFile = compressedFile;
+                    return compressedFile;
+                }).catch(() => {
+                    this.avatarFile = file;
+                    return file;
+                });
             }
         },
 
@@ -379,8 +468,11 @@ function testimonialsManager() {
             formData.append('image_path', this.form.avatar || '');
             formData.append('order', this.form.order);
             formData.append('rating', this.form.rating);
-            formData.append('status', 'approved'); // Always approved since only admins add testimonials
             if (this.form.remove_avatar) formData.append('remove_image', 1);
+
+            if (this.avatarUploadPromise) {
+                await this.avatarUploadPromise;
+            }
 
             // Add image file if present
             if (this.avatarFile) {
@@ -434,6 +526,169 @@ function testimonialsManager() {
             } finally {
                 this.isLoading = false;
             }
+        },
+
+        handleSectionBackgroundUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                this.sectionBackground.preview = URL.createObjectURL(file);
+                this.sectionBackground.remove = false;
+                this.sectionBackgroundUploadPromise = this.prepareImageUpload(file, {
+                    maxWidth: 1600,
+                    maxHeight: 900,
+                    quality: 0.82,
+                }).then((compressedFile) => {
+                    this.sectionBackgroundFile = compressedFile;
+                    return compressedFile;
+                }).catch(() => {
+                    this.sectionBackgroundFile = file;
+                    return file;
+                });
+            }
+        },
+
+        getSectionBackgroundPreviewUrl() {
+            if (this.sectionBackground.preview && this.sectionBackground.preview.startsWith('blob:')) {
+                return this.sectionBackground.preview;
+            }
+            return this.sectionBackground.current;
+        },
+
+        async saveSectionBackground() {
+            this.isLoading = true;
+
+            const csrf = document.querySelector('meta[name=csrf-token]').content;
+            const formData = new FormData();
+
+            if (this.sectionBackgroundUploadPromise) {
+                await this.sectionBackgroundUploadPromise;
+            }
+
+            if (this.sectionBackgroundFile) {
+                formData.append('background_image_file', this.sectionBackgroundFile);
+            }
+
+            if (this.sectionBackground.remove) {
+                formData.append('remove_background_image', 1);
+            }
+
+            try {
+                const res = await fetch('{{ route('admin.testimonials.section-background.update') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json'
+                    },
+                    body: (() => {
+                        formData.append('_method', 'PUT');
+                        return formData;
+                    })()
+                });
+
+                if (res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    if (data.section_background) {
+                        this.sectionBackground.current = data.section_background.background_image_path
+                            ? data.section_background.background_image_path
+                            : null;
+                    }
+                    this.sectionBackground.preview = null;
+                    this.sectionBackground.remove = false;
+                    this.sectionBackgroundFile = null;
+                    this.sectionBackgroundUploadPromise = null;
+                    this.$refs.sectionBackgroundInput.value = '';
+                    Swal.fire({
+                        icon: "success",
+                        title: "Updated!",
+                        text: data.message || "Testimonials section background updated successfully.",
+                        confirmButtonColor: "#2563eb"
+                    });
+                    return;
+                }
+
+                const data = await res.json().catch(() => ({}));
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: data.message || "Failed to update testimonials section background."
+                });
+            } catch (err) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Unexpected Error",
+                    text: "Something went wrong."
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async prepareImageUpload(file, { maxWidth, maxHeight, quality }) {
+            if (!file || !file.type || !file.type.startsWith('image/')) {
+                return file;
+            }
+
+            if (file.size <= 900 * 1024) {
+                return file;
+            }
+
+            const image = await this.loadImage(file);
+            const { width, height } = this.fitWithin(image.naturalWidth || image.width, image.naturalHeight || image.height, maxWidth, maxHeight);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+
+            const context = canvas.getContext('2d');
+            if (!context) {
+                return file;
+            }
+
+            context.drawImage(image, 0, 0, width, height);
+
+            const blob = await new Promise((resolve) => {
+                canvas.toBlob((result) => resolve(result), 'image/jpeg', quality);
+            });
+
+            if (!blob) {
+                return file;
+            }
+
+            return new File([blob], this.replaceExtension(file.name, 'jpg'), {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+            });
+        },
+
+        loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const image = new Image();
+                const objectUrl = URL.createObjectURL(file);
+
+                image.onload = () => {
+                    URL.revokeObjectURL(objectUrl);
+                    resolve(image);
+                };
+
+                image.onerror = () => {
+                    URL.revokeObjectURL(objectUrl);
+                    reject(new Error('Unable to load image'));
+                };
+
+                image.src = objectUrl;
+            });
+        },
+
+        fitWithin(width, height, maxWidth, maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
+            return {
+                width: Math.round(width * ratio),
+                height: Math.round(height * ratio),
+            };
+        },
+
+        replaceExtension(filename, extension) {
+            return filename.replace(/\.[^.]+$/, '') + '.' + extension;
         },
 
         async deleteTestimonial(id) {

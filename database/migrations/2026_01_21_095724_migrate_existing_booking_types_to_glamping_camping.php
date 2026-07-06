@@ -13,10 +13,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First, ensure the enum is updated to include glamping and camping
-        if (DB::getDriverName() !== 'sqlite') {
-            DB::statement("ALTER TABLE bookings MODIFY COLUMN booking_type ENUM('glamping', 'camping', 'dayvisit', 'staycation', 'regular') DEFAULT 'glamping'");
-        }
+        Schema::table('bookings', function (Blueprint $table) {
+            $table->string('booking_type', 50)->default('glamping')->change();
+        });
         
         // Get all staycations to map IDs to types
         $staycations = Staycation::all()->keyBy('id');
@@ -67,7 +66,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Revert glamping and camping back to staycation
+        Schema::table('bookings', function (Blueprint $table) {
+            $table->string('booking_type', 50)->default('staycation')->change();
+        });
+
         DB::table('bookings')
             ->whereIn('booking_type', ['glamping', 'camping'])
             ->update(['booking_type' => 'staycation']);

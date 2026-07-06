@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -12,10 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Update booking_type enum to include 'glamping' and 'camping'
-        if (DB::getDriverName() !== 'sqlite') {
-            DB::statement("ALTER TABLE bookings MODIFY COLUMN booking_type ENUM('glamping', 'camping', 'dayvisit', 'staycation') DEFAULT 'glamping'");
-        }
+        Schema::table('bookings', function (Blueprint $table) {
+            $table->string('booking_type', 50)->default('glamping')->change();
+        });
     }
 
     /**
@@ -23,9 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Revert back to original enum
-        if (DB::getDriverName() !== 'sqlite') {
-            DB::statement("ALTER TABLE bookings MODIFY COLUMN booking_type ENUM('staycation', 'dayvisit') DEFAULT 'staycation'");
-        }
+        Schema::table('bookings', function (Blueprint $table) {
+            $table->string('booking_type', 50)->default('staycation')->change();
+        });
     }
 };

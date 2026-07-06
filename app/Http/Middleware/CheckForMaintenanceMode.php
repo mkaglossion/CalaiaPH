@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SystemSetting;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -38,7 +39,7 @@ class CheckForMaintenanceMode
         }
 
         // Check if maintenance mode is enabled in admin settings
-        $settings = cache()->get('admin.settings', []);
+        $settings = SystemSetting::cachedData();
         $isMaintenanceActive = $settings['system_maintenance'] ?? false;
 
         // Handle multiple type conversions:
@@ -64,6 +65,7 @@ class CheckForMaintenanceMode
         return response()->view('system.maintenance', [
             'message' => $settings['maintenance_message'] ?? 'We are currently performing maintenance. Please check back later.',
             'logo' => $settings['logo_url'] ?? null,
+            'favicon' => $settings['favicon_url'] ?? ($settings['logo_url'] ?? null),
             'lastUpdated' => now()->format('Y-m-d h:i A'),
             'statusLabel' => 'Scheduled Maintenance',
         ], 503, [

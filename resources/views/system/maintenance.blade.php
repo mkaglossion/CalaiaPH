@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#8f5d54">
     <title>System Maintenance</title>
+    @if(!empty($favicon))
+        <link rel="icon" href="{{ \App\Helpers\CloudinaryHelper::thumbnail($favicon, 96) }}">
+        <link rel="apple-touch-icon" href="{{ \App\Helpers\CloudinaryHelper::thumbnail($favicon, 96) }}">
+    @endif
     <style>
         :root {
             --primary: #8f5d54;
@@ -286,7 +290,17 @@
         <div class="card" role="alert" aria-live="polite">
             <!-- Logo -->
             <div class="logo-area">
-                <img src="/assets/logo/CALAIA LOGO RUST.png" alt="Calaia PH Logo" class="logo-img">
+                @if(!empty($logo))
+                    <img
+                        src="{{ $logo }}"
+                        alt="Calaia PH Logo"
+                        class="logo-img"
+                    >
+                @else
+                    <div class="logo-img" style="display:flex;align-items:center;justify-content:center;min-height:72px;font-weight:700;letter-spacing:.25em;color:var(--primary);">
+                        CALAIA PH
+                    </div>
+                @endif
             </div>
 
             <!-- Content -->

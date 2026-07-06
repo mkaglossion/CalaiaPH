@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\SystemSetting;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,5 +26,7 @@ class AppServiceProvider extends ServiceProvider
         Vite::usePreloadTagAttributes(function () {
             return false;
         });
+
+        View::share('systemSettings', SystemSetting::cachedData());
     }
 }

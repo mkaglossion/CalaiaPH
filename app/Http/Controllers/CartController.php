@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\Receipt;
+use App\Helpers\ImageHelper;
 use App\Models\Product;
 use App\Models\Region;
 use App\Models\Province;
@@ -56,7 +57,7 @@ class CartController extends Controller
                 'id'       => $id,
                 'title'    => $it['title'] ?? null,
                 'price'    => $price,
-                'image'    => $it['image'] ?? asset('assets/images/carousel/activities-1.jpg'),
+                'image'    => $it['image'] ?? ImageHelper::placeholder(),
                 'quantity' => $qty,
                 'subtotal' => $subtotal,
                 'type'     => $it['type'] ?? null,

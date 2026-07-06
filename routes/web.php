@@ -695,6 +695,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::prefix('/testimonials')->group(function () {
         Route::get('/', [AdminController::class, 'testimonials'])->name('admin.testimonials.index');
         Route::post('/', [TestimonialController::class, 'store'])->name('admin.testimonials.store');
+        Route::put('/section-background', [TestimonialController::class, 'updateSectionBackground'])->name('admin.testimonials.section-background.update');
         Route::post('/{id}', [TestimonialController::class, 'update'])->name('admin.testimonials.update');
         Route::delete('/{id}', [TestimonialController::class, 'destroy'])->name('admin.testimonials.destroy');
     });

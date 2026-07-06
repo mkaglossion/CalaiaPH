@@ -126,9 +126,8 @@ return new class extends Migration
      */
     private function indexExists($table, $index)
     {
-        $indexes = DB::select("SHOW INDEXES FROM {$table}");
-        foreach ($indexes as $idx) {
-            if ($idx->Key_name === $index) {
+        foreach (Schema::getIndexes($table) as $existingIndex) {
+            if (($existingIndex['name'] ?? null) === $index) {
                 return true;
             }
         }

@@ -420,8 +420,9 @@ class AdminController extends Controller
         // Get the next available order number (highest order + 1)
         $maxOrder = \App\Models\Testimonial::max('order') ?? 0;
         $nextOrder = $maxOrder + 1;
+        $sectionBackground = \App\Models\TestimonialSectionSetting::current();
 
-        return view('admin.testimonials.index', compact('testimonials', 'nextOrder'));
+        return view('admin.testimonials.index', compact('testimonials', 'nextOrder', 'sectionBackground'));
     }
 
     public function staySettings()

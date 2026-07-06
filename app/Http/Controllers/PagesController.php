@@ -60,81 +60,81 @@ class PagesController extends Controller
 
     public function home()
     {
-        // Build availability from staycation inventory
+        // Build availability from staycation inventory using one grouped query instead of
+        // querying each date individually. This keeps the home page from doing 100+ DB hits.
         $availability = [];
         $start = Carbon::today();
         $end = (clone $start)->addMonths(6);
+        $startDate = $start->toDateString();
+        $endDate = $end->toDateString();
+
+        $staycationInventoryByDate = collect();
+        if (Schema::hasTable('staycation_inventories')) {
+            $staycationInventoryByDate = StaycationInventory::whereBetween('date', [$startDate, $endDate])
+                ->select('date')
+                ->selectRaw('COALESCE(SUM(available_quantity), 0) as total_available')
+                ->groupBy('date')
+                ->pluck('total_available', 'date');
+        }
 
         for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
             $key = $d->format('Y-m-d');
 
-            // Past dates invalid
             if ($d->lt(Carbon::today())) {
                 $availability[$key] = [
                     'is_available' => false,
-                    'min_quantity' => 0
+                    'min_quantity' => 0,
                 ];
                 continue;
             }
 
-            // Check if staycation_inventories table exists
-            $totalAvailable = 0;
-            if (Schema::hasTable('staycation_inventories')) {
-                // Compute total availability by summing per staycation:
-                // - if an inventory record exists for the date, use its available_quantity
-                // - otherwise, fall back to 0 (no availability without inventory record)
-                $staycations = Staycation::select('id')->get();
-                $inventoryForDate = StaycationInventory::where('date', $key)
-                    ->select('staycation_id', 'available_quantity')
-                    ->get()
-                    ->keyBy('staycation_id');
-
-                foreach ($staycations as $s) {
-                    $inv = $inventoryForDate->get($s->id);
-                    $qty = $inv ? (int) $inv->available_quantity : 0;
-                    $totalAvailable += max(0, $qty);
-                }
-            }
+            $totalAvailable = (int) $staycationInventoryByDate->get($key, 0);
 
             $availability[$key] = [
                 'is_available' => $totalAvailable > 0,
-                'min_quantity' => $totalAvailable
+                'min_quantity' => $totalAvailable,
             ];
         }
 
         // Total quantity is no longer tracked at staycation level - use 0
         $totalQuantity = 0;
 
-        // Build day tour availability data
+        // Build day tour availability data with a single grouped query.
         $dayTourAvailability = [];
         $dayTours = DayTour::where('is_active', true)->get();
         $totalDayTourGroups = $dayTours->sum('max_groups_per_day');
 
+        $dayTourInventoryByDate = collect();
+        if (Schema::hasTable('day_tour_inventories')) {
+            $dayTourInventoryByDate = DayTourInventory::whereBetween('date', [$startDate, $endDate])
+                ->where('is_blocked', false)
+                ->select('date')
+                ->selectRaw('COALESCE(SUM(available_groups), 0) as total_available_groups')
+                ->groupBy('date')
+                ->pluck('total_available_groups', 'date');
+        }
+
         for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
             $key = $d->format('Y-m-d');
 
-            // Past dates invalid
             if ($d->lt(Carbon::today())) {
                 $dayTourAvailability[$key] = [
                     'is_available' => false,
-                    'min_quantity' => 0
+                    'min_quantity' => 0,
                 ];
                 continue;
             }
 
-            // Get total available groups for this date from day tour inventory
-            $totalAvailableGroups = DayTourInventory::where('date', $key)
-                ->where('is_blocked', false)
-                ->sum('available_groups');
+            $totalAvailableGroups = (int) $dayTourInventoryByDate->get($key, 0);
 
-            // If no inventory records exist for this date, fall back to sum of max_groups_per_day
-            if ($totalAvailableGroups == 0) {
+            // If no inventory records exist for this date, fall back to the configured maximum.
+            if ($totalAvailableGroups === 0) {
                 $totalAvailableGroups = $totalDayTourGroups;
             }
 
             $dayTourAvailability[$key] = [
                 'is_available' => $totalAvailableGroups > 0,
-                'min_quantity' => $totalAvailableGroups
+                'min_quantity' => $totalAvailableGroups,
             ];
         }
 
@@ -248,7 +248,7 @@ class PagesController extends Controller
 
             // Prepare room details for display
             $description = $this->resolveStaycationDescription($staycation);
-            $image = $staycation->image ?? asset('assets/images/carousel/Glamping-1.jpg');
+            $image = $staycation->image ?: \App\Helpers\ImageHelper::placeholder();
 
             $name = strtolower((string) $staycation->name);
             $storedType = strtolower((string) ($staycation->type ?? ''));
