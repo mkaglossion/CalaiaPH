@@ -7,6 +7,8 @@ import './admin/bookingSettings.js'
 import './admin/flash.js'
 import './admin/seasonDurations.js'
 
+import './admin/cms-manager.js'
+
 import Alpine from 'alpinejs'
 import Collapse from '@alpinejs/collapse'
 

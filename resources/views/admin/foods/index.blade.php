@@ -478,7 +478,7 @@
                         Cancel
                     </button>
 
-                    <button type="submit" :disabled="loading"
+                    <button type="submit" :disabled="loading || isEditHydrating"
                             class="px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg sm:rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition disabled:opacity-60"
                             x-text="loading ? 'Saving...' : (editMode ? 'Update Food Item' : 'Create Food Item')">
                     </button>
@@ -549,14 +549,17 @@
                 <div>
                     <h3 class="block text-xs sm:text-sm font-semibold text-gray-700 mb-3">Package Items *</h3>
                     <div class="space-y-3">
-                        <template x-for="(item, index) in packageForm.items" :key="index">
+                        <template x-for="(item, index) in packageForm.items" :key="item.row_key">
                             <div class="flex gap-3 items-end bg-gray-50 p-3 rounded-lg">
                                 <div class="flex-1">
-                                    <select :name="`foods[${index}]`" x-model="item.food_id" required
+                                    <select :name="`foods[${index}]`"
+                                            :value="String(item.food_id || '')"
+                                            @change="item.food_id = String($event.target.value || '')"
+                                            required
                                             class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
                                         <option value="">Select Food Item</option>
                                         <template x-for="food in availableFoods" :key="food.id">
-                                            <option :value="food.id" x-text="food.name + ' (₱' + food.price + ')'"></option>
+                                            <option :value="String(food.id)" x-text="food.name + ' (₱' + food.price + ')'"></option>
                                         </template>
                                     </select>
                                 </div>
@@ -631,7 +634,7 @@
                         Cancel
                     </button>
 
-                    <button type="submit" :disabled="loading"
+                    <button type="submit" :disabled="loading || isEditHydrating"
                             class="px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg sm:rounded-xl bg-green-600 text-white hover:bg-green-700 shadow transition disabled:opacity-60"
                             x-text="loading ? (packageEditMode ? 'Updating...' : 'Creating...') : (packageEditMode ? 'Update Package' : 'Create Package')">
                     </button>
@@ -683,6 +686,7 @@
                 showModal: false,
                 editMode: false,
                 loading: false,
+                isEditHydrating: false,
                 searchQuery: '',
                 isPackageMode: false,
                 packageEditMode: false,
@@ -755,6 +759,7 @@
                     this.showModal = false;
                     this.isPackageMode = false;
                     this.packageEditMode = false;
+                    this.isEditHydrating = false;
                     this.resetForm();
                     this.resetPackageForm();
                 },
@@ -882,13 +887,16 @@
 
                 openCreate() {
                     this.resetForm();
+                    this.isEditHydrating = false;
                     this.form.sort_order = this.getNextSortOrderForMealType(this.form.meal_type);
                     this.showModal = true;
                 },
 
                 openEdit(foodId) {
                     this.resetForm();
-                    this.loading = true;
+                    this.editMode = true;
+                    this.isEditHydrating = true;
+                    this.showModal = true;
                     
                     fetch(`{{ route('admin.foods.show', ':id') }}`.replace(':id', foodId), {
                         headers: { 'Accept': 'application/json' },
@@ -896,7 +904,6 @@
                     })
                     .then(r => r.ok ? r.json() : Promise.reject())
                     .then(food => {
-                        this.editMode = true;
                         this.form.id = food.id;
                         this.form.name = food.name || '';
                         this.form.category = food.category || '';
@@ -910,15 +917,18 @@
                         this.form.stock_quantity = food.stock_quantity ?? '';
                         this.form.is_inventory_managed = !!food.is_inventory_managed;
                         this.form.image_preview = food.image || null;
-                        this.showModal = true;
                     })
-                    .catch(() => this.showToast('Failed to load food data', 'error'))
-                    .finally(() => this.loading = false);
+                    .catch(() => {
+                        this.showModal = false;
+                        this.showToast('Failed to load food data', 'error');
+                    })
+                    .finally(() => this.isEditHydrating = false);
                 },
 
                 resetForm() {
                     this.editMode = false;
                     this.loading = false;
+                    this.isEditHydrating = false;
                     this.form = {
                         id: null,
                         name: '',
@@ -1007,6 +1017,7 @@
                 async openCreatePackage() {
                     this.isPackageMode = true;
                     this.packageEditMode = false;
+                    this.isEditHydrating = false;
                     this.resetPackageForm();
                     await this.loadAvailableFoods();
                     this.showModal = true;
@@ -1016,7 +1027,8 @@
                     this.isPackageMode = true;
                     this.packageEditMode = true;
                     this.resetPackageForm();
-                    this.loading = true;
+                    this.isEditHydrating = true;
+                    this.showModal = true;
                     
                     try {
                         await this.loadAvailableFoods();
@@ -1038,21 +1050,19 @@
                             
                             // Load foods for this package
                             if (pkg.foods && pkg.foods.length > 0) {
-                                this.packageForm.items = pkg.foods.map(f => ({
-                                    food_id: f.id,
-                                    quantity: f.quantity || 1
-                                }));
+                                this.packageForm.items = pkg.foods.map(f => this.makePackageItem(f.id, f.quantity || 1));
                             }
                             
-                            this.showModal = true;
+                            this.syncPackageItemSelections();
                         } else {
                             this.showToast('Package not found', 'error');
                         }
                     } catch (error) {
                         console.error('Error loading package:', error);
+                        this.showModal = false;
                         this.showToast('Failed to load package data', 'error');
                     } finally {
-                        this.loading = false;
+                        this.isEditHydrating = false;
                     }
                 },
 
@@ -1068,7 +1078,7 @@
                         is_active: true,
                         stock_quantity: 0,
                         is_inventory_managed: false,
-                        items: [{ food_id: '', quantity: 1 }]
+                        items: [this.makePackageItem()]
                     };
                 },
                 
@@ -1086,7 +1096,14 @@
                             headers: { 'Accept': 'application/json' }
                         });
                         const data = await response.json();
-                        this.availableFoods = data.foods || [];
+                        this.availableFoods = (data.foods || []).map(food => ({
+                            ...food,
+                            id: String(food.id),
+                            price: Number(food.price || 0),
+                        }));
+                        if (this.isPackageMode && this.packageForm.items.length > 0) {
+                            this.syncPackageItemSelections();
+                        }
                         if (!this.editMode && !this.isPackageMode && !this.form.sort_order) {
                             this.form.sort_order = this.getNextSortOrderForMealType(this.form.meal_type);
                         }
@@ -1096,8 +1113,28 @@
                     }
                 },
 
+                makePackageItem(foodId = '', quantity = 1) {
+                    return {
+                        row_key: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                        food_id: foodId === null || foodId === undefined || foodId === '' ? '' : String(foodId),
+                        quantity: Number(quantity) || 1,
+                    };
+                },
+
+                syncPackageItemSelections() {
+                    this.$nextTick(() => {
+                        const selects = document.querySelectorAll('select[name^="foods["]');
+                        selects.forEach((select, index) => {
+                            const item = this.packageForm.items[index];
+                            if (!item) return;
+                            select.value = String(item.food_id || '');
+                        });
+                    });
+                },
+
                 addPackageItem() {
-                    this.packageForm.items.push({ food_id: '', quantity: 1 });
+                    this.packageForm.items.push(this.makePackageItem());
+                    this.syncPackageItemSelections();
                 },
 
                 removePackageItem(index) {
@@ -1108,13 +1145,13 @@
                 },
 
                 getItemSubtotal(item) {
-                    const food = this.availableFoods.find(f => f.id == item.food_id);
+                    const food = this.availableFoods.find(f => f.id === String(item.food_id || ''));
                     return food ? (food.price * item.quantity).toFixed(2) : '0.00';
                 },
 
                 getPackageTotal() {
                     return this.packageForm.items.reduce((total, item) => {
-                        const food = this.availableFoods.find(f => f.id == item.food_id);
+                        const food = this.availableFoods.find(f => f.id === String(item.food_id || ''));
                         return total + (food ? food.price * item.quantity : 0);
                     }, 0).toFixed(2);
                 },
@@ -1273,6 +1310,3 @@
 </div>
 
 @endsection
-
-
-

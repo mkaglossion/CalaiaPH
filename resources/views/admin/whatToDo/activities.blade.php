@@ -188,10 +188,13 @@
                 <div>
                     <h3 class="block text-xs sm:text-sm font-semibold text-gray-700 mb-3">Include Activities *</h3>
                     <div class="space-y-3">
-                        <template x-for="(item, index) in packageForm.items" :key="index">
+                        <template x-for="(item, index) in packageForm.items" :key="item.row_key">
                             <div class="flex gap-3 items-end bg-gray-50 p-3 rounded-lg">
                                 <div class="flex-1">
-                                    <select :name="`activities[${index}]`" x-model="item.activity_id" required
+                                    <select :name="`activities[${index}]`"
+                                            :value="String(item.activity_id || '')"
+                                            @change="item.activity_id = String($event.target.value || '')"
+                                            required
                                             class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
                                         <option value="">Select Activity</option>
                                         <template x-for="activity in availableActivities" :key="activity.id">
@@ -270,7 +273,7 @@
                         Cancel
                     </button>
 
-                    <button type="submit" :disabled="isLoading"
+                    <button type="submit" :disabled="isLoading || isEditHydrating"
                             class="px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg sm:rounded-xl bg-green-600 text-white hover:bg-green-700 shadow transition disabled:opacity-60"
                             x-text="isLoading ? (editPackageMode ? 'Updating...' : 'Creating...') : (editPackageMode ? 'Update Package' : 'Create Package')">
                     </button>
@@ -556,7 +559,7 @@
 
                 <div class="flex justify-end space-x-3 pt-2">
                     <button type="button" @click="showActivityModal = false; resetForm()" class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">Cancel</button>
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition">
+                    <button type="submit" :disabled="isLoading || isEditHydrating" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition disabled:opacity-60">
                         <span x-text="editModeActivity ? 'Update' : 'Add'"></span>
                     </button>
                 </div>
@@ -685,22 +688,6 @@
 
 
 
-    {{-- GLOBAL LOADING OVERLAY --}}
-    <div
-        x-cloak
-        x-show="isLoading"
-        x-transition.opacity
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-9999"
-        style="display: none;"
-    >
-        <div class="flex flex-col items-center space-y-3">
-            <svg class="animate-spin h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-30" cx="12" cy="12" r="10" stroke="white" stroke-width="4"></circle>
-                <path class="opacity-90" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-            </svg>
-            <span class="text-white text-lg font-medium">Processing...</span>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -749,6 +736,7 @@ function activityManager() {
     return {
         // State management
         isLoading: false,
+        isEditHydrating: false,
         showModal: false,
         showActivityModal: false,
         showTextModal: false,
@@ -769,11 +757,14 @@ function activityManager() {
         loadAvailableActivities() {
             this.availableActivities = @js(($allActivities ?? $activities)->map(function($a) { 
                 return [
-                    'id' => $a->id, 
+                    'id' => (string) $a->id,
                     'name' => $a->name, 
                     'price' => (float)($a->price ?? 0)
                 ]; 
             })->toArray());
+            if (this.showPackageModal && this.packageForm?.items?.length > 0) {
+                this.syncPackageActivitySelections();
+            }
         },
 
         // Data
@@ -879,6 +870,7 @@ function activityManager() {
 
         // Methods
         resetForm() {
+            this.isEditHydrating = false;
             this.form = {
                 id: null,
                 name: '',
@@ -961,6 +953,11 @@ function activityManager() {
         },
 
         async editActivity(id) {
+            this.resetForm();
+            this.editModeActivity = true;
+            this.showActivityModal = true;
+            this.isEditHydrating = true;
+
             try {
                 const response = await fetch(`/admin/activity-list/${id}`, {
                     headers: {
@@ -987,11 +984,11 @@ function activityManager() {
 
                 // Handle image preview
                 this.setImagePreview(activity.image);
-
-                this.editModeActivity = true;
-                this.showActivityModal = true;
             } catch (error) {
+                this.showActivityModal = false;
                 this.showToast('Error loading activity data.', 'error');
+            } finally {
+                this.isEditHydrating = false;
             }
         },
 
@@ -1306,6 +1303,7 @@ function activityManager() {
         // Package management functions
         openCreatePackage() {
             this.editPackageMode = false;
+            this.isEditHydrating = false;
             this.packageForm = {
                 id: null,
                 name: '',
@@ -1314,15 +1312,17 @@ function activityManager() {
                 is_active: true,
                 stock_quantity: 0,
                 is_inventory_managed: false,
-                items: [{ activity_id: '', quantity: 1 }]
+                items: [this.makePackageActivityItem()]
             };
             this.loadAvailableActivities();
             this.showPackageModal = true;
+            this.syncPackageActivitySelections();
         },
 
         async editActivityPackage(id) {
-            this.isLoading = true;
             this.editPackageMode = true;
+            this.isEditHydrating = true;
+            this.showPackageModal = true;
             
             try {
                 this.loadAvailableActivities();
@@ -1343,24 +1343,42 @@ function activityManager() {
                     stock_quantity: data.stock_quantity ?? 0,
                     is_inventory_managed: !!data.is_inventory_managed,
                     items: data.activities && data.activities.length > 0 
-                        ? data.activities.map(a => ({
-                            activity_id: a.id,
-                            quantity: a.pivot?.quantity || 1
-                          }))
-                        : [{ activity_id: '', quantity: 1 }]
+                        ? data.activities.map(a => this.makePackageActivityItem(a.id, a.pivot?.quantity || 1))
+                        : [this.makePackageActivityItem()]
                 };
                 
-                this.isLoading = false;
-                this.showPackageModal = true;
+                this.syncPackageActivitySelections();
             } catch (err) {
                 console.error('Error:', err);
-                this.isLoading = false;
+                this.showPackageModal = false;
                 this.showToast('Failed to load package', 'error');
+            } finally {
+                this.isEditHydrating = false;
             }
         },
 
+        makePackageActivityItem(activityId = '', quantity = 1) {
+            return {
+                row_key: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                activity_id: activityId === null || activityId === undefined || activityId === '' ? '' : String(activityId),
+                quantity: Number(quantity) || 1,
+            };
+        },
+
+        syncPackageActivitySelections() {
+            this.$nextTick(() => {
+                const selects = document.querySelectorAll('select[name^="activities["]');
+                selects.forEach((select, index) => {
+                    const item = this.packageForm.items[index];
+                    if (!item) return;
+                    select.value = String(item.activity_id || '');
+                });
+            });
+        },
+
         addPackageActivityItem() {
-            this.packageForm.items.push({ activity_id: '', quantity: 1 });
+            this.packageForm.items.push(this.makePackageActivityItem());
+            this.syncPackageActivitySelections();
         },
 
         removePackageActivityItem(index) {
@@ -1371,13 +1389,13 @@ function activityManager() {
         },
 
         getActivityItemSubtotal(item) {
-            const activity = this.availableActivities.find(a => a.id == item.activity_id);
+            const activity = this.availableActivities.find(a => a.id === String(item.activity_id || ''));
             return activity ? (activity.price * item.quantity).toFixed(2) : '0.00';
         },
 
         getPackageActivityTotal() {
             return this.packageForm.items.reduce((total, item) => {
-                const activity = this.availableActivities.find(a => a.id == item.activity_id);
+                const activity = this.availableActivities.find(a => a.id === String(item.activity_id || ''));
                 return total + (activity ? activity.price * item.quantity : 0);
             }, 0).toFixed(2);
         },

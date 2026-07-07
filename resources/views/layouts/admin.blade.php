@@ -538,6 +538,21 @@
   <main class="admin-main min-h-screen pt-4 md:pt-20 overflow-x-hidden">
     <div class="py-4 md:py-8">
       <div class="w-full mx-auto max-w-screen-2xl px-3 sm:px-4 md:px-6 lg:px-8 2xl:px-10">
+        {{-- Breadcrumbs --}}
+        @if (!request()->routeIs('admin.dashboard'))
+        <nav aria-label="Breadcrumb" class="mb-4 md:mb-6">
+          <ol class="flex flex-wrap items-center gap-1.5 text-sm text-gray-500">
+            <li>
+              <a href="{{ route('admin.dashboard') }}" class="hover:text-[#8f5d54] transition-colors">Dashboard</a>
+            </li>
+            <li class="flex items-center gap-1.5">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <span class="text-gray-900 font-medium truncate max-w-[200px] sm:max-w-xs">@yield('title', 'Admin Panel')</span>
+            </li>
+          </ol>
+        </nav>
+        @endif
+
         @if (session('error'))
           <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative hidden" role="alert">
             <span class="block sm:inline">{{ session('error') }}</span>
