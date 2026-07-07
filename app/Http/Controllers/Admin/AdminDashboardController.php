@@ -350,7 +350,7 @@ class AdminDashboardController extends Controller
             ->limit(8)
             ->get();
 
-        return view('admin.dashboard', compact(
+        $viewData = compact(
             'rangeLabel', 'start', 'end', 'range',
             'clientUsers', 'totalUsers', 'verifiedUsers', 'adminUsers',
             'totalBookings', 'activeBookings', 'completedBookings',
@@ -363,7 +363,499 @@ class AdminDashboardController extends Controller
             'salesTotalAmount', 'salesTrendLabel', 'salesModeOptions',
             'salesCategoryCards', 'salesTrendChartSeries', 'bookingView',
             'systemAlerts', 'recentActivity'
+        );
+
+        return view('admin.dashboard', array_merge(
+            $viewData,
+            $this->buildDashboardViewData($request, $viewData)
         ));
+    }
+
+    private function buildDashboardViewData(Request $request, array $data): array
+    {
+        extract($data, EXTR_SKIP);
+
+        $peso = html_entity_decode('&#8369;');
+        $fmtMoney = fn ($value) => $peso . number_format((float) $value, 2);
+        $fmtCompactMoney = function ($value) use ($peso) {
+            $value = (float) $value;
+
+            if ($value >= 1000000) {
+                return $peso . rtrim(rtrim(number_format($value / 1000000, 2), '0'), '.') . 'M';
+            }
+
+            if ($value >= 1000) {
+                return $peso . rtrim(rtrim(number_format($value / 1000, 2), '0'), '.') . 'K';
+            }
+
+            return $peso . number_format($value, 0);
+        };
+        $fmtInt = fn ($value) => number_format((int) $value);
+        $initials = function (?string $name) {
+            $parts = preg_split('/\s+/', trim((string) $name)) ?: [];
+            $letters = collect($parts)
+                ->filter()
+                ->take(2)
+                ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
+                ->implode('');
+
+            return $letters !== '' ? $letters : 'A';
+        };
+
+        $from = $request->query('from');
+        $to = $request->query('to');
+        $dateRangeParams = [];
+
+        if (!empty($start) && !empty($end)) {
+            $dateRangeParams = [
+                'date_from' => optional($start)->toDateString(),
+                'date_to' => optional($end)->toDateString(),
+            ];
+        }
+
+        $rangeShortLabel = match ($range) {
+            'today' => 'Today',
+            '30d' => '30 Days',
+            'custom' => 'Custom',
+            default => '30 Days',
+        };
+
+        $rangeDisplay = $start && $end
+            ? ($start->isSameDay($end)
+                ? $start->format('M j, Y')
+                : $start->format('M j') . ' - ' . $end->format('M j, Y'))
+            : $rangeShortLabel;
+
+        $revenueChangeUp = $completedRevenueChangePercent >= 0;
+        $revenueChangeLabel = ($revenueChangeUp ? '+' : '') . number_format($completedRevenueChangePercent, 1) . '%';
+        $lastUpdatedAt = optional($recentActivity->first())->created_at ?? now();
+        $bookingOverviewUpcomingTotal = max(0, (int) $bookingOverviewChartItems->sum('upcoming'));
+        $bookingOverviewCompletedTotal = max(0, (int) $bookingOverviewChartItems->sum('completed'));
+        $bookingOverviewActiveTotal = max(0, (int) $bookingOverviewChartItems->sum('active'));
+        $bookingOverviewCancelledTotal = max(0, (int) $bookingOverviewChartItems->sum('cancelled'));
+        $bookingDistributionCounts = [
+            'completed' => $bookingOverviewCompletedTotal,
+            'active' => $bookingOverviewActiveTotal,
+            'cancelled' => $bookingOverviewCancelledTotal,
+        ];
+        $bookingSummaryTotal = max(0, (int) array_sum($bookingDistributionCounts));
+
+        $overviewCards = [
+            [
+                'label' => 'Upcoming',
+                'value' => $fmtInt($activeBookings),
+                'description' => 'Reservations ahead',
+                'icon' => 'calendar-days',
+                'iconWrap' => 'bg-blue-50 text-blue-600',
+                'linkTone' => 'text-blue-600',
+                'href' => route('admin.bookings.index', ['status' => 'confirmed']),
+            ],
+            [
+                'label' => 'Completed',
+                'value' => $fmtInt($bookingOverviewCompletedTotal),
+                'description' => 'Checked-out reservations',
+                'icon' => 'badge-check',
+                'iconWrap' => 'bg-emerald-50 text-emerald-600',
+                'linkTone' => 'text-emerald-600',
+                'href' => route('admin.bookings.index', array_merge($dateRangeParams, ['status' => 'completed'])),
+            ],
+            [
+                'label' => 'Live Pending',
+                'value' => $fmtInt($pendingBookings),
+                'description' => 'Pending payments only',
+                'icon' => 'clock-3',
+                'iconWrap' => 'bg-orange-50 text-orange-500',
+                'linkTone' => 'text-orange-500',
+                'href' => route('admin.bookings.index', array_merge($dateRangeParams, ['payment_scope' => 'attempts', 'payment_status' => 'pending'])),
+            ],
+            [
+                'label' => 'Closed',
+                'value' => $fmtInt($bookingOverviewCancelledTotal),
+                'description' => 'Failed or expired attempts',
+                'icon' => 'x-circle',
+                'iconWrap' => 'bg-rose-50 text-rose-600',
+                'linkTone' => 'text-rose-600',
+                'href' => route('admin.bookings.index', array_merge($dateRangeParams, ['payment_scope' => 'attempts', 'payment_status' => 'failed'])),
+            ],
+            [
+                'label' => 'Today',
+                'value' => $fmtInt($todayCheckIns),
+                'description' => 'Reservations today',
+                'icon' => 'users',
+                'iconWrap' => 'bg-violet-50 text-violet-600',
+                'linkTone' => 'text-violet-600',
+                'href' => route('admin.bookings.index', ['date_from' => now()->toDateString(), 'date_to' => now()->toDateString()]),
+            ],
+        ];
+
+        $revenueTiles = [
+            [
+                'label' => 'Total Revenue',
+                'value' => $fmtMoney($completedRevenue),
+                'caption' => $completedRevenueComparisonLabel,
+                'meta' => 'Completed payments only',
+                'accent' => 'text-slate-900',
+            ],
+            [
+                'label' => 'Pending Revenue',
+                'value' => $fmtMoney($attemptAmount),
+                'caption' => 'Potential pending value',
+                'meta' => 'Pending, abandoned and expired bookings',
+                'accent' => 'text-orange-500',
+            ],
+            [
+                'label' => 'Refund Amount',
+                'value' => $fmtMoney($refundedRevenue),
+                'caption' => 'Returned bookings',
+                'meta' => 'Refunded transactions',
+                'accent' => 'text-violet-600',
+            ],
+            [
+                'label' => 'Net Revenue',
+                'value' => $fmtMoney($netRevenue),
+                'caption' => 'After refunds',
+                'meta' => 'Completed revenue minus refunded amount',
+                'accent' => 'text-slate-900',
+            ],
+        ];
+
+        $salesViewOptions = collect($salesModeOptions ?? [])->map(function ($label, $value) use ($request) {
+            $rangeValue = match ($value) {
+                'daily' => 'today',
+                'weekly' => '7d',
+                'monthly' => '30d',
+                default => 'today',
+            };
+
+            return [
+                'label' => $label,
+                'value' => $value,
+                'range' => $rangeValue,
+                'url' => $request->fullUrlWithQuery(['range' => $rangeValue]),
+            ];
+        })->values();
+        $bookingViewOptions = collect($salesModeOptions ?? [])->map(function ($label, $value) use ($request) {
+            return [
+                'label' => $label,
+                'value' => $value,
+                'url' => $request->fullUrlWithQuery(['booking_view' => $value]),
+            ];
+        })->values();
+
+        $salesDistributionItems = collect($salesDistributionSeries ?? [])->map(function ($item) {
+            return (object) [
+                'label' => $item->label,
+                'amount' => (float) $item->amount,
+                'count' => (int) $item->count,
+                'percent' => (float) $item->percent,
+                'color' => $item->color,
+            ];
+        })->values();
+        $salesDistributionTotal = max(1, (float) $salesDistributionItems->sum('amount'));
+        $salesDistributionActualTotal = (float) $salesDistributionItems->sum('amount');
+        $salesDistributionRadius = 72;
+        $salesDistributionCircumference = 2 * pi() * $salesDistributionRadius;
+
+        $salesCategoryCards = collect($salesCategoryCards ?? []);
+        $salesTrendChartSeries = collect($salesTrendChartSeries ?? []);
+        $salesTrendChartPayload = [
+            'labels' => $salesTrendChartSeries->pluck('label')->values()->all(),
+            'datasets' => [
+                [
+                    'label' => 'Staycation',
+                    'data' => $salesTrendChartSeries->pluck('staycation')->map(fn ($value) => (float) $value)->values()->all(),
+                    'backgroundColor' => '#3B82F6',
+                    'borderColor' => '#3B82F6',
+                    'stack' => 'sales',
+                ],
+                [
+                    'label' => 'Food & Beverage',
+                    'data' => $salesTrendChartSeries->pluck('food')->map(fn ($value) => (float) $value)->values()->all(),
+                    'backgroundColor' => '#10B981',
+                    'borderColor' => '#10B981',
+                    'stack' => 'sales',
+                ],
+                [
+                    'label' => 'Activities',
+                    'data' => $salesTrendChartSeries->pluck('activities')->map(fn ($value) => (float) $value)->values()->all(),
+                    'backgroundColor' => '#F59E0B',
+                    'borderColor' => '#F59E0B',
+                    'stack' => 'sales',
+                ],
+                [
+                    'label' => 'Refunds',
+                    'data' => $salesTrendChartSeries->pluck('refunds')->map(fn ($value) => (float) $value)->values()->all(),
+                    'backgroundColor' => '#8B5CF6',
+                    'borderColor' => '#8B5CF6',
+                    'stack' => 'sales',
+                ],
+            ],
+        ];
+
+        $revenueSummarySeries = collect($revenueSummarySeries ?? []);
+        $revenueChartCount = max(1, $revenueSummarySeries->count());
+        $revenueChartMax = max(1, (float) $revenueSummarySeries->map(fn ($row) => (float) ($row->completed ?? 0))->max());
+        $revenueChartWidth = max(980, 84 + ($revenueChartCount * 42));
+        $revenueChartHeight = 300;
+        $revenueChartLeft = 64;
+        $revenueChartRight = 24;
+        $revenueChartTop = 24;
+        $revenueChartBottom = 56;
+        $revenueChartPlotHeight = $revenueChartHeight - $revenueChartTop - $revenueChartBottom;
+        $revenueLabelStep = match (true) {
+            $revenueChartCount > 28 => 4,
+            $revenueChartCount > 18 => 3,
+            $revenueChartCount > 12 => 2,
+            default => 1,
+        };
+        $revenueChartLine = function ($key) use ($revenueSummarySeries, $revenueChartCount, $revenueChartMax, $revenueChartWidth, $revenueChartHeight, $revenueChartLeft, $revenueChartRight, $revenueChartBottom, $revenueChartPlotHeight) {
+            $points = [];
+
+            foreach ($revenueSummarySeries as $index => $row) {
+                $value = (float) ($row->{$key} ?? 0);
+                $x = $revenueChartCount === 1
+                    ? ($revenueChartWidth / 2)
+                    : $revenueChartLeft + (($revenueChartWidth - $revenueChartLeft - $revenueChartRight) * ($index / ($revenueChartCount - 1)));
+                $y = $revenueChartHeight - $revenueChartBottom - ($revenueChartPlotHeight * ($value / $revenueChartMax));
+                $points[] = number_format($x, 2, '.', '') . ',' . number_format($y, 2, '.', '');
+            }
+
+            return implode(' ', $points);
+        };
+        $revenueChartArea = function ($key) use ($revenueSummarySeries, $revenueChartCount, $revenueChartMax, $revenueChartWidth, $revenueChartHeight, $revenueChartLeft, $revenueChartRight, $revenueChartBottom, $revenueChartPlotHeight) {
+            $points = [];
+
+            foreach ($revenueSummarySeries as $index => $row) {
+                $value = (float) ($row->{$key} ?? 0);
+                $x = $revenueChartCount === 1
+                    ? ($revenueChartWidth / 2)
+                    : $revenueChartLeft + (($revenueChartWidth - $revenueChartLeft - $revenueChartRight) * ($index / ($revenueChartCount - 1)));
+                $y = $revenueChartHeight - $revenueChartBottom - ($revenueChartPlotHeight * ($value / $revenueChartMax));
+                $points[] = number_format($x, 2, '.', '') . ',' . number_format($y, 2, '.', '');
+            }
+
+            $startX = $revenueChartCount === 1
+                ? ($revenueChartWidth / 2)
+                : $revenueChartLeft;
+            $endX = $revenueChartCount === 1
+                ? ($revenueChartWidth / 2)
+                : ($revenueChartWidth - $revenueChartRight);
+            $baseY = $revenueChartHeight - $revenueChartBottom;
+
+            array_unshift($points, number_format($startX, 2, '.', '') . ',' . number_format($baseY, 2, '.', ''));
+            $points[] = number_format($endX, 2, '.', '') . ',' . number_format($baseY, 2, '.', '');
+
+            return implode(' ', $points);
+        };
+        $revenueTrendExportPayload = [
+            'labels' => $revenueSummarySeries->pluck('label')->values()->all(),
+            'datasets' => [
+                [
+                    'label' => 'Completed Revenue',
+                    'data' => $revenueSummarySeries->pluck('completed')->map(fn ($value) => (float) $value)->values()->all(),
+                    'borderColor' => '#2563eb',
+                    'backgroundColor' => 'rgba(37, 99, 235, 0.12)',
+                    'fill' => true,
+                    'tension' => 0.35,
+                    'pointRadius' => 4,
+                    'pointHoverRadius' => 5,
+                    'borderWidth' => 3,
+                ],
+            ],
+        ];
+
+        $bookingOverviewChartItems = collect($bookingOverviewChartItems ?? []);
+        $bookingOverviewCount = max(1, $bookingOverviewChartItems->count());
+        $bookingOverviewMax = max(1, (int) $bookingOverviewChartItems->map(fn ($row) => max(
+            (int) ($row->upcoming ?? 0),
+            (int) ($row->completed ?? 0),
+            (int) ($row->active ?? 0),
+            (int) ($row->cancelled ?? 0)
+        ))->max());
+        $bookingTickStep = max(1, (int) ceil($bookingOverviewMax / 4));
+        $bookingChartWidth = 1120;
+        $bookingChartHeight = 320;
+        $bookingChartLeft = 56;
+        $bookingChartRight = 28;
+        $bookingChartTop = 28;
+        $bookingChartBottom = 42;
+        $bookingChartPlotHeight = $bookingChartHeight - $bookingChartTop - $bookingChartBottom;
+        $bookingLabelStep = match ($bookingView ?? 'daily') {
+            'daily' => $bookingOverviewCount > 20 ? 2 : 1,
+            'weekly', 'monthly' => 1,
+            default => max(1, (int) ceil($bookingOverviewCount / 8)),
+        };
+        $bookingChartLine = function ($key) use ($bookingOverviewChartItems, $bookingOverviewCount, $bookingOverviewMax, $bookingChartWidth, $bookingChartHeight, $bookingChartLeft, $bookingChartRight, $bookingChartBottom, $bookingChartPlotHeight) {
+            $points = [];
+
+            foreach ($bookingOverviewChartItems as $index => $row) {
+                $value = (int) ($row->{$key} ?? 0);
+                $x = $bookingOverviewCount === 1
+                    ? ($bookingChartWidth / 2)
+                    : $bookingChartLeft + (($bookingChartWidth - $bookingChartLeft - $bookingChartRight) * ($index / ($bookingOverviewCount - 1)));
+                $y = $bookingChartHeight - $bookingChartBottom - ($bookingChartPlotHeight * ($value / $bookingOverviewMax));
+                $points[] = number_format($x, 2, '.', '') . ',' . number_format($y, 2, '.', '');
+            }
+
+            return implode(' ', $points);
+        };
+
+        $bookingSeriesMeta = collect([
+            ['key' => 'upcoming', 'label' => 'Upcoming Bookings', 'stroke' => '#2563eb', 'tone' => 'text-blue-600'],
+            ['key' => 'completed', 'label' => 'Completed', 'stroke' => '#22c55e', 'tone' => 'text-emerald-600'],
+            ['key' => 'active', 'label' => 'Today Active', 'stroke' => '#f97316', 'tone' => 'text-orange-500'],
+            ['key' => 'cancelled', 'label' => 'Closed', 'stroke' => '#ef4444', 'tone' => 'text-red-500'],
+        ]);
+        $bookingSummaryBaseRows = $bookingSeriesMeta
+            ->reject(fn (array $series) => $series['key'] === 'upcoming')
+            ->values()
+            ->map(function (array $series) use ($bookingDistributionCounts, $bookingSummaryTotal, $fmtInt) {
+                $count = $bookingDistributionCounts[$series['key']] ?? 0;
+                $rawPercent = $bookingSummaryTotal > 0 ? (($count / $bookingSummaryTotal) * 100) : 0;
+
+                return [
+                    'key' => $series['key'],
+                    'label' => $series['label'],
+                    'count' => $fmtInt($count),
+                    'count_value' => $count,
+                    'raw_percent' => $rawPercent,
+                    'floor_percent' => (int) floor($rawPercent),
+                    'remainder' => $rawPercent - floor($rawPercent),
+                    'tone' => $series['tone'],
+                ];
+            });
+        $bookingOverviewExportPayload = [
+            'labels' => $bookingOverviewChartItems->pluck('label')->values()->all(),
+            'datasets' => $bookingSeriesMeta->map(function (array $series) use ($bookingOverviewChartItems, $fmtInt) {
+                $color = $series['stroke'];
+                $values = $bookingOverviewChartItems->pluck($series['key'])->map(fn ($value) => (int) $value)->values();
+                $seriesTotal = (int) $values->sum();
+
+                return [
+                    'label' => $series['label'] . ' (' . $fmtInt($seriesTotal) . ')',
+                    'data' => $values->all(),
+                    'borderColor' => $color,
+                    'backgroundColor' => $color,
+                    'fill' => false,
+                    'tension' => 0.35,
+                    'pointRadius' => 4,
+                    'pointHoverRadius' => 5,
+                    'borderWidth' => 3,
+                ];
+            })->values()->all(),
+        ];
+        $bookingPercentRemainder = $bookingSummaryTotal > 0
+            ? max(0, 100 - $bookingSummaryBaseRows->sum('floor_percent'))
+            : 0;
+        $bookingPercentByKey = [];
+        $bookingSummaryBaseRows
+            ->sortByDesc(fn (array $row) => $row['remainder'])
+            ->values()
+            ->each(function (array $row, int $index) use (&$bookingPercentByKey, $bookingPercentRemainder) {
+                $bookingPercentByKey[$row['key']] = $row['floor_percent'] + ($index < $bookingPercentRemainder ? 1 : 0);
+            });
+        $bookingSummaryBreakdown = $bookingSummaryBaseRows
+            ->map(function (array $row) use ($bookingPercentByKey) {
+                return [
+                    'label' => $row['label'],
+                    'count' => $row['count'],
+                    'percent' => $bookingPercentByKey[$row['key']] ?? 0,
+                    'tone' => $row['tone'],
+                ];
+            })->values();
+
+        $recentBookingCards = collect($recentBookings ?? [])->map(function ($booking) use ($fmtMoney, $initials) {
+            $isPackage = $booking instanceof PackageBooking;
+            $detailHref = $isPackage
+                ? route('admin.package_bookings.show', $booking->id)
+                : route('admin.bookings.show', $booking->id);
+            $statusTone = match (strtolower((string) $booking->status)) {
+                'completed' => 'bg-emerald-50 text-emerald-700',
+                'confirmed' => 'bg-blue-50 text-blue-700',
+                'cancelled' => 'bg-red-50 text-red-700',
+                default => 'bg-orange-50 text-orange-700',
+            };
+
+            return [
+                'name' => $booking->display_customer_name,
+                'initials' => $initials($booking->display_customer_name),
+                'item' => $booking->recent_booking_item,
+                'meta' => (string) ($booking->recent_booking_meta ?? 'No date'),
+                'image' => $booking->recent_booking_image,
+                'amount' => $fmtMoney($booking->total_amount),
+                'status' => ucfirst((string) $booking->status),
+                'statusTone' => $statusTone,
+                'href' => $detailHref,
+            ];
+        })->values();
+
+        $activityCards = collect($recentActivity ?? [])->take(5)->map(function ($activity) use ($initials) {
+            $actor = data_get($activity, 'user.first_name') ?: 'Admin';
+            $description = $activity->description ?: ucfirst(str_replace('_', ' ', (string) $activity->action));
+
+            return [
+                'actor' => $actor,
+                'initials' => $initials($actor),
+                'title' => $description,
+                'meta' => ucfirst((string) $activity->action),
+                'time' => optional($activity->created_at)->diffForHumans(),
+            ];
+        })->values();
+
+        $rangeOptions = [
+            'today' => 'Today',
+            '7d' => 'Last 7 Days',
+            '30d' => 'Last 30 Days',
+            'custom' => 'Custom Range',
+        ];
+        $quickActions = [
+            [
+                'title' => 'Manage Bookings',
+                'description' => 'View and manage all bookings',
+                'href' => route('admin.bookings.index'),
+                'icon' => 'clipboard-check',
+                'tone' => 'text-sky-600',
+            ],
+            [
+                'title' => 'Manage Users',
+                'description' => 'Add or manage users',
+                'href' => route('admin.users.index'),
+                'icon' => 'users',
+                'tone' => 'text-emerald-600',
+            ],
+            [
+                'title' => 'Manage Inventory',
+                'description' => 'Update rooms, items and stock',
+                'href' => route('admin.bookings.inventory'),
+                'icon' => 'boxes',
+                'tone' => 'text-violet-600',
+            ],
+        ];
+
+        return compact(
+            'peso', 'fmtMoney', 'fmtCompactMoney', 'fmtInt',
+            'from', 'to', 'dateRangeParams', 'rangeShortLabel', 'rangeDisplay',
+            'revenueChangeUp', 'revenueChangeLabel', 'lastUpdatedAt',
+            'bookingOverviewUpcomingTotal', 'bookingOverviewCompletedTotal',
+            'bookingOverviewActiveTotal', 'bookingOverviewCancelledTotal',
+            'bookingDistributionCounts', 'bookingSummaryTotal',
+            'overviewCards', 'revenueTiles', 'salesViewOptions', 'bookingViewOptions',
+            'salesDistributionItems', 'salesDistributionTotal', 'salesDistributionActualTotal',
+            'salesDistributionRadius', 'salesDistributionCircumference',
+            'salesCategoryCards', 'salesTrendChartSeries', 'salesTrendChartPayload',
+            'revenueSummarySeries', 'revenueChartCount', 'revenueChartMax',
+            'revenueChartWidth', 'revenueChartHeight', 'revenueChartLeft',
+            'revenueChartRight', 'revenueChartTop', 'revenueChartBottom',
+            'revenueChartPlotHeight', 'revenueLabelStep', 'revenueChartLine',
+            'revenueChartArea', 'revenueTrendExportPayload',
+            'bookingOverviewChartItems', 'bookingOverviewCount', 'bookingOverviewMax',
+            'bookingTickStep', 'bookingChartWidth', 'bookingChartHeight',
+            'bookingChartLeft', 'bookingChartRight', 'bookingChartTop',
+            'bookingChartBottom', 'bookingChartPlotHeight', 'bookingLabelStep',
+            'bookingChartLine', 'bookingSeriesMeta', 'bookingSummaryBreakdown',
+            'bookingOverviewExportPayload', 'recentBookingCards', 'activityCards',
+            'rangeOptions', 'quickActions'
+        );
     }
 
     public function export(Request $request)

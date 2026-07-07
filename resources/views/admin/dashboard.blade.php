@@ -3,468 +3,6 @@
 @section('title', 'Dashboard Overview')
 
 @section('content')
-@php
-  $peso = html_entity_decode('&#8369;');
-  $fmtMoney = fn ($value) => $peso . number_format((float) $value, 2);
-  $fmtCompactMoney = function ($value) use ($peso) {
-    $value = (float) $value;
-
-    if ($value >= 1000000) {
-      return $peso . rtrim(rtrim(number_format($value / 1000000, 2), '0'), '.') . 'M';
-    }
-
-    if ($value >= 1000) {
-      return $peso . rtrim(rtrim(number_format($value / 1000, 2), '0'), '.') . 'K';
-    }
-
-    return $peso . number_format($value, 0);
-  };
-  $fmtInt = fn ($value) => number_format((int) $value);
-  $initials = function (?string $name) {
-    $parts = preg_split('/\s+/', trim((string) $name)) ?: [];
-    $letters = collect($parts)
-      ->filter()
-      ->take(2)
-      ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
-      ->implode('');
-
-    return $letters !== '' ? $letters : 'A';
-  };
-
-  $from = request('from');
-  $to = request('to');
-  $dateRangeParams = [];
-
-  if (!empty($start) && !empty($end)) {
-    $dateRangeParams = [
-      'date_from' => optional($start)->toDateString(),
-      'date_to' => optional($end)->toDateString(),
-    ];
-  }
-
-  $rangeShortLabel = match ($range) {
-    'today' => 'Today',
-    '30d' => '30 Days',
-    'custom' => 'Custom',
-    default => '30 Days',
-  };
-
-  $rangeDisplay = $start && $end
-    ? ($start->isSameDay($end)
-      ? $start->format('M j, Y')
-      : $start->format('M j') . ' - ' . $end->format('M j, Y'))
-    : $rangeShortLabel;
-
-  $revenueChangeUp = $completedRevenueChangePercent >= 0;
-  $revenueChangeLabel = ($revenueChangeUp ? '+' : '') . number_format($completedRevenueChangePercent, 1) . '%';
-  $lastUpdatedAt = optional($recentActivity->first())->created_at ?? now();
-  $bookingOverviewUpcomingTotal = max(0, (int) $bookingOverviewChartItems->sum('upcoming'));
-  $bookingOverviewCompletedTotal = max(0, (int) $bookingOverviewChartItems->sum('completed'));
-  $bookingOverviewActiveTotal = max(0, (int) $bookingOverviewChartItems->sum('active'));
-  $bookingOverviewCancelledTotal = max(0, (int) $bookingOverviewChartItems->sum('cancelled'));
-  $bookingDistributionCounts = [
-    'completed' => $bookingOverviewCompletedTotal,
-    'active' => $bookingOverviewActiveTotal,
-    'cancelled' => $bookingOverviewCancelledTotal,
-  ];
-  $bookingSummaryTotal = max(0, (int) array_sum($bookingDistributionCounts));
-
-  $overviewCards = [
-    [
-      'label' => 'Upcoming',
-      'value' => $fmtInt($activeBookings),
-      'description' => 'Reservations ahead',
-      'icon' => 'calendar-days',
-      'iconWrap' => 'bg-blue-50 text-blue-600',
-      'linkTone' => 'text-blue-600',
-      'href' => route('admin.bookings.index', ['status' => 'confirmed']),
-    ],
-    [
-      'label' => 'Completed',
-      'value' => $fmtInt($bookingOverviewCompletedTotal),
-      'description' => 'Checked-out reservations',
-      'icon' => 'badge-check',
-      'iconWrap' => 'bg-emerald-50 text-emerald-600',
-      'linkTone' => 'text-emerald-600',
-      'href' => route('admin.bookings.index', array_merge($dateRangeParams, ['status' => 'completed'])),
-    ],
-    [
-      'label' => 'Live Pending',
-      'value' => $fmtInt($pendingBookings),
-      'description' => 'Pending payments only',
-      'icon' => 'clock-3',
-      'iconWrap' => 'bg-orange-50 text-orange-500',
-      'linkTone' => 'text-orange-500',
-      'href' => route('admin.bookings.index', array_merge($dateRangeParams, ['payment_scope' => 'attempts', 'payment_status' => 'pending'])),
-    ],
-    [
-      'label' => 'Closed',
-      'value' => $fmtInt($bookingOverviewCancelledTotal),
-      'description' => 'Failed or expired attempts',
-      'icon' => 'x-circle',
-      'iconWrap' => 'bg-rose-50 text-rose-600',
-      'linkTone' => 'text-rose-600',
-      'href' => route('admin.bookings.index', array_merge($dateRangeParams, ['payment_scope' => 'attempts', 'payment_status' => 'failed'])),
-    ],
-    [
-      'label' => 'Today',
-      'value' => $fmtInt($todayCheckIns),
-      'description' => 'Reservations today',
-      'icon' => 'users',
-      'iconWrap' => 'bg-violet-50 text-violet-600',
-      'linkTone' => 'text-violet-600',
-      'href' => route('admin.bookings.index', ['date_from' => now()->toDateString(), 'date_to' => now()->toDateString()]),
-    ],
-  ];
-
-  $revenueTiles = [
-    [
-      'label' => 'Total Revenue',
-      'value' => $fmtMoney($completedRevenue),
-      'caption' => $completedRevenueComparisonLabel,
-      'meta' => 'Completed payments only',
-      'accent' => 'text-slate-900',
-    ],
-    [
-      'label' => 'Pending Revenue',
-      'value' => $fmtMoney($attemptAmount),
-      'caption' => 'Potential pending value',
-      'meta' => 'Pending, abandoned and expired bookings',
-      'accent' => 'text-orange-500',
-    ],
-    [
-      'label' => 'Refund Amount',
-      'value' => $fmtMoney($refundedRevenue),
-      'caption' => 'Returned bookings',
-      'meta' => 'Refunded transactions',
-      'accent' => 'text-violet-600',
-    ],
-    [
-      'label' => 'Net Revenue',
-      'value' => $fmtMoney($netRevenue),
-      'caption' => 'After refunds',
-      'meta' => 'Completed revenue minus refunded amount',
-      'accent' => 'text-slate-900',
-    ],
-  ];
-
-  $salesViewOptions = collect($salesModeOptions ?? [])->map(function ($label, $value) {
-    $rangeValue = match ($value) {
-      'daily' => 'today',
-      'weekly' => '7d',
-      'monthly' => '30d',
-      default => 'today',
-    };
-
-    return [
-      'label' => $label,
-      'value' => $value,
-      'range' => $rangeValue,
-      'url' => request()->fullUrlWithQuery(['range' => $rangeValue]),
-    ];
-  })->values();
-  $bookingViewOptions = collect($salesModeOptions ?? [])->map(function ($label, $value) {
-    return [
-      'label' => $label,
-      'value' => $value,
-      'url' => request()->fullUrlWithQuery(['booking_view' => $value]),
-    ];
-  })->values();
-
-  $salesDistributionItems = collect($salesDistributionSeries ?? [])->map(function ($item) {
-    return (object) [
-      'label' => $item->label,
-      'amount' => (float) $item->amount,
-      'count' => (int) $item->count,
-      'percent' => (float) $item->percent,
-      'color' => $item->color,
-    ];
-  })->values();
-  $salesDistributionTotal = max(1, (float) $salesDistributionItems->sum('amount'));
-  $salesDistributionActualTotal = (float) $salesDistributionItems->sum('amount');
-  $salesDistributionRadius = 72;
-  $salesDistributionCircumference = 2 * pi() * $salesDistributionRadius;
-
-  $salesCategoryCards = collect($salesCategoryCards ?? []);
-  $salesTrendChartSeries = collect($salesTrendChartSeries ?? []);
-  $salesTrendChartPayload = [
-    'labels' => $salesTrendChartSeries->pluck('label')->values()->all(),
-    'datasets' => [
-      [
-        'label' => 'Staycation',
-        'data' => $salesTrendChartSeries->pluck('staycation')->map(fn ($value) => (float) $value)->values()->all(),
-        'backgroundColor' => '#3B82F6',
-        'borderColor' => '#3B82F6',
-        'stack' => 'sales',
-      ],
-      [
-        'label' => 'Food & Beverage',
-        'data' => $salesTrendChartSeries->pluck('food')->map(fn ($value) => (float) $value)->values()->all(),
-        'backgroundColor' => '#10B981',
-        'borderColor' => '#10B981',
-        'stack' => 'sales',
-      ],
-      [
-        'label' => 'Activities',
-        'data' => $salesTrendChartSeries->pluck('activities')->map(fn ($value) => (float) $value)->values()->all(),
-        'backgroundColor' => '#F59E0B',
-        'borderColor' => '#F59E0B',
-        'stack' => 'sales',
-      ],
-      [
-        'label' => 'Refunds',
-        'data' => $salesTrendChartSeries->pluck('refunds')->map(fn ($value) => (float) $value)->values()->all(),
-        'backgroundColor' => '#8B5CF6',
-        'borderColor' => '#8B5CF6',
-        'stack' => 'sales',
-      ],
-    ],
-  ];
-
-  $revenueSummarySeries = collect($revenueSummarySeries ?? []);
-  $revenueChartCount = max(1, $revenueSummarySeries->count());
-  $revenueChartMax = max(1, (float) $revenueSummarySeries->map(fn ($row) => (float) ($row->completed ?? 0))->max());
-  $revenueChartWidth = max(980, 84 + ($revenueChartCount * 42));
-  $revenueChartHeight = 300;
-  $revenueChartLeft = 64;
-  $revenueChartRight = 24;
-  $revenueChartTop = 24;
-  $revenueChartBottom = 56;
-  $revenueChartPlotHeight = $revenueChartHeight - $revenueChartTop - $revenueChartBottom;
-  $revenueLabelStep = match (true) {
-    $revenueChartCount > 28 => 4,
-    $revenueChartCount > 18 => 3,
-    $revenueChartCount > 12 => 2,
-    default => 1,
-  };
-  $revenueChartLine = function ($key) use ($revenueSummarySeries, $revenueChartCount, $revenueChartMax, $revenueChartWidth, $revenueChartHeight, $revenueChartLeft, $revenueChartRight, $revenueChartBottom, $revenueChartPlotHeight) {
-    $points = [];
-
-    foreach ($revenueSummarySeries as $index => $row) {
-      $value = (float) ($row->{$key} ?? 0);
-      $x = $revenueChartCount === 1
-        ? ($revenueChartWidth / 2)
-        : $revenueChartLeft + (($revenueChartWidth - $revenueChartLeft - $revenueChartRight) * ($index / ($revenueChartCount - 1)));
-      $y = $revenueChartHeight - $revenueChartBottom - ($revenueChartPlotHeight * ($value / $revenueChartMax));
-      $points[] = number_format($x, 2, '.', '') . ',' . number_format($y, 2, '.', '');
-    }
-
-    return implode(' ', $points);
-  };
-  $revenueChartArea = function ($key) use ($revenueSummarySeries, $revenueChartCount, $revenueChartMax, $revenueChartWidth, $revenueChartHeight, $revenueChartLeft, $revenueChartRight, $revenueChartBottom, $revenueChartPlotHeight) {
-    $points = [];
-
-    foreach ($revenueSummarySeries as $index => $row) {
-      $value = (float) ($row->{$key} ?? 0);
-      $x = $revenueChartCount === 1
-        ? ($revenueChartWidth / 2)
-        : $revenueChartLeft + (($revenueChartWidth - $revenueChartLeft - $revenueChartRight) * ($index / ($revenueChartCount - 1)));
-      $y = $revenueChartHeight - $revenueChartBottom - ($revenueChartPlotHeight * ($value / $revenueChartMax));
-      $points[] = number_format($x, 2, '.', '') . ',' . number_format($y, 2, '.', '');
-    }
-
-    $startX = $revenueChartCount === 1
-      ? ($revenueChartWidth / 2)
-      : $revenueChartLeft;
-    $endX = $revenueChartCount === 1
-      ? ($revenueChartWidth / 2)
-      : ($revenueChartWidth - $revenueChartRight);
-    $baseY = $revenueChartHeight - $revenueChartBottom;
-
-    array_unshift($points, number_format($startX, 2, '.', '') . ',' . number_format($baseY, 2, '.', ''));
-    $points[] = number_format($endX, 2, '.', '') . ',' . number_format($baseY, 2, '.', '');
-
-    return implode(' ', $points);
-  };
-  $revenueTrendExportPayload = [
-    'labels' => $revenueSummarySeries->pluck('label')->values()->all(),
-    'datasets' => [
-      [
-        'label' => 'Completed Revenue',
-        'data' => $revenueSummarySeries->pluck('completed')->map(fn ($value) => (float) $value)->values()->all(),
-        'borderColor' => '#2563eb',
-        'backgroundColor' => 'rgba(37, 99, 235, 0.12)',
-        'fill' => true,
-        'tension' => 0.35,
-        'pointRadius' => 4,
-        'pointHoverRadius' => 5,
-        'borderWidth' => 3,
-      ],
-    ],
-  ];
-
-  $bookingOverviewChartItems = collect($bookingOverviewChartItems ?? []);
-  $bookingOverviewCount = max(1, $bookingOverviewChartItems->count());
-  $bookingOverviewMax = max(1, (int) $bookingOverviewChartItems->map(fn ($row) => max(
-    (int) ($row->upcoming ?? 0),
-    (int) ($row->completed ?? 0),
-    (int) ($row->active ?? 0),
-    (int) ($row->cancelled ?? 0)
-  ))->max());
-  $bookingTickStep = max(1, (int) ceil($bookingOverviewMax / 4));
-  $bookingChartWidth = 1120;
-  $bookingChartHeight = 320;
-  $bookingChartLeft = 56;
-  $bookingChartRight = 28;
-  $bookingChartTop = 28;
-  $bookingChartBottom = 42;
-  $bookingChartPlotHeight = $bookingChartHeight - $bookingChartTop - $bookingChartBottom;
-  $bookingLabelStep = match ($bookingView ?? 'daily') {
-    'daily' => $bookingOverviewCount > 20 ? 2 : 1,
-    'weekly', 'monthly' => 1,
-    default => max(1, (int) ceil($bookingOverviewCount / 8)),
-  };
-  $bookingChartLine = function ($key) use ($bookingOverviewChartItems, $bookingOverviewCount, $bookingOverviewMax, $bookingChartWidth, $bookingChartHeight, $bookingChartLeft, $bookingChartRight, $bookingChartBottom, $bookingChartPlotHeight) {
-    $points = [];
-
-    foreach ($bookingOverviewChartItems as $index => $row) {
-      $value = (int) ($row->{$key} ?? 0);
-      $x = $bookingOverviewCount === 1
-        ? ($bookingChartWidth / 2)
-        : $bookingChartLeft + (($bookingChartWidth - $bookingChartLeft - $bookingChartRight) * ($index / ($bookingOverviewCount - 1)));
-      $y = $bookingChartHeight - $bookingChartBottom - ($bookingChartPlotHeight * ($value / $bookingOverviewMax));
-      $points[] = number_format($x, 2, '.', '') . ',' . number_format($y, 2, '.', '');
-    }
-
-    return implode(' ', $points);
-  };
-
-  $bookingSeriesMeta = collect([
-    ['key' => 'upcoming', 'label' => 'Upcoming Bookings', 'stroke' => '#2563eb', 'tone' => 'text-blue-600'],
-    ['key' => 'completed', 'label' => 'Completed', 'stroke' => '#22c55e', 'tone' => 'text-emerald-600'],
-    ['key' => 'active', 'label' => 'Today Active', 'stroke' => '#f97316', 'tone' => 'text-orange-500'],
-    ['key' => 'cancelled', 'label' => 'Closed', 'stroke' => '#ef4444', 'tone' => 'text-red-500'],
-  ]);
-  $bookingSummaryBaseRows = $bookingSeriesMeta
-    ->reject(fn (array $series) => $series['key'] === 'upcoming')
-    ->values()
-    ->map(function (array $series) use ($bookingDistributionCounts, $bookingSummaryTotal, $fmtInt) {
-      $count = $bookingDistributionCounts[$series['key']] ?? 0;
-      $rawPercent = $bookingSummaryTotal > 0 ? (($count / $bookingSummaryTotal) * 100) : 0;
-
-      return [
-        'key' => $series['key'],
-        'label' => $series['label'],
-        'count' => $fmtInt($count),
-        'count_value' => $count,
-        'raw_percent' => $rawPercent,
-        'floor_percent' => (int) floor($rawPercent),
-        'remainder' => $rawPercent - floor($rawPercent),
-        'tone' => $series['tone'],
-      ];
-    });
-  $bookingOverviewExportPayload = [
-    'labels' => $bookingOverviewChartItems->pluck('label')->values()->all(),
-    'datasets' => $bookingSeriesMeta->map(function (array $series) use ($bookingOverviewChartItems, $fmtInt) {
-      $color = $series['stroke'];
-      $values = $bookingOverviewChartItems->pluck($series['key'])->map(fn ($value) => (int) $value)->values();
-      $seriesTotal = (int) $values->sum();
-
-      return [
-        'label' => $series['label'] . ' (' . $fmtInt($seriesTotal) . ')',
-        'data' => $values->all(),
-        'borderColor' => $color,
-        'backgroundColor' => $color,
-        'fill' => false,
-        'tension' => 0.35,
-        'pointRadius' => 4,
-        'pointHoverRadius' => 5,
-        'borderWidth' => 3,
-      ];
-    })->values()->all(),
-  ];
-  $bookingPercentRemainder = $bookingSummaryTotal > 0
-    ? max(0, 100 - $bookingSummaryBaseRows->sum('floor_percent'))
-    : 0;
-  $bookingPercentByKey = [];
-  $bookingSummaryBaseRows
-    ->sortByDesc(fn (array $row) => $row['remainder'])
-    ->values()
-    ->each(function (array $row, int $index) use (&$bookingPercentByKey, $bookingPercentRemainder) {
-      $bookingPercentByKey[$row['key']] = $row['floor_percent'] + ($index < $bookingPercentRemainder ? 1 : 0);
-    });
-  $bookingSummaryBreakdown = $bookingSummaryBaseRows
-    ->map(function (array $row) use ($bookingPercentByKey) {
-      return [
-        'label' => $row['label'],
-        'count' => $row['count'],
-        'percent' => $bookingPercentByKey[$row['key']] ?? 0,
-        'tone' => $row['tone'],
-      ];
-    })->values();
-
-  $recentBookingCards = collect($recentBookings ?? [])->map(function ($booking) use ($fmtMoney, $initials) {
-    $isPackage = $booking instanceof \App\Models\PackageBooking;
-    $detailHref = $isPackage
-      ? route('admin.package_bookings.show', $booking->id)
-      : route('admin.bookings.show', $booking->id);
-    $statusTone = match (strtolower((string) $booking->status)) {
-      'completed' => 'bg-emerald-50 text-emerald-700',
-      'confirmed' => 'bg-blue-50 text-blue-700',
-      'cancelled' => 'bg-red-50 text-red-700',
-      default => 'bg-orange-50 text-orange-700',
-    };
-
-    return [
-      'name' => $booking->display_customer_name,
-      'initials' => $initials($booking->display_customer_name),
-      'item' => $booking->recent_booking_item,
-      'meta' => (string) ($booking->recent_booking_meta ?? 'No date'),
-      'image' => $booking->recent_booking_image,
-      'amount' => $fmtMoney($booking->total_amount),
-      'status' => ucfirst((string) $booking->status),
-      'statusTone' => $statusTone,
-      'href' => $detailHref,
-    ];
-  })->values();
-
-  $activityCards = collect($recentActivity ?? [])->take(5)->map(function ($activity) use ($initials) {
-    $actor = data_get($activity, 'user.first_name') ?: 'Admin';
-    $description = $activity->description ?: ucfirst(str_replace('_', ' ', (string) $activity->action));
-
-    return [
-      'actor' => $actor,
-      'initials' => $initials($actor),
-      'title' => $description,
-      'meta' => ucfirst((string) $activity->action),
-      'time' => optional($activity->created_at)->diffForHumans(),
-    ];
-  })->values();
-
-@endphp
-
-@php
-  $rangeOptions = [
-    'today' => 'Today',
-    '7d' => 'Last 7 Days',
-    '30d' => 'Last 30 Days',
-    'custom' => 'Custom Range',
-  ];
-  $quickActions = [
-    [
-      'title' => 'Manage Bookings',
-      'description' => 'View and manage all bookings',
-      'href' => route('admin.bookings.index'),
-      'icon' => 'clipboard-check',
-      'tone' => 'text-sky-600',
-    ],
-    [
-      'title' => 'Manage Users',
-      'description' => 'Add or manage users',
-      'href' => route('admin.users.index'),
-      'icon' => 'users',
-      'tone' => 'text-emerald-600',
-    ],
-    [
-      'title' => 'Manage Inventory',
-      'description' => 'Update rooms, items and stock',
-      'href' => route('admin.bookings.inventory'),
-      'icon' => 'boxes',
-      'tone' => 'text-violet-600',
-    ],
-  ];
-@endphp
-
 <div x-data="dashboard(@js($range), @js($salesView), @js($bookingView))" x-init="init()" class="space-y-3 lg:space-y-4">
   <section class="rounded-3xl border border-slate-200 bg-white px-4 py-4 shadow-sm xl:px-5 xl:py-5">
     <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -535,26 +73,7 @@
 
   <section class="grid items-stretch grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
     @foreach($overviewCards as $card)
-      <a
-        href="{{ $card['href'] }}"
-        class="group flex h-full w-full flex-col rounded-3xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-slate-300 hover:shadow-md xl:p-3 2xl:p-4"
-      >
-        <div class="flex flex-1 items-start gap-3 xl:gap-2.5 2xl:gap-4">
-          <span class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl {{ $card['iconWrap'] }} xl:h-10 xl:w-10 2xl:h-14 2xl:w-14">
-            <i data-lucide="{{ $card['icon'] }}" class="h-5 w-5 xl:h-4.5 xl:w-4.5 2xl:h-6 2xl:w-6"></i>
-          </span>
-          <div class="flex min-w-0 flex-1 flex-col justify-start xl:min-h-18 2xl:min-h-24">
-            <p class="text-[0.72rem] font-semibold leading-4 text-slate-900 sm:text-xs lg:text-xs xl:text-xs 2xl:text-sm 2xl:leading-5 wrap-break-word">{{ $card['label'] }}</p>
-            <p class="mt-1 text-[1.1rem] font-bold leading-none text-slate-900 sm:text-[1.25rem] lg:text-[1.15rem] xl:text-[1.15rem] 2xl:text-[1.5rem]">{{ $card['value'] }}</p>
-            <p class="mt-1 text-[0.72rem] leading-4 text-slate-500 sm:text-xs lg:text-xs xl:text-xs 2xl:text-sm 2xl:leading-5 wrap-break-word">{{ $card['description'] }}</p>
-          </div>
-        </div>
-
-        <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-2.5 text-xs font-semibold sm:text-sm xl:mt-2.5 xl:pt-1.5 2xl:mt-4 2xl:pt-3 {{ $card['linkTone'] }}">
-          <span>View details</span>
-          <i data-lucide="chevron-right" class="h-4 w-4 transition group-hover:translate-x-1"></i>
-        </div>
-      </a>
+      <x-admin.dashboard.overview-card :card="$card" />
     @endforeach
   </section>
 
@@ -576,36 +95,22 @@
     </section>
   @endif
 
-  <section class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-    <div class="flex flex-col gap-3 border-b border-slate-100 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500">
-          <i data-lucide="circle-dollar-sign" class="h-4 w-4"></i>
-        </span>
-        <h2 class="text-base font-semibold leading-tight text-slate-900 sm:text-lg lg:text-xl 2xl:text-xl sm:whitespace-nowrap">Revenue Summary</h2>
-      </div>
-      <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm sm:text-sm 2xl:text-base">
-        <span class="sm:whitespace-nowrap">{{ $rangeShortLabel }}</span>
-        <i data-lucide="chevron-down" class="h-4 w-4 text-slate-400"></i>
-      </span>
-    </div>
-
+  <x-admin.dashboard.section-card
+    title="Revenue Summary"
+    icon="circle-dollar-sign"
+    icon-class="h-4 w-4"
+    icon-wrap-class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500"
+    :meta-label="$rangeShortLabel"
+    body-class="pt-0"
+  >
     <div class="grid grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-2 sm:px-5 lg:grid-cols-4 2xl:gap-4 2xl:px-6 2xl:py-5">
       @foreach($revenueTiles as $index => $tile)
-        <div class="rounded-2xl bg-slate-50/70 px-3.5 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] 2xl:px-4 2xl:py-4">
-          <p class="text-[0.72rem] font-semibold {{ $tile['accent'] }} sm:text-xs lg:text-xs xl:text-xs sm:truncate sm:whitespace-nowrap 2xl:text-sm">{{ $tile['label'] }}</p>
-          <div class="mt-3 flex items-center gap-2">
-            <p class="text-[1.1rem] font-bold leading-none tracking-tight text-slate-900 sm:text-[1.25rem] lg:text-[1.15rem] 2xl:text-[1.45rem]">{{ $tile['value'] }}</p>
-            @if($index === 0)
-              <span class="inline-flex items-center gap-1 whitespace-nowrap text-[11px] font-semibold sm:text-xs 2xl:text-sm {{ $revenueChangeUp ? 'text-emerald-600' : 'text-red-500' }}">
-                <i data-lucide="{{ $revenueChangeUp ? 'trending-up' : 'trending-down' }}" class="h-3 w-3 sm:h-3.5 sm:w-3.5"></i>
-                <span>{{ $revenueChangeLabel }}</span>
-              </span>
-            @endif
-          </div>
-          <p class="mt-3 text-[0.72rem] text-slate-500 sm:text-xs lg:text-xs xl:text-xs sm:truncate sm:whitespace-nowrap 2xl:text-sm">{{ $tile['caption'] }}</p>
-          <p class="mt-1 text-xs leading-5 text-slate-500 lg:text-xs xl:text-xs 2xl:text-sm">{{ $tile['meta'] }}</p>
-        </div>
+        <x-admin.dashboard.revenue-tile
+          :tile="$tile"
+          :show-change="$index === 0"
+          :change-up="$revenueChangeUp"
+          :change-label="$revenueChangeLabel"
+        />
       @endforeach
     </div>
 
@@ -617,48 +122,26 @@
         <span>Pending revenue is not included in Total Revenue.</span>
       </div>
     </div>
-  </section>
+  </x-admin.dashboard.section-card>
 
-  <section class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-    <div class="flex flex-col gap-3 border-b border-gray-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:py-6">
-      <div class="flex flex-wrap items-center gap-2">
-        <i data-lucide="sparkles" class="h-5 w-5 text-slate-500"></i>
-        <h2 class="text-base font-semibold leading-tight text-slate-900 sm:text-lg lg:text-xl 2xl:text-xl sm:whitespace-nowrap">Sales Report by Category</h2>
-      </div>
-      <span class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm sm:text-sm 2xl:text-base">
-        <span class="sm:whitespace-nowrap">{{ $rangeShortLabel }}</span>
-        <i data-lucide="chevron-down" class="h-4 w-4 text-slate-400"></i>
-      </span>
-    </div>
-
+  <x-admin.dashboard.section-card
+    title="Sales Report by Category"
+    icon="sparkles"
+    icon-class="h-5 w-5 text-slate-500"
+    :meta-label="$rangeShortLabel"
+    class="rounded-2xl border-gray-200"
+    body-class="pt-0"
+  >
     <div class="grid grid-cols-1 gap-3 p-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 2xl:gap-4 2xl:p-6">
       @foreach($salesCategoryCards as $card)
-        <div class="rounded-2xl border border-gray-200 bg-white px-6 py-6 shadow-sm 2xl:px-7 2xl:py-7">
-          <div class="flex items-start gap-4">
-            <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl {{ $card->tone }} 2xl:h-14 2xl:w-14">
-              <i data-lucide="{{ $card->icon }}" class="h-5 w-5"></i>
-            </span>
-            <div class="min-w-0 flex-1">
-              <p class="text-[0.72rem] font-semibold text-slate-900 sm:text-xs lg:text-xs sm:truncate sm:whitespace-nowrap xl:overflow-visible xl:whitespace-normal 2xl:text-sm">{{ $card->label }}</p>
-              <p class="mt-3 text-[1.1rem] font-bold leading-none tracking-tight text-slate-900 sm:text-[1.25rem] lg:text-[1.15rem] 2xl:text-[1.45rem]">{{ $fmtMoney($card->amount) }}</p>
-              <div class="mt-3 space-y-1 text-xs text-slate-500 sm:text-xs lg:text-xs xl:text-xs 2xl:text-sm">
-                <p>{{ number_format($card->percent, 0) }}% {{ $card->label === 'Refund Amount' ? 'of completed revenue' : 'of total revenue' }}</p>
-                <p>{{ number_format($card->count) }} {{ \Illuminate\Support\Str::plural($card->countLabel, $card->count) }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <x-admin.dashboard.sales-category-card :card="$card" :amount="$fmtMoney($card->amount)" />
       @endforeach
     </div>
-  </section>
+  </x-admin.dashboard.section-card>
 
   <section class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-    <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-4 py-3.5 sm:px-5">
-        <div class="min-w-0">
-          <h2 class="text-base font-semibold leading-tight text-slate-900 sm:text-lg lg:text-xl 2xl:text-xl sm:whitespace-nowrap">Revenue Trend</h2>
-        </div>
-
+    <x-admin.dashboard.section-card title="Revenue Trend" body-class="px-4 py-4 sm:px-5">
+      <x-slot:actions>
         <button
           type="button"
           data-revenue-trend-download
@@ -668,9 +151,8 @@
         >
           <i data-lucide="download" class="h-4 w-4"></i>
         </button>
-      </div>
+      </x-slot:actions>
 
-      <div class="px-4 py-4 sm:px-5">
         <div x-data="chartHoverCard({{ $revenueChartWidth }}, {{ $revenueChartHeight }}, 'money')" @mouseleave="clearActive()">
           @if($revenueSummarySeries->count() > 0)
             <div class="mb-2.5 flex items-center gap-2 text-[0.72rem] font-medium text-slate-600 sm:text-xs lg:text-xs">
@@ -737,12 +219,10 @@
           @endif
         </div>
 
-      </div>
-    </div>
+    </x-admin.dashboard.section-card>
 
-    <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3.5 sm:px-5">
-          <h2 class="text-base font-semibold leading-tight text-slate-900 sm:text-lg lg:text-xl 2xl:text-xl sm:whitespace-nowrap">Revenue by Category</h2>
+    <x-admin.dashboard.section-card title="Revenue by Category" body-class="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 lg:grid-cols-[208px_minmax(0,1fr)] lg:items-center">
+      <x-slot:actions>
         <button
           type="button"
           data-revenue-by-category-download
@@ -752,9 +232,8 @@
         >
           <i data-lucide="download" class="h-4 w-4"></i>
         </button>
-      </div>
+      </x-slot:actions>
 
-      <div class="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 lg:grid-cols-[208px_minmax(0,1fr)] lg:items-center">
         <div class="flex justify-center lg:justify-self-end lg:pr-1" data-revenue-by-category-chart>
           <svg viewBox="0 0 200 200" class="h-48 w-48 lg:h-52 lg:w-52 2xl:h-60 2xl:w-60" role="img" aria-label="Revenue by category">
             <circle cx="100" cy="100" r="{{ $salesDistributionRadius }}" fill="none" stroke="#e5e7eb" stroke-width="22"></circle>
@@ -795,17 +274,16 @@
             </div>
           @endforeach
         </div>
-      </div>
-    </div>
+    </x-admin.dashboard.section-card>
   </section>
 
-  <section class="mt-4 rounded-2xl border border-gray-200 bg-white shadow-sm">
-    <div class="flex flex-col gap-3 border-b border-gray-200 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
-      <div>
-        <h2 class="text-base font-semibold leading-tight text-slate-900 sm:text-lg lg:text-xl 2xl:text-xl sm:whitespace-nowrap">Sales Trend by Category</h2>
-        <p class="mt-1 text-[0.72rem] text-slate-500 sm:text-xs lg:text-xs">Revenue breakdown for the selected period. Defaults follow the dashboard period.</p>
-      </div>
-
+  <x-admin.dashboard.section-card
+    title="Sales Trend by Category"
+    subtitle="Revenue breakdown for the selected period. Defaults follow the dashboard period."
+    class="mt-4 rounded-2xl border-gray-200"
+    body-class="px-4 py-4 sm:px-5"
+  >
+    <x-slot:actions>
       <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
         <span class="hidden text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 lg:inline">Chart period</span>
         <div class="inline-flex flex-wrap rounded-2xl border border-gray-200 bg-slate-50 p-1">
@@ -830,9 +308,8 @@
           <i data-lucide="download" class="h-4 w-4"></i>
         </button>
       </div>
-    </div>
+    </x-slot:actions>
 
-    <div class="px-4 py-4 sm:px-5">
         <div class="relative h-75 lg:h-75 2xl:h-80">
           <canvas id="sales-trend-chart" class="h-full w-full"></canvas>
         </div>
@@ -840,16 +317,15 @@
         <i data-lucide="info" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"></i>
         <p>Chart displays completed sales only. Pending, abandoned and expired bookings are excluded.</p>
       </div>
-    </div>
-  </section>
+  </x-admin.dashboard.section-card>
 
-  <section class="mt-4 rounded-3xl border border-slate-200 bg-white shadow-sm">
-    <div class="flex flex-col gap-3 border-b border-slate-100 px-4 py-3.5 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
-      <div class="min-w-0">
-        <h2 class="text-base font-semibold leading-tight text-slate-900 sm:text-lg lg:text-xl 2xl:text-xl sm:whitespace-nowrap">Bookings Overview (Count)</h2>
-        <p class="mt-1 text-[0.72rem] text-slate-500 sm:text-xs lg:text-xs">Bookings breakdown for the selected period.</p>
-      </div>
-
+  <x-admin.dashboard.section-card
+    title="Bookings Overview (Count)"
+    subtitle="Bookings breakdown for the selected period."
+    class="mt-4"
+    body-class="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 xl:grid-cols-[minmax(0,1fr)_260px] 2xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start"
+  >
+    <x-slot:actions>
       <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
         <span class="hidden text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 lg:inline">Chart period</span>
         <div class="inline-flex flex-wrap rounded-2xl border border-gray-200 bg-slate-50 p-1">
@@ -874,9 +350,8 @@
           <i data-lucide="download" class="h-4 w-4"></i>
         </button>
       </div>
-    </div>
+    </x-slot:actions>
 
-    <div class="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 xl:grid-cols-[minmax(0,1fr)_260px] 2xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
       <div data-bookings-overview-chart x-data="chartHoverCard({{ $bookingChartWidth }}, {{ $bookingChartHeight }}, 'count')" @mouseleave="clearActive()">
         <div class="mb-3 flex flex-wrap items-center gap-3 text-[0.72rem] font-medium text-slate-600 sm:text-xs lg:text-xs">
           @foreach($bookingSeriesMeta as $series)
@@ -963,91 +438,43 @@
           <p class="mt-1">Closed = cancelled, expired, and abandoned bookings.</p>
         </div>
       </div>
-    </div>
-  </section>
+  </x-admin.dashboard.section-card>
 
   <section class="grid grid-cols-1 gap-4 xl:grid-cols-1 2xl:grid-cols-2 2xl:gap-5">
-    <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3.5 sm:px-5">
-        <h2 class="text-base font-semibold leading-tight text-slate-900 sm:text-lg lg:text-xl 2xl:text-xl sm:whitespace-nowrap">Recent Bookings</h2>
-        <a href="{{ route('admin.bookings.index') }}" class="text-[0.72rem] font-medium text-[#8f5d54] sm:text-xs lg:text-xs">View all</a>
-      </div>
+    <x-admin.dashboard.section-card
+      title="Recent Bookings"
+      action-text="View all"
+      :action-href="route('admin.bookings.index')"
+      body-class="space-y-2 px-4 py-3.5 sm:px-5 lg:px-5 lg:py-3.5"
+    >
+      @forelse($recentBookingCards as $booking)
+        <x-admin.dashboard.recent-booking-row :booking="$booking" />
+      @empty
+        <div class="flex min-h-72 items-center justify-center text-[0.72rem] text-slate-500 sm:text-xs lg:text-xs">No recent bookings to show.</div>
+      @endforelse
+    </x-admin.dashboard.section-card>
 
-      <div class="space-y-2 px-4 py-3.5 sm:px-5 lg:px-5 lg:py-3.5">
-        @forelse($recentBookingCards as $booking)
-          <a href="{{ $booking['href'] }}" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 transition hover:bg-slate-50 lg:gap-4 lg:p-4 2xl:gap-4 2xl:p-4">
-            <img
-              src="{{ \App\Helpers\ImageHelper::src($booking['image'] ?? null) }}"
-              alt="{{ $booking['name'] }}"
-              class="h-14 w-14 shrink-0 rounded-xl object-cover lg:h-14 lg:w-14 2xl:h-16 2xl:w-16"
-              onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
-            >
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-semibold text-slate-900 sm:text-base lg:text-base lg:overflow-visible lg:whitespace-normal lg:text-clip 2xl:text-base">{{ $booking['name'] }}</p>
-              @if(!empty($booking['item']))
-                <p class="mt-0.5 truncate text-xs font-medium text-slate-700 sm:text-sm lg:text-sm lg:overflow-visible lg:whitespace-normal lg:text-clip 2xl:text-sm">{{ $booking['item'] }}</p>
-              @endif
-              <p class="mt-0.5 text-xs text-slate-500 sm:text-sm lg:text-sm lg:whitespace-normal lg:overflow-visible lg:text-clip 2xl:text-sm sm:truncate sm:whitespace-nowrap">{{ $booking['meta'] }}</p>
-            </div>
-            <div class="text-right">
-              <span class="inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold 2xl:text-xs {{ $booking['statusTone'] }}">{{ $booking['status'] }}</span>
-              <p class="mt-1.5 whitespace-nowrap text-xs font-semibold text-slate-900 sm:text-sm lg:text-sm 2xl:text-base">{{ $booking['amount'] }}</p>
-            </div>
-          </a>
-        @empty
-          <div class="flex min-h-72 items-center justify-center text-[0.72rem] text-slate-500 sm:text-xs lg:text-xs">No recent bookings to show.</div>
-        @endforelse
-      </div>
-    </div>
-
-    <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3.5 sm:px-5">
-        <h2 class="text-base font-semibold leading-tight text-slate-900 sm:text-lg lg:text-xl 2xl:text-xl sm:whitespace-nowrap">Recent Admin Activity</h2>
-        <a href="{{ route('admin.settings.activity-log') }}" class="text-[0.72rem] font-medium text-[#8f5d54] sm:text-xs lg:text-xs">View all</a>
-      </div>
-
-      <div class="space-y-2.5 px-4 py-3.5 sm:px-5 lg:px-5 lg:py-3.5">
-        @forelse($activityCards as $activity)
-          <div class="flex items-start gap-3 lg:gap-4 2xl:gap-4">
-            <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-600 lg:h-8 lg:w-8 lg:text-xs 2xl:h-9 2xl:w-9 2xl:text-sm">{{ $activity['initials'] }}</span>
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <p class="text-sm font-semibold text-slate-900 sm:text-base lg:text-base 2xl:text-base lg:whitespace-normal lg:overflow-visible lg:text-clip">{{ $activity['title'] }}</p>
-                <p class="text-xs text-slate-500 sm:text-sm lg:text-sm 2xl:text-sm lg:whitespace-normal lg:overflow-visible lg:text-clip">{{ $activity['actor'] }}</p>
-              </div>
-              <p class="mt-1 text-xs text-slate-500 sm:text-sm lg:text-sm 2xl:text-sm lg:whitespace-normal lg:overflow-visible lg:text-clip">{{ $activity['meta'] }}</p>
-            </div>
-            <p class="shrink-0 whitespace-nowrap pt-0.5 text-[11px] text-slate-400 sm:text-xs lg:text-xs 2xl:text-sm">{{ $activity['time'] }}</p>
-          </div>
-        @empty
-          <div class="flex min-h-72 items-center justify-center text-[0.72rem] text-slate-500 sm:text-xs lg:text-xs">No recent admin activity recorded.</div>
-        @endforelse
-      </div>
-    </div>
+    <x-admin.dashboard.section-card
+      title="Recent Admin Activity"
+      action-text="View all"
+      :action-href="route('admin.settings.activity-log')"
+      body-class="space-y-2.5 px-4 py-3.5 sm:px-5 lg:px-5 lg:py-3.5"
+    >
+      @forelse($activityCards as $activity)
+        <x-admin.dashboard.activity-row :activity="$activity" />
+      @empty
+        <div class="flex min-h-72 items-center justify-center text-[0.72rem] text-slate-500 sm:text-xs lg:text-xs">No recent admin activity recorded.</div>
+      @endforelse
+    </x-admin.dashboard.section-card>
   </section>
 
-  <section class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-    <div class="border-b border-slate-100 px-4 py-3.5 sm:px-5">
-        <h2 class="text-base font-semibold leading-tight text-slate-900 sm:text-lg lg:text-xl 2xl:text-xl sm:whitespace-nowrap">Quick Actions</h2>
-    </div>
-
+  <x-admin.dashboard.section-card title="Quick Actions" body-class="pt-0">
     <div class="grid grid-cols-1 gap-3 px-4 py-3.5 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 sm:px-5 2xl:gap-4 2xl:px-6 2xl:py-5">
       @foreach($quickActions as $action)
-        <a href="{{ $action['href'] }}" class="group flex min-h-22 rounded-2xl border border-slate-200 bg-white px-5 py-4 transition hover:border-slate-300 hover:bg-slate-50 2xl:min-h-24 2xl:px-6 2xl:py-5">
-          <div class="flex w-full items-center gap-3">
-            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 {{ $action['tone'] }} 2xl:h-11 2xl:w-11">
-              <i data-lucide="{{ $action['icon'] }}" class="h-4.5 w-4.5"></i>
-            </span>
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-semibold leading-tight text-slate-900 lg:text-sm 2xl:text-base">{{ $action['title'] }}</p>
-              <p class="mt-1 text-xs leading-relaxed text-slate-500 sm:text-xs lg:text-xs 2xl:text-sm">{{ $action['description'] }}</p>
-            </div>
-            <i data-lucide="chevron-right" class="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-1"></i>
-          </div>
-        </a>
+        <x-admin.dashboard.quick-action :action="$action" />
       @endforeach
     </div>
-  </section>
+  </x-admin.dashboard.section-card>
 
   <footer class="flex flex-col gap-2 px-1 text-[0.72rem] text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:text-xs lg:text-xs">
     <p class="sm:truncate sm:whitespace-nowrap">All amounts are in PHP ({{ $peso }}) and based on completed payments only.</p>
