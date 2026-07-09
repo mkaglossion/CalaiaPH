@@ -39,10 +39,10 @@
                     <span class="text-xs text-gray-500">Select</span>
                 </div>
                 <div class="overflow-hidden rounded-xl">
-                    @if(str_contains($img->image_path, '/video/'))
-                        <video src="{{ $img->image_path }}" class="w-full h-48 object-cover transition hover:scale-105" muted></video>
+                    @if(\App\Helpers\ImageHelper::isVideo($img->image_path ?? $img))
+                        <img src="{{ \App\Helpers\ImageHelper::src(\App\Helpers\ImageHelper::videoThumbnail($img->image_path ?? $img)) }}" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                     @else
-                        <img src="{{ $img->image_path }}" class="w-full h-48 object-cover transition hover:scale-105">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                     @endif
                 </div>
 

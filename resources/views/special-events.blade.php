@@ -10,7 +10,7 @@
     @endpush
 
      {{-- Hero Slider --}}
-    <x-hero-slider :images="$swiperImages" />
+    <x-hero-slider :images="$swiperImages" :texts="$heroTexts ?? []" />
 
     {{-- ===== Events Section ===== --}}
     <main id="main">

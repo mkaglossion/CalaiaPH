@@ -47,15 +47,19 @@
         <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
         <div class="absolute inset-0 flex items-center justify-center z-20 text-white">
           <div class="text-center px-4">
-            @if(isset($texts_array[$index]))
-              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase"
-                  style="">
-                {{ ucfirst($labels_array[$index]) }}
+            @php
+              $slideTitle = $image->title ?? ($labels_array[$index] ?? '');
+              $slideDesc = $texts_array[$index] ?? '';
+            @endphp
+            @if($slideTitle || $slideDesc)
+              <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-bold mb-4 uppercase" style="">
+                {{ $slideTitle ? ucfirst($slideTitle) : '' }}
               </h2>
-              <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase"
-                style=" font-style: italic;">
-                {{ $texts_array[$index] }}
-              </p>
+              @if($slideDesc)
+                <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl uppercase" style=" font-style: italic;">
+                  {{ $slideDesc }}
+                </p>
+              @endif
             @endif
           </div>
         </div>

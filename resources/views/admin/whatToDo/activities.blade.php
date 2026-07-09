@@ -3,6 +3,37 @@
 @section('title', 'Activities Management')
 
 @section('content')
+<style>
+    .settings-accordion > summary::-webkit-details-marker {
+        display: none;
+    }
+    .settings-accordion > summary {
+        list-style: none;
+    }
+    .settings-chevron {
+        transition: transform 0.2s ease;
+    }
+    .settings-accordion[open] .settings-chevron {
+        transform: rotate(180deg);
+    }
+</style>
+
+@php
+    $mobileLayoutStep3 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step3_activities')->value('value') ?? 3);
+    $activityCategoryLabels = \App\Models\ActivityPackageSetting::getCategoryLabels();
+    $activityCategoryDefinitions = \App\Models\ActivityPackageSetting::getCategoryLabelDefinitions();
+    $activityBookingSectionCopy = \App\Models\ActivityPackageSetting::getBookingSectionCopy();
+    $activityBookingSectionDefinitions = \App\Models\ActivityPackageSetting::getBookingSectionDefinitions();
+    $activityCategoryOptions = [];
+    foreach ($activityCategoryDefinitions as $categoryKey => $definition) {
+        $activityCategoryOptions[$categoryKey] = $activityCategoryLabels[$categoryKey] ?? $definition['default'];
+    }
+    $activityOnlyCategoryOptions = array_filter(
+        $activityCategoryOptions,
+        fn ($label, $categoryKey) => $categoryKey !== 'special',
+        ARRAY_FILTER_USE_BOTH
+    );
+@endphp
 
 <div x-data="activityManager()" x-init="window.__alpineApp = $data; $data.setupKeyboardShortcuts(); $data.loadPackages(); $data.loadAvailableActivities()" x-cloak class="p-3 sm:p-6 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-lg sm:rounded-xl w-full">
 
@@ -10,9 +41,118 @@
         Activities Management
     </h1>
     <p class="text-gray-600 text-sm sm:text-base mb-6 sm:mb-10">Manage activities & experience packages available for booking.</p>
-    @php
-        $mobileLayoutStep3 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step3_activities')->value('value') ?? 3);
-    @endphp
+    <div class="mb-6 rounded-xl border border-gray-200 bg-white p-4">
+        <form method="POST" action="{{ route('admin.do.category-label.update') }}" class="space-y-6">
+            @csrf
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900">Activity Display Settings</h3>
+                <p class="text-xs text-gray-600 mt-1">Edit category labels and booking headings in one place.</p>
+            </div>
+
+            <div class="space-y-4">
+                <details class="settings-accordion group rounded-xl border border-gray-200 bg-gray-50/60 p-4" open>
+                    <summary class="cursor-pointer">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <h4 class="text-sm font-semibold text-gray-900">Activity Category Labels</h4>
+                                <p class="text-xs text-gray-600 mt-1">Used in filters, cards, and admin category choices.</p>
+                                <p class="text-[11px] text-gray-500 mt-1">Click to expand or collapse this section.</p>
+                            </div>
+                            <span class="settings-chevron inline-flex h-8 w-8 flex-none items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm">
+                                <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4" aria-hidden="true">
+                                    <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                                </svg>
+                            </span>
+                        </div>
+                    </summary>
+                    <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                        @foreach($activityCategoryDefinitions as $category => $definition)
+                            @php
+                                $fieldName = $definition['setting_key'];
+                                $fieldValue = $activityCategoryLabels[$category] ?? $definition['default'];
+                            @endphp
+                            <div>
+                                <label for="{{ $fieldName }}" class="block text-xs font-semibold text-gray-800 mb-1">
+                                    {{ $definition['label'] }}
+                                </label>
+                                <input
+                                    id="{{ $fieldName }}"
+                                    name="{{ $fieldName }}"
+                                    type="text"
+                                    value="{{ old($fieldName, $fieldValue) }}"
+                                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                                    placeholder="{{ $definition['default'] }}"
+                                    required
+                                >
+                            </div>
+                        @endforeach
+                    </div>
+                </details>
+
+                <details class="settings-accordion group rounded-xl border border-gray-200 bg-gray-50/60 p-4" @if($errors->any()) open @endif>
+                    <summary class="cursor-pointer">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <h4 class="text-sm font-semibold text-gray-900">Booking Section Copy</h4>
+                                <p class="text-xs text-gray-600 mt-1">Used on <code>/booking/staycation/activities</code>.</p>
+                                <p class="text-[11px] text-gray-500 mt-1">Click to expand or collapse this section.</p>
+                            </div>
+                            <span class="settings-chevron inline-flex h-8 w-8 flex-none items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm">
+                                <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4" aria-hidden="true">
+                                    <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                                </svg>
+                            </span>
+                        </div>
+                    </summary>
+                    <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                        @foreach($activityBookingSectionDefinitions as $section => $definition)
+                            @php
+                                $headingField = $definition['heading_key'];
+                                $descriptionField = $definition['description_key'];
+                                $headingValue = $activityBookingSectionCopy[$section]['heading'] ?? $definition['default_heading'];
+                                $descriptionValue = $activityBookingSectionCopy[$section]['description'] ?? $definition['default_description'];
+                            @endphp
+                            <div class="rounded-lg border border-gray-200 bg-white p-3">
+                                <h5 class="text-xs font-semibold text-gray-900 mb-3">{{ $definition['label'] }}</h5>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label for="{{ $headingField }}" class="block text-[11px] font-semibold text-gray-700 mb-1">Heading</label>
+                                        <input
+                                            id="{{ $headingField }}"
+                                            name="{{ $headingField }}"
+                                            type="text"
+                                            value="{{ old($headingField, $headingValue) }}"
+                                            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                                            required
+                                        >
+                                    </div>
+                                    <div>
+                                        <label for="{{ $descriptionField }}" class="block text-[11px] font-semibold text-gray-700 mb-1">Description</label>
+                                        <textarea
+                                            id="{{ $descriptionField }}"
+                                            name="{{ $descriptionField }}"
+                                            rows="2"
+                                            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                                            required
+                                        >{{ old($descriptionField, $descriptionValue) }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </details>
+            </div>
+
+            <div class="flex justify-end">
+                <button
+                    type="submit"
+                    class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 transition">
+                    Save Display Settings
+                </button>
+            </div>
+        </form>
+    </div>
+
     <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
         <div class="flex flex-col md:flex-row md:items-end gap-3">
             <div class="flex-1">
@@ -159,11 +299,9 @@
                                 autocomplete="category"
                                 class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
                             <option value="">Select Category</option>
-                            <option value="adventure">Adventure</option>
-                            <option value="sports">Sports & Games</option>
-                            <option value="rrcamp">R & R & Camp</option>
-                            <option value="farm">Farm</option>
-                            <option value="special">Special</option>
+                            @foreach($activityCategoryOptions as $categoryKey => $categoryLabel)
+                                <option value="{{ $categoryKey }}">{{ $categoryLabel }}</option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -406,7 +544,10 @@
                             {{ ($activities->currentPage() - 1) * $activities->perPage() + $index + 1 }}
                         </td>
                         <td class="px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $act->name ?? 'Untitled' }}</td>
-                        <td class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ ucfirst($act->category) ?? 'No category' }}</td>
+                        @php
+                            $activityCategoryKey = strtolower((string) ($act->category ?? ''));
+                        @endphp
+                        <td class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $activityCategoryOptions[$activityCategoryKey] ?? ($activityCategoryKey !== '' ? ucfirst(str_replace('_', ' ', $activityCategoryKey)) : 'No category') }}</td>
                         <td class="hidden md:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $act->description ?? 'No description' }}</td>
                         <td class="hidden lg:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $act->duration ?? 'N/A' }}</td>
                         <td class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $act->price ? '₱' . number_format($act->price, 2) : 'N/A' }}</td>
@@ -529,10 +670,9 @@
                         autocomplete="off"
                     >
                         <option value="">Select Category</option>
-                        <option value="adventure">Adventure</option>
-                        <option value="sports">Sports & Games</option>
-                        <option value="rrcamp">R & R & Camp</option>
-                        <option value="farm">Farm</option>
+                        @foreach($activityOnlyCategoryOptions as $categoryKey => $categoryLabel)
+                            <option value="{{ $categoryKey }}">{{ $categoryLabel }}</option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -686,7 +826,101 @@
         </div>
     </div>
 
+    {{-- ============================================================= --}}
+    {{-- TEXT CONTENT MANAGEMENT SECTION --}}
+    {{-- ============================================================= --}}
+    <div class="flex justify-between items-end mb-6 mt-12">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
+            <p class="text-gray-500 text-sm">Paragraphs and captions displayed on this page.</p>
+        </div>
+        <button 
+            @click="showTextModal = true; resetTextForm()"
+            class="px-4 py-2 rounded-xl bg-[#8f5d54] text-white font-medium shadow hover:bg-[#7a4d46] hover:shadow-lg transition">
+            + Add Text
+        </button>
+    </div>
 
+    {{-- Text Content Table --}}
+    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur mb-8">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-gray-100/70 backdrop-blur">
+                    <tr>
+                        <th class="px-4 lg:px-6 py-4 font-medium text-gray-900">Label</th>
+                        <th class="px-4 lg:px-6 py-4 font-medium text-gray-900">Text</th>
+                        <th class="px-4 lg:px-6 py-4 font-medium text-gray-900 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @forelse($texts as $text)
+                        <tr class="hover:bg-gray-50/70 transition">
+                            <td class="px-4 lg:px-6 py-4 text-gray-700 font-medium">{{ $text->label ?? 'N/A' }}</td>
+                            <td class="px-4 lg:px-6 py-4 text-gray-700 max-w-md truncate">{{ $text->text ?? 'N/A' }}</td>
+                            <td class="px-4 lg:px-6 py-4 text-right">
+                                <div class="inline-flex items-center justify-end gap-2 whitespace-nowrap">
+                                    <button
+                                        type="button"
+                                        class="text-[#8f5d54] font-semibold hover:text-[#7a4d46] hover:underline transition"
+                                        @click="editText({{ $text->id }}, '{{ addslashes($text->label) }}', '{{ addslashes($text->text) }}')"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                                        @click="deleteText({{ $text->id }})"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="px-4 lg:px-6 py-6 text-center text-gray-500">No text content yet.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- Text Content Modal --}}
+    <div
+        x-cloak
+        x-show="showTextModal"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        x-transition.opacity
+    >
+        <div @click.away="showTextModal = false" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-6 border border-gray-200">
+            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editTextMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
+
+            <form
+                id="textForm"
+                class="space-y-5"
+                method="POST"
+                @submit.prevent="addOrUpdateText($el)"
+            >
+                @csrf
+
+                <div>
+                    <label for="text_label" class="block font-medium mb-1 text-gray-700">Label</label>
+                    <input id="text_label" type="text" x-ref="textLabel" name="label" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-[#8f5d54] focus:outline-none" placeholder="Enter label (e.g., section_title)" required>
+                </div>
+
+                <div>
+                    <label for="text_content" class="block font-medium mb-1 text-gray-700">Text Content</label>
+                    <textarea id="text_content" x-ref="textContent" name="text" rows="4" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-[#8f5d54] focus:outline-none" placeholder="Enter text content" required></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" @click="showTextModal = false; resetTextForm()" class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-[#8f5d54] text-white hover:bg-[#7a4d46] shadow transition" x-text="editTextMode ? 'Update' : 'Add'"></button>
+                </div>
+            </form>
+        </div>
+    </div>
 
 </div>
 
@@ -732,6 +966,8 @@ if (typeof window.saveMobileLayoutSetting !== 'function') {
     }
 }
 
+const activityCategoryLabels = @json($activityCategoryOptions);
+
 function activityManager() {
     return {
         // State management
@@ -745,8 +981,12 @@ function activityManager() {
         editModeActivity: false,
         editPackageMode: false,
         editImageMode: false,
+        editTextMode: false,
         currentImageId: null,
+        currentTextId: null,
         searchQuery: '',
+        textLabel: '',
+        textContent: '',
 
         // Load packages on initialization
         loadPackages() {
@@ -813,6 +1053,19 @@ function activityManager() {
                 toast.classList.add('hide');
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
+        },
+
+        getActivityCategoryLabel(category) {
+            const key = String(category || '').toLowerCase();
+            if (key && activityCategoryLabels[key]) {
+                return activityCategoryLabels[key];
+            }
+
+            if (!key) {
+                return activityCategoryLabels.special || 'Special';
+            }
+
+            return key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
         },
 
         // Search and filter (simplified - uses x-show directives on rows)
@@ -1300,6 +1553,114 @@ function activityManager() {
             });
         },
 
+        // Text Management Methods
+        resetTextForm() {
+            this.editTextMode = false;
+            this.currentTextId = null;
+            this.textLabel = '';
+            this.textContent = '';
+
+            const labelInput = this.$refs.textLabel;
+            const contentInput = this.$refs.textContent;
+
+            if (labelInput) labelInput.value = '';
+            if (contentInput) contentInput.value = '';
+        },
+
+        editText(id, label, content) {
+            this.currentTextId = id;
+            this.editTextMode = true;
+            this.textLabel = label;
+            this.textContent = content;
+            this.showTextModal = true;
+
+            this.$nextTick(() => {
+                const labelInput = this.$refs.textLabel;
+                const contentInput = this.$refs.textContent;
+
+                if (labelInput) labelInput.value = label || '';
+                if (contentInput) contentInput.value = content || '';
+            });
+        },
+
+        deleteText(id) {
+            if (!confirm('Are you sure you want to delete this text?')) return;
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/admin/activity-text/${id}`;
+
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = document.querySelector('meta[name=csrf-token]').getAttribute('content');
+            form.appendChild(csrfInput);
+
+            const methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'DELETE';
+            form.appendChild(methodInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        },
+
+        async addOrUpdateText(formElement) {
+            const labelInput = this.$refs.textLabel;
+            const contentInput = this.$refs.textContent;
+
+            if (!labelInput?.value || !contentInput?.value) {
+                this.showToast('Please fill in all fields.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('label', labelInput.value);
+            formData.append('text', contentInput.value);
+
+            if (this.editTextMode) {
+                formData.append('_method', 'PUT');
+            }
+
+            const url = this.editTextMode
+                ? `/admin/activity-text/${this.currentTextId}`
+                : "{{ route('activity-text.store') }}";
+
+            this.isLoading = true;
+            const submitBtn = formElement.querySelector('button[type=submit]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = this.editTextMode ? 'Updating...' : 'Adding...';
+            submitBtn.disabled = true;
+
+            const safetyTimeout = setTimeout(() => {
+                this.isLoading = false;
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }, 45000);
+
+            try {
+                const response = await this.submitForm(url, formData);
+                clearTimeout(safetyTimeout);
+
+                if (response.ok) {
+                    this.showToast(this.editTextMode ? 'Text updated!' : 'Text added!', 'success');
+                    this.resetTextForm();
+                    this.showTextModal = false;
+                    window.location.reload();
+                } else {
+                    await this.handleError(response);
+                }
+            } catch (error) {
+                clearTimeout(safetyTimeout);
+                this.showToast('Error submitting text.', 'error');
+            } finally {
+                this.isLoading = false;
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        },
+
         // Package management functions
         openCreatePackage() {
             this.editPackageMode = false;
@@ -1506,7 +1867,7 @@ function activityManager() {
                 <tr class="hover:bg-gray-50">
                     <td class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">${idx + 1}</td>
                     <td class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm font-medium text-gray-900">${pkg.name || ''}</td>
-                    <td class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm text-gray-600">${pkg.category ? pkg.category.charAt(0).toUpperCase() + pkg.category.slice(1).replace(/_/g, ' ') : 'special'}</td>
+                    <td class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm text-gray-600">${this.getActivityCategoryLabel(pkg.category)}</td>
                     <td class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 text-center">₱${pkg.price ? parseFloat(pkg.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</td>
                     <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm text-gray-600">${pkg.activities?.length || 0}</td>
                     <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm"><span class="px-2 py-1 text-gray-700 rounded text-xs font-semibold">${pkg.is_active ? 'Active' : 'Inactive'}</span></td>

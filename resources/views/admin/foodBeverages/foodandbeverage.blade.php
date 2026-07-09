@@ -4,13 +4,17 @@
 
 @section('content')
 <x-admin.cms-manager
-    title="Page Information"
-    description="Manage the image slider and content displayed on your Food & Beverage page."
+    :title="$cmsConfig['title']"
+    :description="$cmsConfig['description']"
     :images="$images"
-    :texts="$texts"
-    imageStoreRoute="{{ route('food-swiper-images.store') }}"
-    imageDestroyRoute="/admin/food-swiper-images"
-    textStoreRoute="{{ route('food-texts.store') }}"
-    textDestroyRoute="/admin/food-texts"
+    :texts="$filteredTexts"
+    :imageStoreRoute="$cmsConfig['imageStoreRoute']"
+    :imageDestroyRoute="$cmsConfig['imageDestroyRoute']"
+    :textStoreRoute="$cmsConfig['textStoreRoute']"
+    :textDestroyRoute="$cmsConfig['textDestroyRoute']"
+    :pageCopyEnabled="$cmsConfig['pageCopyEnabled']"
+    :pageCopyFields="$cmsConfig['pageCopyFields']"
+    :pageCopyMeta="$cmsConfig['pageCopyMeta']"
+    :pageCopyStoreRoute="$cmsConfig['pageCopyStoreRoute']"
 />
 @endsection

@@ -3,39 +3,19 @@
 @section('title', 'What to Do Page CMS')
 
 @section('content')
-@php
-    $contentTexts = collect($texts ?? [])->reject(function ($item) {
-        $label = strtolower((string) ($item->label ?? $item->title ?? ''));
-        return str_starts_with($label, 'packages_');
-    })->values();
-
-    $packagesTitleEntry = collect($texts ?? [])->first(function ($item) {
-        return strtolower((string) ($item->label ?? $item->title ?? '')) === 'packages_title';
-    });
-    $packagesTitle = trim((string) ($packagesTitleEntry->text ?? $packagesTitleEntry->content ?? $texts->firstWhere('title', 'packages_title')?->content ?? 'Day Packages'));
-
-    $packagesIntroEntry = collect($texts ?? [])->first(function ($item) {
-        return strtolower((string) ($item->label ?? $item->title ?? '')) === 'packages_intro';
-    });
-    $packagesIntro = trim((string) ($packagesIntroEntry->text ?? $packagesIntroEntry->content ?? $texts->firstWhere('title', 'packages_intro')?->content ?? 'Start with our curated package options, then explore activities you can add to your stay.'));
-@endphp
-
 <x-admin.cms-manager
-    title="Page Information"
-    description="Manage the image slider and content displayed on your What to Do page."
+    :title="$cmsConfig['title']"
+    :description="$cmsConfig['description']"
     :images="$images"
-    :texts="$contentTexts"
-    imageStoreRoute="{{ route('do-swiper-images.store') }}"
-    imageDestroyRoute="/admin/do-swiper-images"
-    textStoreRoute="{{ route('do-texts.store') }}"
-    textDestroyRoute="/admin/do-texts"
-    :pageCopyEnabled="true"
-    :pageCopyFields="[
-        'label' => '',
-        'title' => $packagesTitle,
-        'intro' => $packagesIntro,
-    ]"
-    pageCopyStoreRoute="{{ route('admin.do.copy.store') }}"
+    :texts="$filteredTexts"
+    :imageStoreRoute="$cmsConfig['imageStoreRoute']"
+    :imageDestroyRoute="$cmsConfig['imageDestroyRoute']"
+    :textStoreRoute="$cmsConfig['textStoreRoute']"
+    :textDestroyRoute="$cmsConfig['textDestroyRoute']"
+    :pageCopyEnabled="$cmsConfig['pageCopyEnabled']"
+    :pageCopyFields="$cmsConfig['pageCopyFields']"
+    :pageCopyMeta="$cmsConfig['pageCopyMeta']"
+    :pageCopyStoreRoute="$cmsConfig['pageCopyStoreRoute']"
     :extraSections="view('admin.whatToDo.partials.packages', ['packages' => $packages ?? collect()])->render()"
 />
 
@@ -102,7 +82,6 @@
             },
 
             editPackage(id) {
-                this.isLoading = true;
                 this.errors = [];
                 fetch(`/admin/packages/${id}/edit`, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
                     .then(res => res.json())
@@ -124,8 +103,7 @@
                         this.isPackageEditMode = true;
                         this.$nextTick(() => { this.showPackageModal = true; });
                     })
-                    .catch(() => Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to load package' }))
-                    .finally(() => { this.isLoading = false; });
+                    .catch(() => Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to load package' }));
             },
 
             deletePackage(id, route) {

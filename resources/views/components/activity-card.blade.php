@@ -1,4 +1,9 @@
-@props(['activity'])
+@props(['activity', 'categoryLabels' => []])
+
+@php
+    $activityCategoryKey = strtolower(trim((string) ($activity->category ?? 'activity')));
+    $activityCategoryLabel = $categoryLabels[$activityCategoryKey] ?? ucfirst(str_replace('_', ' ', $activityCategoryKey ?: 'activity'));
+@endphp
 
 <div class="relative h-full flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl ring-2 ring-gray-200 hover:ring-[#8f5d54] cursor-pointer"
      @click="toggleActivity({{ $activity->id }}, '{{ addslashes($activity->name) }}', '{{ $activity->category ?? 'activity' }}', {{ $activity->price }})">
@@ -18,7 +23,7 @@
 
         <div class="absolute bottom-4 left-4 z-10">
             <span class="px-3 py-1 bg-[#8f5d54] text-white text-sm font-semibold rounded-full">
-                {{ ucfirst($activity->category ?? 'Activity') }}
+                {{ $activityCategoryLabel }}
             </span>
         </div>
     </div>

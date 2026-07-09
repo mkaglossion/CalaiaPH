@@ -640,6 +640,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     });
     Route::prefix('/do')->group(function () {
             Route::get('/activities', [AdminController::class, 'activity'])->name('admin.do.activities');
+            Route::post('/category-label', [\App\Http\Controllers\Admin\ActivityPackageSettingController::class, 'updateCategoryLabel'])->name('admin.do.category-label.update');
             Route::get('/api/activity-packages', [ActivityPackageController::class, 'apiIndex'])->name('admin.activity-packages.api.index');
             Route::resource('activity-packages', ActivityPackageController::class, ['except' => ['create', 'index'], 'names' => [
                 'edit' => 'admin.activity-packages.edit',
@@ -710,7 +711,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
      });
 
      Route::prefix('/shop')->group(function () {
-         Route::get('/shopstore', [AdminController::class, 'shopstore'])->name('admin.shop.shopstore');
+         Route::get('/shopstore', [AdminPagesController::class, 'shopStore'])->name('admin.shop.shopstore');
          Route::get('/shopitems', [AdminController::class, 'shopitems'])->name('admin.shop.shopitems');
          Route::get('/orders', [AdminController::class, 'shopOrders'])->name('admin.shop.orders');
          Route::post('/copy', [ShopTextController::class, 'saveCopy'])->name('admin.shop.copy.store');

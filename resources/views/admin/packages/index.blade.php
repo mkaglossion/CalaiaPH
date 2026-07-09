@@ -29,16 +29,16 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach($packages as $package)
                 <div class="bg-white/70 backdrop-blur-lg border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden flex flex-col h-full" data-package-id="{{ $package->id }}">
-                    <!-- Image -->
-                    @if($package->image)
-                        <div class="w-full h-48 overflow-hidden">
-                            <img src="{{ $package->image }}" alt="{{ $package->name }}" class="w-full h-full object-cover">
-                        </div>
-                    @else
-                        <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                            <i class="fas fa-image text-gray-400 text-4xl"></i>
-                        </div>
-                    @endif
+<!-- Image -->
+                        @if($package->image)
+                            <div class="w-full h-48 overflow-hidden">
+                                <img src="{{ \App\Helpers\ImageHelper::src($package->image) }}" alt="{{ $package->name }}" class="w-full h-full object-cover">
+                            </div>
+                        @else
+                            <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-image text-gray-400 text-4xl"></i>
+                            </div>
+                        @endif
 
                     <!-- Content -->
                     <div class="p-6 flex flex-col flex-1">

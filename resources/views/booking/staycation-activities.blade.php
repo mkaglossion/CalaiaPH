@@ -66,9 +66,25 @@
     $selectedActivities = $booking['selected_activities'] ?? [];
     $selectedActivityPackages = $booking['selected_activity_packages'] ?? [];
     $staycations = $staycations->keyBy('id');
+    $activityCategoryLabels = \App\Models\ActivityPackageSetting::getCategoryLabels();
+    $activityBookingSectionCopy = \App\Models\ActivityPackageSetting::getBookingSectionCopy();
+    $activityCategoryDefinitions = \App\Models\ActivityPackageSetting::getCategoryLabelDefinitions();
+    $activityCategoryOptions = [];
+    foreach ($activityCategoryDefinitions as $categoryKey => $definition) {
+        $activityCategoryOptions[$categoryKey] = $activityCategoryLabels[$categoryKey] ?? $definition['default'];
+    }
+    $categoryOrder = array_keys($activityCategoryDefinitions);
 
     // Get unique categories from activities
-    $categories = $activities->pluck('category')->unique()->filter()->sort()->values();
+    $categories = $activities->pluck('category')
+        ->map(fn ($category) => strtolower(trim((string) $category)))
+        ->unique()
+        ->filter()
+        ->sortBy(function ($category) use ($categoryOrder) {
+            $position = array_search($category, $categoryOrder, true);
+            return $position === false ? PHP_INT_MAX : $position;
+        })
+        ->values();
     @endphp
 
     @php
@@ -120,7 +136,7 @@
                                     class="block w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8f5d54] focus:border-[#8f5d54]">
                                 <option value="all">All Items</option>
                                 @foreach($categories as $category)
-                                    <option value="{{ strtolower($category) }}">{{ ucfirst($category) }}</option>
+                                    <option value="{{ strtolower($category) }}">{{ $activityCategoryOptions[strtolower($category)] ?? ucfirst(str_replace('_', ' ', strtolower($category))) }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -161,15 +177,15 @@
                     @if($activityPackages->count() > 0)
                         <div class="mb-10">
                             <div class="mb-8 text-center flex flex-col items-center justify-center">
-                                <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">Activity Packages</h2>
+                                <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">{{ $activityBookingSectionCopy['packages']['heading'] ?? 'Activity Packages' }}</h2>
                                 <p class="mt-3 text-base md:text-lg text-gray-500 max-w-2xl">
-                                    Curated activity bundles with special pricing
+                                    {{ $activityBookingSectionCopy['packages']['description'] ?? 'Curated activity bundles with special pricing' }}
                                 </p>
                             </div>
 
                             <div class="cards-grid-responsive">
                                 @foreach($activityPackages as $package)
-                                    @include('booking.partials.activity-package-card', ['package' => $package])
+                                    @include('booking.partials.activity-package-card', ['package' => $package, 'categoryLabels' => $activityCategoryOptions])
                                 @endforeach
                             </div>
                         </div>
@@ -185,16 +201,21 @@
 
                         @if($categoryActivities->count() > 0)
                             <div class="mb-10 mt-12" x-show="selectedCategory === 'all' || selectedCategory === '{{ strtolower($category) }}'">
+                                @php
+                                    $categoryKey = strtolower((string) $category);
+                                    $categoryHeading = $activityBookingSectionCopy[$categoryKey]['heading'] ?? ($activityCategoryOptions[$categoryKey] ?? ucfirst(str_replace('_', ' ', $categoryKey)));
+                                    $categoryDescription = $activityBookingSectionCopy[$categoryKey]['description'] ?? 'Choose from activities a la carte below.';
+                                @endphp
                                 <div class="mb-8 text-center flex flex-col items-center justify-center">
-                                    <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">{{ ucfirst($category) }}</h2>
-                                    <p class="mt-3 text-base md:text-lg text-gray-500 max-w-2xl">
+                                    <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">{{ $categoryHeading }}</h2>
+                                    <p class="mt-3 text-base md:text-lg text-gray-500 max-w-2xl">{{ $categoryDescription }}@if(false)
                                         Choose from activities à la carte below.
-                                    </p>
+                                    @endif</p>
                                 </div>
 
                                 <div class="cards-grid-responsive">
                                     @foreach($categoryActivities as $activity)
-                                        <x-activity-card :activity="$activity" />
+                                        <x-activity-card :activity="$activity" :categoryLabels="$activityCategoryOptions" />
                                     @endforeach
                                 </div>
                             </div>

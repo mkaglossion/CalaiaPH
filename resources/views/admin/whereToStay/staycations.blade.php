@@ -176,10 +176,6 @@
                         </div>
                     </template>
                     
-                    <template x-if="staycation.name && (staycation.name.toLowerCase().includes('byot') || staycation.name.toLowerCase().includes('car camping') || staycation.name.toLowerCase().includes('bring your own'))">
-                        <p class="text-blue-600 font-medium">Special Room: BYOT/Car Camping</p>
-                    </template>
-
                     <div class="text-xs bg-green-50 border border-green-200 rounded p-2 mt-2">
                         <p class="font-semibold text-green-700">Today's Rate:
                             <span x-text="(() => { const rate = getAdminPreviewRate(staycation); return rate !== null ? '\u20B1' + new Intl.NumberFormat('en-US').format(rate) : 'No active rate today'; })()"></span>

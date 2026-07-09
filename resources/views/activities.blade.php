@@ -10,7 +10,7 @@
     @endpush
 
    {{-- Hero Slider --}}
-    <x-hero-slider :images="$swiperImages" />
+    <x-hero-slider :images="$swiperImages" :texts="$heroTexts" />
 
     {{-- ========= PACKAGES SECTION (MERGED FROM /packages) ========= --}}
     <main id="main">
@@ -40,7 +40,7 @@
       </section>
 
     {{-- ========= ACTIVITIES SECTION ========= --}}
-      <section class="container mx-auto px-4 py-12 hidden">
+      <section class="container mx-auto px-4 py-12">
         <div class="max-w-300 mx-auto">
 
           <h2 class="text-3xl md:text-4xl font-bold text-brand mb-4 text-center">
@@ -181,6 +181,8 @@
                      style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,.35) 85%);"></div>
                 <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
                   <span class="bg-brand text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-2.25 px-3 leading-none cursor-pointer"></span>
+                  <h4 class="text-white text-lg sm:text-xl font-bold leading-tight drop-shadow-md"></h4>
+                  <p class="max-w-104 text-sm sm:text-base text-white/90 leading-relaxed drop-shadow-md"></p>
                   <a class="text-white text-[14px] tracking-[.08em] uppercase py-2.25 px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
                   <form action="{{ route('cart.add') }}" method="POST" class="inline">
                     @csrf
@@ -202,6 +204,8 @@
                      style="background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,.35) 85%);"></div>
                 <div class="absolute left-3 bottom-3 flex flex-col items-start gap-1">
                   <span class="bg-brand text-white font-extrabold text-[13px] tracking-[.08em] uppercase rounded-[10px] py-2.25 px-3 leading-none cursor-pointer"></span>
+                  <h4 class="text-white text-lg sm:text-xl font-bold leading-tight drop-shadow-md"></h4>
+                  <p class="max-w-104 text-sm sm:text-base text-white/90 leading-relaxed drop-shadow-md"></p>
                   <a class="text-white text-[14px] tracking-[.08em] uppercase py-2.25 px-3 no-underline hover:underline cursor-pointer">Learn more >></a>
                   <form action="{{ route('cart.add') }}" method="POST" class="inline">
                     @csrf
@@ -388,6 +392,8 @@
         function wire(panelEl, item) {
            const img  = panelEl.querySelector('img');
            const chip = panelEl.querySelector('span');
+           const title = panelEl.querySelector('h4');
+           const summary = panelEl.querySelector('p');
            const link = panelEl.querySelector('a');
            const form = panelEl.querySelector('form');
 
@@ -395,6 +401,8 @@
            img.alt = item.alt || item.title;
            img.style.cursor = 'pointer';
            chip.textContent = item.title;
+           if (title) title.textContent = item.title || '';
+           if (summary) summary.textContent = item.summary || item.details?.[0] || '';
 
            // Set form inputs
            if (form) {

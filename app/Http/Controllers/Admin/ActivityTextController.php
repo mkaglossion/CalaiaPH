@@ -11,13 +11,24 @@ class ActivityTextController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'activity_id' => 'required|exists:activities,id',
+            'activity_id' => 'nullable|exists:activities,id',
             'section' => 'nullable|string|max:255',
             'title' => 'nullable|string|max:255',
+            'label' => 'nullable|string|max:255',
             'content' => 'nullable|string',
+            'text' => 'nullable|string',
         ]);
 
-        $text = ActivityText::create($request->only(['activity_id', 'section', 'title', 'content']));
+        // Support both label/text and title/content field names
+        $label = $request->input('label') ?? $request->input('title');
+        $content = $request->input('text') ?? $request->input('content');
+
+        $text = ActivityText::create([
+            'activity_id' => $request->input('activity_id'),
+            'section' => $request->input('section'),
+            'title' => $label,
+            'content' => $content,
+        ]);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -34,10 +45,20 @@ class ActivityTextController extends Controller
         $request->validate([
             'section' => 'nullable|string|max:255',
             'title' => 'nullable|string|max:255',
+            'label' => 'nullable|string|max:255',
             'content' => 'nullable|string',
+            'text' => 'nullable|string',
         ]);
 
-        $activityText->update($request->only(['section', 'title', 'content']));
+        // Support both label/text and title/content field names
+        $label = $request->input('label') ?? $request->input('title');
+        $content = $request->input('text') ?? $request->input('content');
+
+        $activityText->update([
+            'section' => $request->input('section'),
+            'title' => $label,
+            'content' => $content,
+        ]);
 
         if ($request->expectsJson()) {
             return response()->json([

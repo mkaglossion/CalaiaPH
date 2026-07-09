@@ -11,53 +11,6 @@
     </h1>
     <p class="text-gray-600 mb-10">Manage hero category images and Learn More modal swiper images for the Dining page.</p>
 
-    <div class="mb-10 rounded-2xl border border-gray-200 bg-white/60 backdrop-blur p-6 shadow-sm">
-        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-5">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900">Dining Page Copy</h2>
-            </div>
-
-            <button
-                type="button"
-                @click="saveDiningCopy()"
-                class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
-                Save Dining Copy
-            </button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div>
-                <label for="dining_page_title" class="block font-semibold mb-2 text-gray-700">Page Title</label>
-                <input id="dining_page_title" type="text" x-model="diningCopy.pageTitle" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Dining at CalaiaPH">
-            </div>
-
-            <div>
-                <label for="dining_page_intro" class="block font-semibold mb-2 text-gray-700">Page Intro</label>
-                <textarea id="dining_page_intro" x-model="diningCopy.pageIntro" rows="4" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Experience farm-to-table dining..."></textarea>
-            </div>
-
-            <div>
-                <label for="cta_title" class="block font-semibold mb-2 text-gray-700">CTA Title</label>
-                <input id="cta_title" type="text" x-model="diningCopy.ctaTitle" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Ready to Dine With Us?">
-            </div>
-
-            <div>
-                <label for="cta_intro" class="block font-semibold mb-2 text-gray-700">CTA Intro</label>
-                <textarea id="cta_intro" x-model="diningCopy.ctaIntro" rows="4" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Message us to reserve your dining experience."></textarea>
-            </div>
-
-            <div>
-                <label for="cta_button" class="block font-semibold mb-2 text-gray-700">CTA Button Text</label>
-                <input id="cta_button" type="text" x-model="diningCopy.ctaButton" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Make a Reservation on Messenger">
-            </div>
-
-            <div>
-                <label for="cta_note" class="block font-semibold mb-2 text-gray-700">CTA Note</label>
-                <textarea id="cta_note" x-model="diningCopy.ctaNote" rows="4" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white" placeholder="Available for lunch and dinner reservations."></textarea>
-            </div>
-        </div>
-    </div>
-
     {{-- ============================================================= --}}
     {{-- ============================================================= --}}
     {{-- HERO CATEGORY IMAGES (Top of /dining page) --}}
@@ -472,30 +425,18 @@ function diningImageManager() {
         currentSwiperId: null,
         texts: @js($texts),
         diningCopy: {
-            pageTitle: '',
-            pageIntro: '',
             messHallTitle: '',
             messHallIntro: '',
             cookTitle: '',
             cookIntro: '',
-            ctaTitle: '',
-            ctaIntro: '',
-            ctaButton: '',
-            ctaNote: '',
         },
 
         init() {
             this.diningCopy = {
-                pageTitle: this.getTextValue('dining_page_title', 'Dining at CalaiaPH'),
-                pageIntro: this.getTextValue('dining_page_intro', 'Experience farm-to-table dining in our elegant mess hall or enjoy cooking your own fresh ingredients straight from our farm. Perfect for celebrations, family gatherings, and intimate dinners.'),
                 messHallTitle: this.getTextValue('dining_messhall_title', 'Mess Hall Dining'),
                 messHallIntro: this.getTextValue('dining_messhall_intro', 'Our spacious and elegant mess hall is perfect for group dining and special occasions. Let our chefs prepare delicious farm-to-table meals using the freshest ingredients from our farm.'),
                 cookTitle: this.getTextValue('dining_cook_title', 'Cook Your Own Experience'),
                 cookIntro: this.getTextValue('dining_cook_intro', 'Enjoy cooking your own fresh ingredients harvested directly from our farm. Choose premium, locally sourced ingredients and create your own meal with guidance from our team.'),
-                ctaTitle: this.getTextValue('dining_cta_title', 'Ready to Dine With Us?'),
-                ctaIntro: this.getTextValue('dining_cta_intro', 'Message us to reserve your dining experience. We can accommodate lunch, dinner, group events, and special arrangements.'),
-                ctaButton: this.getTextValue('dining_cta_button', 'Make a Reservation on Messenger'),
-                ctaNote: this.getTextValue('dining_cta_note', 'Available for lunch and dinner reservations. Message us for inquiries.'),
             };
         },
 
@@ -506,74 +447,6 @@ function diningImageManager() {
             });
             const value = (text?.text ?? text?.content ?? '').toString().trim();
             return value ? value : fallback;
-        },
-
-        async saveDiningCopy() {
-            this.isLoading = true;
-
-            try {
-                await this.persistDiningCopy();
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Saved!',
-                    text: 'Dining page copy updated successfully.',
-                    confirmButtonColor: '#2563eb'
-                }).then(() => {
-                    window.location.reload();
-                });
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error?.message || 'Failed to save dining copy.'
-                });
-            } finally {
-                this.isLoading = false;
-            }
-        },
-
-        async persistDiningCopy() {
-            const csrf = document.querySelector('meta[name=csrf-token]').content;
-            const payload = {
-                page_title: this.diningCopy.pageTitle,
-                page_intro: this.diningCopy.pageIntro,
-                messhall_title: this.diningCopy.messHallTitle,
-                messhall_intro: this.diningCopy.messHallIntro,
-                cook_title: this.diningCopy.cookTitle,
-                cook_intro: this.diningCopy.cookIntro,
-                cta_title: this.diningCopy.ctaTitle,
-                cta_intro: this.diningCopy.ctaIntro,
-                cta_button: this.diningCopy.ctaButton,
-                cta_note: this.diningCopy.ctaNote,
-            };
-
-            const res = await fetch('{{ url('/admin/food/category-images/copy') }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': csrf,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const raw = await res.text();
-            let data = {};
-            try {
-                data = raw ? JSON.parse(raw) : {};
-            } catch (_) {
-                data = {};
-            }
-
-            if (!res.ok) {
-                const message = data.errors
-                    ? Object.values(data.errors).flat().join('<br>')
-                    : (data.message || 'Failed to save dining copy.');
-                throw new Error(message);
-            }
-
-            return data;
         },
 
         openHeroModal(category = '') {

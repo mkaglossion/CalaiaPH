@@ -21,7 +21,7 @@
                 <div class="bg-white/70 backdrop-blur-lg border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden flex flex-col h-full" data-package-id="{{ $package->id }}">
                     @if($package->image)
                         <div class="w-full h-48 overflow-hidden">
-                            <img src="{{ $package->image }}" alt="{{ $package->name }}" class="w-full h-full object-cover">
+                            <img src="{{ \App\Helpers\ImageHelper::src($package->image) }}" alt="{{ $package->name }}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                         </div>
                     @else
                         <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
@@ -70,7 +70,7 @@
     {{-- Package Modal --}}
     <div
         x-show="showPackageModal"
-        class="fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm px-4 py-6 overflow-y-auto"
+        class="fixed inset-0 z-1000 bg-black/50 backdrop-blur-sm px-4 py-6 overflow-y-auto"
         x-transition.opacity
         @click.self="showPackageModal = false"
     >
@@ -179,7 +179,7 @@
                 </div>
                 <div class="flex justify-end space-x-3 p-6 border-t border-gray-200">
                     <button type="button" @click="showPackageModal = false" class="px-6 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-100">Cancel</button>
-                    <button type="button" @click="savePackage()" :disabled="isLoading" class="px-6 py-2.5 rounded-xl bg-[#8f5d54] text-white hover:bg-[#7a4d46] disabled:opacity-60" x-text="isLoading ? (isPackageEditMode ? 'Updating...' : 'Creating...') : (isPackageEditMode ? 'Update Package' : 'Create Package')"></button>
+                    <button type="submit" :disabled="isLoading" class="px-6 py-2.5 rounded-xl bg-[#8f5d54] text-white hover:bg-[#7a4d46] disabled:opacity-60" x-text="isLoading ? (isPackageEditMode ? 'Updating...' : 'Creating...') : (isPackageEditMode ? 'Update Package' : 'Create Package')"></button>
                 </div>
             </div>
         </div>

@@ -199,8 +199,8 @@
                         <tr class="hover:bg-gray-50/70 transition">
                             <td class="px-6 py-4 font-medium text-gray-900">{{ $index + 1 }}</td>
                             <td class="px-6 py-4">
-                                @if(str_contains($img->image_path, '/video/'))
-                                    <video src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-20 h-12 object-cover rounded" muted></video>
+                                @if(\App\Helpers\ImageHelper::isVideo($img->image_path ?? $img))
+                                    <img src="{{ \App\Helpers\ImageHelper::src(\App\Helpers\ImageHelper::videoThumbnail($img->image_path ?? $img)) }}" class="w-20 h-12 object-cover rounded" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                 @else
                                     <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-20 h-12 object-cover rounded" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                                 @endif

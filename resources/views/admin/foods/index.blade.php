@@ -227,7 +227,7 @@
             @input="filterFoods()"
             type="text"
             autocomplete="off"
-            placeholder="Search by name or category..."
+            placeholder="&#128269; Search by name or category..."
             class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:border-blue-500 focus:outline-none transition"
         >
     </div>

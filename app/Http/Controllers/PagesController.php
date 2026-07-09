@@ -10,6 +10,7 @@ use App\Models\FarmSwiperImage;
 use App\Models\FoodSwiperImage;
 use App\Models\SpecialSwiperImage;
 use App\Models\StaySwiperImage;
+use App\Models\StaycationSwiperImage;
 use App\Models\HomeText;
 use App\Models\DayTourText;
 use App\Models\StayText;
@@ -179,6 +180,20 @@ class PagesController extends Controller
             'texts',
             'swiperImages'
         ])->get();
+
+        $staycations->each(function (Staycation $staycation) {
+            if ($staycation->swiperImages->isNotEmpty() || blank($staycation->image)) {
+                return;
+            }
+
+            $staycation->setRelation('swiperImages', collect([
+                new StaycationSwiperImage([
+                    'staycation_id' => $staycation->id,
+                    'title' => $staycation->name,
+                    'image_path' => $staycation->image,
+                ]),
+            ]));
+        });
 
         // Use default dates for availability display (next 2 days)
         $checkin = now()->addDay()->format('Y-m-d');
@@ -705,6 +720,11 @@ class PagesController extends Controller
                 return [strtolower((string) ($item->label ?? '')) => $item->text];
             })
             ->toArray();
+        $heroTexts = collect($texts)
+            ->reject(function ($value, $key) {
+                return str_starts_with((string) $key, 'packages_');
+            })
+            ->toArray();
 
         $packagesSectionTitle = $this->pageTextValue($texts, [
             'packages_title',
@@ -728,7 +748,7 @@ class PagesController extends Controller
         $activities = Activity::with('swiperImages')->get();
         $slidesByCategory = $this->formatActivitiesForSlides($activities, $activities);
 
-        $data = compact('swiperImages', 'texts', 'slidesByCategory', 'packages', 'packagesSectionTitle', 'packagesSectionIntro');
+        $data = compact('swiperImages', 'texts', 'heroTexts', 'slidesByCategory', 'packages', 'packagesSectionTitle', 'packagesSectionIntro');
         $data['active'] = 'activities';
         
         return view('activities', $data);
@@ -787,6 +807,7 @@ class PagesController extends Controller
                 'title' => $activity->name,
                 'images' => $modalImages, // Only swiper images for modal
                 'price' => $activity->price,
+                'summary' => $activity->description,
                 'details' => array_filter([$activity->description, $activity->duration ? 'Duration: ' . $activity->duration : null]),
             ];
         }
@@ -822,6 +843,7 @@ class PagesController extends Controller
                         'img'     => $carouselImg, // Use activity image for carousel
                         'alt'     => $left['title'],
                         'price'   => $left['price'] ?? 0,
+                        'summary' => $left['summary'] ?? '',
                         'details' => $left['details'] ?? [],
                         'images'  => $left['images'] ?? [], // Swiper images for modal
                     ];
@@ -846,6 +868,7 @@ class PagesController extends Controller
                         'img'     => $carouselImg, // Use activity image for carousel
                         'alt'     => $right['title'],
                         'price'   => $right['price'] ?? 0,
+                        'summary' => $right['summary'] ?? '',
                         'details' => $right['details'] ?? [],
                         'images'  => $right['images'] ?? [], // Swiper images for modal
                     ];
@@ -877,6 +900,11 @@ class PagesController extends Controller
         $texts = FoodText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
+        $heroTexts = collect($texts)
+            ->reject(function ($value, $key) {
+                return str_starts_with((string) $key, 'dining_');
+            })
+            ->toArray();
 
         $diningPageTitle = $this->pageTextValue($texts, ['dining_page_title'], 'Dining at CalaiaPH');
         $diningPageIntro = $this->pageTextValue($texts, ['dining_page_intro'], 'Experience farm-to-table dining in our elegant mess hall or enjoy cooking your own fresh ingredients straight from our farm. Perfect for celebrations, family gatherings, and intimate dinners.');
@@ -889,7 +917,7 @@ class PagesController extends Controller
         $ctaButton = $this->pageTextValue($texts, ['dining_cta_button'], 'Make a Reservation on Messenger');
         $ctaNote = $this->pageTextValue($texts, ['dining_cta_note'], 'Available for lunch and dinner reservations. Message us for inquiries.');
 
-        $data = compact('swiperImages', 'texts', 'messHallFoods', 'cookYourOwnFoods', 'diningCategoryImages', 'diningPageTitle', 'diningPageIntro', 'messHallTitle', 'messHallIntro', 'cookYourOwnTitle', 'cookYourOwnIntro', 'ctaTitle', 'ctaIntro', 'ctaButton', 'ctaNote');
+        $data = compact('swiperImages', 'texts', 'heroTexts', 'messHallFoods', 'cookYourOwnFoods', 'diningCategoryImages', 'diningPageTitle', 'diningPageIntro', 'messHallTitle', 'messHallIntro', 'cookYourOwnTitle', 'cookYourOwnIntro', 'ctaTitle', 'ctaIntro', 'ctaButton', 'ctaNote');
         $data['active'] = 'dining';
         
         return view('dining', $data);
@@ -906,6 +934,11 @@ class PagesController extends Controller
         $texts = SpecialText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
+        $heroTexts = collect($texts)
+            ->reject(function ($value, $key) {
+                return str_starts_with((string) $key, 'special_events_');
+            })
+            ->toArray();
         $events = Event::with(['swiperImages', 'texts'])->get();
 
         $specialEventsPageTitle = $this->pageTextValue($texts, ['special_events_title', 'title', 'heading'], 'Our Special Events');
@@ -920,6 +953,7 @@ class PagesController extends Controller
         $data = compact(
             'swiperImages',
             'texts',
+            'heroTexts',
             'events',
             'specialEventsPageTitle',
             'specialEventsPageIntro',
@@ -941,6 +975,11 @@ class PagesController extends Controller
         $texts = FarmText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
+        $heroTexts = collect($texts)
+            ->reject(function ($value, $key) {
+                return str_starts_with((string) $key, 'farm_page_');
+            })
+            ->toArray();
 
         $farmPageTitle = $this->pageTextValue($texts, ['farm_page_title', 'title', 'heading'], 'Our Sustainable Farming');
         $farmPageIntro = $this->pageTextValue($texts, ['farm_page_intro', 'intro', 'subtitle', 'description'], 'Discover how we raise livestock and grow produce with respect for nature and animal welfare');
@@ -960,7 +999,7 @@ class PagesController extends Controller
             ];
         })->toArray();
         
-        $data = compact('swiperImages', 'texts', 'farmExperiences', 'farmPageTitle', 'farmPageIntro');
+        $data = compact('swiperImages', 'texts', 'heroTexts', 'farmExperiences', 'farmPageTitle', 'farmPageIntro');
         $data['active'] = 'farm';
 
         return view('farm', $data);
@@ -977,6 +1016,11 @@ class PagesController extends Controller
         $texts = ShopText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
+        $heroTexts = collect($texts)
+            ->reject(function ($value, $key) {
+                return str_starts_with((string) $key, 'shop_page_');
+            })
+            ->toArray();
 
         $shopPageTitle = $this->pageTextValue($texts, ['shop_page_title', 'title', 'heading'], 'Shop Our Products');
         $shopPageIntro = $this->pageTextValue($texts, ['shop_page_intro', 'intro', 'subtitle', 'description'], 'Farm-fresh produce and quality frozen goods delivered straight from our fields to your table');
@@ -990,7 +1034,7 @@ class PagesController extends Controller
         $frozenProducts = $allProducts->where('category', 'frozen');
         $freshProducts = $allProducts->where('category', 'fresh');
 
-        $data = compact('swiperImages', 'texts', 'frozenProducts', 'freshProducts', 'shopPageTitle', 'shopPageIntro');
+        $data = compact('swiperImages', 'texts', 'heroTexts', 'frozenProducts', 'freshProducts', 'shopPageTitle', 'shopPageIntro');
         $data['active'] = 'shop';
 
         return view('shop', $data);

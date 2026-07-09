@@ -1,13 +1,8 @@
 @php
     $category = strtolower($package->category ?? 'adventure');
+    $categoryLabels = $categoryLabels ?? [];
 
-    $categoryLabel = match ($category) {
-        'adventure' => 'Adventure',
-        'wellness' => 'Wellness',
-        'cultural' => 'Cultural',
-        'special' => 'Special',
-        default => ucfirst(str_replace('_', ' ', $category)),
-    };
+    $categoryLabel = $categoryLabels[$category] ?? ucfirst(str_replace('_', ' ', $category));
 
     $packageActivities = $package->activities->map(function ($activity) {
         return [
