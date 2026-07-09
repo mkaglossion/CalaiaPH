@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Food;
 use App\Models\FoodPackage;
+use App\Models\FoodPackageSetting;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Validation\ValidationException;
 
 class FoodPackageController extends Controller
 {
@@ -32,6 +35,7 @@ class FoodPackageController extends Controller
 
     protected const CATEGORIES = [
         'messhall' => 'Messhall',
+        'overnight_stay_menu' => 'Overnight Stay Menu',
         'cook_your_own' => 'Cook Your Own',
         'special' => 'Special',
     ];
@@ -39,36 +43,192 @@ class FoodPackageController extends Controller
     /**
      * Get validation rules for food packages
      */
-    private function getValidationRules(): array
+    private function getValidationRules(Request $request): array
     {
-        return [
+        $isStructuredPackage = strtolower((string) $request->input('category', '')) === 'overnight_stay_menu';
+
+        $baseRules = [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'category' => 'required|in:messhall,cook_your_own,special',
+            'category' => 'required|in:messhall,overnight_stay_menu,cook_your_own,special',
             'meal_type' => 'nullable|string|in:breakfast,lunch,dinner,all_day',
             'sort_order' => 'nullable|integer|min:1',
             'price' => 'nullable|numeric|min:0',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:20480',
+            'remove_image' => 'nullable|in:1',
             'is_active' => 'boolean',
             'is_inventory_managed' => 'boolean',
             'stock_quantity' => 'required_if:is_inventory_managed,true|nullable|integer|min:1',
-            'foods' => 'required|array|min:1',
-            'foods.*' => 'integer|exists:foods,id',
-            'quantities' => 'required|array',
-            'quantities.*' => 'integer|min:1',
         ];
+
+        if ($isStructuredPackage) {
+            $baseRules['sections'] = 'required|array|min:1';
+            $baseRules['sections.*.title'] = 'required|string|max:255';
+            $baseRules['sections.*.mode'] = 'nullable|string|in:included,choice';
+            $baseRules['sections.*.note'] = 'nullable|string|max:255';
+            $baseRules['sections.*.choice_limit'] = 'nullable|integer|min:1|max:20';
+            $baseRules['sections.*.items'] = 'required|array|min:1';
+            $baseRules['sections.*.items.*.food_id'] = 'required|integer|exists:foods,id';
+            $baseRules['sections.*.items.*.quantity'] = 'nullable|integer|min:1|max:20';
+            $baseRules['foods'] = 'nullable|array';
+            $baseRules['quantities'] = 'nullable|array';
+        } else {
+            $baseRules['foods'] = 'required|array|min:1';
+            $baseRules['foods.*'] = 'integer|exists:foods,id';
+            $baseRules['quantities'] = 'required|array';
+            $baseRules['quantities.*'] = 'integer|min:1';
+        }
+
+        return $baseRules;
     }
 
-    /**
-     * Sync package foods with quantities
-     */
+    private function normalizePackageSections(array $sections): array
+    {
+        return collect($sections)
+            ->filter(fn ($section) => is_array($section))
+            ->map(function (array $section) {
+                return [
+                    'title' => trim((string) ($section['title'] ?? '')),
+                    'mode' => in_array(($section['mode'] ?? 'included'), ['included', 'choice'], true) ? $section['mode'] : 'included',
+                    'note' => trim((string) ($section['note'] ?? '')),
+                    'choice_limit' => max(1, (int) ($section['choice_limit'] ?? 1)),
+                    'items' => collect($section['items'] ?? [])
+                        ->filter(fn ($item) => is_array($item))
+                        ->map(function (array $item) {
+                            return [
+                                'food_id' => (int) ($item['food_id'] ?? 0),
+                                'quantity' => max(1, (int) ($item['quantity'] ?? 1)),
+                            ];
+                        })
+                        ->filter(fn ($item) => $item['food_id'] > 0)
+                        ->values()
+                        ->all(),
+                ];
+            })
+            ->filter(function (array $section) {
+                return $section['title'] !== '' && !empty($section['items']);
+            })
+            ->values()
+            ->all();
+    }
+
+    private function getSectionFoods(array $sections): array
+    {
+        return collect($sections)
+            ->flatMap(fn ($section) => collect($section['items'] ?? [])->pluck('food_id'))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function calculateFlatPackageTotal(array $validated): float
+    {
+        $foodIds = array_values(array_filter(array_map('intval', $validated['foods'] ?? [])));
+        if (empty($foodIds)) {
+            return 0;
+        }
+
+        $foods = Food::select('id', 'price')
+            ->whereIn('id', $foodIds)
+            ->get()
+            ->keyBy('id');
+
+        $total = 0;
+        foreach (($validated['foods'] ?? []) as $index => $foodId) {
+            $foodId = (int) $foodId;
+            if (!isset($foods[$foodId])) {
+                continue;
+            }
+
+            $quantity = max(1, (int) ($validated['quantities'][$index] ?? 1));
+            $total += ((float) $foods[$foodId]->price) * $quantity;
+        }
+
+        return $total;
+    }
+
+    private function calculateStructuredPackageTotal(array $sections): float
+    {
+        $foodIds = collect($sections)
+            ->flatMap(function ($section) {
+                $mode = strtolower((string) ($section['mode'] ?? 'included'));
+                $choiceLimit = max(1, (int) ($section['choice_limit'] ?? 1));
+                $items = collect($section['items'] ?? [])
+                    ->filter(fn ($item) => is_array($item) && filled($item['food_id'] ?? null))
+                    ->values();
+
+                if ($mode === 'choice') {
+                    $items = $items->take($choiceLimit);
+                }
+
+                return $items->pluck('food_id');
+            })
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($foodIds)) {
+            return 0;
+        }
+
+        $foods = Food::select('id', 'price')
+            ->whereIn('id', $foodIds)
+            ->get()
+            ->keyBy('id');
+
+        return collect($sections)
+            ->sum(function (array $section) use ($foods) {
+                $mode = strtolower((string) ($section['mode'] ?? 'included'));
+                $choiceLimit = max(1, (int) ($section['choice_limit'] ?? 1));
+                $items = collect($section['items'] ?? [])
+                    ->filter(fn ($item) => is_array($item) && filled($item['food_id'] ?? null))
+                    ->values();
+
+                if ($mode === 'choice') {
+                    $items = $items->take($choiceLimit);
+                }
+
+                return $items->sum(function (array $item) use ($foods) {
+                    $foodId = (int) ($item['food_id'] ?? 0);
+                    $food = $foods[$foodId] ?? null;
+                    $quantity = max(1, (int) ($item['quantity'] ?? 1));
+
+                    return ((float) ($food->price ?? 0)) * $quantity;
+                });
+            });
+    }
+
     private function syncPackageFoods(FoodPackage $package, array $validated): void
     {
+        $category = strtolower((string) ($validated['category'] ?? $package->category ?? ''));
+        $sections = $validated['sections'] ?? [];
+
+        if ($category === 'overnight_stay_menu' && !empty($sections)) {
+            $syncData = [];
+            foreach ($this->getSectionFoods($sections) as $foodId) {
+                $syncData[$foodId] = ['quantity' => 1];
+            }
+
+            $package->foods()->sync($syncData);
+            return;
+        }
+
+        $this->syncPackageFoodsLegacy($package, $validated);
+    }
+
+    private function syncPackageFoodsLegacy(FoodPackage $package, array $validated): void
+    {
         $syncData = [];
-        foreach ($validated['foods'] as $index => $foodId) {
+        foreach (($validated['foods'] ?? []) as $index => $foodId) {
             $syncData[$foodId] = [
-                'quantity' => $validated['quantities'][$index] ?? 1,
+                'quantity' => ($validated['quantities'][$index] ?? 1),
             ];
         }
+
         $package->foods()->sync($syncData);
     }
 
@@ -88,6 +248,8 @@ class FoodPackageController extends Controller
             'category' => $package->category,
             'meal_type' => $package->meal_type,
             'sort_order' => $package->sort_order,
+            'image' => $package->image,
+            'sections' => $package->sections ?? [],
             'price' => $package->price,
             'effective_price' => $package->getEffectivePrice(),
             'is_active' => $package->is_active,
@@ -110,7 +272,7 @@ class FoodPackageController extends Controller
     private function getFormData(): array
     {
         return [
-            'categories' => self::CATEGORIES,
+            'categories' => FoodPackageSetting::getPackageCategoryLabels(),
             'foods' => Food::select('id', 'name', 'category', 'price', 'is_active')
                 ->orderBy('category')
                 ->orderBy('name')
@@ -149,32 +311,84 @@ class FoodPackageController extends Controller
     {
         $this->ensurePackageOrderingColumns();
 
-        $validated = $request->validate($this->getValidationRules());
+        try {
+            $sections = $request->input('sections', []);
+            if (is_string($sections)) {
+                $sections = json_decode($sections, true) ?: [];
+            }
+            if (is_array($sections)) {
+                $request->merge(['sections' => $sections]);
+            }
 
-        $package = FoodPackage::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'],
-            'category' => $validated['category'],
-            'meal_type' => $validated['meal_type'] ?? 'all_day',
-            'sort_order' => $validated['sort_order'] ?? 1,
-            'price' => $validated['price'],
-            'is_active' => $request->has('is_active'),
-            'is_inventory_managed' => $request->has('is_inventory_managed'),
-            'stock_quantity' => $validated['stock_quantity'] ?? 999,
-        ]);
+            $validated = $request->validate($this->getValidationRules($request));
 
-        $this->syncPackageFoods($package, $validated);
+            $structuredSections = [];
+            if (($validated['category'] ?? '') === 'overnight_stay_menu') {
+                $structuredSections = $this->normalizePackageSections($validated['sections'] ?? []);
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Package created successfully!',
-                'package' => $this->packageToArray($package),
-            ], 201);
+                if (empty($structuredSections)) {
+                    throw ValidationException::withMessages([
+                        'sections' => 'Overnight Stay Menu packages need at least one section.',
+                    ]);
+                }
+            }
+
+            $imageUrl = null;
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $uploadResult = Cloudinary::uploadApi()->upload($file->getRealPath(), ['resource_type' => 'auto']);
+                $imageUrl = $uploadResult['secure_url'];
+            }
+
+            $price = $validated['price'] ?? null;
+            if (($price === null || $price === '') && $validated['category'] !== 'overnight_stay_menu') {
+                $price = $this->calculateFlatPackageTotal($validated);
+            } elseif (($price === null || $price === '') && !empty($structuredSections)) {
+                $price = $this->calculateStructuredPackageTotal($structuredSections);
+            } elseif ($price === null || $price === '') {
+                $price = 0;
+            }
+
+            $package = FoodPackage::create([
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'category' => $validated['category'],
+                'meal_type' => $validated['meal_type'] ?? 'all_day',
+                'sort_order' => $validated['sort_order'] ?? 1,
+                'price' => $price,
+                'image' => $imageUrl,
+                'sections' => !empty($structuredSections) ? $structuredSections : null,
+                'is_active' => $request->boolean('is_active', true),
+                'is_inventory_managed' => $request->boolean('is_inventory_managed', false),
+                'stock_quantity' => $validated['stock_quantity'] ?? 999,
+            ]);
+
+            $this->syncPackageFoods($package, $validated);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Package created successfully!',
+                    'package' => $this->packageToArray($package),
+                ], 201);
+            }
+
+            return redirect()->route('admin.foods.index')
+                ->with('success', 'Package created successfully!');
+        } catch (ValidationException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+            throw $e;
+        } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
-
-        return redirect()->route('admin.foods.index')
-            ->with('success', 'Package created successfully!');
     }
 
     /**
@@ -209,32 +423,86 @@ class FoodPackageController extends Controller
     {
         $this->ensurePackageOrderingColumns();
 
-        $validated = $request->validate($this->getValidationRules());
+        try {
+            $sections = $request->input('sections', []);
+            if (is_string($sections)) {
+                $sections = json_decode($sections, true) ?: [];
+            }
+            if (is_array($sections)) {
+                $request->merge(['sections' => $sections]);
+            }
 
-        $package->update([
-            'name' => $validated['name'],
-            'description' => $validated['description'],
-            'category' => $validated['category'],
-            'meal_type' => $validated['meal_type'] ?? 'all_day',
-            'sort_order' => $validated['sort_order'] ?? 1,
-            'price' => $validated['price'],
-            'is_active' => $request->has('is_active'),
-            'is_inventory_managed' => $request->has('is_inventory_managed'),
-            'stock_quantity' => $validated['stock_quantity'] ?? 999,
-        ]);
+            $validated = $request->validate($this->getValidationRules($request));
 
-        $this->syncPackageFoods($package, $validated);
+            $structuredSections = [];
+            if (($validated['category'] ?? '') === 'overnight_stay_menu') {
+                $structuredSections = $this->normalizePackageSections($validated['sections'] ?? []);
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Package updated successfully!',
-                'package' => $this->packageToArray($package),
-            ]);
+                if (empty($structuredSections)) {
+                    throw ValidationException::withMessages([
+                        'sections' => 'Overnight Stay Menu packages need at least one section.',
+                    ]);
+                }
+            }
+
+            $price = $validated['price'] ?? '';
+            if ($price === '' && ($validated['category'] ?? '') !== 'overnight_stay_menu') {
+                $price = $this->calculateFlatPackageTotal($validated);
+            } elseif ($price === '' && !empty($structuredSections)) {
+                $price = $this->calculateStructuredPackageTotal($structuredSections);
+            } elseif ($price === '') {
+                $price = 0;
+            }
+
+            $updateData = [
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'category' => $validated['category'],
+                'meal_type' => $validated['meal_type'] ?? 'all_day',
+                'sort_order' => $validated['sort_order'] ?? 1,
+                'price' => $price,
+                'sections' => !empty($structuredSections) ? $structuredSections : null,
+                'is_active' => $request->boolean('is_active', true),
+                'is_inventory_managed' => $request->boolean('is_inventory_managed', false),
+                'stock_quantity' => $validated['stock_quantity'] ?? 999,
+            ];
+
+            if ($request->boolean('remove_image')) {
+                $updateData['image'] = null;
+            } elseif ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $uploadResult = Cloudinary::uploadApi()->upload($file->getRealPath(), ['resource_type' => 'auto']);
+                $updateData['image'] = $uploadResult['secure_url'];
+            }
+
+            $package->update($updateData);
+
+            $this->syncPackageFoods($package, $validated);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Package updated successfully!',
+                    'package' => $this->packageToArray($package),
+                ]);
+            }
+
+            return redirect()->route('admin.foods.index')
+                ->with('success', 'Package updated successfully!');
+        } catch (ValidationException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+            throw $e;
+        } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
-
-        return redirect()->route('admin.foods.index')
-            ->with('success', 'Package updated successfully!');
     }
 
     /**
@@ -278,10 +546,8 @@ class FoodPackageController extends Controller
         }])->withCount('foods')
             ->orderBy('category');
 
-        if (Schema::hasColumn('food_packages', 'meal_type') && Schema::hasColumn('food_packages', 'sort_order')) {
-            $packagesQuery
-                ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
-                ->orderBy('sort_order');
+        if (Schema::hasColumn('food_packages', 'sort_order')) {
+            $packagesQuery->orderBy('sort_order');
         }
 
         $packages = $packagesQuery->orderBy('name')->get();
@@ -294,9 +560,11 @@ class FoodPackageController extends Controller
                 'category' => $package->category,
                 'meal_type' => $package->meal_type,
                 'sort_order' => $package->sort_order,
+                'image' => $package->image,
+                'sections' => $package->sections ?? [],
                 'effective_price' => $package->getEffectivePrice(),
                 'is_active' => $package->is_active,
-                'foods_count' => $package->foods_count,
+                'foods_count' => $package->hasStructuredSections() ? $package->getDisplayItemsCount() : $package->foods_count,
                 'edit_url' => route('admin.food.packages.edit', $package),
                 'delete_url' => route('admin.food.packages.destroy', $package),
             ];

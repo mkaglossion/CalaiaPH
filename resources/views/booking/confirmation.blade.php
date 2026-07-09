@@ -291,7 +291,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                                         stripos($activity['name'] ?? '', 'car camping') !== false || 
                                         stripos($activity['name'] ?? '', 'bring your own') !== false;
                     @endphp
-                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }}
+                    <li>&bull; {{ $activity['name'] }} - &#8369;{{ number_format($activity['price'], 2) }}
                       @if(!$isByotOrCamping)
                         x {{ $activity['guests'] ?? 1 }}
                       @endif
@@ -312,7 +312,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                       $packageQuantity = (int) ($package['quantity'] ?? 1);
                       $packageTotal = $packagePrice * $packageQuantity;
                     @endphp
-                    <li>â€¢ {{ $packageName }} - â‚±{{ number_format($packagePrice, 2) }} x {{ $packageQuantity }} = â‚±{{ number_format($packageTotal, 2) }}</li>
+                    <li>&bull; {{ $packageName }} - &#8369;{{ number_format($packagePrice, 2) }} x {{ $packageQuantity }} = &#8369;{{ number_format($packageTotal, 2) }}</li>
                   @endforeach
                 </ul>
               </div>
@@ -322,16 +322,16 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
               <div class="space-y-2">
                 <div class="flex justify-between items-center text-sm">
                   <span>Day Visit Package:</span>
-                  <span>₱{{ number_format($bookingData['price'] ?? 0, 2) }}</span>
+                  <span>&#8369;{{ number_format($bookingData['price'] ?? 0, 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center text-sm">
                   <span>Activities Total:</span>
-                  <span>₱{{ number_format(collect($selectedActivities ?? [])->sum(function($activity) { return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1); }), 2) }}</span>
+                  <span>&#8369;{{ number_format(collect($selectedActivities ?? [])->sum(function($activity) { return ($activity['price'] ?? 0) * ($activity['guests'] ?? 1); }), 2) }}</span>
                 </div>
                 {{-- Subtotal (VAT-inclusive) --}}
                 <div class="flex justify-between items-center text-sm border-t border-gray-200 pt-2">
                   <span>Subtotal:</span>
-                  <span class="font-medium">₱{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal ?? 0, 2) }}</span>
+                  <span class="font-medium">&#8369;{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal ?? 0, 2) }}</span>
                 </div>
                 
                 {{-- VAT Breakdown --}}
@@ -340,11 +340,11 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                     <i class="bi bi-info-circle text-gray-400 text-xs"></i>
 <x-vat-label />
                   </span>
-                  <span>₱{{ number_format($vatBreakdown['vat_amount'] ?? 0, 2) }}</span>
+                  <span>&#8369;{{ number_format($vatBreakdown['vat_amount'] ?? 0, 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
                   <span>Total Amount Paid:</span>
-                  <span class="text-[#8f5d54]">₱{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal ?? 0, 2) }}</span>
+                  <span class="text-[#8f5d54]">&#8369;{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal ?? 0, 2) }}</span>
                 </div>
                 <!--<p class="text-xs text-gray-500 italic text-center mt-2">
                   * All prices are VAT-inclusive as required by Philippine tax regulations.
@@ -473,7 +473,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                     $foodQuantity = $foodData['quantity'] ?? 1;
                     $foodItemTotal = $foodPrice * $foodQuantity;
                     @endphp
-                    <li>• {{ $foodName }} - ₱{{ number_format($foodPrice, 2) }} × {{ $foodQuantity }} = ₱{{ number_format($foodItemTotal, 2) }}</li>
+                    <li>&bull; {{ $foodName }} - &#8369;{{ number_format($foodPrice, 2) }} Ã— {{ $foodQuantity }} = &#8369;{{ number_format($foodItemTotal, 2) }}</li>
                   @empty
                     <li>No foods selected</li>
                   @endforelse
@@ -491,7 +491,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                                         stripos($activity['name'] ?? '', 'car camping') !== false || 
                                         stripos($activity['name'] ?? '', 'bring your own') !== false;
                     @endphp
-                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }}
+                    <li>&bull; {{ $activity['name'] }} - &#8369;{{ number_format($activity['price'], 2) }}
                       @if(!$isByotOrCamping)
                         x {{ $activity['guests'] }}
                       @endif
@@ -506,19 +506,19 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                 @if($accommodationTotal > 0)
                 <div class="flex justify-between items-center text-sm">
                   <span>Accommodation Total:</span>
-                  <span>₱{{ number_format($accommodationTotal, 2) }}</span>
+                  <span>&#8369;{{ number_format($accommodationTotal, 2) }}</span>
                 </div>
                 @endif
                 @if($foodTotal > 0)
                 <div class="flex justify-between items-center text-sm">
                   <span>Food & Beverages Total:</span>
-                  <span>₱{{ number_format($foodTotal, 2) }}</span>
+                  <span>&#8369;{{ number_format($foodTotal, 2) }}</span>
                 </div>
                 @endif
                 @if($activitiesTotal > 0)
                 <div class="flex justify-between items-center text-sm">
                   <span>Activities Total:</span>
-                  <span>₱{{ number_format($activitiesTotal, 2) }}</span>
+                  <span>&#8369;{{ number_format($activitiesTotal, 2) }}</span>
                 </div>
                 @endif
                 @if((float)($paymentSummary['promo_discount'] ?? 0) > 0)
@@ -530,16 +530,16 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                 {{-- Subtotal (VAT-inclusive) --}}
                 <div class="flex justify-between items-center text-sm border-t border-gray-200 pt-2">
                   <span>Subtotal:</span>
-                  <span class="font-medium">₱{{ number_format($vatBreakdown['gross_amount'] ?? ($accommodationTotal + $foodTotal + $activitiesTotal), 2) }}</span>
+                  <span class="font-medium">&#8369;{{ number_format($vatBreakdown['gross_amount'] ?? ($accommodationTotal + $foodTotal + $activitiesTotal), 2) }}</span>
                 </div>
                 {{-- VAT Included --}}
                 <div class="flex justify-between items-center text-sm text-gray-500">
                   <span>Includes 12% VAT:</span>
-                  <span>₱{{ number_format($vatBreakdown['vat_amount'] ?? 0, 2) }}</span>
+                  <span>&#8369;{{ number_format($vatBreakdown['vat_amount'] ?? 0, 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
                   <span>Total Amount Paid:</span>
-                  <span class="text-[#8f5d54]">₱{{ number_format($vatBreakdown['gross_amount'] ?? ($accommodationTotal + $foodTotal + $activitiesTotal), 2) }}</span>
+                  <span class="text-[#8f5d54]">&#8369;{{ number_format($vatBreakdown['gross_amount'] ?? ($accommodationTotal + $foodTotal + $activitiesTotal), 2) }}</span>
                 </div>
                 <!-- <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.1/css/all.css" integrity="sha384-O8whS3fhG2OnA5Kas0Y9l3cfpmYjapjI0E4theH4iuMD+pLhbf6JI0jIMfYcK3yZ" crossorigin="anonymous">
                 <p class="text-xs text-gray-500 italic text-center mt-2">
@@ -598,7 +598,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                                         stripos($activity['name'] ?? '', 'car camping') !== false || 
                                         stripos($activity['name'] ?? '', 'bring your own') !== false;
                     @endphp
-                    <li>• {{ $activity['name'] }} - ₱{{ number_format($activity['price'], 2) }}
+                    <li>&bull; {{ $activity['name'] }} - &#8369;{{ number_format($activity['price'], 2) }}
                       @if(!$isByotOrCamping)
                         x {{ $activity['guests'] ?? 1 }}
                       @endif
@@ -613,7 +613,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                 @if(($bookingData['price'] ?? 0) > 0)
                 <div class="flex justify-between items-center text-sm">
                   <span>Accommodation Total:</span>
-                  <span>₱{{ number_format($bookingData['price'] ?? 0, 2) }}</span>
+                  <span>&#8369;{{ number_format($bookingData['price'] ?? 0, 2) }}</span>
                 </div>
                 @endif
                 @php
@@ -622,22 +622,22 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                 @if($activitiesTotal > 0)
                 <div class="flex justify-between items-center text-sm">
                   <span>Activities Total:</span>
-                  <span>₱{{ number_format($activitiesTotal, 2) }}</span>
+                  <span>&#8369;{{ number_format($activitiesTotal, 2) }}</span>
                 </div>
                 @endif
                 {{-- Subtotal (VAT-inclusive) --}}
                 <div class="flex justify-between items-center text-sm border-t border-gray-200 pt-2">
                   <span>Subtotal:</span>
-                  <span class="font-medium">₱{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal, 2) }}</span>
+                  <span class="font-medium">&#8369;{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal, 2) }}</span>
                 </div>
                 {{-- VAT Included --}}
                 <div class="flex justify-between items-center text-sm text-gray-500">
                   <span>Includes 12% VAT:</span>
-                  <span>₱{{ number_format($vatBreakdown['vat_amount'] ?? 0, 2) }}</span>
+                  <span>&#8369;{{ number_format($vatBreakdown['vat_amount'] ?? 0, 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center text-lg font-semibold pt-2 border-t border-gray-300">
                   <span>Total Amount Paid:</span>
-                  <span class="text-[#8f5d54]">₱{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal, 2) }}</span>
+                  <span class="text-[#8f5d54]">&#8369;{{ number_format($vatBreakdown['gross_amount'] ?? $grandTotal, 2) }}</span>
                 </div>
                 <!-- <p class="text-xs text-gray-500 italic text-center mt-2">
                   * All prices are VAT-inclusive as required by Philippine tax regulations.

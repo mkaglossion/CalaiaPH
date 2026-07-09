@@ -13,15 +13,29 @@
     </div>
 
     <div class="border-t border-gray-200 pt-3">
-        <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Includes:</p>
-        <div class="space-y-1">
-            @foreach($includedFoods as $item)
-                <div class="text-gray-700 text-xs">
-                    <span class="font-semibold text-gray-600">{{ $item['quantity'] }}x</span>
-                    <span>{{ $item['name'] }}</span>
-                </div>
-            @endforeach
-        </div>
+        @if(!empty($selectedChoices ?? []))
+            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Choices:</p>
+            <div class="space-y-1 mb-3">
+                @foreach($selectedChoices as $choice)
+                    <div class="text-gray-700 text-xs">
+                        <span class="font-semibold text-gray-600">{{ $choice['section_title'] ?? 'Choice' }}:</span>
+                        <span>{{ $choice['food_name'] ?? 'Selected item' }}</span>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
+        @if(!empty($includedFoods))
+            <p class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Includes:</p>
+            <div class="space-y-1">
+                @foreach($includedFoods as $item)
+                    <div class="text-gray-700 text-xs">
+                        <span class="font-semibold text-gray-600">{{ $item['quantity'] }}x</span>
+                        <span>{{ $item['name'] }}</span>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     @if($quantity > 1)

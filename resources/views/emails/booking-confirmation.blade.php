@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <!-- Updated to fix undefined variable -->
 <html lang="en">
 <head>

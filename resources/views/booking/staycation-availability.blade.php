@@ -1,4 +1,4 @@
-﻿{{-- resources/views/booking/staycation-availability.blade.php --}}
+{{-- resources/views/booking/staycation-availability.blade.php --}}
 <x-app-layout active-header="booking">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>

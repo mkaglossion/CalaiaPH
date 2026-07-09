@@ -547,7 +547,7 @@
             </li>
             <li class="flex items-center gap-1.5">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              <span class="text-gray-900 font-medium truncate max-w-[200px] sm:max-w-xs">@yield('title', 'Admin Panel')</span>
+              <span class="text-gray-900 font-medium truncate max-w-50 sm:max-w-xs">@yield('title', 'Admin Panel')</span>
             </li>
           </ol>
         </nav>

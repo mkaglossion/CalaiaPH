@@ -654,6 +654,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::prefix('/food')->group(function () {
             Route::get('/food-and-beverage', [AdminPagesController::class, 'foodAndBeverage'])->name('admin.food.foodandbeverage');
             Route::get('/menus', [AdminController::class, 'menu'])->name('admin.food.menus');
+            Route::post('/category-label', [\App\Http\Controllers\Admin\FoodPackageSettingController::class, 'updateCategoryLabel'])->name('admin.food.category-label.update');
             Route::resource('foods', FoodController::class, ['names' => [
                 'index' => 'admin.foods.index',
                 'create' => 'admin.foods.create',

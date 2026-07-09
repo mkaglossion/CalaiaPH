@@ -14,7 +14,7 @@
         @endphp
 
         @if($isPackage)
-            @include('components.partials._selected-package-static', ['selectedFood' => $selectedFood, 'quantity' => $quantity, 'itemPrice' => $itemPrice, 'itemTotal' => $itemTotal, 'includedFoods' => $includedFoods])
+            @include('components.partials._selected-package-static', ['selectedFood' => $selectedFood, 'quantity' => $quantity, 'itemPrice' => $itemPrice, 'itemTotal' => $itemTotal, 'includedFoods' => $includedFoods, 'selectedChoices' => $selectedFood['selected_choices'] ?? []])
         @else
             @include('components.partials._selected-food-static', ['selectedFood' => $selectedFood, 'quantity' => $quantity, 'itemTotal' => $itemTotal])
         @endif

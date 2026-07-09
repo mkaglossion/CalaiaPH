@@ -1086,6 +1086,9 @@ class BookingController extends Controller
                 }
 
                 $foodPackage = $foodPackages[$packageId];
+                $includedFoods = $item['included_foods'] ?? [];
+                $packageSections = $item['package_sections'] ?? ($foodPackage->sections ?? []);
+                $selectedChoices = $item['selected_choices'] ?? [];
                 $normalized[] = [
                     'id' => 'package-' . $foodPackage->id,
                     'package_id' => (string) $foodPackage->id,
@@ -1094,6 +1097,9 @@ class BookingController extends Controller
                     'price' => (float) $foodPackage->getEffectivePrice(),
                     'quantity' => $quantity,
                     'notes' => $notes,
+                    'included_foods' => is_array($includedFoods) ? $includedFoods : [],
+                    'package_sections' => is_array($packageSections) ? $packageSections : [],
+                    'selected_choices' => is_array($selectedChoices) ? $selectedChoices : [],
                 ];
                 continue;
             }
@@ -2074,6 +2080,15 @@ class BookingController extends Controller
             'staycation_customer_info' => $resolvedCustomerInfo,
             'staycation_selected_foods' => $bookingData['selected_foods'] ?? [],
         ]);
+    }
+
+    private function canUseSession(): bool
+    {
+        try {
+            return request()->hasSession();
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     private function recordPromoUsage(PromoCode $promo, ?Booking $booking, array $paymentData): void
@@ -3333,10 +3348,8 @@ class BookingController extends Controller
             case 'featured':
             default:
                 $foodPackagesQuery->orderBy('category');
-                if (Schema::hasColumn('food_packages', 'meal_type') && Schema::hasColumn('food_packages', 'sort_order')) {
-                    $foodPackagesQuery
-                        ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
-                        ->orderBy('sort_order');
+                if (Schema::hasColumn('food_packages', 'sort_order')) {
+                    $foodPackagesQuery->orderBy('sort_order');
                 }
                 $foodPackagesQuery->orderBy('name');
                 break;
@@ -3363,13 +3376,15 @@ class BookingController extends Controller
         // Fetch staycation data for display in summary (array keys are room IDs)
         $accommodationIds = array_keys($booking['accommodations'] ?? []);
         $staycations = Staycation::ordered()->whereIn('id', $accommodationIds)->get();
+        $packageCategoryLabels = FoodPackageSetting::getPackageCategoryLabels();
+        $foodBookingSectionCopy = FoodPackageSetting::getFoodBookingSectionCopy();
 
         // Get dynamic VAT rate
         $vatService = app(\App\Services\VatService::class);
         $vatRate = $vatService->getCurrentVatRate();
         $vatRatePercentage = $vatService->getCurrentVatRatePercentage();
 
-        return view('booking.staycation-food', compact('booking', 'foodMenus', 'foodMenusByMealType', 'foodPackages', 'staycations', 'packagesSettings', 'vatRate', 'vatRatePercentage', 'sortBy', 'sortOptions'));
+        return view('booking.staycation-food', compact('booking', 'foodMenus', 'foodMenusByMealType', 'foodPackages', 'staycations', 'packagesSettings', 'packageCategoryLabels', 'foodBookingSectionCopy', 'vatRate', 'vatRatePercentage', 'sortBy', 'sortOptions'));
     }
 
     public function saveFoodSelection(Request $request)

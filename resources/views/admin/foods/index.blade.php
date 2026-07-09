@@ -4,27 +4,6 @@
 
 @section('content')
 <style>
-    /* Toast notifications */
-    .toast {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 16px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        animation: slideIn 0.3s ease-out;
-    }
-    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    @keyframes slideOut { to { transform: translateX(400px); opacity: 0; } }
-    .toast.hide { animation: slideOut 0.3s ease-out forwards; }
-    .toast.success { background: #10b981; color: white; }
-    .toast.error { background: #ef4444; color: white; }
-    .toast.info { background: #3b82f6; color: white; }
-    
     /* Undo notification */
     .undo-banner {
         position: fixed;
@@ -50,6 +29,18 @@
         font-weight: 600;
     }
     .undo-banner button:hover { background: #fcd34d; }
+    .settings-accordion > summary::-webkit-details-marker {
+        display: none;
+    }
+    .settings-accordion > summary {
+        list-style: none;
+    }
+    .settings-chevron {
+        transition: transform 0.2s ease;
+    }
+    .settings-accordion[open] .settings-chevron {
+        transform: rotate(180deg);
+    }
 </style>
 <div
     x-data="foodCrud()"
@@ -58,12 +49,139 @@
 >
     @php
         $mobileLayoutStep2 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step2_food')->value('value') ?? 3);
+        $packageCategoryLabels = $packageCategoryLabels ?? \App\Models\FoodPackageSetting::getPackageCategoryLabels();
+        $packageCategoryDefinitions = \App\Models\FoodPackageSetting::getPackageCategoryLabelDefinitions();
+        $foodBookingSectionCopy = $foodBookingSectionCopy ?? \App\Models\FoodPackageSetting::getFoodBookingSectionCopy();
+        $foodBookingSectionDefinitions = \App\Models\FoodPackageSetting::getFoodBookingSectionDefinitions();
+        $messhallLabel = $packageCategoryLabels['messhall'] ?? 'Messhall';
+        $overnightStayMenuLabel = $packageCategoryLabels['overnight_stay_menu'] ?? 'Messhall';
+        $cookYourOwnLabel = $packageCategoryLabels['cook_your_own'] ?? 'Cook Your Own';
+        $specialLabel = $packageCategoryLabels['special'] ?? 'Special';
+        $packageCategoryOptions = [
+            'messhall' => $messhallLabel,
+            'overnight_stay_menu' => $overnightStayMenuLabel,
+            'cook_your_own' => $cookYourOwnLabel,
+            'special' => $specialLabel,
+        ];
+        $defaultPackageCategory = array_key_first($packageCategoryOptions) ?? 'messhall';
     @endphp
 
     <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-2 sm:mb-3 tracking-tight text-gray-900">
         Food Management
     </h1>
     <p class="text-gray-600 text-sm sm:text-base mb-6 sm:mb-10">Manage food & beverage items, categories, prices, and inventory.</p>
+
+    <div class="mb-6 rounded-xl border border-gray-200 bg-white p-4">
+        <form method="POST" action="{{ route('admin.food.category-label.update') }}" class="space-y-6">
+            @csrf
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900">Food Package Display Settings</h3>
+                <p class="text-xs text-gray-600 mt-1">Edit category labels and booking headings in one place.</p>
+            </div>
+
+            <div class="space-y-4">
+                <details class="settings-accordion group rounded-xl border border-gray-200 bg-gray-50/60 p-4" open>
+                    <summary class="cursor-pointer">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <h4 class="text-sm font-semibold text-gray-900">Package Category Labels</h4>
+                                <p class="text-xs text-gray-600 mt-1">Used in filters, package cards, and category choices.</p>
+                                <p class="text-[11px] text-gray-500 mt-1">Click to expand or collapse this section.</p>
+                            </div>
+                            <span class="settings-chevron inline-flex h-8 w-8 flex-none items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm">
+                                <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4" aria-hidden="true">
+                                    <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                                </svg>
+                            </span>
+                        </div>
+                    </summary>
+                    <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                        @foreach($packageCategoryDefinitions as $category => $definition)
+                            @php
+                                $fieldName = $definition['setting_key'];
+                                $fieldValue = $packageCategoryLabels[$category] ?? $definition['default'];
+                            @endphp
+                            <div>
+                                <label for="{{ $fieldName }}" class="block text-xs font-semibold text-gray-800 mb-1">
+                                    {{ $definition['label'] }}
+                                </label>
+                                <input
+                                    id="{{ $fieldName }}"
+                                    name="{{ $fieldName }}"
+                                    type="text"
+                                    value="{{ old($fieldName, $fieldValue) }}"
+                                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                                    placeholder="{{ $definition['default'] }}"
+                                    required
+                                >
+                            </div>
+                        @endforeach
+                    </div>
+                </details>
+
+                <details class="settings-accordion group rounded-xl border border-gray-200 bg-gray-50/60 p-4" @if($errors->any()) open @endif>
+                    <summary class="cursor-pointer">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <h4 class="text-sm font-semibold text-gray-900">Booking Section Copy</h4>
+                                <p class="text-xs text-gray-600 mt-1">Used on <code>/booking/staycation/food</code>.</p>
+                                <p class="text-[11px] text-gray-500 mt-1">Click to expand or collapse this section.</p>
+                            </div>
+                            <span class="settings-chevron inline-flex h-8 w-8 flex-none items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm">
+                                <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4" aria-hidden="true">
+                                    <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                                </svg>
+                            </span>
+                        </div>
+                    </summary>
+                    <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                        @foreach($foodBookingSectionDefinitions as $section => $definition)
+                            @php
+                                $headingField = $definition['heading_key'];
+                                $descriptionField = $definition['description_key'];
+                                $headingValue = $foodBookingSectionCopy[$section]['heading'] ?? $definition['default_heading'];
+                                $descriptionValue = $foodBookingSectionCopy[$section]['description'] ?? $definition['default_description'];
+                            @endphp
+                            <div class="rounded-lg border border-gray-200 bg-white p-3">
+                                <h5 class="text-xs font-semibold text-gray-900 mb-3">{{ $definition['label'] }}</h5>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label for="{{ $headingField }}" class="block text-[11px] font-semibold text-gray-700 mb-1">Heading</label>
+                                        <input
+                                            id="{{ $headingField }}"
+                                            name="{{ $headingField }}"
+                                            type="text"
+                                            value="{{ old($headingField, $headingValue) }}"
+                                            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                                            required
+                                        >
+                                    </div>
+                                    <div>
+                                        <label for="{{ $descriptionField }}" class="block text-[11px] font-semibold text-gray-700 mb-1">Description</label>
+                                        <textarea
+                                            id="{{ $descriptionField }}"
+                                            name="{{ $descriptionField }}"
+                                            rows="2"
+                                            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                                            required
+                                        >{{ old($descriptionField, $descriptionValue) }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </details>
+            </div>
+
+            <div class="flex justify-end">
+                <button
+                    type="submit"
+                    class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 transition">
+                    Save Display Settings
+                </button>
+            </div>
+        </form>
+    </div>
 
     <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
         <div class="flex flex-col md:flex-row md:items-end gap-3">
@@ -109,18 +227,38 @@
             @input="filterFoods()"
             type="text"
             autocomplete="off"
-            placeholder="🔍 Search by name or category..." 
+            placeholder="Search by name or category..."
             class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:border-blue-500 focus:outline-none transition"
         >
     </div>
 
     @if ($message = Session::get('success'))
-        <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-6 py-3 rounded relative" role="alert">
-            <span class="block sm:inline">{{ $message }}</span>
-            <button type="button" class="absolute top-0 bottom-0 right-0 px-6 py-3" onclick="this.parentElement.style.display='none'">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: @js($message),
+                    confirmButtonText: 'OK',
+                    customClass: {
+                        confirmButton: 'swal2-confirm swal2-styled'
+                    }
+                });
+            });
+        </script>
+    @endif
+
+    @if ($errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Please check the form',
+                    html: @js(collect($errors->all())->map(fn ($error) => e($error))->implode('<br>')),
+                    confirmButtonText: 'OK'
+                });
+            });
+        </script>
     @endif
 
     {{-- ============================================================= --}}
@@ -136,7 +274,7 @@
             <button
                 type="button"
                 @click="openCreatePackage()"
-                class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-green-600 text-white text-sm sm:text-base font-medium shadow hover:bg-green-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
+                class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-green-600 text-white text-sm sm:text-base font-medium shadow hover:bg-green-700 hover:shadow-lg transition inline-flex items-center justify-center gap-2">
                 <i data-lucide="package" class="w-4 h-4"></i>
                 <span class="hidden sm:inline">Create Package</span>
                 <span class="sm:hidden">New Package</span>
@@ -203,7 +341,8 @@
                         <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-right sticky right-0 bg-gray-100/70 z-20">Actions</th>
                     </tr>
                 </thead>
-            <tbody class="divide-y divide-gray-200">
+            <tbody class="divide-y divide-gray-200" x-show="hasSearchQuery()" x-html="filteredFoodsHtml"></tbody>
+            <tbody class="divide-y divide-gray-200" x-show="!hasSearchQuery()">
                 @forelse ($foods as $index => $food)
                     <tr 
                         class="hover:bg-gray-50/70 transition border-b border-gray-200 last:border-b-0"
@@ -222,7 +361,7 @@
                         <td class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             <div class="flex flex-wrap gap-1">
                                 <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 truncate">
-                                    {{ ucfirst($food->category) }}
+                                    {{ $food->category === 'messhall' ? $messhallLabel : ($food->category === 'cook_your_own' ? $cookYourOwnLabel : ucfirst($food->category)) }}
                                 </span>
                                 <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 truncate">
                                     {{ ucwords(str_replace('_', ' ', $food->meal_type ?? 'all_day')) }}
@@ -237,7 +376,7 @@
                                 @endif
                             </div>
                         </td>
-                        <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 font-medium text-gray-900 text-center">₱{{ number_format($food->price, 2) }}</td>
+                        <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 font-medium text-gray-900 text-center">&#8369;{{ number_format($food->price, 2) }}</td>
                         <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             @if($food->is_inventory_managed)
                                 <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
@@ -259,11 +398,11 @@
                         <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             @if ($food->is_active)
                                 <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                    <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> <span class="hidden sm:inline">Active</span><span class="sm:hidden">✓</span>
+                                    <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> <span class="hidden sm:inline">Active</span><span class="sm:hidden">âœ“</span>
                                 </span>
                             @else
                                 <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                    <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i> <span class="hidden sm:inline">Inactive</span><span class="sm:hidden">✕</span>
+                                    <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i> <span class="hidden sm:inline">Inactive</span><span class="sm:hidden">âœ•</span>
                                 </span>
                             @endif
                         </td>
@@ -284,13 +423,13 @@
                                         class="text-blue-600 font-semibold hover:text-blue-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline"
                                         @click="openEdit({{ $food->id }})"
                                         title="Edit">
-                                    <span class="hidden sm:inline">Edit</span><span class="sm:hidden">✎</span>
+                                    <span class="hidden sm:inline">Edit</span><span class="sm:hidden">âœŽ</span>
                                 </button>
                                 <button type="button"
                                         class="text-red-600 font-semibold hover:text-red-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline"
                                         @click="deleteFood({{ $food->id }}, '{{ $food->name }}')"
                                         title="Delete">
-                                    <span class="hidden sm:inline">Delete</span><span class="sm:hidden">✕</span>
+                                    <span class="hidden sm:inline">Delete</span><span class="sm:hidden">âœ•</span>
                                 </button>
                             </div>
                         </td>
@@ -301,7 +440,7 @@
                             <div class="flex flex-col items-center justify-center gap-3">
                                 <i data-lucide="inbox" class="w-8 h-8 text-gray-400"></i>
                                 <p>No food items found.</p>
-                                <button type="button" @click="openCreate()" class="text-blue-600 hover:underline font-medium text-sm">Create your first food item →</button>
+                                <button type="button" @click="openCreate()" class="text-blue-600 hover:underline font-medium text-sm">Create your first food item â†’</button>
                             </div>
                         </td>
                     </tr>
@@ -311,7 +450,7 @@
         </div>
 
         @if ($foods->hasPages())
-            <div class="px-6 py-4 border-t border-gray-200">
+            <div class="px-6 py-4 border-t border-gray-200" x-show="!hasSearchQuery()">
                 {{ $foods->links('pagination::tailwind') }}
             </div>
         @endif
@@ -349,8 +488,8 @@
                                 autocomplete="category"
                                 class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
                             <option value="">Select Category</option>
-                            <option value="messhall">Messhall</option>
-                            <option value="cook_your_own">Cook Your Own</option>
+                            <option value="messhall">{{ $messhallLabel }}</option>
+                            <option value="cook_your_own">{{ $cookYourOwnLabel }}</option>
                         </select>
                     </div>
 
@@ -390,7 +529,7 @@
                         </p>
                     </div>
                     <div>
-                        <label for="food_price" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Price (₱) *</label>
+                        <label for="food_price" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Price (&#8369;) *</label>
                         <input type="number" step="0.01" min="0" x-model="form.price" id="food_price" name="price" required
                                autocomplete="price"
                                class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -486,7 +625,7 @@
             </form>
 
             {{-- Package Creation Form --}}
-            <form class="space-y-4 sm:space-y-6" @submit.prevent="submitPackageForm" x-show="isPackageMode">
+            <form class="space-y-4 sm:space-y-6" @submit.prevent="submitPackageForm" x-show="isPackageMode" x-effect="if (isPackageMode) { syncPackagePrice(); }">
                 <div>
                     <label for="package_name" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Package Name *</label>
                     <input type="text" x-model="packageForm.name" id="package_name" name="name" required
@@ -495,28 +634,17 @@
                            placeholder="e.g., Breakfast Bundle, Romantic Dinner for 2">
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                     <div>
                         <label for="package_category" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Category *</label>
                         <select x-model="packageForm.category" id="package_category" name="category" required
+                                @change="handlePackageCategoryChange()"
                                 autocomplete="category"
                                 class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
                             <option value="">Select Category</option>
-                            <option value="messhall">Messhall</option>
-                            <option value="cook_your_own">Cook Your Own</option>
-                            <option value="special">Special</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="package_meal_type" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Meal Type *</label>
-                        <select x-model="packageForm.meal_type" id="package_meal_type" name="meal_type" required
-                                autocomplete="off"
-                                class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
-                            <option value="all_day">All Day</option>
-                            <option value="breakfast">Breakfast</option>
-                            <option value="lunch">Lunch</option>
-                            <option value="dinner">Dinner</option>
+                            @foreach($packageCategoryOptions as $categoryKey => $categoryLabel)
+                                <option value="{{ $categoryKey }}">{{ $categoryLabel }}</option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -529,11 +657,21 @@
                         <p class="mt-1 text-xs text-gray-500">Lower number appears first.</p>
                     </div>
                     <div>
-                        <h3 class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Package Price (₱)</h3>
-                        <div class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg bg-gray-50 text-gray-900">
-                            ₱<span x-text="getPackageTotal()"></span>
+                        <label for="package_price" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Package Price (&#8369;)</label>
+                        <input type="number" min="0" step="0.01" x-model="packageForm.price" id="package_price" name="price"
+                               @input="packagePriceManualOverride = String(packageForm.price ?? '') !== getPackageTotal()"
+                               autocomplete="off"
+                               class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg text-gray-700 focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+                               placeholder="0.00">
+                        <div class="mt-1 flex items-center justify-between gap-3">
+                            <p class="text-xs text-gray-500">Suggested total: &#8369;<span x-text="getPackageTotal()"></span></p>
+                            <button type="button"
+                                    @click="packagePriceManualOverride = false; syncPackagePrice(true)"
+                                    x-show="packagePriceManualOverride"
+                                    class="text-xs font-semibold text-green-600 hover:text-green-700">
+                                Use Suggested
+                            </button>
                         </div>
-                        <p class="mt-1 text-xs text-gray-500">Automatically computed from selected items.</p>
                     </div>
                 </div>
 
@@ -545,54 +683,216 @@
                               placeholder="Describe what's included in this package..."></textarea>
                 </div>
 
-                {{-- Package Items --}}
                 <div>
-                    <h3 class="block text-xs sm:text-sm font-semibold text-gray-700 mb-3">Package Items *</h3>
-                    <div class="space-y-3">
-                        <template x-for="(item, index) in packageForm.items" :key="item.row_key">
-                            <div class="flex gap-3 items-end bg-gray-50 p-3 rounded-lg">
-                                <div class="flex-1">
-                                    <select :name="`foods[${index}]`"
-                                            :value="String(item.food_id || '')"
-                                            @change="item.food_id = String($event.target.value || '')"
-                                            required
-                                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
-                                        <option value="">Select Food Item</option>
-                                        <template x-for="food in availableFoods" :key="food.id">
-                                            <option :value="String(food.id)" x-text="food.name + ' (₱' + food.price + ')'"></option>
-                                        </template>
-                                    </select>
-                                </div>
-
-                                <div class="w-20">
-                                    <input type="number" :name="`quantities[${index}]`" x-model.number="item.quantity"
-                                           required min="1" max="20"
-                                           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition">
-                                </div>
-
-                                <div class="w-24 text-sm text-gray-600 px-2 py-2 bg-white border border-gray-300 rounded-lg">
-                                    ₱<span x-text="getItemSubtotal(item)"></span>
-                                </div>
-
-                                <button type="button" @click="removePackageItem(index)"
-                                        class="px-3 py-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
+                    <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Image</label>
+                    <div
+                        class="rounded-2xl border-2 border-dashed border-blue-400 bg-blue-50/60 px-4 py-8 sm:px-6 sm:py-10 text-center cursor-pointer hover:bg-blue-50 transition"
+                        @click="$refs.packageImageInput.click()"
+                    >
+                        <template x-if="packageForm.image_preview">
+                            <div class="flex flex-col items-center gap-3">
+                                <img :src="packageForm.image_preview" alt="Package preview" class="max-h-40 sm:max-h-48 rounded-xl shadow-md object-cover">
+                                <label
+                                    x-show="packageEditMode && !packageForm.image"
+                                    class="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
+                                    @click.stop
+                                >
+                                    <input type="checkbox" x-model="packageForm.remove_image" id="package_remove_image" name="remove_image" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span>Remove current image</span>
+                                </label>
                             </div>
                         </template>
 
-                        <button type="button" @click="addPackageItem()"
-                                class="w-full py-2 px-4 border-2 border-dashed border-green-300 text-green-600 rounded-lg hover:bg-green-50 transition font-medium">
-                            <i data-lucide="plus" class="w-4 h-4 mr-2 inline"></i>Add Another Item
-                        </button>
-                    </div>
+                        <template x-if="!packageForm.image_preview">
+                            <div class="flex flex-col items-center justify-center gap-2 text-gray-600">
+                                <i data-lucide="image-plus" class="w-10 h-10 text-blue-400"></i>
+                                <p class="text-sm sm:text-base font-medium">Click to upload an image</p>
+                                <p class="text-xs text-gray-500">PNG, JPG, GIF, WEBP up to 20MB</p>
+                            </div>
+                        </template>
 
-                    <div class="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="font-medium text-gray-900">Total Items Value:</span>
-                            <span class="text-lg font-bold text-green-600">₱<span x-text="getPackageTotal()"></span></span>
-                        </div>
+                        <input type="file" accept="image/*" class="hidden" x-ref="packageImageInput" id="package_image" name="image" @change="handlePackageFile">
                     </div>
+                </div>
+
+                {{-- Package Items / Sections --}}
+                <div>
+                    <template x-if="isStructuredPackage(packageForm.category)">
+                        <div>
+                            <div class="mb-3">
+                                <h3 class="block text-xs sm:text-sm font-semibold text-gray-700">Package Sections *</h3>
+                                <p class="mt-1 text-xs text-gray-500">Use Lunch, Dinner, and Big Breakfast. Set Big Breakfast to "Choose one".</p>
+                            </div>
+
+                            <div class="space-y-4">
+                                <template x-for="(section, sectionIndex) in packageForm.sections" :key="section.row_key">
+                                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-4">
+                                        <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_180px_auto] gap-3 items-end">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-700 mb-1">Section Title</label>
+                                                <input type="text"
+                                                       x-model="section.title"
+                                                       class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                                       placeholder="Lunch">
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-700 mb-1">Section Type</label>
+                                                <select x-model="section.mode"
+                                                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                                    <option value="included">Included Items</option>
+                                                    <option value="choice">Choose One</option>
+                                                </select>
+                                            </div>
+
+                                            <button type="button"
+                                                    @click="removePackageSection(sectionIndex)"
+                                                    class="inline-flex items-center justify-center h-10 px-3 rounded-lg border border-red-200 bg-white text-red-600 hover:bg-red-50 hover:border-red-300 transition text-sm font-medium">
+                                                Remove Section
+                                            </button>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-700 mb-1">Note</label>
+                                                <input type="text"
+                                                       x-model="section.note"
+                                                       class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                                       placeholder="Choose one">
+                                            </div>
+
+                                            <div x-show="section.mode === 'choice'">
+                                                <label class="block text-xs font-semibold text-gray-700 mb-1">Choice Limit</label>
+                                                <input type="number"
+                                                       min="1"
+                                                       step="1"
+                                                       x-model.number="section.choice_limit"
+                                                       class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                                       placeholder="1">
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-3">
+                                            <div class="flex items-center justify-between">
+                                                <h4 class="text-xs sm:text-sm font-semibold text-gray-700">Section Items</h4>
+                                                <button type="button"
+                                                        @click="addPackageSectionItem(sectionIndex)"
+                                                        class="inline-flex items-center gap-2 text-xs font-semibold text-green-600 hover:text-green-700">
+                                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                                    Add Item
+                                                </button>
+                                            </div>
+
+                                            <template x-for="(item, itemIndex) in section.items" :key="item.row_key">
+                                                <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_80px_110px_auto] gap-3 items-center bg-white p-3 rounded-lg border border-gray-200">
+                                                    <div class="min-w-0">
+                                                        <select :name="`sections[${sectionIndex}][items][${itemIndex}][food_id]`"
+                                                                x-model="item.food_id"
+                                                                x-init="$nextTick(() => { $el.value = String(item.food_id || '') })"
+                                                                required
+                                                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition bg-white">
+                                                            <option value="">Select Food Item</option>
+                                                            <template x-for="food in availableFoods" :key="food.id">
+                                                                <option :value="String(food.id)" x-text="food.name + ' (&#8369;' + food.price + ')'"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="w-full">
+                                                        <input type="number" :name="`sections[${sectionIndex}][items][${itemIndex}][quantity]`"
+                                                               x-model.number="item.quantity"
+                                                               required min="1" max="20"
+                                                               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition bg-white text-center">
+                                                    </div>
+
+                                                    <div class="w-full text-sm text-gray-700 px-3 py-2 bg-white border border-gray-300 rounded-lg">
+                                                        <span>&#8369;</span><span x-text="getItemSubtotal(item)"></span>
+                                                    </div>
+
+                                                    <button type="button"
+                                                            @click="removePackageSectionItem(sectionIndex, itemIndex)"
+                                                            title="Remove item"
+                                                            aria-label="Remove item"
+                                                            class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-red-200 bg-white text-red-600 shadow-sm hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition">
+                                                        <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4" aria-hidden="true">
+                                                            <path d="M3 6h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                                                            <path d="M8 6V4.8c0-.9.7-1.8 1.8-1.8h4.4c1.1 0 1.8.7 1.8 1.8V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                                                            <path d="M6.5 6l.7 12.1c0 1 .8 1.9 1.8 1.9h6.8c1 0 1.8-.8 1.8-1.9L17.5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                                                            <path d="M10 10v6M14 10v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <button type="button" @click="addPackageSection()"
+                                        class="w-full py-2 px-4 border-2 border-dashed border-green-300 text-green-600 rounded-lg hover:bg-green-50 transition font-medium">
+                                    <i data-lucide="plus" class="w-4 h-4 mr-2 inline"></i>Add Another Section
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="!isStructuredPackage(packageForm.category)">
+                        <div>
+                            <h3 class="block text-xs sm:text-sm font-semibold text-gray-700 mb-3">Package Items *</h3>
+                            <div class="space-y-3">
+                                <template x-for="(item, index) in packageForm.items" :key="item.row_key">
+                                    <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_80px_110px_auto] gap-3 items-center bg-gray-50 p-3 rounded-lg">
+                                        <div class="min-w-0">
+                                            <select :name="`foods[${index}]`"
+                                                    x-model="item.food_id"
+                                                    x-init="$nextTick(() => { $el.value = String(item.food_id || '') })"
+                                                    required
+                                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition bg-white">
+                                                <option value="">Select Food Item</option>
+                                                <template x-for="food in availableFoods" :key="food.id">
+                                                    <option :value="String(food.id)" x-text="food.name + ' (&#8369;' + food.price + ')'"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+
+                                        <div class="w-full">
+                                            <input type="number" :name="`quantities[${index}]`" x-model.number="item.quantity"
+                                                   required min="1" max="20"
+                                                   class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition bg-white text-center">
+                                        </div>
+
+                                        <div class="w-full text-sm text-gray-700 px-3 py-2 bg-white border border-gray-300 rounded-lg">
+                                            <span>&#8369;</span><span x-text="getItemSubtotal(item)"></span>
+                                        </div>
+
+                                        <button type="button"
+                                                @click="removePackageItem(index)"
+                                                title="Remove item"
+                                                aria-label="Remove item"
+                                                class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-lg border border-red-200 bg-white text-red-600 shadow-sm hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition">
+                                            <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4" aria-hidden="true">
+                                                <path d="M3 6h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                                                <path d="M8 6V4.8c0-.9.7-1.8 1.8-1.8h4.4c1.1 0 1.8.7 1.8 1.8V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                                                <path d="M6.5 6l.7 12.1c0 1 .8 1.9 1.8 1.9h6.8c1 0 1.8-.8 1.8-1.9L17.5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                                                <path d="M10 10v6M14 10v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </template>
+
+                                <button type="button" @click="addPackageItem()"
+                                        class="w-full py-2 px-4 border-2 border-dashed border-green-300 text-green-600 rounded-lg hover:bg-green-50 transition font-medium">
+                                    <i data-lucide="plus" class="w-4 h-4 mr-2 inline"></i>Add Another Item
+                                </button>
+                            </div>
+
+                            <div class="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="font-medium text-gray-900">Total Items Value:</span>
+                                    <span class="text-lg font-bold text-green-600">&#8369;<span x-text="getPackageTotal()"></span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
@@ -663,18 +963,15 @@
                     }
                     Swal.fire({
                         icon: 'success',
-                        title: 'Saved',
+                        title: 'Success!',
                         text: 'Mobile layout updated.',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 1800
+                        confirmButtonText: 'OK'
                     });
                 })
                 .catch((err) => {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
+                        title: 'Error!',
                         text: err.message || 'Failed to update mobile layout setting.'
                     });
                 });
@@ -690,7 +987,11 @@
                 searchQuery: '',
                 isPackageMode: false,
                 packageEditMode: false,
+                packagePriceManualOverride: false,
+                categoryLabels: @js($packageCategoryOptions),
                 availableFoods: [],
+                filteredFoodsHtml: '',
+                packages: [],
                 packagesHtml: '',
                 form: {
                     id: null,
@@ -713,26 +1014,27 @@
                     id: null,
                     name: '',
                     category: '',
-                    meal_type: 'all_day',
                     sort_order: 1,
                     price: '',
                     description: '',
                     is_active: true,
                     stock_quantity: 0,
                     is_inventory_managed: false,
-                    items: [{ food_id: '', quantity: 1 }]
+                    image: null,
+                    image_preview: null,
+                    remove_image: false,
+                    items: [{ row_key: `pkg-${Date.now()}`, food_id: '', quantity: 1 }],
+                    sections: []
                 },
                 
-                // Toast notifications
+                // Notification helper
                 showToast(message, type = 'info') {
                     const icon = ['success', 'error', 'warning', 'info', 'question'].includes(type) ? type : 'info';
-                    Swal.fire({
+                    return Swal.fire({
                         icon,
-                        title: message,
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 2200
+                        title: type === 'success' ? 'Success!' : (type === 'error' ? 'Error!' : 'Notice'),
+                        text: message,
+                        confirmButtonText: 'OK'
                     });
                 },
 
@@ -750,7 +1052,10 @@
                 // Modal title
                 getModalTitle() {
                     if (this.isPackageMode) {
-                        return this.packageEditMode ? 'Edit Food Package' : 'Create Food Package';
+                        if (this.packageEditMode) {
+                            return `Edit ${this.formatCategoryLabel(this.packageForm.category || 'package')} Package`;
+                        }
+                        return `Create ${this.formatCategoryLabel(this.packageForm.category || 'package')} Package`;
                     }
                     return this.editMode ? 'Edit Food Item' : 'Create Food Item';
                 },
@@ -814,10 +1119,150 @@
 
                     return maxSortOrder + 1;
                 },
+
+                getNextPackageSortOrder(category = '') {
+                    const normalizedCategory = String(category || '').trim().toLowerCase();
+                    const matchingPackages = (this.packages || []).filter(pkg => {
+                        if (!normalizedCategory) {
+                            return true;
+                        }
+
+                        return String(pkg.category || '').trim().toLowerCase() === normalizedCategory;
+                    });
+
+                    if (matchingPackages.length === 0) {
+                        return 1;
+                    }
+
+                    const maxSortOrder = Math.max(...matchingPackages.map(pkg => {
+                        const parsed = Number(pkg.sort_order);
+                        return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+                    }));
+
+                    return maxSortOrder + 1;
+                },
+
+                hasSearchQuery() {
+                    return String(this.searchQuery || '').trim() !== '';
+                },
+
+                escapeHtml(value) {
+                    return String(value ?? '')
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;');
+                },
+
+                formatPriorityOrdinal(value) {
+                    const parsed = Number(value) || 1;
+                    const mod100 = parsed % 100;
+                    if (mod100 >= 11 && mod100 <= 13) {
+                        return `${parsed}th`;
+                    }
+
+                    switch (parsed % 10) {
+                        case 1:
+                            return `${parsed}st`;
+                        case 2:
+                            return `${parsed}nd`;
+                        case 3:
+                            return `${parsed}rd`;
+                        default:
+                            return `${parsed}th`;
+                    }
+                },
+
+                renderFilteredFoodRows(foods) {
+                    if (!Array.isArray(foods) || foods.length === 0) {
+                        return '<tr><td colspan="9" class="px-6 py-6 text-center text-gray-500">No matching food items found.</td></tr>';
+                    }
+
+                    return foods.map((food, index) => {
+                        const categoryLabel = this.formatCategoryLabel(food.category || '');
+                        const mealTypeLabel = String(food.meal_type || 'all_day').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                        const description = this.escapeHtml(food.description || '');
+                        const name = this.escapeHtml(food.name || '');
+                        const subcategory = this.escapeHtml(food.subcategory || '');
+                        const imageUrl = food.image_url || food.image || '';
+                        const encodedName = JSON.stringify(String(food.name || ''));
+                        const sortLabel = this.formatPriorityOrdinal(food.sort_order || 1);
+                        const statusHtml = food.is_active
+                            ? '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i data-lucide="check-circle" class="w-3 h-3 mr-1"></i><span class="hidden sm:inline">Active</span></span>'
+                            : '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i data-lucide="x-circle" class="w-3 h-3 mr-1"></i><span class="hidden sm:inline">Inactive</span></span>';
+                        const stockHtml = food.is_inventory_managed
+                            ? `<span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">${Number(food.stock_quantity || 0)} left</span>`
+                            : '<span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Not tracked</span>';
+                        const specialHtml = food.is_special_option
+                            ? '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i data-lucide="star" class="w-3 h-3 mr-1"></i> Special</span>'
+                            : '<span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Regular</span>';
+
+                        return `
+                            <tr class="hover:bg-gray-50/70 transition border-b border-gray-200 last:border-b-0">
+                                <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 font-medium text-gray-900">${index + 1}</td>
+                                <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4">
+                                    <div class="min-w-0 max-w-xs sm:max-w-sm md:max-w-none">
+                                        <div class="text-xs sm:text-sm font-medium text-gray-900 truncate">${name}</div>
+                                        ${description ? `<div class="text-gray-500 text-xs line-clamp-2 sm:line-clamp-1">${description}</div>` : ''}
+                                    </div>
+                                </td>
+                                <td class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 truncate">${this.escapeHtml(categoryLabel)}</span>
+                                        <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 truncate">${this.escapeHtml(mealTypeLabel)}</span>
+                                        <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 truncate">Priority: ${sortLabel}</span>
+                                        ${subcategory ? `<span class="hidden sm:inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 truncate">${subcategory}</span>` : ''}
+                                    </div>
+                                </td>
+                                <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 font-medium text-gray-900 text-center">&#8369;${Number(food.price || 0).toFixed(2)}</td>
+                                <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">${stockHtml}</td>
+                                <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
+                                    ${imageUrl ? `<img src="${this.escapeHtml(imageUrl)}" alt="${name}" class="h-8 sm:h-10 w-8 sm:w-10 rounded object-cover" loading="lazy">` : '<span class="text-gray-400 text-xs">No image</span>'}
+                                </td>
+                                <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">${statusHtml}</td>
+                                <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">${specialHtml}</td>
+                                <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-right sticky right-0 bg-white/60 md:bg-transparent z-10 md:z-auto">
+                                    <div class="flex justify-end gap-2 sm:gap-3 md:gap-4 flex-nowrap">
+                                        <button type="button" class="text-blue-600 font-semibold hover:text-blue-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline" onclick='window.foodCrudInstance.openEdit(${Number(food.id)})'>
+                                            <span class="hidden sm:inline">Edit</span><span class="sm:hidden">Edit</span>
+                                        </button>
+                                        <button type="button" class="text-red-600 font-semibold hover:text-red-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline" onclick='window.foodCrudInstance.deleteFood(${Number(food.id)}, ${encodedName})'>
+                                            <span class="hidden sm:inline">Delete</span><span class="sm:hidden">Delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                },
                  
                 // Search/Filter
                 filterFoods() {
-                    // Filtering handled by x-show directives on table rows
+                    if (!this.hasSearchQuery()) {
+                        this.filteredFoodsHtml = '';
+                        return;
+                    }
+
+                    const query = String(this.searchQuery || '').trim().toLowerCase();
+                    const filteredFoods = (this.availableFoods || []).filter(food => {
+                        const haystack = [
+                            food.name,
+                            food.category,
+                            food.subcategory,
+                            food.description,
+                            food.meal_type,
+                        ].map(value => String(value || '').toLowerCase());
+
+                        return haystack.some(value => value.includes(query));
+                    });
+
+                    this.filteredFoodsHtml = this.renderFilteredFoodRows(filteredFoods);
+                    this.$nextTick(() => {
+                        if (window.lucide?.createIcons) {
+                            window.lucide.createIcons();
+                        }
+                    });
                 },
                 
                 // Delete with undo
@@ -966,8 +1411,9 @@
                 },
 
                 renderPackages(packages) {
+                    this.packages = Array.isArray(packages) ? packages : [];
                     if (packages.length === 0) {
-                        this.packagesHtml = '<tr><td colspan="7" class="px-6 py-6 text-center text-gray-500"><div class="flex flex-col items-center justify-center gap-3"><i data-lucide="package" class="w-8 h-8 text-gray-400"></i><p>No packages found.</p><button type="button" @click="openCreatePackage()" class="text-green-600 hover:underline font-medium text-sm">Create your first package →</button></div></td></tr>';
+                        this.packagesHtml = '<tr><td colspan="7" class="px-6 py-6 text-center text-gray-500"><div class="flex flex-col items-center justify-center gap-3"><i data-lucide="package" class="w-8 h-8 text-gray-400"></i><p>No packages found.</p><button type="button" @click="openCreatePackage()" class="text-green-600 hover:underline font-medium text-sm">Create your first package â†’</button></div></td></tr>';
                         return;
                     }
 
@@ -983,30 +1429,27 @@
                             <td class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                                 <div class="flex flex-col items-start gap-1">
                                     <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 truncate">
-                                        ${pkg.category.charAt(0).toUpperCase() + pkg.category.slice(1).replace('_', ' ')}
-                                    </span>
-                                    <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 truncate">
-                                        ${(pkg.meal_type || 'all_day').replace('_', ' ').replace(/\\b\\w/g, c => c.toUpperCase())}
+                                        ${this.formatCategoryLabel(pkg.category)}
                                     </span>
                                     <span class="text-[11px] text-gray-500">Sort: ${pkg.sort_order ?? 1}</span>
                                 </div>
                             </td>
-                            <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 font-medium text-gray-900 text-center">₱${pkg.effective_price ? pkg.effective_price.toLocaleString() : '0'}</td>
+                            <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 font-medium text-gray-900 text-center">&#8369;${pkg.effective_price ? pkg.effective_price.toLocaleString() : '0'}</td>
                             <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                                 <span class="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                                     ${pkg.foods_count || 0} items
                                 </span>
                             </td>
                             <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
-                                ${pkg.is_active ? '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i data-lucide="check-circle" class="w-3 h-3 mr-1"></i><span class="hidden sm:inline">Active</span><span class="sm:hidden">✓</span></span>' : '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i data-lucide="x-circle" class="w-3 h-3 mr-1"></i><span class="hidden sm:inline">Inactive</span><span class="sm:hidden">✕</span></span>'}
+                                ${pkg.is_active ? '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i data-lucide="check-circle" class="w-3 h-3 mr-1"></i><span class="hidden sm:inline">Active</span><span class="sm:hidden">âœ“</span></span>' : '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i data-lucide="x-circle" class="w-3 h-3 mr-1"></i><span class="hidden sm:inline">Inactive</span><span class="sm:hidden">âœ•</span></span>'}
                             </td>
                             <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-right sticky right-0 bg-white/60 md:bg-transparent z-10 md:z-auto">
                                 <div class="flex justify-end gap-2 sm:gap-3 md:gap-4 flex-nowrap">
                                     <button type="button" class="text-blue-600 font-semibold hover:text-blue-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline" @click="openEditPackage(${pkg.id})">
-                                        <span class="hidden sm:inline">Edit</span><span class="sm:hidden">✎</span>
+                                        <span class="hidden sm:inline">Edit</span><span class="sm:hidden">âœŽ</span>
                                     </button>
                                     <button type="button" class="text-red-600 font-semibold hover:text-red-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline" @click="deletePackage(${pkg.id}, '${pkg.name.replace(/'/g, '\\u0027')}')" title="Delete">
-                                        <span class="hidden sm:inline">Delete</span><span class="sm:hidden">✕</span>
+                                        <span class="hidden sm:inline">Delete</span><span class="sm:hidden">âœ•</span>
                                     </button>
                                 </div>
                             </td>
@@ -1014,11 +1457,19 @@
                     `).join('');
                 },
 
+                formatCategoryLabel(category) {
+                    if (!category) return 'Package';
+                    return this.categoryLabels?.[category]
+                        || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                },
+
                 async openCreatePackage() {
                     this.isPackageMode = true;
                     this.packageEditMode = false;
+                    this.packagePriceManualOverride = false;
                     this.isEditHydrating = false;
-                    this.resetPackageForm();
+                    this.resetPackageForm(@js($defaultPackageCategory));
+                    this.packageForm.sort_order = this.getNextPackageSortOrder(this.packageForm.category);
                     await this.loadAvailableFoods();
                     this.showModal = true;
                 },
@@ -1026,6 +1477,7 @@
                 async openEditPackage(packageId) {
                     this.isPackageMode = true;
                     this.packageEditMode = true;
+                    this.packagePriceManualOverride = true;
                     this.resetPackageForm();
                     this.isEditHydrating = true;
                     this.showModal = true;
@@ -1041,19 +1493,38 @@
                             this.packageForm.id = pkg.id;
                             this.packageForm.name = pkg.name || '';
                             this.packageForm.category = pkg.category || '';
-                            this.packageForm.meal_type = pkg.meal_type || 'all_day';
                             this.packageForm.sort_order = pkg.sort_order ?? 1;
+                            this.packageForm.price = pkg.price ?? '';
                             this.packageForm.description = pkg.description || '';
                             this.packageForm.is_active = !!pkg.is_active;
                             this.packageForm.stock_quantity = pkg.stock_quantity ?? 0;
                             this.packageForm.is_inventory_managed = !!pkg.is_inventory_managed;
+                            this.packageForm.image = null;
+                            this.packageForm.image_preview = pkg.image || null;
+                            this.packageForm.remove_image = false;
+                            this.packageForm.sections = Array.isArray(pkg.sections) && pkg.sections.length > 0
+                                ? pkg.sections.map(section => this.hydratePackageSection(section))
+                                : this.defaultPackageSections(pkg.category || '');
                             
                             // Load foods for this package
                             if (pkg.foods && pkg.foods.length > 0) {
                                 this.packageForm.items = pkg.foods.map(f => this.makePackageItem(f.id, f.quantity || 1));
+                            } else if (!this.isStructuredPackage(pkg.category || '') && (!this.packageForm.items || this.packageForm.items.length === 0)) {
+                                this.packageForm.items = [this.makePackageItem()];
                             }
                             
                             this.syncPackageItemSelections();
+                            this.syncPackageSectionSelections();
+
+                            const suggestedPrice = this.getPackageTotal();
+                            const savedPrice = pkg.price === null || pkg.price === undefined || pkg.price === ''
+                                ? ''
+                                : Number(pkg.price).toFixed(2);
+
+                            this.packagePriceManualOverride = savedPrice !== '' && savedPrice !== suggestedPrice;
+                            if (!this.packagePriceManualOverride) {
+                                this.packageForm.price = suggestedPrice;
+                            }
                         } else {
                             this.showToast('Package not found', 'error');
                         }
@@ -1066,19 +1537,26 @@
                     }
                 },
 
-                resetPackageForm() {
+                resetPackageForm(category = '') {
+                    if (this.$refs.packageImageInput) {
+                        this.$refs.packageImageInput.value = '';
+                    }
+                    this.packagePriceManualOverride = false;
                     this.packageForm = {
                         id: null,
                         name: '',
-                        category: '',
-                        meal_type: 'all_day',
-                        sort_order: 1,
+                        category,
+                        sort_order: this.getNextPackageSortOrder(category),
                         price: '',
                         description: '',
                         is_active: true,
                         stock_quantity: 0,
                         is_inventory_managed: false,
-                        items: [this.makePackageItem()]
+                        image: null,
+                        image_preview: null,
+                        remove_image: false,
+                        items: [this.makePackageItem()],
+                        sections: this.defaultPackageSections(category)
                     };
                 },
                 
@@ -1092,7 +1570,8 @@
 
                 async loadAvailableFoods() {
                     try {
-                        const response = await fetch('{{ route('admin.foods.api.index') }}', {
+                        const sortBy = document.getElementById('sort_by')?.value || '{{ $sortBy ?? 'featured' }}';
+                        const response = await fetch(`{{ route('admin.foods.api.index') }}?sort_by=${encodeURIComponent(sortBy)}`, {
                             headers: { 'Accept': 'application/json' }
                         });
                         const data = await response.json();
@@ -1104,12 +1583,93 @@
                         if (this.isPackageMode && this.packageForm.items.length > 0) {
                             this.syncPackageItemSelections();
                         }
+                        if (this.isPackageMode && this.packageForm.sections.length > 0) {
+                            this.syncPackageSectionSelections();
+                        }
                         if (!this.editMode && !this.isPackageMode && !this.form.sort_order) {
                             this.form.sort_order = this.getNextSortOrderForMealType(this.form.meal_type);
+                        }
+                        if (this.hasSearchQuery()) {
+                            this.filterFoods();
                         }
                     } catch (error) {
                         console.error('Failed to load foods:', error);
                         this.availableFoods = [];
+                        this.filteredFoodsHtml = '<tr><td colspan="9" class="px-6 py-6 text-center text-gray-500">Failed to load food items.</td></tr>';
+                    }
+                },
+
+                isStructuredPackage(category) {
+                    return String(category || '').toLowerCase() === 'overnight_stay_menu';
+                },
+
+                makePackageSection(title = '', mode = 'included', note = '', choiceLimit = 1, items = []) {
+                    return {
+                        row_key: `section-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                        title,
+                        mode,
+                        note,
+                        choice_limit: Number(choiceLimit) || 1,
+                        items: items.length > 0 ? items : [this.makePackageSectionItem()],
+                    };
+                },
+
+                makePackageSectionItem(foodId = '', quantity = 1) {
+                    return {
+                        row_key: `section-item-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                        food_id: foodId === null || foodId === undefined || foodId === '' ? '' : String(foodId),
+                        quantity: Number(quantity) || 1,
+                    };
+                },
+
+                hydratePackageSection(section) {
+                    const normalizedSection = this.makePackageSection(
+                        section?.title || '',
+                        section?.mode || 'included',
+                        section?.note || '',
+                        section?.choice_limit ?? 1,
+                        Array.isArray(section?.items)
+                            ? section.items.map(item => this.makePackageSectionItem(item?.food_id ?? '', item?.quantity ?? 1))
+                            : []
+                    );
+
+                    return normalizedSection;
+                },
+
+                defaultPackageSections(category = '') {
+                    if (!this.isStructuredPackage(category)) {
+                        return [];
+                    }
+
+                    return [
+                        this.makePackageSection('Lunch', 'included', 'Included meals for lunch', 1, [
+                            this.makePackageSectionItem(),
+                            this.makePackageSectionItem(),
+                        ]),
+                        this.makePackageSection('Dinner', 'included', 'Included meals for dinner', 1, [
+                            this.makePackageSectionItem(),
+                            this.makePackageSectionItem(),
+                        ]),
+                        this.makePackageSection('Big Breakfast', 'choice', 'Choose one', 1, [
+                            this.makePackageSectionItem(),
+                            this.makePackageSectionItem(),
+                        ]),
+                    ];
+                },
+
+                handlePackageCategoryChange() {
+                    if (!this.packageEditMode) {
+                        this.packageForm.sort_order = this.getNextPackageSortOrder(this.packageForm.category);
+                    }
+
+                    if (this.isStructuredPackage(this.packageForm.category)) {
+                        if (!Array.isArray(this.packageForm.sections) || this.packageForm.sections.length === 0) {
+                            this.packageForm.sections = this.defaultPackageSections(this.packageForm.category);
+                        }
+                    } else {
+                        if (!Array.isArray(this.packageForm.items) || this.packageForm.items.length === 0) {
+                            this.packageForm.items = [this.makePackageItem()];
+                        }
                     }
                 },
 
@@ -1132,6 +1692,19 @@
                     });
                 },
 
+                syncPackageSectionSelections() {
+                    this.$nextTick(() => {
+                        const selects = document.querySelectorAll('select[name^="sections["][name*="[food_id]"]');
+                        const sectionItems = this.packageForm.sections.flatMap(section => Array.isArray(section.items) ? section.items : []);
+
+                        selects.forEach((select, index) => {
+                            const item = sectionItems[index];
+                            if (!item) return;
+                            select.value = String(item.food_id || '');
+                        });
+                    });
+                },
+
                 addPackageItem() {
                     this.packageForm.items.push(this.makePackageItem());
                     this.syncPackageItemSelections();
@@ -1144,16 +1717,77 @@
                     }
                 },
 
+                addPackageSection() {
+                    this.packageForm.sections.push(this.makePackageSection());
+                },
+
+                removePackageSection(sectionIndex) {
+                    this.packageForm.sections.splice(sectionIndex, 1);
+                    if (this.packageForm.sections.length === 0) {
+                        this.packageForm.sections = this.defaultPackageSections(this.packageForm.category);
+                    }
+                },
+
+                addPackageSectionItem(sectionIndex) {
+                    const section = this.packageForm.sections[sectionIndex];
+                    if (!section) return;
+                    section.items.push(this.makePackageSectionItem());
+                },
+
+                removePackageSectionItem(sectionIndex, itemIndex) {
+                    const section = this.packageForm.sections[sectionIndex];
+                    if (!section) return;
+                    section.items.splice(itemIndex, 1);
+                    if (section.items.length === 0) {
+                        section.items.push(this.makePackageSectionItem());
+                    }
+                },
+
                 getItemSubtotal(item) {
                     const food = this.availableFoods.find(f => f.id === String(item.food_id || ''));
                     return food ? (food.price * item.quantity).toFixed(2) : '0.00';
                 },
 
+                getPackageSectionSubtotal(section) {
+                    const items = Array.isArray(section?.items) ? section.items : [];
+                    const mode = String(section?.mode || 'included');
+                    const limit = Math.max(1, parseInt(section?.choice_limit || 1, 10));
+                    const selectedItems = mode === 'choice' ? items.slice(0, limit) : items;
+
+                    return selectedItems.reduce((sectionTotal, item) => {
+                        const food = this.availableFoods.find(f => f.id === String(item.food_id || ''));
+                        return sectionTotal + (food ? food.price * Number(item.quantity || 1) : 0);
+                    }, 0);
+                },
+
                 getPackageTotal() {
+                    if (this.isStructuredPackage(this.packageForm.category)) {
+                        return this.packageForm.sections.reduce((total, section) => {
+                            return total + this.getPackageSectionSubtotal(section);
+                        }, 0).toFixed(2);
+                    }
+
                     return this.packageForm.items.reduce((total, item) => {
                         const food = this.availableFoods.find(f => f.id === String(item.food_id || ''));
                         return total + (food ? food.price * item.quantity : 0);
                     }, 0).toFixed(2);
+                },
+
+                syncPackagePrice(force = false) {
+                    const computedPrice = this.getPackageTotal();
+                    if ((force || !this.packagePriceManualOverride) && String(this.packageForm.price ?? '') !== computedPrice) {
+                        this.packageForm.price = computedPrice;
+                    }
+
+                    return computedPrice;
+                },
+
+                handlePackageFile(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    this.packageForm.image = file;
+                    this.packageForm.image_preview = URL.createObjectURL(file);
+                    this.packageForm.remove_image = false;
                 },
 
                 handleFile(event) {
@@ -1236,24 +1870,37 @@
                     if (this.loading) return;
                     this.loading = true;
 
+                    const resolvedPackagePrice = this.packagePriceManualOverride
+                        ? (this.packageForm.price === '' || this.packageForm.price === null ? this.getPackageTotal() : this.packageForm.price)
+                        : this.syncPackagePrice(true);
+
                     const formData = new FormData();
                     formData.append('name', this.packageForm.name);
-                    formData.append('category', this.packageForm.category);
-                    formData.append('meal_type', this.packageForm.meal_type || 'all_day');
+                    formData.append('category', this.packageForm.category || @js($defaultPackageCategory));
                     formData.append('sort_order', this.packageForm.sort_order ?? 1);
-                    formData.append('price', this.getPackageTotal());
+                    formData.append('price', resolvedPackagePrice);
                     formData.append('description', this.packageForm.description || '');
                     formData.append('is_active', this.packageForm.is_active ? 1 : 0);
                     formData.append('stock_quantity', this.packageForm.stock_quantity ?? 0);
                     formData.append('is_inventory_managed', this.packageForm.is_inventory_managed ? 1 : 0);
+                    if (this.packageForm.image) {
+                        formData.append('image', this.packageForm.image);
+                    }
+                    if (this.packageForm.remove_image) {
+                        formData.append('remove_image', 1);
+                    }
 
-                    // Add foods and quantities
-                    this.packageForm.items.forEach((item, index) => {
-                        if (item.food_id) {
-                            formData.append(`foods[${index}]`, item.food_id);
-                            formData.append(`quantities[${index}]`, item.quantity);
-                        }
-                    });
+                    if (this.isStructuredPackage(this.packageForm.category)) {
+                        formData.append('sections', JSON.stringify(this.packageForm.sections || []));
+                    } else {
+                        // Add foods and quantities
+                        this.packageForm.items.forEach((item, index) => {
+                            if (item.food_id) {
+                                formData.append(`foods[${index}]`, item.food_id);
+                                formData.append(`quantities[${index}]`, item.quantity);
+                            }
+                        });
+                    }
 
                     let url = '{{ route('admin.food.packages.store') }}';
                     if (this.packageEditMode && this.packageForm.id) {
@@ -1279,9 +1926,9 @@
                                 title: 'Success!',
                                 text: data.message || successMsg,
                                 icon: 'success'
-                            }).then(() => {
+                            }).then(async () => {
                                 this.showModal = false;
-                                this.loadPackages();
+                                await this.loadPackages();
                                 this.resetPackageForm();
                                 this.packageEditMode = false;
                             });

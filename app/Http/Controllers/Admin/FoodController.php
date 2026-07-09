@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Food;
+use App\Models\FoodPackageSetting;
 use App\Models\FoodSwiperImage;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Validation\ValidationException;
@@ -51,21 +52,8 @@ class FoodController extends Controller
         return $columnCache[$column];
     }
 
-    public function index(Request $request)
+    private function applyFoodSort($foodsQuery, string $sortBy)
     {
-        $this->ensureFoodOrderingColumns();
-
-        // Handle API requests
-        if ($request->query('api') === '1') {
-            return $this->apiIndex($request);
-        }
-
-        $sortBy = $request->string('sort_by', 'featured')->toString();
-        if (!array_key_exists($sortBy, self::SORT_OPTIONS)) {
-            $sortBy = 'featured';
-        }
-
-        $foodsQuery = Food::query();
         switch ($sortBy) {
             case 'name_asc':
                 $foodsQuery->orderBy('name', 'asc');
@@ -97,10 +85,31 @@ class FoodController extends Controller
                 break;
         }
 
+        return $foodsQuery;
+    }
+
+    public function index(Request $request)
+    {
+        $this->ensureFoodOrderingColumns();
+
+        // Handle API requests
+        if ($request->query('api') === '1') {
+            return $this->apiIndex($request);
+        }
+
+        $sortBy = $request->string('sort_by', 'featured')->toString();
+        if (!array_key_exists($sortBy, self::SORT_OPTIONS)) {
+            $sortBy = 'featured';
+        }
+
+        $foodsQuery = $this->applyFoodSort(Food::query(), $sortBy);
+
         $foods = $foodsQuery->paginate(10)->appends(['sort_by' => $sortBy]);
         $sortOptions = self::SORT_OPTIONS;
+        $packageCategoryLabels = FoodPackageSetting::getPackageCategoryLabels();
+        $foodBookingSectionCopy = FoodPackageSetting::getFoodBookingSectionCopy();
 
-        return view('admin.foods.index', compact('foods', 'sortBy', 'sortOptions'));
+        return view('admin.foods.index', compact('foods', 'sortBy', 'sortOptions', 'packageCategoryLabels', 'foodBookingSectionCopy'));
     }
 
     public function create()
@@ -284,9 +293,28 @@ class FoodController extends Controller
 
     public function destroy(Food $food)
     {
-        $food->delete();
-        return redirect()->route('admin.foods.index')
-                         ->with('success', 'Food item deleted successfully!');
+        try {
+            $food->delete();
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Food item deleted successfully!',
+                ]);
+            }
+
+            return redirect()->route('admin.foods.index')
+                ->with('success', 'Food item deleted successfully!');
+        } catch (\Throwable $e) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     /**
@@ -300,7 +328,12 @@ class FoodController extends Controller
             return $this->index($request);
         }
 
-        $selectColumns = ['id', 'name', 'category', 'price', 'is_active'];
+        $sortBy = $request->string('sort_by', 'featured')->toString();
+        if (!array_key_exists($sortBy, self::SORT_OPTIONS)) {
+            $sortBy = 'featured';
+        }
+
+        $selectColumns = ['id', 'name', 'category', 'price', 'is_active', 'description', 'image', 'subcategory', 'is_special_option', 'stock_quantity', 'is_inventory_managed'];
         if (Schema::hasColumn('foods', 'meal_type')) {
             $selectColumns[] = 'meal_type';
         }
@@ -308,17 +341,27 @@ class FoodController extends Controller
             $selectColumns[] = 'sort_order';
         }
 
-        $foodsQuery = Food::query()
-            ->select($selectColumns)
-            ->orderBy('category');
-
-        if (Schema::hasColumn('foods', 'meal_type') && Schema::hasColumn('foods', 'sort_order')) {
-            $foodsQuery
-                ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
-                ->orderBy('sort_order');
-        }
-
-        $foods = $foodsQuery->orderBy('name')->get();
+        $foods = $this->applyFoodSort(
+            Food::query()->select($selectColumns),
+            $sortBy
+        )->get()->map(function (Food $food) {
+            return [
+                'id' => $food->id,
+                'name' => $food->name,
+                'category' => $food->category,
+                'price' => $food->price,
+                'is_active' => $food->is_active,
+                'description' => $food->description,
+                'image' => $food->image,
+                'image_url' => $food->image ? \App\Helpers\ImageHelper::src($food->image) : null,
+                'subcategory' => $food->subcategory,
+                'is_special_option' => $food->is_special_option,
+                'stock_quantity' => $food->stock_quantity,
+                'is_inventory_managed' => $food->is_inventory_managed,
+                'meal_type' => $food->meal_type,
+                'sort_order' => $food->sort_order,
+            ];
+        })->values();
 
         return response()->json(['foods' => $foods]);
     }

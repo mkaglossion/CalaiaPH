@@ -23,6 +23,10 @@ class ImageHelper
         }
 
         if (preg_match('#^https?://#i', $path)) {
+            if (str_contains($path, 'res.cloudinary.com')) {
+                return CloudinaryHelper::card($path) ?? $path;
+            }
+
             return $path;
         }
 
