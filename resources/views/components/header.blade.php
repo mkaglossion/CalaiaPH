@@ -261,11 +261,12 @@
 
   <!-- ✅ MOBILE OFF-CANVAS MENU -->
   <div x-cloak x-show="mobileOpen" style="display: none;" class="md:hidden">
-    <div class="fixed inset-0 bg-black/40" @click="mobileOpen = false"></div>
+    <div class="fixed inset-0 z-40 bg-black/40" @click="mobileOpen = false"></div>
 
     <div
       id="mobile-menu"
-      class="fixed top-0 left-0 h-full w-[85%] max-w-sm bg-brand shadow-2xl z-50"
+      class="fixed inset-0 z-50 w-full overflow-y-auto bg-brand shadow-2xl"
+      style="height: 100dvh;"
       x-transition:enter="transition ease-out duration-300"
       x-transition:enter-start="-translate-x-4 opacity-0"
       x-transition:enter-end="translate-x-0 opacity-100"
@@ -275,7 +276,16 @@
     >
         <div class="flex items-center justify-between px-4 py-4 border-b border-brand/15">
         <span class="font-semibold tracking-wide text-white">Menu</span>
-        <button class="rounded-lg p-2 hover:bg-white/50" @click="mobileOpen = false">✕</button>
+        <button
+          type="button"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-lg text-white transition hover:bg-white/20"
+          @click="mobileOpen = false"
+          aria-label="Close menu"
+        >
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       <div class="px-4 py-3 space-y-1">
@@ -296,11 +306,11 @@
           href="{{ route('cart.index') }}"
           data-js-cart-button
           @click.prevent="mobileOpen = false; window.location.href = '{{ route('cart.index') }}'"
-          class="mt-2 flex items-center justify-between rounded-lg px-3 py-2 uppercase tracking-wide hover:bg-white/50 transition text-white"
+          class="mt-2 flex items-center gap-2 rounded-lg px-3 py-2 uppercase tracking-wide text-white transition hover:bg-white/50"
         >
           <span>Cart</span>
           @if($cartCount > 0)
-            <span data-js-cart-count class="inline-flex items-center justify-center min-w-6 h-6 rounded-full bg-brand text-white text-xs px-2">
+            <span data-js-cart-count class="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-white px-1.5 text-xs font-semibold text-brand shadow-sm">
               {{ $cartCount }}
             </span>
           @endif
