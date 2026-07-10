@@ -85,7 +85,7 @@
         ? \App\Helpers\CloudinaryHelper::optimize($checkoutLogoSource, 420, false, false, 'good')
         : null;
     @endphp
-    <div class="bg-linear-to-r from-white via-gray-50 to-white border-b border-gray-100 shadow-sm relative">
+    <div class="relative bg-brand border-b border-white/10 shadow-sm">
       <div class="container mx-auto px-4 py-6">
         <div class="flex items-center justify-center">
           <a href="{{ route('home') }}" class="group transition-transform duration-300 hover:scale-105">
@@ -93,17 +93,17 @@
               <img
                 src="{{ $checkoutLogoUrl }}"
                 alt="{{ $systemSettings['app_name'] ?? 'CalaiaPH' }}"
-                class="h-16 w-auto drop-shadow-sm group-hover:drop-shadow-md transition-all duration-300"
+                class="h-16 w-auto object-contain drop-shadow-sm transition-all duration-300 group-hover:drop-shadow-md md:h-20"
               >
             @else
-              <span class="text-xl font-semibold tracking-[0.3em] text-[#8f5d54] uppercase">
+              <span class="text-xl font-semibold tracking-[0.3em] text-white uppercase">
                 {{ $systemSettings['app_name'] ?? 'CalaiaPH' }}
               </span>
             @endif
           </a>
         </div>
         <a href="{{ route('cart.index') }}" class="group transition-transform duration-300 hover:scale-105 absolute right-4 top-1/2 transform -translate-y-1/2">
-          <i class="bi bi-bag text-2xl text-[#8f5d54] group-hover:text-[#7a4a42] transition-colors duration-300"></i>
+          <i class="bi bi-bag text-2xl text-white transition-colors duration-300 group-hover:text-white/80"></i>
         </a>
       </div>
     </div>

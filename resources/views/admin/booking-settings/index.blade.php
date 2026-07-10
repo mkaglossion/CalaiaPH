@@ -1,13 +1,20 @@
 @extends('layouts.admin')
 
+@section('title', 'Staycation Additional Fees')
+
 @section('content')
-<div class="container mx-auto p-6 space-y-8">
+<div class="min-h-screen space-y-6 rounded-xl bg-linear-to-b from-gray-50 to-gray-100 p-4 md:p-8">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 md:text-4xl">Staycation Additional Fees</h1>
+            <p class="mt-2 text-sm text-gray-600 md:text-base">Configure extra mattress and pet fees for staycation bookings. These settings apply to all regular accommodations.</p>
+        </div>
+        <x-admin.action-button variant="soft" href="{{ route('admin.stay.staycations') }}" class="px-4 py-2 text-sm font-semibold">
+            Back to Staycations
+        </x-admin.action-button>
+    </div>
 
-    <h1 class="text-2xl font-bold">Staycation Additional Fees</h1>
-
-    <p class="text-gray-600 text-sm mb-6">Configure extra mattress and pet fees for staycation bookings. These settings apply to all regular accommodations.</p>
-
-    <div class="bg-white p-6 rounded-lg shadow">
+    <div class="rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-sm backdrop-blur md:p-6">
         <form id="bookingSettingsForm" action="{{ route('admin.booking-settings.update') }}" method="POST">
             @csrf
 
@@ -27,7 +34,7 @@
                             value="{{ $settings->where('key', 'mattress_price_per_night')->first()?->value ?? 800 }}"
                             step="0.01"
                             min="0"
-                            class="ml-2 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="ml-2 block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#8f5d54] focus:outline-none focus:ring-2 focus:ring-[#d8bcb7]"
                             required
                         />
                     </div>
@@ -52,7 +59,7 @@
                             value="{{ $settings->where('key', 'pet_price')->first()?->value ?? 2000 }}"
                             step="0.01"
                             min="0"
-                            class="ml-2 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="ml-2 block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#8f5d54] focus:outline-none focus:ring-2 focus:ring-[#d8bcb7]"
                             required
                         />
                     </div>
@@ -76,7 +83,7 @@
                         value="{{ intval($settings->where('key', 'max_pets_per_room')->first()?->value ?? 2) }}"
                         min="1"
                         max="10"
-                        class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#8f5d54] focus:outline-none focus:ring-2 focus:ring-[#d8bcb7]"
                         required
                     />
                     <p class="text-xs text-gray-500 mt-2">
@@ -88,9 +95,9 @@
                 </div>
             </div>
 
-            <div class="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 class="text-sm font-semibold text-blue-900 mb-2">ℹ️ Important Notes:</h3>
-                <ul class="text-sm text-blue-800 space-y-1 list-disc list-inside">
+            <div class="mt-8 rounded-xl border border-[#dfc8c1] bg-[#f6ede9] p-4">
+                <h3 class="mb-2 text-sm font-semibold text-[#774b43]">Important Notes</h3>
+                <ul class="list-inside list-disc space-y-1 text-sm text-[#774b43]">
                     <li>Extra mattress fee is auto-computed when total guests exceed room capacity</li>
                     <li>Pet fee is charged per pet for bookings with pets</li>
                     <li>Maximum pets setting enforces limits per room during bookings</li>
@@ -99,20 +106,22 @@
                 </ul>
             </div>
 
-            <div class="mt-6 flex gap-3">
-                <button
+            <div class="mt-6 flex flex-wrap gap-3">
+                <x-admin.action-button
+                    variant="primary"
                     type="submit"
                     id="saveBtn"
-                    class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+                    class="px-6 py-2 text-sm font-semibold"
                 >
                     Save Settings
-                </button>
-                <a
+                </x-admin.action-button>
+                <x-admin.action-button
+                    variant="secondary"
                     href="{{ route('admin.stay.staycations') }}"
-                    class="px-6 py-2 bg-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-400 transition"
+                    class="px-6 py-2 text-sm font-semibold"
                 >
                     Cancel
-                </a>
+                </x-admin.action-button>
             </div>
         </form>
     </div>

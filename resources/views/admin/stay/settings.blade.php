@@ -32,12 +32,12 @@
         </div>
 
         <div class="flex flex-wrap gap-2">
-            <a href="{{ route('admin.seasonDurations.index') }}" class="px-4 py-2 rounded-xl bg-orange-600 text-white font-medium shadow hover:bg-orange-700 hover:shadow-lg transition">
+            <x-admin.action-button variant="accent-orange" href="{{ route('admin.seasonDurations.index') }}" class="px-4 py-2 font-medium">
                 Season Durations
-            </a>
-            <a href="{{ route('admin.booking-settings.index') }}" class="px-4 py-2 rounded-xl bg-green-600 text-white font-medium shadow hover:bg-green-700 hover:shadow-lg transition">
+            </x-admin.action-button>
+            <x-admin.action-button variant="accent-green" href="{{ route('admin.booking-settings.index') }}" class="px-4 py-2 font-medium">
                 Additional Fees
-            </a>
+            </x-admin.action-button>
             <a href="{{ route('admin.stay.staycations') }}" class="px-4 py-2 rounded-xl bg-[#8f5d54] text-white font-medium shadow hover:bg-[#7a4d46] hover:shadow-lg transition">
                 Back to Staycations
             </a>

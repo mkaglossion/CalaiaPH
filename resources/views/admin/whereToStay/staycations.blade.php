@@ -73,32 +73,35 @@
                 <label for="sort_by" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Sort by</label>
                 <select id="sort_by" name="sort_by"
                         onchange="this.form.submit()"
-                        class="w-full min-w-64 px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        class="w-full min-w-64 px-3 py-2 rounded-xl border border-gray-300 text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#d8bcb7] focus:border-[#8f5d54]">
                     @foreach(($sortOptions ?? ['featured' => 'Featured']) as $key => $label)
                         <option value="{{ $key }}" {{ ($sortBy ?? 'featured') === $key ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
             </form>
 
-            <a
+            <x-admin.action-button
+                variant="accent-orange"
                 href="{{ route('admin.seasonDurations.index') }}"
-                class="px-3 py-2 sm:px-4 rounded-xl bg-white text-gray-700 border border-gray-300 font-medium shadow-sm hover:bg-gray-50 transition text-center text-sm sm:text-base"
+                class="px-3 py-2 sm:px-4 text-center text-sm sm:text-base font-medium"
             >
                 Season Durations
-            </a>
-            <a
+            </x-admin.action-button>
+            <x-admin.action-button
+                variant="accent-green"
                 href="{{ route('admin.booking-settings.index') }}"
-                class="px-3 py-2 sm:px-4 rounded-xl bg-white text-gray-700 border border-gray-300 font-medium shadow-sm hover:bg-gray-50 transition text-center text-sm sm:text-base"
+                class="px-3 py-2 sm:px-4 text-center text-sm sm:text-base font-medium"
             >
                 Additional Fees
-            </a>
-            <button
+            </x-admin.action-button>
+            <x-admin.action-button
+                variant="primary"
                 type="button"
                 @click="showStaycationModal = true; resetForm()"
-                class="{{ $adminPrimaryButton }}"
+                class="px-4 py-2 text-sm font-semibold"
             >
                 + Add Room
-            </button>
+            </x-admin.action-button>
         </div>
     </div>
     </div>
@@ -164,7 +167,7 @@
                              onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                     </template>
                     <template x-if="!staycation.image || staycation.image.trim() === ''">
-                        <div class="w-full h-full bg-linear-to-br from-blue-200 to-purple-200 flex items-center justify-center cursor-pointer hover:from-blue-300 hover:to-purple-300">
+                        <div class="flex h-full w-full cursor-pointer items-center justify-center bg-linear-to-br from-[#eadbd6] to-[#cfaea5] transition hover:from-[#dfc8c1] hover:to-[#bd9188]">
                             <div class="text-center">
                                 <i class="bi bi-image text-4xl opacity-50 text-white block mb-2"></i>
                                 <p class="text-xs text-white opacity-70">No image</p>
@@ -222,7 +225,7 @@
                 <p class="text-xs text-gray-400 mt-3" x-text="`Uploaded: ${new Date(staycation.created_at || new Date()).toLocaleDateString('en-US', {year: 'numeric', month: '2-digit', day: '2-digit'})}`"></p>
 
                 <div class="mt-5 flex justify-end space-x-3">
-                    <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                    <button class="font-semibold text-[#8f5d54] transition hover:text-[#7a4d46] hover:underline"
                         @click="editStaycation(staycation.id)">Edit</button>
                     <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
                         @click="deleteStaycation(staycation.id, `{{ url('/admin/staycation-list') }}/${staycation.id}`)">Delete</button>
@@ -307,7 +310,7 @@
                         <td class="px-6 py-4 text-gray-600">{{ $img->title ?? 'Untitled' }}</td>
                         <td class="px-6 py-4 text-gray-600">{{ $img->created_at->format('Y-m-d') }}</td>
                         <td class="px-6 py-4 text-right space-x-4">
-                            <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition" @click="editImage({{ $img->id }}, '{{ $img->staycation_id }}', '{{ $img->title }}')">
+                            <button class="font-semibold text-[#8f5d54] transition hover:text-[#7a4d46] hover:underline" @click="editImage({{ $img->id }}, '{{ $img->staycation_id }}', '{{ $img->title }}')">
                                 Edit
                             </button>
                             <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition" @click="deleteImage({{ $img->id }}, '{{ route('admin.staycation-image.destroy', $img->id) }}')">
@@ -350,7 +353,7 @@
                     <div>
                         <label for="staycation_name" class="block text-sm font-medium mb-1">Room Name</label>
                         <input type="text" id="staycation_name" name="name" autocomplete="off" x-model="form.name" @input="updateSpecialRoomStatus()" class="w-full border rounded px-3 py-2 h-10" placeholder="Premium Glamping Tent" required>
-                        <p x-show="isSpecialStaycation" class="text-xs text-blue-600 mt-1">BYOT/Car Camping - No adults/children required</p>
+                        <p x-show="isSpecialStaycation" class="mt-1 text-xs text-[#8f5d54]">BYOT/Car Camping - No adults/children required</p>
                     </div>
                     <div>
                         <label for="staycation_days" class="block text-sm font-medium mb-1">Duration (Days)</label>
@@ -734,12 +737,13 @@
             <p class="text-gray-500 text-sm">Amenities and features for each room.</p>
         </div>
 
-        <button
+        <x-admin.action-button
+            variant="primary"
             @click="resetTextForm(); showTextModal = true"
-            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition"
+            class="px-4 py-2 text-sm font-semibold"
         >
             + Add Room Features
-        </button>
+        </x-admin.action-button>
     </div>
 
     {{-- Features Table --}}
@@ -768,7 +772,7 @@
                                 $featureCount = collect($features)->filter(fn($f) => trim($f))->count();
                             @endphp
                             @if($featureCount > 0)
-                                <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">{{ $featureCount }} features</span>
+                                <span class="inline-flex items-center rounded-full bg-[#f6ede9] px-3 py-1 text-sm font-medium text-[#8f5d54]">{{ $featureCount }} features</span>
                             @else
                                 <span class="text-gray-400 italic">No features</span>
                             @endif
@@ -778,7 +782,7 @@
                                 type="button"
                                 x-on:click="editText($el, {{ $text->id }}, '{{ $text->staycation_id }}', '{{ $text->section }}', '{{ $text->title }}')"
                                 data-content="{!! htmlspecialchars($text->content ?? '', ENT_QUOTES) !!}"
-                                class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                                class="font-semibold text-[#8f5d54] transition hover:text-[#7a4d46] hover:underline"
                             >
                                 Edit
                             </button>
@@ -851,7 +855,7 @@
                         name="text"
                         x-model="form.text"
                         rows="8"
-                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        class="w-full rounded border px-3 py-2 focus:border-[#8f5d54] focus:outline-none focus:ring-2 focus:ring-[#d8bcb7]"
                         placeholder="Enter each feature on a new line:&#10;LUXURY TENT SETUP&#10;GOURMET LUNCH SERVICE&#10;PRIVATE ATV EXPERIENCE&#10;GUIDED NATURE TOUR&#10;CUSTOM TEAM BUILDING"
                         required
                     ></textarea>
@@ -885,12 +889,13 @@
             <p class="text-gray-500 text-sm">Manage VR title, badge, and panorama slides for each room.</p>
         </div>
 
-        <button
+        <x-admin.action-button
+            variant="primary"
             @click="resetVrTextForm(); showVrTextModal = true"
-            class="px-4 py-2 rounded-xl bg-indigo-600 text-white font-medium shadow hover:bg-indigo-700 hover:shadow-lg transition"
+            class="px-4 py-2 text-sm font-semibold"
         >
             + Add VR Content
-        </button>
+        </x-admin.action-button>
     </div>
 
     <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
@@ -916,7 +921,7 @@
                         <td class="px-6 py-4 font-medium text-gray-900">{{ $text->staycation->name ?? 'Untitled' }}</td>
                         <td class="px-6 py-4 text-gray-600 text-sm">
                             @if(!empty($badgeLabel))
-                                <span class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-700">{{ $badgeLabel }}</span>
+                                <span class="inline-flex items-center rounded-full bg-[#f6ede9] px-3 py-1 text-sm font-medium text-[#8f5d54]">{{ $badgeLabel }}</span>
                             @else
                                 <span class="text-gray-400 italic">No badge set</span>
                             @endif
@@ -931,7 +936,7 @@
                                 type="button"
                                 x-on:click="editVrText($el, {{ $text->id }}, @js($text->staycation_id), @js($text->title))"
                                 data-content="{!! htmlspecialchars($text->content ?? '', ENT_QUOTES) !!}"
-                                class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                                class="font-semibold text-[#8f5d54] transition hover:text-[#7a4d46] hover:underline"
                             >
                                 Edit
                             </button>
@@ -1003,7 +1008,7 @@
                             type="text"
                             id="vr_badge_label"
                             x-model="vrForm.badge_label"
-                            class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            class="w-full rounded border px-3 py-2 focus:border-[#8f5d54] focus:outline-none focus:ring-2 focus:ring-[#d8bcb7]"
                             placeholder="Glamping or Camping"
                             required
                         >
@@ -1013,7 +1018,7 @@
                         <select
                             id="vr_room_type"
                             x-model="vrForm.room_type"
-                            class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            class="w-full rounded border px-3 py-2 focus:border-[#8f5d54] focus:outline-none focus:ring-2 focus:ring-[#d8bcb7]"
                             @change="vrForm.badge_label = $event.target.value === 'camping' ? 'Camping' : 'Glamping'"
                         >
                             <option value="glamping">Glamping</option>
@@ -1039,14 +1044,14 @@
                         id="vr_description"
                         x-model="vrForm.description"
                         rows="4"
-                        class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        class="w-full rounded border px-3 py-2 focus:border-[#8f5d54] focus:outline-none focus:ring-2 focus:ring-[#d8bcb7]"
                         placeholder="Short intro shown under the VR viewer"
                     ></textarea>
                 </div>
 
                 <div class="mb-4 space-y-3">
                     <div
-                        class="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-indigo-400 hover:bg-indigo-50/40"
+                        class="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600 transition hover:border-[#cfaea5] hover:bg-[#f6ede9]/40"
                         @dragover.prevent
                         @drop.prevent="handleVrSlideDrop($event)"
                     >
@@ -1066,7 +1071,7 @@
                             <div class="flex flex-wrap gap-2">
                                 <label
                                     for="vr_images"
-                                    class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+                                    class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-[#8f5d54] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#7a4d46]"
                                 >
                                     Choose one or more files
                                 </label>
@@ -1103,7 +1108,7 @@
                             <div x-show="vrForm.slides.length" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                 <template x-for="(slide, index) in vrForm.slides" :key="slide.id">
                                     <div
-                                        class="group rounded-xl border border-gray-200 bg-gray-50 p-3 shadow-sm transition hover:border-indigo-300 hover:bg-white"
+                                        class="group rounded-xl border border-gray-200 bg-gray-50 p-3 shadow-sm transition hover:border-[#cfaea5] hover:bg-white"
                                         draggable="true"
                                         @dragstart="startVrSlideDrag(index)"
                                         @dragover.prevent
@@ -1123,7 +1128,7 @@
                                                     <p class="truncate text-sm font-medium text-gray-900" x-text="getVrSlideLabel(slide, index)"></p>
                                                     <span
                                                         class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                                                        :class="slide.kind === 'existing' ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'"
+                                                        :class="slide.kind === 'existing' ? 'bg-emerald-50 text-emerald-700' : 'bg-[#f6ede9] text-[#8f5d54]'"
                                                         x-text="slide.kind === 'existing' ? 'Saved' : 'New'"
                                                     ></span>
                                                 </div>
@@ -1159,7 +1164,7 @@
                     </button>
                     <button
                         type="submit"
-                        class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 text-sm w-full sm:w-auto"
+                        class="w-full rounded-xl bg-[#8f5d54] px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-[#7a4d46] sm:w-auto"
                     >
                         <span x-text="editVrMode ? 'Update' : 'Add'"></span>
                     </button>

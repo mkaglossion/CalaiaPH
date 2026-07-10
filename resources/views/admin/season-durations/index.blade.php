@@ -1,5 +1,7 @@
 @extends('layouts.admin')
 
+@section('title', 'Season Durations')
+
 @section('content')
 <style>
     .undo-banner {
@@ -49,14 +51,19 @@
         ];
     @endphp
 
-    <h1 class="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
-        Season Durations
-    </h1>
-    <p class="text-gray-600">Manage season date ranges used by staycation bookings.</p>
-
-    <div class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-        This page only manages season durations. Room rates are configured inside <strong>Staycation Rooms</strong>.
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 md:text-4xl">Season Durations</h1>
+            <p class="mt-2 text-gray-600">Manage season date ranges used by staycation bookings.</p>
+        </div>
+        <x-admin.action-button variant="soft" href="{{ route('admin.stay.staycations') }}" class="px-4 py-2 text-sm font-semibold">
+            Back to Staycations
+        </x-admin.action-button>
     </div>
+
+    <p class="border-0 bg-transparent p-0 text-sm text-gray-600 shadow-none" style="border: 0; background: transparent; box-shadow: none; padding: 0;">
+        This page only manages season durations. Room rates are configured inside <strong>Staycation Rooms</strong>.
+    </p>
 
     @if(session('success'))
         <div
@@ -95,9 +102,9 @@
                 <h2 class="text-xl font-semibold">Season Durations</h2>
                 <p class="text-sm text-gray-500">Define the active date ranges for Non-Peak, Peak, and Super-Peak.</p>
             </div>
-            <button @click="openModal()" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+            <x-admin.action-button variant="primary" @click="openModal()" class="px-4 py-2 text-sm font-semibold">
                 + Add Duration
-            </button>
+            </x-admin.action-button>
         </div>
 
         {{-- Duration Legend --}}
@@ -144,7 +151,7 @@
                                     <div class="flex justify-end gap-4">
                                         <button 
                                             @click="editPeriod({{ $period->id }}, {{ $peakType->id }}, '{{ $period->start_date }}', '{{ $period->end_date }}', {{ $period->name ? "'$period->name'" : 'null' }})"
-                                            class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition">
+                                            class="font-semibold text-[#8f5d54] transition hover:text-[#7a4d46] hover:underline">
                                             Edit
                                         </button>
                                         <form action="{{ route('admin.seasonDurations.periods.destroy', $period->id) }}" method="POST" class="inline" onsubmit="return queuePricingDelete(this, 'season duration', @js($period->name ?? 'Unnamed Duration'))">
@@ -173,7 +180,7 @@
         </div>
 
         {{-- Cross-Year Note --}}
-        <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
+        <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
             <strong>Note:</strong> If a duration crosses year-end, split it into two entries:
             <ul class="list-disc list-inside mt-1">
                 <li>Dec 20, 2026 - Dec 31, 2026</li>
@@ -239,7 +246,7 @@
                                 name="name"
                                 x-model="form.name"
                                 placeholder="e.g., Holy Week, Halloween, Holiday Season"
-                                class="border rounded w-full p-2"
+                                class="w-full rounded-lg border border-gray-300 p-2 focus:border-[#8f5d54] focus:outline-none focus:ring-2 focus:ring-[#d8bcb7]"
                                 autocomplete="off">
                         </div>
 
@@ -251,7 +258,7 @@
                                     id="duration-start-date"
                                     name="start_date"
                                     x-model="form.start_date"
-                                    class="border rounded w-full p-2"
+                                    class="w-full rounded-lg border border-gray-300 p-2 focus:border-[#8f5d54] focus:outline-none focus:ring-2 focus:ring-[#d8bcb7]"
                                     required
                                     autocomplete="off">
                             </div>
@@ -263,17 +270,19 @@
                                     id="duration-end-date"
                                     name="end_date"
                                     x-model="form.end_date"
-                                    class="border rounded w-full p-2"
+                                    class="w-full rounded-lg border border-gray-300 p-2 focus:border-[#8f5d54] focus:outline-none focus:ring-2 focus:ring-[#d8bcb7]"
                                     required
                                     autocomplete="off">
                             </div>
                         </div>
 
                         <div class="flex justify-end gap-2">
-                            <button type="button" @click="closeModal()" class="px-4 py-2 border rounded">Cancel</button>
-                            <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+                            <x-admin.action-button variant="secondary" type="button" @click="closeModal()" class="px-4 py-2 text-sm font-semibold">
+                                Cancel
+                            </x-admin.action-button>
+                            <x-admin.action-button variant="primary" type="submit" class="px-4 py-2 text-sm font-semibold">
                                 <span x-text="editMode ? 'Update' : 'Save'"></span>
-                            </button>
+                            </x-admin.action-button>
                         </div>
                     </form>
                 </div>
