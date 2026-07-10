@@ -1915,6 +1915,16 @@
                     return Math.max(0, parseInt(roomDetail?.children_limit || 0, 10) || 0);
                 },
 
+                getRoomMaxOccupancy(roomId) {
+                    const lookupId = String(roomId).includes('_') ? String(roomId).split('_')[0] : roomId;
+                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[lookupId] ? this.roomDetailsMap[lookupId] : null;
+                    const maxAdults = this.getRoomGuestLimit(roomId);
+                    const maxChildren = this.getRoomIncludedChildren(roomId);
+                    const configuredMaxAdults = Math.max(0, parseInt(roomDetail?.max_guest_capacity || 0, 10) || 0);
+
+                    return configuredMaxAdults > 0 ? maxAdults + maxChildren : maxAdults;
+                },
+
                 getRoomMaxExtraMattress(roomId) {
                     const included = this.getRoomIncludedCapacity(roomId);
                     const maxAllowed = this.getRoomGuestLimit(roomId);
@@ -1944,12 +1954,13 @@
 
                 getRoomCapacityHint(roomId) {
                     const included = this.getRoomIncludedCapacity(roomId);
-                    const maxAllowed = this.getRoomGuestLimit(roomId);
-                    if (maxAllowed <= included) {
-                        return `Included: ${included} adults • Max: ${maxAllowed} guests • No additional adult allowance`;
+                    const maxAdults = this.getRoomGuestLimit(roomId);
+                    const maxChildren = this.getRoomIncludedChildren(roomId);
+                    if (maxAdults <= included) {
+                        return `Included adults: ${included} • Up to ${maxAdults} adults + ${maxChildren} children • No additional adult allowance`;
                     }
                     const extraStartsAt = included + 1;
-                    return `Included: ${included} adults • Max: ${maxAllowed} guests • Additional adult fee starts at adult #${extraStartsAt}`;
+                    return `Included adults: ${included} • Up to ${maxAdults} adults + ${maxChildren} children • Additional adult fee starts at adult #${extraStartsAt}`;
                 },
 
                 getRoomGuestCount(roomId) {
@@ -1962,10 +1973,9 @@
                 },
 
                 getRoomGuestCountLabel(roomId) {
-                    const rawTotal = this.getRoomGuestCount(roomId);
-                    const maxGuests = this.getRoomGuestLimit(roomId);
-                    const totalGuests = Math.min(rawTotal, maxGuests);
-                    return `Total guests: ${totalGuests} / ${maxGuests}`;
+                    const totalGuests = this.getRoomGuestCount(roomId);
+                    const maxOccupancy = this.getRoomMaxOccupancy(roomId);
+                    return `Total guests: ${totalGuests} / ${maxOccupancy}`;
                 },
 
                 getRoomExtraMattressLabel(roomId) {
@@ -2044,7 +2054,7 @@
                             Swal.fire({
                                 icon: 'warning',
                                 title: 'Guest Limit Exceeded',
-                                text: `Maximum ${maxGuests} guests allowed for ${roomLabel}.`,
+                                text: `Maximum ${maxAdults} adults allowed for ${roomLabel}.`,
                                 toast: true,
                                 position: 'bottom-end',
                                 showConfirmButton: false,

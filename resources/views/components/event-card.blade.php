@@ -30,7 +30,7 @@
 
         <!-- Features -->
         @if($event->features)
-            <div class="mb-6">
+            <div>
                 <p class="text-sm font-semibold text-gray-900 mb-3">What's Included:</p>
                 <ul class="space-y-2">
                     @foreach(array_map('trim', explode(',', $event->features)) as $feature)
@@ -43,19 +43,5 @@
             </div>
         @endif
 
-        <!-- CTA Button -->
-        @php
-            $messengerUrl = 'https://m.me/410774518796277';
-            $messengerText = rawurlencode('Inquiry About ' . $event->name);
-            $eventMessengerLink = $messengerUrl . '?text=' . $messengerText;
-        @endphp
-        <a 
-            href="{{ $eventMessengerLink }}"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="w-full block bg-brand text-white text-center py-3 rounded-xl font-semibold hover:bg-brand/90 transition-colors duration-300"
-        >
-            <i class="bi bi-messenger mr-2"></i>Inquire About This Event
-        </a>
     </div>
 </div>

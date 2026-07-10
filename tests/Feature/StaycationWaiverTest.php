@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Mail\BookingConfirmation;
 use App\Models\Booking;
+use App\Models\Staycation;
 use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class StaycationWaiverTest extends TestCase
@@ -45,6 +47,7 @@ class StaycationWaiverTest extends TestCase
     public function test_complete_staycation_payment_redirects_to_paymongo_checkout(): void
     {
         config()->set('services.paymongo.secret_key', 'sk_test_123');
+        Storage::fake('local');
 
         $this->partialMock(PaymentService::class, function ($mock) {
             $mock->shouldReceive('createCheckout')
@@ -65,15 +68,19 @@ class StaycationWaiverTest extends TestCase
                 'payment_method' => 'paymongo',
                 'terms_and_policy_accepted' => 'on',
                 'camp_waiver_accepted' => 'on',
-                'camp_waiver_participant_name' => 'Juan Dela Cruz',
-                'camp_waiver_birth_date' => '1995-05-01',
-                'camp_waiver_gender' => 'male',
-                'camp_waiver_address' => '123 Sample Street',
-                'camp_waiver_emergency_name' => 'Maria Dela Cruz',
-                'camp_waiver_emergency_phone' => '09170000000',
-                'camp_waiver_relationship' => 'Self',
-                'camp_waiver_signature_name' => 'Juan Dela Cruz',
-                'camp_waiver_signature_date' => '2026-06-19',
+                'guests' => [
+                    [
+                        'full_name' => 'Juan Dela Cruz',
+                        'guest_type' => 'adult',
+                        'birth_date' => '1995-05-01',
+                        'gender' => 'male',
+                        'contact_number' => '09171234567',
+                        'emergency_contact_name' => 'Maria Dela Cruz',
+                        'emergency_contact_number' => '09170000000',
+                        'emergency_contact_relationship' => 'Sibling',
+                        'signature_data' => $this->signatureData(),
+                    ],
+                ],
                 'cancellation_policy' => 'flexible',
             ],
             [
@@ -100,6 +107,246 @@ class StaycationWaiverTest extends TestCase
             'payment_status' => 'pending',
             'status' => 'pending',
         ]);
+        $booking = Booking::sole();
+        $this->assertDatabaseHas('booking_guests', [
+            'booking_id' => $booking->id,
+            'full_name' => 'Juan Dela Cruz',
+            'guest_type' => 'adult',
+            'is_primary_contact' => true,
+        ]);
+        Storage::disk('local')->assertExists("signatures/bookings/{$booking->id}/guest-1.png");
+    }
+
+    public function test_checkout_uses_every_guest_from_the_selected_accommodation(): void
+    {
+        config()->set('services.paymongo.secret_key', 'sk_test_123');
+        Storage::fake('local');
+
+        $this->partialMock(PaymentService::class, function ($mock) {
+            $mock->shouldReceive('createCheckout')
+                ->once()
+                ->andReturn((object) [
+                    'checkout_url' => 'https://paymongo.test/checkout/cs_six_guests',
+                    'id' => 'cs_six_guests',
+                ]);
+        });
+
+        $response = $this->postWithCsrf(
+            route('booking.initiatePayment'),
+            [
+                'first_name' => 'Juan',
+                'last_name' => 'Dela Cruz',
+                'email' => 'juan@example.com',
+                'phone' => '09171234567',
+                'payment_method' => 'paymongo',
+                'terms_and_policy_accepted' => 'on',
+                'camp_waiver_accepted' => 'on',
+                'guests' => $this->guestPayloads(4, 2),
+                'cancellation_policy' => 'flexible',
+            ],
+            [
+                'booking' => [
+                    'booking_type' => 'staycation',
+                    'checkin' => '2026-07-01',
+                    'checkout' => '2026-07-02',
+                    'adults_total' => 1,
+                    'children_total' => 0,
+                    'accommodations' => [
+                        [
+                            'room_name' => 'Standard Glamping',
+                            'adults' => 4,
+                            'children' => 2,
+                            'total_price' => 0,
+                        ],
+                    ],
+                    'selected_foods' => [],
+                    'selected_activities' => [],
+                    'selected_activity_packages' => [],
+                    'final_totals' => ['grand_total' => 0],
+                ],
+            ]
+        );
+
+        $response->assertRedirect('https://paymongo.test/checkout/cs_six_guests');
+        $booking = Booking::sole();
+        $this->assertDatabaseCount('booking_guests', 6);
+        $this->assertSame(4, $booking->bookingGuests()->where('guest_type', 'adult')->count());
+        $this->assertSame(2, $booking->bookingGuests()->where('guest_type', 'child')->count());
+        Storage::disk('local')->assertExists("signatures/bookings/{$booking->id}/guest-1.png");
+        Storage::disk('local')->assertExists("signatures/bookings/{$booking->id}/guest-6.png");
+    }
+
+    public function test_checkout_page_renders_one_waiver_card_for_every_selected_guest(): void
+    {
+        $response = $this->withSession([
+            'booking' => [
+                'booking_type' => 'staycation',
+                'checkin' => '2026-07-01',
+                'checkout' => '2026-07-02',
+                'adults_total' => 1,
+                'children_total' => 0,
+                'accommodations' => [
+                    [
+                        'room_name' => 'Standard Glamping',
+                        'adults' => 4,
+                        'children' => 2,
+                        'total_price' => 0,
+                    ],
+                ],
+                'selected_foods' => [],
+                'selected_activities' => [],
+                'selected_activity_packages' => [],
+                'final_totals' => ['grand_total' => 0],
+            ],
+        ])->get(route('booking.staycationPayment'));
+
+        $response->assertOk();
+        $response->assertSee('data-total-guests="6"', false);
+        $response->assertSee('data-adult-guests="4"', false);
+        $response->assertSee('data-child-guests="2"', false);
+        $response->assertSee('Guest 4');
+        $response->assertSee('Guest 6');
+        $response->assertSee('Child details and guardian e-signature');
+        $response->assertDontSee('Guest 1 of 6');
+        $this->assertSame(6, substr_count($response->getContent(), 'data-guest-card-index="'));
+    }
+
+    public function test_room_selection_preserves_separate_adult_and_child_counts(): void
+    {
+        $room = Staycation::create([
+            'name' => 'Standard Glamping',
+            'days' => 1,
+            'type' => 'glamping',
+            'base_quantity' => 3,
+            'capacity' => 4,
+            'included_guest_capacity' => 4,
+            'max_guest_capacity' => 6,
+            'adults' => 4,
+            'children' => 2,
+            'price' => 6800,
+        ]);
+
+        $response = $this->withSession([
+            'booking' => [
+                'booking_type' => 'staycation',
+                'checkin' => '2026-07-20',
+                'checkout' => '2026-07-21',
+                'adults_total' => 6,
+                'children_total' => 2,
+                'accommodations' => [],
+            ],
+        ])->postJson(route('booking.staycation'), [
+            'selected_rooms' => [
+                (string) $room->id => [
+                    'id' => $room->id,
+                    'adults' => 6,
+                    'children' => 2,
+                    'extra_mattress' => 2,
+                    'pets' => 'no',
+                    'pet_agreement' => false,
+                    'num_pets' => 0,
+                ],
+            ],
+            'proceed_to_activities' => true,
+        ]);
+
+        $response->assertOk()->assertJson(['success' => true]);
+        $booking = session('booking');
+        $accommodation = array_values($booking['accommodations'])[0];
+
+        $this->assertSame(6, $accommodation['adults']);
+        $this->assertSame(2, $accommodation['children']);
+        $this->assertSame(2, $accommodation['additional_adults']);
+        $this->assertSame(2400.0, (float) $accommodation['additional_adult_price']);
+        $this->assertSame(9200.0, (float) $accommodation['total_price']);
+        $this->assertSame(6, $booking['adults_total']);
+        $this->assertSame(2, $booking['children_total']);
+
+        $paymentPage = $this->get(route('booking.staycationPayment'));
+        $paymentPage->assertOk();
+        $paymentPage->assertSee('data-total-guests="8"', false);
+        $paymentPage->assertSee('data-adult-guests="6"', false);
+        $paymentPage->assertSee('data-child-guests="2"', false);
+        $this->assertSame(8, substr_count($paymentPage->getContent(), 'data-guest-card-index="'));
+    }
+
+    public function test_room_selection_rejects_counts_above_the_configured_child_limit(): void
+    {
+        $room = Staycation::create([
+            'name' => 'Standard Glamping',
+            'days' => 1,
+            'type' => 'glamping',
+            'base_quantity' => 3,
+            'capacity' => 4,
+            'included_guest_capacity' => 4,
+            'max_guest_capacity' => 6,
+            'adults' => 4,
+            'children' => 2,
+            'price' => 6800,
+        ]);
+
+        $response = $this->withSession([
+            'booking' => [
+                'booking_type' => 'staycation',
+                'checkin' => '2026-07-20',
+                'checkout' => '2026-07-21',
+                'accommodations' => [],
+            ],
+        ])->postJson(route('booking.staycation'), [
+            'selected_rooms' => [
+                (string) $room->id => [
+                    'id' => $room->id,
+                    'adults' => 6,
+                    'children' => 3,
+                    'extra_mattress' => 2,
+                    'pets' => 'no',
+                    'pet_agreement' => false,
+                    'num_pets' => 0,
+                ],
+            ],
+            'proceed_to_activities' => true,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonFragment(['message' => 'Guest allocation exceeds the allowed adult or child count for Standard Glamping. Please review your guest numbers.']);
+        $this->assertSame([], session('booking.accommodations'));
+    }
+
+    public function test_checkout_rejects_a_missing_guest_card(): void
+    {
+        $guests = $this->guestPayloads(4, 2);
+        array_pop($guests);
+
+        $response = $this->postWithCsrf(
+            route('booking.initiatePayment'),
+            $this->checkoutPayload($guests),
+            ['booking' => $this->sixGuestBooking()],
+            route('booking.staycationPayment')
+        );
+
+        $response->assertRedirect(route('booking.staycationPayment'));
+        $response->assertSessionHasErrors(['guests']);
+        $this->assertDatabaseCount('bookings', 0);
+        $this->assertDatabaseCount('booking_guests', 0);
+    }
+
+    public function test_checkout_rejects_a_missing_guest_signature(): void
+    {
+        $guests = $this->guestPayloads(4, 2);
+        unset($guests[5]['signature_data']);
+
+        $response = $this->postWithCsrf(
+            route('booking.initiatePayment'),
+            $this->checkoutPayload($guests),
+            ['booking' => $this->sixGuestBooking()],
+            route('booking.staycationPayment')
+        );
+
+        $response->assertRedirect(route('booking.staycationPayment'));
+        $response->assertSessionHasErrors(['guests.5.signature_data']);
+        $this->assertDatabaseCount('bookings', 0);
+        $this->assertDatabaseCount('booking_guests', 0);
     }
 
     public function test_booking_confirmation_email_shows_accepted_agreements(): void
@@ -325,5 +572,84 @@ class StaycationWaiverTest extends TestCase
         }
 
         return $text;
+    }
+
+    private function guestPayloads(int $adultCount, int $childCount): array
+    {
+        $guests = [];
+
+        for ($adult = 1; $adult <= $adultCount; $adult++) {
+            $guests[] = [
+                'full_name' => "Adult Guest {$adult}",
+                'guest_type' => 'adult',
+                'birth_date' => '1990-05-01',
+                'gender' => 'male',
+                'contact_number' => "0917000000{$adult}",
+                'emergency_contact_name' => 'Emergency Contact',
+                'emergency_contact_number' => '09179999999',
+                'emergency_contact_relationship' => 'Sibling',
+                'signature_data' => $this->signatureData(),
+            ];
+        }
+
+        for ($child = 1; $child <= $childCount; $child++) {
+            $guests[] = [
+                'full_name' => "Child Guest {$child}",
+                'guest_type' => 'child',
+                'birth_date' => '2018-05-01',
+                'gender' => 'female',
+                'emergency_contact_name' => 'Juan Dela Cruz',
+                'emergency_contact_number' => '09171234567',
+                'emergency_contact_relationship' => 'Parent',
+                'guardian_full_name' => 'Juan Dela Cruz',
+                'guardian_relationship' => 'Father',
+                'signature_data' => $this->signatureData(),
+            ];
+        }
+
+        return $guests;
+    }
+
+    private function checkoutPayload(array $guests): array
+    {
+        return [
+            'first_name' => 'Juan',
+            'last_name' => 'Dela Cruz',
+            'email' => 'juan@example.com',
+            'phone' => '09171234567',
+            'payment_method' => 'paymongo',
+            'terms_and_policy_accepted' => 'on',
+            'camp_waiver_accepted' => 'on',
+            'guests' => $guests,
+            'cancellation_policy' => 'flexible',
+        ];
+    }
+
+    private function sixGuestBooking(): array
+    {
+        return [
+            'booking_type' => 'staycation',
+            'checkin' => '2026-07-01',
+            'checkout' => '2026-07-02',
+            'adults_total' => 1,
+            'children_total' => 0,
+            'accommodations' => [
+                [
+                    'room_name' => 'Standard Glamping',
+                    'adults' => 4,
+                    'children' => 2,
+                    'total_price' => 0,
+                ],
+            ],
+            'selected_foods' => [],
+            'selected_activities' => [],
+            'selected_activity_packages' => [],
+            'final_totals' => ['grand_total' => 0],
+        ];
+    }
+
+    private function signatureData(): string
+    {
+        return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
     }
 }

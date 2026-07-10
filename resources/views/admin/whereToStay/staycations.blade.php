@@ -187,8 +187,8 @@
                     
                     <template x-if="!staycation.name || (!staycation.name.toLowerCase().includes('byot') && !staycation.name.toLowerCase().includes('car camping') && !staycation.name.toLowerCase().includes('bring your own'))">
                         <div class="space-y-1">
-                        <p><span x-text="`Base included guests: ${staycation.included_guest_capacity || staycation.capacity || ((staycation.adults || 0) + (staycation.children || 0)) || 0}`"></span></p>
-                            <p><span x-text="`Max guests: ${staycation.max_guest_capacity || staycation.capacity || 'N/A'}`"></span></p>
+                        <p><span x-text="`Base included adults: ${staycation.included_guest_capacity || staycation.adults || staycation.capacity || 0}`"></span></p>
+                            <p><span x-text="`Max adults: ${staycation.max_guest_capacity || staycation.adults || staycation.capacity || 'N/A'}`"></span></p>
                         </div>
                     </template>
                     
@@ -371,18 +371,18 @@
                         <input type="number" id="staycation_children" name="children" x-model.number="form.children" min="0" class="w-full border rounded px-3 py-2 h-10" placeholder="0" required>
                     </div>
                     <div x-show="!isSpecialStaycation">
-                        <label for="staycation_max_capacity" class="block text-sm font-medium mb-1">Maximum Guests Allowed</label>
+                        <label for="staycation_max_capacity" class="block text-sm font-medium mb-1">Maximum Adults Allowed</label>
                         <input type="number" id="staycation_max_capacity" name="max_guest_capacity" x-model.number="form.max_guest_capacity" :min="Math.max(1, form.included_guest_capacity || 1)" class="w-full border rounded px-3 py-2 h-10" placeholder="6" required>
                         <p class="text-xs text-gray-500 mt-1">Can be higher than base setup to allow extra beds.</p>
                     </div>
                     <div x-show="!isSpecialStaycation">
-                        <label for="staycation_included_capacity" class="block text-sm font-medium mb-1">Base number of guests</label>
+                        <label for="staycation_included_capacity" class="block text-sm font-medium mb-1">Base adults included</label>
                         <input type="number" id="staycation_included_capacity" name="included_guest_capacity" x-model.number="form.included_guest_capacity" min="1" class="w-full border rounded px-3 py-2 h-10" placeholder="4" required>
-                        <p class="text-xs text-gray-500 mt-1">Guests covered by base price before extra mattress.</p>
+                        <p class="text-xs text-gray-500 mt-1">Adults covered by the room rate before the additional-adult fee.</p>
                     </div>
                 </div>
                 <div x-show="!isSpecialStaycation" class="text-xs text-gray-600 -mt-2">
-                    <span x-text="`Base included guests = ${Math.max(1, form.included_guest_capacity || 1)} - Extra bed starts from guest #${Math.max(1, form.included_guest_capacity || 1) + 1}`"></span>
+                    <span x-text="`Base included adults: ${Math.max(1, form.included_guest_capacity || 1)} - Additional-adult fee starts at adult #${Math.max(1, form.included_guest_capacity || 1) + 1}`"></span>
                 </div>
 
                 <!-- Dynamic Price Configs -->
@@ -1716,8 +1716,8 @@ function staycationManager() {
                 this.form.quantity = staycation.capacity;
                 this.form.adults = this.isSpecialStaycation ? Number(staycation.adults || 0) : Math.max(1, Number(staycation.adults || 0));
                 this.form.children = staycation.children;
-                this.form.included_guest_capacity = Number(staycation.included_guest_capacity || staycation.capacity || ((staycation.adults || 0) + (staycation.children || 0)) || 1);
-                this.form.max_guest_capacity = Number(staycation.max_guest_capacity || staycation.capacity || this.form.included_guest_capacity || 1);
+                this.form.included_guest_capacity = Number(staycation.included_guest_capacity || staycation.adults || staycation.capacity || 1);
+                this.form.max_guest_capacity = Number(staycation.max_guest_capacity || staycation.adults || staycation.capacity || this.form.included_guest_capacity || 1);
                 // Align inventory inputs with base capacity
                 this.inventoryQty = Number(staycation.base_quantity || 1);
                 this.inventoryQtyRange = Number(staycation.base_quantity || 1);

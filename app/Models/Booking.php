@@ -9,6 +9,8 @@ use Carbon\Carbon;
 use App\Models\Staycation;
 use App\Events\FoodStockUpdated;
 use App\Models\Food;
+use App\Models\BookingGuest;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Booking extends Model
 {
@@ -156,6 +158,11 @@ class Booking extends Model
         }
 
         return max(1, $this->checkin_date->diffInDays($checkout));
+    }
+
+    public function bookingGuests(): HasMany
+    {
+        return $this->hasMany(BookingGuest::class);
     }
 
     /**

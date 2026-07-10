@@ -292,10 +292,10 @@
                     <i class="bi bi-{{ $experience['icon'] }} mr-2 text-[#8f5d54]" aria-hidden="true"></i> {{ $experience['capacity'] }}
                   </div>
                 </div>
-                <a href="/contact"
-                   class="w-full inline-flex items-center justify-center border-2 border-brand text-brand hover:bg-brand hover:text-white rounded-xl px-6 py-3 font-medium transition-all duration-300">
-                  {{ $experience['cta'] }}
-                </a>
+<a href="https://m.me/410774518796277"
+           class="w-full inline-flex items-center justify-center border-2 border-brand text-brand hover:bg-brand hover:text-white rounded-xl px-6 py-3 font-medium transition-all duration-300">
+           {{ $experience['cta'] }}
+        </a>
               </div>
             </article>
             @empty

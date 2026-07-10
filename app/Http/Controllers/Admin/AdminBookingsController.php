@@ -7,6 +7,7 @@ use App\Models\Activity;
 use App\Models\ActivityPackage;
 use App\Models\AdminActivityLog;
 use App\Models\Booking;
+use App\Models\BookingGuest;
 use App\Models\DayTour;
 use App\Models\Food;
 use App\Models\PackageBooking;
@@ -20,6 +21,7 @@ use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class AdminBookingsController extends Controller
 {
@@ -417,7 +419,7 @@ class AdminBookingsController extends Controller
 
     public function show(int $id)
     {
-        $booking = Booking::findOrFail($id);
+        $booking = Booking::with(['bookingGuests.signer'])->findOrFail($id);
 
         $staycations = Staycation::with('swiperImages')->get()->keyBy('id');
         $bookingData = is_array($booking->booking_data) ? $booking->booking_data : [];
@@ -449,6 +451,20 @@ class AdminBookingsController extends Controller
             'activityPackageImages',
             'dayTourImages'
         ));
+    }
+
+    public function guestSignature(int $bookingId, int $guestId)
+    {
+        $booking = Booking::findOrFail($bookingId);
+        abort_unless($booking->isStaycationFamilyBooking(), 404);
+
+        $guest = BookingGuest::where('booking_id', $booking->id)->whereKey($guestId)->firstOrFail();
+        abort_unless(!empty($guest->signature_path), 404);
+        abort_unless(Storage::disk('local')->exists($guest->signature_path), 404);
+
+        return Storage::disk('local')->response($guest->signature_path, basename($guest->signature_path), [
+            'Cache-Control' => 'private, no-store, max-age=0',
+        ]);
     }
     
     public function cancel(int $id)

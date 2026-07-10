@@ -7,8 +7,11 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use App\Mail\BookingConfirmation;
 use App\Models\Booking;
+use App\Models\BookingGuest;
 
 class PaymentService
 {
@@ -336,8 +339,10 @@ class PaymentService
         }
 
         $staycationBooking['staycation_category'] = $staycationCategory;
+        $persistedBookingData = $this->stripTransientGuestData($staycationBooking);
 
         $booking = DB::transaction(function () use ($staycationBooking, $paymentData, $customerName, $paymentStatus) {
+            $persistedBookingData = $this->stripTransientGuestData($staycationBooking);
             $booking = Booking::create([
                 'transaction_id' => $staycationBooking['transaction_id'],
                 'customer_name' => $customerName,
@@ -346,7 +351,7 @@ class PaymentService
                 'booking_type' => 'staycation',
                 'checkin_date' => $staycationBooking['checkin'],
                 'checkout_date' => $staycationBooking['checkout'],
-                'booking_data' => $staycationBooking,
+                'booking_data' => $persistedBookingData,
                 'total_amount' => (float) ($staycationBooking['payment_summary']['grand_total_paid'] ?? ($staycationBooking['final_totals']['grand_total'] ?? 0)),
                 'payment_method' => 'paymongo',
                 'payment_status' => $paymentStatus,
@@ -358,6 +363,15 @@ class PaymentService
 
             return $booking;
         });
+
+        $this->persistBookingGuests($booking, $staycationBooking, [
+            'guest_signature_payloads' => is_array($staycationBooking['guest_signature_payloads'] ?? null)
+                ? $staycationBooking['guest_signature_payloads']
+                : [],
+            'ip_address' => $paymentData['ip_address'] ?? null,
+            'user_agent' => $paymentData['user_agent'] ?? null,
+            'signed_by_user_id' => $paymentData['signed_by_user_id'] ?? null,
+        ]);
 
         $staycations = \App\Models\Staycation::all()->keyBy('id');
         $foods = \App\Models\Food::all()->keyBy('id');
@@ -600,10 +614,106 @@ class PaymentService
     }
 
     /**
+     * Persist normalized guest rows and signature files for a booking.
+     *
+     * The booking payload may contain raw guest signature data while the
+     * checkout is being created. This helper strips that transient payload
+     * before writing booking_data and stores only the private file path.
+     */
+    private function persistBookingGuests(Booking $booking, array $bookingData, array $options = []): void
+    {
+        $guests = array_values(array_filter(
+            is_array($bookingData['guests'] ?? null) ? $bookingData['guests'] : [],
+            fn ($guest) => is_array($guest)
+        ));
+
+        if (empty($guests)) {
+            return;
+        }
+
+        $signaturePayloads = array_values(array_filter(
+            is_array($options['guest_signature_payloads'] ?? null) ? $options['guest_signature_payloads'] : [],
+            fn ($payload) => is_array($payload)
+        ));
+
+        $ipAddress = $options['ip_address'] ?? null;
+        $userAgent = $options['user_agent'] ?? null;
+        $signedByUserId = $options['signed_by_user_id'] ?? null;
+
+        $booking->bookingGuests()->delete();
+
+        foreach ($guests as $index => $guest) {
+            $guestType = strtolower(trim((string) ($guest['guest_type'] ?? 'adult'))) === 'child' ? 'child' : 'adult';
+            $signaturePayload = $signaturePayloads[$index] ?? [];
+            $signatureData = trim((string) ($signaturePayload['signature_data'] ?? $guest['signature_data'] ?? ''));
+            $signaturePath = null;
+
+            if ($signatureData !== '') {
+                $signaturePath = $this->storeGuestSignature($booking, $index + 1, $signatureData);
+            }
+
+            BookingGuest::create([
+                'booking_id' => $booking->id,
+                'full_name' => trim((string) ($guest['full_name'] ?? '')),
+                'guest_type' => $guestType,
+                'birth_date' => $guest['birth_date'] ?? null,
+                'gender' => $guest['gender'] ?? null,
+                'contact_number' => $guest['contact_number'] ?? null,
+                'emergency_contact_name' => $guest['emergency_contact_name'] ?? '',
+                'emergency_contact_number' => $guest['emergency_contact_number'] ?? '',
+                'emergency_contact_relationship' => $guest['emergency_contact_relationship'] ?? '',
+                'waiver_acknowledged_at' => $guest['waiver_acknowledged_at'] ?? now(),
+                'signed_at' => $guest['signed_at'] ?? now(),
+                'signed_by_user_id' => $guest['signed_by_user_id'] ?? $signedByUserId,
+                'signed_by_name' => $guest['signed_by_name'] ?? null,
+                'signed_by_relationship' => $guest['signed_by_relationship'] ?? null,
+                'signature_path' => $signaturePath,
+                'ip_address' => $guest['ip_address'] ?? $ipAddress,
+                'user_agent' => $guest['user_agent'] ?? $userAgent,
+                'is_primary_contact' => (bool) ($guest['is_primary_contact'] ?? false),
+            ]);
+        }
+    }
+
+    private function storeGuestSignature(Booking $booking, int $guestNumber, string $signatureData): ?string
+    {
+        if (!str_starts_with($signatureData, 'data:image/png;base64,')) {
+            return null;
+        }
+
+        $encoded = substr($signatureData, strlen('data:image/png;base64,'));
+        $binary = base64_decode($encoded, true);
+        $imageInfo = $binary !== false ? @getimagesizefromstring($binary) : false;
+        if (
+            $binary === false
+            || $binary === ''
+            || strlen($binary) > 1500000
+            || $imageInfo === false
+            || ($imageInfo['mime'] ?? null) !== 'image/png'
+            || ($imageInfo[0] ?? 0) > 2400
+            || ($imageInfo[1] ?? 0) > 1200
+        ) {
+            return null;
+        }
+
+        $path = 'signatures/bookings/' . $booking->id . '/guest-' . $guestNumber . '.png';
+        Storage::disk('local')->put($path, $binary);
+
+        return $path;
+    }
+
+    private function stripTransientGuestData(array $bookingData): array
+    {
+        unset($bookingData['guest_signature_payloads']);
+
+        return $bookingData;
+    }
+
+    /**
      * Create a pending booking record before PayMongo redirect.
      * This ensures the booking exists in DB so webhook can find it.
      */
-    public function createPendingBooking(array $bookingData, array $paymentData, string $type): Booking
+    public function createPendingBooking(array $bookingData, array $paymentData, string $type, array $options = []): Booking
     {
         $transactionId = $paymentData['reference_id'] ?? ('TXN-' . strtoupper(uniqid()));
         $checkoutSessionId = $paymentData['checkout_session_id'] ?? null;
@@ -622,7 +732,7 @@ class PaymentService
         $checkinDate = $bookingData['checkin'] ?? ($bookingData['booking_date'] ?? now()->toDateString());
         $checkoutDate = $bookingData['checkout'] ?? null;
         $bookingPayload = $this->withPaymentAttemptMetadata(
-            array_merge($bookingData, [
+            array_merge($this->stripTransientGuestData($bookingData), [
                 'payment_data' => $paymentData,
             ]),
             'pending',
@@ -643,6 +753,8 @@ class PaymentService
             'payment_status' => 'pending',
             'status' => 'pending',
         ]);
+
+        $this->persistBookingGuests($booking, $bookingData, $options);
 
         Log::info('Created pending booking before PayMongo redirect', [
             'booking_id' => $booking->id,
@@ -729,6 +841,16 @@ class PaymentService
                 $booking->reduceInventory(true);
             }
         });
+
+        $booking->refresh();
+        if ($booking->bookingGuests()->count() === 0) {
+            $bookingData = is_array($booking->booking_data) ? $booking->booking_data : [];
+            $this->persistBookingGuests($booking, $bookingData, [
+                'guest_signature_payloads' => is_array($bookingData['guest_signature_payloads'] ?? null)
+                    ? $bookingData['guest_signature_payloads']
+                    : [],
+            ]);
+        }
 
         Log::info('Confirmed pending booking after successful payment', [
             'booking_id' => $booking->id,

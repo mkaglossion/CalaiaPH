@@ -332,7 +332,7 @@ class BookingController extends Controller
     {
         $acceptedAt = now()->toDateTimeString();
         $termsAccepted = $request->boolean('terms_and_policy_accepted') || $request->boolean('terms_accepted');
-        $waiverDetails = $this->buildCampWaiverSubmissionData($request);
+        $guestCounts = $this->resolveStaycationGuestCounts(session('booking', []));
 
         return [
             'terms_and_policy' => [
@@ -345,10 +345,17 @@ class BookingController extends Controller
             'camp_waiver' => [
                 'accepted' => $request->boolean('camp_waiver_accepted'),
                 'accepted_at' => $request->boolean('camp_waiver_accepted') ? $acceptedAt : null,
-                'label' => 'Camp Waiver and Release from Liability',
+                'label' => 'Camp Waiver and Safety Guidelines',
                 'source' => 'camp_waiver_accepted',
-                'version' => 'camp-waiver-v1',
-                'details' => $waiverDetails,
+                'version' => 'camp-waiver-v2',
+                'details' => [
+                    'guest_count' => $guestCounts['total'] ?? 0,
+                    'adult_count' => $guestCounts['adults'] ?? 0,
+                    'child_count' => $guestCounts['children'] ?? 0,
+                    'customer_id' => auth()->id(),
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ],
             ],
         ];
     }
@@ -356,50 +363,35 @@ class BookingController extends Controller
     private function campWaiverRules(): array
     {
         return [
-            'camp_waiver_participant_name' => 'required|string|max:255',
-            'camp_waiver_birth_date' => 'required|date',
-            'camp_waiver_gender' => 'required|string|in:male,female,other,prefer_not_to_say',
-            'camp_waiver_address' => 'required|string|max:500',
-            'camp_waiver_parent_guardian_name' => 'nullable|string|max:255',
-            'camp_waiver_emergency_name' => 'required|string|max:255',
-            'camp_waiver_emergency_phone' => 'required|string|max:20',
-            'camp_waiver_relationship' => 'required|string|max:255',
-            'camp_waiver_medical_condition' => 'nullable|string|max:1000',
-            'camp_waiver_signature_name' => 'required|string|max:255',
-            'camp_waiver_signature_date' => 'required|date',
-            'camp_waiver_parent_signature_name' => 'nullable|string|max:255',
-            'camp_waiver_child_ward_name' => 'nullable|string|max:255',
-            'camp_waiver_parent_signature_date' => 'nullable|date',
+            'camp_waiver_accepted' => 'accepted',
         ];
     }
 
     private function buildCampWaiverSubmissionData(Request $request): array
     {
-        $fields = [
-            'participant_name' => 'camp_waiver_participant_name',
-            'birth_date' => 'camp_waiver_birth_date',
-            'gender' => 'camp_waiver_gender',
-            'address' => 'camp_waiver_address',
-            'parent_guardian_name' => 'camp_waiver_parent_guardian_name',
-            'emergency_contact_name' => 'camp_waiver_emergency_name',
-            'emergency_contact_phone' => 'camp_waiver_emergency_phone',
-            'relationship_to_participant' => 'camp_waiver_relationship',
-            'medical_condition' => 'camp_waiver_medical_condition',
-            'signature_name' => 'camp_waiver_signature_name',
-            'signature_date' => 'camp_waiver_signature_date',
-            'parent_signature_name' => 'camp_waiver_parent_signature_name',
-            'child_ward_name' => 'camp_waiver_child_ward_name',
-            'parent_signature_date' => 'camp_waiver_parent_signature_date',
+        return [
+            'acknowledged_at' => now()->toDateTimeString(),
+            'customer_id' => auth()->id(),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
         ];
+    }
 
-        $submission = [];
+    private function sanitizeStaycationFlashInput(Request $request): array
+    {
+        $input = $request->except(['_token']);
 
-        foreach ($fields as $key => $inputKey) {
-            $value = trim((string) $request->input($inputKey, ''));
-            $submission[$key] = $value !== '' ? $value : null;
+        if (!empty($input['guests']) && is_array($input['guests'])) {
+            foreach ($input['guests'] as $index => $guest) {
+                if (is_array($guest)) {
+                    unset($input['guests'][$index]['signature_data']);
+                }
+            }
         }
 
-        return $submission;
+        unset($input['guest_signature_payloads']);
+
+        return $input;
     }
 
     public function debugSession()
@@ -1391,6 +1383,7 @@ class BookingController extends Controller
         // Get selected activities and activity packages from session
         $selectedActivities = $booking['selected_activities'] ?? [];
         $selectedActivityPackages = $booking['selected_activity_packages'] ?? [];
+        $guestBlueprints = $this->buildStaycationGuestBlueprints($booking);
 
         // Get dynamic VAT rate
         $vatService = app(\App\Services\VatService::class);
@@ -1405,7 +1398,19 @@ class BookingController extends Controller
             'package' => $booking['package'] ?? 'Staycation',
         ]);
 
-        return view('booking.staycation-payment', compact('booking', 'selectedFoods', 'foods', 'staycations', 'selectedActivities', 'selectedActivityPackages', 'vatRate', 'vatRatePercentage', 'confirmationContent', 'campWaiverContent'));
+        return view('booking.staycation-payment', compact(
+            'booking',
+            'selectedFoods',
+            'foods',
+            'staycations',
+            'selectedActivities',
+            'selectedActivityPackages',
+            'guestBlueprints',
+            'vatRate',
+            'vatRatePercentage',
+            'confirmationContent',
+            'campWaiverContent'
+        ));
     }
 
     public function payment()
@@ -1587,19 +1592,11 @@ class BookingController extends Controller
         if (!$request->boolean('terms_accepted') && !$request->boolean('terms_and_policy_accepted')) {
             return redirect()->back()
                 ->withErrors(['terms_and_policy_accepted' => 'You must accept the booking terms and policy.'])
-                ->withInput();
+                ->withInput($this->sanitizeStaycationFlashInput($request));
         }
 
         if (!empty(session('booking', [])) && (session('booking.booking_type') === 'staycation')) {
-            if (!$request->boolean('camp_waiver_accepted')) {
-                return redirect()->back()
-                    ->withErrors(['camp_waiver_accepted' => 'You must accept the camp waiver before continuing.'])
-                    ->withInput();
-            }
-
-            $request->validate(array_merge($this->campWaiverRules(), [
-                'camp_waiver_accepted' => 'accepted',
-            ]));
+            return $this->initiateStaycationCheckout($request, session('booking', []));
         }
 
         // Use only trusted server-side session data.
@@ -1618,10 +1615,7 @@ class BookingController extends Controller
         $paymentProcessors = [
             [
                 'condition' => !empty($staycationBooking) && isset($staycationBooking['booking_type']) && $staycationBooking['booking_type'] === 'staycation',
-                'processor' => fn() => redirect()->route('booking.staycationPayment')->with(
-                    'error',
-                    'Please complete payment using secure checkout.'
-                )
+                'processor' => fn() => $this->initiateStaycationCheckout($request, $staycationBooking)
             ],
             [
                 'condition' => (bool) $dayvisitBooking,
@@ -1638,6 +1632,384 @@ class BookingController extends Controller
             if ($processor['condition']) {
                 return $processor['processor']();
             }
+        }
+    }
+
+    private function resolveStaycationGuestCounts(array $booking): array
+    {
+        $accommodations = collect($booking['accommodations'] ?? [])
+            ->filter(fn ($accommodation) => is_array($accommodation));
+        $adults = $accommodations->sum(fn ($accommodation) => max(0, (int) ($accommodation['adults'] ?? 0)));
+        $children = $accommodations->sum(fn ($accommodation) => max(0, (int) ($accommodation['children'] ?? 0)));
+
+        // The selected room allocation is the final source of truth for checkout pax.
+        if (($adults + $children) < 1) {
+            $adults = max(0, (int) ($booking['adults_total'] ?? 0));
+            $children = max(0, (int) ($booking['children_total'] ?? 0));
+        }
+
+        if (($adults + $children) < 1) {
+            $rooms = collect($booking['rooms'] ?? [])->filter(fn ($room) => is_array($room));
+            $adults = $rooms->sum(fn ($room) => max(0, (int) ($room['adults'] ?? 0)));
+            $children = $rooms->sum(fn ($room) => max(0, (int) ($room['children'] ?? 0)));
+        }
+
+        $adults = max(1, $adults);
+        $children = max(0, $children);
+
+        return [
+            'adults' => $adults,
+            'children' => $children,
+            'total' => $adults + $children,
+        ];
+    }
+
+    private function buildStaycationGuestBlueprints(array $booking): array
+    {
+        $counts = $this->resolveStaycationGuestCounts($booking);
+        $guestForms = [];
+        $index = 0;
+
+        for ($adult = 1; $adult <= $counts['adults']; $adult++) {
+            $guestForms[] = [
+                'index' => $index,
+                'guest_number' => $index + 1,
+                'guest_type' => 'adult',
+                'type_number' => $adult,
+                'label' => 'Adult guest ' . $adult,
+                'badge' => $adult === 1 ? 'Primary contact' : 'Adult',
+                'is_primary_contact' => $adult === 1,
+            ];
+            $index++;
+        }
+
+        for ($child = 1; $child <= $counts['children']; $child++) {
+            $guestForms[] = [
+                'index' => $index,
+                'guest_number' => $index + 1,
+                'guest_type' => 'child',
+                'type_number' => $child,
+                'label' => 'Child guest ' . $child,
+                'badge' => 'Child',
+                'is_primary_contact' => false,
+            ];
+            $index++;
+        }
+
+        return $guestForms;
+    }
+
+    private function initiateStaycationCheckout(Request $request, array $booking)
+    {
+        $booking = $this->normalizeAndRecalculateStaycationBooking($booking);
+        $guestCounts = $this->resolveStaycationGuestCounts($booking);
+
+        $rules = array_merge(ValidationService::paymentRules(), [
+            'guests' => ['required', 'array', 'size:' . $guestCounts['total']],
+            'guests.*.full_name' => ['required', 'string', 'max:255'],
+            'guests.*.guest_type' => ['required', 'string', 'in:adult,child'],
+            'guests.*.birth_date' => ['required', 'date', 'before:today'],
+            'guests.*.gender' => ['required', 'string', 'in:male,female,other,prefer_not_to_say'],
+            'guests.*.contact_number' => ['nullable', 'string', 'max:30'],
+            'guests.*.emergency_contact_name' => ['required', 'string', 'max:255'],
+            'guests.*.emergency_contact_number' => ['required', 'string', 'max:30'],
+            'guests.*.emergency_contact_relationship' => ['required', 'string', 'max:255'],
+            'guests.*.signature_data' => ['required', 'string', 'max:2000000'],
+            'guests.*.guardian_full_name' => ['nullable', 'string', 'max:255'],
+            'guests.*.guardian_relationship' => ['nullable', 'string', 'max:255'],
+            'terms_and_policy_accepted' => ['accepted'],
+            'camp_waiver_accepted' => ['accepted'],
+        ]);
+
+        $validator = Validator::make($request->all(), $rules);
+        $validator->after(function ($validator) use ($request, $guestCounts) {
+            $guests = array_values((array) $request->input('guests', []));
+            $adultCount = 0;
+            $childCount = 0;
+
+            foreach ($guests as $index => $guest) {
+                $guestType = strtolower(trim((string) ($guest['guest_type'] ?? '')));
+                $fullName = trim((string) ($guest['full_name'] ?? ''));
+                $signatureData = trim((string) ($guest['signature_data'] ?? ''));
+                $contactNumber = trim((string) ($guest['contact_number'] ?? ''));
+
+                if ($guestType === '') {
+                    $validator->errors()->add("guests.$index.guest_type", 'Please choose a guest type.');
+                    continue;
+                }
+
+                if ($fullName === '') {
+                    $validator->errors()->add("guests.$index.full_name", 'Guest full name is required.');
+                }
+
+                if ($guestType === 'adult') {
+                    $adultCount++;
+                    if ($contactNumber === '') {
+                        $validator->errors()->add("guests.$index.contact_number", 'Adult guest contact number is required.');
+                    }
+                } elseif ($guestType === 'child') {
+                    $childCount++;
+                    if (trim((string) ($guest['guardian_full_name'] ?? '')) === '') {
+                        $validator->errors()->add("guests.$index.guardian_full_name", 'Guardian full name is required for child guests.');
+                    }
+                    if (trim((string) ($guest['guardian_relationship'] ?? '')) === '') {
+                        $validator->errors()->add("guests.$index.guardian_relationship", 'Guardian relationship is required for child guests.');
+                    }
+                } else {
+                    $validator->errors()->add("guests.$index.guest_type", 'Guest type must be adult or child.');
+                }
+
+                if ($signatureData === '') {
+                    $validator->errors()->add("guests.$index.signature_data", 'A signature is required for each guest.');
+                } elseif (!str_starts_with($signatureData, 'data:image/png;base64,')) {
+                    $validator->errors()->add("guests.$index.signature_data", 'The signature must be a valid PNG image.');
+                } else {
+                    $signatureBinary = base64_decode(substr($signatureData, strlen('data:image/png;base64,')), true);
+                    $signatureInfo = $signatureBinary !== false ? @getimagesizefromstring($signatureBinary) : false;
+
+                    if (
+                        $signatureBinary === false
+                        || strlen($signatureBinary) > 1500000
+                        || $signatureInfo === false
+                        || ($signatureInfo['mime'] ?? null) !== 'image/png'
+                        || ($signatureInfo[0] ?? 0) > 2400
+                        || ($signatureInfo[1] ?? 0) > 1200
+                    ) {
+                        $validator->errors()->add("guests.$index.signature_data", 'The signature image is invalid or too large. Please clear it and sign again.');
+                    }
+                }
+            }
+
+            if ($adultCount !== $guestCounts['adults']) {
+                $validator->errors()->add('guests', 'The number of adult guest records must match the selected adult count.');
+            }
+
+            if ($childCount !== $guestCounts['children']) {
+                $validator->errors()->add('guests', 'The number of child guest records must match the selected child count.');
+            }
+        });
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator)
+                ->withInput($this->sanitizeStaycationFlashInput($request));
+        }
+
+        $validated = $validator->validated();
+        $guestInputs = array_values($validated['guests']);
+        $now = now()->toDateTimeString();
+        $guestRecords = [];
+        $guestSignaturePayloads = [];
+
+        foreach ($guestInputs as $index => $guest) {
+            $guestType = strtolower(trim((string) ($guest['guest_type'] ?? 'adult'))) === 'child' ? 'child' : 'adult';
+            $fullName = trim((string) ($guest['full_name'] ?? ''));
+            $signatureData = trim((string) ($guest['signature_data'] ?? ''));
+            $signerName = $guestType === 'child'
+                ? trim((string) ($guest['guardian_full_name'] ?? ''))
+                : $fullName;
+            $signerRelationship = $guestType === 'child'
+                ? trim((string) ($guest['guardian_relationship'] ?? ''))
+                : null;
+
+            $guestRecords[] = [
+                'full_name' => $fullName,
+                'guest_type' => $guestType,
+                'birth_date' => $guest['birth_date'] ?? null,
+                'gender' => $guest['gender'] ?? null,
+                'contact_number' => $guestType === 'child'
+                    ? ($guest['contact_number'] ?? null)
+                    : trim((string) ($guest['contact_number'] ?? '')),
+                'emergency_contact_name' => trim((string) ($guest['emergency_contact_name'] ?? '')),
+                'emergency_contact_number' => trim((string) ($guest['emergency_contact_number'] ?? '')),
+                'emergency_contact_relationship' => trim((string) ($guest['emergency_contact_relationship'] ?? '')),
+                'waiver_acknowledged_at' => $now,
+                'signed_at' => $now,
+                'signed_by_user_id' => auth()->id(),
+                'signed_by_name' => $signerName !== '' ? $signerName : null,
+                'signed_by_relationship' => $signerRelationship !== '' ? $signerRelationship : null,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'is_primary_contact' => $index === 0,
+            ];
+
+            $guestSignaturePayloads[] = [
+                'signature_data' => $signatureData,
+            ];
+        }
+
+        $booking['guests'] = $guestRecords;
+        $booking['guest_totals'] = $guestCounts;
+        $booking['guest_count'] = $guestCounts['total'];
+        $booking['acceptances'] = $this->buildStaycationAcceptanceData($request);
+        $booking['booking_contact'] = array_filter([
+            'user_id' => auth()->id(),
+            'name' => trim($validated['first_name'] . ' ' . $validated['last_name']),
+            'email' => $validated['email'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+        ], fn ($value) => $value !== null && $value !== '');
+
+        $booking['booking_type'] = 'staycation';
+        $booking['transaction_id'] = $booking['transaction_id'] ?? ('TXN-' . strtoupper(uniqid()));
+
+        session(['booking' => $booking]);
+
+        $bookingData = $booking;
+        $bookingData['guest_signature_payloads'] = $guestSignaturePayloads;
+
+        $paymentData = [
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'special_requests' => $validated['special_requests'] ?? null,
+            'cancellation_policy' => $validated['cancellation_policy'] ?? null,
+            'acceptances' => $booking['acceptances'],
+            'payment_method' => $validated['payment_method'] ?? 'paymongo',
+            'promo_code' => null,
+            'promo_discount' => 0.0,
+            'promo_id' => null,
+            'reference_id' => $booking['transaction_id'],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'signed_by_user_id' => auth()->id(),
+        ];
+
+        $promoValidation = $this->getValidatedPromoDiscount(
+            $request->filled('applied_promo_id') ? (int) $request->applied_promo_id : null,
+            $request->input('applied_promo_code'),
+            (float) ($booking['final_totals']['grand_total'] ?? 0)
+        );
+        $paymentData['promo_discount'] = (float) ($promoValidation['discount'] ?? 0);
+        $paymentData['promo_id'] = $promoValidation['promo']?->id;
+        $paymentData['promo_code'] = $promoValidation['promo']?->code;
+
+        $grandTotal = (float) ($booking['final_totals']['grand_total'] ?? 0);
+        $grandTotal = max(0, $grandTotal - (float) ($paymentData['promo_discount'] ?? 0));
+
+        $vatService = app(\App\Services\VatService::class);
+        $vatBreakdown = $vatService->generateBreakdown($grandTotal, false);
+        $grandTotalWithVat = (float) ($vatBreakdown['gross_amount'] ?? $grandTotal);
+        $expectedAmountCentavos = (int) round($grandTotalWithVat * 100);
+
+        $referenceId = $paymentData['reference_id'];
+        $paymentDataForPending = array_merge($paymentData, [
+            'expected_amount_centavos' => $expectedAmountCentavos,
+        ]);
+
+        $pendingBooking = $this->paymentService->createPendingBooking($bookingData, $paymentDataForPending, 'staycation', [
+            'guest_signature_payloads' => $guestSignaturePayloads,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'signed_by_user_id' => auth()->id(),
+        ]);
+        $cacheBookingData = $bookingData;
+        unset($cacheBookingData['guest_signature_payloads']);
+
+        $successUrl = url('/booking/payment/success?checkout_id={CHECKOUT_ID}');
+        $failedUrl = url('/booking/payment/failed?checkout_id={CHECKOUT_ID}');
+
+        $firstAccommodation = $booking['accommodations'][0] ?? [];
+        $roomName = strtolower((string) ($firstAccommodation['staycation']['name'] ?? $firstAccommodation['name'] ?? ''));
+        $staycationCategory = str_contains($roomName, 'byot') || str_contains($roomName, 'car camping') || str_contains($roomName, 'bring your own')
+            ? 'camping'
+            : 'glamping';
+
+        $checkoutMetadata = array_filter([
+            'booking_type' => 'staycation',
+            'staycation_category' => $staycationCategory,
+            'checkin_date' => $booking['checkin'] ?? null,
+            'checkout_date' => $booking['checkout'] ?? null,
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'guest_count' => $guestCounts['total'],
+        ], fn ($value) => $value !== null && $value !== '');
+
+        $lineItems = [];
+        foreach ($booking['accommodations'] ?? [] as $accommodation) {
+            if (!empty($accommodation['total_price'])) {
+                $lineItems[] = [
+                    'name' => $accommodation['room_name'] ?? 'Accommodation',
+                    'unit_price' => (float) $accommodation['total_price'],
+                    'quantity' => 1,
+                ];
+            }
+        }
+        foreach ($booking['selected_foods'] ?? [] as $food) {
+            if (!empty($food['name']) && isset($food['price'])) {
+                $lineItems[] = [
+                    'name' => $food['name'],
+                    'unit_price' => (float) $food['price'],
+                    'quantity' => (int) ($food['quantity'] ?? 1),
+                ];
+            }
+        }
+        foreach ($booking['selected_activities'] ?? [] as $activity) {
+            if (!empty($activity['name']) && isset($activity['price'])) {
+                $lineItems[] = [
+                    'name' => $activity['name'],
+                    'unit_price' => (float) $activity['price'],
+                    'quantity' => (int) ($activity['guests'] ?? 1),
+                ];
+            }
+        }
+        foreach ($booking['selected_activity_packages'] ?? [] as $activityPackage) {
+            if (!empty($activityPackage['name']) && isset($activityPackage['price'])) {
+                $lineItems[] = [
+                    'name' => $activityPackage['name'],
+                    'unit_price' => (float) $activityPackage['price'],
+                    'quantity' => (int) ($activityPackage['quantity'] ?? 1),
+                ];
+            }
+        }
+
+        try {
+            $checkout = $this->paymentService->createCheckout(
+                $expectedAmountCentavos,
+                'staycation',
+                $successUrl,
+                $failedUrl,
+                $lineItems,
+                $referenceId,
+                $validated['email'],
+                $checkoutMetadata
+            );
+
+            session()->put('staycation_payment_data', array_merge($paymentDataForPending, [
+                'checkout_session_id' => $checkout->id,
+            ]));
+
+            Cache::put('paymongo_checkout_reference:' . $checkout->id, $referenceId, now()->addHours(24));
+            Cache::put('paymongo_checkout_context:' . $referenceId, [
+                'type' => 'staycation',
+                'booking_data' => $cacheBookingData,
+                'payment_data' => array_merge($paymentDataForPending, [
+                    'reference_id' => $referenceId,
+                    'checkout_session_id' => $checkout->id,
+                    'expected_amount_centavos' => $expectedAmountCentavos,
+                ]),
+                'created_at' => now()->toDateTimeString(),
+            ], now()->addHours(24));
+
+            $pendingBooking->update(['paymongo_checkout_id' => $checkout->id]);
+
+            return redirect($checkout->checkout_url);
+        } catch (\Throwable $e) {
+            Log::error('Staycation checkout creation failed', [
+                'error' => $e->getMessage(),
+                'transaction_id' => $referenceId,
+            ]);
+
+            $pendingBooking->update([
+                'payment_status' => 'failed',
+                'status' => 'cancelled',
+            ]);
+
+            return back()->withErrors([
+                'payment' => 'Failed to initiate staycation checkout: ' . $e->getMessage(),
+            ])->withInput($this->sanitizeStaycationFlashInput($request));
         }
     }
 
@@ -1680,33 +2052,11 @@ class BookingController extends Controller
         if (!$request->boolean('terms_and_policy_accepted') && !$request->boolean('terms_accepted')) {
             return redirect()->back()
                 ->withErrors(['terms_and_policy_accepted' => 'You must accept the booking terms and policy.'])
-                ->withInput();
-        }
-
-        $requiresCampWaiver = !empty($booking) && (($booking['booking_type'] ?? null) === 'staycation');
-        if ($requiresCampWaiver && !$request->boolean('camp_waiver_accepted')) {
-            return redirect()->back()
-                ->withErrors(['camp_waiver_accepted' => 'You must accept the camp waiver before continuing.'])
-                ->withInput();
-        }
-
-        if ($requiresCampWaiver) {
-            $request->validate(array_merge($this->campWaiverRules(), [
-                'camp_waiver_accepted' => 'accepted',
-            ]));
+                ->withInput($this->sanitizeStaycationFlashInput($request));
         }
 
         if (!empty($booking) && (($booking['booking_type'] ?? null) === 'staycation')) {
-            $booking = $this->normalizeAndRecalculateStaycationBooking($booking);
-            session(['booking' => $booking]);
-        }
-
-        $acceptances = $requiresCampWaiver
-            ? $this->buildStaycationAcceptanceData($request)
-            : [];
-        if ($requiresCampWaiver) {
-            $booking['acceptances'] = $acceptances;
-            session(['booking' => $booking]);
+            return $this->initiateStaycationCheckout($request, $booking);
         }
 
         $lineItems = [];
@@ -2620,15 +2970,25 @@ class BookingController extends Controller
 
                     // Use CENTRALIZED pricing method for consistency across all booking steps
                     // IMPORTANT: pass real adults/children so pricing + pets are computed correctly
-                    $adults = (int)($room['adults'] ?? 1);
-                    $children = (int)($room['children'] ?? 0);
+                    $submittedAdults = max(1, (int)($room['adults'] ?? 1));
+                    $submittedChildren = max(0, (int)($room['children'] ?? 0));
+                    $adults = $submittedAdults;
+                    $children = $submittedChildren;
                     [$adults, $children] = $this->clampRoomGuestCounts($staycation, $adults, $children);
-                    $totalGuests = $adults + $children;
-                    $maxGuestCapacity = $this->resolveMaxGuestCapacity($staycation);
-                    if ($totalGuests > $maxGuestCapacity) {
+
+                    if ($adults !== $submittedAdults || $children !== $submittedChildren) {
                         return response()->json([
                             'success' => false,
-                            'message' => "Guest limit exceeded for {$staycation->name}. Maximum {$maxGuestCapacity} guests allowed.",
+                            'message' => "Guest allocation exceeds the allowed adult or child count for {$staycation->name}. Please review your guest numbers.",
+                        ], 422);
+                    }
+
+                    $totalGuests = $adults + $children;
+                    $maxRoomOccupancy = $this->resolveMaxRoomOccupancy($staycation);
+                    if ($totalGuests > $maxRoomOccupancy) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Guest limit exceeded for {$staycation->name}. Maximum {$maxRoomOccupancy} total guests allowed.",
                         ], 422);
                     }
 
@@ -2685,6 +3045,8 @@ class BookingController extends Controller
                 }
 
                 $booking['accommodations'] = $normalized;
+                $booking['adults_total'] = collect($normalized)->sum(fn ($room) => (int) ($room['adults'] ?? 0));
+                $booking['children_total'] = collect($normalized)->sum(fn ($room) => (int) ($room['children'] ?? 0));
 
                 // Clear any previous food and activities selections for a fresh booking
                 $booking['selected_foods'] = [];
@@ -3893,8 +4255,23 @@ class BookingController extends Controller
     }
 
     /**
-     * Clamp room guest counts to the configured maximum capacity.
-     * Preference: reduce children first, then adults (keeping at least 1 adult).
+     * Explicit max_guest_capacity is the adult ceiling for regular rooms.
+     * The configured child allowance is counted separately in total occupancy.
+     */
+    protected function resolveMaxRoomOccupancy(Staycation $staycation): int
+    {
+        $maxGuests = $this->resolveMaxGuestCapacity($staycation);
+        $configuredMax = max(0, (int)($staycation->max_guest_capacity ?? 0));
+
+        if ($configuredMax < 1 || $this->isSpecialStaycationRoom($staycation)) {
+            return $maxGuests;
+        }
+
+        return $maxGuests + max(0, (int)($staycation->children ?? 0));
+    }
+
+    /**
+     * Normalize room guest counts against independently configured adult and child limits.
      */
     protected function clampRoomGuestCounts(Staycation $staycation, int $adults, int $children): array
     {
@@ -3903,6 +4280,17 @@ class BookingController extends Controller
 
         if ($this->isSpecialStaycationRoom($staycation)) {
             return [$adults, $children];
+        }
+
+        $configuredMaxAdults = max(0, (int)($staycation->max_guest_capacity ?? 0));
+        if ($configuredMaxAdults > 0) {
+            $maxAdults = $this->resolveMaxGuestCapacity($staycation);
+            $maxChildren = max(0, (int)($staycation->children ?? 0));
+
+            return [
+                min($adults, $maxAdults),
+                min($children, $maxChildren),
+            ];
         }
 
         $maxGuests = $this->resolveMaxGuestCapacity($staycation);

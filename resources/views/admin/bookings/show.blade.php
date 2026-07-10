@@ -267,6 +267,54 @@
                 </div>
             </div>
 
+            @if($booking->bookingGuests->isNotEmpty())
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center justify-between gap-3 mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Staycation Guests</h2>
+                    <span class="text-sm text-gray-500">{{ $booking->bookingGuests->count() }} record(s)</span>
+                </div>
+                <div class="space-y-4">
+                    @foreach($booking->bookingGuests as $guest)
+                    <div class="rounded-xl border border-gray-200 p-4">
+                        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                            <div class="space-y-2">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="text-lg font-semibold text-gray-900">{{ $guest->full_name }}</h3>
+                                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700">{{ $guest->guest_type }}</span>
+                                    @if($guest->is_primary_contact)
+                                    <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">Primary contact</span>
+                                    @endif
+                                </div>
+                                <div class="grid gap-2 text-sm text-gray-600 md:grid-cols-2">
+                                    <p><span class="font-medium text-gray-800">Birth date:</span> {{ optional($guest->birth_date)->format('M d, Y') ?? 'N/A' }}</p>
+                                    <p><span class="font-medium text-gray-800">Gender:</span> {{ $guest->gender ? ucfirst(str_replace('_', ' ', $guest->gender)) : 'N/A' }}</p>
+                                    <p><span class="font-medium text-gray-800">Contact:</span> {{ $guest->contact_number ?: 'N/A' }}</p>
+                                    <p><span class="font-medium text-gray-800">Emergency contact:</span> {{ $guest->emergency_contact_name ?: 'N/A' }}</p>
+                                    <p><span class="font-medium text-gray-800">Emergency number:</span> {{ $guest->emergency_contact_number ?: 'N/A' }}</p>
+                                    <p><span class="font-medium text-gray-800">Relationship:</span> {{ $guest->emergency_contact_relationship ?: 'N/A' }}</p>
+                                </div>
+                                <div class="flex flex-wrap gap-2 text-xs text-gray-500">
+                                    <span>Waiver acknowledged: {{ $guest->waiver_acknowledged_at?->format('M d, Y H:i') ?? 'N/A' }}</span>
+                                    <span>Signed: {{ $guest->signed_at?->format('M d, Y H:i') ?? 'N/A' }}</span>
+                                </div>
+                            </div>
+                            <div class="flex shrink-0 flex-col gap-2">
+                                @if($guest->signature_path)
+                                <a href="{{ route('admin.bookings.guests.signature', [$booking->id, $guest->id]) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-lg border border-blue-200 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50">
+                                    <i class="fas fa-pen-nib mr-2"></i>View signature
+                                </a>
+                                @endif
+                                @if($guest->signed_by_name)
+                                <p class="text-xs text-gray-500">Signed by {{ $guest->signed_by_name }}@if($guest->signed_by_relationship) ({{ $guest->signed_by_relationship }})@endif</p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
             <div class="bg-white p-6 rounded-lg shadow">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">Payment Information</h2>
                 @php

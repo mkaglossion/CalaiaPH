@@ -553,6 +553,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::post('/package/{id}/cancel', [AdminPackageBookingsController::class, 'cancel'])->name('admin.package_bookings.cancel');
         Route::post('/package/record-payment', [AdminPackageBookingsController::class, 'recordPayment'])->name('admin.package_bookings.record-payment');
 
+        Route::get('/{bookingId}/guests/{guestId}/signature', [AdminBookingsController::class, 'guestSignature'])->name('admin.bookings.guests.signature');
         Route::get('/{id}', [AdminBookingsController::class, 'show'])->name('admin.bookings.show');
         Route::post('/{id}/cancel', [AdminBookingsController::class, 'cancel'])->name('admin.bookings.cancel');
     });

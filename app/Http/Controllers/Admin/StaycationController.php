@@ -65,7 +65,7 @@ class StaycationController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
-        $defaultIncludedCapacity = $request->adults + $request->children;
+        $defaultIncludedCapacity = max(1, (int) $request->adults);
         $includedGuestCapacity = max(1, (int)($request->input('included_guest_capacity', $defaultIncludedCapacity)));
         $capacity = $includedGuestCapacity;
         $requestedMaxGuestCapacity = (int)($request->input('max_guest_capacity', 0));
@@ -230,7 +230,7 @@ class StaycationController extends Controller
             'remove_image' => 'nullable|in:1',
         ]);
 
-        $defaultIncludedCapacity = $request->adults + $request->children;
+        $defaultIncludedCapacity = max(1, (int) $request->adults);
         $includedGuestCapacity = max(1, (int)($request->input('included_guest_capacity', $defaultIncludedCapacity)));
         $capacity = $includedGuestCapacity;
         $requestedMaxGuestCapacity = (int)($request->input('max_guest_capacity', 0));

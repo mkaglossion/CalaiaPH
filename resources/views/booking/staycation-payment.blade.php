@@ -447,6 +447,12 @@ let vatRate = {{ $vatRate }};
                       </div>
                     </div>-->
 
+                    @include('booking.partials.staycation-guest-waiver', [
+                      'booking' => $booking,
+                      'guestBlueprints' => $guestBlueprints ?? [],
+                      'campWaiverContent' => $campWaiverContent ?? [],
+                    ])
+                    @if(false)
                     {{-- Booking Terms & Policy Agreement --}}
                     <div
                       class="bg-yellow-50 border border-blue-200 rounded-xl p-4 sm:p-6"
@@ -1141,6 +1147,7 @@ let vatRate = {{ $vatRate }};
                         </div>
                       </div>
                     </div>
+                    @endif
 
                     {{-- PayMongo platform fee notice removed: PayMongo does not add a 19.4% platform fee by default. --}}
 
