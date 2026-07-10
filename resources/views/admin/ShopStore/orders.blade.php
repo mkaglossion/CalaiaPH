@@ -3,6 +3,9 @@
 @section('title', 'Shop Orders')
 
 @section('content')
+@php
+    $adminPrimaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-4 py-2 text-sm font-medium text-white shadow transition hover:bg-[#7a4d46] hover:shadow-lg';
+@endphp
 <div class="space-y-6">
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
@@ -10,7 +13,7 @@
             <h1 class="text-3xl font-semibold text-gray-900">Shop Orders</h1>
         </div>
         <div class="flex flex-wrap gap-3">
-            <a href="{{ route('admin.bookings.paymongo-webhooks') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
+            <a href="{{ route('admin.bookings.paymongo-webhooks') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg {{ $adminPrimaryButton }}">
                 <span>PayMongo Logs</span>
             </a>
             <a href="{{ route('admin.shop.shopitems') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
@@ -81,7 +84,7 @@
                     class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             </div>
             <div class="md:col-span-6 flex items-center gap-2">
-                <button type="submit" class="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition">Filter</button>
+                <button type="submit" class="px-3 py-2 {{ $adminPrimaryButton }}">Filter</button>
                 <a href="{{ route('admin.shop.orders') }}" class="px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 transition">Reset</a>
             </div>
         </form>

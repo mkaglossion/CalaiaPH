@@ -876,19 +876,19 @@ class BookingController extends Controller
         $activityPackages = $activityPackagesQuery->get();
         
         // Get selected foods from session
-        $selectedFoods = $booking['selected_foods'] ?? session('selected_foods', []);
-        
+        $selectedFoods = $this->normalizeStaycationFoods($booking['selected_foods'] ?? session('selected_foods', []));
+
         // Fetch food details if we have selected foods
-        $foods = [];
+        $foodIds = [];
         if (!empty($selectedFoods)) {
             $foodIds = array_values(array_filter(array_map(function ($item) {
                 $id = $item['id'] ?? null;
                 return is_numeric($id) ? (int) $id : null;
             }, $selectedFoods)));
-            $foods = \App\Models\Food::whereIn('id', $foodIds)->get()->keyBy('id');
         }
+        $foods = $foodIds ? \App\Models\Food::whereIn('id', $foodIds)->get()->keyBy('id') : collect();
 
-            // Get selected activities from session
+        // Get selected activities from session
         $selectedActivities = $booking['selected_activities'] ?? session('selected_activities', []);
         $selectedActivityPackages = $booking['selected_activity_packages'] ?? session('selected_activity_packages', []);
 
@@ -1089,6 +1089,12 @@ class BookingController extends Controller
                 $includedFoods = $item['included_foods'] ?? [];
                 $packageSections = $item['package_sections'] ?? ($foodPackage->sections ?? []);
                 $selectedChoices = $item['selected_choices'] ?? [];
+                
+                // Build included_foods from package_sections if not already present
+                if (empty($includedFoods) && !empty($packageSections) && is_array($packageSections)) {
+                    $includedFoods = $this->buildPackageIncludedFoods($packageSections, $selectedChoices);
+                }
+                
                 $normalized[] = [
                     'id' => 'package-' . $foodPackage->id,
                     'package_id' => (string) $foodPackage->id,
@@ -1097,6 +1103,7 @@ class BookingController extends Controller
                     'price' => (float) $foodPackage->getEffectivePrice(),
                     'quantity' => $quantity,
                     'notes' => $notes,
+                    'is_package' => true,
                     'included_foods' => is_array($includedFoods) ? $includedFoods : [],
                     'package_sections' => is_array($packageSections) ? $packageSections : [],
                     'selected_choices' => is_array($selectedChoices) ? $selectedChoices : [],
@@ -1121,6 +1128,56 @@ class BookingController extends Controller
         }
 
         return $normalized;
+    }
+
+    /**
+     * Build included_foods array from package_sections for display
+     * Handles both pre-converted items (with id/name/price) and raw DB items (with food_id)
+     */
+    private function buildPackageIncludedFoods(array $packageSections, array $selectedChoices = []): array
+    {
+        $includedFoods = [];
+        
+        foreach ($packageSections as $sectionIndex => $section) {
+            $mode = $section['mode'] ?? 'included';
+            $sectionTitle = $section['title'] ?? '';
+
+            if ($mode === 'choice') {
+                // For choice sections, look up the selected choice
+                $lookupKey = (string) ($sectionTitle ?: $sectionIndex);
+                $selectedChoice = collect($selectedChoices)->first(function ($choice) use ($lookupKey) {
+                    return (string) ($choice['section_title'] ?? $choice['section_index'] ?? '') === $lookupKey;
+                });
+                
+                if ($selectedChoice) {
+                    $includedFoods[] = [
+                        'id' => $selectedChoice['food_id'] ?? null,
+                        'name' => $selectedChoice['food_name'] ?? 'Unknown',
+                        'price' => $selectedChoice['price'] ?? 0,
+                        'quantity' => 1,
+                        'section_title' => $sectionTitle,
+                    ];
+                }
+            } else {
+                // For included sections, process all items
+                foreach ($section['items'] ?? [] as $item) {
+                    // Handle both pre-converted (id) and raw DB (food_id) formats
+                    $foodId = $item['id'] ?? $item['food_id'] ?? null;
+                    $foodName = $item['name'] ?? $item['food_name'] ?? 'Unknown';
+                    $foodPrice = $item['price'] ?? $item['food_price'] ?? 0;
+                    
+                    $includedFoods[] = [
+                        'id' => $foodId,
+                        'name' => $foodName,
+                        'price' => (float) $foodPrice,
+                        'quantity' => $item['quantity'] ?? 1,
+                        'section_title' => $sectionTitle,
+                    ];
+                }
+            }
+        }
+
+        return array_values(array_filter($includedFoods, fn($item) => !empty($item['id'])));
     }
 
     private function normalizeStaycationActivities(array $selectedItems): array
@@ -1319,14 +1376,14 @@ class BookingController extends Controller
         $selectedFoods = $booking['selected_foods'] ?? [];
 
         // Fetch food details if we have selected foods
-        $foods = [];
+        $foodIds = [];
         if (!empty($selectedFoods)) {
             $foodIds = array_values(array_filter(array_map(function ($item) {
                 $id = $item['id'] ?? null;
                 return is_numeric($id) ? (int) $id : null;
             }, $selectedFoods)));
-            $foods = \App\Models\Food::whereIn('id', $foodIds)->get()->keyBy('id');
         }
+        $foods = $foodIds ? \App\Models\Food::whereIn('id', $foodIds)->get()->keyBy('id') : collect();
 
         // Fetch staycations for room names
         $staycations = \App\Models\Staycation::ordered()->get()->keyBy('id');

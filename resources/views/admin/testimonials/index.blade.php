@@ -3,7 +3,6 @@
 @section('title', 'Testimonials Management')
 
 @section('content')
-
 <div
     x-data="testimonialsManager()"
     class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
@@ -56,11 +55,11 @@
                         </template>
 
                         <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                            <label class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-300 bg-white text-sm font-medium text-emerald-700 cursor-pointer hover:bg-emerald-50 transition">
+                            <x-admin.action-button as="label" variant="outline" class="px-4 py-2 text-sm font-medium">
                                 <input type="file" name="background_image_file" accept="image/*" class="hidden" x-ref="sectionBackgroundInput" @change="handleSectionBackgroundUpload">
                                 <i data-lucide="upload" class="w-4 h-4"></i>
                                 <span>Choose image</span>
-                            </label>
+                            </x-admin.action-button>
 
                             @if($sectionBackgroundImage)
                                 <label class="inline-flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
@@ -69,13 +68,9 @@
                                 </label>
                             @endif
 
-                            <button
-                                type="submit"
-                                class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition"
-                            >
-                                <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                            <x-admin.action-button variant="primary" type="submit" icon="save" class="px-4 py-2 font-medium">
                                 Save Background
-                            </button>
+                            </x-admin.action-button>
                         </div>
                     </div>
                 </div>
@@ -89,11 +84,9 @@
              <p class="text-gray-500 text-sm">Testimonials that appear in the customer reviews section.</p>
          </div>
 
-         <button
-             @click="showModal = true; resetForm()"
-             class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+         <x-admin.action-button variant="primary" class="px-4 py-2 font-medium" @click="showModal = true; resetForm()">
              + Add Testimonial
-         </button>
+         </x-admin.action-button>
      </div>
 
      {{-- Search and Filter Bar --}}
@@ -119,15 +112,13 @@
 
 
              <div class="flex items-end gap-2">
-                 <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                     <i data-lucide="search" class="w-4 h-4 inline mr-1"></i>
+                 <x-admin.action-button variant="primary" type="submit" icon="search" class="px-4 py-2">
                      Search
-                 </button>
+                 </x-admin.action-button>
                  @if(request('search') || request('status'))
-                     <a href="{{ route('admin.testimonials.index') }}" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">
-                         <i data-lucide="x" class="w-4 h-4 inline mr-1"></i>
+                     <x-admin.action-button variant="secondary" href="{{ route('admin.testimonials.index') }}" icon="x" class="px-4 py-2">
                          Clear
-                     </a>
+                     </x-admin.action-button>
                  @endif
              </div>
          </form>
@@ -185,7 +176,8 @@
                             </td>
                             <td class="px-6 py-4 text-sm font-medium">
                                 <div class="flex items-center space-x-3">
-                                    <button
+                                    <x-admin.action-button
+                                        variant="link"
                                         @click="editTestimonial"
                                         data-id="{{ $testimonial->id }}"
                                         data-name="{{ $testimonial->name }}"
@@ -195,10 +187,10 @@
                                         data-order="{{ $testimonial->order }}"
                                         data-rating="{{ $testimonial->rating }}"
                                         data-status="{{ $testimonial->status }}"
-                                        class="text-blue-600 hover:text-blue-900 transition flex items-center">
+                                    >
                                         <i data-lucide="edit" class="w-4 h-4 mr-1"></i>
                                         Edit
-                                    </button>
+                                    </x-admin.action-button>
                                     <button
                                         @click="confirmDelete({{ $testimonial->id }})"
                                         class="text-red-600 hover:text-red-900 transition flex items-center">
@@ -284,7 +276,7 @@
 
                 <div>
                     <label for="avatar_file" class="block font-medium mb-1 text-gray-700">Avatar Image</label>
-                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
+                    <div class="border-2 border-dashed border-[#d8bcb7] rounded-xl p-6 text-center cursor-pointer hover:border-[#8f5d54] hover:bg-[#fdf7f5] transition"
                          @click="$refs.avatarInput.click()">
                         <template x-if="form.avatar">
                             <div class="mb-4 flex flex-col items-center gap-2">
@@ -298,7 +290,7 @@
 
                         <template x-if="!form.avatar">
                             <div class="flex flex-col items-center gap-2 text-center">
-                                <i data-lucide="user" class="w-8 h-8 text-gray-400"></i>
+                                <i data-lucide="user" class="w-8 h-8 text-[#8f5d54]"></i>
                                 <p class="text-gray-600 font-medium">Click to upload avatar</p>
                                 <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
                             </div>
@@ -314,18 +306,13 @@
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">
-                    <button
-                        type="button"
-                        @click="showModal = false"
-                        class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">
+                    <x-admin.action-button variant="secondary" type="button" @click="showModal = false">
                         Cancel
-                    </button>
+                    </x-admin.action-button>
 
-                    <button
-                        type="submit"
-                        class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition">
+                    <x-admin.action-button variant="primary" type="submit">
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
-                    </button>
+                    </x-admin.action-button>
                 </div>
             </form>
         </div>

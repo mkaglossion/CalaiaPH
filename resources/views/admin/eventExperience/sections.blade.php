@@ -3,7 +3,6 @@
 @section('title', 'Event Experience Cards Management')
 
 @section('content')
-
 <div
     x-data="eventSectionsManager()"
     class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
@@ -19,11 +18,9 @@
             <p class="text-gray-500 text-sm">Sections that appear in the event experience carousel.</p>
         </div>
 
-        <button
-            @click="showModal = true; resetForm()"
-            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+        <x-admin.action-button variant="primary" class="px-4 py-2 text-sm font-medium" @click="showModal = true; resetForm()">
             + Add Section
-        </button>
+        </x-admin.action-button>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -58,12 +55,10 @@
                 </div>
 
                 <div class="mt-6 flex justify-end space-x-3">
-                    <button
-                        @click="editSection({{ $section->id }})"
-                        class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition flex items-center">
+                    <x-admin.action-button variant="link" @click="editSection({{ $section->id }})">
                         <i data-lucide="edit" class="w-4 h-4 mr-1"></i>
                         Edit
-                    </button>
+                    </x-admin.action-button>
 
                     <button
                         @click="confirmDelete({{ $section->id }})"
@@ -115,7 +110,7 @@
 
                 <div>
                     <label for="image_file" class="block font-medium mb-1 text-gray-700">Image</label>
-                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 md:p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
+                    <div class="border-2 border-dashed border-[#d8bcb7] rounded-xl p-4 md:p-6 text-center cursor-pointer hover:border-[#8f5d54] hover:bg-[#fdf7f5] transition"
                          @click="$refs.imageInput.click()">
                         <div x-show="form.image_preview" class="mb-4 flex flex-col items-center gap-2">
                             <img :src="getImagePreviewUrl()" :key="form.image_preview" alt="Image Preview" class="max-h-32 md:max-h-40 lg:max-h-48 rounded-lg shadow">
@@ -129,7 +124,7 @@
 
                         <template x-if="!form.image_path">
                             <div class="flex flex-col items-center gap-2 text-center">
-                                <i data-lucide="cloud-upload" class="w-8 h-8 text-gray-400"></i>
+                                <i data-lucide="cloud-upload" class="w-8 h-8 text-[#8f5d54]"></i>
                                 <p class="text-gray-600 font-medium">Click to upload or drag and drop</p>
                                 <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
                             </div>
@@ -171,18 +166,13 @@
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">
-                    <button
-                        type="button"
-                        @click="showModal = false"
-                        class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">
+                    <x-admin.action-button variant="secondary" type="button" @click="showModal = false">
                         Cancel
-                    </button>
+                    </x-admin.action-button>
 
-                    <button
-                        type="submit"
-                        class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition">
+                    <x-admin.action-button variant="primary" type="submit">
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
-                    </button>
+                    </x-admin.action-button>
                 </div>
             </form>
         </div>

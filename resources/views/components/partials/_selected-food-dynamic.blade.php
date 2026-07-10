@@ -22,11 +22,13 @@
             <div class="text-sm text-gray-600">Quantity: <span class="font-semibold" x-text="food.quantity"></span></div>
             <div class="text-lg font-bold text-[#8f5d54]" x-text="'₱' + (food.price * food.quantity).toLocaleString()"></div>
         </div>
-        <template x-if="food.notes">
-            <div class="mt-2 text-xs text-gray-600">
-                <strong>Notes:</strong> <span x-text="food.notes"></span>
-            </div>
-        </template>
+    </template>
+
+    {{-- Notes field --}}
+    <template x-if="food.notes">
+        <div class="mt-2 text-xs text-gray-600">
+            <strong>Notes:</strong> <span x-text="food.notes"></span>
+        </div>
     </template>
 
     {{-- Special message for special options --}}

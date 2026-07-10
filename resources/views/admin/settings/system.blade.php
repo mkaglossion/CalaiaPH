@@ -18,6 +18,8 @@
             $faviconPreview = !empty($settings['favicon_url'] ?? null)
                 ? \App\Helpers\CloudinaryHelper::thumbnail($settings['favicon_url'], 96)
                 : null;
+            $adminPrimaryButton = 'inline-flex items-center justify-center rounded-xl bg-[#8f5d54] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#7a4d46]';
+            $adminOutlineButton = 'inline-flex items-center gap-2 rounded-xl border border-[#d8bcb7] bg-white px-4 py-3 text-sm font-medium text-[#8f5d54] transition hover:bg-[#fdf7f5]';
         @endphp
 
         <!-- Right Column - Forms (full width for responsive layout) -->
@@ -66,7 +68,7 @@
                             </div>
 
                             <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                                <label class="inline-flex items-center gap-2 rounded-xl border border-blue-300 bg-white px-4 py-3 text-sm font-medium text-blue-700 transition hover:bg-blue-50">
+                                <label class="{{ $adminOutlineButton }}">
                                     <input type="file" name="logo_file" accept="image/*" class="hidden" onchange="window.submitSystemSettingUpload(this)">
                                     <i data-lucide="upload" class="h-4 w-4"></i>
                                     <span>Choose image</span>
@@ -117,7 +119,7 @@
                             </div>
 
                             <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                                <label class="inline-flex items-center gap-2 rounded-xl border border-blue-300 bg-white px-4 py-3 text-sm font-medium text-blue-700 transition hover:bg-blue-50">
+                                <label class="{{ $adminOutlineButton }}">
                                     <input type="file" name="favicon_file" accept="image/*,.ico" class="hidden" onchange="window.submitSystemSettingUpload(this)">
                                     <i data-lucide="upload" class="h-4 w-4"></i>
                                     <span>Choose image</span>
@@ -238,7 +240,7 @@
                     </div>
 
                     <div class="flex flex-col gap-3 pt-2 sm:flex-row">
-                        <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                        <button type="submit" class="{{ $adminPrimaryButton }}">
                             <i data-lucide="save" class="mr-2 h-4 w-4"></i>
                             Save Branding
                         </button>
@@ -369,7 +371,7 @@
                     </div>
 
                     <div class="flex flex-col gap-3 pt-2 sm:flex-row">
-                        <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                        <button type="submit" class="{{ $adminPrimaryButton }}">
                             <i data-lucide="save" class="mr-2 h-4 w-4"></i>
                             Save Settings
                         </button>
@@ -487,7 +489,7 @@
                             </div>
 
                             <div class="flex flex-col gap-3 pt-2 sm:flex-row">
-                                <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                                <button type="submit" class="{{ $adminPrimaryButton }}">
                                     <i data-lucide="save" class="mr-2 h-4 w-4"></i>
                                     Save Message
                                 </button>

@@ -3,6 +3,11 @@
 @section('title', 'Manage Special Events')
 
 @section('content')
+@php
+    $adminPrimaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-4 py-2 text-sm font-medium text-white shadow transition hover:bg-[#7a4d46] hover:shadow-lg';
+    $adminSecondaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-100';
+    $adminActionLink = 'text-[#8f5d54] font-semibold hover:text-[#7a4d46] hover:underline transition';
+@endphp
 
 <div x-data="specialEventsManager()" class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl">
 
@@ -14,7 +19,7 @@
     <div class="flex justify-end mb-8">
         <button 
             @click="openAddModal()" 
-            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+            class="{{ $adminPrimaryButton }}">
             + Add Event
         </button>
     </div>
@@ -60,7 +65,7 @@
 
                 {{-- Action Buttons --}}
                 <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-auto">
-                    <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                    <button class="{{ $adminActionLink }}"
                         @click="editEvent(event)">Edit</button>
                     <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
                         @click="deleteEvent(event.id)">
@@ -149,8 +154,8 @@
                             id="imageFileInput"
                             name="image"
                             class="hidden">
-                        <label for="imageFileInput" class="flex flex-col items-center justify-center w-full px-3 sm:px-4 py-6 sm:py-8 border-2 border-dashed border-gray-400 rounded-xl text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition bg-gray-50">
-                            <svg class="w-8 sm:w-10 h-8 sm:h-10 text-blue-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <label for="imageFileInput" class="flex flex-col items-center justify-center w-full px-3 sm:px-4 py-6 sm:py-8 border-2 border-dashed border-[#d8bcb7] rounded-xl text-center cursor-pointer hover:border-[#8f5d54] hover:bg-[#fdf7f5] transition bg-gray-50">
+                            <svg class="w-8 sm:w-10 h-8 sm:h-10 text-[#8f5d54] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
                             <p class="text-base sm:text-lg font-bold text-gray-900 leading-tight">Click to upload image</p>
@@ -180,14 +185,14 @@
                     <button
                         type="button"
                         @click="closeModal()"
-                        class="w-full sm:flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition">
+                        class="w-full sm:flex-1 {{ $adminSecondaryButton }}">
                         Cancel
                     </button>
 
                     <button
                         type="submit"
                         :disabled="isLoading"
-                        class="w-full sm:flex-1 px-3 sm:px-4 py-3 sm:py-3.5 text-sm sm:text-base rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center">
+                        class="w-full sm:flex-1 px-3 sm:px-4 py-3 sm:py-3.5 text-sm sm:text-base rounded-xl {{ $adminPrimaryButton }} font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
                         <span class="inline-block" x-text="isEditing ? 'Update Event' : 'Add Event'"></span>
                     </button>
                 </div>

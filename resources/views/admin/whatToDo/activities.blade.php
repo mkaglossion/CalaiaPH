@@ -33,6 +33,17 @@
         fn ($label, $categoryKey) => $categoryKey !== 'special',
         ARRAY_FILTER_USE_BOTH
     );
+    $adminSectionCard = 'rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-5 md:p-6 shadow-sm';
+    $adminSubtleCard = 'rounded-2xl border border-gray-200 bg-white/80 backdrop-blur p-4 md:p-5 shadow-sm';
+    $adminPrimaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-[#7a4d46] hover:shadow-lg';
+    $adminDarkButton = 'inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800';
+    $adminModalOverlay = 'fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4';
+    $adminModalPanel = 'relative w-full max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white/95 p-5 sm:p-6 md:p-7 shadow-xl';
+    $adminModalPanelSm = $adminModalPanel . ' max-w-lg';
+    $adminModalPanelLg = $adminModalPanel . ' max-w-3xl';
+    $adminModalCloseButton = 'absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-2xl leading-none text-gray-400 transition hover:border-gray-300 hover:text-gray-700';
+    $adminModalTitle = 'pr-12 text-lg sm:text-xl font-bold text-gray-900';
+    $adminModalCancelButton = 'rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100';
 @endphp
 
 <div x-data="activityManager()" x-init="window.__alpineApp = $data; $data.setupKeyboardShortcuts(); $data.loadPackages(); $data.loadAvailableActivities()" x-cloak class="p-3 sm:p-6 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-lg sm:rounded-xl w-full">
@@ -41,7 +52,7 @@
         Activities Management
     </h1>
     <p class="text-gray-600 text-sm sm:text-base mb-6 sm:mb-10">Manage activities & experience packages available for booking.</p>
-    <div class="mb-6 rounded-xl border border-gray-200 bg-white p-4">
+    <div class="mb-6 {{ $adminSectionCard }}">
         <form method="POST" action="{{ route('admin.do.category-label.update') }}" class="space-y-6">
             @csrf
             <div>
@@ -146,29 +157,29 @@
             <div class="flex justify-end">
                 <button
                     type="submit"
-                    class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 transition">
+                    class="{{ $adminDarkButton }}">
                     Save Display Settings
                 </button>
             </div>
         </form>
     </div>
 
-    <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+    <div class="mb-6 {{ $adminSubtleCard }}">
         <div class="flex flex-col md:flex-row md:items-end gap-3">
             <div class="flex-1">
-                <h3 class="text-sm font-semibold text-indigo-900">Booking Step 3 Mobile Layout</h3>
-                <p class="text-xs text-indigo-700 mt-1">Controls mobile card style for `/booking/staycation/activities` only. Desktop layout stays unchanged.</p>
+                <h3 class="text-sm font-semibold text-gray-900">Booking Step 3 Mobile Layout</h3>
+                <p class="text-xs text-gray-600 mt-1">Controls mobile card style for `/booking/staycation/activities` only. Desktop layout stays unchanged.</p>
             </div>
             <div class="flex gap-2 items-center">
                 <select id="mobileLayoutStep3"
-                        class="px-3 py-2 border border-indigo-300 rounded-lg text-sm bg-white">
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
                     <option value="1" {{ $mobileLayoutStep3 === 1 ? 'selected' : '' }}>2 Columns</option>
                     <option value="2" {{ $mobileLayoutStep3 === 2 ? 'selected' : '' }}>1 Card Per Row</option>
                     <option value="3" {{ $mobileLayoutStep3 === 3 ? 'selected' : '' }}>Carousel (1 Card Swipe)</option>
                 </select>
                 <button type="button"
                         onclick="saveMobileLayoutSetting('mobile_layout_step3_activities', document.getElementById('mobileLayoutStep3').value)"
-                        class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition">
+                        class="{{ $adminPrimaryButton }}">
                     Save
                 </button>
             </div>
@@ -176,7 +187,7 @@
     </div>
 
     {{-- Search + Sort --}}
-    <div class="mb-4 flex flex-col sm:flex-row gap-3 sm:items-end sm:justify-between">
+    <div class="mb-4 {{ $adminSubtleCard }} flex flex-col sm:flex-row gap-3 sm:items-end sm:justify-between">
         <form method="GET" action="{{ route('admin.do.activities') }}" class="w-full sm:w-auto">
             <label for="sort_by" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Sort by</label>
             <select id="sort_by" name="sort_by"
@@ -189,7 +200,7 @@
         </form>
     </div>
 
-    <div class="mb-8 sm:mb-10">
+    <div class="mb-8 sm:mb-10 {{ $adminSubtleCard }}">
         <input
             id="search_activities"
             name="search"
@@ -198,7 +209,7 @@
             type="text"
             autocomplete="off"
             placeholder="&#128269; Search by name or category..."
-            class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:border-blue-500 focus:outline-none transition"
+            class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:border-[#8f5d54] focus:outline-none transition"
         >
     </div>
 
@@ -225,7 +236,7 @@
     {{-- ============================================================= --}}
     {{-- ACTIVITY PACKAGES SECTION --}}
     {{-- ============================================================= --}}
-    <div class="mt-8 sm:mt-12">
+    <div class="mt-8 sm:mt-12 {{ $adminSectionCard }}">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sm:gap-0 mb-4 sm:mb-6">
             <div>
                 <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Activity Packages</h2>
@@ -233,7 +244,7 @@
             </div>
 
             <button type="button" @click="openCreatePackage()"
-                    class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-green-600 text-white text-sm sm:text-base font-medium shadow hover:bg-green-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
+                    class="w-full sm:w-auto {{ $adminPrimaryButton }}">
                 <i class="bi bi-plus-lg"></i>
                 <span class="hidden sm:inline">Create Package</span>
                 <span class="sm:hidden">New Package</span>
@@ -269,16 +280,16 @@
     <div
         x-cloak
         x-show="showPackageModal"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4"
+        class="{{ $adminModalOverlay }}"
         x-transition.opacity
     >
-        <div @click.away="showPackageModal = false" class="bg-white/90 backdrop-blur-lg rounded-lg sm:rounded-2xl shadow-xl w-full max-w-2xl sm:max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 border border-gray-200">
+        <div @click.away="showPackageModal = false" class="{{ $adminModalPanelLg }}">
             <button
                 @click="showPackageModal = false"
-                class="absolute top-2 right-3 sm:top-3 sm:right-4 text-gray-400 hover:text-gray-600 text-2xl sm:text-3xl leading-none"
+                class="{{ $adminModalCloseButton }}"
             >&times;</button>
 
-            <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-900 pr-8" x-text="editPackageMode ? 'Edit Activity Package' : 'Create Activity Package'"></h3>
+            <h3 class="{{ $adminModalTitle }} mb-3 sm:mb-4" x-text="editPackageMode ? 'Edit Activity Package' : 'Create Activity Package'"></h3>
 
             <form class="space-y-4 sm:space-y-6" @submit.prevent="saveActivityPackage">
                 @csrf
@@ -406,13 +417,13 @@
                     </label>
                 </div>
 
-                <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-2 border-t border-gray-200">
-                    <button type="button" @click="showPackageModal = false" class="px-4 sm:px-6 py-2 text-sm sm:text-base border rounded-lg sm:rounded-xl hover:bg-gray-100 transition">
+                <div class="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
+                    <button type="button" @click="showPackageModal = false" class="{{ $adminModalCancelButton }}">
                         Cancel
                     </button>
 
                     <button type="submit" :disabled="isLoading || isEditHydrating"
-                            class="px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg sm:rounded-xl bg-green-600 text-white hover:bg-green-700 shadow transition disabled:opacity-60"
+                            class="{{ $adminPrimaryButton }} disabled:opacity-60"
                             x-text="isLoading ? (editPackageMode ? 'Updating...' : 'Creating...') : (editPackageMode ? 'Update Package' : 'Create Package')">
                     </button>
                 </div>
@@ -500,21 +511,22 @@
     {{-- ============================================================= --}}
     {{-- ACTIVITIES MANAGEMENT SECTION --}}
     {{-- ============================================================= --}}
-    <div class="flex justify-between items-end mb-6">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">Activities</h2>
-            <p class="text-gray-500 text-sm">Manage your activity listings and details.</p>
+    <div class="{{ $adminSectionCard }}">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Activities</h2>
+                <p class="text-gray-500 text-sm">Manage your activity listings and details.</p>
+            </div>
+            <button
+                @click="showActivityModal = true; resetForm()"
+                class="{{ $adminPrimaryButton }}"
+            >
+                + Add Activity
+            </button>
         </div>
-        <button
-            @click="showActivityModal = true; resetForm()"
-            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition"
-        >
-            + Add Activity
-        </button>
-    </div>
 
     {{-- Activities Table --}}
-    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/80 backdrop-blur">
         <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead class="bg-gray-100/70 backdrop-blur">
@@ -584,6 +596,7 @@
         </table>
         </div>
     </div>
+    </div>
 
     <div class="mt-6">
         {{ $activities->links() }}
@@ -593,11 +606,16 @@
     <div
         x-cloak
         x-show="showActivityModal"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        class="{{ $adminModalOverlay }}"
         x-transition.opacity
     >
-        <div @click.away="showActivityModal = false" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-6 border border-gray-200">
-            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editModeActivity ? 'Edit Activity' : 'Add Activity'"></h3>
+        <div @click.away="showActivityModal = false; resetForm()" class="{{ $adminModalPanelSm }}">
+            <button
+                @click="showActivityModal = false; resetForm()"
+                class="{{ $adminModalCloseButton }}"
+            >&times;</button>
+
+            <h3 class="{{ $adminModalTitle }} mb-4" x-text="editModeActivity ? 'Edit Activity' : 'Add Activity'"></h3>
 
             <form id="activityForm" @submit.prevent="saveActivity()" class="space-y-5">
                 @csrf
@@ -697,9 +715,9 @@
                     </template>
                 </div>
 
-                <div class="flex justify-end space-x-3 pt-2">
-                    <button type="button" @click="showActivityModal = false; resetForm()" class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">Cancel</button>
-                    <button type="submit" :disabled="isLoading || isEditHydrating" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition disabled:opacity-60">
+                <div class="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
+                    <button type="button" @click="showActivityModal = false; resetForm()" class="{{ $adminModalCancelButton }}">Cancel</button>
+                    <button type="submit" :disabled="isLoading || isEditHydrating" class="{{ $adminPrimaryButton }} disabled:opacity-60">
                         <span x-text="editModeActivity ? 'Update' : 'Add'"></span>
                     </button>
                 </div>
@@ -710,71 +728,73 @@
     {{-- ============================================================= --}}
     {{-- SWIPER IMAGES MANAGEMENT SECTION --}}
     {{-- ============================================================= --}}
-    <div class="flex justify-between items-end mb-6 mt-12">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">Swiper Images Management</h2>
-            <p class="text-gray-500 text-sm">Manage carousel images for activities.</p>
+    <div class="mt-12 {{ $adminSectionCard }}">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Swiper Images Management</h2>
+                <p class="text-gray-500 text-sm">Manage carousel images for activities.</p>
+            </div>
+            <button
+                @click="showModal = true"
+                class="{{ $adminPrimaryButton }}"
+            >
+                + Add Image
+            </button>
         </div>
-        <button
-            @click="showModal = true"
-            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition"
-        >
-            + Add Image
-        </button>
-    </div>
 
-    {{-- Images Table --}}
-    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead class="bg-gray-100/70 backdrop-blur">
-                    <tr>
-                        <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">#</th>
-                        <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Preview</th>
-                        <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Activity Name</th>
-                        <th class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Title</th>
-                        <th class="hidden md:table-cell px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Uploaded</th>
-                        <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900 text-right">Actions</th>
-                </tr>
-            </thead>
+        {{-- Images Table --}}
+        <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-100/70 backdrop-blur">
+                        <tr>
+                            <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">#</th>
+                            <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Preview</th>
+                            <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Activity Name</th>
+                            <th class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Title</th>
+                            <th class="hidden md:table-cell px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Uploaded</th>
+                            <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900 text-right">Actions</th>
+                        </tr>
+                    </thead>
 
-            <tbody class="divide-y divide-gray-200">
-                @forelse($images as $index => $img)
-                    <tr class="hover:bg-gray-50/70 transition">
-                        <td class="px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $index + 1 }}</td>
-                        <td class="px-3 sm:px-4 lg:px-6 py-4">
-                            <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-16 h-10 sm:w-20 sm:h-12 object-cover rounded-xl">
-                        </td>
-                        <td class="px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $img->activity->name ?? 'Untitled' }}</td>
-                        <td class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $img->title ?? 'Untitled' }}</td>
-                        <td class="hidden md:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $img->created_at->format('Y-m-d') }}</td>
-                        <td class="px-3 sm:px-4 lg:px-6 py-4 text-right">
-  <div class="inline-flex items-center justify-end gap-1 sm:gap-2 whitespace-nowrap">
-    <button
-      type="button"
-      class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition text-xs sm:text-sm"
-      @click="editImage({{ $img->id }}, '{{ $img->activity_id }}', '{{ $img->title }}')"
-    >
-      Edit
-    </button>
+                    <tbody class="divide-y divide-gray-200">
+                        @forelse($images as $index => $img)
+                            <tr class="hover:bg-gray-50/70 transition">
+                                <td class="px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $index + 1 }}</td>
+                                <td class="px-3 sm:px-4 lg:px-6 py-4">
+                                    <img src="{{ $img->image_path }}" alt="{{ $img->title }}" class="w-16 h-10 sm:w-20 sm:h-12 object-cover rounded-xl">
+                                </td>
+                                <td class="px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $img->activity->name ?? 'Untitled' }}</td>
+                                <td class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $img->title ?? 'Untitled' }}</td>
+                                <td class="hidden md:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $img->created_at->format('Y-m-d') }}</td>
+                                <td class="px-3 sm:px-4 lg:px-6 py-4 text-right">
+                                    <div class="inline-flex items-center justify-end gap-1 sm:gap-2 whitespace-nowrap">
+                                        <button
+                                            type="button"
+                                            class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition text-xs sm:text-sm"
+                                            @click="editImage({{ $img->id }}, '{{ $img->activity_id }}', '{{ $img->title }}')"
+                                        >
+                                            Edit
+                                        </button>
 
-    <button
-      type="button"
-      class="text-red-600 font-semibold hover:text-red-700 hover:underline transition text-xs sm:text-sm"
-      @click="deleteImage({{ $img->id }})"
-    >
-      Delete
-    </button>
-  </div>
-</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="4" class="px-4 sm:px-6 py-6 text-center text-gray-500">No images uploaded yet.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                                        <button
+                                            type="button"
+                                            class="text-red-600 font-semibold hover:text-red-700 hover:underline transition text-xs sm:text-sm"
+                                            @click="deleteImage({{ $img->id }})"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="px-4 sm:px-6 py-6 text-center text-gray-500">No images uploaded yet.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -782,11 +802,16 @@
     <div
         x-cloak
         x-show="showModal"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        class="{{ $adminModalOverlay }}"
         x-transition.opacity
     >
-        <div @click.away="showModal = false" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-6 border border-gray-200">
-            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
+        <div @click.away="showModal = false; resetImageForm()" class="{{ $adminModalPanelSm }}">
+            <button
+                @click="showModal = false; resetImageForm()"
+                class="{{ $adminModalCloseButton }}"
+            >&times;</button>
+
+            <h3 class="{{ $adminModalTitle }} mb-4" x-text="editImageMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
 
             <form
                 id="swiperUploadForm"
@@ -818,9 +843,9 @@
                     <small class="text-gray-500">Supported formats: JPG, PNG, GIF, MP4. Max size: 5MB</small>
                 </div>
 
-                <div class="flex justify-end space-x-3 pt-2">
-                    <button type="button" @click="showModal = false; resetImageForm()" class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">Cancel</button>
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition" x-text="editImageMode ? 'Update' : 'Upload'"></button>
+                <div class="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
+                    <button type="button" @click="showModal = false; resetImageForm()" class="{{ $adminModalCancelButton }}">Cancel</button>
+                    <button type="submit" class="{{ $adminPrimaryButton }}" x-text="editImageMode ? 'Update' : 'Upload'"></button>
                 </div>
             </form>
         </div>
@@ -890,11 +915,16 @@
     <div
         x-cloak
         x-show="showTextModal"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        class="{{ $adminModalOverlay }}"
         x-transition.opacity
     >
-        <div @click.away="showTextModal = false" class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-6 border border-gray-200">
-            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editTextMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
+        <div @click.away="showTextModal = false; resetTextForm()" class="{{ $adminModalPanelSm }}">
+            <button
+                @click="showTextModal = false; resetTextForm()"
+                class="{{ $adminModalCloseButton }}"
+            >&times;</button>
+
+            <h3 class="{{ $adminModalTitle }} mb-4" x-text="editTextMode ? 'Edit Text Content' : 'Add Text Content'"></h3>
 
             <form
                 id="textForm"
@@ -914,9 +944,9 @@
                     <textarea id="text_content" x-ref="textContent" name="text" rows="4" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-[#8f5d54] focus:outline-none" placeholder="Enter text content" required></textarea>
                 </div>
 
-                <div class="flex justify-end space-x-3 pt-2">
-                    <button type="button" @click="showTextModal = false; resetTextForm()" class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">Cancel</button>
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-[#8f5d54] text-white hover:bg-[#7a4d46] shadow transition" x-text="editTextMode ? 'Update' : 'Add'"></button>
+                <div class="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
+                    <button type="button" @click="showTextModal = false; resetTextForm()" class="{{ $adminModalCancelButton }}">Cancel</button>
+                    <button type="submit" class="{{ $adminPrimaryButton }}" x-text="editTextMode ? 'Update' : 'Add'"></button>
                 </div>
             </form>
         </div>

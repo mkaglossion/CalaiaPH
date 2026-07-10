@@ -3,12 +3,16 @@
 @section('title', 'Shop Inventory Monitor')
 
 @section('content')
+@php
+    $adminPrimaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-4 py-2 text-sm font-medium text-white shadow transition hover:bg-[#7a4d46] hover:shadow-lg';
+    $adminActionLink = 'text-[#8f5d54] font-semibold hover:text-[#7a4d46] hover:underline transition';
+@endphp
 <div class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl space-y-6">
     <div class="flex justify-between items-center">
         <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
             Store Shop Inventory Monitor
         </h1>
-        <a href="{{ route('products.index') }}" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+        <a href="{{ route('products.index') }}" class="px-4 py-2 rounded-xl {{ $adminPrimaryButton }}">
             Manage Products
         </a>
     </div>
@@ -49,7 +53,7 @@
             </div>
 
             <div class="flex gap-3">
-                <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+                <button type="submit" class="px-4 py-2 rounded-xl {{ $adminPrimaryButton }}">
                     <i class="fas fa-search mr-2"></i>Search
                 </button>
                 <a href="{{ route('admin.inventory.shop') }}" class="px-4 py-2 rounded-xl bg-gray-500 text-white font-medium shadow hover:bg-gray-600 hover:shadow-lg transition">
@@ -145,7 +149,7 @@
                     <tr>
                         <td colspan="7" class="px-6 py-4 text-center text-gray-500">
                             No products with inventory management found.
-                            <a href="{{ route('products.index') }}" class="text-blue-600 hover:text-blue-700 ml-2">Manage Products</a>
+                            <a href="{{ route('products.index') }}" class="{{ $adminActionLink }} ml-2">Manage Products</a>
                         </td>
                     </tr>
                     @endforelse

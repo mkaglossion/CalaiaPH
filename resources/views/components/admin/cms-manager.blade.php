@@ -38,68 +38,68 @@
     {{-- ============================================================= --}}
     {{-- SWIPER IMAGES SECTION --}}
     {{-- ============================================================= --}}
-    <div class="flex justify-between items-end mb-6">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">Swiper Images</h2>
-            <p class="text-gray-500 text-sm">Photos that appear inside the page carousel.</p>
+    <div class="mb-10 rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-5 md:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Swiper Images</h2>
+                <p class="text-gray-500 text-sm">Photos that appear inside the page carousel.</p>
+            </div>
+
+            <x-admin.action-button variant="primary" class="px-4 py-2 text-sm font-semibold" @click="showModal = true; resetImageForm()">
+                + Add Image
+            </x-admin.action-button>
         </div>
 
-        <button 
-            @click="showModal = true; resetImageForm()"
-            class="px-4 py-2 rounded-xl bg-[#8f5d54] text-white font-medium shadow hover:bg-[#7a4d46] hover:shadow-lg transition">
-            + Add Image
-        </button>
-    </div>
+        {{-- Cards Grid --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            @forelse($images as $img)
+                <div class="tilt-card bg-white/80 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative">
+                    <div class="flex items-center mb-2">
+                        <input type="checkbox" x-model="selectedImages" value="{{ $img->id }}" class="mr-2">
+                        <span class="text-xs text-gray-500">Select</span>
+                    </div>
+                    <div class="overflow-hidden rounded-xl">
+                        @if(\App\Helpers\ImageHelper::isVideo($img->image_path ?? $img))
+                            <img src="{{ \App\Helpers\ImageHelper::src(\App\Helpers\ImageHelper::videoThumbnail($img->image_path ?? $img)) }}" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        @else
+                            <img src="{{ \App\Helpers\ImageHelper::src($img->image_path ?? $img) }}" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        @endif
+                    </div>
 
-    {{-- Cards Grid --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-        @forelse($images as $img)
-            <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative">
-                <div class="flex items-center mb-2">
-                    <input type="checkbox" x-model="selectedImages" value="{{ $img->id }}" class="mr-2">
-                    <span class="text-xs text-gray-500">Select</span>
-                </div>
-                <div class="overflow-hidden rounded-xl">
-                    @if(\App\Helpers\ImageHelper::isVideo($img->image_path ?? $img))
-                        <img src="{{ \App\Helpers\ImageHelper::src(\App\Helpers\ImageHelper::videoThumbnail($img->image_path ?? $img)) }}" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
-                    @else
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path ?? $img) }}" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
-                    @endif
-                </div>
+                    <div class="mt-4">
+                        <h3 class="font-semibold text-lg text-gray-900">{{ $img->title ?: 'Untitled' }}</h3>
+                        <p class="text-gray-500 text-sm">
+                            Uploaded: {{ $img->created_at?->format('Y-m-d') ?? 'N/A' }}
+                        </p>
+                    </div>
 
-                <div class="mt-4">
-                    <h3 class="font-semibold text-lg text-gray-900">{{ $img->title ?: 'Untitled' }}</h3>
-                    <p class="text-gray-500 text-sm">
-                        Uploaded: {{ $img->created_at?->format('Y-m-d') ?? 'N/A' }}
-                    </p>
+                    <div class="mt-5 flex justify-end space-x-3">
+                        <button class="text-[#8f5d54] font-semibold hover:text-[#7a4d46] hover:underline transition"
+                            @click="editImage({{ $img->id }}, '{{ $img->title }}')">Edit</button>
+                        <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                            @click="deleteImage({{ $img->id }})">
+                            Delete
+                        </button>
+                    </div>
                 </div>
+            @empty
+                <p class="text-gray-500 col-span-full">No images uploaded yet.</p>
+            @endforelse
+        </div>
 
-                <div class="mt-5 flex justify-end space-x-3">
-                    <button class="text-[#8f5d54] font-semibold hover:text-[#7a4d46] hover:underline transition"
-                        @click="editImage({{ $img->id }}, '{{ $img->title }}')">Edit</button>
-                    <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
-                        @click="deleteImage({{ $img->id }})">
-                        Delete
-                    </button>
-                </div>
-            </div>
-        @empty
-            <p class="text-gray-500 col-span-full">No images uploaded yet.</p>
-        @endforelse
-    </div>
-
-    {{-- Bulk Actions --}}
-    <div x-show="selectedImages.length > 0" class="mt-6 flex items-center space-x-4" x-cloak>
-        <span class="text-sm text-gray-600">Selected: <span x-text="selectedImages.length"></span></span>
-        <button @click="selectAll" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600">
-            Select All
-        </button>
-        <button @click="deselectAll" class="px-3 py-1 bg-gray-400 text-white rounded text-sm hover:bg-gray-500">
-            Deselect All
-        </button>
-        <button @click="bulkDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
-            Delete Selected
-        </button>
+        {{-- Bulk Actions --}}
+        <div x-show="selectedImages.length > 0" class="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3" x-cloak>
+            <span class="text-sm text-gray-600">Selected: <span x-text="selectedImages.length"></span></span>
+            <button @click="selectAll" class="px-3 py-1.5 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600">
+                Select All
+            </button>
+            <button @click="deselectAll" class="px-3 py-1.5 bg-gray-400 text-white rounded-lg text-sm hover:bg-gray-500">
+                Deselect All
+            </button>
+            <button @click="bulkDelete" class="px-4 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+                Delete Selected
+            </button>
+        </div>
     </div>
 
     <hr class="my-14 border-gray-300">
@@ -107,58 +107,58 @@
     {{-- ============================================================= --}}
     {{-- TEXT CONTENT SECTION --}}
     {{-- ============================================================= --}}
-    <div class="flex justify-between items-end mb-6">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
-            <p class="text-gray-500 text-sm">Paragraphs and captions displayed on this page.</p>
+    <div class="mb-10 rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-5 md:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
+                <p class="text-gray-500 text-sm">Paragraphs and captions displayed on this page.</p>
+            </div>
+
+            <x-admin.action-button variant="primary" class="px-4 py-2 text-sm font-semibold" @click="showTextModal = true; resetForm()">
+                + Add Text
+            </x-admin.action-button>
         </div>
 
-        <button 
-            @click="showTextModal = true; resetForm()"
-            class="px-4 py-2 rounded-xl bg-[#8f5d54] text-white font-medium shadow hover:bg-[#7a4d46] hover:shadow-lg transition">
-            + Add Text
-        </button>
-    </div>
-
-    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
-        <table class="w-full text-left">
-            <thead class="bg-gray-100/70 backdrop-blur">
-                <tr>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Label</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Text</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
-                </tr>
-            </thead>
-
-            <tbody class="divide-y divide-gray-200">
-                @forelse($texts as $text)
-                    <tr class="hover:bg-gray-50/70 transition">
-                        <td class="px-6 py-4 font-medium text-gray-900">
-                            {{ $text->title ?? $text->label ?? 'No Label' }}
-                        </td>
-
-                        <td class="px-6 py-4 text-gray-600 text-sm">
-                            {{ Str::limit($text->text ?? $text->content ?? '', 150) }}
-                        </td>
-
-                        <td class="px-6 py-4 text-right space-x-4">
-                            <button 
-                                class="text-[#8f5d54] font-semibold hover:text-[#7a4d46] hover:underline transition"
-                                @click="editText({{ $text->id }})">Edit</button>
-                            <button 
-                                class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
-                                @click="deleteText({{ $text->id }})">Delete</button>
-                        </td>
-                    </tr>
-                @empty
+        <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/80 backdrop-blur">
+            <table class="w-full text-left">
+                <thead class="bg-gray-100/70 backdrop-blur">
                     <tr>
-                        <td colspan="3" class="px-6 py-6 text-center text-gray-500">
-                            No text content yet.
-                        </td>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700">Label</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700">Text</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
                     </tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+
+                <tbody class="divide-y divide-gray-200">
+                    @forelse($texts as $text)
+                        <tr class="hover:bg-gray-50/70 transition">
+                            <td class="px-6 py-4 font-medium text-gray-900">
+                                {{ $text->title ?? $text->label ?? 'No Label' }}
+                            </td>
+
+                            <td class="px-6 py-4 text-gray-600 text-sm">
+                                {{ Str::limit($text->text ?? $text->content ?? '', 150) }}
+                            </td>
+
+                            <td class="px-6 py-4 text-right space-x-4">
+                                <button
+                                    class="text-[#8f5d54] font-semibold hover:text-[#7a4d46] hover:underline transition"
+                                    @click="editText({{ $text->id }})">Edit</button>
+                                <button
+                                    class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
+                                    @click="deleteText({{ $text->id }})">Delete</button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="px-6 py-6 text-center text-gray-500">
+                                No text content yet.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
     {{-- ============================================================= --}}
@@ -176,6 +176,12 @@
                 'cta' => 'CTA Copy',
                 'messhall' => 'Mess Hall Copy',
                 'cook' => 'Cook Your Own Copy',
+            ];
+            $pageCopySectionDescriptions = [
+                'page' => 'Main heading, intro, and hero-facing copy shown at the top of the public page.',
+                'cta' => 'Call-to-action text, supporting message, and button/link labels.',
+                'messhall' => 'Content used on the Mess Hall dining card and related highlights.',
+                'cook' => 'Content used on the Cook Your Own dining card and related highlights.',
             ];
             $resolvedCopy = $pageCopyFields;
             $pageCopyEntries = collect($resolvedCopy)->map(function ($value, $key) use ($pageCopyMeta, $pageCopyTransportMap) {
@@ -209,10 +215,11 @@
             })->values();
             $pageCopySections = $pageCopyEntries
                 ->groupBy('section')
-                ->map(function ($entries, $section) use ($pageCopySectionLabels) {
+                ->map(function ($entries, $section) use ($pageCopySectionLabels, $pageCopySectionDescriptions) {
                     return [
                         'key' => $section,
                         'label' => $pageCopySectionLabels[$section] ?? str($section)->replace('_', ' ')->title()->toString(),
+                        'description' => $pageCopySectionDescriptions[$section] ?? 'Update the copy used for this section of the public page.',
                         'entries' => $entries->values(),
                     ];
                 })
@@ -268,6 +275,7 @@
                 <section class="rounded-xl border border-gray-200/80 bg-white/80 p-3 md:p-4">
                     <div class="mb-3">
                         <h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-gray-500" x-text="section.label"></h3>
+                        <p class="mt-1 text-xs text-gray-500" x-text="section.description"></p>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">

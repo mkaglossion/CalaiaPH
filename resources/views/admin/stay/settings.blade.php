@@ -38,7 +38,7 @@
             <a href="{{ route('admin.booking-settings.index') }}" class="px-4 py-2 rounded-xl bg-green-600 text-white font-medium shadow hover:bg-green-700 hover:shadow-lg transition">
                 Additional Fees
             </a>
-            <a href="{{ route('admin.stay.staycations') }}" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
+            <a href="{{ route('admin.stay.staycations') }}" class="px-4 py-2 rounded-xl bg-[#8f5d54] text-white font-medium shadow hover:bg-[#7a4d46] hover:shadow-lg transition">
                 Back to Staycations
             </a>
         </div>

@@ -242,6 +242,7 @@
                         :staycations="$staycations"
                         :selectedActivities="$selectedActivities"
                         :selectedFoods="$selectedFoods"
+                        :foods="$foods"
                         :showDynamicFood="false"
                         :showActionButtons="true"
                         :showActivities="true"
@@ -257,10 +258,31 @@
     </div>
 
     <script>
+        // Pass prefill data into safe globals to avoid Alpine parsing errors
+        window.__initialActivities = {!! json_encode($selectedActivities ?? []) !!};
+        window.__initialActivityPackages = {!! json_encode($selectedActivityPackages ?? []) !!};
+
         function staycationActivitiesSelection(accommodationTotal = 0, foodTotal = 0, nights = 1, vatRate = 0.0, vatRatePercentage = 0) {
             return {
-                selectedActivities: [],
-                selectedActivityPackages: [],
+                selectedActivities: (window.__initialActivities && window.__initialActivities.length ? window.__initialActivities.map(item => {
+                    return {
+                        id: String(item.id || item.activity_id || ''),
+                        name: item.name || 'Activity',
+                        category: item.category || 'Activity',
+                        price: Number(item.price || 0),
+                        guests: Number(item.guests || 1)
+                    };
+                }) : []),
+                selectedActivityPackages: (window.__initialActivityPackages && window.__initialActivityPackages.length ? window.__initialActivityPackages.map(pkg => ({
+                    id: pkg.id || `package-${pkg.package_id}`,
+                    package_id: String(pkg.package_id || ''),
+                    name: pkg.name || 'Package',
+                    category: pkg.category || 'package',
+                    price: Number(pkg.price || 0),
+                    quantity: Number(pkg.quantity || 1),
+                    is_package: true,
+                    included_activities: pkg.included_activities || pkg.included_foods || []
+                })) : []),
                 selectedCategory: 'all',
                 accommodationTotal: accommodationTotal,
                 foodTotal: foodTotal,
@@ -468,17 +490,17 @@
                 },
 
                 decreaseActivityPackageQty(packageId) {
-                    const pkg = this.selectedActivityPackages.find(p => p.package_id === String(packageId));
+                    const pkg = this.selectedActivityPackages.find(p => String(p.package_id) === String(packageId));
                     if (pkg && pkg.quantity > 1) pkg.quantity--;
                 },
 
                 increaseActivityPackageQty(packageId) {
-                    const pkg = this.selectedActivityPackages.find(p => p.package_id === String(packageId));
+                    const pkg = this.selectedActivityPackages.find(p => String(p.package_id) === String(packageId));
                     if (pkg && pkg.quantity < 20) pkg.quantity++;
                 },
 
                 setActivityPackageField(packageId, field, value) {
-                    const pkg = this.selectedActivityPackages.find(p => p.package_id === packageId);
+                    const pkg = this.selectedActivityPackages.find(p => String(p.package_id) === String(packageId));
                     if (!pkg) return;
                     if (field === 'quantity') {
                         let qty = parseInt(value);
@@ -523,7 +545,7 @@
                 },
 
                 getActivityPackageQuantity(packageId) {
-                    const pkg = this.selectedActivityPackages.find(p => p.package_id === String(packageId));
+                    const pkg = this.selectedActivityPackages.find(p => String(p.package_id) === String(packageId));
                     return pkg ? pkg.quantity || 1 : 1;
                 }
             }

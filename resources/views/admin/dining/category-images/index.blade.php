@@ -3,6 +3,16 @@
 @section('title', 'Dining Category Images')
 
 @section('content')
+@php
+    $adminSectionCard = 'rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-5 md:p-6 shadow-sm';
+    $adminPrimaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-[#7a4d46] hover:shadow-lg';
+    $adminModalOverlay = 'fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4';
+    $adminModalPanel = 'relative w-full max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white/95 p-5 sm:p-6 md:p-7 shadow-xl';
+    $adminModalPanelMd = $adminModalPanel . ' max-w-2xl';
+    $adminModalCloseButton = 'absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-2xl leading-none text-gray-400 transition hover:border-gray-300 hover:text-gray-700';
+    $adminModalTitle = 'pr-12 text-lg sm:text-xl font-bold text-gray-900';
+    $adminModalCancelButton = 'rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100';
+@endphp
 
 <div x-data="diningImageManager()" x-init="init()" class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl">
     
@@ -16,39 +26,40 @@
     {{-- HERO CATEGORY IMAGES (Top of /dining page) --}}
     {{-- ============================================================= --}}
 
-    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 mb-6">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">Hero Category Images</h2>
-            <p class="text-gray-500 text-sm">Large hero images at the top of the Dining page (Messhall & Cook Your Own).</p>
+    <section class="{{ $adminSectionCard }}">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-5">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Hero Category Images</h2>
+                <p class="text-gray-500 text-sm">Large hero images at the top of the Dining page for `Mess Hall` and `Cook Your Own`.</p>
+            </div>
+
+            <button
+                type="button"
+                @click="openHeroModal()"
+                class="{{ $adminPrimaryButton }}">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Add Hero Category Image
+            </button>
         </div>
 
-        <button
-            type="button"
-            @click="openHeroModal()"
-            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            Add Hero Category Image
-        </button>
-    </div>
+        @php
+            $resolveDiningText = function (string $label, string $fallback = '') use ($texts) {
+                $match = collect($texts ?? [])->first(function ($item) use ($label) {
+                    $itemLabel = strtolower((string) ($item->label ?? $item->title ?? ''));
+                    return $itemLabel === strtolower($label);
+                });
 
-    @php
-        $resolveDiningText = function (string $label, string $fallback = '') use ($texts) {
-            $match = collect($texts ?? [])->first(function ($item) use ($label) {
-                $itemLabel = strtolower((string) ($item->label ?? $item->title ?? ''));
-                return $itemLabel === strtolower($label);
-            });
+                $value = trim((string) ($match->text ?? $match->content ?? ''));
+                return $value !== '' ? $value : $fallback;
+            };
 
-            $value = trim((string) ($match->text ?? $match->content ?? ''));
-            return $value !== '' ? $value : $fallback;
-        };
+            $messhallCardTitle = $resolveDiningText('dining_messhall_title', 'Mess Hall Dining');
+            $messhallCardIntro = $resolveDiningText('dining_messhall_intro', 'Our spacious and elegant mess hall is perfect for group dining and special occasions.');
+            $cookYourOwnCardTitle = $resolveDiningText('dining_cook_title', 'Cook Your Own Experience');
+            $cookYourOwnCardIntro = $resolveDiningText('dining_cook_intro', 'Enjoy cooking your own fresh ingredients harvested directly from our farm.');
+        @endphp
 
-        $messhallCardTitle = $resolveDiningText('dining_messhall_title', 'Mess Hall Dining');
-        $messhallCardIntro = $resolveDiningText('dining_messhall_intro', 'Our spacious and elegant mess hall is perfect for group dining and special occasions.');
-        $cookYourOwnCardTitle = $resolveDiningText('dining_cook_title', 'Cook Your Own Experience');
-        $cookYourOwnCardIntro = $resolveDiningText('dining_cook_intro', 'Enjoy cooking your own fresh ingredients harvested directly from our farm.');
-    @endphp
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-10">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <!-- Messhall Card -->
         <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden flex flex-col h-full">
             <div class="overflow-hidden rounded-t-xl rounded-b-none mb-4 bg-linear-to-br from-gray-100 to-gray-200">
@@ -145,6 +156,7 @@
             </div>
         </div>
     </div>
+    </section>
 
     {{--<hr class="my-14 border-gray-300"> --}}
 
@@ -235,17 +247,18 @@
 
     <!-- Swiper Image Upload/Edit Modal -->
     <div 
+        x-cloak
         x-show="showSwiperModal"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        class="{{ $adminModalOverlay }}"
         x-transition.opacity
     >
-        <div class="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative border border-gray-200">
+        <div @click.away="closeSwiperModal()" class="{{ $adminModalPanelMd }}">
             <button 
                 @click="closeSwiperModal()"
-                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+                class="{{ $adminModalCloseButton }}"
             >&times;</button>
 
-            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editSwiperMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
+            <h3 class="{{ $adminModalTitle }} mb-4" x-text="editSwiperMode ? 'Edit Swiper Image' : 'Upload New Swiper Image'"></h3>
 
             <form id="swiperUploadForm" class="space-y-5" enctype="multipart/form-data" @submit.prevent="uploadSwiperImage">
                 @csrf
@@ -271,17 +284,17 @@
                     <p class="text-xs text-gray-500 mt-1">Max 100MB • JPG, PNG, GIF, MP4, MOV</p>
                 </div>
 
-                <div class="flex justify-end space-x-3 pt-2">
+                <div class="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
                     <button
                         type="button"
                         @click="closeSwiperModal()"
-                        class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">
+                        class="{{ $adminModalCancelButton }}">
                         Cancel
                     </button>
 
                     <button
                         type="submit"
-                        class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition"
+                        class="{{ $adminPrimaryButton }}"
                         x-text="editSwiperMode ? 'Update' : 'Upload'">
                     </button>
                 </div>
@@ -291,17 +304,18 @@
 
     <!-- Category Image Upload Modal -->
     <div 
+        x-cloak
         x-show="showUploadModal"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+        class="{{ $adminModalOverlay }}"
         x-transition.opacity
     >
-        <div class="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl w-[min(94vw,50rem)] max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative border border-gray-200">
+        <div @click.away="closeHeroModal()" class="{{ $adminModalPanelMd }}">
             <button 
                 @click="showUploadModal = false"
-                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+                class="{{ $adminModalCloseButton }}"
             >&times;</button>
 
-            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editHeroMode ? 'Edit Hero Category Image' : 'Add Hero Category Image'"></h3>
+            <h3 class="{{ $adminModalTitle }} mb-4" x-text="editHeroMode ? 'Edit Hero Category Image' : 'Add Hero Category Image'"></h3>
 
             <form id="diningUploadForm" class="space-y-5" enctype="multipart/form-data" @submit.prevent="uploadImage">
                 @csrf
@@ -378,17 +392,17 @@
                     </template>
                 </div>
 
-                <div class="flex justify-end space-x-3 pt-2">
+                <div class="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
                     <button
                         type="button"
                         @click="closeHeroModal()"
-                        class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">
+                        class="{{ $adminModalCancelButton }}">
                         Cancel
                     </button>
 
                     <button
                         type="submit"
-                        class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition">
+                        class="{{ $adminPrimaryButton }}">
                         <span x-text="editHeroMode ? 'Update' : 'Upload'"></span>
                     </button>
                 </div>

@@ -8,6 +8,11 @@
 @endsection
 
 @section('content')
+@php
+    $adminPrimaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-4 py-2 text-sm font-medium text-white shadow transition hover:bg-[#7a4d46] hover:shadow-lg';
+    $adminSecondaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-100';
+    $adminActionLink = 'text-[#8f5d54] font-semibold hover:text-[#7a4d46] hover:underline transition';
+@endphp
 <style>
     /* Toast notifications - matching Food Management */
     .toast {
@@ -127,7 +132,7 @@
             <button
                 type="button"
                 @click="openCreate()"
-                class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-blue-600 text-white text-sm sm:text-base font-medium shadow hover:bg-blue-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
+                class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl {{ $adminPrimaryButton }} text-sm sm:text-base inline-flex items-center justify-center sm:justify-start gap-2">
                 <i class="bi bi-plus-lg w-4 h-4"></i>
                 <span class="hidden sm:inline">Add Promo Code</span>
                 <span class="sm:hidden">Add Promo</span>
@@ -194,7 +199,7 @@
                 <button
                     type="button"
                     @click="applyUsageDateFilter()"
-                    class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                    class="inline-flex items-center justify-center rounded-xl {{ $adminPrimaryButton }} px-4 py-2.5 text-sm font-semibold">
                     Apply Filter
                 </button>
                 <button
@@ -331,12 +336,12 @@
                 </div>
 
                 <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-2">
-                    <button type="button" @click="closeModal()" class="px-4 sm:px-6 py-2 text-sm sm:text-base border rounded-lg sm:rounded-xl hover:bg-gray-100 transition">
+                    <button type="button" @click="closeModal()" class="px-4 sm:px-6 py-2 text-sm sm:text-base {{ $adminSecondaryButton }}">
                         Cancel
                     </button>
 
                     <button type="submit" :disabled="loading"
-                            class="px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg sm:rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition disabled:opacity-60"
+                            class="px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg sm:rounded-xl {{ $adminPrimaryButton }} disabled:opacity-60"
                             x-text="loading ? 'Saving...' : (editMode ? 'Update Promo Code' : 'Create Promo Code')">
                     </button>
                 </div>
@@ -656,7 +661,7 @@ function promoCrud() {
                                 ? `
                                     <button
                                         type="button"
-                                        class="block w-full p-4 text-left transition hover:bg-blue-50/70 cursor-pointer"
+                                        class="block w-full p-4 text-left transition hover:bg-[#fdf7f5] cursor-pointer"
                                         onclick="window.promoCrudInstance.filterPromoUsage(${topPromo.id})"
                                         title="View usage history for ${this.escapeHtml(topPromo.code || '')}">
                                         <p class="text-xs uppercase tracking-wide text-gray-500">Top Promo</p>
@@ -664,7 +669,7 @@ function promoCrud() {
                                         <p class="text-sm text-gray-600">${this.escapeHtml(topPromo.name || '')}</p>
                                         <p class="mt-2 text-sm text-gray-500">${topPromo.usage_count ?? 0}${topPromo.usage_limit ? ` / ${topPromo.usage_limit} used` : ' uses recorded'}</p>
                                         ${topPromo.remaining_uses !== null && topPromo.remaining_uses !== undefined ? `<p class="text-sm text-gray-500">${topPromo.remaining_uses} left</p>` : ''}
-                                        <p class="mt-3 text-xs font-semibold text-blue-600">Click to view usage history</p>
+                                        <p class="mt-3 text-xs font-semibold text-[#8f5d54]">Click to view usage history</p>
                                     </button>
                                 `
                                 : '<div class="p-4"><p class="text-xs uppercase tracking-wide text-gray-500">Top Promo</p><p class="mt-2 text-sm text-gray-500">No usage yet.</p></div>'
@@ -697,7 +702,7 @@ function promoCrud() {
                         <div class="flex items-center gap-2">
                             <span class="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">${rows.length} record${rows.length === 1 ? '' : 's'}</span>
                             ${selectedPromo && selectedPromo.remaining_uses !== null && selectedPromo.remaining_uses !== undefined ? `<span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">${selectedPromo.remaining_uses} left</span>` : ''}
-                            ${selectedPromo ? '<button type="button" class="text-sm font-semibold text-blue-600 hover:text-blue-700" onclick="window.promoCrudInstance.clearUsageFilter()">View all</button>' : ''}
+                            ${selectedPromo ? '<button type="button" class="text-sm font-semibold text-[#8f5d54] hover:text-[#7a4d46] hover:underline" onclick="window.promoCrudInstance.clearUsageFilter()">View all</button>' : ''}
                         </div>
                     </div>
                 </div>
@@ -747,7 +752,7 @@ function promoCrud() {
                                     <td class="px-3 sm:px-4 py-3">
                                         ${
                                             usage.booking_url
-                                                ? `<a href="${usage.booking_url}" class="block font-medium text-blue-700 hover:text-blue-800 hover:underline" target="_blank" rel="noopener">${this.escapeHtml(usage.booking?.customer_name || '-')}</a>`
+                                            ? `<a href="${usage.booking_url}" class="block font-medium text-[#8f5d54] hover:text-[#7a4d46] hover:underline" target="_blank" rel="noopener">${this.escapeHtml(usage.booking?.customer_name || '-')}</a>`
                                                 : `<div class="font-medium text-gray-900">${this.escapeHtml(usage.booking?.customer_name || '-')}</div>`
                                         }
                                         <div class="text-xs text-gray-500">${this.escapeHtml(usage.booking?.customer_email || '')}</div>
@@ -761,7 +766,7 @@ function promoCrud() {
                                     <td class="px-3 sm:px-4 py-3 text-xs text-gray-500 whitespace-nowrap">${this.formatDateTime(usage.created_at)}</td>
                                     <td class="px-3 sm:px-4 py-3 text-right">
                                         ${usage.booking_url
-                                            ? `<a href="${usage.booking_url}" class="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i>View</a>`
+                                            ? `<a href="${usage.booking_url}" class="inline-flex items-center gap-1 rounded-lg border border-[#d8bcb7] bg-[#fdf7f5] px-3 py-1.5 text-xs font-semibold text-[#8f5d54] hover:bg-[#f7ece9] hover:text-[#7a4d46] transition" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i>View</a>`
                                             : '<span class="text-xs text-gray-400">-</span>'
                                         }
                                     </td>
@@ -848,7 +853,7 @@ function promoCrud() {
                                     <span class="hidden sm:inline">History</span><span class="sm:hidden">Hist</span>
                                 </button>
                                 <button type="button"
-                                        class="text-blue-600 font-semibold hover:text-blue-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline"
+                                        class="text-[#8f5d54] font-semibold hover:text-[#7a4d46] transition text-xs sm:text-sm whitespace-nowrap hover:underline"
                                         @click="openEdit(${promo.id})"
                                         title="Edit">
                                     <span class="hidden sm:inline">Edit</span><span class="sm:hidden">✎</span>

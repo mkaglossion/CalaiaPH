@@ -3,6 +3,11 @@
 @section('title', 'Store Management')
 
 @section('content')
+@php
+    $adminPrimaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-4 py-2 text-sm font-medium text-white shadow transition hover:bg-[#7a4d46] hover:shadow-lg';
+    $adminSecondaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-100';
+    $adminActionLink = 'text-[#8f5d54] font-semibold hover:text-[#7a4d46] hover:underline transition';
+@endphp
 <style>
     /* Undo notification */
     .undo-banner {
@@ -53,7 +58,7 @@
         <button 
             type="button" 
             @click="openCreate()" 
-            class="w-full sm:w-auto px-3 sm:px-6 py-2 sm:py-2 rounded-lg sm:rounded-xl bg-blue-600 text-white text-xs sm:text-sm font-medium shadow hover:bg-blue-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
+            class="w-full sm:w-auto px-3 sm:px-6 py-2 sm:py-2 rounded-lg sm:rounded-xl {{ $adminPrimaryButton }} text-xs sm:text-sm inline-flex items-center justify-center sm:justify-start gap-2">
             <i data-lucide="plus" class="w-4 h-4"></i>
             <span class="sm:inline">Add New Product</span>
         </button>
@@ -171,7 +176,7 @@
                         <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-right whitespace-nowrap">
                             <div class="flex flex-nowrap gap-1 sm:gap-2 md:gap-4 justify-end">
                                 <button type="button"
-                                        class="text-xs sm:text-sm text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
+                                        class="text-xs sm:text-sm {{ $adminActionLink }}"
                                         @click="openEdit({
                                             id: {{ $product->id }},
                                             title: @js($product->title),
@@ -199,7 +204,7 @@
                             <div class="flex flex-col items-center justify-center gap-2 sm:gap-3">
                                 <i data-lucide="inbox" class="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"></i>
                                 <p class="text-xs sm:text-sm">No products found.</p>
-                                <button type="button" @click="openCreate()" class="text-blue-600 hover:underline font-medium text-xs sm:text-sm">Create your first product →</button>
+                                <button type="button" @click="openCreate()" class="{{ $adminActionLink }} font-medium text-xs sm:text-sm">Create your first product →</button>
                             </div>
                         </td>
                     </tr>
@@ -292,7 +297,7 @@
 
                 <div>
                     <label for="product_image" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Image</label>
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
+                    <div class="border-2 border-dashed border-[#d8bcb7] rounded-lg p-4 sm:p-6 text-center cursor-pointer hover:border-[#8f5d54] hover:bg-[#fdf7f5] transition"
                          @click="$refs.imageInput.click()">
                         <template x-if="form.image_preview">
                             <div class="mb-3 sm:mb-4 flex flex-col items-center gap-2">
@@ -306,7 +311,7 @@
 
                         <template x-if="!form.image_preview">
                             <div class="flex flex-col items-center gap-1 sm:gap-2 text-center">
-                                <i data-lucide="cloud-upload" class="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"></i>
+                                <i data-lucide="cloud-upload" class="w-6 h-6 sm:w-8 sm:h-8 text-[#8f5d54]"></i>
                                 <p class="text-sm sm:text-base text-gray-600 font-medium">Click to upload or drag and drop</p>
                                 <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
                             </div>
@@ -329,12 +334,12 @@
                 </div>
 
                 <div class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 justify-end pt-2 sm:pt-4">
-                    <button type="button" @click="showModal = false" class="px-3 sm:px-6 py-2 text-xs sm:text-sm border rounded-lg sm:rounded-xl hover:bg-gray-100 transition">
+                    <button type="button" @click="showModal = false" class="px-3 sm:px-6 py-2 text-xs sm:text-sm {{ $adminSecondaryButton }}">
                         Cancel
                     </button>
 
                     <button type="submit" :disabled="loading"
-                            class="px-4 sm:px-6 py-2 text-xs sm:text-sm rounded-lg sm:rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition disabled:opacity-60"
+                            class="px-4 sm:px-6 py-2 text-xs sm:text-sm rounded-lg sm:rounded-xl {{ $adminPrimaryButton }} disabled:opacity-60"
                             x-text="loading ? 'Saving...' : (editMode ? 'Update Product' : 'Create Product')">
                     </button>
                 </div>

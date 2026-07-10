@@ -64,6 +64,16 @@
             'special' => $specialLabel,
         ];
         $defaultPackageCategory = array_key_first($packageCategoryOptions) ?? 'messhall';
+        $adminSectionCard = 'rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-5 md:p-6 shadow-sm';
+        $adminSubtleCard = 'rounded-2xl border border-gray-200 bg-white/80 backdrop-blur p-4 md:p-5 shadow-sm';
+        $adminPrimaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-[#7a4d46] hover:shadow-lg';
+        $adminDarkButton = 'inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800';
+        $adminModalOverlay = 'fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4';
+        $adminModalPanel = 'relative w-full max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white/95 p-4 sm:p-6 md:p-7 shadow-xl';
+        $adminModalPanelLg = $adminModalPanel . ' max-w-4xl';
+        $adminModalCloseButton = 'absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-2xl leading-none text-gray-400 transition hover:border-gray-300 hover:text-gray-700';
+        $adminModalTitle = 'pr-12 text-lg sm:text-xl font-bold text-gray-900';
+        $adminModalCancelButton = 'rounded-xl border border-gray-300 px-4 sm:px-6 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100';
     @endphp
 
     <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-2 sm:mb-3 tracking-tight text-gray-900">
@@ -71,7 +81,7 @@
     </h1>
     <p class="text-gray-600 text-sm sm:text-base mb-6 sm:mb-10">Manage food & beverage items, categories, prices, and inventory.</p>
 
-    <div class="mb-6 rounded-xl border border-gray-200 bg-white p-4">
+    <div class="mb-6 {{ $adminSectionCard }}">
         <form method="POST" action="{{ route('admin.food.category-label.update') }}" class="space-y-6">
             @csrf
             <div>
@@ -176,29 +186,29 @@
             <div class="flex justify-end">
                 <button
                     type="submit"
-                    class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 transition">
+                    class="{{ $adminDarkButton }}">
                     Save Display Settings
                 </button>
             </div>
         </form>
     </div>
 
-    <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+    <div class="mb-6 {{ $adminSubtleCard }}">
         <div class="flex flex-col md:flex-row md:items-end gap-3">
             <div class="flex-1">
-                <h3 class="text-sm font-semibold text-indigo-900">Booking Step 2 Mobile Layout</h3>
-                <p class="text-xs text-indigo-700 mt-1">Controls mobile card style for `/booking/staycation/food` only. Desktop layout stays unchanged.</p>
+                <h3 class="text-sm font-semibold text-gray-900">Booking Step 2 Mobile Layout</h3>
+                <p class="text-xs text-gray-600 mt-1">Controls mobile card style for `/booking/staycation/food` only. Desktop layout stays unchanged.</p>
             </div>
             <div class="flex gap-2 items-center">
                 <select id="mobileLayoutStep2"
-                        class="px-3 py-2 border border-indigo-300 rounded-lg text-sm bg-white">
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
                     <option value="1" {{ $mobileLayoutStep2 === 1 ? 'selected' : '' }}>2 Columns</option>
                     <option value="2" {{ $mobileLayoutStep2 === 2 ? 'selected' : '' }}>1 Card Per Row</option>
                     <option value="3" {{ $mobileLayoutStep2 === 3 ? 'selected' : '' }}>Carousel (1 Card Swipe)</option>
                 </select>
                 <button type="button"
                         onclick="saveMobileLayoutSetting('mobile_layout_step2_food', document.getElementById('mobileLayoutStep2').value)"
-                        class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition">
+                        class="{{ $adminPrimaryButton }}">
                     Save
                 </button>
             </div>
@@ -206,7 +216,7 @@
     </div>
 
     {{-- Search + Sort --}}
-    <div class="mb-4 flex flex-col sm:flex-row gap-3 sm:items-end sm:justify-between">
+    <div class="mb-4 {{ $adminSubtleCard }} flex flex-col sm:flex-row gap-3 sm:items-end sm:justify-between">
         <form method="GET" action="{{ route('admin.foods.index') }}" class="w-full sm:w-auto">
             <label for="sort_by" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">Sort by</label>
             <select id="sort_by" name="sort_by"
@@ -219,7 +229,7 @@
         </form>
     </div>
 
-    <div class="mb-8 sm:mb-10">
+    <div class="mb-8 sm:mb-10 {{ $adminSubtleCard }}">
         <input 
             id="search_foods"
             name="search"
@@ -228,7 +238,7 @@
             type="text"
             autocomplete="off"
             placeholder="&#128269; Search by name or category..."
-            class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:border-blue-500 focus:outline-none transition"
+            class="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:border-[#8f5d54] focus:outline-none transition"
         >
     </div>
 
@@ -264,7 +274,7 @@
     {{-- ============================================================= --}}
     {{-- FOOD PACKAGES SECTION --}}
     {{-- ============================================================= --}}
-    <div class="mt-8 sm:mt-12">
+    <div class="mt-8 sm:mt-12 {{ $adminSectionCard }}">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sm:gap-0 mb-4 sm:mb-6">
             <div>
                 <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Food Packages</h2>
@@ -274,7 +284,7 @@
             <button
                 type="button"
                 @click="openCreatePackage()"
-                class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-green-600 text-white text-sm sm:text-base font-medium shadow hover:bg-green-700 hover:shadow-lg transition inline-flex items-center justify-center gap-2">
+                class="w-full sm:w-auto {{ $adminPrimaryButton }}">
                 <i data-lucide="package" class="w-4 h-4"></i>
                 <span class="hidden sm:inline">Create Package</span>
                 <span class="sm:hidden">New Package</span>
@@ -308,24 +318,25 @@
     {{-- ============================================================= --}}
     {{-- FOOD ITEMS SECTION --}}
     {{-- ============================================================= --}}
-    <div class="mt-12 sm:mt-16 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sm:gap-0 mb-4 sm:mb-6">
-        <div>
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Food & Beverage Items</h2>
-            <p class="text-gray-500 text-xs sm:text-sm">Manage all food and beverage items available for booking.</p>
+    <div class="mt-12 sm:mt-16 {{ $adminSectionCard }}">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 sm:gap-0 mb-4 sm:mb-6">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Food & Beverage Items</h2>
+                <p class="text-gray-500 text-xs sm:text-sm">Manage all food and beverage items available for booking.</p>
+            </div>
+
+            <button
+                type="button"
+                @click="openCreate()"
+                class="w-full sm:w-auto {{ $adminPrimaryButton }}">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Add New Food Item</span>
+                <span class="sm:hidden">Add Item</span>
+            </button>
         </div>
 
-        <button
-            type="button"
-            @click="openCreate()"
-            class="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-blue-600 text-white text-sm sm:text-base font-medium shadow hover:bg-blue-700 hover:shadow-lg transition inline-flex items-center justify-center sm:justify-start gap-2">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            <span class="hidden sm:inline">Add New Food Item</span>
-            <span class="sm:hidden">Add Item</span>
-        </button>
-    </div>
-
     {{-- Food Items Table --}}
-    <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+    <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/80 backdrop-blur">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs sm:text-sm">
                 <thead class="bg-gray-100/70 backdrop-blur">
@@ -455,22 +466,23 @@
             </div>
         @endif
     </div>
+    </div>
 
     {{-- Modal --}}
     <div 
         x-show="showModal"
         x-cloak
         style="display: none;"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4"
+        class="{{ $adminModalOverlay }}"
         x-transition.opacity
     >
-        <div @click.away="showModal = false" class="bg-white/90 backdrop-blur-lg rounded-lg sm:rounded-2xl shadow-xl w-full max-w-2xl sm:max-w-3xl md:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 md:p-7 border border-gray-200 my-4">
+        <div @click.away="closeModal()" class="{{ $adminModalPanelLg }}">
             <button 
                 @click="showModal = false; isPackageMode = false"
-                class="absolute top-2 right-3 sm:top-3 sm:right-4 text-gray-400 hover:text-gray-600 text-2xl sm:text-3xl leading-none"
+                class="{{ $adminModalCloseButton }}"
             >&times;</button>
 
-            <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-900 pr-8" x-text="getModalTitle()"></h3>
+            <h3 class="{{ $adminModalTitle }} mb-3 sm:mb-4" x-text="getModalTitle()"></h3>
 
             <form class="space-y-4 sm:space-y-6" @submit.prevent="submitForm" x-show="!isPackageMode">
                 <div>
@@ -612,13 +624,13 @@
                     </label>
                 </div>
 
-                <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-2">
-                    <button type="button" @click="closeModal()" class="px-4 sm:px-6 py-2 text-sm sm:text-base border rounded-lg sm:rounded-xl hover:bg-gray-100 transition">
+                <div class="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
+                    <button type="button" @click="closeModal()" class="{{ $adminModalCancelButton }}">
                         Cancel
                     </button>
 
                     <button type="submit" :disabled="loading || isEditHydrating"
-                            class="px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg sm:rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition disabled:opacity-60"
+                            class="{{ $adminPrimaryButton }} disabled:opacity-60"
                             x-text="loading ? 'Saving...' : (editMode ? 'Update Food Item' : 'Create Food Item')">
                     </button>
                 </div>
@@ -929,13 +941,13 @@
                     </label>
                 </div>
 
-                <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-2">
-                    <button type="button" @click="showModal = false" class="px-4 sm:px-6 py-2 text-sm sm:text-base border rounded-lg sm:rounded-xl hover:bg-gray-100 transition">
+                <div class="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
+                    <button type="button" @click="closeModal()" class="{{ $adminModalCancelButton }}">
                         Cancel
                     </button>
 
                     <button type="submit" :disabled="loading || isEditHydrating"
-                            class="px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg sm:rounded-xl bg-green-600 text-white hover:bg-green-700 shadow transition disabled:opacity-60"
+                            class="{{ $adminPrimaryButton }} disabled:opacity-60"
                             x-text="loading ? (packageEditMode ? 'Updating...' : 'Creating...') : (packageEditMode ? 'Update Package' : 'Create Package')">
                     </button>
                 </div>

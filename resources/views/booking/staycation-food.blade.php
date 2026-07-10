@@ -833,6 +833,22 @@
         function staycationFoodSelection(accommodationTotal = 0, activitiesTotal = 0, nights = 1, initialSelected = [], foodLookup = {}, vatRate = 0.0, vatRatePercentage = 0) {
             return {
                 selectedFoods: initialSelected && initialSelected.length ? initialSelected.map(item => {
+                    // Handle package items - preserve all package properties
+                    if (item.is_package || item.package_id || (typeof item.id === 'string' && item.id.startsWith('package-'))) {
+                        return {
+                            id: item.id || `package-${item.package_id}`,
+                            package_id: String(item.package_id || ''),
+                            name: item.name || 'Package',
+                            category: 'package',
+                            price: Number(item.price || 0),
+                            quantity: Number(item.quantity || 1),
+                            is_package: true,
+                            included_foods: item.included_foods || item.included_activities || [],
+                            package_sections: item.package_sections || [],
+                            selected_choices: item.selected_choices || [],
+                            notes: item.notes || ''
+                        };
+                    }
                     // Normalize server-side prefills to client format
                     if (item.food_id) {
                         const id = parseInt(item.food_id, 10);
@@ -1032,7 +1048,7 @@
                 },
 
                 addPackageToCart(packageId, packageName, packagePrice, packageFoods, packageSections = [], selectedChoices = []) {
-                    const existingPackageIndex = this.selectedFoods.findIndex(f => f.is_package && f.package_id === packageId);
+                    const existingPackageIndex = this.selectedFoods.findIndex(f => f.is_package && String(f.package_id) === String(packageId));
                     const includedFoods = this.buildStructuredPackageFoods(packageSections, selectedChoices);
                     const finalIncludedFoods = includedFoods.length > 0 ? includedFoods : packageFoods;
 
@@ -1043,7 +1059,7 @@
 
                     this.selectedFoods.push({
                         id: `package-${packageId}`,
-                        package_id: packageId,
+                        package_id: String(packageId),
                         name: packageName,
                         category: 'package',
                         price: Number(packagePrice) || 0,
@@ -1068,7 +1084,7 @@
                 },
 
                 async togglePackage(packageId, packageName, packagePrice, packageFoods, packageSections = []) {
-                    const existingPackageIndex = this.selectedFoods.findIndex(f => f.is_package && f.package_id === packageId);
+                    const existingPackageIndex = this.selectedFoods.findIndex(f => f.is_package && String(f.package_id) === String(packageId));
 
                     if (existingPackageIndex > -1) {
                         this.selectedFoods.splice(existingPackageIndex, 1);
@@ -1101,8 +1117,8 @@
                     return this.selectedFoods.some(f => f.id === foodId);
                 },
 
-                isPackageSelected(packageId) {
-                    return this.selectedFoods.some(f => f.is_package && f.package_id === packageId);
+isPackageSelected(packageId) {
+                    return this.selectedFoods.some(f => f.is_package && String(f.package_id) === String(packageId));
                 },
 
                 setField(foodId, field, value) {
@@ -1193,22 +1209,22 @@
                 },
 
                 decreasePackageQty(packageId) {
-                    const pkg = this.selectedFoods.find(f => f.is_package && f.package_id === packageId);
+                    const pkg = this.selectedFoods.find(f => f.is_package && String(f.package_id) === String(packageId));
                     if (pkg && pkg.quantity > 1) pkg.quantity--;
                 },
 
                 increasePackageQty(packageId) {
-                    const pkg = this.selectedFoods.find(f => f.is_package && f.package_id === packageId);
+                    const pkg = this.selectedFoods.find(f => f.is_package && String(f.package_id) === String(packageId));
                     if (pkg && pkg.quantity < 20) pkg.quantity++;
                 },
 
                 getPackageQuantity(packageId) {
-                    const pkg = this.selectedFoods.find(f => f.is_package && f.package_id === packageId);
+                    const pkg = this.selectedFoods.find(f => f.is_package && String(f.package_id) === String(packageId));
                     return pkg ? pkg.quantity || 1 : 1;
                 },
 
                 setPackageField(packageId, field, value) {
-                    const pkg = this.selectedFoods.find(f => f.is_package && f.package_id === packageId);
+                    const pkg = this.selectedFoods.find(f => f.is_package && String(f.package_id) === String(packageId));
                     if (!pkg) return;
 
                     if (field === 'quantity') {

@@ -16,24 +16,35 @@
     <p class="text-gray-600 mb-8 sm:mb-10 text-sm sm:text-base">Manage all your room options, capacity, pricing, and inventory.</p>
     @php
         $mobileLayoutStep1 = (int) (\App\Models\BookingSetting::where('key', 'mobile_layout_step1_availability')->value('value') ?? 3);
+        $adminSectionCard = 'rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-5 md:p-6 shadow-sm';
+        $adminSubtleCard = 'rounded-2xl border border-gray-200 bg-white/80 backdrop-blur p-4 md:p-5 shadow-sm';
+        $adminPrimaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-[#7a4d46] hover:shadow-lg';
+        $adminModalOverlay = 'fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4';
+        $adminModalPanel = 'relative w-full max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-200 bg-white/95 p-5 sm:p-6 md:p-7 shadow-xl';
+        $adminModalPanelSm = $adminModalPanel . ' max-w-lg';
+        $adminModalPanelMd = $adminModalPanel . ' max-w-2xl';
+        $adminModalPanelLg = $adminModalPanel . ' max-w-4xl';
+        $adminModalCloseButton = 'absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-2xl leading-none text-gray-400 transition hover:border-gray-300 hover:text-gray-700';
+        $adminModalTitle = 'pr-12 text-lg sm:text-xl font-bold text-gray-900';
+        $adminModalCancelButton = 'rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100';
     @endphp
 
-    <div class="mb-6 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+    <div class="mb-6 {{ $adminSubtleCard }}">
         <div class="flex flex-col md:flex-row md:items-end gap-3">
             <div class="flex-1">
-                <h3 class="text-sm font-semibold text-indigo-900">Booking Step 1 Mobile Layout</h3>
-                <p class="text-xs text-indigo-700 mt-1">Controls mobile card style for `/booking/staycation/availability` only. Desktop layout stays unchanged.</p>
+                <h3 class="text-sm font-semibold text-gray-900">Booking Step 1 Mobile Layout</h3>
+                <p class="text-xs text-gray-600 mt-1">Controls mobile card style for `/booking/staycation/availability` only. Desktop layout stays unchanged.</p>
             </div>
             <div class="flex gap-2 items-center">
                 <select id="mobileLayoutStep1"
-                        class="px-3 py-2 border border-indigo-300 rounded-lg text-sm bg-white">
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
                     <option value="1" {{ $mobileLayoutStep1 === 1 ? 'selected' : '' }}>2 Columns</option>
                     <option value="2" {{ $mobileLayoutStep1 === 2 ? 'selected' : '' }}>1 Card Per Row</option>
                     <option value="3" {{ $mobileLayoutStep1 === 3 ? 'selected' : '' }}>Carousel (1 Card Swipe)</option>
                 </select>
                 <button type="button"
                         onclick="saveMobileLayoutSetting('mobile_layout_step1_availability', document.getElementById('mobileLayoutStep1').value)"
-                        class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition">
+                        class="{{ $adminPrimaryButton }}">
                     Save
                 </button>
             </div>
@@ -41,7 +52,8 @@
     </div>
 
     {{-- Toolbar --}}
-    <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-6">
+    <div class="mb-6 {{ $adminSectionCard }}">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Staycation Rooms</h2>
             <p class="text-gray-500 text-sm">View and edit all room options.</p>
@@ -70,28 +82,29 @@
 
             <a
                 href="{{ route('admin.seasonDurations.index') }}"
-                class="px-3 py-2 sm:px-4 rounded-xl bg-orange-600 text-white font-medium shadow hover:bg-orange-700 hover:shadow-lg transition text-center text-sm sm:text-base"
+                class="px-3 py-2 sm:px-4 rounded-xl bg-white text-gray-700 border border-gray-300 font-medium shadow-sm hover:bg-gray-50 transition text-center text-sm sm:text-base"
             >
                 Season Durations
             </a>
             <a
                 href="{{ route('admin.booking-settings.index') }}"
-                class="px-3 py-2 sm:px-4 rounded-xl bg-green-600 text-white font-medium shadow hover:bg-green-700 hover:shadow-lg transition text-center text-sm sm:text-base"
+                class="px-3 py-2 sm:px-4 rounded-xl bg-white text-gray-700 border border-gray-300 font-medium shadow-sm hover:bg-gray-50 transition text-center text-sm sm:text-base"
             >
                 Additional Fees
             </a>
             <button
                 type="button"
                 @click="showStaycationModal = true; resetForm()"
-                class="px-3 py-2 sm:px-4 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition text-center text-sm sm:text-base"
+                class="{{ $adminPrimaryButton }}"
             >
                 + Add Room
             </button>
         </div>
     </div>
+    </div>
 
     <div
-        class="mb-6 rounded-xl border px-4 py-3 text-sm"
+        class="mb-6 rounded-xl border px-4 py-3 text-sm shadow-sm"
         :class="canReorder ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-slate-200 bg-white/80 text-slate-600'"
     >
         <template x-if="canReorder">
@@ -227,19 +240,20 @@
     </div>
 
     {{-- SWIPER IMAGES MANAGEMENT --}}
-    <div class="flex justify-between items-end mb-6 mt-12">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">Room Images Management</h2>
-            <p class="text-gray-500 text-sm">Photos that appear in the room carousel.</p>
-        </div>
+    <div class="mt-12 {{ $adminSectionCard }}">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Room Images Management</h2>
+                <p class="text-gray-500 text-sm">Photos that appear in the room carousel.</p>
+            </div>
 
-        <button 
-            @click="showModal = true" 
-            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition"
-        >
-            + Add Room Image
-        </button>
-    </div>
+            <button
+                @click="showModal = true"
+                class="{{ $adminPrimaryButton }}"
+            >
+                + Add Room Image
+            </button>
+        </div>
 
     @if(session('success'))
         <script>
@@ -270,7 +284,7 @@
     @endif
 
     {{-- Images Table --}}
-    <div class="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+    <div class="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm bg-white/80 backdrop-blur">
         <table class="w-full text-left min-w-200">
             <thead class="bg-gray-100/70 backdrop-blur">
                 <tr>
@@ -309,22 +323,24 @@
             </tbody>
         </table>
     </div>
+    </div>
 
     <hr class="my-14 border-gray-300">
 
     {{-- STAYCATION MODAL --}}
     <div 
+        x-cloak
         x-show="showStaycationModal"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        class="{{ $adminModalOverlay }}"
         x-transition.opacity
     >
-        <div class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-4xl p-5 sm:p-7 relative border border-gray-200 max-h-[95vh] overflow-y-auto">
+        <div @click.away="showStaycationModal = false; resetForm()" class="{{ $adminModalPanelLg }}">
             <button 
-                @click="showStaycationModal = false"
-                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+                @click="showStaycationModal = false; resetForm()"
+                class="{{ $adminModalCloseButton }}"
             >&times;</button>
 
-            <h3 class="text-xl font-bold mb-4 text-gray-900" x-text="editModeStaycation ? 'Edit Room' : 'Add Room'"></h3>
+            <h3 class="{{ $adminModalTitle }} mb-4" x-text="editModeStaycation ? 'Edit Room' : 'Add Room'"></h3>
 
             <form id="staycationForm" @submit.prevent="saveStaycation()" class="space-y-5">
                 @csrf
@@ -540,9 +556,9 @@
 
 
                 <!-- Actions -->
-                <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-2">
-                    <button type="button" @click="showStaycationModal = false; resetForm()" class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition text-sm w-full sm:w-auto">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition text-sm w-full sm:w-auto" x-text="editModeStaycation ? 'Update' : 'Add'"></button>
+                <div class="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
+                    <button type="button" @click="showStaycationModal = false; resetForm()" class="{{ $adminModalCancelButton }} w-full sm:w-auto">Cancel</button>
+                    <button type="submit" class="{{ $adminPrimaryButton }} w-full sm:w-auto" x-text="editModeStaycation ? 'Update' : 'Add'"></button>
                 </div>
             </form>
         </div>
@@ -565,17 +581,18 @@
 
     {{-- Image Upload Modal --}}
     <div 
+        x-cloak
         x-show="showModal"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        class="{{ $adminModalOverlay }}"
         x-transition.opacity
     >
-        <div class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-md p-5 sm:p-6 relative border border-gray-200">
+        <div @click.away="showModal = false; resetImageForm()" class="{{ $adminModalPanelSm }}">
             <button 
-                @click="showModal = false"
-                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+                @click="showModal = false; resetImageForm()"
+                class="{{ $adminModalCloseButton }}"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4 text-gray-900" x-text="editImageMode ? 'Edit Room Image' : 'Upload New Room Image'"></h3>
+            <h3 class="{{ $adminModalTitle }} mb-4" x-text="editImageMode ? 'Edit Room Image' : 'Upload New Room Image'"></h3>
 
             <form
                 id="swiperUploadForm"
@@ -702,9 +719,9 @@
                     <input type="file" id="swiper_image_file" name="image" x-ref="image" accept="image/*,video/*" class="border rounded p-2 w-full" x-bind:required="!editImageMode">
                 </div>
 
-                <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2">
-                    <button type="button" @click="showModal = false; resetImageForm()" class="px-4 py-2 border rounded text-sm w-full sm:w-auto">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm w-full sm:w-auto" x-text="editImageMode ? 'Update' : 'Upload'"></button>
+                <div class="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
+                    <button type="button" @click="showModal = false; resetImageForm()" class="{{ $adminModalCancelButton }} w-full sm:w-auto">Cancel</button>
+                    <button type="submit" class="{{ $adminPrimaryButton }} w-full sm:w-auto" x-text="editImageMode ? 'Update' : 'Upload'"></button>
                 </div>
             </form>
         </div>
@@ -785,20 +802,21 @@
 
     <!-- Features Modal -->
     <div
+        x-cloak
         x-show="showTextModal"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        class="{{ $adminModalOverlay }}"
         x-transition.opacity
     >
         <div
             @click.away="showTextModal = false"
-            class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-lg p-5 sm:p-6 relative border border-gray-200"
+            class="{{ $adminModalPanelSm }}"
         >
             <button 
                 @click="showTextModal = false"
-                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+                class="{{ $adminModalCloseButton }}"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4 text-gray-900" x-text="editMode ? 'Edit Room Features' : 'Add Room Features'"></h3>
+            <h3 class="{{ $adminModalTitle }} mb-4" x-text="editMode ? 'Edit Room Features' : 'Add Room Features'"></h3>
 
             <form
                 id="textUploadForm"
@@ -840,17 +858,17 @@
                     <p class="text-xs text-gray-500 mt-1">Enter each feature on a separate line. These will be displayed as bullet points on the room pages.</p>
                 </div>
 
-                <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2">
+                <div class="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
                     <button
                         type="button"
                         @click="showTextModal = false"
-                        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 text-sm w-full sm:w-auto"
+                        class="{{ $adminModalCancelButton }} w-full sm:w-auto"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
-                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm w-full sm:w-auto"
+                        class="{{ $adminPrimaryButton }} w-full sm:w-auto"
                     >
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
                     </button>
@@ -936,20 +954,21 @@
     </div>
 
     <div
+        x-cloak
         x-show="showVrTextModal"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        class="{{ $adminModalOverlay }}"
         x-transition.opacity
     >
         <div
             @click.away="showVrTextModal = false; resetVrTextForm()"
-            class="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl w-full max-w-2xl p-5 sm:p-6 relative border border-gray-200 max-h-[90vh] overflow-auto"
+            class="{{ $adminModalPanelMd }}"
         >
             <button
                 @click="showVrTextModal = false; resetVrTextForm()"
-                class="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-3xl leading-none"
+                class="{{ $adminModalCloseButton }}"
             >&times;</button>
 
-            <h3 class="text-lg font-semibold mb-4 text-gray-900" x-text="editVrMode ? 'Edit VR Content' : 'Add VR Content'"></h3>
+            <h3 class="{{ $adminModalTitle }} mb-4" x-text="editVrMode ? 'Edit VR Content' : 'Add VR Content'"></h3>
 
             <form
                 id="vrTextUploadForm"
