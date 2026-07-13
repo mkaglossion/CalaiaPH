@@ -118,16 +118,14 @@
                                 </div>
                             @endif
 
-                            <div class="flex flex-wrap gap-2">
+                            <div class="text-xs font-medium text-[#8f5d54] leading-5">
                                 @foreach($section['items'] as $item)
                                     @php
                                         $itemLabel = is_array($item)
                                             ? (($item['quantity'] ?? 1) . 'x ' . ($item['name'] ?? ''))
                                             : ((isset($item['quantity']) ? $item['quantity'] : 1) . 'x ' . ($item['name'] ?? ''));
                                     @endphp
-                                    <span class="inline-flex items-center gap-1 rounded-full border border-[#8f5d54]/20 bg-[#8f5d54]/10 px-3 py-1 text-xs font-medium text-[#8f5d54]">
-                                        <span>{{ $itemLabel }}</span>
-                                    </span>
+                                    <span>{{ $itemLabel }}@if(! $loop->last), @endif</span>
                                 @endforeach
                             </div>
                         </div>
