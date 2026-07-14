@@ -286,7 +286,7 @@ class AdminPagesController extends Controller
                 'textStoreRoute' => 'farm-texts.store',
                 'textDestroyRoute' => '/admin/farm-texts',
                 'pageCopyStoreRoute' => 'admin.farm.copy.store',
-                'excludePrefixes' => ['farm_page_'],
+                'excludePrefixes' => ['farm_page_', 'farm_cta_'],
                 'pageCopyFields' => [
                     'title' => [
                         'sources' => ['farm_page_title'],
@@ -296,10 +296,30 @@ class AdminPagesController extends Controller
                         'sources' => ['farm_page_intro'],
                         'fallback' => 'Discover how we raise livestock and grow produce with respect for nature and animal welfare',
                     ],
+                    'cta_title' => [
+                        'sources' => ['farm_cta_title'],
+                        'fallback' => 'Ready to Reserve Your Farm Experience?',
+                    ],
+                    'cta_intro' => [
+                        'sources' => ['farm_cta_intro'],
+                        'fallback' => 'Message us on Messenger to ask about farm visits, group reservations, and special arrangements.',
+                    ],
+                    'cta_button' => [
+                        'sources' => ['farm_cta_button'],
+                        'fallback' => 'Message Us on Messenger',
+                    ],
+                    'cta_note' => [
+                        'sources' => ['farm_cta_note'],
+                        'fallback' => 'We usually reply as soon as possible during business hours.',
+                    ],
                 ],
                 'pageCopyMeta' => [
                     'title' => ['label' => 'Page Title'],
                     'intro' => ['label' => 'Page Intro', 'type' => 'textarea', 'rows' => 4, 'columnClass' => 'md:col-span-2'],
+                    'cta_title' => ['label' => 'Reserve Title'],
+                    'cta_intro' => ['label' => 'Reserve Message', 'type' => 'textarea', 'rows' => 4, 'columnClass' => 'md:col-span-2'],
+                    'cta_button' => ['label' => 'Reserve Button Label'],
+                    'cta_note' => ['label' => 'Reserve Note', 'type' => 'textarea', 'rows' => 3, 'columnClass' => 'md:col-span-2'],
                 ],
             ],
         ],

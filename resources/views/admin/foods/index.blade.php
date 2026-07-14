@@ -151,6 +151,7 @@
                                 $descriptionField = $definition['description_key'];
                                 $headingValue = $foodBookingSectionCopy[$section]['heading'] ?? $definition['default_heading'];
                                 $descriptionValue = $foodBookingSectionCopy[$section]['description'] ?? $definition['default_description'];
+                                $allowBlankHeading = $headingField === 'messhall_section_heading';
                             @endphp
                             <div class="rounded-lg border border-gray-200 bg-white p-3">
                                 <h5 class="text-xs font-semibold text-gray-900 mb-3">{{ $definition['label'] }}</h5>
@@ -163,8 +164,13 @@
                                             type="text"
                                             value="{{ old($headingField, $headingValue) }}"
                                             class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
-                                            required
+                                            @unless($allowBlankHeading)
+                                                required
+                                            @endunless
                                         >
+                                        @if($allowBlankHeading)
+                                            <p class="mt-1 text-[11px] text-gray-500">Leave this blank to hide the heading on the booking page.</p>
+                                        @endif
                                     </div>
                                     <div>
                                         <label for="{{ $descriptionField }}" class="block text-[11px] font-semibold text-gray-700 mb-1">Description</label>

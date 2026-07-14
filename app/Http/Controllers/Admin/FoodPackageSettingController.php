@@ -43,7 +43,9 @@ class FoodPackageSettingController extends Controller
             $rules[$definition['setting_key']] = 'required|string|max:255';
         }
         foreach ($sectionDefinitions as $definition) {
-            $rules[$definition['heading_key']] = 'required|string|max:255';
+            $rules[$definition['heading_key']] = $definition['heading_key'] === 'messhall_section_heading'
+                ? 'nullable|string|max:255'
+                : 'required|string|max:255';
             $rules[$definition['description_key']] = 'required|string|max:500';
         }
 

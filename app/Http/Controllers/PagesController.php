@@ -977,12 +977,16 @@ class PagesController extends Controller
         })->toArray();
         $heroTexts = collect($texts)
             ->reject(function ($value, $key) {
-                return str_starts_with((string) $key, 'farm_page_');
+                return str_starts_with((string) $key, 'farm_page_') || str_starts_with((string) $key, 'farm_cta_');
             })
             ->toArray();
 
         $farmPageTitle = $this->pageTextValue($texts, ['farm_page_title', 'title', 'heading'], 'Our Sustainable Farming');
         $farmPageIntro = $this->pageTextValue($texts, ['farm_page_intro', 'intro', 'subtitle', 'description'], 'Discover how we raise livestock and grow produce with respect for nature and animal welfare');
+        $farmCtaTitle = $this->pageTextValue($texts, ['farm_cta_title'], 'Ready to Reserve Your Farm Experience?');
+        $farmCtaIntro = $this->pageTextValue($texts, ['farm_cta_intro'], 'Message us on Messenger to ask about farm visits, group reservations, and special arrangements.');
+        $farmCtaButton = $this->pageTextValue($texts, ['farm_cta_button'], 'Message Us on Messenger');
+        $farmCtaNote = $this->pageTextValue($texts, ['farm_cta_note'], 'We usually reply as soon as possible during business hours.');
 
         // Get farm experiences from database
         $farmExperiences = \App\Models\FarmExperience::orderBy('sort_order')->get()->map(function($exp) {
@@ -994,12 +998,22 @@ class PagesController extends Controller
                 'time' => $exp->time,
                 'capacity' => $exp->capacity,
                 'icon' => $exp->icon,
-                'cta' => $exp->cta,
                 'badge' => $exp->badge,
             ];
         })->toArray();
         
-        $data = compact('swiperImages', 'texts', 'heroTexts', 'farmExperiences', 'farmPageTitle', 'farmPageIntro');
+        $data = compact(
+            'swiperImages',
+            'texts',
+            'heroTexts',
+            'farmExperiences',
+            'farmPageTitle',
+            'farmPageIntro',
+            'farmCtaTitle',
+            'farmCtaIntro',
+            'farmCtaButton',
+            'farmCtaNote'
+        );
         $data['active'] = 'farm';
 
         return view('farm', $data);

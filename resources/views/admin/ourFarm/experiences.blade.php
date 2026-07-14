@@ -51,7 +51,6 @@
                 {{-- Details --}}
                 <div class="mb-4 text-xs text-gray-500 space-y-1">
                     <div><span class="font-medium">Time:</span> <span x-text="experience.time"></span></div>
-                    <div><span class="font-medium">Button:</span> <span x-text="experience.cta"></span></div>
                 </div>
 
                 {{-- Created Date --}}
@@ -136,18 +135,6 @@
                         x-model="currentExperience.time" 
                         required 
                         placeholder="e.g., Weekends 9AM–2PM"
-                        class="w-full text-sm sm:text-base border border-gray-300 rounded-xl px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                </div>
-
-                {{-- CTA Button Text --}}
-                <div>
-                    <label for="experience_cta" class="block text-xs sm:text-sm font-medium mb-2 text-gray-700">Button Text (CTA) *</label>
-                    <input 
-                        id="experience_cta"
-                        type="text" 
-                        x-model="currentExperience.cta" 
-                        required 
-                        placeholder="e.g., Reserve Your Spot"
                         class="w-full text-sm sm:text-base border border-gray-300 rounded-xl px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
                 </div>
 
@@ -312,7 +299,6 @@ function farmExperiencesManager() {
                 time: '',
                 capacity: '',
                 icon: 'people',
-                cta: '',
                 badge: null,
                 created_at: new Date().toISOString(),
                 imageFile: null,

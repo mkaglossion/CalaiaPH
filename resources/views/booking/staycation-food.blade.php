@@ -322,10 +322,14 @@
                     @if($messhallPackages->count() > 0)
                         <div class="mb-10" x-show="selectedCategory === 'all' || selectedCategory === 'messhall'">
                             <div class="mb-8 text-center flex flex-col items-center justify-center">
-                                <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">{{ $messhallSectionCopy['heading'] }}</h2>
-                                <p class="mt-3 text-base md:text-lg text-gray-500 max-w-2xl">
-                                    {{ $messhallSectionCopy['description'] }}
-                                </p>
+                                @if(filled($messhallSectionCopy['heading'] ?? ''))
+                                    <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">{{ $messhallSectionCopy['heading'] }}</h2>
+                                @endif
+                                @if(filled($messhallSectionCopy['description'] ?? ''))
+                                    <p class="mt-3 text-base md:text-lg text-gray-500 max-w-2xl">
+                                        {{ $messhallSectionCopy['description'] }}
+                                    </p>
+                                @endif
                             </div>
 
                             <div class="cards-grid-responsive">
@@ -393,7 +397,6 @@
                                         $messhallSubcategoryGroups = $groupFoodsBySubcategory($categories['messhall']);
                                     @endphp
                                     <div class="mb-8" x-show="selectedCategory === 'all' || selectedCategory === 'messhall'">
-                                        <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4">{{ $messhallLabel }}</h3>
                                         @foreach($messhallSubcategoryGroups as $messhallSubcategory => $subcategoryFoods)
                                             @php
                                                 $messhallSubcategoryLabel = $messhallSubcategory === '__default'

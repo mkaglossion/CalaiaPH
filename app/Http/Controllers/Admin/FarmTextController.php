@@ -57,6 +57,10 @@ class FarmTextController extends Controller
         $validated = $request->validate([
             'page_title' => 'nullable|string|max:255',
             'page_intro' => 'nullable|string',
+            'cta_title' => 'nullable|string|max:255',
+            'cta_intro' => 'nullable|string',
+            'cta_button' => 'nullable|string|max:255',
+            'cta_note' => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($validated) {
@@ -68,6 +72,26 @@ class FarmTextController extends Controller
             FarmText::updateOrCreate(
                 ['label' => 'farm_page_intro'],
                 ['text' => $validated['page_intro'] ?? '']
+            );
+
+            FarmText::updateOrCreate(
+                ['label' => 'farm_cta_title'],
+                ['text' => $validated['cta_title'] ?? '']
+            );
+
+            FarmText::updateOrCreate(
+                ['label' => 'farm_cta_intro'],
+                ['text' => $validated['cta_intro'] ?? '']
+            );
+
+            FarmText::updateOrCreate(
+                ['label' => 'farm_cta_button'],
+                ['text' => $validated['cta_button'] ?? '']
+            );
+
+            FarmText::updateOrCreate(
+                ['label' => 'farm_cta_note'],
+                ['text' => $validated['cta_note'] ?? '']
             );
         });
 

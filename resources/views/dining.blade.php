@@ -89,34 +89,15 @@
         </div>
     </section>
 
-    {{-- Call to Action - Messenger Reservation --}}
-    <section class="container mx-auto px-4 sm:px-6 lg:px-8 pb-16 md:pb-20">
-        <div class="max-w-4xl mx-auto">
-            <div class="bg-linear-to-r from-[#97655A] to-[#8f5d54] rounded-2xl p-6 sm:p-8 md:p-12 text-white text-center shadow-xl">
-                <i class="fas fa-utensils text-4xl md:text-5xl opacity-80 mb-4 block"></i>
-
-                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
-                    {{ $ctaTitle ?? 'Ready to Dine With Us?' }}
-                </h2>
-
-                <p class="text-base md:text-lg mb-8 opacity-90 max-w-2xl mx-auto">
-                    {{ $ctaIntro ?? 'Message us to reserve your dining experience. We can accommodate lunch, dinner, group events, and special arrangements.' }}
-                </p>
-
-                <a href="https://m.me/calaiaph"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   class="inline-flex w-full sm:w-auto items-center justify-center px-6 md:px-8 py-4 bg-[#0084ff] hover:bg-[#0073e0] text-white font-semibold rounded-xl transition-all duration-300 gap-3 shadow-lg text-base md:text-lg">
-                    <i class="fab fa-facebook-messenger text-xl md:text-2xl"></i>
-                    {{ $ctaButton ?? 'Make a Reservation on Messenger' }}
-                </a>
-
-                <p class="text-xs sm:text-sm mt-6 opacity-75">
-                    {{ $ctaNote ?? 'Available for lunch and dinner reservations. Message us for inquiries.' }}
-                </p>
-            </div>
-        </div>
-    </section>
+    <x-messenger-cta
+        title-id="dining-cta-heading"
+        title="{{ $ctaTitle ?? 'Ready to Dine With Us?' }}"
+        intro="{{ $ctaIntro ?? 'Message us to reserve your dining experience. We can accommodate lunch, dinner, group events, and special arrangements.' }}"
+        button-url="https://m.me/calaiaph"
+        button-label="{{ $ctaButton ?? 'Make a Reservation on Messenger' }}"
+        note="{{ $ctaNote ?? 'Available for lunch and dinner reservations. Message us for inquiries.' }}"
+        icon-class="fas fa-utensils text-4xl md:text-5xl opacity-80 mb-4 block"
+    />
 
     <x-floating-buttons />
 </x-page-layout>

@@ -148,8 +148,7 @@
 
           <div class="relative z-10 px-6 md:px-10 py-10 md:py-14 max-w-xl">
             <h3 class="text-white font-extrabold text-2xl md:text-4xl mb-5">Vegetable Garden.</h3>
-            <p class="text-white/90 text-base md:text-lg leading-relaxed mb-8">We grow over 50 varieties of vegetables using organic methods and natural amendments like compost and cover crops.</p>
-            <a href="#contact" class="inline-flex items-center bg-brand text-white font-semibold px-6 py-3 rounded-full hover:bg-brand/90 transition">GET OUR HARVEST SCHEDULE <span class="ml-2">></span></a>
+            <p class="text-white/90 text-base md:text-lg leading-relaxed mb-0">We grow over 50 varieties of vegetables using organic methods and natural amendments like compost and cover crops.</p>
           </div>
           <div class="h-80 md:h-100"></div>
         </article>
@@ -163,8 +162,7 @@
 
           <div class="relative z-10 px-6 md:px-10 py-10 md:py-14 max-w-xl ml-auto text-right">
             <h3 class="text-white font-extrabold text-2xl md:text-4xl mb-5">Orchard Fruits.</h3>
-            <p class="text-white/90 text-base md:text-lg leading-relaxed mb-8">Our heritage fruit trees are grown without chemical sprays, allowing natural ecosystems to maintain balance.</p>
-            <a href="#contact" class="inline-flex items-center bg-brand text-white font-semibold px-6 py-3 rounded-full hover:bg-brand/90 transition">JOIN OUR FRUIT CSA <span class="ml-2">></span></a>
+            <p class="text-white/90 text-base md:text-lg leading-relaxed mb-0">Our heritage fruit trees are grown without chemical sprays, allowing natural ecosystems to maintain balance.</p>
           </div>
           <div class="h-80 md:h-100"></div>
         </article>
@@ -292,10 +290,6 @@
                     <i class="bi bi-{{ $experience['icon'] }} mr-2 text-[#8f5d54]" aria-hidden="true"></i> {{ $experience['capacity'] }}
                   </div>
                 </div>
-<a href="https://m.me/410774518796277"
-           class="w-full inline-flex items-center justify-center border-2 border-brand text-brand hover:bg-brand hover:text-white rounded-xl px-6 py-3 font-medium transition-all duration-300">
-           {{ $experience['cta'] }}
-        </a>
               </div>
             </article>
             @empty
@@ -306,6 +300,18 @@
           </div>
         </div>
       </section>
+
+      <x-messenger-cta
+        section-class="pb-16 md:pb-20"
+        section-style="background-color: #f5efe7;"
+        title-id="farm-cta-heading"
+        title="{{ $farmCtaTitle ?? 'Ready to Reserve Your Farm Experience?' }}"
+        intro="{{ $farmCtaIntro ?? 'Message us on Messenger to ask about farm visits, group reservations, and special arrangements.' }}"
+        button-url="https://m.me/410774518796277"
+        button-label="{{ $farmCtaButton ?? 'Message Us on Messenger' }}"
+        note="{{ $farmCtaNote ?? 'We usually reply as soon as possible during business hours.' }}"
+        icon-class="fab fa-facebook-messenger text-4xl md:text-5xl opacity-80 mb-4 block"
+    />
     </main>
 
     {{-- Floating Buttons --}}
