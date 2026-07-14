@@ -654,7 +654,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
           <div class="bg-[#f7f2f0] border border-[#e3d0cb] rounded-xl p-6 mb-6 text-left">
             <h3 class="text-2xl font-semibold text-[#8f5d54] mb-2">Camp Waiver</h3>
             <p class="text-sm text-gray-700">
-              Your camp waiver is ready for printing and download. Use the buttons below to open the printable copy or save the PDF.
+              Your booking confirmation email includes the camp waiver. Use the buttons below to view the printable copy or download the PDF.
             </p>
             <div class="mt-4 flex flex-col sm:flex-row gap-3">
               @if(!empty($campWaiverUrl))

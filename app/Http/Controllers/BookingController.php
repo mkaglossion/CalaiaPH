@@ -1699,30 +1699,54 @@ class BookingController extends Controller
         return $guestForms;
     }
 
+    private function generateUniqueStaycationTransactionId(?string $preferred = null): string
+    {
+        $candidate = trim((string) $preferred);
+
+        if ($candidate !== '' && !Booking::where('transaction_id', $candidate)->exists()) {
+            return $candidate;
+        }
+
+        do {
+            $candidate = 'TXN-' . strtoupper(uniqid());
+        } while (Booking::where('transaction_id', $candidate)->exists());
+
+        return $candidate;
+    }
+
     private function initiateStaycationCheckout(Request $request, array $booking)
     {
         $booking = $this->normalizeAndRecalculateStaycationBooking($booking);
         $guestCounts = $this->resolveStaycationGuestCounts($booking);
+        $skipGuestDetails = $request->boolean('skip_guest_details');
 
-        $rules = array_merge(ValidationService::paymentRules(), [
-            'guests' => ['required', 'array', 'size:' . $guestCounts['total']],
-            'guests.*.full_name' => ['required', 'string', 'max:255'],
-            'guests.*.guest_type' => ['required', 'string', 'in:adult,child'],
-            'guests.*.birth_date' => ['required', 'date', 'before:today'],
-            'guests.*.gender' => ['required', 'string', 'in:male,female,other,prefer_not_to_say'],
-            'guests.*.contact_number' => ['nullable', 'string', 'max:30'],
-            'guests.*.emergency_contact_name' => ['required', 'string', 'max:255'],
-            'guests.*.emergency_contact_number' => ['required', 'string', 'max:30'],
-            'guests.*.emergency_contact_relationship' => ['required', 'string', 'max:255'],
-            'guests.*.signature_data' => ['required', 'string', 'max:2000000'],
-            'guests.*.guardian_full_name' => ['nullable', 'string', 'max:255'],
-            'guests.*.guardian_relationship' => ['nullable', 'string', 'max:255'],
-            'terms_and_policy_accepted' => ['accepted'],
-            'camp_waiver_accepted' => ['accepted'],
-        ]);
+        $rules = ValidationService::paymentRules();
+        $rules['terms_and_policy_accepted'] = ['accepted'];
+        $rules['camp_waiver_accepted'] = ['accepted'];
+
+        if (!$skipGuestDetails) {
+            $rules = array_merge($rules, [
+                'guests' => ['required', 'array', 'size:' . $guestCounts['total']],
+                'guests.*.full_name' => ['required', 'string', 'max:255'],
+                'guests.*.guest_type' => ['required', 'string', 'in:adult,child'],
+                'guests.*.birth_date' => ['required', 'date', 'before:today'],
+                'guests.*.gender' => ['required', 'string', 'in:male,female,other,prefer_not_to_say'],
+                'guests.*.contact_number' => ['nullable', 'string', 'max:30'],
+                'guests.*.emergency_contact_name' => ['required', 'string', 'max:255'],
+                'guests.*.emergency_contact_number' => ['required', 'string', 'max:30'],
+                'guests.*.emergency_contact_relationship' => ['required', 'string', 'max:255'],
+                'guests.*.signature_data' => ['required', 'string', 'max:2000000'],
+                'guests.*.guardian_full_name' => ['nullable', 'string', 'max:255'],
+                'guests.*.guardian_relationship' => ['nullable', 'string', 'max:255'],
+            ]);
+        }
 
         $validator = Validator::make($request->all(), $rules);
-        $validator->after(function ($validator) use ($request, $guestCounts) {
+        $validator->after(function ($validator) use ($request, $guestCounts, $skipGuestDetails) {
+            if ($skipGuestDetails) {
+                return;
+            }
+
             $guests = array_values((array) $request->input('guests', []));
             $adultCount = 0;
             $childCount = 0;
@@ -1796,46 +1820,50 @@ class BookingController extends Controller
         }
 
         $validated = $validator->validated();
-        $guestInputs = array_values($validated['guests']);
+        $guestInputs = $skipGuestDetails
+            ? []
+            : array_values($validated['guests']);
         $now = now()->toDateTimeString();
         $guestRecords = [];
         $guestSignaturePayloads = [];
 
-        foreach ($guestInputs as $index => $guest) {
-            $guestType = strtolower(trim((string) ($guest['guest_type'] ?? 'adult'))) === 'child' ? 'child' : 'adult';
-            $fullName = trim((string) ($guest['full_name'] ?? ''));
-            $signatureData = trim((string) ($guest['signature_data'] ?? ''));
-            $signerName = $guestType === 'child'
-                ? trim((string) ($guest['guardian_full_name'] ?? ''))
-                : $fullName;
-            $signerRelationship = $guestType === 'child'
-                ? trim((string) ($guest['guardian_relationship'] ?? ''))
-                : null;
+        if (!$skipGuestDetails) {
+            foreach ($guestInputs as $index => $guest) {
+                $guestType = strtolower(trim((string) ($guest['guest_type'] ?? 'adult'))) === 'child' ? 'child' : 'adult';
+                $fullName = trim((string) ($guest['full_name'] ?? ''));
+                $signatureData = trim((string) ($guest['signature_data'] ?? ''));
+                $signerName = $guestType === 'child'
+                    ? trim((string) ($guest['guardian_full_name'] ?? ''))
+                    : $fullName;
+                $signerRelationship = $guestType === 'child'
+                    ? trim((string) ($guest['guardian_relationship'] ?? ''))
+                    : null;
 
-            $guestRecords[] = [
-                'full_name' => $fullName,
-                'guest_type' => $guestType,
-                'birth_date' => $guest['birth_date'] ?? null,
-                'gender' => $guest['gender'] ?? null,
-                'contact_number' => $guestType === 'child'
-                    ? ($guest['contact_number'] ?? null)
-                    : trim((string) ($guest['contact_number'] ?? '')),
-                'emergency_contact_name' => trim((string) ($guest['emergency_contact_name'] ?? '')),
-                'emergency_contact_number' => trim((string) ($guest['emergency_contact_number'] ?? '')),
-                'emergency_contact_relationship' => trim((string) ($guest['emergency_contact_relationship'] ?? '')),
-                'waiver_acknowledged_at' => $now,
-                'signed_at' => $now,
-                'signed_by_user_id' => auth()->id(),
-                'signed_by_name' => $signerName !== '' ? $signerName : null,
-                'signed_by_relationship' => $signerRelationship !== '' ? $signerRelationship : null,
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'is_primary_contact' => $index === 0,
-            ];
+                $guestRecords[] = [
+                    'full_name' => $fullName,
+                    'guest_type' => $guestType,
+                    'birth_date' => $guest['birth_date'] ?? null,
+                    'gender' => $guest['gender'] ?? null,
+                    'contact_number' => $guestType === 'child'
+                        ? ($guest['contact_number'] ?? null)
+                        : trim((string) ($guest['contact_number'] ?? '')),
+                    'emergency_contact_name' => trim((string) ($guest['emergency_contact_name'] ?? '')),
+                    'emergency_contact_number' => trim((string) ($guest['emergency_contact_number'] ?? '')),
+                    'emergency_contact_relationship' => trim((string) ($guest['emergency_contact_relationship'] ?? '')),
+                    'waiver_acknowledged_at' => $now,
+                    'signed_at' => $now,
+                    'signed_by_user_id' => auth()->id(),
+                    'signed_by_name' => $signerName !== '' ? $signerName : null,
+                    'signed_by_relationship' => $signerRelationship !== '' ? $signerRelationship : null,
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'is_primary_contact' => $index === 0,
+                ];
 
-            $guestSignaturePayloads[] = [
-                'signature_data' => $signatureData,
-            ];
+                $guestSignaturePayloads[] = [
+                    'signature_data' => $signatureData,
+                ];
+            }
         }
 
         $booking['guests'] = $guestRecords;
@@ -1850,7 +1878,7 @@ class BookingController extends Controller
         ], fn ($value) => $value !== null && $value !== '');
 
         $booking['booking_type'] = 'staycation';
-        $booking['transaction_id'] = $booking['transaction_id'] ?? ('TXN-' . strtoupper(uniqid()));
+        $booking['transaction_id'] = $this->generateUniqueStaycationTransactionId($booking['transaction_id'] ?? null);
 
         session(['booking' => $booking]);
 

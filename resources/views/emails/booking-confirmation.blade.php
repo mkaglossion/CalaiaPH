@@ -108,6 +108,7 @@
                     @if(!empty($campWaiverPdfUrl))
                         <p><strong>Camp Waiver PDF:</strong> <a href="{{ $campWaiverPdfUrl }}">Download PDF</a></p>
                     @endif
+                    <p>Camp Waiver PDF attached for your records.</p>
                 @endif
                 @php
                 // Use the passed isStaycation flag, default to false if not set
