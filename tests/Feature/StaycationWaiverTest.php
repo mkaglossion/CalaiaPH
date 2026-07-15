@@ -114,7 +114,7 @@ class StaycationWaiverTest extends TestCase
             'guest_type' => 'adult',
             'is_primary_contact' => true,
         ]);
-        Storage::disk('local')->assertExists("signatures/bookings/{$booking->id}/guest-1.png");
+        $this->assertTrue(Storage::disk('local')->exists("signatures/bookings/{$booking->id}/guest-1.png"));
     }
 
     public function test_checkout_uses_every_guest_from_the_selected_accommodation(): void
@@ -172,11 +172,11 @@ class StaycationWaiverTest extends TestCase
         $this->assertDatabaseCount('booking_guests', 6);
         $this->assertSame(4, $booking->bookingGuests()->where('guest_type', 'adult')->count());
         $this->assertSame(2, $booking->bookingGuests()->where('guest_type', 'child')->count());
-        Storage::disk('local')->assertExists("signatures/bookings/{$booking->id}/guest-1.png");
-        Storage::disk('local')->assertExists("signatures/bookings/{$booking->id}/guest-6.png");
+        $this->assertTrue(Storage::disk('local')->exists("signatures/bookings/{$booking->id}/guest-1.png"));
+        $this->assertTrue(Storage::disk('local')->exists("signatures/bookings/{$booking->id}/guest-6.png"));
     }
 
-    public function test_checkout_page_renders_one_waiver_card_for_every_selected_guest(): void
+    public function test_checkout_page_hides_guest_details_and_waiver_workflow(): void
     {
         $response = $this->withSession([
             'booking' => [
@@ -201,14 +201,15 @@ class StaycationWaiverTest extends TestCase
         ])->get(route('booking.staycationPayment'));
 
         $response->assertOk();
-        $response->assertSee('data-total-guests="6"', false);
-        $response->assertSee('data-adult-guests="4"', false);
-        $response->assertSee('data-child-guests="2"', false);
-        $response->assertSee('Guest 4');
-        $response->assertSee('Guest 6');
-        $response->assertSee('Child details and guardian e-signature');
-        $response->assertDontSee('Guest 1 of 6');
-        $this->assertSame(6, substr_count($response->getContent(), 'data-guest-card-index="'));
+        $response->assertDontSee('Guest details and waivers');
+        $response->assertDontSee('data-guest-card-index="');
+        $response->assertDontSee('Guest 4');
+        $response->assertDontSee('Child details and guardian e-signature');
+        $response->assertSee('skip_guest_details', false);
+        $response->assertSee('I agree to the Terms & Conditions and acknowledge the selected Cancellation Policy', false);
+        $response->assertSee('I agree to the Camp Waiver and Release from Liability', false);
+        $response->assertSee('Read full booking policy', false);
+        $response->assertSee('Review camp waiver', false);
     }
 
     public function test_room_selection_preserves_separate_adult_and_child_counts(): void
@@ -264,10 +265,11 @@ class StaycationWaiverTest extends TestCase
 
         $paymentPage = $this->get(route('booking.staycationPayment'));
         $paymentPage->assertOk();
-        $paymentPage->assertSee('data-total-guests="8"', false);
-        $paymentPage->assertSee('data-adult-guests="6"', false);
-        $paymentPage->assertSee('data-child-guests="2"', false);
-        $this->assertSame(8, substr_count($paymentPage->getContent(), 'data-guest-card-index="'));
+        $paymentPage->assertDontSee('data-guest-card-index="');
+        $paymentPage->assertDontSee('Guest details and waivers');
+        $paymentPage->assertSee('skip_guest_details', false);
+        $paymentPage->assertSee('I agree to the Terms & Conditions and acknowledge the selected Cancellation Policy', false);
+        $paymentPage->assertSee('I agree to the Camp Waiver and Release from Liability', false);
     }
 
     public function test_room_selection_rejects_counts_above_the_configured_child_limit(): void

@@ -184,7 +184,6 @@ let vatRate = {{ $vatRate }};
                     method="POST"
                     novalidate
                     class="space-y-8"
-                    @submit="if (!validateCampWaiverBeforePayment()) { $event.preventDefault(); }"
                   >
                     @csrf
 
@@ -198,6 +197,7 @@ let vatRate = {{ $vatRate }};
                     <input type="hidden" name="selected_activity_packages" value="{{ json_encode($booking['selected_activity_packages'] ?? []) }}">
                     <input type="hidden" name="booking_type" value="{{ $booking['booking_type'] ?? 'general' }}">
                     <input type="hidden" name="total_guests" value="{{ $totalGuests }}">
+                    <input type="hidden" name="skip_guest_details" value="1">
                     
                     {{-- Validation Errors --}}
                     @if ($errors->any())
@@ -416,14 +416,6 @@ let vatRate = {{ $vatRate }};
                       </div>
                     </div>-->
 
-                    <x-booking.staycation-guest-waiver
-                      :guestBlueprints="$guestBlueprints ?? []"
-                      :campWaiverContent="$campWaiverContent ?? []"
-                      :showHeader="true"
-                      :showGuestCards="true"
-                      :showTermsAndPolicy="false"
-                      :showCampWaiver="false"
-                    />
                     {{-- Booking Terms & Policy Agreement --}}
                     <div
                       class="bg-yellow-50 border border-blue-200 rounded-xl p-4 sm:p-6"
