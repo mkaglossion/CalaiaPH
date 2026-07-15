@@ -35,7 +35,7 @@ class FarmSwiperImageController extends Controller
         $publicId = $uploadResult['public_id']; // Store this if you want to delete later
 
         // Save to DB
-        FarmSwiperImage::create([
+        $image = FarmSwiperImage::create([
             'title' => $validated['title'] ?? null,
             'image_path' =>  $uploadedFileUrl, // store Cloudinary URL
             'public_id' => $publicId,
@@ -43,7 +43,10 @@ class FarmSwiperImageController extends Controller
 
         $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
 
-        return response()->json(['message' => $message]);
+        return response()->json([
+            'message' => $message,
+            'image' => $image->fresh(),
+        ]);
     }
 
     public function update(Request $request, FarmSwiperImage $farmSwiperImage)
@@ -71,19 +74,27 @@ class FarmSwiperImageController extends Controller
         }
 
         $farmSwiperImage->update($data);
+        $updatedImage = $farmSwiperImage->fresh();
 
         $message = $request->hasFile('image') ? 'Image updated successfully!' : 'Image details updated successfully!';
 
-        return response()->json(['message' => $message]);
+        return response()->json([
+            'message' => $message,
+            'image' => $updatedImage,
+        ]);
     }
 
 
-    public function destroy(FarmSwiperImage $FarmSwiperImage)
+    public function destroy(Request $request, FarmSwiperImage $FarmSwiperImage)
     {
         if ($FarmSwiperImage->public_id ?? false) {
             Cloudinary::uploadApi()->destroy($FarmSwiperImage->public_id);
         }
         $FarmSwiperImage->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Image deleted successfully!']);
+        }
 
         return redirect()->back()->with('success', 'Image deleted successfully!');
     }

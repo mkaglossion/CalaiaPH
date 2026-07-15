@@ -37,7 +37,7 @@ class StaySwiperImageController extends Controller
         $publicId = $uploadResult['public_id']; // Store this if you want to delete later
 
         // Save to DB
-        StaySwiperImage::create([
+        $image = StaySwiperImage::create([
             'title' => $validated['title'] ?? null,
             'image_path' => $uploadedFileUrl, // store Cloudinary URL
             'public_id' => $publicId, // optional column in your DB for deletion
@@ -45,7 +45,10 @@ class StaySwiperImageController extends Controller
 
         $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
 
-        return response()->json(['message' => $message]);
+        return response()->json([
+            'message' => $message,
+            'image' => $image->fresh(),
+        ]);
     }
 
 
@@ -74,19 +77,27 @@ class StaySwiperImageController extends Controller
         }
 
         $staySwiperImage->update($data);
+        $updatedImage = $staySwiperImage->fresh();
 
         $message = $request->hasFile('image') ? 'Image updated successfully!' : 'Image details updated successfully!';
 
-        return response()->json(['message' => $message]);
+        return response()->json([
+            'message' => $message,
+            'image' => $updatedImage,
+        ]);
     }
 
-    public function destroy(StaySwiperImage $StaySwiperImage)
+    public function destroy(Request $request, StaySwiperImage $StaySwiperImage)
     {
          // Delete from Cloudinary if public_id is stored
         if ($StaySwiperImage->public_id ?? false) {
             Cloudinary::uploadApi()->destroy($StaySwiperImage->public_id);
         }
         $StaySwiperImage->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Image deleted successfully!']);
+        }
 
         return redirect()->back()->with('success', 'Image deleted successfully!');
     }

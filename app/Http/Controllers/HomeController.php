@@ -16,7 +16,7 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $swiperImages = HomeSwiperImage::all();
+        $swiperImages = HomeSwiperImage::ordered()->get();
         $texts = HomeText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($text, $label) {
             return [strtolower($label) => $text];
         })->toArray();

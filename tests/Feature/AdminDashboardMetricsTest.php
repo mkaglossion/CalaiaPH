@@ -124,6 +124,15 @@ class AdminDashboardMetricsTest extends TestCase
             'total_amount' => 2000,
         ]));
 
+        $createdOutsideRange = Booking::create(array_merge($this->bookingAttributes('TXN-UPCOMING-CREATED-OUTSIDE-RANGE', 'paid', 'confirmed'), [
+            'checkin_date' => now()->addDays(3)->toDateString(),
+            'checkout_date' => now()->addDays(4)->toDateString(),
+        ]));
+        $createdOutsideRange->forceFill([
+            'created_at' => now()->subMonths(2),
+            'updated_at' => now()->subMonths(2),
+        ])->save();
+
         Booking::create(array_merge($this->bookingAttributes('TXN-PENDING-OVERVIEW-1', 'pending', 'confirmed'), [
             'checkin_date' => now()->toDateString(),
             'checkout_date' => now()->addDays(1)->toDateString(),
@@ -131,8 +140,10 @@ class AdminDashboardMetricsTest extends TestCase
         ]));
 
         Booking::create(array_merge($this->bookingAttributes('TXN-CLOSED-OVERVIEW-1', 'failed', 'cancelled'), [
-            'checkin_date' => now()->subDay()->toDateString(),
-            'checkout_date' => now()->toDateString(),
+            // The failed attempt is in the selected creation-date range, but its
+            // requested stay date is outside it.
+            'checkin_date' => now()->addMonths(2)->toDateString(),
+            'checkout_date' => now()->addMonths(2)->addDay()->toDateString(),
             'total_amount' => 900,
         ]));
 
@@ -149,9 +160,17 @@ class AdminDashboardMetricsTest extends TestCase
 
         $this->assertSame(1, $data['pendingBookings']);
         $this->assertSame(1, $data['closedAttemptBookings']);
+        $this->assertSame(1, $data['bookingOverviewCancelledTotal']);
+        $this->assertSame($data['closedAttemptBookings'], $data['bookingOverviewCancelledTotal']);
+        $upcomingCard = collect($data['overviewCards'])->firstWhere('label', 'Upcoming');
+        $todayCard = collect($data['overviewCards'])->firstWhere('label', 'Today');
+        $this->assertSame('3', $upcomingCard['value']);
+        $this->assertSame('1', $todayCard['value']);
+        $closedCard = collect($data['overviewCards'])->firstWhere('label', 'Closed');
+        $this->assertSame('1', $closedCard['value']);
 
         $this->assertSame(1, (int) ($todayRow->active ?? 0));
-        $this->assertSame(1, (int) ($todayRow->upcoming ?? 0));
+        $this->assertSame(2, (int) ($todayRow->upcoming ?? 0));
     }
 
     private function bookingAttributes(string $transactionId, string $paymentStatus, string $status): array

@@ -44,7 +44,7 @@ class DayTourSwiperImageController extends Controller
             $publicId = $uploadResult['public_id'];
 
             // Save to DB
-            DayTourSwiperImage::create([
+            $image = DayTourSwiperImage::create([
                 'title' => $validated['title'] ?? null,
                 'image_path' => $uploadedFileUrl, // store Cloudinary URL
                 'public_id' => $publicId,
@@ -53,7 +53,10 @@ class DayTourSwiperImageController extends Controller
 
             $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
 
-            return response()->json(['message' => $message]);
+            return response()->json([
+                'message' => $message,
+                'image' => $image->fresh(),
+            ]);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Upload failed: ' . $e->getMessage()], 500);
         }
@@ -89,18 +92,26 @@ class DayTourSwiperImageController extends Controller
         }
 
         $dayTourSwiperImage->update($data);
+        $updatedImage = $dayTourSwiperImage->fresh();
 
         $message = $request->hasFile('image') ? 'Image updated successfully!' : 'Image details updated successfully!';
 
-        return response()->json(['message' => $message]);
+        return response()->json([
+            'message' => $message,
+            'image' => $updatedImage,
+        ]);
     }
 
-    public function destroy(DayTourSwiperImage $DayTourSwiperImage)
+    public function destroy(Request $request, DayTourSwiperImage $DayTourSwiperImage)
     {
         if ($DayTourSwiperImage->public_id ?? false) {
             Cloudinary::uploadApi()->destroy($DayTourSwiperImage->public_id);
         }
         $DayTourSwiperImage->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Image deleted successfully!']);
+        }
 
         return redirect()->back()->with('success', 'Image deleted successfully!');
     }

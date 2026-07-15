@@ -21,12 +21,15 @@ class StayTextController extends Controller
             'content' => 'nullable|string',
         ]);
 
-        StayText::create([
+        $text = StayText::create([
             'label' => $request->title,
             'text' => $request->content,
         ]);
 
-        return response()->json();
+        return response()->json([
+            'message' => 'Text content added successfully.',
+            'text' => $text->fresh(),
+        ]);
     }
 
     public function update(Request $request, StayText $StayText)
@@ -41,12 +44,19 @@ class StayTextController extends Controller
             'text' => $request->content,
         ]);
 
-        return response()->json();
+        return response()->json([
+            'message' => 'Text content updated successfully.',
+            'text' => $StayText->fresh(),
+        ]);
     }
 
-    public function destroy(StayText $StayText)
+    public function destroy(Request $request, StayText $StayText)
     {
         $StayText->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Text content deleted successfully.']);
+        }
 
         return redirect()->back()->with('success', 'Text content deleted successfully.');
     }

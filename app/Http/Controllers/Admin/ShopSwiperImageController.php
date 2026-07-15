@@ -36,7 +36,7 @@ class ShopSwiperImageController extends Controller
             );
 
             // Create record
-            ShopSwiperImage::create([
+            $image = ShopSwiperImage::create([
                 'title' => $validated['title'] ?? null,
                 'image_path' => $uploadedFile['secure_url'],
                 'public_id' => $uploadedFile['public_id'],
@@ -44,7 +44,11 @@ class ShopSwiperImageController extends Controller
 
             $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
 
-            return response()->json(['success' => true, 'message' => $message]);
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'image' => $image->fresh(),
+            ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -65,21 +69,29 @@ class ShopSwiperImageController extends Controller
             'title' => $request->input('title', $image->title),
         ]);
 
-        return response()->json(['success' => true, 'message' => 'Image updated successfully']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Image updated successfully',
+            'image' => $image->fresh(),
+        ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $image = ShopSwiperImage::find($id);
 
         if (!$image) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Image already deleted.',
-            ]);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Image already deleted.',
+                ]);
+            }
+
+            return back()->with('success', 'Image already deleted.');
         }
 
         try {

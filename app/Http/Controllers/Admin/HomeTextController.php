@@ -21,12 +21,15 @@ class HomeTextController extends Controller
             'content' => 'nullable|string',
         ]);
 
-        HomeText::create([
+        $text = HomeText::create([
             'label' => $request->title,
             'text' => $request->content,
         ]);
 
-        return response()->json(['message' => 'Text content added successfully.']);
+        return response()->json([
+            'message' => 'Text content added successfully.',
+            'text' => $text->fresh(),
+        ]);
     }
 
     public function update(Request $request, HomeText $HomeText)
@@ -41,14 +44,20 @@ class HomeTextController extends Controller
             'text' => $request->content,
         ]);
 
-        return response()->json(['message' => 'Text content updated successfully.']);
+        return response()->json([
+            'message' => 'Text content updated successfully.',
+            'text' => $HomeText->fresh(),
+        ]);
     }
 
-    public function destroy(HomeText $HomeText)
+    public function destroy(Request $request, HomeText $HomeText)
     {
         $HomeText->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Text content deleted successfully.']);
+        }
 
         return redirect()->back()->with('success', 'Text content deleted successfully.');
     }
 }
-

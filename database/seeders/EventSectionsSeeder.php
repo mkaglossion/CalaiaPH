@@ -42,12 +42,12 @@ class EventSectionsSeeder extends Seeder
                 "order" => 3
             ],
             [
-                "section_id" => "grpups",
+                "section_id" => "special-events",
                 "title" => "Special Events.",
                 "image_path" => "/assets/images/carousel/groups.jpg",
                 "description1" => "Strong and effective teams are built with purpose",
                 "description2" => "Calaia Nature Park is the perfect partner for your next team building event. Our packages include comfortable stays, nourishing meals, and group activities to create stronger bonds.",
-                "link_path" => "/groups",
+                "link_path" => "/special-events",
                 "order" => 4
             ],
             [

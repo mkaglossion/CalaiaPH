@@ -36,7 +36,7 @@ class DoSwiperImageController extends Controller
         $publicId = $uploadResult['public_id']; // Store this if you want to delete later
 
         // Save to DB
-        DoSwiperImage::create([
+        $image = DoSwiperImage::create([
             'title' => $validated['title'] ?? null,
             'image_path' => $uploadedFileUrl, // store Cloudinary URL
             'public_id' => $publicId,
@@ -44,7 +44,10 @@ class DoSwiperImageController extends Controller
 
         $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
 
-        return response()->json(['message' => $message]);
+        return response()->json([
+            'message' => $message,
+            'image' => $image->fresh(),
+        ]);
     }
 
 
@@ -73,18 +76,26 @@ class DoSwiperImageController extends Controller
         }
 
         $doSwiperImage->update($data);
+        $updatedImage = $doSwiperImage->fresh();
 
         $message = $request->hasFile('image') ? 'Image updated successfully!' : 'Image details updated successfully!';
 
-        return response()->json(['message' => $message]);
+        return response()->json([
+            'message' => $message,
+            'image' => $updatedImage,
+        ]);
     }
 
-    public function destroy(DoSwiperImage $DoSwiperImage)
+    public function destroy(Request $request, DoSwiperImage $DoSwiperImage)
     {
         if ($DoSwiperImage->public_id ?? false) {
             Cloudinary::uploadApi()->destroy($DoSwiperImage->public_id);
         }
         $DoSwiperImage->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Image deleted successfully!']);
+        }
 
         return redirect()->back()->with('success', 'Image deleted successfully!');
     }

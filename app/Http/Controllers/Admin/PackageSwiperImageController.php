@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\PackageSwiperImage;
+use Illuminate\Support\Facades\DB;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class PackageSwiperImageController extends Controller
 {
     public function index()
     {
-        $images = PackageSwiperImage::all();
+        $images = PackageSwiperImage::ordered()->get();
         return view('admin.packages.packagesInfos', compact('images'));
     }
 
@@ -35,17 +36,18 @@ class PackageSwiperImageController extends Controller
             $publicId = $uploadResult['public_id'];
 
             // Save to DB
-            PackageSwiperImage::create([
+            $image = PackageSwiperImage::create([
                 'title' => $validated['title'] ?? null,
                 'image_path' => $uploadedFileUrl,
                 'public_id' => $publicId,
             ]);
+            $image->refresh();
 
             $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
 
             return response()->json([
                 'message' => $message,
-                'url' => $uploadedFileUrl
+                'image' => $this->imagePayload($image),
             ]);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Upload failed: ' . $e->getMessage()], 500);
@@ -77,10 +79,14 @@ class PackageSwiperImageController extends Controller
         }
 
         $packageSwiperImage->update($data);
+        $packageSwiperImage->refresh();
 
         $message = $request->hasFile('image') ? 'Image updated successfully!' : 'Image details updated successfully!';
 
-        return response()->json(['message' => $message]);
+        return response()->json([
+            'message' => $message,
+            'image' => $this->imagePayload($packageSwiperImage),
+        ]);
     }
 
     public function destroy(PackageSwiperImage $packageSwiperImage)
@@ -92,7 +98,49 @@ class PackageSwiperImageController extends Controller
 
         $packageSwiperImage->delete();
 
-        return redirect()->back()->with('success', 'Image deleted successfully!');
+        return response()->json([
+            'message' => 'Image deleted successfully!',
+            'id' => $packageSwiperImage->id,
+        ]);
+    }
+
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'ordered_ids' => ['required', 'array'],
+            'ordered_ids.*' => ['integer', 'exists:package_swiper_images,id'],
+        ]);
+
+        $images = PackageSwiperImage::ordered()->get();
+        $currentIds = $images->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $orderedIds = array_values(array_unique(array_map('intval', $validated['ordered_ids'])));
+        $orderedIds = array_values(array_intersect($orderedIds, $currentIds));
+        $finalIds = array_merge($orderedIds, array_values(array_diff($currentIds, $orderedIds)));
+
+        DB::transaction(function () use ($finalIds): void {
+            foreach ($finalIds as $index => $id) {
+                PackageSwiperImage::whereKey($id)->update([
+                    'sort_order' => $index + 1,
+                ]);
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Image order updated successfully.',
+        ]);
+    }
+
+    private function imagePayload(PackageSwiperImage $image): array
+    {
+        return [
+            'id' => $image->id,
+            'title' => $image->title,
+            'image_path' => $image->image_path,
+            'public_id' => $image->public_id,
+            'sort_order' => $image->sort_order,
+            'created_at' => optional($image->created_at)->toISOString(),
+            'updated_at' => optional($image->updated_at)->toISOString(),
+        ];
     }
 }
-

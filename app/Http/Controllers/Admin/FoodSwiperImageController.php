@@ -52,11 +52,14 @@ class FoodSwiperImageController extends Controller
             $data['food_id'] = $validated['food_id'];
         }
 
-        FoodSwiperImage::create($data);
+        $image = FoodSwiperImage::create($data);
 
         $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
 
-        return response()->json(['message' => $message]);
+        return response()->json([
+            'message' => $message,
+            'image' => $image->fresh(),
+        ]);
     }
 
     public function update(Request $request, FoodSwiperImage $foodSwiperImage)
@@ -92,20 +95,28 @@ class FoodSwiperImageController extends Controller
         }
 
         $foodSwiperImage->update($data);
+        $updatedImage = $foodSwiperImage->fresh();
 
         $message = $request->hasFile('image') ? 'Image updated successfully!' : 'Image details updated successfully!';
 
-        return response()->json(['message' => $message]);
+        return response()->json([
+            'message' => $message,
+            'image' => $updatedImage,
+        ]);
     }
 
 
-    public function destroy(FoodSwiperImage $FoodSwiperImage)
+    public function destroy(Request $request, FoodSwiperImage $FoodSwiperImage)
     {
         if ($FoodSwiperImage->public_id ?? false) {
             Cloudinary::uploadApi()->destroy($FoodSwiperImage->public_id);
         }
 
         $FoodSwiperImage->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Image deleted successfully!']);
+        }
 
         return redirect()->back()->with('success', 'Image deleted successfully!');
     }

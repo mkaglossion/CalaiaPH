@@ -27,10 +27,16 @@ class DayTourTextController extends Controller
             $text = DayTourText::where('title', $request->title)->first();
             if ($text) {
                 $text->update($request->only(['content', 'daytour_id']));
-                return response()->json(['message' => 'Text content updated successfully.']);
+                return response()->json([
+                    'message' => 'Text content updated successfully.',
+                    'text' => $text->fresh(),
+                ]);
             } else {
-                DayTourText::create($request->only(['title', 'content', 'daytour_id']));
-                return response()->json(['message' => 'Text content added successfully.']);
+                $text = DayTourText::create($request->only(['title', 'content', 'daytour_id']));
+                return response()->json([
+                    'message' => 'Text content added successfully.',
+                    'text' => $text->fresh(),
+                ]);
             }
         } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to save text: ' . $e->getMessage()], 500);
@@ -48,17 +54,23 @@ class DayTourTextController extends Controller
         try {
             $dayTourText->update($request->only(['title', 'content', 'daytour_id']));
 
-            return response()->json(['message' => 'Text content updated successfully.']);
+            return response()->json([
+                'message' => 'Text content updated successfully.',
+                'text' => $dayTourText->fresh(),
+            ]);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to update text: ' . $e->getMessage()], 500);
         }
     }
 
-    public function destroy(DayTourText $dayTourText)
+    public function destroy(Request $request, DayTourText $dayTourText)
     {
         $dayTourText->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Text content deleted successfully.']);
+        }
 
         return redirect()->back()->with('success', 'Text content deleted successfully.');
     }
 }
-

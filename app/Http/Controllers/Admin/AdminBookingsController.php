@@ -35,7 +35,7 @@ class AdminBookingsController extends Controller
         // Build Booking query with filters
         $bookingQuery = Booking::query();
         $paymentScope = $this->normalizePaymentScope($request);
-        if ($request->filled('status') && !$request->filled('payment_status')) {
+        if ($request->filled('status') && !$request->filled('payment_status') && !$request->filled('payment_scope')) {
             $paymentScope = 'all';
         }
 
@@ -43,6 +43,10 @@ class AdminBookingsController extends Controller
 
         if ($request->filled('status')) {
             $bookingQuery->where('status', $request->status);
+        }
+
+        if ($request->boolean('exclude_cancelled')) {
+            $bookingQuery->where('status', '!=', 'cancelled');
         }
 
         if ($request->filled('booking_type')) {
@@ -62,12 +66,10 @@ class AdminBookingsController extends Controller
             });
         }
 
-        if ($request->filled('date_from')) {
-            $bookingQuery->where('checkin_date', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $bookingQuery->where('checkin_date', '<=', $request->date_to);
-        }
+        $bookingDateColumn = $this->usesPaymentAttemptDate($request, $paymentScope)
+            ? 'created_at'
+            : 'checkin_date';
+        $this->applyDateRangeFilter($bookingQuery, $request, $bookingDateColumn);
 
         $bookingsCollection = $bookingQuery->orderBy('created_at', 'desc')->get()->map(function($b) use ($pendingCutoff) {
             $b->resource_type = 'booking';
@@ -159,6 +161,10 @@ class AdminBookingsController extends Controller
             $packageQuery->where('status', $request->status);
         }
 
+        if ($request->boolean('exclude_cancelled')) {
+            $packageQuery->where('status', '!=', 'cancelled');
+        }
+
         // Filter by booking type
         if ($request->filled('booking_type')) {
             if ($request->booking_type === 'package') {
@@ -180,12 +186,10 @@ class AdminBookingsController extends Controller
             });
         }
 
-        if ($request->filled('date_from')) {
-            $packageQuery->where('booking_date', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $packageQuery->where('booking_date', '<=', $request->date_to);
-        }
+        $packageDateColumn = $this->usesPaymentAttemptDate($request, $paymentScope)
+            ? 'created_at'
+            : 'booking_date';
+        $this->applyDateRangeFilter($packageQuery, $request, $packageDateColumn);
 
         $packageCollection = $packageQuery->orderBy('created_at', 'desc')->get()->map(function($pb) use ($pendingCutoff) {
             $obj = new \stdClass();
@@ -285,8 +289,9 @@ class AdminBookingsController extends Controller
 
         // Manual pagination
         $perPage = 10;
-        $page = max(1, (int) $request->query('page', 1));
         $total = $merged->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min(max(1, (int) $request->query('page', 1)), $lastPage);
         $slice = $merged->slice(($page - 1) * $perPage, $perPage)->values();
         $bookings = new LengthAwarePaginator($slice, $total, $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]);
         
@@ -697,6 +702,10 @@ class AdminBookingsController extends Controller
             $bookingQuery->where('status', $request->status);
         }
 
+        if ($request->boolean('exclude_cancelled')) {
+            $bookingQuery->where('status', '!=', 'cancelled');
+        }
+
         if ($request->filled('booking_type')) {
             if ($request->booking_type === 'staycation') {
                 $bookingQuery->whereIn('booking_type', Booking::STAYCATION_TYPES);
@@ -714,12 +723,10 @@ class AdminBookingsController extends Controller
             });
         }
 
-        if ($request->filled('date_from')) {
-            $bookingQuery->where('checkin_date', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $bookingQuery->where('checkin_date', '<=', $request->date_to);
-        }
+        $bookingDateColumn = $this->usesPaymentAttemptDate($request, $paymentScope)
+            ? 'created_at'
+            : 'checkin_date';
+        $this->applyDateRangeFilter($bookingQuery, $request, $bookingDateColumn);
 
         $bookingsCollection = $bookingQuery->orderBy('created_at', 'desc')->get()->map(function ($b) use ($pendingCutoff) {
             $b->resource_type = 'booking';
@@ -802,6 +809,10 @@ class AdminBookingsController extends Controller
             $packageQuery->where('status', $request->status);
         }
 
+        if ($request->boolean('exclude_cancelled')) {
+            $packageQuery->where('status', '!=', 'cancelled');
+        }
+
         if ($request->filled('booking_type')) {
             if ($request->booking_type === 'package') {
                 $bookingQuery->whereRaw('1 = 0');
@@ -820,12 +831,10 @@ class AdminBookingsController extends Controller
             });
         }
 
-        if ($request->filled('date_from')) {
-            $packageQuery->where('booking_date', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $packageQuery->where('booking_date', '<=', $request->date_to);
-        }
+        $packageDateColumn = $this->usesPaymentAttemptDate($request, $paymentScope)
+            ? 'created_at'
+            : 'booking_date';
+        $this->applyDateRangeFilter($packageQuery, $request, $packageDateColumn);
 
         $packageCollection = $packageQuery->orderBy('created_at', 'desc')->get()->map(function ($pb) use ($pendingCutoff) {
             $obj = new \stdClass();
@@ -983,6 +992,27 @@ class AdminBookingsController extends Controller
         $scope = (string) $request->query('payment_scope', 'operational');
 
         return in_array($scope, ['operational', 'all', 'attempts'], true) ? $scope : 'operational';
+    }
+
+    private function usesPaymentAttemptDate(Request $request, string $paymentScope): bool
+    {
+        if ($paymentScope === 'attempts') {
+            return true;
+        }
+
+        return in_array((string) $request->query('payment_status'), ['pending', 'failed', 'attempts'], true);
+    }
+
+    private function applyDateRangeFilter(Builder $query, Request $request, string $dateColumn): void
+    {
+        // whereDate keeps the selected end date inclusive for timestamp columns too.
+        if ($request->filled('date_from')) {
+            $query->whereDate($dateColumn, '>=', $request->input('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate($dateColumn, '<=', $request->input('date_to'));
+        }
     }
 
     private function applyPaymentLifecycleFilters(Builder $query, Request $request, string $paymentScope, Carbon $pendingCutoff): void

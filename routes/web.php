@@ -136,7 +136,6 @@ Route::post('/dining/reserve', [DiningReservationController::class, 'store'])->n
 Route::post('/dining/prefill', [DiningReservationController::class, 'prefillBooking'])->name('dining.prefill');
 Route::get('/dining-reservation', [DiningReservationController::class, 'dayVisitForm'])->name('dining-reservation.form');
 Route::post('/dining-reservation/store', [DiningReservationController::class, 'storeDayVisit'])->name('dining-reservation.store');
-Route::get('/groups', [PagesController::class, 'groups'])->name('groups');
 Route::get('/special-events', [PagesController::class, 'specialEvents'])->name('special-events');
 Route::get('/farm', [PagesController::class, 'farm'])->name('farm');
 Route::get('/shop', [PagesController::class, 'shop'])->name('shop');
@@ -592,12 +591,13 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     });
     Route::prefix('/packages')->group(function () {
         // Hide direct package manager pages; use What to Do CMS section instead.
-        Route::get('/', function () { return redirect()->route('admin.do.whattodo'); })->name('admin.packages.index');
-        Route::get('/create', function () { return redirect()->route('admin.do.whattodo'); })->name('admin.packages.create');
-        Route::post('/', [PackageController::class, 'store'])->name('admin.packages.store');
-        Route::get('/{package}/edit', [PackageController::class, 'edit'])->name('admin.packages.edit');
-        Route::put('/{package}', [PackageController::class, 'update'])->name('admin.packages.update');
-        Route::delete('/{package}', [PackageController::class, 'destroy'])->name('admin.packages.destroy');
+    Route::get('/', function () { return redirect()->route('admin.do.whattodo'); })->name('admin.packages.index');
+    Route::get('/create', function () { return redirect()->route('admin.do.whattodo'); })->name('admin.packages.create');
+    Route::post('/', [PackageController::class, 'store'])->name('admin.packages.store');
+    Route::post('/reorder', [PackageController::class, 'reorder'])->name('admin.packages.reorder');
+    Route::get('/{package}/edit', [PackageController::class, 'edit'])->name('admin.packages.edit');
+    Route::put('/{package}', [PackageController::class, 'update'])->name('admin.packages.update');
+    Route::delete('/{package}', [PackageController::class, 'destroy'])->name('admin.packages.destroy');
         
         Route::post('{package}/toggle-status', [PackageController::class, 'toggleStatus'])->name('admin.packages.toggle-status');
         
@@ -614,6 +614,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
             'update' => 'package-swiper-images.update',
             'destroy' => 'package-swiper-images.destroy'
         ]]);
+        Route::post('swiper-images/reorder', [PackageSwiperImageController::class, 'reorder'])->name('package-swiper-images.reorder');
         Route::resource('texts', PackageTextController::class, ['names' => [
             'store' => 'package-texts.store',
             'update' => 'package-texts.update',
@@ -724,6 +725,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
          Route::post('shop-swiper-images/bulk-delete', [ShopSwiperImageController::class, 'bulkDelete'])->name('admin.shop-swiper-images.bulk-delete');
      });
 
+     Route::post('cms/{page}/swiper-images/reorder', [AdminPagesController::class, 'reorderImages'])->name('admin.cms.pages.swiper-images.reorder');
+
      // ========== Season Duration Routes ==========
     Route::prefix('/pricing')->group(function () {
         // Main season durations page
@@ -760,6 +763,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::resource('menu-text', MenuTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-text', EventTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('event-sections', EventSectionController::class)->only(['store', 'update', 'destroy']);
+    Route::post('event-experience-sections/reorder', [EventExperienceSectionController::class, 'reorder'])->name('event-experience-sections.reorder');
     Route::resource('event-experience-sections', EventExperienceSectionController::class)->only(['store', 'update', 'destroy']);
     Route::resource('farmInfo-text', FarmInfoTextController::class)->only(['store', 'update', 'destroy']);
     Route::resource('day-text', DayPackageTextController::class)->only(['store', 'update', 'destroy']);

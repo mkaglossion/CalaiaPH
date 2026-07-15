@@ -29,7 +29,6 @@ use App\Models\DayTour;
 use App\Models\Package;
 use App\Models\PackageSwiperImage;
 use App\Models\Product;
-use App\Models\Activity;
 use App\Models\Staycation;
 use App\Models\StaycationText;
 use App\Models\StaycationInventory;
@@ -49,7 +48,7 @@ class PagesController extends Controller
      */
     protected function renderPage($swiperModel, $textModel, $viewName, $activeName, $textField = 'label', $contentField = 'text', $extraData = [])
     {
-        $swiperImages = $swiperModel::all();
+        $swiperImages = $swiperModel::ordered()->get();
         $texts = $textModel::whereNotNull($textField)->pluck($contentField, $textField)->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
@@ -148,7 +147,7 @@ class PagesController extends Controller
     public function daytour()
     {
         $packages = DayTour::with(['swiperImages', 'texts', 'activities'])->get();
-        $swiperImages = DayTourSwiperImage::whereNull('daytour_id')->get();
+        $swiperImages = DayTourSwiperImage::whereNull('daytour_id')->ordered()->get();
         $texts = DayTourText::whereNotNull('title')->pluck('content', 'title')->mapWithKeys(function ($content, $title) {
             return [strtolower($title) => $content];
         })->toArray();
@@ -163,7 +162,7 @@ class PagesController extends Controller
     {
 
         // Use StaySwiperImage for admin-managed carousel (to match /admin/stay/where-to-stay)
-        $swiperImages = \App\Models\StaySwiperImage::all();
+        $swiperImages = \App\Models\StaySwiperImage::ordered()->get();
         $texts = StayText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
@@ -709,7 +708,7 @@ class PagesController extends Controller
     public function activities()
     {
         // Get swiper images and texts for the hero slider
-        $swiperImages = DoSwiperImage::all();
+        $swiperImages = DoSwiperImage::ordered()->get();
         $texts = DoText::orderByDesc('id')
             ->get()
             ->unique(function ($item) {
@@ -730,25 +729,22 @@ class PagesController extends Controller
             'packages_title',
             'heading',
             'title',
-        ], 'Day Packages');
+        ], 'Featured Packages');
 
         $packagesSectionIntro = $this->pageTextValue($texts, [
             'packages_intro',
             'intro',
             'subtitle',
             'description',
-        ], 'Start with our curated package options, then explore activities you can add to your stay.');
+        ], 'Browse our curated packages and choose the one that fits your stay.');
 
         // Temporarily merge packages into activities page (shown first).
         $packages = Package::with(['contents', 'images', 'inventory'])
             ->where('is_active', true)
+            ->ordered()
             ->get();
 
-        // Fetch activities from database with swiper images and group by category
-        $activities = Activity::with('swiperImages')->get();
-        $slidesByCategory = $this->formatActivitiesForSlides($activities, $activities);
-
-        $data = compact('swiperImages', 'texts', 'heroTexts', 'slidesByCategory', 'packages', 'packagesSectionTitle', 'packagesSectionIntro');
+        $data = compact('swiperImages', 'texts', 'heroTexts', 'packages', 'packagesSectionTitle', 'packagesSectionIntro');
         $data['active'] = 'activities';
         
         return view('activities', $data);
@@ -766,123 +762,6 @@ class PagesController extends Controller
         return $fallback;
     }
 
-    /**
-     * Format activities data for carousel slides
-     */
-    private function formatActivitiesForSlides($activities, $originalActivities)
-    {
-        $activitiesByCategory = [
-            'adventure' => [],
-            'sports' => [],
-            'rrcamp' => [],
-            'farm' => [],
-        ];
-
-        foreach ($activities as $activity) {
-            $category = $activity->category;
-            if (!isset($activitiesByCategory[$category])) {
-                $activitiesByCategory[$category] = [];
-            }
-
-            // Collect swiper images for modal display
-            $modalImages = [];
-            foreach ($activity->swiperImages as $swiperImage) {
-                $modalImages[] = $swiperImage->image_path; // Already a full Cloudinary URL
-            }
-
-            // Use main activity image for carousel display, fallback to first swiper image
-            // Check if image is already a full URL (from Cloudinary) or a local path
-            $carouselImage = '';
-            if ($activity->image) {
-                if (filter_var($activity->image, FILTER_VALIDATE_URL)) {
-                    $carouselImage = $activity->image; // Already a full URL
-                } else {
-                    $carouselImage = asset('storage/' . $activity->image); // Local storage path
-                }
-            } else {
-                $carouselImage = $modalImages[0] ?? ''; // Fallback to first swiper image
-            }
-
-            $activitiesByCategory[$category][] = [
-                'title' => $activity->name,
-                'images' => $modalImages, // Only swiper images for modal
-                'price' => $activity->price,
-                'summary' => $activity->description,
-                'details' => array_filter([$activity->description, $activity->duration ? 'Duration: ' . $activity->duration : null]),
-            ];
-        }
-
-        // Pair activities (2 per slide) for each category
-        $slidesByCategory = [];
-        foreach ($activitiesByCategory as $key => $activities) {
-            $pairs = array_chunk($activities, 2);
-            $slides = [];
-
-            foreach ($pairs as $pair) {
-                $left  = $pair[0] ?? null;
-                $right = $pair[1] ?? null;
-
-                $slide = [];
-                if ($left) {
-                    // Find the activity to get its main image for carousel
-                    $activity = $originalActivities->firstWhere('name', $left['title']);
-                    $carouselImg = '';
-                    if ($activity && $activity->image) {
-                        if (filter_var($activity->image, FILTER_VALIDATE_URL)) {
-                            $carouselImg = $activity->image; // Already a full URL
-                        } else {
-                            $carouselImg = asset('storage/' . $activity->image); // Local storage path
-                        }
-                    } else {
-                        $carouselImg = $left['images'][0] ?? ''; // Fallback to first swiper image
-                    }
-
-                    $slide['left'] = [
-                        'id'      => $activity->id,
-                        'title'   => $left['title'],
-                        'img'     => $carouselImg, // Use activity image for carousel
-                        'alt'     => $left['title'],
-                        'price'   => $left['price'] ?? 0,
-                        'summary' => $left['summary'] ?? '',
-                        'details' => $left['details'] ?? [],
-                        'images'  => $left['images'] ?? [], // Swiper images for modal
-                    ];
-                }
-                if ($right) {
-                    // Find the activity to get its main image for carousel
-                    $activity = $originalActivities->firstWhere('name', $right['title']);
-                    $carouselImg = '';
-                    if ($activity && $activity->image) {
-                        if (filter_var($activity->image, FILTER_VALIDATE_URL)) {
-                            $carouselImg = $activity->image; // Already a full URL
-                        } else {
-                            $carouselImg = asset('storage/' . $activity->image); // Local storage path
-                        }
-                    } else {
-                        $carouselImg = $right['images'][0] ?? ''; // Fallback to first swiper image
-                    }
-
-                    $slide['right'] = [
-                        'id'      => $activity->id,
-                        'title'   => $right['title'],
-                        'img'     => $carouselImg, // Use activity image for carousel
-                        'alt'     => $right['title'],
-                        'price'   => $right['price'] ?? 0,
-                        'summary' => $right['summary'] ?? '',
-                        'details' => $right['details'] ?? [],
-                        'images'  => $right['images'] ?? [], // Swiper images for modal
-                    ];
-                }
-
-                $slides[] = $slide;
-            }
-
-            $slidesByCategory[$key] = $slides;
-        }
-
-        return $slidesByCategory;
-    }
-
     public function dining()
     {
         $messHallFoods = Food::with('swiperImages')
@@ -896,7 +775,7 @@ class PagesController extends Controller
         $diningCategoryImages = DiningCategoryImage::all()->keyBy('category');
 
         // Only get hero swiper images (food_id is null), not Learn More modal images
-        $swiperImages = FoodSwiperImage::whereNull('food_id')->get();
+        $swiperImages = FoodSwiperImage::whereNull('food_id')->ordered()->get();
         $texts = FoodText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
@@ -923,14 +802,9 @@ class PagesController extends Controller
         return view('dining', $data);
     }
 
-    public function groups()
-    {
-        return $this->renderPage(SpecialSwiperImage::class, SpecialText::class, 'groups', 'groups');
-    }
-
     public function specialEvents()
     {
-        $swiperImages = SpecialSwiperImage::all();
+        $swiperImages = SpecialSwiperImage::ordered()->get();
         $texts = SpecialText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
@@ -971,7 +845,7 @@ class PagesController extends Controller
 
     public function farm()
     {
-        $swiperImages = FarmSwiperImage::all();
+        $swiperImages = FarmSwiperImage::ordered()->get();
         $texts = FarmText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
@@ -1026,7 +900,7 @@ class PagesController extends Controller
 
     public function shop()
     {
-        $swiperImages = \App\Models\ShopSwiperImage::all();
+        $swiperImages = \App\Models\ShopSwiperImage::ordered()->get();
         $texts = ShopText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
             return [strtolower($field) => $content];
         })->toArray();
@@ -1097,10 +971,11 @@ class PagesController extends Controller
     public function packages()
     {
         $packages = Package::with(['contents', 'images', 'inventory'])
+            ->ordered()
             ->where('is_active', true)
             ->get();
         
-        $swiperImages = PackageSwiperImage::all();
+        $swiperImages = PackageSwiperImage::ordered()->get();
         $texts = [];
         
         $data = compact('packages', 'swiperImages', 'texts');

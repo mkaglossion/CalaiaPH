@@ -15,18 +15,7 @@
     }
   }
 
-  $nav = [
-    ['key' => 'home',          'label' => 'Home',          'href' => url('/')],
-    // Temporarily hidden in frontend nav; route is kept for easy rollback.
-    // ['key' => 'packages',      'label' => 'Packages',      'href' => url('/packages')],
-    //['key' => 'daytour',       'label' => 'Day Tour',      'href' => url('/daytour')],
-    ['key' => 'staycation',    'label' => 'Where to Stay', 'href' => url('/staycation')],
-    ['key' => 'activities',    'label' => 'Day Trip',    'href' => url('/activities')],
-    ['key' => 'dining',        'label' => 'Dining',        'href' => url('/dining')],
-    ['key' => 'special-events','label' => 'Special Events','href' => url('/special-events')],
-    ['key' => 'farm',          'label' => 'Our Farm',      'href' => url('/farm')],
-    ['key' => 'shop',          'label' => 'Shop',          'href' => url('/shop')],
-  ];
+  $nav = config('navigation.main', []);
 @endphp
 
 <header
@@ -115,7 +104,7 @@
       <nav class="flex justify-center gap-4 shrink-0">
         @foreach ($nav as $item)
           <a
-            href="{{ $item['href'] }}"
+            href="{{ url($item['path']) }}"
             @class([
               'relative uppercase font-medium text-base tracking-wide transition',
               'text-white hover:text-white/80',
@@ -291,8 +280,8 @@
       <div class="px-4 py-3 space-y-1">
         @foreach ($nav as $item)
           <a
-            href="{{ $item['href'] }}"
-            @click.prevent="mobileOpen = false; window.location.href = '{{ $item['href'] }}'"
+            href="{{ url($item['path']) }}"
+            @click.prevent="mobileOpen = false; window.location.href = '{{ url($item['path']) }}'"
             @class([
               'block rounded-lg px-3 py-2 uppercase tracking-wide transition text-white',
               $active === $item['key'] ? 'bg-white/70 font-semibold' : 'hover:bg-white/50'

@@ -20,14 +20,14 @@ class DayTourController extends Controller
             $packages = $tours; // for compatibility
             $activities = Activity::all();
             $texts = DayTourText::all();
-            $images = DayTourSwiperImage::whereNotNull('daytour_id')->latest()->get() ?? collect();
+            $images = DayTourSwiperImage::whereNotNull('daytour_id')->ordered()->get() ?? collect();
             $infoTitle = DayTourText::where('title', 'info_title')->first();
             $infoSubtitle = DayTourText::where('title', 'info_subtitle')->first();
             $infoItemsJson = DayTourText::where('title', 'info_items')->first();
             $infoItems = $infoItemsJson ? json_decode($infoItemsJson->content, true) : [];
             return view('admin.dayTour.days', compact('tours', 'packages', 'activities', 'texts', 'images', 'infoTitle', 'infoSubtitle', 'infoItems', 'infoItemsJson'));
         } else {
-            $swiperImages = DayTourSwiperImage::whereNull('daytour_id')->get();
+            $swiperImages = DayTourSwiperImage::whereNull('daytour_id')->ordered()->get();
             $texts = DayTourText::whereNotNull('title')->pluck('content', 'title')->mapWithKeys(function ($content, $title) {
                 return [strtolower($title) => $content];
             })->toArray();

@@ -24,7 +24,9 @@ use App\Models\Package;
 use App\Models\EventSection;
 use App\Models\PackageImage;
 use App\Models\PackageContent;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class AdminPagesController extends Controller
 {
@@ -38,6 +40,7 @@ class AdminPagesController extends Controller
                 'description' => 'Manage the image slider and content displayed on your Home page.',
                 'imageStoreRoute' => 'home-swiper-images.store',
                 'imageDestroyRoute' => '/admin/home-swiper-images',
+                'imageReorderRoute' => 'admin.cms.pages.swiper-images.reorder',
                 'textStoreRoute' => 'home-texts.store',
                 'textDestroyRoute' => '/admin/home-texts',
             ],
@@ -51,6 +54,7 @@ class AdminPagesController extends Controller
                 'description' => 'Manage the image slider and content displayed on your Day Tour page.',
                 'imageStoreRoute' => 'day-tour-swiper-images.store',
                 'imageDestroyRoute' => '/admin/day-tour-swiper-images',
+                'imageReorderRoute' => 'admin.cms.pages.swiper-images.reorder',
                 'textStoreRoute' => 'day-tour-texts.store',
                 'textDestroyRoute' => '/admin/day-tour-texts',
             ],
@@ -73,6 +77,7 @@ class AdminPagesController extends Controller
                 'description' => 'Manage the image slider and content displayed on your Where to Stay page.',
                 'imageStoreRoute' => 'stay-swiper-images.store',
                 'imageDestroyRoute' => '/admin/stay-swiper-images',
+                'imageReorderRoute' => 'admin.cms.pages.swiper-images.reorder',
                 'textStoreRoute' => 'stay-texts.store',
                 'textDestroyRoute' => '/admin/stay-texts',
                 'pageCopyStoreRoute' => 'admin.stay.copy.store',
@@ -106,6 +111,7 @@ class AdminPagesController extends Controller
                 'description' => 'Manage the image slider and content displayed on your What to Do page.',
                 'imageStoreRoute' => 'do-swiper-images.store',
                 'imageDestroyRoute' => '/admin/do-swiper-images',
+                'imageReorderRoute' => 'admin.cms.pages.swiper-images.reorder',
                 'textStoreRoute' => 'do-texts.store',
                 'textDestroyRoute' => '/admin/do-texts',
                 'pageCopyStoreRoute' => 'admin.do.copy.store',
@@ -135,6 +141,7 @@ class AdminPagesController extends Controller
                 'description' => 'Manage the image slider and content displayed on your Food & Beverage page.',
                 'imageStoreRoute' => 'food-swiper-images.store',
                 'imageDestroyRoute' => '/admin/food-swiper-images',
+                'imageReorderRoute' => 'admin.cms.pages.swiper-images.reorder',
                 'textStoreRoute' => 'food-texts.store',
                 'textDestroyRoute' => '/admin/food-texts',
                 'pageCopyStoreRoute' => 'admin.dining.category-images.copy.store',
@@ -215,6 +222,7 @@ class AdminPagesController extends Controller
                 'description' => 'Manage the image slider and content displayed on your Special Events page.',
                 'imageStoreRoute' => 'special-swiper-images.store',
                 'imageDestroyRoute' => '/admin/special-swiper-images',
+                'imageReorderRoute' => 'admin.cms.pages.swiper-images.reorder',
                 'textStoreRoute' => 'special-texts.store',
                 'textDestroyRoute' => '/admin/special-texts',
                 'pageCopyStoreRoute' => 'admin.specialEvents.copy.store',
@@ -283,6 +291,7 @@ class AdminPagesController extends Controller
                 'description' => 'Manage the image slider and content displayed on your Our Farm page.',
                 'imageStoreRoute' => 'farm-swiper-images.store',
                 'imageDestroyRoute' => '/admin/farm-swiper-images',
+                'imageReorderRoute' => 'admin.cms.pages.swiper-images.reorder',
                 'textStoreRoute' => 'farm-texts.store',
                 'textDestroyRoute' => '/admin/farm-texts',
                 'pageCopyStoreRoute' => 'admin.farm.copy.store',
@@ -332,6 +341,7 @@ class AdminPagesController extends Controller
                 'description' => 'Manage the image slider and content displayed on your Shop Store page.',
                 'imageStoreRoute' => 'admin.shop-swiper-images.store',
                 'imageDestroyRoute' => '/admin/shop/shop-swiper-images',
+                'imageReorderRoute' => 'admin.cms.pages.swiper-images.reorder',
                 'textStoreRoute' => 'shop-texts.store',
                 'textDestroyRoute' => '/admin/shop-texts',
                 'pageCopyStoreRoute' => 'admin.shop.copy.store',
@@ -375,16 +385,7 @@ class AdminPagesController extends Controller
         $view = $config['view'];
         $extraData = [];
 
-        if ($page === 'dayTour') {
-            $images = $imageModel::whereNull('daytour_id')->get();
-        } elseif ($page === 'packages') {
-            $images = $imageModel::all();
-        } elseif ($page === 'foodAndBeverage') {
-            // Only show hero swiper images (food_id is null), not Learn More modal images
-            $images = $imageModel::whereNull('food_id')->get();
-        } else {
-            $images = $imageModel::all();
-        }
+        $images = $this->resolveCmsImages($page);
         $texts = $textModel::orderByDesc('id')
             ->get()
             ->unique(function ($item) {
@@ -395,9 +396,9 @@ class AdminPagesController extends Controller
         $pageCopyTexts = [];
 
         if ($page === 'whatToDo') {
-            $mainPackages = Package::orderBy('created_at', 'asc')->get();
-            $mainPackagesTotal = Package::count();
-            $packages = Package::orderBy('created_at', 'asc')->paginate(15);
+            $mainPackages = Package::ordered()->get();
+            $mainPackagesTotal = $mainPackages->count();
+            $packages = $mainPackages;
             $extraData = compact('mainPackages', 'mainPackagesTotal', 'packages');
         } elseif ($page === 'whereToStay') {
             $pageCopyTexts = StaycationPageText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
@@ -413,6 +414,39 @@ class AdminPagesController extends Controller
         );
 
         return view($view, compact('images', 'texts', 'filteredTexts', 'pageCopyTexts', 'cmsConfig') + $extraData);
+    }
+
+    public function reorderImages(Request $request, string $page)
+    {
+        if (!isset($this->pageConfigs[$page])) {
+            abort(404);
+        }
+
+        $request->validate([
+            'ordered_ids' => ['required', 'array', 'min:1'],
+            'ordered_ids.*' => ['integer', 'distinct'],
+        ]);
+
+        $images = $this->resolveCmsImages($page);
+        $currentIds = $images->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $orderedIds = array_values(array_unique(array_map('intval', $request->input('ordered_ids', []))));
+        $orderedIds = array_values(array_intersect($orderedIds, $currentIds));
+        $finalIds = array_merge($orderedIds, array_values(array_diff($currentIds, $orderedIds)));
+
+        $imageModel = $this->pageConfigs[$page]['imageModel'];
+
+        DB::transaction(function () use ($imageModel, $finalIds): void {
+            foreach ($finalIds as $index => $imageId) {
+                $imageModel::whereKey($imageId)->update([
+                    'sort_order' => $index + 1,
+                ]);
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Image order updated successfully.',
+        ]);
     }
 
     private function buildCmsConfig(string $page, Collection $texts, array $pageCopyTexts = []): array
@@ -431,6 +465,7 @@ class AdminPagesController extends Controller
             'pageCopyFields' => [],
             'pageCopyMeta' => $cms['pageCopyMeta'] ?? [],
             'pageCopyStoreRoute' => isset($cms['pageCopyStoreRoute']) ? route($cms['pageCopyStoreRoute']) : '',
+            'imageReorderRoute' => isset($cms['imageReorderRoute']) ? route($cms['imageReorderRoute'], ['page' => $page]) : '',
             'excludeLabels' => $cms['excludeLabels'] ?? [],
             'excludePrefixes' => $cms['excludePrefixes'] ?? [],
         ];
@@ -444,6 +479,22 @@ class AdminPagesController extends Controller
         }
 
         return $config;
+    }
+
+    private function resolveCmsImages(string $page): Collection
+    {
+        $imageModel = $this->pageConfigs[$page]['imageModel'] ?? null;
+
+        if ($imageModel === null) {
+            return collect();
+        }
+
+        return match ($page) {
+            'packages' => $imageModel::ordered()->get(),
+            'dayTour' => $imageModel::whereNull('daytour_id')->ordered()->get(),
+            'foodAndBeverage' => $imageModel::whereNull('food_id')->ordered()->get(),
+            default => $imageModel::ordered()->get(),
+        };
     }
 
     private function filterCmsTexts(Collection $texts, array $excludeLabels = [], array $excludePrefixes = []): Collection

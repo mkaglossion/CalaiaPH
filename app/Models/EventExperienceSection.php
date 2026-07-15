@@ -15,7 +15,7 @@ class EventExperienceSection extends Model
         'link_path',
         'theme',
         'order',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
@@ -30,6 +30,6 @@ class EventExperienceSection extends Model
 
     public function scopeOrdered($query)
     {
-        return $query->orderBy('order');
+        return $query->orderBy('order')->orderBy('id');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\EventExperienceSection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class EventExperienceSectionController extends Controller
@@ -23,7 +24,6 @@ class EventExperienceSectionController extends Controller
             'description2' => 'required|string',
             'link_path' => 'required|string|max:255',
             'theme' => 'required|string|max:255',
-            'order' => 'nullable|integer',
             'is_active' => 'nullable|boolean'
         ]);
 
@@ -45,7 +45,7 @@ class EventExperienceSectionController extends Controller
             'description2' => $request->description2,
             'link_path' => $request->link_path,
             'theme' => $request->theme,
-            'order' => $request->order ?? 0,
+            'order' => ((int) EventExperienceSection::max('order')) + 1,
             'is_active' => $request->is_active ?? true
         ]);
 
@@ -69,7 +69,6 @@ class EventExperienceSectionController extends Controller
             'description2' => 'required|string',
             'link_path' => 'required|string|max:255',
             'theme' => 'required|string|max:255',
-            'order' => 'nullable|integer',
             'is_active' => 'nullable|boolean'
         ]);
 
@@ -80,7 +79,6 @@ class EventExperienceSectionController extends Controller
             'description2' => $request->description2,
             'link_path' => $request->link_path,
             'theme' => $request->theme,
-            'order' => $request->order ?? 0,
             'is_active' => $request->is_active ?? true
         ];
 
@@ -113,5 +111,35 @@ class EventExperienceSectionController extends Controller
         }
 
         return response()->json(['message' => 'Section deleted successfully.']);
+    }
+
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'ordered_ids' => ['required', 'array', 'min:1'],
+            'ordered_ids.*' => ['integer', 'distinct', 'exists:event_experience_sections,id'],
+        ]);
+
+        $orderedIds = array_values(array_unique(array_map('intval', $validated['ordered_ids'])));
+        $currentIds = EventExperienceSection::query()
+            ->ordered()
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        $missingIds = array_values(array_diff($currentIds, $orderedIds));
+        $finalIds = array_merge($orderedIds, $missingIds);
+
+        DB::transaction(function () use ($finalIds): void {
+            foreach ($finalIds as $index => $sectionId) {
+                EventExperienceSection::whereKey($sectionId)->update([
+                    'order' => $index + 1,
+                ]);
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Event section order updated successfully.',
+        ]);
     }
 }

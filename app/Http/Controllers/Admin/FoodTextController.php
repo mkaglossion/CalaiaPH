@@ -21,12 +21,15 @@ class FoodTextController extends Controller
             'content' => 'nullable|string',
         ]);
 
-        FoodText::create([
+        $text = FoodText::create([
             'label' => $request->title,
             'text' => $request->content,
         ]);
 
-        return response()->json();
+        return response()->json([
+            'message' => 'Text content added successfully.',
+            'text' => $text->fresh(),
+        ]);
     }
 
     public function update(Request $request, FoodText $FoodText)
@@ -41,12 +44,19 @@ class FoodTextController extends Controller
             'text' => $request->content,
         ]);
 
-        return response()->json();
+        return response()->json([
+            'message' => 'Text content updated successfully.',
+            'text' => $FoodText->fresh(),
+        ]);
     }
 
-    public function destroy(FoodText $FoodText)
+    public function destroy(Request $request, FoodText $FoodText)
     {
         $FoodText->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Text content deleted successfully.']);
+        }
 
         return redirect()->back()->with('success', 'Text content deleted successfully.');
     }

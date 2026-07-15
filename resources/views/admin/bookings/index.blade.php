@@ -54,6 +54,12 @@
         @endforeach
     </div>
 
+    @php
+        $usesAttemptDateFilter = request('payment_scope') === 'attempts'
+            || in_array(request('payment_status'), ['pending', 'failed', 'attempts'], true);
+        $dateFilterLabel = $usesAttemptDateFilter ? 'Attempt date' : 'Booking date';
+    @endphp
+
     <!-- Filters -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <form method="GET" action="{{ route('admin.bookings.index') }}" class="flex flex-col md:flex-row gap-3 items-end flex-wrap">
@@ -96,12 +102,12 @@
                 </select>
             </div>
             <div class="w-full sm:w-auto">
-                <label for="date_from" class="block text-xs font-semibold text-gray-600 mb-1">From</label>
+                <label for="date_from" class="block text-xs font-semibold text-gray-600 mb-1">{{ $dateFilterLabel }} from</label>
                 <input type="date" id="date_from" name="date_from" value="{{ request('date_from') }}" 
                     class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
             </div>
             <div class="w-full sm:w-auto">
-                <label for="date_to" class="block text-xs font-semibold text-gray-600 mb-1">To</label>
+                <label for="date_to" class="block text-xs font-semibold text-gray-600 mb-1">{{ $dateFilterLabel }} to</label>
                 <input type="date" id="date_to" name="date_to" value="{{ request('date_to') }}" 
                     class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
             </div>

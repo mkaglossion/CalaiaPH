@@ -22,12 +22,15 @@ class FarmTextController extends Controller
             'content' => 'nullable|string',
         ]);
 
-        FarmText::create([
+        $text = FarmText::create([
             'label' => $request->title,
             'text' => $request->content,
         ]);
 
-        return response()->json();
+        return response()->json([
+            'message' => 'Text content added successfully.',
+            'text' => $text->fresh(),
+        ]);
     }
 
     public function update(Request $request, FarmText $FarmText)
@@ -42,12 +45,19 @@ class FarmTextController extends Controller
             'text' => $request->content,
         ]);
 
-        return response()->json();
+        return response()->json([
+            'message' => 'Text content updated successfully.',
+            'text' => $FarmText->fresh(),
+        ]);
     }
 
-    public function destroy(FarmText $FarmText)
+    public function destroy(Request $request, FarmText $FarmText)
     {
         $FarmText->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Text content deleted successfully.']);
+        }
 
         return redirect()->back()->with('success', 'Text content deleted successfully.');
     }

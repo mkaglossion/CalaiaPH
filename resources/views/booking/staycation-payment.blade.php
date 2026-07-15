@@ -419,11 +419,10 @@ let vatRate = {{ $vatRate }};
                     <x-booking.staycation-guest-waiver
                       :guestBlueprints="$guestBlueprints ?? []"
                       :campWaiverContent="$campWaiverContent ?? []"
-                      :showHeader="false"
-                    :showGuestCards="false"
-                    :showTermsAndPolicy="false"
-                    :showCampWaiver="false"
-                    :skipGuestDetails="true"
+                      :showHeader="true"
+                      :showGuestCards="true"
+                      :showTermsAndPolicy="false"
+                      :showCampWaiver="false"
                     />
                     {{-- Booking Terms & Policy Agreement --}}
                     <div

@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasSortableOrder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Package extends Model
 {
     use HasFactory;
+    use HasSortableOrder;
 
     protected $table = 'packages';
 
@@ -28,6 +30,7 @@ class Package extends Model
         'duration_unit',
         'inclusions',
         'sessions',
+        'sort_order',
     ];
 
     protected $casts = [
@@ -39,6 +42,7 @@ class Package extends Model
         'price_configs' => 'array',
         'inclusions' => 'array',
         'sessions' => 'array',
+        'sort_order' => 'integer',
         'price' => 'decimal:2',
     ];
 

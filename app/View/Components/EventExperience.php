@@ -14,7 +14,7 @@ class EventExperience extends Component
         // Keep this component strictly database-backed so it does not fall back
         // to local public assets when the CMS already has uploaded Cloudinary URLs.
         $this->sections = EventExperienceSection::where('is_active', true)
-            ->orderBy('order')
+            ->ordered()
             ->get();
     }
 

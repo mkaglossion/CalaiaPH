@@ -35,7 +35,7 @@ class HomeSwiperImageController extends Controller
             $publicId = $uploadResult['public_id']; // Store this if you want to delete later
 
             // Save to DB
-            HomeSwiperImage::create([
+            $image = HomeSwiperImage::create([
                 'title' => $validated['title'] ?? null,
                 'image_path' => $uploadedFileUrl, // store Cloudinary URL
                 'public_id' => $publicId, // optional column in your DB for deletion
@@ -45,7 +45,7 @@ class HomeSwiperImageController extends Controller
 
             return response()->json([
                 'message' => $message,
-                'url' => $uploadedFileUrl
+                'image' => $image->fresh(),
             ]);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Upload failed: ' . $e->getMessage()], 500);
@@ -77,13 +77,17 @@ class HomeSwiperImageController extends Controller
         }
 
         $homeSwiperImage->update($data);
+        $updatedImage = $homeSwiperImage->fresh();
 
         $message = $request->hasFile('image') ? 'Image updated successfully!' : 'Image details updated successfully!';
 
-        return response()->json(['message' => $message]);
+        return response()->json([
+            'message' => $message,
+            'image' => $updatedImage,
+        ]);
     }
 
-    public function destroy(HomeSwiperImage $homeSwiperImage)
+    public function destroy(Request $request, HomeSwiperImage $homeSwiperImage)
     {
         // Delete from Cloudinary if public_id is stored
         if ($homeSwiperImage->public_id ?? false) {
@@ -91,6 +95,10 @@ class HomeSwiperImageController extends Controller
         }
 
         $homeSwiperImage->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Image deleted successfully!']);
+        }
 
         return redirect()->back()->with('success', 'Image deleted successfully!');
     }

@@ -3,6 +3,20 @@
 @section('title', 'What to Do Page CMS')
 
 @section('content')
+<style>
+    [data-package-card].sortable-ghost {
+        opacity: 0.45;
+        transform: scale(0.985);
+    }
+
+    [data-package-card].sortable-chosen {
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.15);
+    }
+
+    [data-package-card].sortable-drag {
+        cursor: grabbing;
+    }
+</style>
 <x-admin.cms-manager
     :title="$cmsConfig['title']"
     :description="$cmsConfig['description']"
@@ -10,6 +24,7 @@
     :texts="$filteredTexts"
     :imageStoreRoute="$cmsConfig['imageStoreRoute']"
     :imageDestroyRoute="$cmsConfig['imageDestroyRoute']"
+    :imageReorderRoute="$cmsConfig['imageReorderRoute']"
     :textStoreRoute="$cmsConfig['textStoreRoute']"
     :textDestroyRoute="$cmsConfig['textDestroyRoute']"
     :pageCopyEnabled="$cmsConfig['pageCopyEnabled']"
@@ -25,16 +40,23 @@
     function packageManager() {
         return {
             isLoading: false,
+            isReordering: false,
             showPackageModal: false,
             isPackageEditMode: false,
             errors: [],
-            packages: @js(($packages ?? collect())->all()),
+            packages: @js(($packages ?? collect())->values()->all()),
+            reorderRoute: @js(route('admin.packages.reorder')),
+            sortableInstance: null,
             form: {
                 id: null, name: '', description: '', price: '',
                 duration_value: '', duration_unit: 'hours', max_guests: '',
                 max_groups_per_day: '', pricing_type: 'per_pax',
                 imagePreview: null, inclusionsList: [], sessions: [],
                 is_active: true
+            },
+
+            init() {
+                this.$nextTick(() => this.initSortable());
             },
 
             defaultSessions() {
@@ -79,6 +101,99 @@
 
             removeInclusion(idx) {
                 this.form.inclusionsList.splice(idx, 1);
+            },
+
+            initSortable() {
+                if (this.sortableInstance) {
+                    this.sortableInstance.destroy();
+                    this.sortableInstance = null;
+                }
+
+                if (typeof Sortable === 'undefined' || !this.$refs.packageGrid) {
+                    return;
+                }
+
+                this.sortableInstance = Sortable.create(this.$refs.packageGrid, {
+                    animation: 180,
+                    handle: '[data-drag-handle]',
+                    draggable: '[data-package-card]',
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    dragClass: 'sortable-drag',
+                    onEnd: async () => {
+                        const orderedIds = Array.from(
+                            this.$refs.packageGrid.querySelectorAll('[data-package-id]')
+                        )
+                            .map((node) => Number(node.dataset.packageId))
+                            .filter((id) => Number.isInteger(id) && id > 0);
+
+                        if (orderedIds.length === 0) {
+                            return;
+                        }
+
+                        await this.persistOrder(orderedIds);
+                    }
+                });
+            },
+
+            refreshDisplayedOrder() {
+                if (!this.$refs.packageGrid) return;
+
+                Array.from(this.$refs.packageGrid.querySelectorAll('[data-package-card]')).forEach((card, index) => {
+                    const badge = card.querySelector('[data-package-order]');
+                    if (badge) {
+                        badge.textContent = `#${index + 1}`;
+                    }
+                });
+            },
+
+            async persistOrder(orderedIds) {
+                if (this.isReordering) {
+                    return;
+                }
+
+                this.isReordering = true;
+                this.sortableInstance?.option('disabled', true);
+
+                try {
+                    const csrf = document.querySelector('meta[name=csrf-token]')?.content || '';
+                    const response = await fetch(this.reorderRoute, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ ordered_ids: orderedIds }),
+                    });
+                    const payload = await response.json().catch(() => ({}));
+
+                    if (!response.ok || payload.success === false) {
+                        throw new Error(payload.message || 'Failed to save package order.');
+                    }
+
+                    this.refreshDisplayedOrder();
+                    await Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: payload.message || 'Package order updated successfully.',
+                        showConfirmButton: false,
+                        timer: 1200,
+                    });
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Reorder Failed',
+                        text: error.message || 'Failed to save package order.',
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } finally {
+                    this.isReordering = false;
+                    this.sortableInstance?.option('disabled', false);
+                }
             },
 
             editPackage(id) {

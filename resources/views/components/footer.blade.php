@@ -5,6 +5,7 @@
   $footerDescription = $footerDescription !== ''
     ? $footerDescription
     : "Your perfect getaway destination for relaxation and adventure.\nExperience nature at its finest in Calaca, Batangas.";
+  $nav = config('navigation.main', []);
 @endphp
 
 <footer class="bg-brand-dark text-white mt-0">
@@ -56,13 +57,13 @@
             <i class="bi bi-plus md:hidden"></i>
           </h3>
           <ul class="space-y-1 hidden md:block">
-            <li><a href="{{ url('/') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Home</a></li>
-            <li><a href="{{ url('/daytour') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Day Tour</a></li>
-            <li><a href="{{ url('/staycation') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Where to Stay</a></li>
-            <li><a href="{{ url('/activities') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">What to Do</a></li>
-            <li><a href="{{ url('/dining') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Food & Beverage</a></li>
-            <li><a href="{{ url('/groups') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Special Events</a></li>
-            <li><a href="{{ url('/farm') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Our Farm</a></li>
+            @foreach ($nav as $item)
+              <li>
+                <a href="{{ url($item['path']) }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
+                  {{ $item['label'] }}
+                </a>
+              </li>
+            @endforeach
           </ul>
         </div>
 

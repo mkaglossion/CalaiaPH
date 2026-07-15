@@ -16,12 +16,15 @@ class ShopTextController extends Controller
             'content' => 'nullable|string',
         ]);
 
-        ShopText::create([
+        $text = ShopText::create([
             'label' => $request->title,
             'text' => $request->content,
         ]);
 
-        return response()->json();
+        return response()->json([
+            'message' => 'Text content added successfully.',
+            'text' => $text->fresh(),
+        ]);
     }
 
     public function update(Request $request, ShopText $shopText)
@@ -36,12 +39,19 @@ class ShopTextController extends Controller
             'text' => $request->content,
         ]);
 
-        return response()->json();
+        return response()->json([
+            'message' => 'Text content updated successfully.',
+            'text' => $shopText->fresh(),
+        ]);
     }
 
-    public function destroy(ShopText $shopText)
+    public function destroy(Request $request, ShopText $shopText)
     {
         $shopText->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Text content deleted successfully.']);
+        }
 
         return redirect()->back()->with('success', 'Text content deleted successfully.');
     }

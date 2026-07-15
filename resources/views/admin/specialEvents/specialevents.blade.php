@@ -10,6 +10,7 @@
     :texts="$filteredTexts"
     :imageStoreRoute="$cmsConfig['imageStoreRoute']"
     :imageDestroyRoute="$cmsConfig['imageDestroyRoute']"
+    :imageReorderRoute="$cmsConfig['imageReorderRoute']"
     :textStoreRoute="$cmsConfig['textStoreRoute']"
     :textDestroyRoute="$cmsConfig['textDestroyRoute']"
     :pageCopyEnabled="$cmsConfig['pageCopyEnabled']"

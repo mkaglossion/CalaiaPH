@@ -6,6 +6,7 @@
 
 <div
     x-data="packageManager()"
+    x-init="initialize()"
     class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
 >
 
@@ -17,68 +18,98 @@
     {{-- ============================================================= --}}
     {{-- SWIPER IMAGES SECTION --}}
     {{-- ============================================================= --}}
-    <div class="flex justify-between items-end mb-6">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">Swiper Images</h2>
-            <p class="text-gray-500 text-sm">Photos that appear inside the homepage carousel.</p>
+    <div class="mb-10 rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-5 md:p-6 shadow-sm">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Swiper Images</h2>
+                <p class="text-gray-500 text-sm">Photos that appear inside the homepage carousel.</p>
+            </div>
+
+            <x-admin.action-button variant="primary" class="px-4 py-2 text-sm font-semibold" @click="showModal = true; resetImageForm()">
+                + Add Image
+            </x-admin.action-button>
         </div>
 
-        <button 
-            @click="showModal = true" 
-            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
-            + Add Image
-        </button>
-    </div>
+        {{-- Cards Grid --}}
+        <div x-ref="imageGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+        <template x-for="(image, index) in images" :key="image.id">
+            <div
+                data-cms-image-card
+                :data-cms-image-id="image.id"
+                class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative"
+                :class="canReorder ? 'cursor-grab active:cursor-grabbing' : ''"
+            >
+                <div class="absolute right-4 top-4 z-10 flex items-center gap-2">
+                    <span class="inline-flex min-w-8 items-center justify-center rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-gray-500 shadow-sm"
+                        x-text="`#${Number(image.sort_order || (index + 1))}`"></span>
+                    <button
+                        x-show="canReorder"
+                        type="button"
+                        data-drag-handle
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-500 shadow-sm transition hover:border-gray-300 hover:text-gray-700"
+                        aria-label="Drag to reorder image"
+                        title="Drag to reorder image"
+                    >
+                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <circle cx="6" cy="5" r="1.4" />
+                            <circle cx="6" cy="10" r="1.4" />
+                            <circle cx="6" cy="15" r="1.4" />
+                            <circle cx="14" cy="5" r="1.4" />
+                            <circle cx="14" cy="10" r="1.4" />
+                            <circle cx="14" cy="15" r="1.4" />
+                        </svg>
+                    </button>
+                </div>
 
-    {{-- Cards Grid --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-        @forelse($images as $img)
-            <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative">
                 <div class="flex items-center mb-2">
-                    <input type="checkbox" x-model="selectedImages" value="{{ $img->id }}" class="mr-2">
+                    <input type="checkbox" x-model="selectedImages" :value="Number(image.id)" class="mr-2">
                     <span class="text-xs text-gray-500">Select</span>
                 </div>
                 <div class="overflow-hidden rounded-xl">
-                    @if(\App\Helpers\ImageHelper::isVideo($img->image_path ?? $img))
-                        <img src="{{ \App\Helpers\ImageHelper::src(\App\Helpers\ImageHelper::videoThumbnail($img->image_path ?? $img)) }}" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
-                    @else
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
-                    @endif
+                    <template x-if="isVideoPath(image.image_path)">
+                        <img :src="resolveImageSrc(videoThumbnailSrc(image.image_path))" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                    </template>
+                    <template x-if="!isVideoPath(image.image_path)">
+                        <img :src="resolveImageSrc(image.image_path)" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                    </template>
                 </div>
 
                 <div class="mt-4">
-                    <h3 class="font-semibold text-lg text-gray-900">{{ $img->title ?: 'Untitled' }}</h3>
+                    <h3 class="font-semibold text-lg text-gray-900" x-text="image.title ? image.title : 'Untitled'"></h3>
                     <p class="text-gray-500 text-sm">
-                        Uploaded: {{ $img->created_at->format('Y-m-d') }}
+                        Uploaded: <span x-text="formatDate(image.created_at)"></span>
                     </p>
                 </div>
 
                 <div class="mt-5 flex justify-end space-x-3">
-                    <button class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
-                        @click="editImage({{ $img->id }}, '{{ $img->title }}')">Edit</button>
+                    <x-admin.action-button variant="link" class="px-0" @click="editImage(image.id, image.title || '')">
+                        Edit
+                    </x-admin.action-button>
                     <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
-                        @click="deleteImage({{ $img->id }}, '{{ route('package-swiper-images.destroy', $img->id) }}')">
+                        @click="deleteImage(image.id)">
                         Delete
                     </button>
                 </div>
             </div>
-        @empty
-            <p class="text-gray-500">No images uploaded yet.</p>
-        @endforelse
-    </div>
+        </template>
+        <template x-if="images.length === 0">
+            <p class="text-gray-500 col-span-full">No images uploaded yet.</p>
+        </template>
+        </div>
 
-    {{-- Bulk Actions --}}
-    <div x-show="selectedImages.length > 0" class="mt-6 flex items-center space-x-4">
-        <span class="text-sm text-gray-600">Selected: <span x-text="selectedImages.length"></span></span>
-        <button @click="selectAll" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600">
-            Select All
-        </button>
-        <button @click="deselectAll" class="px-3 py-1 bg-gray-400 text-white rounded text-sm hover:bg-gray-500">
-            Deselect All
-        </button>
-        <button @click="bulkDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
-            Delete Selected
-        </button>
+        {{-- Bulk Actions --}}
+        <div x-show="selectedImages.length > 0" class="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3" x-cloak>
+            <span class="text-sm text-gray-600">Selected: <span x-text="selectedImages.length"></span></span>
+            <x-admin.action-button variant="secondary" type="button" class="px-3 py-1.5 text-sm font-semibold" @click="selectAll">
+                Select All
+            </x-admin.action-button>
+            <x-admin.action-button variant="secondary" type="button" class="px-3 py-1.5 text-sm font-semibold" @click="deselectAll">
+                Deselect All
+            </x-admin.action-button>
+            <button @click="bulkDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+                Delete Selected
+            </button>
+        </div>
     </div>
 
     <hr class="my-14 border-gray-300">
@@ -87,58 +118,60 @@
     {{-- ============================================================= --}}
     {{-- TEXT CONTENT SECTION --}}
     {{-- ============================================================= --}}
-    <div class="flex justify-between items-end mb-6">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
-            <p class="text-gray-500 text-sm">Paragraphs and captions displayed on the Packages page.</p>
+    <div class="mb-10 rounded-2xl border border-gray-200 bg-white/70 backdrop-blur p-5 md:p-6 shadow-sm">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">Text Content</h2>
+                <p class="text-gray-500 text-sm">Paragraphs and captions displayed on the Packages page.</p>
+            </div>
+
+            <x-admin.action-button variant="primary" class="px-4 py-2 text-sm font-semibold" @click="showTextModal = true; resetForm()">
+                + Add Text
+            </x-admin.action-button>
         </div>
 
-        <button 
-            @click="showTextModal = true" 
-            class="px-4 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 hover:shadow-lg transition">
-            + Add Text
-        </button>
-    </div>
+        <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/80 backdrop-blur">
+            <table class="w-full text-left">
+                <thead class="bg-gray-100/70 backdrop-blur">
+                    <tr>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700">Label</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700">Text</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
+                    </tr>
+                </thead>
 
-    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
-        <table class="w-full text-left">
-            <thead class="bg-gray-100/70 backdrop-blur">
-                <tr>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Label</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700">Text</th>
-                    <th class="px-6 py-4 text-sm font-semibold text-gray-700 text-right">Actions</th>
-                </tr>
-            </thead>
-
-            <tbody class="divide-y divide-gray-200">
-                @forelse($texts as $text)
+                <tbody class="divide-y divide-gray-200">
+                <template x-for="text in texts" :key="text.id">
                     <tr class="hover:bg-gray-50/70 transition">
-                        <td class="px-6 py-4 font-medium text-gray-900">
-                            {{ $text->title ?: 'No Label' }}
-                        </td>
+                        <td class="px-6 py-4 font-medium text-gray-900" x-text="text.title || 'No Label'"></td>
 
-                        <td class="px-6 py-4 text-gray-600 text-sm">
-                            {{ Str::limit($text->content, 150) }}
-                        </td>
+                        <td class="px-6 py-4 text-gray-600 text-sm" x-text="truncateText(text.content || '', 150)"></td>
 
                         <td class="px-6 py-4 text-right space-x-4">
-                            <button 
-                                class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition"
-                                @click="editText({{ $text->id }})">Edit</button>
-                            <button 
+                            <x-admin.action-button
+                                variant="link"
+                                class="px-0"
+                                @click="editText(text.id)"
+                            >
+                                Edit
+                            </x-admin.action-button>
+                            <button
                                 class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
-                                @click="deleteText({{ $text->id }}, '{{ route('package-texts.destroy', $text->id) }}')">Delete</button>
+                                @click="deleteText(text.id)"
+                            >Delete</button>
                         </td>
                     </tr>
-                @empty
+                </template>
+                <template x-if="texts.length === 0">
                     <tr>
                         <td colspan="3" class="px-6 py-6 text-center text-gray-500">
                             No text content yet.
                         </td>
                     </tr>
-                @endforelse
-            </tbody>
-        </table>
+                </template>
+                </tbody>
+            </table>
+        </div>
     </div>
 
 
@@ -175,18 +208,13 @@
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">
-                    <button
-                        type="button"
-                        @click="showModal = false; resetImageForm()"
-                        class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">
+                    <x-admin.action-button variant="secondary" type="button" @click="showModal = false; resetImageForm()">
                         Cancel
-                    </button>
+                    </x-admin.action-button>
 
-                    <button
-                        type="submit"
-                        class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition"
-                        x-text="editImageMode ? 'Update' : 'Upload'">
-                    </button>
+                    <x-admin.action-button variant="primary" type="submit">
+                        <span x-text="editImageMode ? 'Update' : 'Upload'"></span>
+                    </x-admin.action-button>
                 </div>
             </form>
         </div>
@@ -212,13 +240,13 @@
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-2">
-                    <button type="button" @click="showTextModal = false" class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">
+                    <x-admin.action-button variant="secondary" type="button" @click="showTextModal = false">
                         Cancel
-                    </button>
+                    </x-admin.action-button>
 
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow transition">
+                    <x-admin.action-button variant="primary" type="submit">
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
-                    </button>
+                    </x-admin.action-button>
                 </div>
             </form>
         </div>
@@ -252,11 +280,69 @@ function packageManager() {
         currentImageId: null,
         currentImageTitle: '',
         selectedImages: [],
+        images: @js($images),
         texts: @js($texts),
+        imageReorderRoute: '{{ route('package-swiper-images.reorder') }}',
+        textDestroyBase: '/admin/packages/texts',
+        sortableInstance: null,
+        isReordering: false,
+        canReorder: true,
         form: { id: null, title: '', content: '' },
 
+        initialize() {
+            this.images = this.sortImages(this.normalizeImages(this.images));
+            this.texts = this.normalizeTexts(this.texts);
+            this.$nextTick(() => this.initSortable());
+        },
+
+        normalizeImages(images) {
+            return (Array.isArray(images) ? images : []).map((image) => ({
+                ...image,
+                id: Number(image?.id ?? 0),
+                sort_order: Number(image?.sort_order ?? 0),
+            })).filter((image) => image.id > 0);
+        },
+
+        normalizeTexts(texts) {
+            return (Array.isArray(texts) ? texts : []).map((text) => ({
+                ...text,
+                id: Number(text?.id ?? 0),
+            })).filter((text) => text.id > 0);
+        },
+
+        truncateText(text, limit = 150) {
+            const value = String(text || '');
+            if (value.length <= limit) {
+                return value;
+            }
+
+            return `${value.slice(0, Math.max(0, limit - 3))}...`;
+        },
+
+        sortImages(images) {
+            return [...images].sort((a, b) => {
+                const aOrder = Number(a?.sort_order ?? 0);
+                const bOrder = Number(b?.sort_order ?? 0);
+                if (aOrder !== bOrder) {
+                    return aOrder - bOrder;
+                }
+
+                const aDate = new Date(a?.created_at ?? 0).getTime();
+                const bDate = new Date(b?.created_at ?? 0).getTime();
+                if (aDate !== bDate) {
+                    return aDate - bDate;
+                }
+
+                return Number(a?.id ?? 0) - Number(b?.id ?? 0);
+            });
+        },
+
+        currentImageIds() {
+            return this.images.map((image) => Number(image.id)).filter((id) => Number.isInteger(id) && id > 0);
+        },
+
         selectAll() {
-            this.selectedImages = @js($images->pluck('id')->toArray());
+            this.selectedImages = this.currentImageIds();
         },
 
         deselectAll() {
@@ -277,13 +363,58 @@ function packageManager() {
         },
 
         editImage(id, title) {
-            this.currentImageId = id;
+            this.currentImageId = Number(id);
             this.currentImageTitle = title || '';
             this.editImageMode = true;
             this.showModal = true;
+            this.$nextTick(() => {
+                if (this.$refs.title) {
+                    this.$refs.title.value = this.currentImageTitle;
+                }
+            });
         },
 
-        deleteImage(id, route) {
+        removeImageById(id) {
+            const normalizedId = Number(id);
+            this.images = this.images.filter((image) => Number(image.id) !== normalizedId);
+            this.selectedImages = this.selectedImages.filter((selectedId) => Number(selectedId) !== normalizedId);
+            this.$nextTick(() => this.initSortable());
+        },
+
+        removeImagesByIds(ids) {
+            const idSet = new Set((Array.isArray(ids) ? ids : []).map((value) => Number(value)));
+            this.images = this.images.filter((image) => !idSet.has(Number(image.id)));
+            this.selectedImages = this.selectedImages.filter((selectedId) => !idSet.has(Number(selectedId)));
+            this.$nextTick(() => this.initSortable());
+        },
+
+        upsertImage(image) {
+            if (!image || image.id === undefined || image.id === null) {
+                return;
+            }
+
+            const normalized = this.normalizeImages([image])[0];
+            if (!normalized) {
+                return;
+            }
+
+            const current = Array.isArray(this.images) ? [...this.images] : [];
+            const index = current.findIndex((item) => Number(item.id) === Number(normalized.id));
+
+            if (index === -1) {
+                current.push(normalized);
+            } else {
+                current.splice(index, 1, {
+                    ...current[index],
+                    ...normalized,
+                });
+            }
+
+            this.images = this.sortImages(current);
+            this.$nextTick(() => this.initSortable());
+        },
+
+        deleteImage(id) {
             Swal.fire({
                 title: 'Delete Image?',
                 text: 'This action cannot be undone.',
@@ -298,18 +429,24 @@ function packageManager() {
                     const csrf = document.querySelector('meta[name=csrf-token]').content;
                     const formData = new FormData();
                     formData.append('_method', 'DELETE');
-                    fetch(route, {
+                    fetch(`/admin/packages/swiper-images/${id}`, {
                         method: 'POST',
-                        headers: { 'X-CSRF-TOKEN': csrf },
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json'
+                        },
                         body: formData
-                    }).then(() => {
+                    }).then(async (response) => {
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Failed to delete image.');
+                        }
+                        this.removeImageById(data.id || id);
                         Swal.fire({
                             icon: 'success',
                             title: 'Deleted!',
                             text: 'Image deleted successfully.',
                             confirmButtonColor: '#2563eb'
-                        }).then(() => {
-                            window.location.reload();
                         });
                     }).catch(() => {
                         Swal.fire({
@@ -322,7 +459,7 @@ function packageManager() {
             });
         },
 
-        deleteText(id, route) {
+        deleteText(id) {
             Swal.fire({
                 title: 'Delete Text?',
                 text: 'This action cannot be undone.',
@@ -337,18 +474,24 @@ function packageManager() {
                     const csrf = document.querySelector('meta[name=csrf-token]').content;
                     const formData = new FormData();
                     formData.append('_method', 'DELETE');
-                    fetch(route, {
+                    fetch(`${this.textDestroyBase}/${id}`, {
                         method: 'POST',
-                        headers: { 'X-CSRF-TOKEN': csrf },
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json'
+                        },
                         body: formData
-                    }).then(() => {
+                    }).then(async (response) => {
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Failed to delete text.');
+                        }
+                        this.removeTextById(data.id || id);
                         Swal.fire({
                             icon: 'success',
                             title: 'Deleted!',
                             text: 'Text deleted successfully.',
                             confirmButtonColor: '#2563eb'
-                        }).then(() => {
-                            window.location.reload();
                         });
                     }).catch(() => {
                         Swal.fire({
@@ -362,12 +505,42 @@ function packageManager() {
         },
 
         editText(id) {
-            const text = this.texts.find(t => t.id === id);
+            const text = this.texts.find((t) => Number(t.id) === Number(id));
             if (text) {
                 this.form = { id: text.id, title: text.title, content: text.content };
                 this.editMode = true;
                 this.showTextModal = true;
             }
+        },
+
+        removeTextById(id) {
+            const normalizedId = Number(id);
+            this.texts = this.texts.filter((text) => Number(text.id) !== normalizedId);
+        },
+
+        upsertText(text) {
+            if (!text || text.id === undefined || text.id === null) {
+                return;
+            }
+
+            const normalized = this.normalizeTexts([text])[0];
+            if (!normalized) {
+                return;
+            }
+
+            const current = Array.isArray(this.texts) ? [...this.texts] : [];
+            const index = current.findIndex((item) => Number(item.id) === Number(normalized.id));
+
+            if (index === -1) {
+                current.push(normalized);
+            } else {
+                current.splice(index, 1, {
+                    ...current[index],
+                    ...normalized,
+                });
+            }
+
+            this.texts = current;
         },
 
         async bulkDelete() {
@@ -392,21 +565,21 @@ function packageManager() {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': csrf,
-                            'Content-Type': 'application/x-www-form-urlencoded'
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Accept': 'application/json'
                         },
                         body: '_method=DELETE'
                     })
                 );
 
                 await Promise.all(promises);
+                this.removeImagesByIds(this.selectedImages);
                 this.selectedImages = [];
                 Swal.fire({
                     icon: "success",
                     title: "Delete Complete",
                     text: "Images deleted successfully!",
                     confirmButtonColor: "#2563eb"
-                }).then(() => {
-                    window.location.reload();
                 });
             } catch (err) {
                 Swal.fire({
@@ -449,6 +622,9 @@ function packageManager() {
                 const data = await res.json();
 
                 if (res.ok) {
+                    if (data.text) {
+                        this.upsertText(data.text);
+                    }
                     Swal.fire({
                         icon: "success",
                         title: this.editMode ? "Updated!" : "Added!",
@@ -457,7 +633,6 @@ function packageManager() {
                     }).then(() => {
                         this.resetForm();
                         this.showTextModal = false;
-                        window.location.reload();
                     });
                 } else if (data.errors) {
                     Swal.fire({
@@ -520,6 +695,9 @@ function packageManager() {
                 const data = await res.json();
 
                 if (res.ok) {
+                    if (data.image) {
+                        this.upsertImage(data.image);
+                    }
                     Swal.fire({
                         icon: "success",
                         title: this.editImageMode ? "Update Complete" : "Upload Complete",
@@ -528,7 +706,6 @@ function packageManager() {
                     }).then(() => {
                         this.showModal = false;
                         this.resetImageForm();
-                        window.location.reload();
                     });
                 } else if (data.errors) {
                     Swal.fire({
@@ -552,6 +729,160 @@ function packageManager() {
             } finally {
                 this.isLoading = false;
             }
+        },
+
+        initSortable() {
+            if (this.sortableInstance) {
+                this.sortableInstance.destroy();
+                this.sortableInstance = null;
+            }
+
+            if (!this.canReorder || typeof Sortable === 'undefined' || !this.$refs.imageGrid) {
+                return;
+            }
+
+            this.sortableInstance = Sortable.create(this.$refs.imageGrid, {
+                animation: 180,
+                handle: '[data-drag-handle]',
+                draggable: '[data-cms-image-card]',
+                ghostClass: 'cms-image-ghost',
+                chosenClass: 'cms-image-chosen',
+                dragClass: 'cms-image-drag',
+                onEnd: async () => {
+                    const previousImages = this.images.map((image) => ({ ...image }));
+                    const orderedIds = Array.from(
+                        this.$refs.imageGrid.querySelectorAll('[data-cms-image-id]')
+                    )
+                        .map((node) => Number(node.dataset.cmsImageId))
+                        .filter((id) => Number.isInteger(id) && id > 0);
+
+                    if (orderedIds.length !== this.images.length) {
+                        return;
+                    }
+
+                    this.applyImageOrder(orderedIds);
+                    await this.persistImageOrder(orderedIds, previousImages);
+                },
+            });
+        },
+
+        applyImageOrder(orderedIds) {
+            const imageMap = new Map(this.images.map((image) => [Number(image.id), image]));
+            this.images = orderedIds
+                .map((id, index) => {
+                    const image = imageMap.get(Number(id));
+                    if (!image) {
+                        return null;
+                    }
+
+                    return {
+                        ...image,
+                        sort_order: index + 1,
+                    };
+                })
+                .filter(Boolean);
+        },
+
+        async persistImageOrder(orderedIds, previousImages = []) {
+            if (this.isReordering) {
+                return;
+            }
+
+            this.isReordering = true;
+            this.sortableInstance?.option('disabled', true);
+
+            try {
+                const csrf = document.querySelector('meta[name=csrf-token]')?.content || '';
+                const response = await fetch(this.imageReorderRoute, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ ordered_ids: orderedIds }),
+                });
+                const payload = await response.json().catch(() => ({}));
+
+                if (!response.ok || payload.success === false) {
+                    throw new Error(payload.message || 'Failed to save image order.');
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Order Not Saved',
+                    text: error.message || 'Failed to save image order.',
+                    confirmButtonColor: '#ef4444',
+                });
+                this.images = Array.isArray(previousImages) ? previousImages : this.images;
+                this.$nextTick(() => this.initSortable());
+            } finally {
+                this.isReordering = false;
+                this.sortableInstance?.option('disabled', false);
+            }
+        },
+
+        isVideoPath(path) {
+            if (!path) {
+                return false;
+            }
+
+            const normalized = String(path).trim();
+            if (!normalized) {
+                return false;
+            }
+
+            return /\/video\//i.test(normalized) || /\.(mp4|webm|ogg|mov|avi|wmv)$/i.test(normalized);
+        },
+
+        resolveImageSrc(path) {
+            const normalized = String(path || '').trim();
+            if (!normalized) {
+                return '';
+            }
+
+            if (normalized.startsWith('data:')) {
+                return normalized;
+            }
+
+            if (normalized.startsWith('//')) {
+                return `https:${normalized}`;
+            }
+
+            if (/^https?:\/\//i.test(normalized)) {
+                return normalized;
+            }
+
+            return normalized.startsWith('/') ? normalized : `/${normalized}`;
+        },
+
+        videoThumbnailSrc(path) {
+            const normalized = String(path || '').trim();
+            if (!normalized) {
+                return '';
+            }
+
+            if (/res\.cloudinary\.com/i.test(normalized) && /\/video\/upload\//i.test(normalized)) {
+                return normalized
+                    .replace('/video/upload/', '/video/upload/so_0,w_1280/')
+                    .replace(/\.(mp4|webm|ogg|mov|avi|wmv)(\?.*)?$/i, '.jpg');
+            }
+
+            return normalized;
+        },
+
+        formatDate(value) {
+            if (!value) {
+                return 'N/A';
+            }
+
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) {
+                return 'N/A';
+            }
+
+            return date.toLocaleDateString();
         }
     };
 }

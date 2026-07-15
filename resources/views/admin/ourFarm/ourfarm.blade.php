@@ -16,5 +16,6 @@
     :pageCopyFields="$cmsConfig['pageCopyFields']"
     :pageCopyMeta="$cmsConfig['pageCopyMeta']"
     :pageCopyStoreRoute="$cmsConfig['pageCopyStoreRoute']"
+    :imageReorderRoute="$cmsConfig['imageReorderRoute']"
 />
 @endsection

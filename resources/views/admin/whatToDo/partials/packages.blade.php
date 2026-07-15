@@ -1,5 +1,20 @@
 {{-- Package Management Section embedded in What to Do CMS --}}
-<div x-data="packageManager()" class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
+<div>
+    <style>
+        [data-package-card].sortable-ghost {
+            opacity: 0.45;
+        }
+
+        [data-package-card].sortable-chosen {
+            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.14);
+        }
+
+        [data-package-card].sortable-drag {
+            cursor: grabbing;
+        }
+    </style>
+
+<div x-data="packageManager()" x-init="init()" class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6">
     <h2 class="text-2xl font-bold text-gray-900 mb-1">Manage Packages</h2>
     <p class="text-gray-600 mb-6">Manage all vacation packages, bookings, and availability CalaiaPH offers</p>
 
@@ -16,9 +31,36 @@
     </div>
 
     @if(($packages ?? collect())->count() > 0)
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div x-ref="packageGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach($packages as $package)
-                <div class="bg-white/70 backdrop-blur-lg border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden flex flex-col h-full" data-package-id="{{ $package->id }}">
+                @php
+                    $packageInclusions = is_array($package->inclusions ?? null)
+                        ? array_values(array_filter($package->inclusions, fn ($item) => is_string($item) && trim($item) !== ''))
+                        : [];
+                    $durationLabel = $package->duration_label
+                        ?? (($package->duration_days ?? 0) > 0
+                            ? ($package->duration_days . ' Day' . (($package->duration_days ?? 0) > 1 ? 's' : ''))
+                            : null);
+                @endphp
+                <div
+                    data-package-card
+                    data-package-id="{{ $package->id }}"
+                    class="relative bg-white/70 backdrop-blur-lg border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden flex flex-col h-full cursor-grab active:cursor-grabbing"
+                >
+                    <div class="absolute right-3 top-3 z-20 flex items-center gap-2">
+                        <span data-package-order class="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-white/95 px-2 text-xs font-semibold text-gray-700 shadow-sm border border-gray-200">
+                            #{{ $package->sort_order ?? $loop->iteration }}
+                        </span>
+                        <button
+                            type="button"
+                            data-drag-handle
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-500 shadow-sm transition hover:border-gray-300 hover:text-gray-700"
+                            aria-label="Drag to reorder package"
+                            title="Drag to reorder package"
+                        >
+                            <i class="fas fa-grip-vertical"></i>
+                        </button>
+                    </div>
                     @if($package->image)
                         <div class="w-full h-48 overflow-hidden">
                             <img src="{{ \App\Helpers\ImageHelper::src($package->image) }}" alt="{{ $package->name }}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
@@ -31,21 +73,48 @@
 
                     <div class="p-6 flex flex-col flex-1">
                         <h3 class="text-lg font-bold text-gray-900 mb-1">{{ $package->name }}</h3>
-                        <p class="text-gray-600 text-sm mb-3">{{ Str::limit((string)($package->description ?? ''), 100) }}</p>
-                        <div class="mb-3">
-                            <span class="inline-block bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full">
-                                Good for {{ $package->max_guests }} person{{ $package->max_guests > 1 ? 's' : '' }}
-                            </span>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-3">
+                            {{ $package->description ?: 'Experience an unforgettable adventure with this exclusive package.' }}
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-2 mb-3 pb-3 border-b border-gray-200">
+                            @if($durationLabel)
+                                <div class="rounded-lg bg-gray-50 p-2 text-center">
+                                    <i class="fas fa-calendar-alt text-[#8f5d54] text-base mb-1"></i>
+                                    <p class="text-xs font-semibold text-gray-700">{{ $durationLabel }}</p>
+                                </div>
+                            @endif
+                            @if($package->max_guests)
+                                <div class="rounded-lg bg-gray-50 p-2 text-center">
+                                    <i class="fas fa-users text-[#8f5d54] text-base mb-1"></i>
+                                    <p class="text-xs font-semibold text-gray-700">
+                                        {{ $package->pricing_type === 'per_group' ? 'Up to ' . $package->max_guests . ' / group' : $package->max_guests . ' Guest' . ($package->max_guests > 1 ? 's' : '') }}
+                                    </p>
+                                </div>
+                            @endif
                         </div>
+
                         <div class="mb-3">
                             <p class="text-2xl font-bold text-gray-900">
-                                P{{ number_format($package->price, 0) }}
+                                P{{ number_format((float) $package->price, 0) }}
                                 <span class="text-sm font-normal text-gray-600">
                                     {{ $package->pricing_type === 'per_group' ? '/group' : '/head' }}
                                 </span>
                             </p>
+                            <p class="text-xs text-gray-500">
+                                {{ $package->pricing_type === 'per_group' ? 'group pricing' : 'per head pricing, total depends on selected guests' }}
+                            </p>
                         </div>
-                        <hr class="my-3 border-gray-200">
+
+                        @if(count($packageInclusions) > 0)
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                @foreach($packageInclusions as $inclusion)
+                                    <span class="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
+                                        {{ $inclusion }}
+                                    </span>
+                                @endforeach
+                            </div>
+                        @endif
                         <div class="flex justify-between items-center pt-3 mt-auto border-t border-gray-200">
                             <span class="text-xs text-gray-500">{{ optional($package->created_at)->format('Y-m-d') }}</span>
                             <div class="flex items-center space-x-4">
@@ -184,4 +253,5 @@
             </div>
         </div>
     </div>
+</div>
 </div>

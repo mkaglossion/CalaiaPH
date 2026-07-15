@@ -37,7 +37,7 @@ class SpecialSwiperImageController extends Controller
 
 
         // Save to DB
-        SpecialSwiperImage::create([
+        $image = SpecialSwiperImage::create([
             'title' => $validated['title'] ?? null,
             'image_path' => $uploadedFileUrl,
             'public_id' => $publicId, // optional column in your DB for deletion
@@ -45,7 +45,10 @@ class SpecialSwiperImageController extends Controller
 
         $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
 
-        return response()->json(['message' => $message]);
+        return response()->json([
+            'message' => $message,
+            'image' => $image->fresh(),
+        ]);
     }
 
     public function update(Request $request, SpecialSwiperImage $specialSwiperImage)
@@ -73,19 +76,27 @@ class SpecialSwiperImageController extends Controller
         }
 
         $specialSwiperImage->update($data);
+        $updatedImage = $specialSwiperImage->fresh();
 
         $message = $request->hasFile('image') ? 'Image updated successfully!' : 'Image details updated successfully!';
 
-        return response()->json(['message' => $message]);
+        return response()->json([
+            'message' => $message,
+            'image' => $updatedImage,
+        ]);
     }
 
 
-    public function destroy(SpecialSwiperImage $SpecialSwiperImage)
+    public function destroy(Request $request, SpecialSwiperImage $SpecialSwiperImage)
     {
         if ($SpecialSwiperImage->public_id ?? false) {
             Cloudinary::uploadApi()->destroy($SpecialSwiperImage->public_id);
         }        
         $SpecialSwiperImage->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Image deleted successfully!']);
+        }
 
         return redirect()->back()->with('success', 'Image deleted successfully!');
     }

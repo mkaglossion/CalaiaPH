@@ -22,12 +22,15 @@ class SpecialTextController extends Controller
             'content' => 'nullable|string',
         ]);
 
-        SpecialText::create([
+        $text = SpecialText::create([
             'label' => $request->title,
             'text' => $request->content,
         ]);
 
-        return response()->json();
+        return response()->json([
+            'message' => 'Text content added successfully.',
+            'text' => $text->fresh(),
+        ]);
     }
 
     public function update(Request $request, SpecialText $SpecialText)
@@ -42,12 +45,19 @@ class SpecialTextController extends Controller
             'text' => $request->content,
         ]);
 
-        return response()->json();
+        return response()->json([
+            'message' => 'Text content updated successfully.',
+            'text' => $SpecialText->fresh(),
+        ]);
     }
 
-    public function destroy(SpecialText $SpecialText)
+    public function destroy(Request $request, SpecialText $SpecialText)
     {
         $SpecialText->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Text content deleted successfully.']);
+        }
 
         return redirect()->back()->with('success', 'Text content deleted successfully.');
     }

@@ -40,6 +40,12 @@ class AdminDashboardController extends Controller
                 fn ($q) => $q->whereBetween('created_at', [$start, $end])
             );
         };
+        $applyBookingDateRange = function (Builder $query, string $dateColumn) use ($start, $end) {
+            return $query->when(
+                $start && $end,
+                fn ($q) => $q->whereBetween($dateColumn, [$start->toDateString(), $end->toDateString()])
+            );
+        };
 
         // -----------------------------
         // USERS (1 query)
@@ -89,6 +95,39 @@ class AdminDashboardController extends Controller
             PackageBooking::query()->whereIn('payment_status', ['pending', 'failed']),
             'created_at'
         );
+        $closedAttemptBase = $applyRange(
+            Booking::query()->where(function (Builder $query) use ($pendingCutoff) {
+                $query->where('payment_status', 'failed')
+                    ->orWhere(function (Builder $stalePending) use ($pendingCutoff) {
+                        $stalePending->where('payment_status', 'pending')
+                            ->whereNotIn('status', ['cancelled', 'completed'])
+                            ->where('created_at', '<', $pendingCutoff);
+                    });
+            }),
+            'created_at'
+        );
+        $closedAttemptPackageBase = $applyRange(
+            PackageBooking::query()->where(function (Builder $query) use ($pendingCutoff) {
+                $query->where('payment_status', 'failed')
+                    ->orWhere(function (Builder $stalePending) use ($pendingCutoff) {
+                        $stalePending->where('payment_status', 'pending')
+                            ->whereNotIn('status', ['cancelled', 'completed'])
+                            ->where('created_at', '<', $pendingCutoff);
+                    });
+            }),
+            'created_at'
+        );
+        $upcomingBookings = $applyBookingDateRange(
+            Booking::query()
+                ->where('status', 'confirmed')
+                ->whereNotIn('payment_status', ['pending', 'failed']),
+            'checkin_date'
+        )->count() + $applyBookingDateRange(
+            PackageBooking::query()
+                ->where('status', 'confirmed')
+                ->whereNotIn('payment_status', ['pending', 'failed']),
+            'booking_date'
+        )->count();
 
         $agg = (clone $base)->selectRaw("
             COUNT(*) as total_bookings,
@@ -137,7 +176,8 @@ class AdminDashboardController extends Controller
         $pendingBookings   = (int) $pendingAgg->pending_bookings + (int) $pendingPackageAgg->pending_bookings;
         $paymentAttempts   = (int) $attemptAgg->payment_attempts + (int) $attemptPackageAgg->payment_attempts;
         $attemptAmount     = (float) $attemptAgg->attempt_amount + (float) $attemptPackageAgg->attempt_amount;
-        $closedAttemptBookings = max(0, $paymentAttempts - $pendingBookings);
+        $closedAttemptBookings = (clone $closedAttemptBase)->count()
+            + (clone $closedAttemptPackageBase)->count();
         $completedRevenue  = (float) $agg->completed_revenue + (float) $packageAgg->completed_revenue;
         $refundedRevenue   = (float) $agg->refunded_revenue + (float) $packageAgg->refunded_revenue;
         $refundedBookings  = (int) $agg->refunded_bookings + (int) $packageAgg->refunded_bookings;
@@ -197,11 +237,13 @@ class AdminDashboardController extends Controller
         $today = now()->toDateString();
         $todayCheckInsBooking = Booking::query()
             ->whereDate('checkin_date', $today)
+            ->whereNotIn('payment_status', ['pending', 'failed'])
             ->where('status', '!=', 'cancelled')
             ->count();
 
         $todayCheckInsPackage = PackageBooking::query()
             ->whereDate('booking_date', $today)
+            ->whereNotIn('payment_status', ['pending', 'failed'])
             ->where('status', '!=', 'cancelled')
             ->count();
 
@@ -353,7 +395,7 @@ class AdminDashboardController extends Controller
         $viewData = compact(
             'rangeLabel', 'start', 'end', 'range',
             'clientUsers', 'totalUsers', 'verifiedUsers', 'adminUsers',
-            'totalBookings', 'activeBookings', 'completedBookings',
+            'totalBookings', 'activeBookings', 'completedBookings', 'upcomingBookings',
             'netRevenue', 'totalRevenue', 'pendingRevenue', 'pendingBookings', 'paymentAttempts', 'attemptAmount', 'closedAttemptBookings', 'pendingWindowMinutes', 'completedRevenue', 'refundedRevenue', 'refundedBookings', 'todayCheckIns',
             'summaryCompletedBookings', 'summaryClosedBookings', 'summaryTotalBookings',
             'completedRevenueChangePercent', 'completedRevenueComparisonLabel',
@@ -443,12 +485,15 @@ class AdminDashboardController extends Controller
         $overviewCards = [
             [
                 'label' => 'Upcoming',
-                'value' => $fmtInt($activeBookings),
+                'value' => $fmtInt($upcomingBookings),
                 'description' => 'Reservations ahead',
                 'icon' => 'calendar-days',
                 'iconWrap' => 'bg-blue-50 text-blue-600',
                 'linkTone' => 'text-blue-600',
-                'href' => route('admin.bookings.index', ['status' => 'confirmed']),
+                'href' => route('admin.bookings.index', array_merge($dateRangeParams, [
+                    'status' => 'confirmed',
+                    'payment_scope' => 'operational',
+                ])),
             ],
             [
                 'label' => 'Completed',
@@ -470,7 +515,7 @@ class AdminDashboardController extends Controller
             ],
             [
                 'label' => 'Closed',
-                'value' => $fmtInt($bookingOverviewCancelledTotal),
+                'value' => $fmtInt($closedAttemptBookings),
                 'description' => 'Failed or expired attempts',
                 'icon' => 'x-circle',
                 'iconWrap' => 'bg-rose-50 text-rose-600',
@@ -484,7 +529,12 @@ class AdminDashboardController extends Controller
                 'icon' => 'users',
                 'iconWrap' => 'bg-violet-50 text-violet-600',
                 'linkTone' => 'text-violet-600',
-                'href' => route('admin.bookings.index', ['date_from' => now()->toDateString(), 'date_to' => now()->toDateString()]),
+                'href' => route('admin.bookings.index', [
+                    'date_from' => now()->toDateString(),
+                    'date_to' => now()->toDateString(),
+                    'payment_scope' => 'operational',
+                    'exclude_cancelled' => 1,
+                ]),
             ],
         ];
 
@@ -1175,13 +1225,15 @@ class AdminDashboardController extends Controller
             PackageBooking::query()->whereBetween('booking_date', [$start->toDateString(), $end->toDateString()]),
             'booking_date'
         )->keyBy('day');
+        $closedAttemptCounts = $this->getDailyClosedAttemptCounts($start, $end, now()->subMinutes(60))->keyBy('day');
         $upcomingCounts = $this->getDailyUpcomingOverviewCounts($start, $end)->keyBy('day');
         $activeCounts = $this->getDailyActiveOverviewCounts($start, $end)->keyBy('day');
 
-        $dailySeries = collect(CarbonPeriod::create($start, '1 day', $end))->map(function (Carbon $date) use ($bookingCounts, $packageCounts, $upcomingCounts, $activeCounts) {
+        $dailySeries = collect(CarbonPeriod::create($start, '1 day', $end))->map(function (Carbon $date) use ($bookingCounts, $packageCounts, $closedAttemptCounts, $upcomingCounts, $activeCounts) {
             $key = $date->toDateString();
             $bookingRow = $bookingCounts->get($key);
             $packageRow = $packageCounts->get($key);
+            $closedRow = $closedAttemptCounts->get($key);
             $upcomingRow = $upcomingCounts->get($key);
             $activeRow = $activeCounts->get($key);
 
@@ -1191,7 +1243,7 @@ class AdminDashboardController extends Controller
                 'upcoming' => (int) ($upcomingRow->upcoming_count ?? 0),
                 'completed' => (int) ($bookingRow->completed_count ?? 0) + (int) ($packageRow->completed_count ?? 0),
                 'active' => (int) ($activeRow->active_count ?? 0),
-                'cancelled' => (int) ($bookingRow->cancelled_count ?? 0) + (int) ($packageRow->cancelled_count ?? 0),
+                'cancelled' => (int) ($closedRow->closed_count ?? 0),
                 'total' => (int) ($bookingRow->total_count ?? 0) + (int) ($packageRow->total_count ?? 0),
             ];
         })->values();
@@ -1291,6 +1343,39 @@ class AdminDashboardController extends Controller
             ->groupBy('day')
             ->orderBy('day')
             ->get();
+    }
+
+    private function getDailyClosedAttemptCounts(Carbon $start, Carbon $end, Carbon $pendingCutoff): \Illuminate\Support\Collection
+    {
+        $driver = DB::connection()->getDriverName();
+        $dayExpression = fn (string $column): string => $driver === 'sqlite'
+            ? "date({$column})"
+            : "DATE({$column})";
+
+        $buildQuery = function (Builder $query, string $dayColumn) use ($start, $end, $pendingCutoff, $dayExpression) {
+            return $query
+                ->where(function (Builder $attempts) use ($pendingCutoff) {
+                    $attempts->where('payment_status', 'failed')
+                        ->orWhere(function (Builder $stalePending) use ($pendingCutoff) {
+                            $stalePending->where('payment_status', 'pending')
+                                ->whereNotIn('status', ['cancelled', 'completed'])
+                                ->where('created_at', '<', $pendingCutoff);
+                        });
+                })
+                ->whereBetween('created_at', [$start, $end])
+                ->selectRaw($dayExpression($dayColumn) . ' as day, COUNT(*) as closed_count')
+                ->groupBy('day')
+                ->get();
+        };
+
+        return $buildQuery(Booking::query(), 'created_at')
+            ->concat($buildQuery(PackageBooking::query(), 'created_at'))
+            ->groupBy('day')
+            ->map(fn ($rows, $day) => (object) [
+                'day' => $day,
+                'closed_count' => (int) $rows->sum('closed_count'),
+            ])
+            ->values();
     }
 
     private function getDailyActiveOverviewCounts(Carbon $start, Carbon $end): \Illuminate\Support\Collection

@@ -22,12 +22,15 @@ class DoTextController extends Controller
             'content' => 'nullable|string',
         ]);
 
-        DoText::create([
+        $text = DoText::create([
             'label' => $request->title,
             'text' => $request->content,
         ]);
 
-        return response()->json();
+        return response()->json([
+            'message' => 'Text content added successfully.',
+            'text' => $text->fresh(),
+        ]);
     }
 
     public function update(Request $request, DoText $DoText)
@@ -42,12 +45,19 @@ class DoTextController extends Controller
             'text' => $request->content,
         ]);
 
-        return response()->json();
+        return response()->json([
+            'message' => 'Text content updated successfully.',
+            'text' => $DoText->fresh(),
+        ]);
     }
 
-    public function destroy(DoText $DoText)
+    public function destroy(Request $request, DoText $DoText)
     {
         $DoText->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Text content deleted successfully.']);
+        }
 
         return redirect()->back()->with('success', 'Text content deleted successfully.');
     }

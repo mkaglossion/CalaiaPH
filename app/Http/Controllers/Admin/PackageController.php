@@ -16,7 +16,7 @@ class PackageController extends Controller
      */
     public function index()
     {
-        $packages = Package::orderBy('created_at', 'asc')->paginate(15);
+        $packages = Package::ordered()->paginate(15);
         return view('admin.packages.index', compact('packages'));
     }
 
@@ -279,9 +279,40 @@ class PackageController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update status: ' . $e->getMessage(),
+            'message' => 'Failed to update status: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'ordered_ids' => ['required', 'array', 'min:1'],
+            'ordered_ids.*' => ['integer', 'distinct', 'exists:packages,id'],
+        ]);
+
+        $orderedIds = array_values(array_unique(array_map('intval', $validated['ordered_ids'])));
+        $currentIds = Package::query()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        $missingIds = array_values(array_diff($currentIds, $orderedIds));
+        $finalIds = array_merge($orderedIds, $missingIds);
+
+        DB::transaction(function () use ($finalIds): void {
+            foreach ($finalIds as $index => $packageId) {
+                Package::whereKey($packageId)->update([
+                    'sort_order' => $index + 1,
+                ]);
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Package order updated successfully.',
+        ]);
     }
 
     private function toDurationDays(int $value, string $unit): int

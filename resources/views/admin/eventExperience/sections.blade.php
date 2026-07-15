@@ -3,8 +3,23 @@
 @section('title', 'Event Experience Cards Management')
 
 @section('content')
+<style>
+    [data-event-section-card].sortable-ghost {
+        opacity: 0.45;
+        transform: scale(0.985);
+    }
+
+    [data-event-section-card].sortable-chosen {
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.15);
+    }
+
+    [data-event-section-card].sortable-drag {
+        cursor: grabbing;
+    }
+</style>
 <div
     x-data="eventSectionsManager()"
+    x-init="init()"
     class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
 >
     <h1 class="text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
@@ -23,9 +38,27 @@
         </x-admin.action-button>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div x-ref="sectionGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         @forelse($sections as $section)
-            <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-6 rounded-2xl shadow-md hover:shadow-xl transition">
+            <div
+                data-event-section-card
+                data-section-id="{{ $section->id }}"
+                class="relative tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-6 rounded-2xl shadow-md hover:shadow-xl transition cursor-grab active:cursor-grabbing"
+            >
+                <div class="absolute right-4 top-4 z-20 flex items-center gap-2">
+                    <span data-section-order class="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-white/95 px-2 text-xs font-semibold text-gray-700 shadow-sm border border-gray-200">
+                        #{{ $loop->iteration }}
+                    </span>
+                    <button
+                        type="button"
+                        data-drag-handle
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-500 shadow-sm transition hover:border-gray-300 hover:text-gray-700"
+                        aria-label="Drag to reorder event section"
+                        title="Drag to reorder event section"
+                    >
+                        <i data-lucide="grip-vertical" class="w-5 h-5"></i>
+                    </button>
+                </div>
                 <div class="mb-4">
                     <img
                         src="{{ \App\Helpers\ImageHelper::src($section->image_path) }}"
@@ -42,10 +75,6 @@
                         <div class="flex items-center text-gray-600">
                             <i data-lucide="link" class="w-4 h-4 mr-2 text-blue-500"></i>
                             <span class="truncate">{{ $section->link_path }}</span>
-                        </div>
-                        <div class="flex items-center text-gray-600">
-                            <i data-lucide="list-ordered" class="w-4 h-4 mr-2 text-green-500"></i>
-                            <span>Order: {{ $section->order }}</span>
                         </div>
                         <div class="flex items-center text-gray-600">
                             <i data-lucide="file-text" class="w-4 h-4 mr-2 text-purple-500"></i>
@@ -151,11 +180,6 @@
                     </div>
 
                     <div>
-                        <label for="order" class="block font-medium mb-1 text-gray-700">Order</label>
-                        <input type="number" id="order" name="order" x-model="form.order" class="border rounded-xl p-3 w-full" required>
-                    </div>
-
-                    <div>
                         <label for="theme" class="block font-medium mb-1 text-gray-700">Theme</label>
                         <select id="theme" x-model="form.theme" :value="form.theme" name="theme" class="border rounded-xl p-3 w-full" required>
                             <option value="white" :selected="form.theme === 'white'">White</option>
@@ -165,12 +189,21 @@
                     </div>
                 </div>
 
-                <div class="flex justify-end space-x-3 pt-2">
-                    <x-admin.action-button variant="secondary" type="button" @click="showModal = false">
+                <div class="mt-6 flex justify-end gap-3 border-t border-gray-200 pt-5">
+                    <x-admin.action-button
+                        variant="secondary"
+                        type="button"
+                        class="min-w-[96px] px-5 py-2.5 text-sm font-semibold"
+                        @click="showModal = false"
+                    >
                         Cancel
                     </x-admin.action-button>
 
-                    <x-admin.action-button variant="primary" type="submit">
+                    <x-admin.action-button
+                        variant="primary"
+                        type="submit"
+                        class="min-w-[96px] px-5 py-2.5 text-sm font-semibold"
+                    >
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
                     </x-admin.action-button>
                 </div>
@@ -198,9 +231,12 @@
 function eventSectionsManager() {
     return {
         isLoading: false,
+        isReordering: false,
         showModal: false,
         editMode: false,
         sections: @js($sections),
+        reorderRoute: @js(route('event-experience-sections.reorder')),
+        sortableInstance: null,
         form: {
             id: null,
             section_id: '',
@@ -211,10 +247,99 @@ function eventSectionsManager() {
             description2: '',
             link_path: '',
             theme: 'white',
-            order: 1,
             remove_image: false
         },
         file: null,
+
+        init() {
+            this.$nextTick(() => this.initSortable());
+        },
+
+        initSortable() {
+            if (this.sortableInstance) {
+                this.sortableInstance.destroy();
+                this.sortableInstance = null;
+            }
+
+            if (typeof Sortable === 'undefined' || !this.$refs.sectionGrid) {
+                return;
+            }
+
+            this.sortableInstance = Sortable.create(this.$refs.sectionGrid, {
+                animation: 180,
+                handle: '[data-drag-handle]',
+                draggable: '[data-event-section-card]',
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                onEnd: async () => {
+                    const orderedIds = Array.from(
+                        this.$refs.sectionGrid.querySelectorAll('[data-section-id]')
+                    )
+                        .map((node) => Number(node.dataset.sectionId))
+                        .filter((id) => Number.isInteger(id) && id > 0);
+
+                    if (orderedIds.length > 0) {
+                        await this.persistOrder(orderedIds);
+                    }
+                }
+            });
+        },
+
+        refreshDisplayedOrder() {
+            if (!this.$refs.sectionGrid) return;
+
+            Array.from(this.$refs.sectionGrid.querySelectorAll('[data-event-section-card]'))
+                .forEach((card, index) => {
+                    const badge = card.querySelector('[data-section-order]');
+                    if (badge) badge.textContent = `#${index + 1}`;
+                });
+        },
+
+        async persistOrder(orderedIds) {
+            if (this.isReordering) return;
+
+            this.isReordering = true;
+            this.sortableInstance?.option('disabled', true);
+
+            try {
+                const csrf = document.querySelector('meta[name=csrf-token]')?.content || '';
+                const response = await fetch(this.reorderRoute, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ ordered_ids: orderedIds }),
+                });
+                const payload = await response.json().catch(() => ({}));
+
+                if (!response.ok || payload.success === false) {
+                    throw new Error(payload.message || 'Failed to save event section order.');
+                }
+
+                this.refreshDisplayedOrder();
+                await Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: payload.message || 'Event section order updated successfully.',
+                    showConfirmButton: false,
+                    timer: 1200,
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Reorder Failed',
+                    text: error.message || 'Failed to save event section order.',
+                }).then(() => window.location.reload());
+            } finally {
+                this.isReordering = false;
+                this.sortableInstance?.option('disabled', false);
+            }
+        },
 
         resetForm() {
             this.form = {
@@ -227,7 +352,6 @@ function eventSectionsManager() {
                 description2: '',
                 link_path: '',
                 theme: 'white',
-                order: 1,
                 remove_image: false
             };
             this.file = null;
@@ -271,7 +395,6 @@ function eventSectionsManager() {
                     description2: section.description2,
                     link_path: section.link_path,
                     theme: section.theme,
-                    order: section.order,
                     remove_image: false
                 };
                 this.editMode = true;
@@ -310,7 +433,6 @@ function eventSectionsManager() {
             formData.append('description2', this.form.description2);
             formData.append('link_path', this.form.link_path);
             formData.append('theme', this.form.theme || 'white');
-            formData.append('order', this.form.order);
             if (this.form.remove_image) formData.append('remove_image', 1);
 
             // Add file if present

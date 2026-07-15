@@ -305,12 +305,21 @@
                     <input type="number" id="order" name="order" x-model="form.order" class="border rounded-xl p-3 w-full" required min="0" placeholder="0 = first, higher numbers = later">
                 </div>
 
-                <div class="flex justify-end space-x-3 pt-2">
-                    <x-admin.action-button variant="secondary" type="button" @click="showModal = false">
+                <div class="mt-6 flex justify-end gap-3 border-t border-gray-200 pt-5">
+                    <x-admin.action-button
+                        variant="secondary"
+                        type="button"
+                        class="min-w-[96px] px-5 py-2.5 text-sm font-semibold"
+                        @click="showModal = false"
+                    >
                         Cancel
                     </x-admin.action-button>
 
-                    <x-admin.action-button variant="primary" type="submit">
+                    <x-admin.action-button
+                        variant="primary"
+                        type="submit"
+                        class="min-w-[96px] px-5 py-2.5 text-sm font-semibold"
+                    >
                         <span x-text="editMode ? 'Update' : 'Add'"></span>
                     </x-admin.action-button>
                 </div>

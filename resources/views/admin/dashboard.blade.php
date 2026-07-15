@@ -435,7 +435,7 @@
         @endforeach
 
         <div class="border-t border-slate-100 px-3.5 py-3 text-[11px] text-slate-500 sm:text-xs 2xl:px-4 2xl:py-4 2xl:text-sm">
-          <p class="mt-1">Closed = cancelled, expired, and abandoned bookings.</p>
+          <p class="mt-1">Closed = failed or expired payment attempts.</p>
         </div>
       </div>
   </x-admin.dashboard.section-card>

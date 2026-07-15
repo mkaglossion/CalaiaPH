@@ -5,6 +5,7 @@
     'texts' => [],
     'imageStoreRoute' => '',
     'imageDestroyRoute' => '',
+    'imageReorderRoute' => '',
     'textStoreRoute' => '',
     'textDestroyRoute' => '',
     'pageCopyEnabled' => false,
@@ -14,20 +15,17 @@
     'extraSections' => null,
 ])
 
-@php
-    $imageIds = $images->pluck('id')->toArray();
-@endphp
-
 <div
     x-data="cmsManager({
         images: @js($images),
         texts: @js($texts),
         imageStoreRoute: '{{ $imageStoreRoute }}',
         imageDestroyRoute: '{{ $imageDestroyRoute }}',
+        imageReorderRoute: '{{ $imageReorderRoute }}',
         textStoreRoute: '{{ $textStoreRoute }}',
         textDestroyRoute: '{{ $textDestroyRoute }}',
-        imageIds: @js($imageIds)
     })"
+    x-init="initialize()"
     class="p-4 md:p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl"
 >
     <h1 class="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-gray-900">
@@ -51,40 +49,69 @@
         </div>
 
         {{-- Cards Grid --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            @forelse($images as $img)
-                <div class="tilt-card bg-white/80 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative">
+        <div x-ref="imageGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <template x-for="image in images" :key="image.id">
+                <div
+                    data-cms-image-card
+                    :data-cms-image-id="image.id"
+                    class="tilt-card bg-white/80 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative"
+                    :class="canReorder ? 'cursor-grab active:cursor-grabbing' : ''"
+                >
+                    <div class="absolute right-4 top-4 z-10 flex items-center gap-2">
+                        <span class="inline-flex min-w-8 items-center justify-center rounded-full bg-white/90 px-2 py-1 text-[11px] font-semibold text-gray-500 shadow-sm"
+                              x-text="`#${Number(image.sort_order || 0)}`"></span>
+                        <button
+                            x-show="canReorder"
+                            type="button"
+                            data-drag-handle
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/95 text-gray-500 shadow-sm transition hover:border-gray-300 hover:text-gray-700"
+                            aria-label="Drag to reorder image"
+                            title="Drag to reorder image"
+                        >
+                            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <circle cx="6" cy="5" r="1.4" />
+                                <circle cx="6" cy="10" r="1.4" />
+                                <circle cx="6" cy="15" r="1.4" />
+                                <circle cx="14" cy="5" r="1.4" />
+                                <circle cx="14" cy="10" r="1.4" />
+                                <circle cx="14" cy="15" r="1.4" />
+                            </svg>
+                        </button>
+                    </div>
+
                     <div class="flex items-center mb-2">
-                        <input type="checkbox" x-model="selectedImages" value="{{ $img->id }}" class="mr-2">
+                        <input type="checkbox" x-model="selectedImages" :value="Number(image.id)" class="mr-2">
                         <span class="text-xs text-gray-500">Select</span>
                     </div>
                     <div class="overflow-hidden rounded-xl">
-                        @if(\App\Helpers\ImageHelper::isVideo($img->image_path ?? $img))
-                            <img src="{{ \App\Helpers\ImageHelper::src(\App\Helpers\ImageHelper::videoThumbnail($img->image_path ?? $img)) }}" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
-                        @else
-                            <img src="{{ \App\Helpers\ImageHelper::src($img->image_path ?? $img) }}" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
-                        @endif
+                        <template x-if="isVideoPath(image.image_path)">
+                            <img :src="resolveImageSrc(videoThumbnailSrc(image.image_path))" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        </template>
+                        <template x-if="!isVideoPath(image.image_path)">
+                            <img :src="resolveImageSrc(image.image_path)" class="w-full h-48 object-cover transition hover:scale-105" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        </template>
                     </div>
 
                     <div class="mt-4">
-                        <h3 class="font-semibold text-lg text-gray-900">{{ $img->title ?: 'Untitled' }}</h3>
+                        <h3 class="font-semibold text-lg text-gray-900" x-text="image.title ? image.title : 'Untitled'"></h3>
                         <p class="text-gray-500 text-sm">
-                            Uploaded: {{ $img->created_at?->format('Y-m-d') ?? 'N/A' }}
+                            Uploaded: <span x-text="formatDate(image.created_at)"></span>
                         </p>
                     </div>
 
                     <div class="mt-5 flex justify-end space-x-3">
                         <button class="text-[#8f5d54] font-semibold hover:text-[#7a4d46] hover:underline transition"
-                            @click="editImage({{ $img->id }}, '{{ $img->title }}')">Edit</button>
+                            @click="editImage(image.id, image.title || '')">Edit</button>
                         <button class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
-                            @click="deleteImage({{ $img->id }})">
+                            @click="deleteImage(image.id)">
                             Delete
                         </button>
                     </div>
                 </div>
-            @empty
+            </template>
+            <template x-if="images.length === 0">
                 <p class="text-gray-500 col-span-full">No images uploaded yet.</p>
-            @endforelse
+            </template>
         </div>
 
         {{-- Bulk Actions --}}
@@ -130,32 +157,29 @@
                 </thead>
 
                 <tbody class="divide-y divide-gray-200">
-                    @forelse($texts as $text)
+                    <template x-for="text in texts" :key="text.id">
                         <tr class="hover:bg-gray-50/70 transition">
-                            <td class="px-6 py-4 font-medium text-gray-900">
-                                {{ $text->title ?? $text->label ?? 'No Label' }}
-                            </td>
+                            <td class="px-6 py-4 font-medium text-gray-900" x-text="text.title || text.label || 'No Label'"></td>
 
-                            <td class="px-6 py-4 text-gray-600 text-sm">
-                                {{ Str::limit($text->text ?? $text->content ?? '', 150) }}
-                            </td>
+                            <td class="px-6 py-4 text-gray-600 text-sm" x-text="truncateText(text.text || text.content || '', 150)"></td>
 
                             <td class="px-6 py-4 text-right space-x-4">
                                 <button
                                     class="text-[#8f5d54] font-semibold hover:text-[#7a4d46] hover:underline transition"
-                                    @click="editText({{ $text->id }})">Edit</button>
+                                    @click="editText(text.id)">Edit</button>
                                 <button
                                     class="text-red-600 font-semibold hover:text-red-700 hover:underline transition"
-                                    @click="deleteText({{ $text->id }})">Delete</button>
+                                    @click="deleteText(text.id)">Delete</button>
                             </td>
                         </tr>
-                    @empty
+                    </template>
+                    <template x-if="texts.length === 0">
                         <tr>
                             <td colspan="3" class="px-6 py-6 text-center text-gray-500">
                                 No text content yet.
                             </td>
                         </tr>
-                    @endforelse
+                    </template>
                 </tbody>
             </table>
         </div>
@@ -354,8 +378,7 @@
                     <button type="button" @click="showModal = false; resetImageForm()" class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">
                         Cancel
                     </button>
-                    <button type="submit" :disabled="isLoading" class="px-4 py-2 rounded-xl bg-[#8f5d54] text-white hover:bg-[#7a4d46] shadow transition disabled:opacity-60" x-text="isLoading ? (editImageMode ? 'Updating...' : 'Uploading...') : (editImageMode ? 'Update' : 'Upload')">
-                    </button>
+                    <button type="submit" :disabled="isLoading" class="px-4 py-2 rounded-xl bg-[#8f5d54] text-white hover:bg-[#7a4d46] shadow transition disabled:opacity-60" x-text="isLoading ? (editImageMode ? 'Updating...' : 'Uploading...') : (editImageMode ? 'Update' : 'Upload')"></button>
                 </div>
             </form>
         </div>
@@ -379,9 +402,9 @@
                     <textarea id="cms-text-content" x-model="form.content" rows="4" class="w-full border rounded-xl px-3 py-2" placeholder="Enter text..." required></textarea>
                 </div>
 
-<div class="flex justify-end space-x-3 pt-2">
+                <div class="flex justify-end space-x-3 pt-2">
                     <button type="button" @click="showTextModal = false" class="px-4 py-2 border rounded-xl hover:bg-gray-100 transition">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-[#8f5d54] text-white hover:bg-[#7a4d46] shadow transition" x-text="editMode ? 'Update' : 'Add'"></button>
+                    <button type="submit" :disabled="isLoading" class="px-5 py-2 rounded-xl bg-[#8f5d54] text-white hover:bg-[#7a4d46] shadow transition disabled:opacity-60" x-text="isLoading ? (editMode ? 'Updating...' : 'Adding...') : (editMode ? 'Update' : 'Add')"></button>
                 </div>
             </form>
         </div>
