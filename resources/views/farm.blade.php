@@ -310,7 +310,7 @@
         button-url="https://m.me/410774518796277"
         button-label="{{ $farmCtaButton ?? 'Message Us on Messenger' }}"
         note="{{ $farmCtaNote ?? 'We usually reply as soon as possible during business hours.' }}"
-        icon-class="fab fa-facebook-messenger text-4xl md:text-5xl opacity-80 mb-4 block"
+        icon-class="fas fa-tractor text-4xl md:text-5xl opacity-80 mb-4 block"
     />
     </main>
 
