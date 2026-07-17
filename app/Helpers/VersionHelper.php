@@ -3,7 +3,7 @@
 namespace App\Helpers;
 
 use Illuminate\Support\Facades\File;
-use Symfony\Component\Process\Process;
+use Illuminate\Support\Facades\Process;
 
 class VersionHelper
 {
@@ -25,13 +25,16 @@ class VersionHelper
             return self::$fullResolved;
         }
 
-        $version = self::versionFromStoredFile();
+        // Prefer the checked-out commit whenever Git metadata is available.
+        // The stored file is only a deployment fallback and may be stale after
+        // a pull, so it must never override the current repository version.
+        $version = self::versionFromGitTag();
 
         if ($version !== null) {
             return self::$fullResolved = $version;
         }
 
-        $version = self::versionFromGitTag();
+        $version = self::versionFromStoredFile();
 
         if ($version !== null) {
             return self::$fullResolved = $version;
@@ -119,15 +122,15 @@ class VersionHelper
     private static function runGitCommand(array $command): ?string
     {
         try {
-            $process = new Process($command, base_path());
-            $process->setTimeout(2);
-            $process->run();
+            $process = Process::path(base_path())
+                ->timeout(2)
+                ->run($command);
 
-            if (! $process->isSuccessful()) {
+            if (! $process->successful()) {
                 return null;
             }
 
-            return trim($process->getOutput());
+            return trim($process->output());
         } catch (\Throwable) {
             return null;
         }
