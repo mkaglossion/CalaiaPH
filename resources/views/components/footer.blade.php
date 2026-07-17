@@ -6,6 +6,7 @@
     ? $footerDescription
     : "Your perfect getaway destination for relaxation and adventure.\nExperience nature at its finest in Calaca, Batangas.";
   $nav = config('navigation.main', []);
+  $policyLinks = \App\Models\PolicyPage::navigationItems();
 @endphp
 
 <footer class="bg-brand-dark text-white mt-0">
@@ -117,21 +118,11 @@
         <div class="text-center">
           <h3 class="text-xl font-semibold uppercase mb-3">POLICIES & TERMS</h3>
           <div class="flex flex-wrap justify-center gap-6">
-            <a href="{{ url('/privacy-notice') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
-              Privacy Notice
-            </a>
-            <a href="{{ url('/data-deletion') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
-              Data Deletion
-            </a>
-            <a href="{{ url('/calaia-policy') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
-              Calaia Policy
-            </a>
-            <a href="{{ url('/cookies-policy') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
-              Cookies Policy
-            </a>
-            <a href="{{ url('/terms-service') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
-              Terms of Service
-            </a>
+            @foreach($policyLinks as $policyLink)
+              <a href="{{ route($policyLink['route']) }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
+                {{ $policyLink['label'] }}
+              </a>
+            @endforeach
           </div>
         </div>
       </div>

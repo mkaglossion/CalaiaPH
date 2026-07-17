@@ -37,6 +37,7 @@ use App\Models\Holiday;
 use App\Models\DayTypeDay;
 use App\Models\BookingSetting;
 use App\Models\DiningCategoryImage;
+use App\Models\PolicyPage;
 
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -961,23 +962,36 @@ class PagesController extends Controller
     }
     public function privacyNotice()
     {
-        return view('pages.privacy-notice', ['active' => 'privacy-notice']);
+        return $this->renderPolicyPage('privacy-notice');
     }
+
     public function dataDeletion()
     {
-        return view('pages.data-deletion', ['active' => 'data-deletion']);
+        return $this->renderPolicyPage('data-deletion');
     }
+
     public function calaiaPolicy()
     {
-        return view('pages.calaia-policy', ['active' => 'calaia-policy']);
+        return $this->renderPolicyPage('calaia-policy');
     }
+
     public function cookiesPolicy()
     {
-        return view('pages.cookies-policy', ['active' => 'cookies-policy']);
+        return $this->renderPolicyPage('cookies-policy');
     }
+
     public function termsService()
     {
-        return view('pages.terms-service', ['active' => 'terms-service']);
+        return $this->renderPolicyPage('terms-service');
+    }
+
+    private function renderPolicyPage(string $slug)
+    {
+        $policyPage = PolicyPage::findPublic($slug);
+
+        abort_if($policyPage === null, 404);
+
+        return view('pages.'.$slug, compact('policyPage'));
     }
 
     public function packages()

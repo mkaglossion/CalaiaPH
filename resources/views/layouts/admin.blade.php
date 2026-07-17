@@ -88,6 +88,12 @@
 
       <div class="px-3 space-y-1">
         @foreach($menuItems as $item)
+          @php
+            if (($item['sub_provider'] ?? null) === 'policy_pages') {
+              $item['sub'] = \App\Models\PolicyPage::adminNavigationItems();
+            }
+          @endphp
+
           @if(!empty($item['sub']))
             @php
               $isAnySubActive = false;
