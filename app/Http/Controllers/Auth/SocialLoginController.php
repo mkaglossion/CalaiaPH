@@ -70,9 +70,13 @@ class SocialLoginController extends Controller
             /** @var AbstractProvider $socialiteProvider */
             $socialiteProvider = Socialite::driver($provider);
 
-            return $socialiteProvider
-                ->scopes($this->providerScopes($provider))
-                ->redirect();
+            $socialiteProvider->scopes($this->providerScopes($provider));
+
+            if ($provider === 'google') {
+                $socialiteProvider->with(['prompt' => 'select_account']);
+            }
+
+            return $socialiteProvider->redirect();
         } catch (Throwable $exception) {
             Log::warning('Unable to start social login redirect.', [
                 'provider' => $provider,

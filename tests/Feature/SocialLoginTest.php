@@ -60,6 +60,22 @@ class SocialLoginTest extends TestCase
         );
     }
 
+    public function test_google_oauth_prompts_the_user_to_select_an_account(): void
+    {
+        config([
+            'services.google.client_id' => 'google-test-client',
+            'services.google.client_secret' => 'google-test-secret',
+            'services.google.redirect' => 'https://localhost/auth/google/callback',
+        ]);
+
+        $response = $this->get('https://localhost/auth/google/redirect');
+        $location = (string) $response->headers->get('Location');
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+
+        $this->assertStringStartsWith('https://accounts.google.com/o/oauth2/auth', $location);
+        $this->assertSame('select_account', $query['prompt'] ?? null);
+    }
+
     public function test_facebook_oauth_uses_the_secure_configured_callback_uri(): void
     {
         config([
