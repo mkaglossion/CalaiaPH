@@ -120,6 +120,9 @@
             <a href="{{ url('/privacy-notice') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
               Privacy Notice
             </a>
+            <a href="{{ url('/data-deletion') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
+              Data Deletion
+            </a>
             <a href="{{ url('/calaia-policy') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
               Calaia Policy
             </a>

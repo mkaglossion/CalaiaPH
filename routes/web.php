@@ -142,6 +142,7 @@ Route::get('/shop', [PagesController::class, 'shop'])->name('shop');
 Route::get('/contact', [PagesController::class, 'contact'])->name('contact');
 Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
 Route::get('/privacy-notice', [PagesController::class, 'privacyNotice'])->name('privacy-notice');
+Route::get('/data-deletion', [PagesController::class, 'dataDeletion'])->name('data-deletion');
 Route::get('/calaia-policy', [PagesController::class, 'calaiaPolicy'])->name('calaia-policy');
 Route::get('/cookies-policy', [PagesController::class, 'cookiesPolicy'])->name('cookies-policy');
 Route::get('/terms-service', [PagesController::class, 'termsService'])->name('terms-service');

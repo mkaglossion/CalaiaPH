@@ -46,7 +46,15 @@ class PagesController extends Controller
     /**
      * Generic method to render pages with swiper images and texts
      */
-    protected function renderPage($swiperModel, $textModel, $viewName, $activeName, $textField = 'label', $contentField = 'text', $extraData = [])
+    protected function renderPage(
+        string $swiperModel,
+        string $textModel,
+        string $viewName,
+        string $activeName,
+        string $textField = 'label',
+        string $contentField = 'text',
+        array $extraData = []
+    )
     {
         $swiperImages = $swiperModel::ordered()->get();
         $texts = $textModel::whereNotNull($textField)->pluck($contentField, $textField)->mapWithKeys(function ($content, $field) {
@@ -602,13 +610,13 @@ class PagesController extends Controller
         return 0;
     }
 
-    protected function calculateMattressFee($mattressCount, $nights)
+    protected function calculateMattressFee(int|string $mattressCount, int|float $nights): int|float
     {
         $pricePerNight = BookingSetting::getValue('mattress_price_per_night', 500); // default 500
         return (int)$mattressCount * (int)$pricePerNight * max(1, $nights);
     }
 
-    protected function calculatePetFee($petCount)
+    protected function calculatePetFee(int|string $petCount): int
     {
         $petPrice = BookingSetting::getValue('pet_price', 2000); // default 2000
         return (int)$petCount * (int)$petPrice;
@@ -954,6 +962,10 @@ class PagesController extends Controller
     public function privacyNotice()
     {
         return view('pages.privacy-notice', ['active' => 'privacy-notice']);
+    }
+    public function dataDeletion()
+    {
+        return view('pages.data-deletion', ['active' => 'data-deletion']);
     }
     public function calaiaPolicy()
     {

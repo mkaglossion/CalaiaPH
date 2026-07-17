@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\InvalidStateException;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Throwable;
@@ -41,6 +42,23 @@ class SocialLoginController extends Controller
 
     private function redirectToProvider(Request $request, string $provider): RedirectResponse
     {
+        if (! $this->providerIsConfigured($provider)) {
+            Log::warning('Social login provider is not configured.', [
+                'provider' => $provider,
+            ]);
+
+            return $this->redirectWithError(
+                $request,
+                $this->providerLabel($provider).' login is not configured yet. Please contact support.'
+            );
+        }
+
+        $providerOriginRedirect = $this->redirectToConfiguredProviderOrigin($request, $provider);
+
+        if ($providerOriginRedirect !== null) {
+            return $providerOriginRedirect;
+        }
+
         $intendedUrl = $this->sanitizePublicUrl($request, $request->query('intended'));
 
         if ($intendedUrl !== null) {
@@ -49,7 +67,10 @@ class SocialLoginController extends Controller
         }
 
         try {
-            return Socialite::driver($provider)
+            /** @var AbstractProvider $socialiteProvider */
+            $socialiteProvider = Socialite::driver($provider);
+
+            return $socialiteProvider
                 ->scopes($this->providerScopes($provider))
                 ->redirect();
         } catch (Throwable $exception) {
@@ -63,6 +84,39 @@ class SocialLoginController extends Controller
                 'Unable to start '.$this->providerLabel($provider).' login right now. Please try again.'
             );
         }
+    }
+
+    private function providerIsConfigured(string $provider): bool
+    {
+        return filled(config('services.'.$provider.'.client_id'))
+            && filled(config('services.'.$provider.'.client_secret'))
+            && filled(config('services.'.$provider.'.redirect'));
+    }
+
+    private function redirectToConfiguredProviderOrigin(Request $request, string $provider): ?RedirectResponse
+    {
+        $redirectUri = (string) config('services.'.$provider.'.redirect');
+        $scheme = strtolower((string) parse_url($redirectUri, PHP_URL_SCHEME));
+        $host = strtolower((string) parse_url($redirectUri, PHP_URL_HOST));
+
+        if ($scheme === '' || $host === '') {
+            return null;
+        }
+
+        $port = parse_url($redirectUri, PHP_URL_PORT);
+        $usesDefaultPort = ($scheme === 'http' && $port === 80)
+            || ($scheme === 'https' && $port === 443);
+        $configuredOrigin = $scheme.'://'.$host;
+
+        if ($port !== null && ! $usesDefaultPort) {
+            $configuredOrigin .= ':'.$port;
+        }
+
+        if (strcasecmp($request->getSchemeAndHttpHost(), $configuredOrigin) === 0) {
+            return null;
+        }
+
+        return redirect()->away($configuredOrigin.$request->getRequestUri());
     }
 
     private function handleProviderCallback(Request $request, string $provider): RedirectResponse
@@ -109,9 +163,11 @@ class SocialLoginController extends Controller
         }
 
         $email = Str::lower((string) $socialUser->getEmail());
+        $emailVerified = $this->providerEmailIsVerified($socialUser);
         $user = User::where('provider_name', $provider)
             ->where('provider_id', $providerId)
             ->first();
+        $matchedByProvider = $user !== null;
 
         if ($user === null && $email === '') {
             return $this->redirectWithError(
@@ -124,14 +180,17 @@ class SocialLoginController extends Controller
             $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
         }
 
-        if ($user !== null && $user->user_type === 'admin') {
+        if (
+            $user !== null
+            && $user->user_type === 'admin'
+            && ! $matchedByProvider
+            && ($provider !== 'google' || ! $emailVerified)
+        ) {
             return $this->redirectWithError(
                 $request,
-                'This social login is only available for customer accounts.'
+                'Admin accounts can only use a verified Google account for social login.'
             );
         }
-
-        $emailVerified = $this->providerEmailIsVerified($socialUser);
 
         if ($user !== null) {
             $this->syncExistingUser($user, $provider, $providerId, $socialUser->getAvatar(), $emailVerified);
