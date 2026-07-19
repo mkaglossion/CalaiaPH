@@ -11,6 +11,7 @@ return [
         ['title' => 'Bookings', 'icon' => 'calendar-check', 'route' => 'admin.bookings.*', 'sub' => [
             ['label' => 'All Bookings', 'route' => 'admin.bookings.index'],
             ['label' => 'Unified Inventory', 'route' => 'admin.bookings.inventory'],
+            ['label' => 'Package Bookings', 'route' => 'admin.bookings.packages'],
             ['label' => 'Staycation Bookings', 'route' => 'admin.bookings.staycations'],
             ['label' => 'Food Bookings', 'route' => 'admin.bookings.foodandbeverage'],
             ['label' => 'Activities Bookings', 'route' => 'admin.bookings.activities'],

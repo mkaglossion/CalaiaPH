@@ -537,6 +537,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/paymongo-webhooks', [AdminBookingsController::class, 'paymongoWebhooks'])->name('admin.bookings.paymongo-webhooks');
         Route::get('/staycations', [AdminBookingMonitoringController::class, 'staycations'])->name('admin.bookings.staycations');
         Route::get('/staycations/export', [AdminBookingMonitoringController::class, 'exportStaycations'])->name('admin.bookings.staycations.export');
+        Route::get('/packages', [AdminBookingMonitoringController::class, 'packages'])->name('admin.bookings.packages');
+        Route::get('/packages/export', [AdminBookingMonitoringController::class, 'exportPackages'])->name('admin.bookings.packages.export');
         Route::get('/food-and-beverage', [AdminBookingMonitoringController::class, 'foodAndBeverage'])->name('admin.bookings.foodandbeverage');
         Route::get('/food-and-beverage/export', [AdminBookingMonitoringController::class, 'exportFoodAndBeverage'])->name('admin.bookings.foodandbeverage.export');
         Route::get('/activities', [AdminBookingMonitoringController::class, 'activities'])->name('admin.bookings.activities');
