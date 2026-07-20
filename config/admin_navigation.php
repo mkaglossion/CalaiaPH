@@ -46,6 +46,7 @@ return [
             ['label' => 'Orders', 'route' => 'admin.shop.orders'],
             ['label' => 'Inventory Monitor', 'route' => 'admin.inventory.shop'],
         ]],
+        ['title' => 'Information', 'icon' => 'info', 'route' => 'admin.information.index', 'sub_provider' => 'information_pages'],
         ['title' => 'Policies & Terms', 'icon' => 'file-lock-2', 'route' => 'admin.policies.index', 'sub_provider' => 'policy_pages'],
         ['title' => 'Booking Confirmation', 'icon' => 'file-text', 'route' => 'admin.booking-confirmation.index', 'sub' => [
             ['label' => 'Staycation', 'route' => 'admin.booking-confirmation.index', 'params' => ['tab' => 'staycation']],

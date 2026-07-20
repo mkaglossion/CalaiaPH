@@ -37,6 +37,7 @@ use App\Models\Holiday;
 use App\Models\DayTypeDay;
 use App\Models\BookingSetting;
 use App\Models\DiningCategoryImage;
+use App\Models\InformationPage;
 use App\Models\PolicyPage;
 
 use Illuminate\Http\Request;
@@ -904,7 +905,7 @@ class PagesController extends Controller
 
     public function ourStory()
     {
-        return view('pages.our-story');
+        return $this->renderInformationPage('our-story');
     }
 
     public function shop()
@@ -949,17 +950,27 @@ class PagesController extends Controller
 
     public function sustainability()
     {
-        return view('pages.sustainability');
+        return $this->renderInformationPage('sustainability');
     }
 
     public function ourServices()
     {
-        return view('pages.our-services');
+        return $this->renderInformationPage('our-services');
     }
     public function contact()
     {
-        return view('contact', ['active' => 'contact']);
+        return $this->renderInformationPage('contact');
     }
+
+    private function renderInformationPage(string $slug)
+    {
+        $informationPage = InformationPage::findPublic($slug);
+
+        abort_if($informationPage === null, 404);
+
+        return view(config("information_pages.pages.$slug.default_view"), compact('informationPage'));
+    }
+
     public function privacyNotice()
     {
         return $this->renderPolicyPage('privacy-notice');

@@ -6,6 +6,7 @@
     ? $footerDescription
     : "Your perfect getaway destination for relaxation and adventure.\nExperience nature at its finest in Calaca, Batangas.";
   $nav = config('navigation.main', []);
+  $informationLinks = \App\Models\InformationPage::navigationItems();
   $policyLinks = \App\Models\PolicyPage::navigationItems();
 @endphp
 
@@ -75,10 +76,13 @@
             <i class="bi bi-plus md:hidden"></i>
           </h3>
           <ul class="space-y-1 hidden md:block">
-            <li><a href="{{ url('/our-story') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Our Story</a></li>
-            <li><a href="{{ url('/sustainability') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Sustainability</a></li>
-            <li><a href="{{ url('/our-services') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Our Services</a></li>
-            <li><a href="{{ url('/contact') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Contact Us</a></li>
+            @foreach($informationLinks as $informationLink)
+              <li>
+                <a href="{{ route($informationLink['route']) }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
+                  {{ $informationLink['label'] }}
+                </a>
+              </li>
+            @endforeach
           </ul>
         </div>
 

@@ -92,6 +92,9 @@
             if (($item['sub_provider'] ?? null) === 'policy_pages') {
               $item['sub'] = \App\Models\PolicyPage::adminNavigationItems();
             }
+            if (($item['sub_provider'] ?? null) === 'information_pages') {
+              $item['sub'] = \App\Models\InformationPage::adminNavigationItems();
+            }
           @endphp
 
           @if(!empty($item['sub']))

@@ -1,9 +1,9 @@
 {{-- resources/views/pages/our-story.blade.php --}}
 <x-page-layout
-    title="Our Story - Calaia Farm"
-    description="Discover the inspiring journey of Calaia Farm from a simple dream to a thriving nature sanctuary committed to sustainable agriculture and community development."
-    keywords="Calaia Farm, our story, sustainable agriculture, farm history, Philippines farm"
-    active-header="our-story"
+    :title="$informationPage->meta_title"
+    :description="$informationPage->meta_description"
+    :keywords="$informationPage->meta_keywords"
+    :active-header="$informationPage->slug"
 >
     {{-- Best practice:
         - Tailwind-only styling (no custom CSS needed)
@@ -18,18 +18,27 @@
             {{-- Content --}}
             <div class="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
                 <div class="max-w-4xl space-y-8">
-                    <div class="inline-block rounded-full border-2 border-amber-300 bg-white/10 backdrop-blur px-6 py-3 text-sm font-bold uppercase tracking-widest text-amber-100">
-                        Est. 2018 • Calaca, Batangas
-                    </div>
+                    @if(filled($informationPage->hero_eyebrow))
+                        <div class="inline-block rounded-full border-2 border-amber-300 bg-white/10 backdrop-blur px-6 py-3 text-sm font-bold uppercase tracking-widest text-amber-100">
+                            {{ $informationPage->hero_eyebrow }}
+                        </div>
+                    @endif
 
                     <h1 class="text-5xl font-black text-white drop-shadow-lg sm:text-6xl md:text-7xl">
-                        Our <span class="text-amber-300">Story</span>
+                        <span class="text-amber-300">{{ $informationPage->hero_title }}</span>
                     </h1>
 
-                    <p class="text-xl font-bold leading-relaxed text-white drop-shadow-md md:text-2xl">
-                        From a simple dream to a thriving sanctuary dedicated to
-                        <span class="block font-black text-amber-300">sustainability, community & nature</span>
-                    </p>
+                    @if(filled($informationPage->hero_description))
+                        @php
+                            $heroLines = preg_split('/\R/u', trim($informationPage->hero_description)) ?: [];
+                        @endphp
+                        <p class="text-xl font-bold leading-relaxed text-white drop-shadow-md md:text-2xl">
+                            {{ array_shift($heroLines) }}
+                            @foreach($heroLines as $heroLine)
+                                <span class="block font-black text-amber-300">{{ $heroLine }}</span>
+                            @endforeach
+                        </p>
+                    @endif
 
                     <div class="flex flex-col justify-center gap-4 pt-8 sm:flex-row">
                         <a
@@ -49,6 +58,10 @@
             </div>
         </section>
 
+        <!-- INFORMATION_PAGE_BODY_START -->
+        @if($informationPage->hasStoredBody())
+            {!! $informationPage->renderedBodyHtml() !!}
+        @else
         {{-- CONTENT --}}
         <section class="bg-white py-12 sm:py-16 pb-0">
             <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
@@ -267,6 +280,8 @@
                 </section>
             </div>
         </section>
+        @endif
+        <!-- INFORMATION_PAGE_BODY_END -->
         {{-- Floating Buttons --}}
         <x-floating-buttons />    </div>
 </x-page-layout>

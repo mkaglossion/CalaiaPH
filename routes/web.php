@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminPackageBookingsController;
 use App\Http\Controllers\Admin\BookingSettingsController;
 use App\Http\Controllers\Admin\BookingConfirmationContentController;
+use App\Http\Controllers\Admin\InformationPageController;
 use App\Http\Controllers\Admin\PolicyPageController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\InventoryManagementController;
@@ -647,6 +648,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::prefix('/policies')->group(function () {
         Route::get('/', [PolicyPageController::class, 'index'])->name('admin.policies.index');
         Route::put('/{policyPage:slug}', [PolicyPageController::class, 'update'])->name('admin.policies.update');
+    });
+    Route::prefix('/information')->group(function () {
+        Route::get('/', [InformationPageController::class, 'index'])->name('admin.information.index');
+        Route::put('/{informationPage:slug}', [InformationPageController::class, 'update'])->name('admin.information.update');
     });
     Route::prefix('/do')->group(function () {
             Route::get('/activities', [AdminController::class, 'activity'])->name('admin.do.activities');
