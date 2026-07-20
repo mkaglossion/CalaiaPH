@@ -3,13 +3,20 @@
 @section('title', 'Farm Experiences Management')
 
 @section('content')
+@push('styles')
+<style>
+    [data-farm-experience-card].sortable-ghost { opacity: .35; }
+    [data-farm-experience-card].sortable-chosen { box-shadow: 0 18px 40px rgb(15 23 42 / .18); }
+    [data-farm-experience-card].sortable-drag { transform: rotate(1deg); }
+</style>
+@endpush
 @php
     $adminPrimaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl bg-[#8f5d54] px-4 py-2 text-sm font-medium text-white shadow transition hover:bg-[#7a4d46] hover:shadow-lg';
     $adminSecondaryButton = 'inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-100';
     $adminActionLink = 'text-[#8f5d54] font-semibold hover:text-[#7a4d46] hover:underline transition';
 @endphp
 
-<div x-data="farmExperiencesManager()" class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl">
+<div x-data="farmExperiencesManager()" x-init="init()" class="p-8 bg-linear-to-b from-gray-50 to-gray-100 min-h-screen rounded-xl">
 
     <h1 class="text-4xl font-extrabold mb-8 tracking-tight text-gray-900">
         Farm Experiences Manager
@@ -25,9 +32,15 @@
     </div>
 
     {{-- Cards Grid --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 auto-rows-max">
-        <template x-for="(experience, index) in experiences" :key="index">
-            <div class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative flex flex-col h-full">
+    <div x-ref="experienceGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 auto-rows-max">
+        <template x-for="(experience, index) in experiences" :key="experience._key">
+            <div data-farm-experience-card class="tilt-card bg-white/70 backdrop-blur-lg border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition relative flex flex-col h-full">
+                <div class="absolute top-4 right-4 z-10 flex items-center gap-2">
+                    <span class="inline-flex h-10 min-w-10 items-center justify-center rounded-full border border-gray-200 bg-white/95 px-2 text-xs font-bold text-gray-600 shadow-sm" x-text="`#${index + 1}`"></span>
+                    <button type="button" data-drag-handle class="inline-flex h-12 w-12 cursor-grab items-center justify-center rounded-full border border-gray-300 bg-white/95 text-gray-600 shadow-md transition hover:border-[#8f5d54] hover:text-[#8f5d54] active:cursor-grabbing" title="Drag to reorder" aria-label="Drag to reorder">
+                        <i class="fas fa-grip-vertical text-sm" aria-hidden="true"></i>
+                    </button>
+                </div>
                 {{-- Image --}}
                 <div class="overflow-hidden rounded-xl mb-4">
                     <template x-if="experience.img">
@@ -111,7 +124,7 @@
                         x-model="currentExperience.title" 
                         required 
                         placeholder="Enter experience title"
-                        class="w-full text-sm sm:text-base border border-gray-300 rounded-xl px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                        class="w-full rounded-xl border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm outline-none transition sm:px-4 sm:py-3 sm:text-base focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20">
                 </div>
 
                 {{-- Description --}}
@@ -123,7 +136,7 @@
                         rows="3" 
                         required 
                         placeholder="Describe this experience..."
-                        class="w-full text-sm sm:text-base border border-gray-300 rounded-xl px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"></textarea>
+                        class="w-full resize-none rounded-xl border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm outline-none transition sm:px-4 sm:py-3 sm:text-base focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20"></textarea>
                 </div>
 
                 {{-- Time/Schedule --}}
@@ -135,7 +148,7 @@
                         x-model="currentExperience.time" 
                         required 
                         placeholder="e.g., Weekends 9AM–2PM"
-                        class="w-full text-sm sm:text-base border border-gray-300 rounded-xl px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                        class="w-full rounded-xl border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm outline-none transition sm:px-4 sm:py-3 sm:text-base focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20">
                 </div>
 
                 {{-- Badge (Optional) --}}
@@ -146,7 +159,7 @@
                         type="text" 
                         x-model="currentExperience.badge" 
                         placeholder="e.g., Guided Tour"
-                        class="w-full text-sm sm:text-base border border-gray-300 rounded-xl px-3 sm:px-4 py-2 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                        class="w-full rounded-xl border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm outline-none transition sm:px-4 sm:py-3 sm:text-base focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20">
                 </div>
 
                 {{-- Image Upload --}}
@@ -164,7 +177,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
                             <p class="text-base sm:text-lg font-bold text-gray-900 leading-tight">Click to upload image</p>
-                            <p class="text-xs sm:text-sm text-gray-600 mt-2">Max 20MB • JPG, PNG, GIF, WebP</p>
+                            <p class="text-xs sm:text-sm text-gray-600 mt-2">Max 5 MB • JPG, PNG, WebP</p>
                         </label>
                     </div>
                 </div>
@@ -242,13 +255,66 @@
 <script>
 function farmExperiencesManager() {
     return {
-        experiences: {!! json_encode($experiences) !!}.filter(exp => exp && exp.title),
+        experiences: {!! json_encode($experiences) !!}.filter(exp => exp && exp.title).map((exp, index) => ({
+            ...exp,
+            _key: exp.id ? `experience-${exp.id}` : `experience-new-${index}-${Date.now()}`,
+        })),
         currentExperience: {},
         editingIndex: null,
         showModal: false,
         isEditing: false,
         isSaving: false,
         isUploadingImage: false,
+        isReordering: false,
+        sortableInstance: null,
+
+        init() {
+            this.$nextTick(() => this.initSortable());
+        },
+
+        initSortable() {
+            this.sortableInstance?.destroy();
+            this.sortableInstance = null;
+            if (typeof Sortable === 'undefined' || !this.$refs.experienceGrid) return;
+
+            this.sortableInstance = Sortable.create(this.$refs.experienceGrid, {
+                animation: 180,
+                handle: '[data-drag-handle]',
+                draggable: '[data-farm-experience-card]',
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                onEnd: async (event) => {
+                    if (event.oldIndex === event.newIndex) return;
+                    const [movedExperience] = this.experiences.splice(event.oldIndex, 1);
+                    this.experiences.splice(event.newIndex, 0, movedExperience);
+                    await this.saveOrder();
+                },
+            });
+        },
+
+        async saveOrder() {
+            if (this.isReordering) return;
+            this.isReordering = true;
+            try {
+                const response = await fetch('{{ route("admin.farm.experiences.save") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ experiences: this.experiences }),
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || 'Unable to save the new order.');
+                Swal.fire({ icon: 'success', title: 'Order saved', timer: 1100, showConfirmButton: false });
+            } catch (error) {
+                Swal.fire({ icon: 'error', title: 'Reorder failed', text: error.message });
+            } finally {
+                this.isReordering = false;
+            }
+        },
 
         formatDate(dateString) {
             if (!dateString) return 'Created: N/A';
@@ -294,6 +360,7 @@ function farmExperiencesManager() {
             this.currentExperience = {
                 id: null,
                 img: null,
+                image_public_id: null,
                 title: '',
                 desc: '',
                 time: '',
@@ -337,7 +404,7 @@ function farmExperiencesManager() {
                     const formData = new FormData();
                     formData.append('image', this.currentExperience.imageFile);
 
-                    const uploadResponse = await fetch('/api/farm-experiences/upload-image', {
+                    const uploadResponse = await fetch('{{ route("admin.farm.experiences.uploadImage") }}', {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': csrf,
@@ -354,6 +421,7 @@ function farmExperiencesManager() {
                     }
 
                     this.currentExperience.img = uploadData.imageUrl;
+                    this.currentExperience.image_public_id = uploadData.publicId;
                     this.currentExperience.imageFile = null;
                 }
 
@@ -369,8 +437,7 @@ function farmExperiencesManager() {
                     this.experiences[this.editingIndex] = cleanExperience;
                 } else {
                     // Add new experience
-                    const newId = Math.max(...this.experiences.map(e => e.id || 0)) + 1;
-                    cleanExperience.id = newId;
+                    cleanExperience.id = null;
                     // Ensure created_at is set for new experiences
                     if (!cleanExperience.created_at) {
                         cleanExperience.created_at = new Date().toISOString();

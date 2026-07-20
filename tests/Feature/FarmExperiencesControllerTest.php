@@ -25,6 +25,7 @@ class FarmExperiencesControllerTest extends TestCase
                 $table->string('cta')->nullable();
                 $table->string('badge')->nullable();
                 $table->string('img')->nullable();
+                $table->string('image_public_id')->nullable();
                 $table->integer('sort_order')->default(0);
                 $table->timestamps();
             });
@@ -119,5 +120,60 @@ class FarmExperiencesControllerTest extends TestCase
         $this->assertSame('Original Two', $second->title);
 
         Carbon::setTestNow();
+    }
+
+    public function test_save_persists_dragged_experience_order(): void
+    {
+        $admin = new \App\Models\User();
+        $admin->id = 1;
+        $admin->user_type = 'admin';
+
+        $first = FarmExperience::create([
+            'title' => 'First Experience',
+            'desc' => 'First',
+            'time' => 'Morning',
+            'capacity' => '10',
+            'icon' => 'people',
+            'img' => 'https://example.com/first.jpg',
+            'sort_order' => 0,
+        ]);
+        $second = FarmExperience::create([
+            'title' => 'Second Experience',
+            'desc' => 'Second',
+            'time' => 'Afternoon',
+            'capacity' => '20',
+            'icon' => 'people',
+            'img' => 'https://example.com/second.jpg',
+            'sort_order' => 1,
+        ]);
+
+        $response = $this->actingAs($admin)->postJsonWithCsrf(route('admin.farm.experiences.save'), [
+            'experiences' => [
+                [
+                    'id' => $second->id,
+                    'title' => $second->title,
+                    'desc' => $second->desc,
+                    'time' => $second->time,
+                    'capacity' => $second->capacity,
+                    'icon' => $second->icon,
+                    'img' => $second->img,
+                ],
+                [
+                    'id' => $first->id,
+                    'title' => $first->title,
+                    'desc' => $first->desc,
+                    'time' => $first->time,
+                    'capacity' => $first->capacity,
+                    'icon' => $first->icon,
+                    'img' => $first->img,
+                ],
+            ],
+        ]);
+
+        $response->assertOk()->assertJson(['success' => true]);
+        $this->assertSame(
+            [$second->id, $first->id],
+            FarmExperience::query()->orderBy('sort_order')->pluck('id')->all()
+        );
     }
 }

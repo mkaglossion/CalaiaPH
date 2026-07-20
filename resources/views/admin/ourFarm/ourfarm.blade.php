@@ -18,4 +18,6 @@
     :pageCopyStoreRoute="$cmsConfig['pageCopyStoreRoute']"
     :imageReorderRoute="$cmsConfig['imageReorderRoute']"
 />
+
+@include('admin.ourFarm.partials.sections-manager', ['sections' => $farmSections])
 @endsection

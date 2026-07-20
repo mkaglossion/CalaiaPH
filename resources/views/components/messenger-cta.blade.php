@@ -1,4 +1,5 @@
 @props([
+    'copy' => [],
     'sectionClass' => 'container mx-auto px-4 sm:px-6 lg:px-8 pb-16 md:pb-20',
     'sectionStyle' => '',
     'wrapperClass' => 'max-w-4xl mx-auto',
@@ -15,29 +16,39 @@
     'noteClass' => 'text-xs sm:text-sm mt-6 opacity-75',
 ])
 
+@php
+    $cta = array_merge([
+        'title' => $title,
+        'intro' => $intro,
+        'button_url' => $buttonUrl,
+        'button_label' => $buttonLabel,
+        'note' => $note,
+    ], is_array($copy) ? $copy : []);
+@endphp
+
 <section {{ $attributes->merge(['class' => $sectionClass]) }} @if(filled($sectionStyle)) style="{{ $sectionStyle }}" @endif @if(filled($titleId)) aria-labelledby="{{ $titleId }}" @endif>
     <div class="{{ $wrapperClass }}">
         <div class="{{ $cardClass }}">
             <i class="{{ $iconClass }}"></i>
 
             <h2 @if(filled($titleId)) id="{{ $titleId }}" @endif class="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
-                {{ $title }}
+                {{ $cta['title'] }}
             </h2>
 
             <p class="text-base md:text-lg mb-8 opacity-90 max-w-2xl mx-auto">
-                {{ $intro }}
+                {{ $cta['intro'] }}
             </p>
 
-            <a href="{{ $buttonUrl }}"
+            <a href="{{ $cta['button_url'] }}"
                target="_blank"
                rel="noopener noreferrer"
                class="{{ $buttonClass }}">
                 <i class="{{ $buttonIconClass }}"></i>
-                {{ $buttonLabel }}
+                {{ $cta['button_label'] }}
             </a>
 
             <p class="{{ $noteClass }}">
-                {{ $note }}
+                {{ $cta['note'] }}
             </p>
         </div>
     </div>

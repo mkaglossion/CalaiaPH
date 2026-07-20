@@ -1,7 +1,8 @@
 {{-- resources/views/components/hero-slider.blade.php --}}
 @props([
     'images' => [],
-    'texts' => []
+    'texts' => [],
+    'usePlaceholderOnError' => true,
 ])
 
 {{-- Swiper CSS --}}
@@ -41,7 +42,11 @@
             loading="{{ $isPrimarySlide ? 'eager' : 'lazy' }}"
             fetchpriority="{{ $isPrimarySlide ? 'high' : 'auto' }}"
             decoding="async"
-            onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
+            @if($usePlaceholderOnError)
+              onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
+            @else
+              onerror="this.remove();"
+            @endif
           >
         @endif
         <div class="absolute inset-0 bg-black opacity-40 z-10"></div>

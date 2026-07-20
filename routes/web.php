@@ -87,6 +87,7 @@ use App\Http\Controllers\Admin\ActivityPackageController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\FarmInfoController;
 use App\Http\Controllers\Admin\FarmExperiencesController;
+use App\Http\Controllers\Admin\FarmPageSectionController;
 use App\Http\Controllers\Admin\StaycationAccommodationController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\CartController;
@@ -722,6 +723,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
              Route::get('/experiences', [FarmExperiencesController::class, 'index'])->name('admin.farm.experiences');
              Route::post('/experiences/save', [FarmExperiencesController::class, 'save'])->name('admin.farm.experiences.save');
              Route::post('/experiences/upload-image', [FarmExperiencesController::class, 'uploadImage'])->name('admin.farm.experiences.uploadImage');
+             Route::post('/sections/upload', [FarmPageSectionController::class, 'upload'])->name('admin.farm.sections.upload');
+             Route::put('/sections/{farmPageSection:key}', [FarmPageSectionController::class, 'update'])->name('admin.farm.sections.update');
              Route::post('/copy', [FarmTextController::class, 'saveCopy'])->name('admin.farm.copy.store');
      });
 
@@ -931,8 +934,6 @@ Route::group(['middleware' => ['api.throttle:upload', 'api.security', 'xss']], f
     // API Routes for Special Events
     Route::post('/api/special-events/upload-image', [EventApiController::class, 'uploadImage']);
 
-    // API Routes for Farm Experiences
-    Route::post('/api/farm-experiences/upload-image', [\App\Http\Controllers\Api\FarmExperiencesApiController::class, 'uploadImage']);
 });
 
 // Special Events API Routes (10 requests per minute - stricter for write operations)
