@@ -239,6 +239,97 @@
                         </section>
                     </div>
 
+                    @php
+                        $footerSocialFields = [
+                            [
+                                'name' => 'footer_instagram_url',
+                                'label' => 'Instagram URL',
+                                'type' => 'url',
+                                'icon' => 'instagram',
+                                'placeholder' => 'https://www.instagram.com/your-page/',
+                            ],
+                            [
+                                'name' => 'footer_facebook_url',
+                                'label' => 'Facebook URL',
+                                'type' => 'url',
+                                'icon' => 'facebook',
+                                'placeholder' => 'https://www.facebook.com/your-page/',
+                            ],
+                            [
+                                'name' => 'footer_messenger_url',
+                                'label' => 'Messenger URL',
+                                'type' => 'url',
+                                'icon' => 'message-circle',
+                                'placeholder' => 'https://m.me/your-page-id',
+                            ],
+                            [
+                                'name' => 'footer_email',
+                                'label' => 'Footer Email',
+                                'type' => 'email',
+                                'icon' => 'mail',
+                                'placeholder' => 'hello@example.com',
+                            ],
+                        ];
+                    @endphp
+
+                    <section class="branding-panel mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div class="flex items-start gap-4">
+                            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                                <i data-lucide="share-2" class="h-5 w-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-900">Social Connections</h3>
+                                <p class="mt-1 text-sm text-slate-500">
+                                    Manage the heading and destinations shown in the footer social banner. Clear a link to hide its icon. The footer email also updates the Contact column.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+                            <div class="lg:col-span-2">
+                                <label for="footer_social_heading" class="block text-sm font-medium text-slate-700">Social Banner Heading</label>
+                                <div class="relative mt-2">
+                                    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                                        <i data-lucide="type" class="h-4 w-4"></i>
+                                    </span>
+                                    <input
+                                        type="text"
+                                        id="footer_social_heading"
+                                        name="footer_social_heading"
+                                        value="{{ old('footer_social_heading', $settings['footer_social_heading'] ?? 'Get connected with us on social networks:') }}"
+                                        class="w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-4 text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                                        maxlength="160"
+                                    >
+                                </div>
+                                <p class="mt-2 text-xs text-slate-500">Clear this field if you want to show only the social icons.</p>
+                                @error('footer_social_heading') <span class="mt-2 block text-sm text-red-500">{{ $message }}</span> @enderror
+                            </div>
+
+                            @foreach ($footerSocialFields as $socialField)
+                                <div>
+                                    <label for="{{ $socialField['name'] }}" class="block text-sm font-medium text-slate-700">{{ $socialField['label'] }}</label>
+                                    <div class="relative mt-2">
+                                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                                            <i data-lucide="{{ $socialField['icon'] }}" class="h-4 w-4"></i>
+                                        </span>
+                                        <input
+                                            type="{{ $socialField['type'] }}"
+                                            id="{{ $socialField['name'] }}"
+                                            name="{{ $socialField['name'] }}"
+                                            value="{{ old($socialField['name'], $settings[$socialField['name']] ?? '') }}"
+                                            placeholder="{{ $socialField['placeholder'] }}"
+                                            class="w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-4 text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                                            maxlength="{{ $socialField['type'] === 'email' ? 255 : 2048 }}"
+                                        >
+                                    </div>
+                                    @if ($errors->has($socialField['name']))
+                                        <span class="mt-2 block text-sm text-red-500">{{ $errors->first($socialField['name']) }}</span>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </section>
+
                     <div class="flex flex-col gap-3 pt-2 sm:flex-row">
                         <button type="submit" class="{{ $adminPrimaryButton }}">
                             <i data-lucide="save" class="mr-2 h-4 w-4"></i>

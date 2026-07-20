@@ -26,6 +26,11 @@ class AdminSystemSettingsController extends Controller
     {
         $current = SystemSetting::cachedData();
         $input = array_merge($current, $request->all());
+        foreach (['footer_instagram_url', 'footer_facebook_url', 'footer_messenger_url', 'footer_email'] as $nullableKey) {
+            if (($input[$nullableKey] ?? null) === '') {
+                $input[$nullableKey] = null;
+            }
+        }
 
         $validated = validator($input, [
             'app_name' => 'required|string|max:255',
@@ -39,11 +44,24 @@ class AdminSystemSettingsController extends Controller
             'maintenance_message' => 'nullable|string|max:500',
             'footer_title' => 'nullable|string|max:255',
             'footer_description' => 'nullable|string|max:300',
+            'footer_social_heading' => 'nullable|string|max:160',
+            'footer_instagram_url' => 'nullable|url:http,https|max:2048',
+            'footer_facebook_url' => 'nullable|url:http,https|max:2048',
+            'footer_messenger_url' => 'nullable|url:http,https|max:2048',
+            'footer_email' => 'nullable|email:rfc|max:255',
             'logo_file' => 'nullable|file|mimes:jpg,jpeg,png,webp,svg|max:10240',
             'remove_logo' => 'nullable|in:1',
             'favicon_file' => 'nullable|file|mimes:jpg,jpeg,png,webp,svg,ico|max:2048',
             'remove_favicon' => 'nullable|in:1',
         ])->validate();
+
+        $stringSetting = function (string $key) use ($request, $validated, $current): string {
+            if ($request->exists($key)) {
+                return trim((string) ($validated[$key] ?? ''));
+            }
+
+            return trim((string) ($current[$key] ?? ''));
+        };
 
         $setting = SystemSetting::current() ?? new SystemSetting();
         $setting->fill([
@@ -60,8 +78,13 @@ class AdminSystemSettingsController extends Controller
                 ? $request->boolean('system_maintenance')
                 : (bool) ($current['system_maintenance'] ?? false),
             'maintenance_message' => trim((string) ($validated['maintenance_message'] ?? '')),
-            'footer_title' => trim((string) ($validated['footer_title'] ?? $current['footer_title'] ?? '')),
-            'footer_description' => trim((string) ($validated['footer_description'] ?? $current['footer_description'] ?? '')),
+            'footer_title' => $stringSetting('footer_title'),
+            'footer_description' => $stringSetting('footer_description'),
+            'footer_social_heading' => $stringSetting('footer_social_heading'),
+            'footer_instagram_url' => $stringSetting('footer_instagram_url'),
+            'footer_facebook_url' => $stringSetting('footer_facebook_url'),
+            'footer_messenger_url' => $stringSetting('footer_messenger_url'),
+            'footer_email' => $stringSetting('footer_email'),
         ]);
 
         if ($request->boolean('remove_logo')) {
