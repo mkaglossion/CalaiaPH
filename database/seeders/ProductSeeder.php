@@ -17,7 +17,7 @@ class ProductSeeder extends Seeder
                 'title' => 'Grass-fed Beef Burger Patties (500g)',
                 'description' => 'Juicy, all-natural beef patties made from our pasture-raised cattle. No preservatives.',
                 'price' => 350.00,
-                'image' => 'Glamping-1.jpg',
+                'image' => null,
                 'category' => 'frozen',
             ],
             [
@@ -45,14 +45,14 @@ class ProductSeeder extends Seeder
                 'title' => 'Rainbow Chard (250g)',
                 'description' => 'Vibrant, nutrient-rich chard, perfect for salads and sautés.',
                 'price' => 90.00,
-                'image' => 'our-farm.jpg',
+                'image' => null,
                 'category' => 'fresh',
             ],
             [
                 'title' => 'Zucchini (500g)',
                 'description' => 'Fresh, tender zucchini, harvested daily from our fields.',
                 'price' => 80.00,
-                'image' => 'our-farm2.jpg',
+                'image' => null,
                 'category' => 'fresh',
             ],
         ];

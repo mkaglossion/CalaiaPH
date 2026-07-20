@@ -11,6 +11,7 @@ return [
         ['title' => 'Bookings', 'icon' => 'calendar-check', 'route' => 'admin.bookings.*', 'sub' => [
             ['label' => 'All Bookings', 'route' => 'admin.bookings.index'],
             ['label' => 'Unified Inventory', 'route' => 'admin.bookings.inventory'],
+            ['label' => 'Package Bookings', 'route' => 'admin.bookings.packages'],
             ['label' => 'Staycation Bookings', 'route' => 'admin.bookings.staycations'],
             ['label' => 'Food Bookings', 'route' => 'admin.bookings.foodandbeverage'],
             ['label' => 'Activities Bookings', 'route' => 'admin.bookings.activities'],
@@ -45,6 +46,7 @@ return [
             ['label' => 'Orders', 'route' => 'admin.shop.orders'],
             ['label' => 'Inventory Monitor', 'route' => 'admin.inventory.shop'],
         ]],
+        ['title' => 'Information', 'icon' => 'info', 'route' => 'admin.information.index', 'sub_provider' => 'information_pages'],
         ['title' => 'Policies & Terms', 'icon' => 'file-lock-2', 'route' => 'admin.policies.index', 'sub_provider' => 'policy_pages'],
         ['title' => 'Booking Confirmation', 'icon' => 'file-text', 'route' => 'admin.booking-confirmation.index', 'sub' => [
             ['label' => 'Staycation', 'route' => 'admin.booking-confirmation.index', 'params' => ['tab' => 'staycation']],

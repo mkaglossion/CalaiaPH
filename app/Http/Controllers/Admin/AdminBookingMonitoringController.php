@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\PackageBooking;
 use App\Models\Staycation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -38,6 +39,31 @@ class AdminBookingMonitoringController extends Controller
                 ['label' => 'Actions', 'key' => 'actions_html'],
             ],
             'staycation'
+        );
+    }
+
+    public function packages(Request $request): View
+    {
+        $rows = $this->rowsForMode('package');
+
+        return $this->renderPage(
+            $request,
+            'Package Bookings',
+            'Package bookings only.',
+            $rows,
+            [
+                ['label' => 'Reference', 'key' => 'reference_html'],
+                ['label' => 'Guest', 'key' => 'guest_html'],
+                ['label' => 'Booking Date', 'key' => 'booking_date_html'],
+                ['label' => 'Package Date', 'key' => 'schedule_html'],
+                ['label' => 'Package', 'key' => 'details_html'],
+                ['label' => 'Guests', 'key' => 'quantity_html'],
+                ['label' => 'Total Amount', 'key' => 'amount_html'],
+                ['label' => 'Payment', 'key' => 'payment_html'],
+                ['label' => 'Status', 'key' => 'status_html'],
+                ['label' => 'Actions', 'key' => 'actions_html'],
+            ],
+            'package'
         );
     }
 
@@ -94,6 +120,11 @@ class AdminBookingMonitoringController extends Controller
     public function exportStaycations(Request $request): StreamedResponse
     {
         return $this->exportPage($request, 'staycation');
+    }
+
+    public function exportPackages(Request $request): StreamedResponse
+    {
+        return $this->exportPage($request, 'package');
     }
 
     public function exportFoodAndBeverage(Request $request): StreamedResponse
@@ -181,6 +212,7 @@ class AdminBookingMonitoringController extends Controller
 
         $tabs = [
             ['label' => 'Staycation Bookings', 'route' => 'admin.bookings.staycations', 'active' => $mode === 'staycation'],
+            ['label' => 'Package Bookings', 'route' => 'admin.bookings.packages', 'active' => $mode === 'package'],
             ['label' => 'Food & Beverage Bookings', 'route' => 'admin.bookings.foodandbeverage', 'active' => $mode === 'food'],
             ['label' => 'Activities Bookings', 'route' => 'admin.bookings.activities', 'active' => $mode === 'activity'],
         ];
@@ -245,6 +277,12 @@ class AdminBookingMonitoringController extends Controller
                 ->get()
                 ->map(fn (Booking $booking) => $this->mapStaycationRow($booking))
                 ->filter()
+                ->values(),
+            'package' => PackageBooking::query()
+                ->with('package')
+                ->latest()
+                ->get()
+                ->map(fn (PackageBooking $booking) => $this->mapPackageRow($booking))
                 ->values(),
             'food' => Booking::query()
                 ->latest()
@@ -318,6 +356,20 @@ class AdminBookingMonitoringController extends Controller
                 'Booking Status',
                 'Monitoring Status',
             ],
+            'package' => [
+                'Reference',
+                'Guest Name',
+                'Contact Number',
+                'Email',
+                'Booking Date',
+                'Package Date',
+                'Package',
+                'Guests',
+                'Total Amount',
+                'Payment Status',
+                'Booking Status',
+                'Monitoring Status',
+            ],
             'food' => [
                 'Reference',
                 'Guest Name',
@@ -367,6 +419,20 @@ class AdminBookingMonitoringController extends Controller
                 $row->status ?? '',
                 $this->monitoringLabel((string) ($row->monitoring_status ?? 'upcoming')),
             ],
+            'package' => [
+                $row->reference ?? '',
+                $row->guest_name ?? '',
+                $row->contact ?? '',
+                $row->email ?? '',
+                $row->booking_label ?? '',
+                $row->schedule_label ?? '',
+                $row->details ?? '',
+                $row->quantity ?? '',
+                number_format((float) ($row->total_amount ?? 0), 2, '.', ''),
+                $row->payment_status ?? '',
+                $row->status ?? '',
+                $this->monitoringLabel((string) ($row->monitoring_status ?? 'upcoming')),
+            ],
             'food' => [
                 $row->reference ?? '',
                 $row->guest_name ?? '',
@@ -403,6 +469,7 @@ class AdminBookingMonitoringController extends Controller
     {
         return match ($mode) {
             'staycation' => 'staycation-bookings-' . now()->format('Y-m-d-His') . '.csv',
+            'package' => 'package-bookings-' . now()->format('Y-m-d-His') . '.csv',
             'food' => 'food-and-beverage-bookings-' . now()->format('Y-m-d-His') . '.csv',
             'activity' => 'activities-bookings-' . now()->format('Y-m-d-His') . '.csv',
             default => 'bookings-export-' . now()->format('Y-m-d-His') . '.csv',
@@ -413,6 +480,7 @@ class AdminBookingMonitoringController extends Controller
     {
         return match ($mode) {
             'staycation' => route('admin.bookings.staycations'),
+            'package' => route('admin.bookings.packages'),
             'food' => route('admin.bookings.foodandbeverage'),
             'activity' => route('admin.bookings.activities'),
             default => route('admin.bookings.index'),
@@ -423,6 +491,7 @@ class AdminBookingMonitoringController extends Controller
     {
         return match ($mode) {
             'staycation' => 'admin.bookings.staycations.export',
+            'package' => 'admin.bookings.packages.export',
             'food' => 'admin.bookings.foodandbeverage.export',
             'activity' => 'admin.bookings.activities.export',
             default => 'admin.bookings.index',
@@ -457,6 +526,33 @@ class AdminBookingMonitoringController extends Controller
             'booking_label' => $booking->created_at?->format('M d, Y H:i') ?? 'N/A',
             'extra_label' => $booking->display_checkout_date?->format('M d, Y') ?? 'N/A',
             'actions_route' => route('admin.bookings.show', $booking->id),
+        ]);
+    }
+
+    private function mapPackageRow(PackageBooking $booking): object
+    {
+        $scheduleDate = $booking->booking_date instanceof Carbon
+            ? $booking->booking_date
+            : Carbon::parse($booking->booking_date);
+
+        return $this->buildRow([
+            'reference' => $booking->booking_reference,
+            'guest_name' => $booking->full_name,
+            'contact' => $booking->phone,
+            'email' => $booking->email,
+            'booking_date' => $booking->created_at,
+            'schedule_date' => $scheduleDate,
+            'monitoring_status' => $this->resolvePackageMonitoringStatus($booking, $scheduleDate),
+            'is_pending' => $this->isPendingPackageRow($booking),
+            'total_amount' => (float) $booking->total_amount,
+            'status' => $booking->status,
+            'payment_status' => $booking->payment_status ?? 'pending',
+            'details' => $booking->package?->name ?? 'Package',
+            'quantity' => $booking->total_guests > 0 ? $booking->total_guests : null,
+            'schedule_label' => $this->formatDateLabel($scheduleDate),
+            'booking_label' => $booking->created_at?->format('M d, Y H:i') ?? 'N/A',
+            'extra_label' => $booking->display_session,
+            'actions_route' => route('admin.package_bookings.show', $booking->id),
         ]);
     }
 
@@ -684,6 +780,29 @@ class AdminBookingMonitoringController extends Controller
         return 'upcoming';
     }
 
+    private function resolvePackageMonitoringStatus(PackageBooking $booking, ?Carbon $scheduleDate): string
+    {
+        $status = strtolower((string) ($booking->status ?? ''));
+
+        if ($status === 'cancelled') {
+            return 'cancelled';
+        }
+
+        if ($status === 'completed') {
+            return 'completed';
+        }
+
+        if ($scheduleDate instanceof Carbon && $scheduleDate->isToday()) {
+            return 'today';
+        }
+
+        if ($scheduleDate instanceof Carbon && $scheduleDate->isFuture()) {
+            return 'upcoming';
+        }
+
+        return 'upcoming';
+    }
+
     private function resolveScheduleDate(Booking $booking, string $fallbackColumn): ?Carbon
     {
         $candidates = [
@@ -882,6 +1001,14 @@ class AdminBookingMonitoringController extends Controller
         $paymentStatus = strtolower((string) ($booking->payment_status ?? ''));
 
         return $status === 'pending' || in_array($paymentStatus, ['pending', 'failed'], true);
+    }
+
+    private function isPendingPackageRow(PackageBooking $booking): bool
+    {
+        $status = strtolower((string) ($booking->status ?? ''));
+        $paymentStatus = strtolower((string) ($booking->payment_status ?? ''));
+
+        return $status === 'pending_payment' || in_array($paymentStatus, ['pending', 'failed'], true);
     }
 
     private function matchesStatusFilter(object $row, string $statusFilter): bool

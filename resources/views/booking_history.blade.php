@@ -25,7 +25,7 @@
                         You haven't made any bookings yet.
                     </p>
                     <a
-                        href="{{ route('booking.staycation') }}"
+                        href="{{ route('booking.calendar') }}"
                         class="inline-flex items-center gap-2 px-6 py-2 rounded-lg bg-[#db8636] text-[#f6f3ec] text-sm font-medium
                                shadow-sm transition hover:bg-[#db8636]/90 hover:-translate-y-0.5 hover:shadow-md"
                     >

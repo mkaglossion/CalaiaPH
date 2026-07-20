@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Booking;
+use App\Models\Package;
+use App\Models\PackageBooking;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -95,6 +97,105 @@ class AdminBookingMonitoringPagesTest extends TestCase
         ], $rows[0]);
         $this->assertSame('TXN-STAY-CSV', $rows[1][0]);
         $this->assertSame('Villa Export', $rows[1][6]);
+    }
+
+    public function test_package_monitoring_page_renders_only_package_bookings(): void
+    {
+        $admin = User::factory()->create([
+            'user_type' => 'admin',
+        ]);
+
+        $package = Package::create([
+            'name' => 'Garden Getaway',
+            'price' => 4500,
+            'max_guests' => 8,
+            'pricing_type' => 'fixed',
+            'is_active' => true,
+        ]);
+
+        PackageBooking::create([
+            'booking_reference' => 'PB-MONITOR-001',
+            'package_id' => $package->id,
+            'booking_date' => today()->toDateString(),
+            'session' => 'morning',
+            'total_guests' => 4,
+            'first_name' => 'Package',
+            'last_name' => 'Guest',
+            'email' => 'package@example.com',
+            'phone' => '09171234567',
+            'total_amount' => 4500,
+            'status' => 'confirmed',
+            'payment_status' => 'paid',
+        ]);
+
+        Booking::create($this->bookingAttributes([
+            'transaction_id' => 'TXN-NOT-PACKAGE',
+        ]));
+
+        $response = $this->actingAs($admin)->get(route('admin.bookings.packages'));
+
+        $response->assertOk();
+        $response->assertSee('Package Bookings');
+        $response->assertSee('PB-MONITOR-001');
+        $response->assertSee('Garden Getaway');
+        $response->assertSee('Morning');
+        $response->assertSee('Today');
+        $response->assertDontSee('TXN-NOT-PACKAGE');
+    }
+
+    public function test_package_monitoring_export_downloads_csv(): void
+    {
+        $admin = User::factory()->create([
+            'user_type' => 'admin',
+        ]);
+
+        $package = Package::create([
+            'name' => 'Farm Tour',
+            'price' => 2500,
+            'max_guests' => 10,
+            'pricing_type' => 'fixed',
+            'is_active' => true,
+        ]);
+
+        PackageBooking::create([
+            'booking_reference' => 'PB-MONITOR-CSV',
+            'package_id' => $package->id,
+            'booking_date' => today()->toDateString(),
+            'total_guests' => 2,
+            'first_name' => 'CSV',
+            'last_name' => 'Guest',
+            'email' => 'csv@example.com',
+            'phone' => '09170000000',
+            'total_amount' => 2500,
+            'status' => 'confirmed',
+            'payment_status' => 'paid',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.bookings.packages.export'));
+
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+        $this->assertStringContainsString(
+            'attachment; filename=package-bookings-',
+            $response->baseResponse->headers->get('content-disposition')
+        );
+
+        $rows = $this->parseCsv($response->streamedContent());
+        $this->assertSame([
+            'Reference',
+            'Guest Name',
+            'Contact Number',
+            'Email',
+            'Booking Date',
+            'Package Date',
+            'Package',
+            'Guests',
+            'Total Amount',
+            'Payment Status',
+            'Booking Status',
+            'Monitoring Status',
+        ], $rows[0]);
+        $this->assertSame('PB-MONITOR-CSV', $rows[1][0]);
+        $this->assertSame('Farm Tour', $rows[1][6]);
     }
 
     public function test_food_monitoring_page_renders_food_orders(): void

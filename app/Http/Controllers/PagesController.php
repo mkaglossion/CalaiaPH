@@ -19,6 +19,7 @@ use App\Models\DoText;
 use App\Models\FoodText;
 use App\Models\SpecialText;
 use App\Models\FarmText;
+use App\Models\FarmPageSection;
 use App\Models\ShopText;
 
 use App\Models\Food;
@@ -37,6 +38,7 @@ use App\Models\Holiday;
 use App\Models\DayTypeDay;
 use App\Models\BookingSetting;
 use App\Models\DiningCategoryImage;
+use App\Models\InformationPage;
 use App\Models\PolicyPage;
 
 use Illuminate\Http\Request;
@@ -771,6 +773,17 @@ class PagesController extends Controller
         return $fallback;
     }
 
+    private function messengerCtaCopy(array $texts, string $prefix, array $defaults): array
+    {
+        return [
+            'title' => $this->pageTextValue($texts, ["{$prefix}_cta_title"], $defaults['title']),
+            'intro' => $this->pageTextValue($texts, ["{$prefix}_cta_intro"], $defaults['intro']),
+            'button_url' => $defaults['button_url'],
+            'button_label' => $this->pageTextValue($texts, ["{$prefix}_cta_button"], $defaults['button_label']),
+            'note' => $this->pageTextValue($texts, ["{$prefix}_cta_note"], $defaults['note']),
+        ];
+    }
+
     public function dining()
     {
         $messHallFoods = Food::with('swiperImages')
@@ -800,12 +813,15 @@ class PagesController extends Controller
         $messHallIntro = $this->pageTextValue($texts, ['dining_messhall_intro'], 'Our spacious and elegant mess hall is perfect for group dining and special occasions. Let our chefs prepare delicious farm-to-table meals using the freshest ingredients from our farm.');
         $cookYourOwnTitle = $this->pageTextValue($texts, ['dining_cook_title'], 'Cook Your Own Experience');
         $cookYourOwnIntro = $this->pageTextValue($texts, ['dining_cook_intro'], 'Enjoy cooking your own fresh ingredients harvested directly from our farm. Choose premium, locally sourced ingredients and create your own meal with guidance from our team.');
-        $ctaTitle = $this->pageTextValue($texts, ['dining_cta_title'], 'Ready to Dine With Us?');
-        $ctaIntro = $this->pageTextValue($texts, ['dining_cta_intro'], 'Message us to reserve your dining experience. We can accommodate lunch, dinner, group events, and special arrangements.');
-        $ctaButton = $this->pageTextValue($texts, ['dining_cta_button'], 'Make a Reservation on Messenger');
-        $ctaNote = $this->pageTextValue($texts, ['dining_cta_note'], 'Available for lunch and dinner reservations. Message us for inquiries.');
+        $diningCta = $this->messengerCtaCopy($texts, 'dining', [
+            'title' => 'Ready to Dine With Us?',
+            'intro' => 'Message us to reserve your dining experience. We can accommodate lunch, dinner, group events, and special arrangements.',
+            'button_url' => 'https://m.me/calaiaph',
+            'button_label' => 'Make a Reservation on Messenger',
+            'note' => 'Available for lunch and dinner reservations. Message us for inquiries.',
+        ]);
 
-        $data = compact('swiperImages', 'texts', 'heroTexts', 'messHallFoods', 'cookYourOwnFoods', 'diningCategoryImages', 'diningPageTitle', 'diningPageIntro', 'messHallTitle', 'messHallIntro', 'cookYourOwnTitle', 'cookYourOwnIntro', 'ctaTitle', 'ctaIntro', 'ctaButton', 'ctaNote');
+        $data = compact('swiperImages', 'texts', 'heroTexts', 'messHallFoods', 'cookYourOwnFoods', 'diningCategoryImages', 'diningPageTitle', 'diningPageIntro', 'messHallTitle', 'messHallIntro', 'cookYourOwnTitle', 'cookYourOwnIntro', 'diningCta');
         $data['active'] = 'dining';
         
         return view('dining', $data);
@@ -866,10 +882,14 @@ class PagesController extends Controller
 
         $farmPageTitle = $this->pageTextValue($texts, ['farm_page_title', 'title', 'heading'], 'Our Sustainable Farming');
         $farmPageIntro = $this->pageTextValue($texts, ['farm_page_intro', 'intro', 'subtitle', 'description'], 'Discover how we raise livestock and grow produce with respect for nature and animal welfare');
-        $farmCtaTitle = $this->pageTextValue($texts, ['farm_cta_title'], 'Ready to Reserve Your Farm Experience?');
-        $farmCtaIntro = $this->pageTextValue($texts, ['farm_cta_intro'], 'Message us on Messenger to ask about farm visits, group reservations, and special arrangements.');
-        $farmCtaButton = $this->pageTextValue($texts, ['farm_cta_button'], 'Message Us on Messenger');
-        $farmCtaNote = $this->pageTextValue($texts, ['farm_cta_note'], 'We usually reply as soon as possible during business hours.');
+        $farmCta = $this->messengerCtaCopy($texts, 'farm', [
+            'title' => 'Ready to Reserve Your Farm Experience?',
+            'intro' => 'Message us on Messenger to ask about farm visits, group reservations, and special arrangements.',
+            'button_url' => 'https://m.me/410774518796277',
+            'button_label' => 'Message Us on Messenger',
+            'note' => 'We usually reply as soon as possible during business hours.',
+        ]);
+        $farmSections = FarmPageSection::publicSections()->keyBy('key');
 
         // Get farm experiences from database
         $farmExperiences = \App\Models\FarmExperience::orderBy('sort_order')->get()->map(function($exp) {
@@ -892,10 +912,8 @@ class PagesController extends Controller
             'farmExperiences',
             'farmPageTitle',
             'farmPageIntro',
-            'farmCtaTitle',
-            'farmCtaIntro',
-            'farmCtaButton',
-            'farmCtaNote'
+            'farmCta',
+            'farmSections'
         );
         $data['active'] = 'farm';
 
@@ -904,7 +922,7 @@ class PagesController extends Controller
 
     public function ourStory()
     {
-        return view('pages.our-story');
+        return $this->renderInformationPage('our-story');
     }
 
     public function shop()
@@ -949,17 +967,27 @@ class PagesController extends Controller
 
     public function sustainability()
     {
-        return view('pages.sustainability');
+        return $this->renderInformationPage('sustainability');
     }
 
     public function ourServices()
     {
-        return view('pages.our-services');
+        return $this->renderInformationPage('our-services');
     }
     public function contact()
     {
-        return view('contact', ['active' => 'contact']);
+        return $this->renderInformationPage('contact');
     }
+
+    private function renderInformationPage(string $slug)
+    {
+        $informationPage = InformationPage::findPublic($slug);
+
+        abort_if($informationPage === null, 404);
+
+        return view(config("information_pages.pages.$slug.default_view"), compact('informationPage'));
+    }
+
     public function privacyNotice()
     {
         return $this->renderPolicyPage('privacy-notice');

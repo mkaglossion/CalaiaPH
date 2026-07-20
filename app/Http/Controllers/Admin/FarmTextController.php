@@ -73,36 +73,19 @@ class FarmTextController extends Controller
             'cta_note' => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($validated) {
-            FarmText::updateOrCreate(
-                ['label' => 'farm_page_title'],
-                ['text' => $validated['page_title'] ?? '']
-            );
+        $copyMap = [
+            'farm_page_title' => $validated['page_title'] ?? '',
+            'farm_page_intro' => $validated['page_intro'] ?? '',
+            'farm_cta_title' => $validated['cta_title'] ?? '',
+            'farm_cta_intro' => $validated['cta_intro'] ?? '',
+            'farm_cta_button' => $validated['cta_button'] ?? '',
+            'farm_cta_note' => $validated['cta_note'] ?? '',
+        ];
 
-            FarmText::updateOrCreate(
-                ['label' => 'farm_page_intro'],
-                ['text' => $validated['page_intro'] ?? '']
-            );
-
-            FarmText::updateOrCreate(
-                ['label' => 'farm_cta_title'],
-                ['text' => $validated['cta_title'] ?? '']
-            );
-
-            FarmText::updateOrCreate(
-                ['label' => 'farm_cta_intro'],
-                ['text' => $validated['cta_intro'] ?? '']
-            );
-
-            FarmText::updateOrCreate(
-                ['label' => 'farm_cta_button'],
-                ['text' => $validated['cta_button'] ?? '']
-            );
-
-            FarmText::updateOrCreate(
-                ['label' => 'farm_cta_note'],
-                ['text' => $validated['cta_note'] ?? '']
-            );
+        DB::transaction(function () use ($copyMap) {
+            foreach ($copyMap as $label => $text) {
+                FarmText::updateOrCreate(['label' => $label], ['text' => $text]);
+            }
         });
 
         return response()->json([

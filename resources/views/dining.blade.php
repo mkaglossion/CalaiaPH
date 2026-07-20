@@ -90,12 +90,8 @@
     </section>
 
     <x-messenger-cta
+        :copy="$diningCta"
         title-id="dining-cta-heading"
-        title="{{ $ctaTitle ?? 'Ready to Dine With Us?' }}"
-        intro="{{ $ctaIntro ?? 'Message us to reserve your dining experience. We can accommodate lunch, dinner, group events, and special arrangements.' }}"
-        button-url="https://m.me/calaiaph"
-        button-label="{{ $ctaButton ?? 'Make a Reservation on Messenger' }}"
-        note="{{ $ctaNote ?? 'Available for lunch and dinner reservations. Message us for inquiries.' }}"
         icon-class="fas fa-utensils text-4xl md:text-5xl opacity-80 mb-4 block"
     />
 

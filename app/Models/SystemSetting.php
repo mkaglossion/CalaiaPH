@@ -25,6 +25,11 @@ class SystemSetting extends Model
         'favicon_public_id',
         'footer_title',
         'footer_description',
+        'footer_social_heading',
+        'footer_instagram_url',
+        'footer_facebook_url',
+        'footer_messenger_url',
+        'footer_email',
     ];
 
     protected $casts = [
@@ -56,6 +61,11 @@ class SystemSetting extends Model
             'favicon_public_id' => null,
             'footer_title' => 'CALAIA FARM',
             'footer_description' => "Your perfect getaway destination for relaxation and adventure.\nExperience nature at its finest in Calaca, Batangas.",
+            'footer_social_heading' => 'Get connected with us on social networks:',
+            'footer_instagram_url' => 'https://www.instagram.com/calaia.ph/',
+            'footer_facebook_url' => 'https://www.facebook.com/calaia.ph/',
+            'footer_messenger_url' => 'https://m.me/410774518796277',
+            'footer_email' => 'calaia.ph@gmail.com',
         ];
     }
 

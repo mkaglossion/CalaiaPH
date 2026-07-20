@@ -15,7 +15,8 @@ class FarmExperience extends Model
         'cta',
         'badge',
         'img',
-        'sort_order'
+        'image_public_id',
+        'sort_order',
     ];
 
     protected $casts = [

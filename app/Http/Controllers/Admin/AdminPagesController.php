@@ -16,6 +16,7 @@ use App\Models\SpecialSwiperImage;
 use App\Models\SpecialText;
 use App\Models\FarmSwiperImage;
 use App\Models\FarmText;
+use App\Models\FarmPageSection;
 use App\Models\HomeSwiperImage;
 use App\Models\HomeText;
 use App\Models\PackageSwiperImage;
@@ -207,9 +208,9 @@ class AdminPagesController extends Controller
                     'cook_title' => ['label' => 'Cook Your Own Title'],
                     'cook_intro' => ['label' => 'Cook Your Own Intro', 'type' => 'textarea', 'rows' => 4, 'columnClass' => 'md:col-span-2'],
                     'cta_title' => ['label' => 'CTA Title'],
-                    'cta_intro' => ['label' => 'CTA Intro', 'type' => 'textarea', 'rows' => 4, 'columnClass' => 'md:col-span-2'],
+                    'cta_intro' => ['label' => 'CTA Intro', 'type' => 'textarea', 'rows' => 4],
                     'cta_button' => ['label' => 'CTA Button Label'],
-                    'cta_note' => ['label' => 'CTA Note', 'type' => 'textarea', 'rows' => 3, 'columnClass' => 'md:col-span-2'],
+                    'cta_note' => ['label' => 'CTA Note', 'type' => 'textarea', 'rows' => 3],
                 ],
             ],
         ],
@@ -274,7 +275,7 @@ class AdminPagesController extends Controller
                     'title' => ['label' => 'Page Title'],
                     'intro' => ['label' => 'Page Intro', 'type' => 'textarea', 'rows' => 4, 'columnClass' => 'md:col-span-2'],
                     'cta_title' => ['label' => 'CTA Title'],
-                    'cta_intro' => ['label' => 'CTA Intro', 'type' => 'textarea', 'rows' => 4, 'columnClass' => 'md:col-span-2'],
+                    'cta_intro' => ['label' => 'CTA Intro', 'type' => 'textarea', 'rows' => 4],
                     'cta_primary_label' => ['label' => 'Primary Button Label'],
                     'cta_primary_url' => ['label' => 'Primary Button URL', 'type' => 'url'],
                     'cta_secondary_label' => ['label' => 'Secondary Button Label'],
@@ -326,9 +327,9 @@ class AdminPagesController extends Controller
                     'title' => ['label' => 'Page Title'],
                     'intro' => ['label' => 'Page Intro', 'type' => 'textarea', 'rows' => 4, 'columnClass' => 'md:col-span-2'],
                     'cta_title' => ['label' => 'Reserve Title'],
-                    'cta_intro' => ['label' => 'Reserve Message', 'type' => 'textarea', 'rows' => 4, 'columnClass' => 'md:col-span-2'],
+                    'cta_intro' => ['label' => 'Reserve Message', 'type' => 'textarea', 'rows' => 4],
                     'cta_button' => ['label' => 'Reserve Button Label'],
-                    'cta_note' => ['label' => 'Reserve Note', 'type' => 'textarea', 'rows' => 3, 'columnClass' => 'md:col-span-2'],
+                    'cta_note' => ['label' => 'Reserve Note', 'type' => 'textarea', 'rows' => 3],
                 ],
             ],
         ],
@@ -404,6 +405,12 @@ class AdminPagesController extends Controller
             $pageCopyTexts = StaycationPageText::whereNotNull('label')->pluck('text', 'label')->mapWithKeys(function ($content, $field) {
                 return [strtolower($field) => $content];
             })->toArray();
+        } elseif ($page === 'ourFarm') {
+            $farmSections = FarmPageSection::ensureDefaults()
+                ->map(fn (FarmPageSection $section) => $section->adminPayload())
+                ->values()
+                ->all();
+            $extraData = compact('farmSections');
         }
 
         $cmsConfig = $this->buildCmsConfig($page, $texts, $pageCopyTexts);

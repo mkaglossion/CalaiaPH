@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminPackageBookingsController;
 use App\Http\Controllers\Admin\BookingSettingsController;
 use App\Http\Controllers\Admin\BookingConfirmationContentController;
+use App\Http\Controllers\Admin\InformationPageController;
 use App\Http\Controllers\Admin\PolicyPageController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\InventoryManagementController;
@@ -86,6 +87,7 @@ use App\Http\Controllers\Admin\ActivityPackageController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\FarmInfoController;
 use App\Http\Controllers\Admin\FarmExperiencesController;
+use App\Http\Controllers\Admin\FarmPageSectionController;
 use App\Http\Controllers\Admin\StaycationAccommodationController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\CartController;
@@ -537,6 +539,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/paymongo-webhooks', [AdminBookingsController::class, 'paymongoWebhooks'])->name('admin.bookings.paymongo-webhooks');
         Route::get('/staycations', [AdminBookingMonitoringController::class, 'staycations'])->name('admin.bookings.staycations');
         Route::get('/staycations/export', [AdminBookingMonitoringController::class, 'exportStaycations'])->name('admin.bookings.staycations.export');
+        Route::get('/packages', [AdminBookingMonitoringController::class, 'packages'])->name('admin.bookings.packages');
+        Route::get('/packages/export', [AdminBookingMonitoringController::class, 'exportPackages'])->name('admin.bookings.packages.export');
         Route::get('/food-and-beverage', [AdminBookingMonitoringController::class, 'foodAndBeverage'])->name('admin.bookings.foodandbeverage');
         Route::get('/food-and-beverage/export', [AdminBookingMonitoringController::class, 'exportFoodAndBeverage'])->name('admin.bookings.foodandbeverage.export');
         Route::get('/activities', [AdminBookingMonitoringController::class, 'activities'])->name('admin.bookings.activities');
@@ -646,6 +650,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/', [PolicyPageController::class, 'index'])->name('admin.policies.index');
         Route::put('/{policyPage:slug}', [PolicyPageController::class, 'update'])->name('admin.policies.update');
     });
+    Route::prefix('/information')->group(function () {
+        Route::get('/', [InformationPageController::class, 'index'])->name('admin.information.index');
+        Route::put('/{informationPage:slug}', [InformationPageController::class, 'update'])->name('admin.information.update');
+    });
     Route::prefix('/do')->group(function () {
             Route::get('/activities', [AdminController::class, 'activity'])->name('admin.do.activities');
             Route::post('/category-label', [\App\Http\Controllers\Admin\ActivityPackageSettingController::class, 'updateCategoryLabel'])->name('admin.do.category-label.update');
@@ -715,6 +723,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
              Route::get('/experiences', [FarmExperiencesController::class, 'index'])->name('admin.farm.experiences');
              Route::post('/experiences/save', [FarmExperiencesController::class, 'save'])->name('admin.farm.experiences.save');
              Route::post('/experiences/upload-image', [FarmExperiencesController::class, 'uploadImage'])->name('admin.farm.experiences.uploadImage');
+             Route::post('/sections/upload', [FarmPageSectionController::class, 'upload'])->name('admin.farm.sections.upload');
+             Route::put('/sections/{farmPageSection:key}', [FarmPageSectionController::class, 'update'])->name('admin.farm.sections.update');
              Route::post('/copy', [FarmTextController::class, 'saveCopy'])->name('admin.farm.copy.store');
      });
 
@@ -924,8 +934,6 @@ Route::group(['middleware' => ['api.throttle:upload', 'api.security', 'xss']], f
     // API Routes for Special Events
     Route::post('/api/special-events/upload-image', [EventApiController::class, 'uploadImage']);
 
-    // API Routes for Farm Experiences
-    Route::post('/api/farm-experiences/upload-image', [\App\Http\Controllers\Api\FarmExperiencesApiController::class, 'uploadImage']);
 });
 
 // Special Events API Routes (10 requests per minute - stricter for write operations)

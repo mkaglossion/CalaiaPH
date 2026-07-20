@@ -12,7 +12,9 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
       {{-- Contact Form --}}
+      <!-- INFORMATION_CONTACT_FORM_START -->
       <x-contact-form action="{{ route('contact.submit') }}" />
+      <!-- INFORMATION_CONTACT_FORM_END -->
 
       {{-- Contact Information --}}
       <div class="space-y-8">
@@ -67,12 +69,14 @@
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
           <h3 class="font-semibold text-[#8f5d54] mb-6" style="font-size: 25px;">Location & Directions</h3>
           <div class="rounded-xl overflow-hidden mb-6 shadow-md">
+            <!-- INFORMATION_CONTACT_MAP_START -->
             <iframe
               src="https://www.google.com/maps?q=Calaca%20Nature%20Park&output=embed"
               class="w-full h-64 border-0"
               loading="lazy"
               title="Calaia Farm Location Map"
             ></iframe>
+            <!-- INFORMATION_CONTACT_MAP_END -->
           </div>
           <h4 class="text-lg font-semibold text-[#8f5d54] mb-3">Getting Here</h4>
           <p class="text-gray-600 mb-4 leading-relaxed" style="font-size: 13px;">

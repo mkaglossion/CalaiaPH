@@ -1,6 +1,19 @@
+@php
+    $cmsTitle = $cmsTitle ?? 'Policies & Terms CMS';
+    $cmsDescription = $cmsDescription ?? 'Manage navigation labels, SEO, hero copy, publication status, and the complete content for every public policy page.';
+    $cmsNavLabel = $cmsNavLabel ?? 'Policy pages';
+    $configNamespace = $configNamespace ?? 'policy_pages';
+    $adminIndexRoute = $adminIndexRoute ?? 'admin.policies.index';
+    $adminUpdateRoute = $adminUpdateRoute ?? 'admin.policies.update';
+    $supportsLastUpdated = $supportsLastUpdated ?? true;
+    $bodyHelpText = $bodyHelpText ?? 'Edit visually or switch to HTML source for precise layout changes.';
+    $editableBodyHtml = $editableBodyHtml ?? $policyPage->body_html;
+    $publicRouteName = config("{$configNamespace}.pages.{$policyPage->slug}.route");
+@endphp
+
 @extends('layouts.admin')
 
-@section('title', 'Policies & Terms CMS')
+@section('title', $cmsTitle)
 
 @section('content')
 <style>
@@ -20,14 +33,14 @@
 <div class="space-y-6">
     <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-            <h1 class="text-3xl font-semibold text-gray-900">Policies & Terms CMS</h1>
+            <h1 class="text-3xl font-semibold text-gray-900">{{ $cmsTitle }}</h1>
             <p class="mt-2 max-w-3xl text-gray-600">
-                Manage navigation labels, SEO, hero copy, publication status, and the complete content for every public policy page.
+                {{ $cmsDescription }}
             </p>
         </div>
 
         <a
-            href="{{ route(config("policy_pages.pages.{$policyPage->slug}.route")) }}"
+            href="{{ route($publicRouteName) }}"
             target="_blank"
             rel="noopener noreferrer"
             class="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700"
@@ -58,10 +71,10 @@
         ></div>
     @endif
 
-    <nav class="flex gap-2 overflow-x-auto border-b border-gray-200 pb-px" aria-label="Policy pages">
+    <nav class="flex gap-2 overflow-x-auto border-b border-gray-200 pb-px" aria-label="{{ $cmsNavLabel }}">
         @foreach($pages as $page)
             <a
-                href="{{ route('admin.policies.index', ['page' => $page->slug]) }}"
+                href="{{ route($adminIndexRoute, ['page' => $page->slug]) }}"
                 class="whitespace-nowrap rounded-t-lg border px-4 py-3 text-sm font-semibold transition {{ $page->is($policyPage) ? 'border-gray-200 border-b-white bg-white text-[#8f5d54]' : 'border-transparent bg-gray-100 text-gray-600 hover:bg-gray-200' }}"
             >
                 {{ $page->nav_label }}
@@ -74,7 +87,7 @@
 
     <form
         method="POST"
-        action="{{ route('admin.policies.update', $policyPage->slug) }}"
+        action="{{ route($adminUpdateRoute, $policyPage->slug) }}"
         class="space-y-6"
         onsubmit="syncPolicyEditorBeforeSubmit()"
     >
@@ -99,10 +112,12 @@
                         <input type="text" name="hero_eyebrow" value="{{ old('hero_eyebrow', $policyPage->hero_eyebrow) }}" maxlength="120" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20" placeholder="Optional small heading">
                     </label>
 
-                    <label class="space-y-2">
-                        <span class="text-sm font-semibold text-gray-700">Last updated</span>
-                        <input type="date" name="last_updated" value="{{ old('last_updated', $policyPage->last_updated?->format('Y-m-d')) }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20">
-                    </label>
+                    @if($supportsLastUpdated)
+                        <label class="space-y-2">
+                            <span class="text-sm font-semibold text-gray-700">Last updated</span>
+                            <input type="date" name="last_updated" value="{{ old('last_updated', $policyPage->last_updated?->format('Y-m-d')) }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20">
+                        </label>
+                    @endif
 
                     <label class="space-y-2 sm:col-span-2">
                         <span class="text-sm font-semibold text-gray-700">Hero title</span>
@@ -152,18 +167,25 @@
 
                     <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
                         <span class="font-semibold text-gray-900">Public URL:</span>
-                        <span class="break-all">{{ route(config("policy_pages.pages.{$policyPage->slug}.route")) }}</span>
+                        <span class="break-all">{{ route($publicRouteName) }}</span>
                     </div>
                 </div>
             </section>
         </div>
 
-        @php($bodyHtml = old('body_html', $policyPage->body_html))
+        @php($bodyHtml = old('body_html', $editableBodyHtml))
         <section class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             <div class="flex flex-col gap-3 border-b border-gray-200 bg-gray-50 p-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <h2 class="text-xl font-semibold text-gray-900">Full page content</h2>
-                    <p class="text-sm text-gray-500">Edit visually or switch to HTML source for precise layout changes. Use <code class="rounded bg-gray-200 px-1">@{{last_updated}}</code> wherever the selected date should appear.</p>
+                    <p class="text-sm text-gray-500">
+                        {{ $bodyHelpText }}
+                        @if($supportsLastUpdated)
+                            Use <code class="rounded bg-gray-200 px-1">@{{last_updated}}</code> wherever the selected date should appear.
+                        @elseif($policyPage->slug === 'contact')
+                            Keep <code class="rounded bg-gray-200 px-1">@{{contact_form}}</code> and <code class="rounded bg-gray-200 px-1">@{{contact_map}}</code> so the working form and map remain on the page.
+                        @endif
+                    </p>
                 </div>
 
                 <div class="flex flex-wrap gap-2">

@@ -1,43 +1,63 @@
 @php
-  $footerTitle = trim((string) ($systemSettings['footer_title'] ?? ''));
-  $footerTitle = $footerTitle !== '' ? $footerTitle : 'CALAIA FARM';
-  $footerDescription = trim((string) ($systemSettings['footer_description'] ?? ''));
-  $footerDescription = $footerDescription !== ''
-    ? $footerDescription
-    : "Your perfect getaway destination for relaxation and adventure.\nExperience nature at its finest in Calaca, Batangas.";
+  $footerSettings = array_merge(
+    \App\Models\SystemSetting::defaults(),
+    is_array($systemSettings ?? null) ? $systemSettings : []
+  );
+  $footerTitle = trim((string) $footerSettings['footer_title']);
+  $footerDescription = trim((string) $footerSettings['footer_description']);
+  $footerSocialHeading = trim((string) $footerSettings['footer_social_heading']);
+  $footerEmail = trim((string) $footerSettings['footer_email']);
+  $footerSocialLinks = collect([
+    [
+      'url' => trim((string) $footerSettings['footer_instagram_url']),
+      'label' => 'Follow us on Instagram',
+      'icon' => 'bi bi-instagram',
+    ],
+    [
+      'url' => trim((string) $footerSettings['footer_facebook_url']),
+      'label' => 'Follow us on Facebook',
+      'icon' => 'bi bi-facebook',
+    ],
+    [
+      'url' => trim((string) $footerSettings['footer_messenger_url']),
+      'label' => 'Contact us on Messenger',
+      'icon' => 'bi bi-messenger',
+    ],
+    [
+      'url' => $footerEmail !== '' ? 'mailto:'.$footerEmail : '',
+      'label' => 'Email us',
+      'icon' => 'bi bi-envelope-fill',
+    ],
+  ])->filter(fn (array $link): bool => $link['url'] !== '')->values();
   $nav = config('navigation.main', []);
+  $informationLinks = \App\Models\InformationPage::navigationItems();
   $policyLinks = \App\Models\PolicyPage::navigationItems();
 @endphp
 
 <footer class="bg-brand-dark text-white mt-0">
-  <!-- Social Media Banner -->
-  <div class="bg-brand-light py-4">
-    <div class="max-w-7xl mx-auto px-6">
-      <div class="flex flex-col justify-center items-center">
-        <div class="text-center mb-3">
-          <span class="text-lg font-semibold">Get connected with us on social networks:</span>
-        </div>
-        <div class="flex space-x-4">
-          <!-- Instagram -->
-          <a href="https://www.instagram.com/calaia.ph/" class="text-white hover:text-gray-200 hover:scale-110 transition-all duration-300 p-2 rounded-full hover:bg-white/10" aria-label="Follow us on Instagram">
-            <i class="bi bi-instagram text-2xl"></i>
-          </a>
-          <!-- Facebook -->
-          <a href="https://www.facebook.com/calaia.ph/" class="text-white hover:text-gray-200 hover:scale-110 transition-all duration-300 p-2 rounded-full hover:bg-white/10" aria-label="Follow us on Facebook">
-            <i class="bi bi-facebook text-2xl"></i>
-          </a>
-          <!-- Messenger -->
-          <a href="https://m.me/410774518796277" class="text-white hover:text-gray-200 hover:scale-110 transition-all duration-300 p-2 rounded-full hover:bg-white/10" aria-label="Contact us on Messenger">
-            <i class="bi bi-messenger text-2xl"></i>
-          </a>
-          <!-- Email -->
-          <a href="mailto:calaia.ph@gmail.com" class="text-white hover:text-gray-200 hover:scale-110 transition-all duration-300 p-2 rounded-full hover:bg-white/10" aria-label="Email us">
-            <i class="bi bi-envelope-fill text-2xl"></i>
-          </a>
+  @if ($footerSocialHeading !== '' || $footerSocialLinks->isNotEmpty())
+    <!-- Social Media Banner -->
+    <div class="bg-brand-light py-4">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="flex flex-col justify-center items-center">
+          @if ($footerSocialHeading !== '')
+            <div class="text-center{{ $footerSocialLinks->isNotEmpty() ? ' mb-3' : '' }}">
+              <span class="text-lg font-semibold">{{ $footerSocialHeading }}</span>
+            </div>
+          @endif
+          @if ($footerSocialLinks->isNotEmpty())
+            <div class="flex space-x-4">
+              @foreach ($footerSocialLinks as $socialLink)
+                <a href="{{ $socialLink['url'] }}" class="text-white hover:text-gray-200 hover:scale-110 transition-all duration-300 p-2 rounded-full hover:bg-white/10" aria-label="{{ $socialLink['label'] }}">
+                  <i class="{{ $socialLink['icon'] }} text-2xl"></i>
+                </a>
+              @endforeach
+            </div>
+          @endif
         </div>
       </div>
     </div>
-  </div>
+  @endif
 
   <!-- Main Footer Content -->
   <div class="py-8">
@@ -75,10 +95,13 @@
             <i class="bi bi-plus md:hidden"></i>
           </h3>
           <ul class="space-y-1 hidden md:block">
-            <li><a href="{{ url('/our-story') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Our Story</a></li>
-            <li><a href="{{ url('/sustainability') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Sustainability</a></li>
-            <li><a href="{{ url('/our-services') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Our Services</a></li>
-            <li><a href="{{ url('/contact') }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">Contact Us</a></li>
+            @foreach($informationLinks as $informationLink)
+              <li>
+                <a href="{{ route($informationLink['route']) }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
+                  {{ $informationLink['label'] }}
+                </a>
+              </li>
+            @endforeach
           </ul>
         </div>
 
@@ -93,12 +116,14 @@
               <i class="bi bi-geo-alt-fill mr-3 text-gray-200"></i>
               <span class="text-gray-200 text-base">Calaca, Batangas, Philippines</span>
             </div>
-            <div class="flex items-center justify-center md:justify-start">
-              <i class="bi bi-envelope-fill mr-3 text-gray-200"></i>
-              <a href="mailto:calaia.ph@gmail.com" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
-                calaia.ph@gmail.com
-              </a>
-            </div>
+            @if ($footerEmail !== '')
+              <div class="flex items-center justify-center md:justify-start">
+                <i class="bi bi-envelope-fill mr-3 text-gray-200"></i>
+                <a href="mailto:{{ $footerEmail }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
+                  {{ $footerEmail }}
+                </a>
+              </div>
+            @endif
             <div class="flex items-center justify-center md:justify-start">
               <i class="bi bi-telephone-fill mr-3 text-gray-200"></i>
               <a href="tel:+639051294741" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">

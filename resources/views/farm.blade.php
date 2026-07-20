@@ -9,13 +9,24 @@
     @endpush
 
     {{-- Hero Slider --}}
-    <x-hero-slider :images="$swiperImages" :texts="$heroTexts ?? []" />
+    <x-hero-slider :images="$swiperImages" :texts="$heroTexts ?? []" :use-placeholder-on-error="false" />
 
-    <main id="main" class="">
-      {{-- SECTION: Our Sustainable Farming --}}
+    @php
+      $ethicalSection = $farmSections->get('ethical_livestock');
+      $productSection = $farmSections->get('product_cards');
+      $fieldSection = $farmSections->get('field_banners');
+      $natureSection = $farmSections->get('growing_nature');
+      $experienceSection = $farmSections->get('farm_experiences');
+      $safeColor = static function ($section, string $fallback): string {
+          $color = data_get($section?->settings, 'background_color');
+          return is_string($color) && preg_match('/^#[0-9a-fA-F]{6}$/', $color) ? $color : $fallback;
+      };
+    @endphp
+
+    <main id="main">
       <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="sustainable-farming-heading">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          <div class="max-w-4xl mx-auto">
+        <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div class="mx-auto max-w-4xl">
             <x-section-header
               id="sustainable-farming-heading"
               :title="$farmPageTitle ?? 'Our Sustainable Farming'"
@@ -23,285 +34,208 @@
             />
           </div>
 
-          {{-- ============================================================
-    Featured: Ethically raised livestock (overlay + checklist card)
-  ============================================================ --}}
-  <div class="space-y-8">
-
-    {{-- TOP: Image banner with text overlay --}}
-    <section class="relative overflow-hidden rounded-3xl shadow-lg">
-      <img
-        src="{{ \App\Helpers\ImageHelper::src('assets/images/carousel/animal and wellness.jpg') }}"
-        alt="Free-range livestock grazing in open pastures at Calaia farm"
-        class="w-full h-80 md:h-105 object-cover"
-        loading="lazy"
-        onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
-      >
-
-      {{-- dark overlay (for readability like screenshot) --}}
-      <div class="absolute inset-0 bg-black/45"></div>
-
-      {{-- content --}}
-      <div class="absolute inset-0 flex items-end">
-        <div class="p-8 md:p-12 max-w-3xl">
-          <h3 class="text-white font-extrabold text-xl md:text-2xl leading-tight">
-            Ethically raised livestock.
-          </h3>
-          <p class="mt-3 text-white/90 text-base md:text-lg leading-relaxed">
-            Our animals live as nature intended: with plenty of space to roam, fresh air,
-            and a natural diet free from antibiotics and growth hormones.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    {{-- BOTTOM: Brown checklist + circular image --}}
-    @php
-      $ethicalFeatures = [
-        'Pasture-raised with daily access to open fields.',
-        'No antibiotics or hormones - ever.',
-        'Non-GMO, locally-sourced feed.',
-        'Humane treatment with low-stress handling.',
-      ];
-    @endphp
-
-    <section class="relative overflow-hidden rounded-3xl bg-[#6b4a2f] shadow-lg">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-        {{-- checklist --}}
-        <div class="p-10 md:p-12 pt-14">
-          <ul class="space-y-6 md:space-y-10 pt-4">
-            @foreach ($ethicalFeatures as $index => $text)
-              <li class="flex items-start gap-6{{ $index === 0 ? ' mt-4' : '' }}">
-                {{-- check icon --}}
-                <span class="shrink-0 w-12 h-12 rounded-full border-4 border-white/80 flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                </span>
-
-                <p class="text-white font-semibold text-lg md:text-xl leading-relaxed">
-                  {{ $text }}
-                </p>
-              </li>
-            @endforeach
-          </ul>
-        </div>
-
-        {{-- circular image side --}}
-        <div class="relative min-h-80 lg:min-h-105">
-          {{-- This makes the big circle crop on the right --}}
-          <div class="absolute inset-0">
-            <div class="absolute right-0 top-1/2 -translate-y-1/2 w-80 h-80 md:w-110 md:h-110 rounded-full overflow-hidden">
-              <img
-                src="{{ \App\Helpers\ImageHelper::src('assets/images/carousel/animals.jpg') }}"
-                alt="Livestock grazing at Calaia farm"
-                class="w-full h-full object-contain"
-                loading="lazy"
-                onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
-              >
-            </div>
-          </div>
-
-          {{-- subtle fade on right edge for smoother blend --}}
-          <div class="absolute inset-y-0 right-0 w-1/3 bg-linear-to-l from-black/30 to-transparent pointer-events-none"></div>
-        </div>
-      </div>
-    </section>
-
-  </div>
-
-          {{-- Meat Products Grid --}}
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 mb-8">
-            @foreach ([
-              ['img'=>'our-farm.jpg','title'=>'Grass-Fed Beef','desc'=>'100% grass-fed and grass-finished diet; higher in healthy Omega-3s.'],
-              ['img'=>'our-farm2.jpg','title'=>'Heritage Pork','desc'=>'Small groups with room to root and explore for superior flavor and texture.'],
-              ['img'=>'organic.png','title'=>'Pasture Lamb','desc'=>'Grazed on diverse pastures for naturally complex flavor.'],
-            ] as $product)
-            <article class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-300">
-              <img src="{{ \App\Helpers\ImageHelper::src('assets/images/carousel/'.$product['img']) }}" alt="{{ $product['title'] }} product"
-                   class="w-full h-48 object-cover mb-4" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
-              <h4 class="font-semibold text-[#8f5d54] mb-2 text-lg md:text-xl">{{ $product['title'] }}</h4>
-              <p class="text-gray-600 mb-4 leading-relaxed text-sm md:text-base">{{ $product['desc'] }}</p>
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-[#8f5d54]">Available seasonally</span>
-                <i class="fas fa-leaf text-green-500" aria-hidden="true"></i>
-              </div>
-            </article>
-            @endforeach
-          </div>
-
-          {{-- ============================================================
-    Fresh From Our Fields (Overlay Banner Cards)
-  ============================================================ --}}
-  </div>
-      </section>
-
-      {{-- Fresh From Our Fields - Full Width --}}
-      <section class="space-y-0">
-
-        {{-- Vegetable Garden --}}
-        <article class="relative overflow-hidden shadow-lg group">
-          <div class="absolute inset-0">
-            <img src="{{ \App\Helpers\ImageHelper::src('assets/images/carousel/vegetable garden.jpg') }}" alt="Vegetable Garden" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"/>
-            <div class="absolute inset-0 bg-black/30"></div>
-          </div>
-
-          <div class="relative z-10 px-6 md:px-10 py-10 md:py-14 max-w-xl">
-            <h3 class="text-white font-extrabold text-2xl md:text-4xl mb-5">Vegetable Garden.</h3>
-            <p class="text-white/90 text-base md:text-lg leading-relaxed mb-0">We grow over 50 varieties of vegetables using organic methods and natural amendments like compost and cover crops.</p>
-          </div>
-          <div class="h-80 md:h-100"></div>
-        </article>
-
-        {{-- Orchard Fruits --}}
-        <article class="relative overflow-hidden shadow-lg group">
-          <div class="absolute inset-0">
-            <img src="{{ \App\Helpers\ImageHelper::src('assets/images/carousel/orchard fruits.jpg') }}" alt="Orchard Fruits" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"/>
-            <div class="absolute inset-0 bg-black/30"></div>
-          </div>
-
-          <div class="relative z-10 px-6 md:px-10 py-10 md:py-14 max-w-xl ml-auto text-right">
-            <h3 class="text-white font-extrabold text-2xl md:text-4xl mb-5">Orchard Fruits.</h3>
-            <p class="text-white/90 text-base md:text-lg leading-relaxed mb-0">Our heritage fruit trees are grown without chemical sprays, allowing natural ecosystems to maintain balance.</p>
-          </div>
-          <div class="h-80 md:h-100"></div>
-        </article>
-
-      </section>
-
-      {{-- ============================================================
-        Growing With Nature (Icon Feature Block)
-      ============================================================ --}}
-      <section class="py-20" aria-labelledby="growing-nature-heading">
-        <div class="max-w-6xl mx-auto px-6">
-          {{-- Card Container --}}
-          <div class="bg-[#3f6668] rounded-3xl py-10 md:py-14 px-6 md:px-14 text-white text-center shadow-lg" role="region" aria-labelledby="growing-nature-heading">
-            {{-- Title --}}
-            <h2 id="growing-nature-heading" class="text-2xl md:text-4xl font-extrabold mb-6">
-              Growing with nature.
-            </h2>
-
-            {{-- Divider Line --}}
-            <div class="w-3/4 mx-auto border-t border-white/30 mb-12" aria-hidden="true"></div>
-
-            {{-- Icon Grid --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 place-items-center" role="list">
-              {{-- Soil First --}}
-              <div class="flex flex-col items-center text-center" role="listitem">
-                {{-- Icon Circle --}}
-                <div class="w-24 h-24 mx-auto rounded-full bg-white flex items-center justify-center mb-6 shadow-md">
+          @if ($ethicalSection)
+            <div class="space-y-8">
+              <section class="relative min-h-80 overflow-hidden rounded-3xl shadow-lg md:min-h-105" style="background-color: {{ $safeColor($ethicalSection, '#6b4a2f') }};">
+                @if (filled($ethicalSection->image_url))
                   <img
-                    src="{{ \App\Helpers\ImageHelper::src('assets/icons/noun-soil-7519091.png') }}"
-                    alt=""
-                    class="w-20 h-20 object-contain"
+                    src="{{ \App\Helpers\ImageHelper::src($ethicalSection->image_url) }}"
+                    alt="{{ $ethicalSection->title }}"
+                    class="absolute inset-0 h-full w-full object-cover"
                     loading="lazy"
-                    aria-hidden="true"
+                    onerror="this.remove();"
                   >
-                </div>
-
-                <h3 class="text-xl font-bold mb-3 text-white">
-                  Soil First
-                </h3>
-
-                <p class="text-white/80 leading-relaxed text-sm md:text-base max-w-xs">
-                  We build our soil health through composting, cover crops, and minimal tillage.
-                </p>
-              </div>
-
-              {{-- Biodiversity --}}
-              <div class="flex flex-col items-center text-center" role="listitem">
-                <div class="w-24 h-24 mx-auto rounded-full bg-white flex items-center justify-center mb-6 shadow-md">
-                  <img
-                    src="{{ \App\Helpers\ImageHelper::src('assets/icons/noun-biodiversity-8058278.png') }}"
-                    alt=""
-                    class="w-25 h-25 object-contain"
-                    loading="lazy"
-                    aria-hidden="true"
-                  >
-                </div>
-
-                <h3 class="text-xl font-bold mb-3 text-white">
-                  Biodiversity
-                </h3>
-
-                <p class="text-white/80 leading-relaxed text-sm md:text-base max-w-xs">
-                  Companion planting and diverse ecosystems keep plants healthy naturally.
-                </p>
-              </div>
-
-              {{-- Seasonal Focus --}}
-              <div class="flex flex-col items-center text-center" role="listitem">
-                <div class="w-24 h-24 mx-auto rounded-full bg-white flex items-center justify-center mb-6 shadow-md">
-                  <img
-                    src="{{ \App\Helpers\ImageHelper::src('assets/icons/noun-plant-7968466.png') }}"
-                    alt=""
-                    class="w-25 h-25 object-contain"
-                    loading="lazy"
-                    aria-hidden="true"
-                  >
-                </div>
-
-                <h3 class="text-xl font-bold mb-3 text-white">
-                  Seasonal Focus
-                </h3>
-
-                <p class="text-white/80 leading-relaxed text-sm md:text-base max-w-xs">
-                  We grow what thrives in our climate without forcing seasons.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {{-- SECTION: Farm Experiences --}}
-      <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="farm-experiences-heading">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-          <div class="max-w-4xl mx-auto">
-            <x-section-header
-              id="farm-experiences-heading"
-              title="Farm Experiences"
-              subtitle="Connect with your food and learn about sustainable agriculture through hands-on activities"
-            />
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {{-- Experience Cards --}}
-            @forelse ($farmExperiences as $experience)
-            <article class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group">
-              <div class="relative">
-                <img src="{{ $experience['img'] }}"
-                     alt="{{ $experience['title'] }} at Calaia farm"
-                     class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
-                @if(!empty($experience['badge']))
-                <span class="absolute top-4 right-4 bg-black/70 text-white text-xs px-3 py-1 rounded-full font-medium">
-                  <i class="fas fa-route mr-1" aria-hidden="true"></i> {{ $experience['badge'] }}
-                </span>
                 @endif
-              </div>
-              <div class="p-6">
-                <h4 class="font-semibold text-[#8f5d54] mb-3 text-lg md:text-xl">{{ $experience['title'] }}</h4>
-                <p class="text-gray-600 mb-4 leading-relaxed text-sm md:text-base">{{ $experience['desc'] }}</p>
-                <div class="space-y-2 mb-6">
-                  <div class="flex items-center text-sm text-[#8f5d54]">
-                    <i class="far fa-clock mr-2" aria-hidden="true"></i> {{ $experience['time'] }}
-                  </div>
-                  <div class="flex items-center text-sm text-gray-600">
-                    <i class="bi bi-{{ $experience['icon'] }} mr-2 text-[#8f5d54]" aria-hidden="true"></i> {{ $experience['capacity'] }}
+                <div class="absolute inset-0 bg-black/45"></div>
+                <div class="absolute inset-0 flex items-end">
+                  <div class="max-w-3xl p-8 md:p-12">
+                    <h3 class="text-xl font-extrabold leading-tight text-white md:text-2xl">{{ $ethicalSection->title }}</h3>
+                    @if ($ethicalSection->description)
+                      <p class="mt-3 text-base leading-relaxed text-white/90 md:text-lg">{{ $ethicalSection->description }}</p>
+                    @endif
                   </div>
                 </div>
-              </div>
-            </article>
-            @empty
-            <div class="col-span-3 text-center py-12">
-              <p class="text-gray-500">No experiences available at the moment.</p>
+              </section>
+
+              <section class="relative overflow-hidden rounded-3xl shadow-lg" style="background-color: {{ $safeColor($ethicalSection, '#6b4a2f') }};">
+                <div class="grid grid-cols-1 items-stretch gap-8 {{ filled($ethicalSection->secondary_image_url) ? 'lg:grid-cols-2' : '' }}">
+                  <div class="p-10 pt-14 md:p-12 {{ filled($ethicalSection->secondary_image_url) ? '' : 'lg:col-span-2' }}">
+                    <ul class="space-y-6 pt-4 md:space-y-10">
+                      @foreach ($ethicalSection->items ?? [] as $index => $feature)
+                        @if (filled($feature['text'] ?? null))
+                          <li class="flex items-start gap-6{{ $index === 0 ? ' mt-4' : '' }}">
+                            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-4 border-white/80">
+                              <svg viewBox="0 0 24 24" class="h-7 w-7 text-white" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M20 6L9 17l-5-5" />
+                              </svg>
+                            </span>
+                            <p class="text-lg font-semibold leading-relaxed text-white md:text-xl">{{ $feature['text'] }}</p>
+                          </li>
+                        @endif
+                      @endforeach
+                    </ul>
+                  </div>
+                  @if (filled($ethicalSection->secondary_image_url))
+                    <div class="relative min-h-80 lg:min-h-105">
+                      <div class="absolute inset-0">
+                        <div class="absolute right-0 top-1/2 h-80 w-80 -translate-y-1/2 overflow-hidden rounded-full md:h-110 md:w-110">
+                          <img
+                            src="{{ \App\Helpers\ImageHelper::src($ethicalSection->secondary_image_url) }}"
+                            alt="{{ $ethicalSection->title }}"
+                            class="h-full w-full object-contain"
+                            loading="lazy"
+                            onerror="this.remove();"
+                          >
+                        </div>
+                      </div>
+                      <div class="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-linear-to-l from-black/30 to-transparent"></div>
+                    </div>
+                  @endif
+                </div>
+              </section>
             </div>
-            @endforelse
-          </div>
+          @endif
+
+          @if ($productSection && count($productSection->items ?? []))
+            <div class="mt-16 mb-8 grid grid-cols-1 gap-8 md:grid-cols-3">
+              @foreach ($productSection->items as $product)
+                <article class="rounded-2xl border border-gray-100 bg-white p-6 shadow-md transition-shadow duration-300 hover:shadow-lg">
+                  @if (filled($product['image_url'] ?? null))
+                    <img
+                      src="{{ \App\Helpers\ImageHelper::src($product['image_url']) }}"
+                      alt="{{ $product['title'] ?? 'Farm product' }}"
+                      class="mb-4 h-48 w-full object-cover"
+                      loading="lazy"
+                      onerror="this.remove();"
+                    >
+                  @endif
+                  <h4 class="mb-2 text-lg font-semibold text-[#8f5d54] md:text-xl">{{ $product['title'] ?? '' }}</h4>
+                  <p class="mb-4 text-sm leading-relaxed text-gray-600 md:text-base">{{ $product['description'] ?? '' }}</p>
+                  @if (filled($product['meta'] ?? null))
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm font-medium text-[#8f5d54]">{{ $product['meta'] }}</span>
+                      <i class="fas fa-leaf text-green-500" aria-hidden="true"></i>
+                    </div>
+                  @endif
+                </article>
+              @endforeach
+            </div>
+          @endif
         </div>
       </section>
+
+      @if ($fieldSection && count($fieldSection->items ?? []))
+        <section>
+          @foreach ($fieldSection->items as $banner)
+            @php($alignRight = ($banner['alignment'] ?? 'left') === 'right')
+            <article class="group relative overflow-hidden bg-[#6b4a2f] shadow-lg">
+              <div class="absolute inset-0">
+                @if (filled($banner['image_url'] ?? null))
+                  <img
+                    src="{{ \App\Helpers\ImageHelper::src($banner['image_url']) }}"
+                    alt="{{ $banner['title'] ?? 'Farm field' }}"
+                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                    onerror="this.remove();"
+                  >
+                @endif
+                <div class="absolute inset-0 bg-black/40"></div>
+              </div>
+              <div class="relative z-10 max-w-xl px-6 py-10 md:px-10 md:py-14 {{ $alignRight ? 'ml-auto text-right' : '' }}">
+                <h3 class="mb-5 text-2xl font-extrabold text-white md:text-4xl">{{ $banner['title'] ?? '' }}</h3>
+                <p class="mb-0 text-base leading-relaxed text-white/90 md:text-lg">{{ $banner['description'] ?? '' }}</p>
+              </div>
+              <div class="h-80 md:h-100"></div>
+            </article>
+          @endforeach
+        </section>
+      @endif
+
+      @if ($natureSection)
+        <section class="py-20" aria-labelledby="growing-nature-heading">
+          <div class="mx-auto max-w-6xl px-6">
+            <div class="rounded-3xl px-6 py-10 text-center text-white shadow-lg md:px-14 md:py-14" style="background-color: {{ $safeColor($natureSection, '#3f6668') }};">
+              <h2 id="growing-nature-heading" class="mb-6 text-2xl font-extrabold md:text-4xl">{{ $natureSection->title }}</h2>
+              <div class="mx-auto mb-12 w-3/4 border-t border-white/30" aria-hidden="true"></div>
+              <div class="grid grid-cols-1 place-items-center gap-8 md:grid-cols-3 md:gap-12" role="list">
+                @foreach ($natureSection->items ?? [] as $principle)
+                  <div class="flex flex-col items-center text-center" role="listitem">
+                    @if (filled($principle['image_url'] ?? null))
+                      <div class="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-md">
+                        <img
+                          src="{{ \App\Helpers\ImageHelper::src($principle['image_url']) }}"
+                          alt=""
+                          class="h-20 w-20 object-contain"
+                          loading="lazy"
+                          aria-hidden="true"
+                          onerror="this.parentElement.remove();"
+                        >
+                      </div>
+                    @endif
+                    <h3 class="mb-3 text-xl font-bold text-white">{{ $principle['title'] ?? '' }}</h3>
+                    <p class="max-w-xs text-sm leading-relaxed text-white/80 md:text-base">{{ $principle['description'] ?? '' }}</p>
+                  </div>
+                @endforeach
+              </div>
+            </div>
+          </div>
+        </section>
+      @endif
+
+      @if ($experienceSection)
+        <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="farm-experiences-heading">
+          <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-4xl">
+              <x-section-header
+                id="farm-experiences-heading"
+                :title="$experienceSection->title"
+                :subtitle="$experienceSection->description"
+              />
+            </div>
+
+            <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+              @forelse ($farmExperiences as $experience)
+                <article class="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md transition-all duration-300 hover:shadow-lg">
+                  @if (filled($experience['img'] ?? null))
+                    <div class="relative">
+                      <img
+                        src="{{ \App\Helpers\ImageHelper::src($experience['img']) }}"
+                        alt="{{ $experience['title'] }} at Calaia farm"
+                        class="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                        onerror="this.remove();"
+                      >
+                      @if (!empty($experience['badge']))
+                        <span class="absolute top-4 right-4 rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white">
+                          <i class="fas fa-route mr-1" aria-hidden="true"></i> {{ $experience['badge'] }}
+                        </span>
+                      @endif
+                    </div>
+                  @endif
+                  <div class="p-6">
+                    @if (!empty($experience['badge']))
+                      <span class="mb-4 inline-flex rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white {{ filled($experience['img'] ?? null) ? 'hidden' : '' }}">
+                        <i class="fas fa-route mr-1" aria-hidden="true"></i> {{ $experience['badge'] }}
+                      </span>
+                    @endif
+                    <h4 class="mb-3 text-lg font-semibold text-[#8f5d54] md:text-xl">{{ $experience['title'] }}</h4>
+                    <p class="mb-4 text-sm leading-relaxed text-gray-600 md:text-base">{{ $experience['desc'] }}</p>
+                    <div class="mb-6 space-y-2">
+                      <div class="flex items-center text-sm text-[#8f5d54]"><i class="far fa-clock mr-2" aria-hidden="true"></i> {{ $experience['time'] }}</div>
+                      <div class="flex items-center text-sm text-gray-600"><i class="bi bi-{{ $experience['icon'] }} mr-2 text-[#8f5d54]" aria-hidden="true"></i> {{ $experience['capacity'] }}</div>
+                    </div>
+                  </div>
+                </article>
+              @empty
+                <div class="col-span-3 py-12 text-center"><p class="text-gray-500">No experiences available at the moment.</p></div>
+              @endforelse
+            </div>
+          </div>
+        </section>
+      @endif
 
       <x-messenger-cta
+        :copy="$farmCta"
         section-class="pb-16 md:pb-20"
         section-style="background-color: #f5efe7;"
         title-id="farm-cta-heading"

@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\FarmExperience;
+use App\Services\CloudinaryImageService;
 use Illuminate\Http\Request;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class FarmExperiencesController extends Controller
 {
@@ -20,6 +21,7 @@ class FarmExperiencesController extends Controller
             return [
                 'id' => $exp->id,
                 'img' => $exp->img,
+                'image_public_id' => $exp->image_public_id,
                 'title' => $exp->title,
                 'desc' => $exp->desc,
                 'time' => $exp->time,
@@ -38,14 +40,24 @@ class FarmExperiencesController extends Controller
     /**
      * Save farm experiences via AJAX
      */
-    public function save(Request $request)
+    public function save(Request $request, CloudinaryImageService $cloudinary)
     {
         try {
-            $experiences = $request->get('experiences');
-
-            if (!$experiences) {
-                return response()->json(['message' => 'Invalid request', 'success' => false], 400);
-            }
+            $validated = $request->validate([
+                'experiences' => ['present', 'array', 'max:30'],
+                'experiences.*.id' => ['nullable', 'integer', 'min:1'],
+                'experiences.*.title' => ['required', 'string', 'max:160'],
+                'experiences.*.desc' => ['nullable', 'string', 'max:2000'],
+                'experiences.*.time' => ['nullable', 'string', 'max:160'],
+                'experiences.*.capacity' => ['nullable', 'string', 'max:160'],
+                'experiences.*.icon' => ['nullable', 'string', 'max:100'],
+                'experiences.*.cta' => ['nullable', 'string', 'max:160'],
+                'experiences.*.badge' => ['nullable', 'string', 'max:100'],
+                'experiences.*.img' => ['nullable', 'string', 'max:2048'],
+                'experiences.*.image_public_id' => ['nullable', 'string', 'max:255'],
+            ]);
+            $experiences = $validated['experiences'];
+            $oldPublicIds = FarmExperience::query()->pluck('image_public_id')->filter()->unique()->all();
 
             DB::transaction(function () use ($experiences) {
                 $keptIds = [];
@@ -60,6 +72,7 @@ class FarmExperiencesController extends Controller
                         'cta' => $exp['cta'] ?? '',
                         'badge' => $exp['badge'] ?? null,
                         'img' => $exp['img'] ?? null,
+                        'image_public_id' => $exp['image_public_id'] ?? null,
                         'sort_order' => $index,
                     ];
 
@@ -79,13 +92,29 @@ class FarmExperiencesController extends Controller
 
                 if (!empty($keptIds)) {
                     FarmExperience::whereNotIn('id', $keptIds)->delete();
+                } else {
+                    FarmExperience::query()->delete();
                 }
             });
+
+            $currentPublicIds = FarmExperience::query()->pluck('image_public_id')->filter()->unique()->all();
+            foreach (array_diff($oldPublicIds, $currentPublicIds) as $publicId) {
+                try {
+                    $cloudinary->destroy($publicId);
+                } catch (\Throwable $exception) {
+                    Log::warning('Unable to remove replaced farm experience image from Cloudinary.', [
+                        'public_id' => $publicId,
+                        'message' => $exception->getMessage(),
+                    ]);
+                }
+            }
 
             return response()->json([
                 'message' => 'Experiences saved successfully',
                 'success' => true,
             ]);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Error saving farm experiences: ' . $e->getMessage());
             return response()->json([
@@ -98,30 +127,27 @@ class FarmExperiencesController extends Controller
     /**
      * Upload image to Cloudinary for a specific experience
      */
-    public function uploadImage(Request $request)
+    public function uploadImage(Request $request, CloudinaryImageService $cloudinary)
     {
         try {
             $request->validate([
-                'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:20480',
+                'image' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
             ]);
 
             if (!$request->hasFile('image')) {
                 return response()->json(['message' => 'No image provided', 'success' => false], 400);
             }
 
-            // Upload to Cloudinary
-            $filePath = $request->file('image')->getRealPath();
-            $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
-                'folder' => env('CLOUDINARY_UPLOAD_FOLDER', 'farm_experiences'),
-            ]);
-
-            $imageUrl = $uploadResult['secure_url'];
+            $uploaded = $cloudinary->upload($request->file('image'), 'farm/experiences');
 
             return response()->json([
                 'success' => true,
-                'imageUrl' => $imageUrl,
+                'imageUrl' => $uploaded['url'],
+                'publicId' => $uploaded['public_id'],
                 'message' => 'Image uploaded successfully'
             ]);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Cloudinary upload failed: ' . $e->getMessage());
             return response()->json([
