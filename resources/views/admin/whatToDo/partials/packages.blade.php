@@ -248,7 +248,7 @@
                 </div>
                 <div class="flex justify-end space-x-3 p-6 border-t border-gray-200">
                     <button type="button" @click="showPackageModal = false" class="px-6 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-100">Cancel</button>
-                    <button type="submit" :disabled="isLoading" class="px-6 py-2.5 rounded-xl bg-[#8f5d54] text-white hover:bg-[#7a4d46] disabled:opacity-60" x-text="isLoading ? (isPackageEditMode ? 'Updating...' : 'Creating...') : (isPackageEditMode ? 'Update Package' : 'Create Package')"></button>
+                    <button type="button" @click="savePackage()" :disabled="isLoading" class="px-6 py-2.5 rounded-xl bg-[#8f5d54] text-white hover:bg-[#7a4d46] disabled:opacity-60" x-text="isLoading ? (isPackageEditMode ? 'Updating...' : 'Creating...') : (isPackageEditMode ? 'Update Package' : 'Create Package')"></button>
                 </div>
             </div>
         </div>
