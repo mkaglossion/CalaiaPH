@@ -56,7 +56,7 @@ class FoodController extends Controller
         return $columnCache[$column];
     }
 
-    private function applyFoodSort($foodsQuery, string $sortBy)
+    private function applyFoodSort(\Illuminate\Database\Eloquent\Builder $foodsQuery, string $sortBy)
     {
         switch ($sortBy) {
             case 'name_asc':
