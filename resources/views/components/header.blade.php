@@ -72,7 +72,7 @@
     }
   "
   @keydown.escape.window="closeAll()"
-  class="bg-brand text-white shadow-lg top-0 z-50"
+  class="bg-brand text-white shadow-lg sticky top-0 z-50"
 >
 
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -100,8 +100,8 @@
       <!-- left spacer (for balance) -->
       <div class="w-16"></div>
 
-      <!-- NAV centered with shrink -->
-      <nav class="flex justify-center gap-4 shrink-0">
+<!-- NAV centered with shrink -->
+       <nav class="flex justify-center gap-4 shrink-0 sticky top-0">
         @foreach ($nav as $item)
           <a
             href="{{ url($item['path']) }}"
