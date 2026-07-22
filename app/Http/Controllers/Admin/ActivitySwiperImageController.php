@@ -6,12 +6,16 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Activity;
 use App\Models\ActivitySwiperImage;
+use App\Services\CloudinaryImageService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class ActivitySwiperImageController extends Controller
 {
+    public function __construct(private readonly CloudinaryImageService $cloudinaryImages)
+    {
+    }
+
     public function index()
     {
         $images = ActivitySwiperImage::with('activity')->latest()->get(); // eager load activity
@@ -28,20 +32,21 @@ class ActivitySwiperImageController extends Controller
         $file = $request->file('image');
         $mimeType = $file->getMimeType();
         $isVideo = str_starts_with($mimeType, 'video/');
-        $resourceType = $isVideo ? 'video' : 'image';
 
-        // Upload to Cloudinary
-        $filePath = $file->getRealPath();
-        $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
-
-        $uploadedFileUrl = $uploadResult['secure_url']; // Cloudinary secure URL
-        $publicId = $uploadResult['public_id']; // Store this if you want to delete later
+        try {
+            $uploadResult = $this->cloudinaryImages->upload($file, 'activity-swipers');
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Image upload failed: ' . $e->getMessage(),
+                'errors' => ['image' => ['Failed to upload file to Cloudinary.']],
+            ], 422);
+        }
 
         ActivitySwiperImage::create([
             'activity_id' => $request->activity_id,
             'title' => $request->title ?? null,
-            'image_path' => $uploadedFileUrl,
-            'public_id' => $publicId,
+            'image_path' => $uploadResult['url'],
+            'public_id' => $uploadResult['public_id'],
         ]);
 
         $message = $isVideo ? 'Video uploaded successfully!' : 'Image uploaded successfully!';
@@ -50,8 +55,8 @@ class ActivitySwiperImageController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => $message,
-                'image_path' => $uploadedFileUrl, // store Cloudinary URL
-                'public_id' => $publicId,
+                'image_path' => $uploadResult['url'],
+                'public_id' => $uploadResult['public_id'],
             ]);
         }
 
@@ -75,15 +80,20 @@ class ActivitySwiperImageController extends Controller
         if ($request->hasFile('image')) {
             // Delete old image from Cloudinary
             if ($activity_image->public_id) {
-                Cloudinary::uploadApi()->destroy($activity_image->public_id);
+                $this->cloudinaryImages->destroy($activity_image->public_id);
             }
 
             // Upload new image to Cloudinary
-            $file = $request->file('image');
-            $filePath = $file->getRealPath();
-            $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
+            try {
+                $uploadResult = $this->cloudinaryImages->upload($request->file('image'), 'activity-swipers');
+            } catch (\Throwable $e) {
+                return response()->json([
+                    'message' => 'Image upload failed: ' . $e->getMessage(),
+                    'errors' => ['image' => ['Failed to upload file to Cloudinary.']],
+                ], 422);
+            }
 
-            $data['image_path'] = $uploadResult['secure_url'];
+            $data['image_path'] = $uploadResult['url'];
             $data['public_id'] = $uploadResult['public_id'];
         }
 
@@ -105,7 +115,7 @@ class ActivitySwiperImageController extends Controller
         // Delete from Cloudinary if public_id exists
         if (!empty($activity_image->public_id)) {
             try {
-                Cloudinary::uploadApi()->destroy($activity_image->public_id);
+                $this->cloudinaryImages->destroy($activity_image->public_id);
                 Log::info('✅ Deleted image from Cloudinary', [
                     'public_id' => $activity_image->public_id
                 ]);

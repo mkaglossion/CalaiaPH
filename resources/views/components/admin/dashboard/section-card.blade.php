@@ -10,8 +10,8 @@
   'bodyClass' => 'p-4 sm:p-5',
 ])
 
-<section {{ $attributes->merge(['class' => 'rounded-3xl border border-slate-200 bg-white shadow-sm']) }}>
-  <div class="flex flex-col gap-3 border-b border-slate-100 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+<section {{ $attributes->merge(['class' => 'overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm']) }}>
+  <div class="flex flex-col gap-3 border-b border-slate-100 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5 lg:px-6">
     <div class="min-w-0">
       <div class="flex min-w-0 flex-wrap items-center gap-2">
         @if($icon)
@@ -24,7 +24,7 @@
           @endif
         @endif
 
-        <h2 class="text-base font-semibold leading-tight text-slate-900 sm:text-lg lg:text-xl 2xl:text-xl sm:whitespace-nowrap">{{ $title }}</h2>
+        <h2 class="text-base font-semibold leading-tight text-slate-900 sm:text-lg">{{ $title }}</h2>
       </div>
 
       @if($subtitle)
@@ -37,9 +37,8 @@
     @elseif($actionText && $actionHref)
       <a href="{{ $actionHref }}" class="text-[0.72rem] font-medium text-[#8f5d54] sm:text-xs lg:text-xs">{{ $actionText }}</a>
     @elseif($metaLabel)
-      <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm sm:text-sm 2xl:text-base">
+      <span class="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 sm:text-sm 2xl:text-base">
         <span class="sm:whitespace-nowrap">{{ $metaLabel }}</span>
-        <i data-lucide="chevron-down" class="h-4 w-4 text-slate-400"></i>
       </span>
     @endif
   </div>

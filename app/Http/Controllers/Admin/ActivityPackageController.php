@@ -2,14 +2,68 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\ImageHelper;
 use App\Models\Activity;
 use App\Models\ActivityPackage;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Cloudinary\Cloudinary;
+use App\Services\CloudinaryImageService;
 
 class ActivityPackageController extends Controller
 {
+    public function __construct(private readonly CloudinaryImageService $cloudinaryImages)
+    {
+    }
+
+    private function uploadImage(?\Illuminate\Http\UploadedFile $file): ?string
+    {
+        if (!$file) {
+            return null;
+        }
+
+        return $this->cloudinaryImages->upload($file, 'activity-packages')['url'];
+    }
+
+    private function packageToArray(ActivityPackage $activityPackage, bool $includeActivities = true): array
+    {
+        if ($includeActivities) {
+            $activityPackage->loadMissing(['activities' => function ($q) {
+                $q->select('activities.id', 'activities.name', 'activities.price')
+                  ->orderBy('activities.name');
+            }]);
+        }
+
+        $payload = [
+            'id' => $activityPackage->id,
+            'name' => $activityPackage->name,
+            'description' => $activityPackage->description,
+            'category' => $activityPackage->category,
+            'price' => $activityPackage->price,
+            'image' => $activityPackage->image,
+            'image_url' => filled($activityPackage->image) ? ImageHelper::src($activityPackage->image) : null,
+            'effective_price' => $activityPackage->getEffectivePrice(),
+            'is_active' => $activityPackage->is_active,
+            'stock_quantity' => $activityPackage->stock_quantity,
+            'is_inventory_managed' => $activityPackage->is_inventory_managed,
+        ];
+
+        if ($includeActivities) {
+            $payload['activities_count'] = $activityPackage->activities_count ?? $activityPackage->activities()->count();
+            $payload['activities'] = $activityPackage->activities->map(function ($activity) {
+                return [
+                    'id' => $activity->id,
+                    'name' => $activity->name,
+                    'price' => (float) $activity->price,
+                    'pivot' => [
+                        'quantity' => $activity->pivot->quantity ?? 1,
+                    ],
+                ];
+            })->values();
+        }
+
+        return $payload;
+    }
+
     /**
      * Display a listing of activity packages.
      */
@@ -20,26 +74,11 @@ class ActivityPackageController extends Controller
               ->orderBy('activities.name');
         }])->withCount('activities')->latest()->get();
 
-        $packagesData = $packages->map(function($package) {
-            return [
-                'id' => $package->id,
-                'name' => $package->name,
-                'description' => $package->description,
-                'category' => $package->category,
-                'image' => $package->image,
-                'effective_price' => $package->getEffectivePrice(),
-                'is_active' => $package->is_active,
-                'activities_count' => $package->activities_count,
-                'activities' => $package->activities->map(function($activity) {
-                    return [
-                        'id' => $activity->id,
-                        'name' => $activity->name,
-                        'price' => (float) $activity->price
-                    ];
-                })->values(),
+        $packagesData = $packages->map(function ($package) {
+            return array_merge($this->packageToArray($package), [
                 'edit_url' => route('admin.activity-packages.edit', $package),
                 'delete_url' => route('admin.activity-packages.destroy', $package),
-            ];
+            ]);
         });
 
         return response()->json(['packages' => $packagesData]);
@@ -63,18 +102,11 @@ class ActivityPackageController extends Controller
             'activities.*' => 'integer|exists:activities,id',
             'quantities' => 'nullable|array',
             'quantities.*' => 'integer|min:1',
-            'image' => 'nullable|image|max:10240',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'remove_image' => 'nullable|in:1',
         ]);
 
-        // Upload image if provided
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $result = app(Cloudinary::class)->uploadApi()->upload(
-                $request->file('image')->getRealPath(),
-                ['folder' => 'calaiaph/activity-packages']
-            );
-            $imagePath = $result['secure_url'];
-        }
+        $imagePath = $this->uploadImage($request->file('image'));
 
         $package = ActivityPackage::create([
             'name' => $validated['name'],
@@ -109,25 +141,7 @@ class ActivityPackageController extends Controller
      */
     public function show(ActivityPackage $activityPackage)
     {
-        return response()->json([
-            'id' => $activityPackage->id,
-            'name' => $activityPackage->name,
-            'description' => $activityPackage->description,
-            'category' => $activityPackage->category,
-            'price' => $activityPackage->price,
-            'image' => $activityPackage->image,
-            'is_active' => $activityPackage->is_active,
-            'stock_quantity' => $activityPackage->stock_quantity,
-            'is_inventory_managed' => $activityPackage->is_inventory_managed,
-            'activities' => $activityPackage->activities->map(function ($activity) {
-                return [
-                    'activity_id' => $activity->id,
-                    'name' => $activity->name,
-                    'price' => $activity->price,
-                    'quantity' => $activity->pivot->quantity
-                ];
-            })
-        ]);
+        return response()->json($this->packageToArray($activityPackage));
     }
 
     /**
@@ -135,27 +149,7 @@ class ActivityPackageController extends Controller
      */
     public function edit(ActivityPackage $activityPackage)
     {
-        return response()->json([
-            'id' => $activityPackage->id,
-            'name' => $activityPackage->name,
-            'description' => $activityPackage->description,
-            'category' => $activityPackage->category,
-            'price' => $activityPackage->price,
-            'image' => $activityPackage->image,
-            'stock_quantity' => $activityPackage->stock_quantity,
-            'is_inventory_managed' => $activityPackage->is_inventory_managed,
-            'is_active' => $activityPackage->is_active,
-            'activities' => $activityPackage->activities->map(function ($activity) {
-                return [
-                    'id' => $activity->id,
-                    'name' => $activity->name,
-                    'price' => $activity->price,
-                    'pivot' => [
-                        'quantity' => $activity->pivot->quantity ?? 1
-                    ]
-                ];
-            })
-        ]);
+        return response()->json($this->packageToArray($activityPackage));
     }
 
     /**
@@ -175,7 +169,8 @@ class ActivityPackageController extends Controller
             'activities.*' => 'integer|exists:activities,id',
             'quantities' => 'nullable|array',
             'quantities.*' => 'integer|min:1',
-            'image' => 'nullable|image|max:10240',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'remove_image' => 'nullable|in:1',
         ]);
 
         $activityPackage->update([
@@ -188,13 +183,10 @@ class ActivityPackageController extends Controller
             'is_active' => $validated['is_active'] ?? true,
         ]);
 
-        // Handle image
-        if ($request->hasFile('image')) {
-            $result = app(Cloudinary::class)->uploadApi()->upload(
-                $request->file('image')->getRealPath(),
-                ['folder' => 'calaiaph/activity-packages']
-            );
-            $activityPackage->update(['image' => $result['secure_url']]);
+        if ($request->boolean('remove_image')) {
+            $activityPackage->update(['image' => null]);
+        } elseif ($request->hasFile('image')) {
+            $activityPackage->update(['image' => $this->uploadImage($request->file('image'))]);
         }
 
         // Update activities with quantities

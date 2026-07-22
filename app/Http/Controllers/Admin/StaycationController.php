@@ -7,13 +7,26 @@ use Illuminate\Http\Request;
 use App\Models\Staycation;
 use App\Models\StaycationSwiperImage;
 use App\Models\PeakPeriod;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use App\Services\CloudinaryImageService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class StaycationController extends Controller
 {
+    public function __construct(private readonly CloudinaryImageService $cloudinaryImages)
+    {
+    }
+
+    private function uploadImage(?\Illuminate\Http\UploadedFile $file): ?string
+    {
+        if (!$file) {
+            return null;
+        }
+
+        return $this->cloudinaryImages->upload($file, 'staycations')['url'];
+    }
+
     public function index()
     {
         $staycations = Staycation::ordered()->get();
@@ -127,40 +140,14 @@ class StaycationController extends Controller
         }
 
         // Handle image upload
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            try {
-                $file = $request->file('image');
-                $filePath = $file->getRealPath();
-                
-                if (!file_exists($filePath)) {
-                    $filePath = $file->getPathname();
-                }
-                
-                $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
-                    'resource_type' => 'auto'
-                ]);
-                
-                // Extract secure_url from ApiResponse object
-                if (isset($uploadResult['secure_url'])) {
-                    $imagePath = $uploadResult['secure_url'];
-                } elseif (property_exists($uploadResult, 'secure_url')) {
-                    $imagePath = $uploadResult->secure_url;
-                } else {
-                    $asArray = (array)$uploadResult;
-                    $imagePath = $asArray['secure_url'] ?? null;
-                }
-                
-                if (empty($imagePath)) {
-                    throw new \Exception('Could not extract secure_url from Cloudinary response');
-                }
-            } catch (\Exception $e) {
-                Log::error('Image upload failed:', ['message' => $e->getMessage()]);
-                return response()->json([
-                    'message' => 'Image upload failed: ' . $e->getMessage(),
-                    'errors' => ['image' => ['Failed to upload image to Cloudinary: ' . $e->getMessage()]]
-                ], 422);
-            }
+        try {
+            $imagePath = $this->uploadImage($request->file('image'));
+        } catch (\Throwable $e) {
+            Log::error('Image upload failed:', ['message' => $e->getMessage()]);
+            return response()->json([
+                'message' => 'Image upload failed: ' . $e->getMessage(),
+                'errors' => ['image' => ['Failed to upload image to Cloudinary: ' . $e->getMessage()]]
+            ], 422);
         }
 
         $supportsMaxGuestCapacity = Schema::hasColumn('staycations', 'max_guest_capacity');
@@ -321,34 +308,8 @@ class StaycationController extends Controller
             $updateData['image'] = null;
         } elseif ($request->hasFile('image')) {
             try {
-                $file = $request->file('image');
-                $filePath = $file->getRealPath();
-                
-                if (!file_exists($filePath)) {
-                    $filePath = $file->getPathname();
-                }
-                
-                $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
-                    'resource_type' => 'auto'
-                ]);
-                
-                // Extract secure_url from ApiResponse object
-                $imageUrl = null;
-                if (isset($uploadResult['secure_url'])) {
-                    $imageUrl = $uploadResult['secure_url'];
-                } elseif (property_exists($uploadResult, 'secure_url')) {
-                    $imageUrl = $uploadResult->secure_url;
-                } else {
-                    $asArray = (array)$uploadResult;
-                    $imageUrl = $asArray['secure_url'] ?? null;
-                }
-                
-                if (empty($imageUrl)) {
-                    throw new \Exception('Could not extract secure_url from Cloudinary');
-                }
-                
-                $updateData['image'] = $imageUrl;
-            } catch (\Exception $e) {
+                $updateData['image'] = $this->uploadImage($request->file('image'));
+            } catch (\Throwable $e) {
                 Log::error('Image update failed:', ['message' => $e->getMessage()]);
                 return response()->json([
                     'message' => 'Image upload failed: ' . $e->getMessage(),
