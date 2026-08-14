@@ -1,6 +1,50 @@
 {{-- Reusable Floating Buttons Component --}}
+<style>
+    [data-floating-buttons] {
+        position: fixed !important;
+        right: calc(0.75rem + env(safe-area-inset-right, 0px)) !important;
+        bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)) !important;
+        width: 44px !important;
+        min-height: 148px !important;
+        z-index: 9990 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    [data-floating-buttons] > a,
+    [data-floating-buttons] > button {
+        width: 44px !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        flex: 0 0 44px !important;
+    }
+
+    @media (min-width: 640px) {
+        [data-floating-buttons] {
+            right: 1rem !important;
+            bottom: 1rem !important;
+            width: 48px !important;
+            min-height: 160px !important;
+        }
+
+        [data-floating-buttons] > a,
+        [data-floating-buttons] > button {
+            width: 48px !important;
+            height: 48px !important;
+            min-height: 48px !important;
+            flex-basis: 48px !important;
+        }
+    }
+</style>
+
 <div
-    class="fixed bottom-3 right-3 sm:bottom-4 sm:right-4 flex flex-col gap-2 z-1030"
+    data-floating-buttons
+    class="fixed bottom-3 right-3 flex flex-col gap-2 sm:bottom-4 sm:right-4"
+    style="position: fixed !important; right: 12px !important; bottom: 12px !important; z-index: 2147483000 !important; display: flex !important; flex-direction: column !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important;"
 >
     {{-- Special Events button --}}
     <button
@@ -65,10 +109,18 @@ function navigateToBookingCalendar() {
     window.location.href = '{{ url("/booking/calendar") }}';
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const scrollBtn = document.getElementById('scrollToTopBtn');
+function initializeFloatingButtons() {
+    const floatingButtons = document.querySelector('[data-floating-buttons]');
+    if (!floatingButtons) return;
 
-    if (!scrollBtn) return;
+    // Keep global floating controls outside page-specific stacking and overflow contexts.
+    if (floatingButtons.parentElement !== document.body) {
+        document.body.appendChild(floatingButtons);
+    }
+
+    const scrollBtn = document.getElementById('scrollToTopBtn');
+    if (!scrollBtn || scrollBtn.dataset.initialized === 'true') return;
+    scrollBtn.dataset.initialized = 'true';
 
     scrollBtn.addEventListener('click', () => {
         window.scrollTo({
@@ -76,5 +128,11 @@ document.addEventListener('DOMContentLoaded', () => {
             behavior: 'smooth',
         });
     });
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeFloatingButtons, { once: true });
+} else {
+    initializeFloatingButtons();
+}
 </script>
