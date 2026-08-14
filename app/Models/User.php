@@ -121,4 +121,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Booking::class);
     }
+
+    public function bookingWishlistItems(): HasMany
+    {
+        return $this->hasMany(BookingWishlistItem::class);
+    }
 }

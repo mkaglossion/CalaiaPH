@@ -1413,6 +1413,145 @@ class BookingController extends Controller
         ));
     }
 
+    /**
+     * Hydrate the existing staycation checkout from the isolated Booking Cart.
+     * No Booking record is created here; the existing payment flow remains the
+     * only path that can finalize a booking and allocate inventory.
+     */
+    public function checkoutBookingCart(Request $request)
+    {
+        $cart = session('booking_cart', []);
+        $items = collect($cart['items'] ?? []);
+        $context = $cart['booking_context'] ?? [];
+
+        if ($items->isEmpty()) {
+            return redirect()->route('booking.cart.index')->with('error', 'Your Booking Cart is empty.');
+        }
+
+        $checkin = $context['checkin'] ?? null;
+        $checkout = $context['checkout'] ?? null;
+        if (!$checkin || !$checkout || Carbon::parse($checkout)->lte(Carbon::parse($checkin))) {
+            return redirect()->route('booking.cart.index')->with('error', 'The saved booking dates are invalid. Please select your dates again.');
+        }
+
+        $roomItems = $items->where('item_type', 'staycation')->values();
+        if ($roomItems->isEmpty()) {
+            return redirect()->route('booking.cart.index')->with('error', 'Add at least one room or tent before checkout.');
+        }
+
+        $accommodations = [];
+        foreach ($roomItems as $item) {
+            $roomId = (int) ($item['item_id'] ?? 0);
+            $staycation = Staycation::find($roomId);
+            if (!$staycation) {
+                return redirect()->route('booking.cart.index')->with('error', 'A saved room or tent is no longer available.');
+            }
+
+            $selection = is_array($item['selection'] ?? null) ? $item['selection'] : [];
+            $requiredQuantity = max(1, (int) ($selection['quantity'] ?? 1));
+            $date = Carbon::parse($checkin)->startOfDay();
+            $lastNight = Carbon::parse($checkout)->startOfDay();
+            while ($date->lt($lastNight)) {
+                $inventory = StaycationInventory::where('staycation_id', $roomId)
+                    ->whereDate('date', $date->toDateString())
+                    ->first();
+                $available = $inventory
+                    ? (!$inventory->is_blocked ? (int) $inventory->available_quantity : 0)
+                    : (int) ($staycation->base_quantity ?? 0);
+
+                if ($available < $requiredQuantity) {
+                    return redirect()->route('booking.cart.index')->with(
+                        'error',
+                        $staycation->name . ' is no longer available for ' . $date->format('M j, Y') . '.'
+                    );
+                }
+                $date->addDay();
+            }
+
+            $accommodations[] = [
+                'room_id' => $roomId,
+                'accommodation_id' => $roomId,
+                'instance_num' => max(1, (int) ($selection['instance_num'] ?? 1)),
+                'adults' => max(1, (int) ($selection['adults'] ?? 1)),
+                'children' => max(0, (int) ($selection['children'] ?? 0)),
+                'extra_mattress' => max(0, (int) ($selection['extra_mattress'] ?? 0)),
+                'pets' => !empty($selection['pets']) ? 'yes' : 'no',
+                'pet_agreement' => (bool) ($selection['pet_agreement'] ?? false),
+                'num_pets' => max(0, (int) ($selection['num_pets'] ?? 0)),
+                'quantity' => $requiredQuantity,
+            ];
+        }
+
+        $foods = [];
+        $activities = [];
+        $activityPackages = [];
+        foreach ($items as $item) {
+            $type = $item['item_type'] ?? null;
+            $id = (int) ($item['item_id'] ?? 0);
+            $selection = is_array($item['selection'] ?? null) ? $item['selection'] : [];
+
+            if ($type === 'food') {
+                $food = Food::where('is_active', true)->find($id);
+                $quantity = max(1, min(20, (int) ($selection['quantity'] ?? 1)));
+                if (!$food || ($food->is_inventory_managed && $food->stock_quantity < $quantity)) {
+                    return redirect()->route('booking.cart.index')->with('error', 'A meal in your Booking Cart is unavailable or out of stock.');
+                }
+                $foods[] = ['id' => $id, 'quantity' => $quantity];
+            } elseif ($type === 'food_package') {
+                $package = FoodPackage::where('is_active', true)->find($id);
+                $quantity = max(1, min(20, (int) ($selection['quantity'] ?? 1)));
+                if (!$package || ($package->is_inventory_managed && $package->stock_quantity < $quantity)) {
+                    return redirect()->route('booking.cart.index')->with('error', 'A meal package in your Booking Cart is unavailable or out of stock.');
+                }
+                $foods[] = [
+                    'id' => 'package-' . $id,
+                    'package_id' => $id,
+                    'category' => 'package',
+                    'is_package' => true,
+                    'quantity' => $quantity,
+                    'selected_choices' => $selection['selected_choices'] ?? [],
+                ];
+            } elseif ($type === 'activity') {
+                if (!Activity::where('is_active', true)->whereKey($id)->exists()) {
+                    return redirect()->route('booking.cart.index')->with('error', 'An activity in your Booking Cart is no longer available.');
+                }
+                $activities[] = ['id' => $id, 'guests' => max(1, min(20, (int) ($selection['guests'] ?? 1)))];
+            } elseif ($type === 'activity_package') {
+                $package = ActivityPackage::where('is_active', true)->find($id);
+                $quantity = max(1, min(20, (int) ($selection['quantity'] ?? 1)));
+                if (!$package || ($package->is_inventory_managed && $package->stock_quantity < $quantity)) {
+                    return redirect()->route('booking.cart.index')->with('error', 'An activity package in your Booking Cart is no longer available.');
+                }
+                $activityPackages[] = [
+                    'id' => 'package-' . $id,
+                    'package_id' => $id,
+                    'is_package' => true,
+                    'quantity' => $quantity,
+                ];
+            }
+        }
+
+        $booking = $this->normalizeAndRecalculateStaycationBooking([
+            'booking_type' => 'staycation',
+            'checkin' => Carbon::parse($checkin)->toDateString(),
+            'checkout' => Carbon::parse($checkout)->toDateString(),
+            'accommodations' => $accommodations,
+            'selected_foods' => $foods,
+            'selected_activities' => $activities,
+            'selected_activity_packages' => $activityPackages,
+            'rooms_count' => count($accommodations),
+            'adults_total' => collect($accommodations)->sum('adults'),
+            'children_total' => collect($accommodations)->sum('children'),
+            'completed_steps' => [1, 2, 3, 4],
+            'current_step' => 5,
+            'timestamp' => now()->timestamp,
+        ]);
+
+        session(['booking' => $booking]);
+
+        return redirect()->route('booking.staycationPayment');
+    }
+
     public function payment()
     {
         return $this->getBookingPayment('regular');
@@ -1443,7 +1582,7 @@ class BookingController extends Controller
                 'isStaycation' => true,
                 'confirmationContent' => $confirmationContent,
             ];
-            session()->forget(['booking', 'staycation_customer_info']);
+            session()->forget(['booking', 'booking_cart', 'staycation_customer_info']);
             return view('booking.confirmation', $data);
         }
 

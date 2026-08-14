@@ -1,19 +1,11 @@
 @props(['active' => 'home'])
 
 @php
-  $cart = session('cart', []);
-  $cartCount = 0;
   $logoSource = $systemSettings['logo_url'] ?? null;
   $desktopLogo = $logoSource
     ? \App\Helpers\CloudinaryHelper::optimize($logoSource, 420, false, false, 'good')
     : null;
   $mobileLogo = $desktopLogo;
-
-  if (is_array($cart)) {
-    foreach ($cart as $item) {
-      $cartCount += $item['quantity'] ?? 0;
-    }
-  }
 
   $nav = config('navigation.main', []);
 @endphp
@@ -188,6 +180,8 @@
             </div>
           </div>
 
+          <x-booking-wishlist-link />
+          <x-booking-cart-link />
           <x-cart />
         @else
           <div class="flex items-center gap-2">
@@ -205,6 +199,8 @@
             </button>
           </div>
 
+          <x-booking-wishlist-link />
+          <x-booking-cart-link />
           <x-cart />
         @endauth
       </div>
@@ -229,6 +225,8 @@
 
       <!-- Actions + Hamburger -->
       <div class="flex items-center gap-2">
+        <x-booking-wishlist-link />
+        <x-booking-cart-link />
         <x-cart />
 
         <button
@@ -290,20 +288,6 @@
             {{ $item['label'] }}
           </a>
         @endforeach
-
-        <a
-          href="{{ route('cart.index') }}"
-          data-js-cart-button
-          @click.prevent="mobileOpen = false; window.location.href = '{{ route('cart.index') }}'"
-          class="mt-2 flex items-center gap-2 rounded-lg px-3 py-2 uppercase tracking-wide text-white transition hover:bg-white/50"
-        >
-          <span>Cart</span>
-          @if($cartCount > 0)
-            <span data-js-cart-count class="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-white px-1.5 text-xs font-semibold text-brand shadow-sm">
-              {{ $cartCount }}
-            </span>
-          @endif
-        </a>
 
           <div class="pt-3 mt-3 border-t border-brand/15">
           @auth
@@ -690,4 +674,7 @@
       </div>
     </div>
   </div>
+  @once
+    @include('booking.partials.wishlist-script')
+  @endonce
 </header>

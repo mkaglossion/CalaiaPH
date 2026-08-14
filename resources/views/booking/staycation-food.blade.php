@@ -419,7 +419,12 @@
                                                     data-food-id="{{ $food->id }}"
                                                     @click="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})"
                                                 >
-                                                    @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $food->id . ')', 'qty' => 'getSelectedQuantity(' . $food->id . ')'])
+                                                    @include('booking.partials.card-selection-actions', [
+                                                        'itemType' => 'food',
+                                                        'itemId' => $food->id,
+                                                        'selectionExpression' => "selectedFoods.find(f => !f.is_package && String(f.id) === String({$food->id})) || { quantity: 1 }",
+                                                        'selectedCondition' => 'isSelected(' . $food->id . ')',
+                                                    ])
 
                                                     <div class="relative bg-gray-200 overflow-hidden">
                                                         @php
@@ -562,7 +567,12 @@
                                                     data-food-id="{{ $food->id }}"
                                                     @click="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})"
                                                 >
-                                                    @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $food->id . ')', 'qty' => 'getSelectedQuantity(' . $food->id . ')'])
+                                                    @include('booking.partials.card-selection-actions', [
+                                                        'itemType' => 'food',
+                                                        'itemId' => $food->id,
+                                                        'selectionExpression' => "selectedFoods.find(f => !f.is_package && String(f.id) === String({$food->id})) || { quantity: 1 }",
+                                                        'selectedCondition' => 'isSelected(' . $food->id . ')',
+                                                    ])
 
                                                     <div class="relative bg-gray-200 overflow-hidden">
                                                         @php
@@ -710,7 +720,12 @@
                                                     :class="'{{ $specialColor['bg'] }} {{ $specialColor['ring'] }} {{ $specialColor['border'] }}'"
                                                     @click="toggleFood({{ $special->id }}, '{{ $special->name }}', '{{ $category }}', {{ $special->price }})"
                                                 >
-                                                    @include('booking.partials._checkmark-badge', ['condition' => 'isSelected(' . $special->id . ')', 'qty' => 'getSelectedQuantity(' . $special->id . ')'])
+                                                    @include('booking.partials.card-selection-actions', [
+                                                        'itemType' => 'food',
+                                                        'itemId' => $special->id,
+                                                        'selectionExpression' => "selectedFoods.find(f => !f.is_package && String(f.id) === String({$special->id})) || { quantity: 1 }",
+                                                        'selectedCondition' => 'isSelected(' . $special->id . ')',
+                                                    ])
 
                                                     <div class="relative overflow-hidden h-64 sm:h-64 md:h-96 flex items-center justify-center bg-gray-100">
                                                         @php

@@ -75,6 +75,8 @@ use App\Http\Controllers\Admin\AdminSystemSettingsController;
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\DayTourController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BookingCartController;
+use App\Http\Controllers\BookingWishlistController;
 use App\Http\Controllers\ContactController;
 
 use App\Http\Controllers\Admin\ActivityController;
@@ -212,6 +214,21 @@ Route::get('/booking/payment/failed', [BookingController::class, 'paymentFailed'
 Route::match(['GET', 'POST'], '/booking/staycation', [BookingController::class, 'staycation'])->name('booking.staycation');
 Route::post('/booking/save-session', [BookingController::class, 'saveBookingSession'])->name('booking.saveSession');
 Route::get('/booking/staycation/availability', [BookingController::class, 'staycationAvailability'])->name('booking.staycationAvailability');
+Route::get('/booking/wishlist', [BookingWishlistController::class, 'index'])->name('booking.wishlist.index');
+
+Route::middleware('auth')->prefix('booking')->name('booking.')->group(function () {
+    Route::get('/wishlist/state', [BookingWishlistController::class, 'state'])->name('wishlist.state');
+    Route::post('/wishlist/toggle', [BookingWishlistController::class, 'toggle'])->name('wishlist.toggle');
+    Route::delete('/wishlist/selected', [BookingWishlistController::class, 'removeSelected'])->name('wishlist.selected.destroy');
+    Route::delete('/wishlist/{wishlistItem}', [BookingWishlistController::class, 'destroy'])->name('wishlist.destroy');
+    Route::post('/wishlist/add-to-cart', [BookingWishlistController::class, 'addSelectedToCart'])->name('wishlist.add-to-cart');
+
+    Route::get('/cart', [BookingCartController::class, 'index'])->name('cart.index');
+    Route::delete('/cart/clear', [BookingCartController::class, 'clear'])->name('cart.clear');
+    Route::patch('/cart/{key}/quantity', [BookingCartController::class, 'updateQuantity'])->where('key', '[^/]+')->name('cart.quantity.update');
+    Route::delete('/cart/{key}', [BookingCartController::class, 'destroy'])->where('key', '.*')->name('cart.destroy');
+    Route::post('/cart/checkout', [BookingController::class, 'checkoutBookingCart'])->name('cart.checkout');
+});
 // Endpoint: fetch external live site and return current glamping image
 Route::get('/api/external/glamping-image', function() {
     $cacheKey = 'external.glamping_image';

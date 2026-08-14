@@ -7,9 +7,13 @@
 
 <div class="relative h-full flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl ring-2 ring-gray-200 hover:ring-[#8f5d54] cursor-pointer"
      @click="toggleActivity({{ $activity->id }}, '{{ addslashes($activity->name) }}', '{{ $activity->category ?? 'activity' }}', {{ $activity->price }})">
-    
-    {{-- Checkmark Badge --}}
-    @include('booking.partials._checkmark-badge', ['condition' => 'isActivitySelected(' . $activity->id . ')'])
+
+    @include('booking.partials.card-selection-actions', [
+        'itemType' => 'activity',
+        'itemId' => $activity->id,
+        'selectionExpression' => "selectedActivities.find(a => String(a.id) === String({$activity->id})) || { guests: 1 }",
+        'selectedCondition' => 'isActivitySelected(' . $activity->id . ')',
+    ])
 
     {{-- Image --}}
     <div class="relative bg-gray-200 overflow-hidden h-44 sm:h-56 md:h-96">

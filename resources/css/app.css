@@ -85,6 +85,19 @@ body, h1, h2, h3, h4, h5, h6, p, a, li {
   h3 { font-size: var(--text-xl); }
 }
 
+/* Card headings opt out of the global mobile heading scale. */
+.booking-cart-item-title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.375;
+}
+
+@media (min-width: 640px) {
+  .booking-cart-item-title {
+    font-size: var(--text-lg);
+  }
+}
+
 /* Policy nav + container styles */
 .policy-subnav {
   transform: translateY(-2rem);

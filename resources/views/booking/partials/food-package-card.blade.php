@@ -46,9 +46,13 @@
 <div class="relative h-full w-full min-w-0 flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-200 hover:border-[#8f5d54] hover:shadow-xl transition cursor-pointer"
      @click="togglePackage({{ $package->id }}, @js($package->name), {{ $package->getEffectivePrice() }}, @js($packageFoods), @js($packageSections))">
 
-    
-    {{-- Checkmark Badge --}}
-    @include('booking.partials._checkmark-badge', ['condition' => 'isPackageSelected(' . $package->id . ')'])
+    @include('booking.partials.card-selection-actions', [
+        'itemType' => 'food_package',
+        'itemId' => $package->id,
+        'selectionExpression' => "selectedFoods.find(f => f.is_package && String(f.package_id) === String({$package->id})) || { quantity: 1 }",
+        'selectedCondition' => 'isPackageSelected(' . $package->id . ')',
+    ])
+
     <div class="relative bg-gray-200 overflow-hidden h-64 sm:h-64 md:h-80 lg:h-96">
         @if(!empty($package->image))
             <img src="{{ \App\Helpers\ImageHelper::src($package->image) }}" alt="{{ $package->name }}" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">

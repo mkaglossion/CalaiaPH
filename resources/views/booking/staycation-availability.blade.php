@@ -386,12 +386,13 @@
                                 x-show="roomType === 'all' || roomType === '{{ $roomDetail['type'] }}'"
                                 @click="handleCardClick($event, {{ $staycation->id }}, '{{ $roomDetail['type'] }}')"
                             >
-                                {{-- Selected indicator --}}
-                                <div class="absolute top-2 left-2 z-10" x-show="isSelected({{ $staycation->id }})" x-transition>
-                                    <div class="w-6 h-6 bg-[#8f5d54] rounded-full flex items-center justify-center">
-                                        <i class="bi bi-check text-white text-sm"></i>
-                                    </div>
-                                </div>
+                                @include('booking.partials.card-selection-actions', [
+                                    'itemType' => 'staycation',
+                                    'itemId' => $staycation->id,
+                                    'selectionExpression' => 'getSelectedRoom(' . $staycation->id . ') || { room_id: ' . $staycation->id . ', id: ' . $staycation->id . ', adults: Math.max(1, Math.ceil(targetAdults / Math.max(targetRooms, 1))), children: Math.max(0, Math.floor(targetChildren / Math.max(targetRooms, 1))), quantity: 1 }',
+                                    'selectedCondition' => 'isSelected(' . $staycation->id . ')',
+                                    'checkPositionClass' => 'top-14 right-3',
+                                ])
 
                                 {{-- Image (First image only - carousel now in modal) --}}
                                 <div class="relative">

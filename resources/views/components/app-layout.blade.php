@@ -65,8 +65,7 @@
     {{-- Footer --}}
     <x-footer />
 
-    {{-- Scripts --}}
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    {{-- Alpine is bundled and started once by resources/js/app.js. --}}
     <script>
     // Fix for flushLogs fetch error - aggressive override
     (function() {
