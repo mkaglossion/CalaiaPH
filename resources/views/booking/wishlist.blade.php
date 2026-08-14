@@ -38,7 +38,7 @@
             @endif
 
             @if(!$isAuthenticated)
-                <section class="mx-auto mt-4 max-w-2xl border border-gray-200 bg-gray-50 px-6 py-14 text-center sm:px-12">
+                <section x-data="{}" data-wishlist-login-panel class="mx-auto mt-4 max-w-2xl border border-gray-200 bg-gray-50 px-6 py-14 text-center sm:px-12">
                     <span class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white text-3xl text-gray-900 shadow-sm"><i class="bi bi-person-lock"></i></span>
                     <h2 class="mt-6 text-3xl font-semibold text-gray-950">Log in to use your Wishlist</h2>
                     <p class="mx-auto mt-3 max-w-lg leading-7 text-gray-600">Your saved rooms, meals, and activities are securely connected to your account.</p>
@@ -106,7 +106,7 @@
 
                                     <button type="submit" form="remove-wishlist-{{ $item['record_id'] }}" class="absolute right-7 top-7 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl text-gray-800 shadow-md transition hover:bg-red-50 hover:text-red-600" aria-label="Remove {{ $item['name'] }}"><i class="bi bi-x-lg"></i></button>
 
-                                    <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" class="aspect-[4/3] w-full rounded-2xl bg-gray-100 object-cover">
+                                    <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" class="aspect-4/3 w-full rounded-2xl bg-gray-100 object-cover">
                                     <div class="px-1 pb-2 pt-5">
                                         <p class="text-xs font-bold uppercase tracking-[0.14em] text-[#8f5d54]">{{ $item['type_label'] }}</p>
                                         <h2 class="mt-2 text-xl font-bold text-gray-950">{{ $item['name'] }}</h2>

@@ -25,7 +25,9 @@ class BookingWishlistCartTest extends TestCase
         $this->get(route('booking.wishlist.index'))
             ->assertOk()
             ->assertSee('Wishlist')
-            ->assertSee('Log in to use your Wishlist');
+            ->assertSee('Log in to use your Wishlist')
+            ->assertSee('data-wishlist-login-panel', false)
+            ->assertSee('@click="$store.modals.showLogin = true"', false);
 
         $this->postJson(route('booking.wishlist.toggle'), [
             'item_type' => 'food',
