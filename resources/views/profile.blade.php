@@ -459,20 +459,76 @@
                                 View your booking history and manage reservations
                             </div>
 
-                            <div class="text-center py-12">
-                                <i class="bi bi-calendar-check text-6xl mb-4" aria-hidden="true" style="color:#00848d;"></i>
-                                <h3 class="text-2xl font-semibold mb-2" style="color:#4d3327;">My Bookings</h3>
-                                <p class="mb-6" style="color:#4d3327;">Your booking history will appear here.</p>
-
-                                <a
-                                    href="{{ route('booking.staycation') }}"
-                                    class="inline-flex items-center gap-2 px-6 py-2 rounded-lg transition transform hover:-translate-y-0.5 hover:shadow-md"
-                                    style="background-color:#db8636;color:#f6f3ec;text-decoration:none;"
-                                >
+                            <div class="flex items-center justify-between gap-4 mb-6">
+                                <div>
+                                    <h3 class="text-2xl font-semibold" style="color:#4d3327;">My Bookings</h3>
+                                    <p class="text-sm mt-1" style="color:#7a7d52;">Open a booking to view its separate add-on transactions.</p>
+                                </div>
+                                <a href="{{ route('booking.staycation') }}"
+                                   class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
+                                   style="background-color:#db8636;color:#f6f3ec;text-decoration:none;">
                                     <i class="bi bi-plus-circle" aria-hidden="true"></i>
                                     Book a Stay
                                 </a>
                             </div>
+
+                            @if(($bookings ?? collect())->isEmpty())
+                                <div class="text-center py-10 rounded-xl" style="background-color:#f6f3ec;border:1px solid #cccbbd;">
+                                    <i class="bi bi-calendar-check text-5xl" aria-hidden="true" style="color:#00848d;"></i>
+                                    <p class="mt-3" style="color:#4d3327;">You have no bookings yet.</p>
+                                </div>
+                            @else
+                                <div class="space-y-4">
+                                    @foreach($bookings as $booking)
+                                        @php
+                                            $addOnCount = $booking->addOnTransactions->count();
+                                            $addOnTotal = $booking->add_ons_total;
+                                        @endphp
+                                        <article class="rounded-xl p-5" style="background-color:#fff;border:1px solid #cccbbd;">
+                                            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                                                <div>
+                                                    <div class="flex flex-wrap items-center gap-2">
+                                                        <h4 class="text-lg font-bold" style="color:#4d3327;">{{ $booking->transaction_id }}</h4>
+                                                        @if($addOnCount > 0)
+                                                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold" style="background-color:rgba(0,132,141,.1);color:#00848d;">
+                                                                {{ $addOnCount }} {{ \Illuminate\Support\Str::plural('add-on', $addOnCount) }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                    <p class="text-sm mt-1" style="color:#7a7d52;">{{ $booking->display_type_label }}</p>
+                                                    <p class="text-sm mt-2" style="color:#4d3327;">
+                                                        {{ optional($booking->checkin_date)->format('M d, Y') ?? 'Date unavailable' }}
+                                                        @if($booking->display_checkout_date)
+                                                            &ndash; {{ $booking->display_checkout_date->format('M d, Y') }}
+                                                        @endif
+                                                    </p>
+                                                </div>
+                                                <div class="sm:text-right">
+                                                    <p class="text-xs uppercase tracking-wide" style="color:#7a7d52;">Original Booking Total</p>
+                                                    <p class="text-xl font-bold" style="color:#98655b;">&#8369;{{ number_format((float) $booking->total_amount, 2) }}</p>
+                                                    <p class="text-xs font-semibold uppercase mt-1" style="color:#222c1e;">{{ $booking->payment_status }}</p>
+                                                </div>
+                                            </div>
+
+                                            @if($addOnCount > 0)
+                                                <div class="flex justify-between text-sm mt-4 pt-4" style="border-top:1px solid #e5e2dc;color:#4d3327;">
+                                                    <span>Add-ons Total</span>
+                                                    <strong>&#8369;{{ number_format($addOnTotal, 2) }}</strong>
+                                                </div>
+                                            @endif
+
+                                            <div class="mt-4">
+                                                <a href="{{ route('profile.bookings.show', $booking) }}"
+                                                   class="inline-flex items-center gap-2 text-sm font-semibold"
+                                                   style="color:#00848d;text-decoration:none;">
+                                                    View Booking Details
+                                                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                                                </a>
+                                            </div>
+                                        </article>
+                                    @endforeach
+                                </div>
+                            @endif
                         </section>
 
                         {{-- SECURITY --}}
@@ -571,7 +627,7 @@
                             </a>
 
                             <a
-                                href="{{ route('booking.staycation') }}"
+                                href="{{ route('profile.show') }}#bookings"
                                 class="flex items-center gap-3 p-3 rounded-lg transition-colors no-underline"
                                 style="color:#4d3327;border:1px solid transparent;"
                             >
@@ -636,6 +692,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             initializeProfileTabs();
+
+            const requestedTab = window.location.hash.replace('#', '');
+            if (['overview', 'bookings', 'edit', 'password'].includes(requestedTab)) {
+                switchTab(requestedTab);
+            }
         });
 
         function initializeProfileTabs() {

@@ -166,7 +166,7 @@
               <a href="{{ route('booking.calendar') }}?type=daytour" x-show="false" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
                 <i class="bi bi-sun me-2"></i>Book Day Tour
               </a>
-              <a href="{{ route('booking.history') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
+              <a href="{{ route('profile.show') }}#bookings" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">
                 <i class="bi bi-calendar-event me-2"></i>My Bookings
               </a>
 
@@ -316,7 +316,7 @@
             <a href="{{ route('booking.calendar') }}?type=daytour" x-show="false" @click.prevent="mobileOpen = false; window.location.href = '{{ route('booking.calendar') }}?type=daytour'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
               <i class="bi bi-sun me-2"></i>Book Day Tour
             </a>
-            <a href="{{ route('booking.history') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('booking.history') }}'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
+            <a href="{{ route('profile.show') }}#bookings" @click.prevent="mobileOpen = false; window.location.href = '{{ route('profile.show') }}#bookings'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
               <i class="bi bi-calendar-event me-2"></i>My Bookings
             </a>
 

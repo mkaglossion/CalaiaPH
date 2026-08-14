@@ -10,7 +10,11 @@ use App\Models\Staycation;
 use App\Events\FoodStockUpdated;
 use App\Models\Food;
 use App\Models\BookingGuest;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
 
 class Booking extends Model
 {
@@ -19,6 +23,7 @@ class Booking extends Model
     public const STAYCATION_TYPES = ['staycation', 'glamping', 'camping'];
 
     protected $fillable = [
+        'user_id',
         'transaction_id',
         'customer_name',
         'customer_email',
@@ -59,6 +64,26 @@ class Booking extends Model
     const CHECKIN_STATUS_PENDING = 'pending';
     const CHECKIN_STATUS_CHECKED_IN = 'checked_in';
     const CHECKIN_STATUS_CHECKED_OUT = 'checked_out';
+
+    protected static function booted(): void
+    {
+        static::creating(function (Booking $booking) {
+            if ($booking->user_id || blank($booking->customer_email)) {
+                return;
+            }
+
+            $authenticatedUser = Auth::user();
+            if ($authenticatedUser
+                && strtolower(trim((string) $authenticatedUser->email)) === strtolower(trim((string) $booking->customer_email))) {
+                $booking->user_id = $authenticatedUser->id;
+                return;
+            }
+
+            $booking->user_id = User::query()
+                ->whereRaw('LOWER(email) = ?', [strtolower(trim((string) $booking->customer_email))])
+                ->value('id');
+        });
+    }
 
     /**
      * Fallback display name if customer_name is missing.
@@ -163,6 +188,41 @@ class Booking extends Model
     public function bookingGuests(): HasMany
     {
         return $this->hasMany(BookingGuest::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function addOnTransactions(): HasMany
+    {
+        return $this->hasMany(AddOnTransaction::class)->latest('created_at');
+    }
+
+    public function getAddOnsTotalAttribute(): float
+    {
+        $transactions = $this->relationLoaded('addOnTransactions')
+            ? $this->getRelation('addOnTransactions')
+            : $this->addOnTransactions()->get();
+
+        return (float) $transactions
+            ->filter(fn (AddOnTransaction $transaction) =>
+                $transaction->status === AddOnTransaction::STATUS_CONFIRMED
+                && $transaction->payment_status === 'paid'
+            )
+            ->sum(fn (AddOnTransaction $transaction) => (float) $transaction->total_amount);
+    }
+
+    public function scopeOwnedBy(Builder $query, User $user): Builder
+    {
+        return $query->where(function (Builder $ownership) use ($user) {
+            $ownership->where('user_id', $user->id)
+                ->orWhere(function (Builder $legacy) use ($user) {
+                    $legacy->whereNull('user_id')
+                        ->whereRaw('LOWER(customer_email) = ?', [strtolower(trim((string) $user->email))]);
+                });
+        });
     }
 
     /**

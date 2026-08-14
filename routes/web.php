@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\AddOnTransactionController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\DiningReservationController;
 use App\Http\Controllers\WeatherController;
@@ -490,6 +491,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile/bookings/{booking}', [ProfileController::class, 'bookingDetails'])->name('profile.bookings.show');
+    Route::get('/profile/bookings/{booking}/add-ons/create', [AddOnTransactionController::class, 'create'])->name('profile.bookings.add-ons.create');
+    Route::post('/profile/bookings/{booking}/add-ons', [AddOnTransactionController::class, 'store'])->name('profile.bookings.add-ons.store');
+    Route::get('/profile/bookings/{booking}/add-ons/{addOnTransaction}/pay', [AddOnTransactionController::class, 'resumePayment'])->name('profile.bookings.add-ons.pay');
+    Route::get('/profile/bookings/{booking}/add-ons/{addOnTransaction}', [ProfileController::class, 'addOnDetails'])->name('profile.bookings.add-ons.show');
+    Route::get('/profile/add-ons/payment/success', [AddOnTransactionController::class, 'paymentSuccess'])->name('profile.add-ons.payment.success');
+    Route::get('/profile/add-ons/payment/cancelled', [AddOnTransactionController::class, 'paymentCancelled'])->name('profile.add-ons.payment.cancelled');
     Route::get('/booking/history', function () {
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -499,7 +507,9 @@ Route::middleware('auth')->group(function () {
         }
 
         // Fetch user's completed/cancelled bookings or past bookings for history
-        $bookings = \App\Models\Booking::where('customer_email', $user->email)
+        $bookings = \App\Models\Booking::query()
+            ->ownedBy($user)
+            ->with('addOnTransactions')
             ->where(function($query) {
                 $query->whereIn('status', ['completed', 'cancelled'])
                       ->orWhereRaw('DATE(checkout_date) < ?', [now()->toDateString()]);
