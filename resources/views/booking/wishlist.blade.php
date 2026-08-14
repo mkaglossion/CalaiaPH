@@ -21,7 +21,7 @@
             </section>
 
             <div class="flex flex-wrap gap-3 py-7">
-                <a href="{{ route('booking.staycationAvailability') }}" class="inline-flex items-center justify-center rounded-full bg-gray-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#8f5d54]">Continue booking</a>
+                <a href="{{ route('booking.calendar') }}" class="inline-flex items-center justify-center rounded-full bg-gray-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#8f5d54]">Continue booking</a>
                 <a href="{{ route('booking.cart.index') }}" class="inline-flex items-center justify-center gap-2 rounded-full border border-gray-900 px-6 py-3 text-sm font-semibold text-gray-900 transition hover:bg-gray-100">
                     <i class="bi bi-bag"></i> Open Booking Cart
                 </a>
@@ -49,7 +49,7 @@
                     <span class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white text-3xl text-gray-900 shadow-sm"><i class="bi bi-heart"></i></span>
                     <h2 class="mt-6 text-3xl font-semibold text-gray-950">Your wishlist is empty</h2>
                     <p class="mx-auto mt-3 max-w-lg leading-7 text-gray-600">Save rooms, meals, and activities here so you can review them before adding them to your Booking Cart.</p>
-                    <a href="{{ route('booking.staycationAvailability') }}" class="mt-7 inline-flex rounded-full bg-gray-950 px-7 py-3 font-semibold text-white transition hover:bg-[#8f5d54]">Browse booking options</a>
+                    <a href="{{ route('booking.calendar') }}" class="mt-7 inline-flex rounded-full bg-gray-950 px-7 py-3 font-semibold text-white transition hover:bg-[#8f5d54]">Browse booking options</a>
                 </section>
             @else
                 @php
