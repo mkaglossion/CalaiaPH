@@ -464,7 +464,7 @@
                                     <h3 class="text-2xl font-semibold" style="color:#4d3327;">My Bookings</h3>
                                     <p class="text-sm mt-1" style="color:#7a7d52;">Open a booking to view its separate add-on transactions.</p>
                                 </div>
-                                <a href="{{ route('booking.staycation') }}"
+                                <a href="{{ route('booking.calendar') }}"
                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
                                    style="background-color:#db8636;color:#f6f3ec;text-decoration:none;">
                                     <i class="bi bi-plus-circle" aria-hidden="true"></i>
@@ -615,7 +615,7 @@
 
                         <div class="space-y-2">
                             <a
-                                href="/booking/staycation"
+                                href="{{ route('booking.calendar') }}"
                                 class="flex items-center gap-3 p-3 rounded-lg transition-colors no-underline"
                                 style="color:#4d3327;border:1px solid transparent;"
                             >

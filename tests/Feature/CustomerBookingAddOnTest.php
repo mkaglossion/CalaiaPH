@@ -36,6 +36,7 @@ class CustomerBookingAddOnTest extends TestCase
         $response->assertSee('1 add-on');
         $response->assertDontSee('BK-2026-00999');
         $response->assertDontSee('AO-2026-00999');
+        $response->assertSee('href="' . route('booking.calendar') . '"', false);
     }
 
     public function test_booking_details_show_add_ons_separately_without_changing_original_total(): void
