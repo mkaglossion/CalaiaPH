@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -53,7 +54,6 @@ class BookingController extends Controller
     protected PaymentService $paymentService;
     protected InventoryService $inventoryService;
     protected PricingService $pricingService;
-    protected \Paymongo\PaymongoClient $paymongo;
 
     public function __construct(
         BookingService $bookingService,
@@ -65,7 +65,6 @@ class BookingController extends Controller
         $this->paymentService = $paymentService;
         $this->inventoryService = $inventoryService;
         $this->pricingService = $pricingService;
-        $this->paymongo = new \Paymongo\PaymongoClient(config('services.paymongo.secret_key'));
     }
 
     /**
@@ -352,7 +351,7 @@ class BookingController extends Controller
                     'guest_count' => $guestCounts['total'] ?? 0,
                     'adult_count' => $guestCounts['adults'] ?? 0,
                     'child_count' => $guestCounts['children'] ?? 0,
-                    'customer_id' => auth()->id(),
+                    'customer_id' => Auth::id(),
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                 ],
@@ -371,7 +370,7 @@ class BookingController extends Controller
     {
         return [
             'acknowledged_at' => now()->toDateTimeString(),
-            'customer_id' => auth()->id(),
+            'customer_id' => Auth::id(),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ];
@@ -2092,7 +2091,7 @@ class BookingController extends Controller
                     'emergency_contact_relationship' => trim((string) ($guest['emergency_contact_relationship'] ?? '')),
                     'waiver_acknowledged_at' => $now,
                     'signed_at' => $now,
-                    'signed_by_user_id' => auth()->id(),
+                    'signed_by_user_id' => Auth::id(),
                     'signed_by_name' => $signerName !== '' ? $signerName : null,
                     'signed_by_relationship' => $signerRelationship !== '' ? $signerRelationship : null,
                     'ip_address' => $request->ip(),
@@ -2111,7 +2110,7 @@ class BookingController extends Controller
         $booking['guest_count'] = $guestCounts['total'];
         $booking['acceptances'] = $this->buildStaycationAcceptanceData($request);
         $booking['booking_contact'] = array_filter([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'name' => trim($validated['first_name'] . ' ' . $validated['last_name']),
             'email' => $validated['email'] ?? null,
             'phone' => $validated['phone'] ?? null,
@@ -2140,7 +2139,7 @@ class BookingController extends Controller
             'reference_id' => $booking['transaction_id'],
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
-            'signed_by_user_id' => auth()->id(),
+            'signed_by_user_id' => Auth::id(),
         ];
 
         $promoValidation = $this->getValidatedPromoDiscount(
@@ -2169,7 +2168,7 @@ class BookingController extends Controller
             'guest_signature_payloads' => $guestSignaturePayloads,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
-            'signed_by_user_id' => auth()->id(),
+            'signed_by_user_id' => Auth::id(),
         ]);
         $cacheBookingData = $bookingData;
         unset($cacheBookingData['guest_signature_payloads']);
@@ -2326,6 +2325,10 @@ class BookingController extends Controller
         if (!empty($booking) && (($booking['booking_type'] ?? null) === 'staycation')) {
             return $this->initiateStaycationCheckout($request, $booking);
         }
+
+        $acceptances = is_array($booking['acceptances'] ?? null)
+            ? $booking['acceptances']
+            : [];
 
         $lineItems = [];
         $grandTotal = 0.0; // in PHP (not centavos)
