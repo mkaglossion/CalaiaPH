@@ -31,8 +31,8 @@
             const label = button.querySelector('[data-wishlist-label]');
             icon?.classList.toggle('bi-heart-fill', saved);
             icon?.classList.toggle('bi-heart', !saved);
-            if (label) label.textContent = saved ? 'Saved' : 'Save';
-            button.setAttribute('aria-label', saved ? 'Remove from booking wishlist' : 'Save to booking wishlist');
+            if (label) label.textContent = saved ? 'Saved for later' : 'Save for later';
+            button.setAttribute('aria-label', saved ? 'Remove from saved items' : 'Save for later');
         });
     };
 

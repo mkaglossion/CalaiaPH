@@ -73,7 +73,7 @@ class BookingWishlistCartTest extends TestCase
             ->get(route('booking.staycationAvailability'))
             ->assertOk()
             ->assertSee('data-booking-wishlist-button', false)
-            ->assertSee('>Save<', false)
+            ->assertSee('>Save for later<', false)
             ->assertDontSee('data-wishlist-spinner', false)
             ->assertDontSee("'Saving...'", false)
             ->assertSee('setSaved(key, optimisticSaved)', false)
@@ -90,13 +90,13 @@ class BookingWishlistCartTest extends TestCase
             ->get(route('booking.staycationFood'))
             ->assertOk()
             ->assertSee('data-wishlist-key="food:', false)
-            ->assertSee('>Save<', false);
+            ->assertSee('>Save for later<', false);
 
         $this->withSession(['booking' => $booking])
             ->get(route('booking.staycationActivities'))
             ->assertOk()
             ->assertSee('data-wishlist-key="activity:', false)
-            ->assertSee('>Save<', false);
+            ->assertSee('>Save for later<', false);
     }
 
     public function test_authenticated_user_can_toggle_a_configured_room_without_duplicate_records(): void
