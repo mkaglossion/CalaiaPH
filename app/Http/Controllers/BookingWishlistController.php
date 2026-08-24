@@ -18,7 +18,10 @@ class BookingWishlistController extends Controller
     public function index(Request $request): View
     {
         $records = $request->user()
-            ? $request->user()->bookingWishlistItems()->latest()->get()
+            ? $request->user()->bookingWishlistItems()
+                ->oldest('created_at')
+                ->oldest('id')
+                ->get()
             : collect();
         $items = $records->map(function (BookingWishlistItem $record) {
             try {

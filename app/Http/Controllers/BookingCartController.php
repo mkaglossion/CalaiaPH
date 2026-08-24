@@ -22,7 +22,12 @@ class BookingCartController extends Controller
             } catch (\Throwable) {
                 return null;
             }
-        })->filter()->values();
+        })->filter()->sortBy(fn (array $item) => match ($item['item_type']) {
+            'staycation' => 1,
+            'food', 'food_package' => 2,
+            'activity', 'activity_package' => 3,
+            default => 4,
+        })->values();
         $subtotal = $items->sum('line_total');
 
         return view('booking.cart', compact('items', 'subtotal', 'cart'));
@@ -76,6 +81,84 @@ class BookingCartController extends Controller
         session(['booking_cart' => $cart]);
 
         return back();
+    }
+
+    public function updateStaycation(Request $request, string $key): RedirectResponse
+    {
+        $cart = session('booking_cart', []);
+        $item = $cart['items'][$key] ?? null;
+
+        if (!is_array($item) || ($item['item_type'] ?? null) !== 'staycation') {
+            return back()->with('error', 'That room or tent is no longer in your Booking Cart.');
+        }
+
+        $maxPets = $this->service->maxPetsPerRoom();
+        $validated = $request->validate([
+            'quantity' => ['required', 'integer', 'min:1', 'max:20'],
+            'adults' => ['required', 'integer', 'min:1', 'max:20'],
+            'children' => ['required', 'integer', 'min:0', 'max:20'],
+            'pets' => ['required', 'string', 'in:yes,no'],
+            'num_pets' => ['nullable', 'integer', 'min:0', 'max:' . $maxPets],
+            'pet_agreement' => ['nullable', 'boolean'],
+        ]);
+
+        $staycation = $this->service->findActiveItem('staycation', (int) ($item['item_id'] ?? 0));
+        $context = is_array($item['booking_context'] ?? null)
+            ? $item['booking_context']
+            : ($cart['booking_context'] ?? []);
+        $maxQuantity = $this->service->maxStaycationQuantity($staycation, $context);
+        if ((int) $validated['quantity'] > $maxQuantity) {
+            return back()->with('error', $maxQuantity > 0
+                ? "Only {$maxQuantity} room(s) available for the selected dates."
+                : 'This room is unavailable for the selected dates.');
+        }
+
+        $limits = $this->service->staycationGuestLimits($staycation);
+        $adults = (int) $validated['adults'];
+        $children = (int) $validated['children'];
+        if (
+            $adults > $limits['adults']
+            || $children > $limits['children']
+            || ($adults + $children) > $limits['occupancy']
+        ) {
+            return back()->with('error', "Guest limit exceeded for {$staycation->name}. Maximum {$limits['occupancy']} guest(s) per room.");
+        }
+
+        $hasPets = $validated['pets'] === 'yes';
+        $petAgreement = (bool) ($validated['pet_agreement'] ?? false);
+        $numPets = $hasPets ? (int) ($validated['num_pets'] ?? 0) : 0;
+        if ($hasPets && !$petAgreement) {
+            return back()->with('error', 'Please agree to the Pet Policy before adding pets.');
+        }
+        if ($hasPets && $numPets < 1) {
+            return back()->with('error', "Please set the number of pets (1-{$maxPets}) per room.");
+        }
+
+        $selection = array_merge(
+            is_array($item['selection'] ?? null) ? $item['selection'] : [],
+            [
+                'room_id' => (int) $item['item_id'],
+                'quantity' => (int) $validated['quantity'],
+                'adults' => $adults,
+                'children' => $children,
+                'pets' => $validated['pets'],
+                'pet_agreement' => $petAgreement,
+                'num_pets' => $numPets,
+            ]
+        );
+
+        if ($this->service->isSpecialStaycation($staycation)) {
+            $selection['extra_mattress'] = (int) $validated['quantity'];
+        }
+
+        $cart['items'][$key]['selection'] = $this->service->normalizeSelection(
+            'staycation',
+            (int) $item['item_id'],
+            $selection
+        );
+        session(['booking_cart' => $cart]);
+
+        return back()->with('success', 'Room details updated.');
     }
 
     public function clear(): RedirectResponse

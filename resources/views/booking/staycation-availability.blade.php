@@ -389,7 +389,7 @@
                                 @include('booking.partials.card-selection-actions', [
                                     'itemType' => 'staycation',
                                     'itemId' => $staycation->id,
-                                    'selectionExpression' => 'getSelectedRoom(' . $staycation->id . ') || { room_id: ' . $staycation->id . ', id: ' . $staycation->id . ', adults: Math.max(1, Math.ceil(targetAdults / Math.max(targetRooms, 1))), children: Math.max(0, Math.floor(targetChildren / Math.max(targetRooms, 1))), quantity: 1 }',
+                                    'selectionExpression' => 'isSelected(' . $staycation->id . ') ? { ...getSelectedRoom(' . $staycation->id . '), quantity: getSelectedCount(' . $staycation->id . ') } : { room_id: ' . $staycation->id . ', id: ' . $staycation->id . ', adults: 1, children: 0, extra_mattress: 0, pets: \'no\', pet_agreement: false, num_pets: 0, quantity: 1 }',
                                     'selectedCondition' => 'isSelected(' . $staycation->id . ')',
                                     'checkPositionClass' => 'top-14 right-3',
                                 ])
@@ -566,7 +566,7 @@
                                                            @click.stop
                                                            class="mt-0.5 text-[#8f5d54] focus:ring-[#8f5d54]">
                                                     <span class="text-xs text-gray-600">
-                                                        I agree to the <button type="button" @click.stop="petPolicyModal = true" class="text-[#8f5d54] underline">Pet Policy</button>
+                                                        I agree to the <button type="button" @click.stop="$dispatch('open-pet-policy')" class="font-semibold text-[#8f5d54] underline">Pet Policy</button>
                                                     </span>
                                                 </label>
                                                 <label :for="'pets-qty-card-' + {{ $staycation->id }}" class="sr-only">Number of pets</label>
@@ -917,43 +917,7 @@
                     </div>
                 </div>
 
-                {{-- Pet Policy Modal --}}
-                <div x-show="petPolicyModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-                     @click.self="petPolicyModal=false">
-                    <div class="bg-white w-full max-w-3xl rounded-2xl shadow-xl p-6 overflow-y-auto" style="max-height: 90vh;">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-bold">Pet Policy</h3>
-                            <button type="button" class="text-gray-500 hover:text-gray-800" @click="petPolicyModal=false">
-                                <i class="bi bi-x-lg"></i>
-                            </button>
-                        </div>
-
-                        <div class="text-sm text-gray-700 space-y-3">
-                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                                <div class="font-semibold">Owner Responsibility</div>
-                                <div>Pet owners are responsible at all times. Pets must not be left unattended.</div>
-                            </div>
-                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                                <div class="font-semibold">Leash Policy</div>
-                                <div>Pets may be off-leash only under close and careful supervision.</div>
-                            </div>
-                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                                <div class="font-semibold">Overnight Stays & Pet Fee</div>
-                                <div>&#8369;2,000 per pet fee applies when staying inside. Any damages charged accordingly.</div>
-                            </div>
-                            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                                <div class="font-semibold text-red-900">Damage & Liability</div>
-                                <div class="text-red-800">Owners will be held liable for any damage/injury caused by pets.</div>
-                            </div>
-                        </div>
-
-                        <div class="mt-6 flex justify-end">
-                            <button type="button" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold" @click="petPolicyModal=false">
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                @include('booking.partials.pet-policy-modal')
 
                 {{-- Image Gallery Modal --}}
                 <div 
@@ -1491,7 +1455,6 @@
                 },
 
                 calendarModal: false,
-                petPolicyModal: false,
                 imageGalleryModal: false,
                 imageGalleryImages: [],
                 imageGalleryTitle: '',

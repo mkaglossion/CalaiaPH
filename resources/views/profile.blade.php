@@ -483,6 +483,10 @@
                                         @php
                                             $addOnCount = $booking->addOnTransactions->count();
                                             $addOnTotal = $booking->add_ons_total;
+                                            $canAddMealsOrActivities = $booking->isStaycationFamilyBooking()
+                                                && $booking->payment_status === 'paid'
+                                                && $booking->status === 'confirmed'
+                                                && (!$booking->display_checkout_date || !$booking->display_checkout_date->isPast());
                                         @endphp
                                         <article class="rounded-xl p-5" style="background-color:#fff;border:1px solid #cccbbd;">
                                             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -520,8 +524,8 @@
                                             <div class="mt-4">
                                                 <a href="{{ route('profile.bookings.show', $booking) }}"
                                                    class="inline-flex items-center gap-2 text-sm font-semibold"
-                                                   style="color:#00848d;text-decoration:none;">
-                                                    View Booking Details
+                                                    style="color:#00848d;text-decoration:none;">
+                                                    {{ $canAddMealsOrActivities ? 'View Details to Add Meals or Activities' : 'View Booking Details' }}
                                                     <i class="bi bi-arrow-right" aria-hidden="true"></i>
                                                 </a>
                                             </div>

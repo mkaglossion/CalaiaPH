@@ -37,6 +37,7 @@ class CustomerBookingAddOnTest extends TestCase
         $response->assertDontSee('BK-2026-00999');
         $response->assertDontSee('AO-2026-00999');
         $response->assertSee('href="' . route('booking.calendar') . '"', false);
+        $response->assertSee('View Details &amp; Add Meals or Activities', false);
     }
 
     public function test_booking_details_show_add_ons_separately_without_changing_original_total(): void
@@ -325,6 +326,20 @@ class CustomerBookingAddOnTest extends TestCase
             ->assertSee('alt="Kayaking"', false);
     }
 
+    public function test_customer_cannot_add_items_to_a_completed_stay(): void
+    {
+        $user = User::factory()->create(['email' => 'owner@example.com']);
+        $booking = $this->createBooking($user, 'BK-2026-PAST');
+        $booking->update([
+            'checkin_date' => today()->subDays(3)->toDateString(),
+            'checkout_date' => today()->subDay()->toDateString(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('profile.bookings.add-ons.create', $booking))
+            ->assertStatus(422);
+    }
+
     public function test_success_callback_confirms_add_on_and_reduces_meal_inventory_only_once(): void
     {
         config(['services.paymongo.secret_key' => 'sk_test_example']);
@@ -456,8 +471,8 @@ class CustomerBookingAddOnTest extends TestCase
             'customer_email' => $user->email,
             'customer_phone' => $user->mobile_number,
             'booking_type' => 'staycation',
-            'checkin_date' => '2026-08-20',
-            'checkout_date' => '2026-08-22',
+            'checkin_date' => today()->addDays(7)->toDateString(),
+            'checkout_date' => today()->addDays(9)->toDateString(),
             'booking_data' => [
                 'accommodations' => [['name' => 'Family Tent', 'quantity' => 1]],
             ],

@@ -225,6 +225,7 @@ Route::middleware('auth')->prefix('booking')->name('booking.')->group(function (
 
     Route::get('/cart', [BookingCartController::class, 'index'])->name('cart.index');
     Route::delete('/cart/clear', [BookingCartController::class, 'clear'])->name('cart.clear');
+    Route::patch('/cart/{key}/staycation', [BookingCartController::class, 'updateStaycation'])->where('key', '[^/]+')->name('cart.staycation.update');
     Route::patch('/cart/{key}/quantity', [BookingCartController::class, 'updateQuantity'])->where('key', '[^/]+')->name('cart.quantity.update');
     Route::delete('/cart/{key}', [BookingCartController::class, 'destroy'])->where('key', '.*')->name('cart.destroy');
     Route::post('/cart/checkout', [BookingController::class, 'checkoutBookingCart'])->name('cart.checkout');

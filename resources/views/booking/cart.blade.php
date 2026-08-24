@@ -16,6 +16,9 @@
             @if(session('error'))
                 <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">{{ session('error') }}</div>
             @endif
+            @if($errors->any())
+                <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">{{ $errors->first() }}</div>
+            @endif
 
             @if($items->isEmpty())
                 <section class="rounded-2xl border border-[#ded5ca] bg-white px-6 py-16 text-center shadow-sm">
@@ -44,22 +47,107 @@
                                     </form>
                                 </div>
 
-                                <div class="mt-4 flex items-center justify-between gap-4 rounded-xl bg-gray-50 px-3 py-2.5">
-                                    @if($item['item_type'] !== 'staycation')
+                                @if($item['item_type'] === 'staycation')
+                                    @php
+                                        $selection = $item['selection'];
+                                        $hasPets = in_array($selection['pets'] ?? false, [true, 1, '1', 'yes'], true);
+                                    @endphp
+                                    <form
+                                        method="POST"
+                                        action="{{ route('booking.cart.staycation.update', $item['key']) }}"
+                                        class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4"
+                                        x-data="{ pets: @js($hasPets ? 'yes' : 'no') }"
+                                    >
+                                        @csrf @method('PATCH')
+                                        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                            <div>
+                                                <h3 class="font-semibold text-gray-900">Configure your stay</h3>
+                                                <p class="text-xs text-gray-500">Guest and pet values below apply per room.</p>
+                                            </div>
+                                            <span class="text-xs font-medium {{ $item['max_quantity'] > 0 ? 'text-green-700' : 'text-red-600' }}">
+                                                {{ $item['max_quantity'] > 0 ? $item['max_quantity'] . ' available' : 'Unavailable for these dates' }}
+                                            </span>
+                                        </div>
+
+                                        <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                                            <label class="block rounded-lg bg-white p-3 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-gray-200">
+                                                {{ $item['is_special_staycation'] ? 'Unit quantity' : 'Room quantity' }}
+                                                <input type="number" name="quantity" min="1" max="{{ max(1, $item['max_quantity']) }}" value="{{ $selection['quantity'] ?? 1 }}" class="mt-2 w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 shadow-sm focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20" @disabled($item['max_quantity'] < 1)>
+                                            </label>
+                                            <label class="block rounded-lg bg-white p-3 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-gray-200">
+                                                Adults per room
+                                                <input type="number" name="adults" min="1" max="{{ $item['guest_limits']['adults'] }}" value="{{ $selection['adults'] ?? 1 }}" class="mt-2 w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 shadow-sm focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20">
+                                            </label>
+                                            <label class="block rounded-lg bg-white p-3 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-gray-200">
+                                                Children per room
+                                                <input type="number" name="children" min="0" max="{{ $item['guest_limits']['children'] }}" value="{{ $selection['children'] ?? 0 }}" class="mt-2 w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 shadow-sm focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20">
+                                            </label>
+                                        </div>
+
+                                        <fieldset class="mt-4">
+                                            <legend class="text-sm font-semibold text-gray-700">Pets per room</legend>
+                                            <div class="mt-2 flex gap-5">
+                                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                                    <input type="radio" name="pets" value="no" x-model="pets" class="text-[#8f5d54] focus:ring-[#8f5d54]">
+                                                    No
+                                                </label>
+                                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                                    <input type="radio" name="pets" value="yes" x-model="pets" class="text-[#8f5d54] focus:ring-[#8f5d54]">
+                                                    Yes
+                                                </label>
+                                            </div>
+                                        </fieldset>
+
+                                        <div x-show="pets === 'yes'" x-cloak class="mt-4 grid gap-4 rounded-lg border border-amber-200 bg-amber-50 p-3 sm:grid-cols-2">
+                                            <label class="block text-sm font-semibold text-gray-700">
+                                                Number of pets per room
+                                                <input type="number" name="num_pets" min="1" max="{{ $item['max_pets_per_room'] }}" value="{{ max(1, (int) ($selection['num_pets'] ?? 1)) }}" class="mt-2 w-full rounded-lg border border-amber-400 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 shadow-sm focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20">
+                                            </label>
+                                            <label class="flex items-start gap-2 self-end pb-2 text-sm text-gray-700">
+                                                <input type="hidden" name="pet_agreement" value="0">
+                                                <input type="checkbox" name="pet_agreement" value="1" @checked($selection['pet_agreement'] ?? false) class="mt-0.5 rounded border-gray-300 text-[#8f5d54] focus:ring-[#8f5d54]">
+                                                <span>I agree to the <button type="button" @click.stop="$dispatch('open-pet-policy')" class="font-semibold text-[#8f5d54] underline">Pet Policy</button>.</span>
+                                            </label>
+                                        </div>
+
+                                        <div class="mt-4 flex flex-col gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                                            <p class="text-xs leading-5 text-gray-500">Defaults: 1 room, 1 adult, 0 children, no pets. Price and availability refresh after saving.</p>
+                                            <button type="submit" class="shrink-0 rounded-lg bg-[#8f5d54] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#7a4e48] disabled:cursor-not-allowed disabled:opacity-50" @disabled($item['max_quantity'] < 1)>Save room details</button>
+                                        </div>
+                                    </form>
+                                    <div data-staycation-price-breakdown class="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm">
+                                        <div class="flex justify-between gap-4 text-gray-600">
+                                            <span>Accommodation{{ $item['price_breakdown']['room_quantity'] > 1 ? ' (' . $item['price_breakdown']['room_quantity'] . ' rooms)' : '' }}</span>
+                                            <strong class="text-gray-900">&#8369;{{ number_format($item['price_breakdown']['accommodation_total'], 2) }}</strong>
+                                        </div>
+                                        @if($item['price_breakdown']['additional_adult_total'] > 0)
+                                            <div class="mt-2 flex justify-between gap-4 text-gray-600">
+                                                <span>Additional {{ $item['price_breakdown']['additional_adults_per_room'] }} {{ \Illuminate\Support\Str::plural('adult', $item['price_breakdown']['additional_adults_per_room']) }} per room</span>
+                                                <strong class="text-gray-900">&#8369;{{ number_format($item['price_breakdown']['additional_adult_total'], 2) }}</strong>
+                                            </div>
+                                        @endif
+                                        @if($item['price_breakdown']['pet_total'] > 0)
+                                            <div class="mt-2 flex justify-between gap-4 text-gray-600">
+                                                <span>{{ $item['price_breakdown']['pets_per_room'] }} {{ \Illuminate\Support\Str::plural('Pet', $item['price_breakdown']['pets_per_room']) }} per room</span>
+                                                <strong class="text-gray-900">&#8369;{{ number_format($item['price_breakdown']['pet_total'], 2) }}</strong>
+                                            </div>
+                                        @endif
+                                        <div class="mt-3 flex justify-between gap-4 border-t border-gray-200 pt-3">
+                                            <strong class="text-gray-900">Estimated total</strong>
+                                            <strong class="text-lg text-[#8f5d54]">&#8369;{{ number_format($item['line_total'], 2) }}</strong>
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="mt-4 flex items-center justify-between gap-4 rounded-xl bg-gray-50 px-3 py-2.5">
                                         <form method="POST" action="{{ route('booking.cart.quantity.update', $item['key']) }}" class="flex items-center gap-2" aria-label="Update quantity for {{ $item['name'] }}">
                                             @csrf @method('PATCH')
                                             <button type="submit" name="quantity" value="{{ max(1, $item['quantity'] - 1) }}" class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 bg-white text-lg text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40" @disabled($item['quantity'] <= 1) aria-label="Decrease {{ $item['name'] }} quantity">&minus;</button>
                                             <output class="inline-flex h-10 min-w-14 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 font-semibold text-gray-900" aria-label="Current quantity">{{ $item['quantity'] }}</output>
                                             <button type="submit" name="quantity" value="{{ $item['quantity'] + 1 }}" class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 bg-white text-lg text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40" @disabled($item['quantity'] >= $item['max_quantity']) aria-label="Increase {{ $item['name'] }} quantity">&plus;</button>
                                         </form>
-                                    @else
-                                        <span class="flex items-start gap-2 text-xs leading-5 text-gray-600 sm:text-sm">
-                                            <i class="bi bi-info-circle mt-0.5 shrink-0 text-[#8f5d54]" aria-hidden="true"></i>
-                                            <span>Room/tent quantity must be changed in the booking step.</span>
-                                        </span>
-                                    @endif
-                                    <p class="shrink-0 text-lg font-bold text-[#8f5d54]">₱{{ number_format($item['line_total'], 2) }}</p>
-                                </div>
+                                        <p class="shrink-0 text-lg font-bold text-[#8f5d54]">₱{{ number_format($item['line_total'], 2) }}</p>
+                                    </div>
+                                @endif
                             </article>
                         @endforeach
                     </section>
@@ -81,5 +169,6 @@
                 </div>
             @endif
         </div>
+        @include('booking.partials.pet-policy-modal')
     </main>
 </x-app-layout>

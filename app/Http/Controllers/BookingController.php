@@ -1056,9 +1056,13 @@ class BookingController extends Controller
         }
 
         $foods = Food::whereIn('id', array_values($foodIds))->get()->keyBy('id');
-        $foodPackages = FoodPackage::whereIn('id', array_values($packageIds))->get()->keyBy('id');
+        $foodPackages = FoodPackage::with('foods')
+            ->whereIn('id', array_values($packageIds))
+            ->get()
+            ->keyBy('id');
 
-        $normalized = [];
+        $normalizedPackages = [];
+        $normalizedFoods = [];
         foreach ($selectedFoods as $item) {
             if (!is_array($item)) {
                 continue;
@@ -1079,15 +1083,24 @@ class BookingController extends Controller
 
                 $foodPackage = $foodPackages[$packageId];
                 $includedFoods = $item['included_foods'] ?? [];
-                $packageSections = $item['package_sections'] ?? ($foodPackage->sections ?? []);
-                $selectedChoices = $item['selected_choices'] ?? [];
+                $packageSections = $this->hydrateFoodPackageSections(
+                    $foodPackage,
+                    is_array($item['package_sections'] ?? null)
+                        ? $item['package_sections']
+                        : ($foodPackage->sections ?? [])
+                );
+                $selectedChoices = $this->hydrateFoodPackageChoices(
+                    $foodPackage,
+                    is_array($item['selected_choices'] ?? null) ? $item['selected_choices'] : []
+                );
                 
-                // Build included_foods from package_sections if not already present
-                if (empty($includedFoods) && !empty($packageSections) && is_array($packageSections)) {
+                // Structured sections are the source of truth. Rebuild every time so
+                // older checkout sessions containing placeholder names are repaired.
+                if (!empty($packageSections)) {
                     $includedFoods = $this->buildPackageIncludedFoods($packageSections, $selectedChoices);
                 }
                 
-                $normalized[] = [
+                $normalizedPackages[] = [
                     'id' => 'package-' . $foodPackage->id,
                     'package_id' => (string) $foodPackage->id,
                     'name' => $foodPackage->name,
@@ -1109,7 +1122,7 @@ class BookingController extends Controller
             }
 
             $food = $foods[$foodId];
-            $normalized[] = [
+            $normalizedFoods[] = [
                 'id' => (int) $food->id,
                 'name' => $food->name,
                 'category' => $food->category ?? ($item['category'] ?? 'messhall'),
@@ -1119,7 +1132,63 @@ class BookingController extends Controller
             ];
         }
 
-        return $normalized;
+        return array_merge($normalizedPackages, $normalizedFoods);
+    }
+
+    private function hydrateFoodPackageSections(FoodPackage $package, array $sections): array
+    {
+        $foodLookup = $package->foods->keyBy(fn (Food $food) => (string) $food->id);
+
+        return collect($sections)->map(function ($section) use ($foodLookup) {
+            if (!is_array($section)) {
+                return null;
+            }
+
+            $section['items'] = collect($section['items'] ?? [])->map(function ($item) use ($foodLookup) {
+                if (!is_array($item)) {
+                    return null;
+                }
+
+                $foodId = $item['id'] ?? $item['food_id'] ?? null;
+                $food = $foodLookup->get((string) $foodId);
+                if (!$food) {
+                    return null;
+                }
+
+                return array_merge($item, [
+                    'id' => (int) $food->id,
+                    'food_id' => (int) $food->id,
+                    'name' => $food->name,
+                    'food_name' => $food->name,
+                    'price' => (float) $food->price,
+                    'quantity' => max(1, (int) ($item['quantity'] ?? 1)),
+                ]);
+            })->filter()->values()->all();
+
+            return $section;
+        })->filter()->values()->all();
+    }
+
+    private function hydrateFoodPackageChoices(FoodPackage $package, array $selectedChoices): array
+    {
+        $foodLookup = $package->foods->keyBy(fn (Food $food) => (string) $food->id);
+
+        return collect($selectedChoices)->map(function ($choice) use ($foodLookup) {
+            if (!is_array($choice)) {
+                return null;
+            }
+
+            $food = $foodLookup->get((string) ($choice['food_id'] ?? ''));
+            if (!$food) {
+                return null;
+            }
+
+            return array_merge($choice, [
+                'food_id' => (string) $food->id,
+                'food_name' => $food->name,
+                'price' => (float) $food->price,
+            ]);
+        })->filter()->values()->all();
     }
 
     /**
@@ -1439,6 +1508,8 @@ class BookingController extends Controller
             return redirect()->route('booking.cart.index')->with('error', 'Add at least one room or tent before checkout.');
         }
 
+        $wishlistService = app(\App\Services\BookingWishlistService::class);
+        $maxPetsPerRoom = $wishlistService->maxPetsPerRoom();
         $accommodations = [];
         foreach ($roomItems as $item) {
             $roomId = (int) ($item['item_id'] ?? 0);
@@ -1449,6 +1520,30 @@ class BookingController extends Controller
 
             $selection = is_array($item['selection'] ?? null) ? $item['selection'] : [];
             $requiredQuantity = max(1, (int) ($selection['quantity'] ?? 1));
+            $adults = max(1, (int) ($selection['adults'] ?? 1));
+            $children = max(0, (int) ($selection['children'] ?? 0));
+            $guestLimits = $wishlistService->staycationGuestLimits($staycation);
+            if (
+                $adults > $guestLimits['adults']
+                || $children > $guestLimits['children']
+                || ($adults + $children) > $guestLimits['occupancy']
+            ) {
+                return redirect()->route('booking.cart.index')->with(
+                    'error',
+                    "Guest limit exceeded for {$staycation->name}. Please update the room details."
+                );
+            }
+
+            $hasPets = in_array($selection['pets'] ?? false, [true, 1, '1', 'yes'], true);
+            $petAgreement = $hasPets && (bool) ($selection['pet_agreement'] ?? false);
+            $numPets = $hasPets ? max(0, (int) ($selection['num_pets'] ?? 0)) : 0;
+            if ($hasPets && (!$petAgreement || $numPets < 1 || $numPets > $maxPetsPerRoom)) {
+                return redirect()->route('booking.cart.index')->with(
+                    'error',
+                    "Please complete the pet details for {$staycation->name}."
+                );
+            }
+
             $date = Carbon::parse($checkin)->startOfDay();
             $lastNight = Carbon::parse($checkout)->startOfDay();
             while ($date->lt($lastNight)) {
@@ -1468,18 +1563,24 @@ class BookingController extends Controller
                 $date->addDay();
             }
 
-            $accommodations[] = [
-                'room_id' => $roomId,
-                'accommodation_id' => $roomId,
-                'instance_num' => max(1, (int) ($selection['instance_num'] ?? 1)),
-                'adults' => max(1, (int) ($selection['adults'] ?? 1)),
-                'children' => max(0, (int) ($selection['children'] ?? 0)),
-                'extra_mattress' => max(0, (int) ($selection['extra_mattress'] ?? 0)),
-                'pets' => !empty($selection['pets']) ? 'yes' : 'no',
-                'pet_agreement' => (bool) ($selection['pet_agreement'] ?? false),
-                'num_pets' => max(0, (int) ($selection['num_pets'] ?? 0)),
-                'quantity' => $requiredQuantity,
-            ];
+            $isSpecialRoom = $wishlistService->isSpecialStaycation($staycation);
+            $instances = $isSpecialRoom ? 1 : $requiredQuantity;
+            for ($instance = 1; $instance <= $instances; $instance++) {
+                $accommodations[] = [
+                    'room_id' => $roomId,
+                    'accommodation_id' => $roomId,
+                    'instance_num' => $instance,
+                    'adults' => $adults,
+                    'children' => $children,
+                    'extra_mattress' => $isSpecialRoom
+                        ? $requiredQuantity
+                        : max(0, (int) ($selection['extra_mattress'] ?? 0)),
+                    'pets' => $hasPets ? 'yes' : 'no',
+                    'pet_agreement' => $petAgreement,
+                    'num_pets' => $numPets,
+                    'quantity' => $isSpecialRoom ? $requiredQuantity : 1,
+                ];
+            }
         }
 
         $foods = [];

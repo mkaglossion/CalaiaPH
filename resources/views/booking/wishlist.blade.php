@@ -8,6 +8,9 @@
                     <p class="mt-5 max-w-3xl text-base leading-7 text-gray-600 sm:text-lg">
                         Keep rooms, meals, and activities in one place. Select what you want, then add them to your Booking Cart for payment.
                     </p>
+                    <p class="mt-2 max-w-3xl text-sm leading-6 text-gray-500">
+                        Room quantity, guests, and pets are configured in the Booking Cart before checkout.
+                    </p>
                 </div>
 
                 <aside class="rounded-3xl border border-gray-200 bg-gray-50 p-6">
@@ -112,8 +115,43 @@
                                         <h2 class="mt-2 text-xl font-bold text-gray-950">{{ $item['name'] }}</h2>
                                         <p class="mt-2 text-sm leading-6 text-gray-600">
                                             {{ \Carbon\Carbon::parse($item['booking_context']['checkin'])->format('M j') }}–{{ \Carbon\Carbon::parse($item['booking_context']['checkout'])->format('M j, Y') }}
-                                            @if($item['quantity'] > 1) · Qty: {{ $item['quantity'] }} @endif
+                                            @if($item['quantity'] > 1 && $item['item_type'] !== 'staycation') · Qty: {{ $item['quantity'] }} @endif
                                         </p>
+                                        @if($item['item_type'] === 'staycation')
+                                            @php
+                                                $savedSelection = $item['selection'];
+                                                $priceBreakdown = $item['price_breakdown'];
+                                                $savedQuantity = max(1, (int) ($savedSelection['quantity'] ?? 1));
+                                                $savedAdults = max(1, (int) ($savedSelection['adults'] ?? 1));
+                                                $savedChildren = max(0, (int) ($savedSelection['children'] ?? 0));
+                                                $savedHasPets = in_array($savedSelection['pets'] ?? false, [true, 1, '1', 'yes'], true);
+                                                $savedPets = $savedHasPets ? max(1, (int) ($savedSelection['num_pets'] ?? 1)) : 0;
+                                            @endphp
+                                            <div data-wishlist-stay-summary class="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-gray-700">
+                                                <span class="rounded-full bg-gray-100 px-3 py-1.5">{{ $savedQuantity }} {{ \Illuminate\Support\Str::plural('Room', $savedQuantity) }}</span>
+                                                <span class="rounded-full bg-gray-100 px-3 py-1.5">{{ $savedAdults }} {{ \Illuminate\Support\Str::plural('Adult', $savedAdults) }} per room</span>
+                                                <span class="rounded-full bg-gray-100 px-3 py-1.5">{{ $savedChildren }} {{ \Illuminate\Support\Str::plural('Child', $savedChildren) }} per room</span>
+                                                <span class="rounded-full bg-gray-100 px-3 py-1.5">{{ $savedHasPets ? $savedPets . ' ' . \Illuminate\Support\Str::plural('Pet', $savedPets) . ' per room' : 'No pets' }}</span>
+                                            </div>
+                                            <div data-staycation-price-breakdown class="mt-4 space-y-1.5 rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
+                                                <div class="flex justify-between gap-4">
+                                                    <span>Accommodation{{ $priceBreakdown['room_quantity'] > 1 ? ' (' . $priceBreakdown['room_quantity'] . ' rooms)' : '' }}</span>
+                                                    <strong class="text-gray-800">&#8369;{{ number_format($priceBreakdown['accommodation_total'], 2) }}</strong>
+                                                </div>
+                                                @if($priceBreakdown['additional_adult_total'] > 0)
+                                                    <div class="flex justify-between gap-4">
+                                                        <span>Additional {{ $priceBreakdown['additional_adults_per_room'] }} {{ \Illuminate\Support\Str::plural('adult', $priceBreakdown['additional_adults_per_room']) }} per room</span>
+                                                        <strong class="text-gray-800">&#8369;{{ number_format($priceBreakdown['additional_adult_total'], 2) }}</strong>
+                                                    </div>
+                                                @endif
+                                                @if($priceBreakdown['pet_total'] > 0)
+                                                    <div class="flex justify-between gap-4">
+                                                        <span>{{ $priceBreakdown['pets_per_room'] }} {{ \Illuminate\Support\Str::plural('Pet', $priceBreakdown['pets_per_room']) }} per room</span>
+                                                        <strong class="text-gray-800">&#8369;{{ number_format($priceBreakdown['pet_total'], 2) }}</strong>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @endif
                                         <p class="mt-3 text-lg font-bold text-[#8f5d54]">&#8369;{{ number_format($item['line_total'], 2) }}</p>
                                         @if($item['price_label'])
                                             <p class="mt-1 text-xs font-medium text-gray-500">{{ $item['price_label'] }}</p>
