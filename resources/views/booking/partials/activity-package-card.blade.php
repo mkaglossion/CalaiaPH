@@ -16,9 +16,13 @@
 
 <div class="relative h-full flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-gray-200 hover:border-[#8f5d54] hover:shadow-xl transition cursor-pointer"
      @click="toggleActivityPackage({{ $package->id }}, @js($package->name), {{ $package->getEffectivePrice() }}, @js($packageActivities))">
-    
-    {{-- Checkmark Badge --}}
-    @include('booking.partials._checkmark-badge', ['condition' => 'isActivityPackageSelected(' . $package->id . ')'])
+
+    @include('booking.partials.card-selection-actions', [
+        'itemType' => 'activity_package',
+        'itemId' => $package->id,
+        'selectionExpression' => "selectedActivityPackages.find(p => String(p.package_id) === String({$package->id})) || { quantity: 1 }",
+        'selectedCondition' => 'isActivityPackageSelected(' . $package->id . ')',
+    ])
     
     <div class="relative bg-gray-200 overflow-hidden h-44 sm:h-56 md:h-80 lg:h-96">
         @if(!empty($package->image))

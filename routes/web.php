@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\AddOnTransactionController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\DiningReservationController;
 use App\Http\Controllers\WeatherController;
@@ -74,6 +75,8 @@ use App\Http\Controllers\Admin\AdminSystemSettingsController;
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\DayTourController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BookingCartController;
+use App\Http\Controllers\BookingWishlistController;
 use App\Http\Controllers\ContactController;
 
 use App\Http\Controllers\Admin\ActivityController;
@@ -211,6 +214,22 @@ Route::get('/booking/payment/failed', [BookingController::class, 'paymentFailed'
 Route::match(['GET', 'POST'], '/booking/staycation', [BookingController::class, 'staycation'])->name('booking.staycation');
 Route::post('/booking/save-session', [BookingController::class, 'saveBookingSession'])->name('booking.saveSession');
 Route::get('/booking/staycation/availability', [BookingController::class, 'staycationAvailability'])->name('booking.staycationAvailability');
+Route::get('/booking/wishlist', [BookingWishlistController::class, 'index'])->name('booking.wishlist.index');
+
+Route::middleware('auth')->prefix('booking')->name('booking.')->group(function () {
+    Route::get('/wishlist/state', [BookingWishlistController::class, 'state'])->name('wishlist.state');
+    Route::post('/wishlist/toggle', [BookingWishlistController::class, 'toggle'])->name('wishlist.toggle');
+    Route::delete('/wishlist/selected', [BookingWishlistController::class, 'removeSelected'])->name('wishlist.selected.destroy');
+    Route::delete('/wishlist/{wishlistItem}', [BookingWishlistController::class, 'destroy'])->name('wishlist.destroy');
+    Route::post('/wishlist/add-to-cart', [BookingWishlistController::class, 'addSelectedToCart'])->name('wishlist.add-to-cart');
+
+    Route::get('/cart', [BookingCartController::class, 'index'])->name('cart.index');
+    Route::delete('/cart/clear', [BookingCartController::class, 'clear'])->name('cart.clear');
+    Route::patch('/cart/{key}/staycation', [BookingCartController::class, 'updateStaycation'])->where('key', '[^/]+')->name('cart.staycation.update');
+    Route::patch('/cart/{key}/quantity', [BookingCartController::class, 'updateQuantity'])->where('key', '[^/]+')->name('cart.quantity.update');
+    Route::delete('/cart/{key}', [BookingCartController::class, 'destroy'])->where('key', '.*')->name('cart.destroy');
+    Route::post('/cart/checkout', [BookingController::class, 'checkoutBookingCart'])->name('cart.checkout');
+});
 // Endpoint: fetch external live site and return current glamping image
 Route::get('/api/external/glamping-image', function() {
     $cacheKey = 'external.glamping_image';
@@ -490,6 +509,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile/bookings/{booking}', [ProfileController::class, 'bookingDetails'])->name('profile.bookings.show');
+    Route::get('/profile/bookings/{booking}/add-ons/create', [AddOnTransactionController::class, 'create'])->name('profile.bookings.add-ons.create');
+    Route::post('/profile/bookings/{booking}/add-ons', [AddOnTransactionController::class, 'store'])->name('profile.bookings.add-ons.store');
+    Route::get('/profile/bookings/{booking}/add-ons/{addOnTransaction}/pay', [AddOnTransactionController::class, 'resumePayment'])->name('profile.bookings.add-ons.pay');
+    Route::get('/profile/bookings/{booking}/add-ons/{addOnTransaction}', [ProfileController::class, 'addOnDetails'])->name('profile.bookings.add-ons.show');
+    Route::get('/profile/add-ons/payment/success', [AddOnTransactionController::class, 'paymentSuccess'])->name('profile.add-ons.payment.success');
+    Route::get('/profile/add-ons/payment/cancelled', [AddOnTransactionController::class, 'paymentCancelled'])->name('profile.add-ons.payment.cancelled');
     Route::get('/booking/history', function () {
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -499,7 +525,9 @@ Route::middleware('auth')->group(function () {
         }
 
         // Fetch user's completed/cancelled bookings or past bookings for history
-        $bookings = \App\Models\Booking::where('customer_email', $user->email)
+        $bookings = \App\Models\Booking::query()
+            ->ownedBy($user)
+            ->with('addOnTransactions')
             ->where(function($query) {
                 $query->whereIn('status', ['completed', 'cancelled'])
                       ->orWhereRaw('DATE(checkout_date) < ?', [now()->toDateString()]);

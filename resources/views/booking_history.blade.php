@@ -70,8 +70,13 @@
                                         };
                                     @endphp
                                     <tr class="hover:bg-linear-to-r hover:from-[#f6f3ec]/80 hover:to-[#e8dcc0]/60 hover:shadow-lg hover:shadow-[#db8636]/20 hover:scale-[1.02] hover:ring-1 hover:ring-[#db8636]/30 transition-all duration-300 cursor-pointer border-b border-[#cccbbd]/30">
-                                        <td class="px-3 py-3 text-xs font-medium text-[#4d3327] truncate max-w-20" title="{{ $booking->transaction_id ?? 'N/A' }}">
-                                            {{ $booking->transaction_id ?? 'N/A' }}
+                                        <td class="px-3 py-3 text-xs font-medium text-[#4d3327] max-w-20" title="{{ $booking->transaction_id ?? 'N/A' }}">
+                                            <a href="{{ route('profile.bookings.show', $booking) }}" class="font-semibold text-[#00848d] hover:underline">
+                                                {{ $booking->transaction_id ?? 'N/A' }}
+                                            </a>
+                                            @if($booking->addOnTransactions->isNotEmpty())
+                                                <span class="block mt-1 text-[10px] text-[#7a7d52]">{{ $booking->addOnTransactions->count() }} add-on(s)</span>
+                                            @endif
                                         </td>
                                         <td class="px-3 py-3 text-xs text-[#4d3327] capitalize">
                                             {{ ucfirst($booking->booking_type ?? 'Staycation') }}
@@ -134,8 +139,11 @@
                             {{-- Header --}}
                             <div class="flex justify-between items-start mb-4">
                                 <div>
-                                    <h3 class="text-lg font-semibold text-[#4d3327]">#{{ $booking->transaction_id ?? 'N/A' }}</h3>
+                                    <h3 class="text-lg font-semibold"><a href="{{ route('profile.bookings.show', $booking) }}" class="text-[#00848d] hover:underline">#{{ $booking->transaction_id ?? 'N/A' }}</a></h3>
                                     <p class="text-sm text-[#7a7d52] capitalize">{{ ucfirst($booking->booking_type ?? 'Staycation') }}</p>
+                                    @if($booking->addOnTransactions->isNotEmpty())
+                                        <p class="text-xs text-[#7a7d52] mt-1">{{ $booking->addOnTransactions->count() }} add-on(s) &middot; &#8369;{{ number_format($booking->add_ons_total, 2) }}</p>
+                                    @endif
                                 </div>
                                 <div class="flex gap-2">
                                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $statusClass }}">

@@ -6,20 +6,63 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\User;
+use Illuminate\Support\Facades\Gate;
+use App\Models\AddOnTransaction;
+use App\Models\Booking;
+use App\Services\AddOnExpirationService;
 
 class ProfileController extends Controller
 {
-    public function show()
+    public function show(AddOnExpirationService $expirationService)
     {
         $user = Auth::user();
 
-        // TODO: Implement actual booking statistics
-        $totalBookings = 0; // Count of user's bookings
-        $totalSpent = 0; // Total amount spent
-        $confirmedBookings = 0; // Count of confirmed bookings
+        $bookings = Booking::query()
+            ->ownedBy($user)
+            ->latest()
+            ->get();
 
-        return view('profile', compact('totalBookings', 'totalSpent', 'confirmedBookings'));
+        $expirationService->expireStaleForBookings($bookings->modelKeys());
+        $bookings->load([
+            'addOnTransactions' => fn ($query) => $query->visibleToCustomer(),
+        ]);
+
+        $totalBookings = $bookings->count();
+        $confirmedBookings = $bookings->where('status', 'confirmed')->count();
+        $originalBookingsPaid = $bookings
+            ->where('payment_status', 'paid')
+            ->sum(fn (Booking $booking) => (float) $booking->total_amount);
+        $addOnsPaid = $bookings
+            ->flatMap->addOnTransactions
+            ->where('payment_status', 'paid')
+            ->sum(fn (AddOnTransaction $transaction) => (float) $transaction->total_amount);
+        $totalSpent = $originalBookingsPaid + $addOnsPaid;
+
+        return view('profile', compact('bookings', 'totalBookings', 'totalSpent', 'confirmedBookings'));
+    }
+
+    public function bookingDetails(Booking $booking, AddOnExpirationService $expirationService)
+    {
+        Gate::authorize('view', $booking);
+
+        $expirationService->expireStaleForBookings([$booking->id]);
+        $booking->load([
+            'addOnTransactions' => fn ($query) => $query->visibleToCustomer(),
+        ]);
+
+        return view('profile.booking-details', compact('booking'));
+    }
+
+    public function addOnDetails(Booking $booking, AddOnTransaction $addOnTransaction)
+    {
+        Gate::authorize('view', $booking);
+
+        $ownedAddOn = $booking->addOnTransactions()
+            ->whereKey($addOnTransaction->getKey())
+            ->firstOrFail();
+
+        return redirect()->route('profile.bookings.show', $booking)
+            ->withFragment('add-on-' . $ownedAddOn->id);
     }
 
     public function edit()

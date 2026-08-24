@@ -7,13 +7,17 @@ use Illuminate\Http\Request;
 use App\Models\Food;
 use App\Models\FoodPackageSetting;
 use App\Models\FoodSwiperImage;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
+use App\Services\CloudinaryImageService;
 
 class FoodController extends Controller
 {
+    public function __construct(private readonly CloudinaryImageService $cloudinaryImages)
+    {
+    }
+
     private const SORT_OPTIONS = [
         'featured' => 'Featured',
         'name_asc' => 'Alphabetically, A-Z',
@@ -52,7 +56,7 @@ class FoodController extends Controller
         return $columnCache[$column];
     }
 
-    private function applyFoodSort($foodsQuery, string $sortBy)
+    private function applyFoodSort(\Illuminate\Database\Eloquent\Builder $foodsQuery, string $sortBy)
     {
         switch ($sortBy) {
             case 'name_asc':
@@ -156,13 +160,9 @@ class FoodController extends Controller
             $validated = $request->validate($rules);
 
             // Handle image upload
-            $imagePath = null;
-            if ($request->hasFile('image')) {
-                $file = $request->file('image');
-                $filePath = $file->getRealPath();
-                $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
-                $imagePath = $uploadResult['secure_url'];
-            }
+            $imagePath = $request->hasFile('image')
+                ? $this->cloudinaryImages->upload($request->file('image'), 'foods')['url']
+                : null;
 
             $createData = [
                 'name' => $request->name,
@@ -261,10 +261,7 @@ class FoodController extends Controller
             if ($request->has('remove_image') && $request->remove_image == '1') {
                 $updateData['image'] = null;
             } elseif ($request->hasFile('image')) {
-                $file = $request->file('image');
-                $filePath = $file->getRealPath();
-                $uploadResult = Cloudinary::uploadApi()->upload($filePath, ['resource_type' => 'auto']);
-                $updateData['image'] = $uploadResult['secure_url'];
+                $updateData['image'] = $this->cloudinaryImages->upload($request->file('image'), 'foods')['url'];
             }
 
             $food->update($updateData);

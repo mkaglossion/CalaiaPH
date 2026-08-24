@@ -262,6 +262,7 @@
                             <th class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Category</th>
                             <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-center">Price</th>
                             <th class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Activities</th>
+                            <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Image</th>
                             <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Status</th>
                             <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-right">Actions</th>
                         </tr>
@@ -331,6 +332,38 @@
                               autocomplete="off"
                               class="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
                               placeholder="Describe what's included in this package..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Image</label>
+                    <div
+                        class="rounded-2xl border-2 border-dashed border-blue-400 bg-blue-50/60 px-4 py-8 sm:px-6 sm:py-10 text-center cursor-pointer hover:bg-blue-50 transition"
+                        @click="$refs.packageImageInput.click()"
+                    >
+                        <template x-if="packageForm.image_preview">
+                            <div class="flex flex-col items-center gap-3">
+                                <img :src="packageForm.image_preview" alt="Package preview" class="max-h-40 sm:max-h-48 rounded-xl shadow-md object-cover">
+                                <label
+                                    x-show="editPackageMode && !packageForm.image"
+                                    class="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
+                                    @click.stop
+                                >
+                                    <input type="checkbox" x-model="packageForm.remove_image" id="package_remove_image" name="remove_image" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span>Remove current image</span>
+                                </label>
+                            </div>
+                        </template>
+
+                        <template x-if="!packageForm.image_preview">
+                            <div class="flex flex-col items-center justify-center gap-2 text-gray-600">
+                                <i data-lucide="image-plus" class="w-10 h-10 text-blue-400"></i>
+                                <p class="text-sm sm:text-base font-medium">Click to upload an image</p>
+                                <p class="text-xs text-gray-500">PNG, JPG, GIF, WEBP up to 20MB</p>
+                            </div>
+                        </template>
+
+                        <input type="file" accept="image/*" class="hidden" x-ref="packageImageInput" id="package_image" name="image" @change="handlePackageFile">
+                    </div>
                 </div>
 
                 {{-- Package Activities --}}
@@ -1067,6 +1100,9 @@ function activityManager() {
             is_active: true,
             stock_quantity: 0,
             is_inventory_managed: false,
+            image: null,
+            image_preview: null,
+            remove_image: false,
             items: [{ activity_id: '', quantity: 1 }]
         },
 
@@ -1703,8 +1739,14 @@ function activityManager() {
                 is_active: true,
                 stock_quantity: 0,
                 is_inventory_managed: false,
+                image: null,
+                image_preview: null,
+                remove_image: false,
                 items: [this.makePackageActivityItem()]
             };
+            if (this.$refs.packageImageInput) {
+                this.$refs.packageImageInput.value = '';
+            }
             this.loadAvailableActivities();
             this.showPackageModal = true;
             this.syncPackageActivitySelections();
@@ -1733,10 +1775,16 @@ function activityManager() {
                     is_active: !!data.is_active,
                     stock_quantity: data.stock_quantity ?? 0,
                     is_inventory_managed: !!data.is_inventory_managed,
+                    image: null,
+                    image_preview: data.image_url || data.image || null,
+                    remove_image: false,
                     items: data.activities && data.activities.length > 0 
                         ? data.activities.map(a => this.makePackageActivityItem(a.id, a.pivot?.quantity || 1))
                         : [this.makePackageActivityItem()]
                 };
+                if (this.$refs.packageImageInput) {
+                    this.$refs.packageImageInput.value = '';
+                }
                 
                 this.syncPackageActivitySelections();
             } catch (err) {
@@ -1791,6 +1839,14 @@ function activityManager() {
             }, 0).toFixed(2);
         },
 
+        handlePackageFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            this.packageForm.image = file;
+            this.packageForm.image_preview = URL.createObjectURL(file);
+            this.packageForm.remove_image = false;
+        },
+
         async saveActivityPackage() {
             if (this.isLoading) return;
             this.isLoading = true;
@@ -1805,6 +1861,12 @@ function activityManager() {
             formData.append('is_active', this.packageForm.is_active ? 1 : 0);
             formData.append('stock_quantity', this.packageForm.stock_quantity ?? 0);
             formData.append('is_inventory_managed', this.packageForm.is_inventory_managed ? 1 : 0);
+            if (this.packageForm.image) {
+                formData.append('image', this.packageForm.image);
+            }
+            if (this.packageForm.remove_image) {
+                formData.append('remove_image', 1);
+            }
 
             // Add activities and quantities
             this.packageForm.items.forEach((item, index) => {
@@ -1890,7 +1952,7 @@ function activityManager() {
         get packagesHtml() {
             // Compute the HTML for packages table
             if (!this.packages || this.packages.length === 0) {
-                return '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500"><div class="flex flex-col items-center justify-center gap-3"><i class="bi bi-package text-gray-400 text-3xl"></i><p>No packages yet. Click "Create Package" to add one.</p></div></td></tr>';
+                return '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500"><div class="flex flex-col items-center justify-center gap-3"><i class="bi bi-package text-gray-400 text-3xl"></i><p>No packages yet. Click "Create Package" to add one.</p></div></td></tr>';
             }
 
             return this.packages.map((pkg, idx) => `
@@ -1900,6 +1962,9 @@ function activityManager() {
                     <td class="hidden sm:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm text-gray-600">${this.getActivityCategoryLabel(pkg.category)}</td>
                     <td class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 text-center">₱${pkg.price ? parseFloat(pkg.price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</td>
                     <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm text-gray-600">${pkg.activities?.length || 0}</td>
+                    <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm text-gray-600">
+                        ${pkg.image_url || pkg.image ? `<img src="${pkg.image_url || pkg.image}" alt="${pkg.name || 'Package image'}" class="h-8 w-8 rounded object-cover" loading="lazy">` : '<span class="text-gray-400 text-xs">No image</span>'}
+                    </td>
                     <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm"><span class="px-2 py-1 text-gray-700 rounded text-xs font-semibold">${pkg.is_active ? 'Active' : 'Inactive'}</span></td>
                     <td class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm space-x-2">
                         <button onclick="window.__alpineApp.editActivityPackage(${pkg.id})" class="text-blue-600 hover:text-blue-700 font-semibold">Edit</button>

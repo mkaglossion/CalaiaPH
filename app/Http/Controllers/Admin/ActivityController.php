@@ -6,10 +6,23 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Activity;
 use App\Models\ActivityPackage;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use App\Services\CloudinaryImageService;
 
 class ActivityController extends Controller
 {
+    public function __construct(private readonly CloudinaryImageService $cloudinaryImages)
+    {
+    }
+
+    private function uploadImage(?\Illuminate\Http\UploadedFile $file): ?string
+    {
+        if (!$file) {
+            return null;
+        }
+
+        return $this->cloudinaryImages->upload($file, 'activities')['url'];
+    }
+
     public function index()
     {
         $activities = Activity::latest()->paginate(10);
@@ -25,32 +38,25 @@ class ActivityController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255|unique:activities,name',
             'description' => 'nullable|string',
             'duration' => 'nullable|string',
             'image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:10240',
         ]);
 
-        $imageUrl = null;
-        if ($request->hasFile('image')) {
-            try {
-                $uploadResult = Cloudinary::uploadApi()->upload(
-                    $request->file('image')->getRealPath(),
-                    [
-                        'folder' => 'activities',
-                        'resource_type' => 'auto'
-                    ]
-                );
-                $imageUrl = $uploadResult['secure_url'];
-            } catch (\Exception $e) {
-                return response()->json(['error' => 'Image upload failed: ' . $e->getMessage()], 422);
-            }
+        try {
+            $imageUrl = $this->uploadImage($request->file('image'));
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Image upload failed: ' . $e->getMessage(),
+                'errors' => ['image' => ['Failed to upload image.']],
+            ], 422);
         }
 
         Activity::create([
-            'name' => $request->name,
-            'description' => $request->description,
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
             'duration' => $request->duration ?? '',
             'price' => $request->price ?? 0,
             'availability' => $request->availability ?? 'Available',
@@ -66,7 +72,7 @@ class ActivityController extends Controller
 
     public function update(Request $request, Activity $activity_list)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255|unique:activities,name,' . $activity_list->id,
             'description' => 'nullable|string',
             'duration' => 'nullable|string',
@@ -86,17 +92,12 @@ class ActivityController extends Controller
 
         if ($request->hasFile('image')) {
             try {
-                // Upload new image to Cloudinary
-                $uploadResult = Cloudinary::uploadApi()->upload(
-                    $request->file('image')->getRealPath(),
-                    [
-                        'folder' => 'activities',
-                        'resource_type' => 'auto'
-                    ]
-                );
-                $data['image'] = $uploadResult['secure_url'];
-            } catch (\Exception $e) {
-                return response()->json(['error' => 'Image upload failed: ' . $e->getMessage()], 422);
+                $data['image'] = $this->uploadImage($request->file('image'));
+            } catch (\Throwable $e) {
+                return response()->json([
+                    'message' => 'Image upload failed: ' . $e->getMessage(),
+                    'errors' => ['image' => ['Failed to upload image.']],
+                ], 422);
             }
         }
 

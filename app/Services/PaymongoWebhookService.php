@@ -91,6 +91,12 @@ class PaymongoWebhookService
         ]);
 
         if ($status === 'paid') {
+            $addOnPaymentService = app(AddOnPaymentService::class);
+            $addOn = $addOnPaymentService->findForWebhook($metadata, $referenceNumber, $checkoutSessionId);
+            if ($addOn && $addOnPaymentService->markPaid($addOn, $paymentId, $checkoutSessionId, $amount)) {
+                return true;
+            }
+
             if (self::markShopOrderPaid($referenceNumber, $checkoutSessionId, $paymentId, $amount)) {
                 return true;
             }
@@ -213,6 +219,12 @@ class PaymongoWebhookService
             'reference' => $referenceNumber,
         ]);
 
+        $addOnPaymentService = app(AddOnPaymentService::class);
+        $addOn = $addOnPaymentService->findForWebhook($metadata, $referenceNumber, $checkoutSessionId);
+        if ($addOn) {
+            return $addOnPaymentService->markFailed($addOn, $paymentId);
+        }
+
         if (self::markShopOrderFailed($referenceNumber, $checkoutSessionId, $paymentId)) {
             return true;
         }
@@ -260,6 +272,12 @@ class PaymongoWebhookService
             'checkout_session_id' => $checkoutSessionId,
             'reference' => $referenceNumber,
         ]);
+
+        $addOnPaymentService = app(AddOnPaymentService::class);
+        $addOn = $addOnPaymentService->findForWebhook($metadata, $referenceNumber, $checkoutSessionId);
+        if ($addOn) {
+            return $addOnPaymentService->markFailed($addOn, $checkoutSessionId);
+        }
 
         if (self::markShopOrderFailed($referenceNumber, $checkoutSessionId)) {
             return true;
@@ -320,6 +338,12 @@ class PaymongoWebhookService
         $billing = is_array($paymentAttributes['billing'] ?? null)
             ? $paymentAttributes['billing']
             : (is_array($attributes['billing'] ?? null) ? $attributes['billing'] : []);
+
+        $addOnPaymentService = app(AddOnPaymentService::class);
+        $addOn = $addOnPaymentService->findForWebhook($metadata, $referenceNumber, $checkoutSessionId);
+        if ($addOn && $addOnPaymentService->markPaid($addOn, $paymentId, $checkoutSessionId, $amount)) {
+            return true;
+        }
 
         if (self::markShopOrderPaid($referenceNumber, $checkoutSessionId, $paymentId, $amount)) {
             return true;

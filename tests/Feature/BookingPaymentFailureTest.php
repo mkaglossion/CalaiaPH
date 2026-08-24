@@ -7,12 +7,16 @@ use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Mockery;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use Tests\TestCase;
 
 class BookingPaymentFailureTest extends TestCase
 {
     use RefreshDatabase;
 
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
     public function test_failed_paymongo_callback_closes_pending_booking(): void
     {
         config()->set('services.paymongo.secret_key', 'sk_test_123');

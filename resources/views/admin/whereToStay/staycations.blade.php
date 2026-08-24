@@ -2263,12 +2263,16 @@ function staycationManager() {
                 const res = await fetch(url, {
                     method: method,
                     headers: {
+                        'X-CSRF-TOKEN': csrf,
                         'Accept': 'application/json'
                     },
                     body: formData,
                     credentials: 'same-origin'
                 });
-                const data = await res.json();
+                const contentType = res.headers.get('content-type') || '';
+                const data = contentType.includes('application/json')
+                    ? await res.json()
+                    : { message: await res.text() };
                 
                 if (res.ok) {
                     this.syncStaycationState(data.staycation);
@@ -2346,7 +2350,10 @@ function staycationManager() {
                     body: formData,
                     credentials: 'same-origin'
                 });
-                const data = await res.json();
+                const contentType = res.headers.get('content-type') || '';
+                const data = contentType.includes('application/json')
+                    ? await res.json()
+                    : { message: await res.text() };
                 if (res.ok) {
                     Swal.fire({
                         icon: "success",
@@ -2460,7 +2467,10 @@ function staycationManager() {
                     body: formData,
                     credentials: 'same-origin'
                 });
-                const data = await res.json();
+                const contentType = res.headers.get('content-type') || '';
+                const data = contentType.includes('application/json')
+                    ? await res.json()
+                    : { message: await res.text() };
                 if (res.ok) {
                     Swal.fire({
                         icon: "success",

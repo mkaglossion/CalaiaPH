@@ -3,12 +3,12 @@
 @section('title', 'Dashboard Overview')
 
 @section('content')
-<div x-data="dashboard(@js($range), @js($salesView), @js($bookingView))" x-init="init()" class="space-y-3 lg:space-y-4">
-  <section class="rounded-3xl border border-slate-200 bg-white px-4 py-4 shadow-sm xl:px-5 xl:py-5">
+<div x-data="dashboard(@js($range), @js($salesView), @js($bookingView))" x-init="init()" class="space-y-4 lg:space-y-5">
+  <section class="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-5 lg:px-6 lg:py-5">
     <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
       <div class="max-w-2xl">
         <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Dashboard Overview</h1>
-        <p class="mt-1 text-[0.72rem] text-slate-500 sm:text-xs lg:text-xs">Monitor your bookings, revenue, and overall performance.</p>
+        <p class="mt-1 text-[0.72rem] text-slate-500 sm:text-xs lg:text-xs">The date filter applies to dated reports; Upcoming, Live Pending, and Today remain current snapshots.</p>
       </div>
 
       <form x-ref="filterForm" method="GET" @submit="isLoading = true" class="flex w-full flex-col gap-2.5 xl:w-auto xl:items-end">
@@ -41,6 +41,15 @@
           <i data-lucide="download" class="h-4 w-4"></i>
           <span>Export</span>
         </a>
+        <button
+          type="button"
+          @click="isLoading = true; window.location.reload()"
+          class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:text-sm"
+          aria-label="Refresh dashboard data"
+        >
+          <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+          <span>Refresh</span>
+        </button>
       </div>
 
       <div
@@ -71,14 +80,14 @@
     </div>
   </section>
 
-  <section class="grid items-stretch grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+  <section aria-label="Booking highlights" class="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
     @foreach($overviewCards as $card)
       <x-admin.dashboard.overview-card :card="$card" />
     @endforeach
   </section>
 
   @if($lowStockProducts > 0 || $lowStockFoods > 0)
-    <section class="rounded-3xl border border-amber-200 bg-amber-50 px-4 py-3 text-[0.72rem] text-amber-900 shadow-sm sm:text-xs lg:text-xs">
+    <section class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-[0.72rem] text-amber-900 shadow-sm sm:px-5 sm:text-xs lg:text-xs">
       <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-3">
           <i data-lucide="triangle-alert" class="h-5 w-5 text-amber-600"></i>
@@ -96,7 +105,8 @@
   @endif
 
   <x-admin.dashboard.section-card
-    title="Revenue Summary"
+    title="Booking Revenue Summary"
+    subtitle="Revenue and refunds use selected service dates; Live Pending is a current 60-minute snapshot. Shop and standalone dining are excluded."
     icon="circle-dollar-sign"
     icon-class="h-4 w-4"
     icon-wrap-class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500"
@@ -119,28 +129,32 @@
         <span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-500">
           <i data-lucide="info" class="h-3.5 w-3.5"></i>
         </span>
-        <span>Pending revenue is not included in Total Revenue.</span>
+        <span>Net booking revenue follows payment state: paid value remains counted after a booking cancellation until its payment is marked refunded. Gross equals net plus refunded booking value; live pending remains separate.</span>
       </div>
     </div>
   </x-admin.dashboard.section-card>
 
   <x-admin.dashboard.section-card
-    title="Sales Report by Category"
+    title="Booking Sales by Category"
+    subtitle="Paid booking value by category and service date, with refunded booking value reported separately."
     icon="sparkles"
     icon-class="h-5 w-5 text-slate-500"
     :meta-label="$rangeShortLabel"
-    class="rounded-2xl border-gray-200"
     body-class="pt-0"
   >
-    <div class="grid grid-cols-1 gap-3 p-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 2xl:gap-4 2xl:p-6">
+    <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-4">
       @foreach($salesCategoryCards as $card)
         <x-admin.dashboard.sales-category-card :card="$card" :amount="$fmtMoney($card->amount)" />
       @endforeach
     </div>
   </x-admin.dashboard.section-card>
 
-  <section class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-    <x-admin.dashboard.section-card title="Revenue Trend" body-class="px-4 py-4 sm:px-5">
+  <section aria-label="Revenue analytics" class="grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)] 2xl:gap-5">
+    <x-admin.dashboard.section-card
+      title="Net Booking Revenue Trend"
+      subtitle="Bookings currently marked paid, attributed to their reservation service date."
+      body-class="px-4 py-4 sm:px-5"
+    >
       <x-slot:actions>
         <button
           type="button"
@@ -157,11 +171,11 @@
           @if($revenueSummarySeries->count() > 0)
             <div class="mb-2.5 flex items-center gap-2 text-[0.72rem] font-medium text-slate-600 sm:text-xs lg:text-xs">
               <span class="h-1.5 w-5 rounded-full bg-blue-600"></span>
-              <span class="sm:whitespace-nowrap">Revenue ({{ $peso }})</span>
+              <span class="sm:whitespace-nowrap">Net booking revenue ({{ $peso }})</span>
             </div>
-            <div class="overflow-x-auto rounded-3xl bg-slate-50 p-2.5">
+            <div class="overflow-x-auto rounded-2xl bg-slate-50 p-2.5">
               <div class="relative" data-revenue-trend-chart style="min-width: {{ $revenueChartWidth }}px;">
-                <svg viewBox="0 0 {{ $revenueChartWidth }} {{ $revenueChartHeight }}" class="h-68 w-full sm:h-72 2xl:h-80" role="img" aria-label="Revenue trend chart">
+                <svg viewBox="0 0 {{ $revenueChartWidth }} {{ $revenueChartHeight }}" class="h-68 w-full sm:h-72 2xl:h-80" role="img" aria-label="Net booking revenue trend chart">
                   <defs>
                     <linearGradient id="revenue-fill" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stop-color="#2563eb" stop-opacity="0.18" />
@@ -177,15 +191,15 @@
                     <line x1="{{ $revenueChartLeft }}" y1="{{ number_format($y, 2, '.', '') }}" x2="{{ $revenueChartWidth - $revenueChartRight }}" y2="{{ number_format($y, 2, '.', '') }}" stroke="#e2e8f0" stroke-dasharray="4 6" />
                   @endforeach
 
-                  <polygon fill="url(#revenue-fill)" points="{{ $revenueChartArea('completed') }}" />
-                  <polyline fill="none" stroke="#2563eb" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" points="{{ $revenueChartLine('completed') }}" />
+                  <polygon fill="url(#revenue-fill)" points="{{ $revenueChartArea('net') }}" />
+                  <polyline fill="none" stroke="#2563eb" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round" points="{{ $revenueChartLine('net') }}" />
 
                   @foreach($revenueSummarySeries as $index => $row)
                     @php
                       $x = $revenueChartCount === 1
                         ? ($revenueChartWidth / 2)
                         : $revenueChartLeft + (($revenueChartWidth - $revenueChartLeft - $revenueChartRight) * ($index / ($revenueChartCount - 1)));
-                      $value = (float) ($row->completed ?? 0);
+                      $value = (float) ($row->net ?? 0);
                       $y = $revenueChartHeight - $revenueChartBottom - ($revenueChartPlotHeight * ($value / $revenueChartMax));
                       $payload = [
                         'label' => $row->label,
@@ -214,20 +228,24 @@
             </div>
           @else
             <div class="flex min-h-68 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-[0.72rem] text-slate-500 sm:text-xs lg:text-xs 2xl:min-h-80">
-              No revenue data available.
+              No booking revenue data available.
             </div>
           @endif
         </div>
 
     </x-admin.dashboard.section-card>
 
-    <x-admin.dashboard.section-card title="Revenue by Category" body-class="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 lg:grid-cols-[208px_minmax(0,1fr)] lg:items-center">
+    <x-admin.dashboard.section-card
+      title="Paid Booking Revenue by Category"
+      subtitle="Paid booking revenue only; refunds are reported separately."
+      body-class="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 lg:grid-cols-[208px_minmax(0,1fr)] lg:items-center"
+    >
       <x-slot:actions>
         <button
           type="button"
           data-revenue-by-category-download
           class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
-          aria-label="Download revenue by category chart"
+          aria-label="Download paid booking revenue by category chart"
           title="Download chart"
         >
           <i data-lucide="download" class="h-4 w-4"></i>
@@ -235,7 +253,7 @@
       </x-slot:actions>
 
         <div class="flex justify-center lg:justify-self-end lg:pr-1" data-revenue-by-category-chart>
-          <svg viewBox="0 0 200 200" class="h-48 w-48 lg:h-52 lg:w-52 2xl:h-60 2xl:w-60" role="img" aria-label="Revenue by category">
+          <svg viewBox="0 0 200 200" class="h-48 w-48 lg:h-52 lg:w-52 2xl:h-60 2xl:w-60" role="img" aria-label="Paid booking revenue by category">
             <circle cx="100" cy="100" r="{{ $salesDistributionRadius }}" fill="none" stroke="#e5e7eb" stroke-width="22"></circle>
             @php $revenueDistributionOffset = 0; @endphp
             @foreach($salesDistributionItems as $item)
@@ -256,7 +274,7 @@
               @php $revenueDistributionOffset += $segmentLength; @endphp
             @endforeach
             <text x="100" y="96" text-anchor="middle" textLength="108" lengthAdjust="spacingAndGlyphs" class="fill-slate-900 text-[20px] font-bold">{{ $fmtMoney($salesDistributionActualTotal) }}</text>
-            <text x="100" y="118" text-anchor="middle" textLength="84" lengthAdjust="spacingAndGlyphs" class="fill-slate-500 text-[12px]">Total Revenue</text>
+            <text x="100" y="118" text-anchor="middle" textLength="104" lengthAdjust="spacingAndGlyphs" class="fill-slate-500 text-[12px]">Paid Booking Revenue</text>
           </svg>
         </div>
 
@@ -278,14 +296,13 @@
   </section>
 
   <x-admin.dashboard.section-card
-    title="Sales Trend by Category"
-    subtitle="Revenue breakdown for the selected period. Defaults follow the dashboard period."
-    class="mt-4 rounded-2xl border-gray-200"
+    title="Paid Booking Revenue Trend by Category"
+    subtitle="Paid booking revenue grouped by category; refunds are shown separately below zero."
     body-class="px-4 py-4 sm:px-5"
   >
     <x-slot:actions>
       <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-        <span class="hidden text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 lg:inline">Chart period</span>
+        <span class="hidden text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 lg:inline">Group by</span>
         <div class="inline-flex flex-wrap rounded-2xl border border-gray-200 bg-slate-50 p-1">
           @foreach($salesViewOptions as $option)
             <a
@@ -315,19 +332,18 @@
         </div>
       <div class="mt-4 flex items-start gap-2 text-sm text-slate-500">
         <i data-lucide="info" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"></i>
-        <p>Chart displays completed sales only. Pending, abandoned and expired bookings are excluded.</p>
+        <p>Bars include bookings currently marked paid. Refunds are shown separately below zero; live pending and failed payment attempts are excluded.</p>
       </div>
   </x-admin.dashboard.section-card>
 
   <x-admin.dashboard.section-card
-    title="Bookings Overview (Count)"
-    subtitle="Bookings breakdown for the selected period."
-    class="mt-4"
+    title="Booking Records Overview"
+    subtitle="Counts booking records created in the selected period, grouped by their current booking and payment state."
     body-class="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 xl:grid-cols-[minmax(0,1fr)_260px] 2xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start"
   >
     <x-slot:actions>
       <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-        <span class="hidden text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 lg:inline">Chart period</span>
+        <span class="hidden text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400 lg:inline">Group by</span>
         <div class="inline-flex flex-wrap rounded-2xl border border-gray-200 bg-slate-50 p-1">
           @foreach($bookingViewOptions as $option)
             <a
@@ -363,13 +379,13 @@
         </div>
 
         @if($bookingOverviewChartItems->count() > 0)
-          <div class="overflow-x-auto rounded-3xl bg-slate-50 p-2 sm:p-2.5">
+          <div class="overflow-x-auto rounded-2xl bg-slate-50 p-2 sm:p-2.5">
             <div class="relative" style="min-width: {{ $bookingChartWidth }}px;">
               <svg viewBox="0 0 {{ $bookingChartWidth }} {{ $bookingChartHeight }}" class="h-68 w-full sm:h-72 2xl:h-80" role="img" aria-label="Bookings overview chart">
                 @foreach(range(4, 0) as $step)
                   @php
                     $gridValue = $bookingTickStep * $step;
-                    $y = $bookingChartHeight - $bookingChartBottom - ($bookingChartPlotHeight * ($gridValue / $bookingOverviewMax));
+                    $y = $bookingChartHeight - $bookingChartBottom - ($bookingChartPlotHeight * ($gridValue / $bookingAxisMax));
                   @endphp
                   <text x="0" y="{{ number_format($y + 4, 2, '.', '') }}" class="fill-slate-400 text-[10px] font-medium sm:text-[11px] lg:text-[11px]">{{ number_format($gridValue) }}</text>
                   <line x1="{{ $bookingChartLeft }}" y1="{{ number_format($y, 2, '.', '') }}" x2="{{ $bookingChartWidth - $bookingChartRight }}" y2="{{ number_format($y, 2, '.', '') }}" stroke="#e2e8f0" stroke-dasharray="4 6" />
@@ -388,7 +404,7 @@
                   @foreach($bookingSeriesMeta as $series)
                     @php
                       $value = (int) ($row->{$series['key']} ?? 0);
-                      $y = $bookingChartHeight - $bookingChartBottom - ($bookingChartPlotHeight * ($value / $bookingOverviewMax));
+                      $y = $bookingChartHeight - $bookingChartBottom - ($bookingChartPlotHeight * ($value / $bookingAxisMax));
                       $payload = [
                         'label' => $row->label . ' - ' . $series['label'],
                         'amount' => $value,
@@ -423,7 +439,7 @@
 
       <div class="rounded-2xl border border-slate-200 bg-white xl:self-start xl:justify-self-end">
         <div class="flex items-center justify-between px-3.5 py-3">
-          <p class="text-[11px] font-medium text-slate-500 sm:text-xs sm:whitespace-nowrap">Overview Total</p>
+          <p class="text-[11px] font-medium text-slate-500 sm:text-xs sm:whitespace-nowrap">Classified Records</p>
           <p class="text-2xl font-semibold leading-none text-slate-900 sm:text-[1.8rem] 2xl:text-[2rem] sm:whitespace-nowrap">{{ $fmtInt($bookingSummaryTotal) }}</p>
         </div>
 
@@ -435,12 +451,13 @@
         @endforeach
 
         <div class="border-t border-slate-100 px-3.5 py-3 text-[11px] text-slate-500 sm:text-xs 2xl:px-4 2xl:py-4 2xl:text-sm">
-          <p class="mt-1">Closed = failed or expired payment attempts.</p>
+          <p>Live Pending = active payment attempts within the current payment window.</p>
+          <p class="mt-1">Other / Closed = every remaining state, including cancelled, refunded, failed, stale, abandoned, or expired records.</p>
         </div>
       </div>
   </x-admin.dashboard.section-card>
 
-  <section class="grid grid-cols-1 gap-4 xl:grid-cols-1 2xl:grid-cols-2 2xl:gap-5">
+  <section aria-label="Recent dashboard activity" class="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:gap-5">
     <x-admin.dashboard.section-card
       title="Recent Bookings"
       action-text="View all"
@@ -469,7 +486,7 @@
   </section>
 
   <x-admin.dashboard.section-card title="Quick Actions" body-class="pt-0">
-    <div class="grid grid-cols-1 gap-3 px-4 py-3.5 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 sm:px-5 2xl:gap-4 2xl:px-6 2xl:py-5">
+    <div class="grid grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-2 sm:px-5 xl:grid-cols-3">
       @foreach($quickActions as $action)
         <x-admin.dashboard.quick-action :action="$action" />
       @endforeach
@@ -477,8 +494,8 @@
   </x-admin.dashboard.section-card>
 
   <footer class="flex flex-col gap-2 px-1 text-[0.72rem] text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:text-xs lg:text-xs">
-    <p class="sm:truncate sm:whitespace-nowrap">All amounts are in PHP ({{ $peso }}) and based on completed payments only.</p>
-    <p class="sm:whitespace-nowrap">Last updated: {{ $lastUpdatedAt->format('M j, Y g:i A') }}</p>
+    <p class="sm:truncate sm:whitespace-nowrap">Revenue/refunds use selected service dates; Live Pending and Upcoming are current snapshots. Booking revenue only; shop and standalone dining are excluded.</p>
+    <p class="sm:whitespace-nowrap">Data generated: {{ now()->format('M j, Y g:i A') }}</p>
   </footer>
 </div>
 
@@ -796,7 +813,7 @@
         context.save();
         context.fillStyle = '#0f172a';
         context.font = '700 26px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-        context.fillText('Revenue by Category', 56, titleY);
+        context.fillText('Paid Booking Revenue by Category', 56, titleY);
         context.restore();
 
         context.save();
@@ -832,7 +849,7 @@
         context.fillText(revenueCategoryCurrency.format(totalAmount), donutCenterX, donutCenterY - 8);
         context.fillStyle = '#64748b';
         context.font = '500 14px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-        context.fillText('Total Revenue', donutCenterX, donutCenterY + 18);
+        context.fillText('Paid booking revenue', donutCenterX, donutCenterY + 18);
         context.restore();
 
         const legendX = 470;
