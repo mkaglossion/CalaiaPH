@@ -55,8 +55,8 @@ return new class extends Migration
                     'description' => 'Cozy details with your comfort in mind.',
                     'features' => [
                         'Air-conditioned 25sqm tent with 4 beds',
-                        'Exclusive toilet and heated shower a few steps away from tent',
-                        'Bathroom amenities: bath towels, body soap, shampoo, dental, vanity kits',
+                        'Exclusive toilet and heated shower located a few steps away from the tent.',
+                        'Bathroom amenities: bath towels, body soap, shampoo, dental, and vanity kits',
                         'Complimentary breakfast for all registered guests',
                         'Complimentary farm tour and animal feeding for all registered guests',
                         'Convenience outlets in tent',

@@ -35,16 +35,18 @@ class InformationPageCmsTest extends TestCase
 
         $this->get(route('our-story'))
             ->assertSee('Our Story: Respect and Connect')
-            ->assertSee('At Calaia, we believe in a world where nature, farming, and community thrive in perfect harmony')
+            ->assertSeeText('At Calaia, we believe in a world where nature, farming, and community thrive in perfect harmony')
             ->assertSee('regenerative land stewardship')
+            ->assertSee('<strong class="font-bold text-gray-900">Calaia</strong>', false)
             ->assertSee('<strong class="font-bold text-gray-900">living sanctuary</strong>', false)
             ->assertSee('<strong class="font-bold text-gray-900">regenerative land stewardship</strong>', false)
             ->assertSee('<strong class="font-bold text-gray-900">biodynamic farming and forest regeneration</strong>', false)
             ->assertSee('<strong class="font-bold text-gray-900">unfiltered outdoor living</strong>', false)
             ->assertSee('<strong class="font-bold text-gray-900">ethical food production</strong>', false)
             ->assertSee('<strong class="font-bold text-gray-900">authenticity and simplicity</strong>', false)
-            ->assertSee('<strong class="font-bold text-gray-900">a safe and inclusive environment</strong>', false)
-            ->assertSee('<strong class="font-bold text-gray-900">well-being</strong>', false)
+            ->assertSee('Calaia is a <strong class="font-bold text-gray-900">safe and inclusive environment</strong>', false)
+            ->assertDontSee('<strong class="font-bold text-gray-900">a safe and inclusive environment</strong>', false)
+            ->assertDontSee('<strong class="font-bold text-gray-900">well-being</strong>', false)
             ->assertSee('<strong class="font-bold text-gray-900">humane animal care</strong>', false)
             ->assertSee('The Beginning')
             ->assertSee('Our Journey')
@@ -72,7 +74,7 @@ class InformationPageCmsTest extends TestCase
         $indexResponse->assertOk();
         $indexResponse->assertSee('Information CMS');
         $indexResponse->assertSee('Full page content');
-        $indexResponse->assertSee('At Calaia, we believe in a world where nature, farming, and community thrive in perfect harmony');
+        $indexResponse->assertSee('At &lt;strong class=&quot;font-bold text-gray-900&quot;&gt;Calaia&lt;/strong&gt;, we believe in a world where nature, farming, and community thrive in perfect harmony', false);
         $indexResponse->assertSee('The Beginning');
         $indexResponse->assertSee('Our Journey');
         $indexResponse->assertSee('data-lucide="info"', false);
