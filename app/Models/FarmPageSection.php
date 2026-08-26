@@ -130,7 +130,7 @@ class FarmPageSection extends Model
             'secondary_image_public_id' => null,
             'items' => $defaults['items'] ?? [],
             'settings' => $defaults['settings'] ?? [],
-            'is_active' => true,
+            'is_active' => $defaults['is_active'] ?? true,
             'sort_order' => $defaults['sort_order'] ?? 0,
         ];
     }

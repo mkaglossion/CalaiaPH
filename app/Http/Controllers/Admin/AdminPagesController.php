@@ -93,7 +93,7 @@ class AdminPagesController extends Controller
                     ],
                     'intro' => [
                         'sources' => ['staycation_page_intro'],
-                        'fallback' => 'Browse every room directly on the page. The category modals are still available below if you want the full feature list and gallery.',
+                        'fallback' => 'Choose from our range of glamping tents and camping options. Each option has unique features that suit your needs and tastes.',
                     ],
                 ],
                 'pageCopyMeta' => [
@@ -161,11 +161,11 @@ class AdminPagesController extends Controller
                 'pageCopyFields' => [
                     'title' => [
                         'sources' => ['dining_page_title'],
-                        'fallback' => 'Dining at CalaiaPH',
+                        'fallback' => 'Dining at Calaia Nature Park',
                     ],
                     'intro' => [
                         'sources' => ['dining_page_intro'],
-                        'fallback' => 'Experience farm-to-table dining in our elegant mess hall or enjoy cooking your own fresh ingredients straight from our farm. Perfect for celebrations, family gatherings, and intimate dinners.',
+                        'fallback' => 'Experience farm-to-table dining at our mess hall or enjoy cooking your own meal by choosing from our ready-to-cook options on your own grill setup.',
                     ],
                     'messhall_title' => [
                         'sources' => ['dining_messhall_title'],
@@ -173,7 +173,7 @@ class AdminPagesController extends Controller
                     ],
                     'messhall_intro' => [
                         'sources' => ['dining_messhall_intro'],
-                        'fallback' => 'Our spacious and elegant mess hall is perfect for group dining and special occasions. Let our chefs prepare delicious farm-to-table meals using the freshest ingredients from our farm.',
+                        'fallback' => 'Our breezy and spacious mess hall is perfect for groups and special occasions. Our kitchen is ready to serve you delicious and hearty farm-to-table meals.',
                     ],
                     'cook_title' => [
                         'sources' => ['dining_cook_title'],
@@ -181,7 +181,7 @@ class AdminPagesController extends Controller
                     ],
                     'cook_intro' => [
                         'sources' => ['dining_cook_intro'],
-                        'fallback' => 'Enjoy cooking your own fresh ingredients harvested directly from our farm. Choose premium, locally sourced ingredients and create your own meal with guidance from our team.',
+                        'fallback' => 'As we set up your grill, choose your menu from a variety of frozen, ready-to-cook meals for an authentic camping experience!',
                     ],
                     'cta_title' => [
                         'sources' => ['dining_cta_title'],
@@ -308,7 +308,7 @@ class AdminPagesController extends Controller
                     ],
                     'cta_title' => [
                         'sources' => ['farm_cta_title'],
-                        'fallback' => 'Ready to Reserve Your Farm Experience?',
+                        'fallback' => 'Ready for your farm experience?',
                     ],
                     'cta_intro' => [
                         'sources' => ['farm_cta_intro'],

@@ -183,7 +183,7 @@ class PagesController extends Controller
 
         $staycationPageLabel = $this->pageTextValue($pageCopyTexts, ['staycation_page_label'], 'Staycation Options');
         $staycationPageTitle = $this->pageTextValue($pageCopyTexts, ['staycation_page_title'], 'All Glamping & Camping');
-        $staycationPageIntro = $this->pageTextValue($pageCopyTexts, ['staycation_page_intro'], 'Browse every room directly on the page. The category modals are still available below if you want the full feature list and gallery.');
+        $staycationPageIntro = $this->pageTextValue($pageCopyTexts, ['staycation_page_intro'], 'Choose from our range of glamping tents and camping options. Each option has unique features that suit your needs and tastes.');
 
         // Get all staycations from admin panel
         $staycations = Staycation::ordered()->with([
@@ -798,12 +798,12 @@ class PagesController extends Controller
             })
             ->toArray();
 
-        $diningPageTitle = $this->pageTextValue($texts, ['dining_page_title'], 'Dining at CalaiaPH');
-        $diningPageIntro = $this->pageTextValue($texts, ['dining_page_intro'], 'Experience farm-to-table dining in our elegant mess hall or enjoy cooking your own fresh ingredients straight from our farm. Perfect for celebrations, family gatherings, and intimate dinners.');
+        $diningPageTitle = $this->pageTextValue($texts, ['dining_page_title'], 'Dining at Calaia Nature Park');
+        $diningPageIntro = $this->pageTextValue($texts, ['dining_page_intro'], 'Experience farm-to-table dining at our mess hall or enjoy cooking your own meal by choosing from our ready-to-cook options on your own grill setup.');
         $messHallTitle = $this->pageTextValue($texts, ['dining_messhall_title'], 'Mess Hall Dining');
-        $messHallIntro = $this->pageTextValue($texts, ['dining_messhall_intro'], 'Our spacious and elegant mess hall is perfect for group dining and special occasions. Let our chefs prepare delicious farm-to-table meals using the freshest ingredients from our farm.');
+        $messHallIntro = $this->pageTextValue($texts, ['dining_messhall_intro'], 'Our breezy and spacious mess hall is perfect for groups and special occasions. Our kitchen is ready to serve you delicious and hearty farm-to-table meals.');
         $cookYourOwnTitle = $this->pageTextValue($texts, ['dining_cook_title'], 'Cook Your Own Experience');
-        $cookYourOwnIntro = $this->pageTextValue($texts, ['dining_cook_intro'], 'Enjoy cooking your own fresh ingredients harvested directly from our farm. Choose premium, locally sourced ingredients and create your own meal with guidance from our team.');
+        $cookYourOwnIntro = $this->pageTextValue($texts, ['dining_cook_intro'], 'As we set up your grill, choose your menu from a variety of frozen, ready-to-cook meals for an authentic camping experience!');
         $diningCta = $this->messengerCtaCopy($texts, 'dining', [
             'title' => 'Ready to Dine With Us?',
             'intro' => 'Message us to reserve your dining experience. We can accommodate lunch, dinner, group events, and special arrangements.',
@@ -874,7 +874,7 @@ class PagesController extends Controller
         $farmPageTitle = $this->pageTextValue($texts, ['farm_page_title', 'title', 'heading'], 'Our Sustainable Farming');
         $farmPageIntro = $this->pageTextValue($texts, ['farm_page_intro', 'intro', 'subtitle', 'description'], 'Discover how we raise livestock and grow produce with respect for nature and animal welfare');
         $farmCta = $this->messengerCtaCopy($texts, 'farm', [
-            'title' => 'Ready to Reserve Your Farm Experience?',
+            'title' => 'Ready for your farm experience?',
             'intro' => 'Message us on Messenger to ask about farm visits, group reservations, and special arrangements.',
             'button_url' => 'https://m.me/410774518796277',
             'button_label' => 'Message Us on Messenger',

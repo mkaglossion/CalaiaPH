@@ -19,6 +19,9 @@ class FarmPageSectionsCmsTest extends TestCase
         $this->assertDatabaseCount('farm_page_sections', 5);
         $this->assertNull(config('farm_page_sections.sections.ethical_livestock.image_url'));
         $this->assertNull(config('farm_page_sections.sections.ethical_livestock.secondary_image_url'));
+        $this->assertTrue(config('farm_page_sections.sections.ethical_livestock.is_active'));
+        $this->assertTrue(config('farm_page_sections.sections.product_cards.is_active'));
+        $this->assertTrue(config('farm_page_sections.sections.field_banners.is_active'));
         $this->assertTrue(
             collect(config('farm_page_sections.sections'))
                 ->flatMap(fn (array $section) => $section['items'] ?? [])
@@ -28,14 +31,20 @@ class FarmPageSectionsCmsTest extends TestCase
         $response = $this->get(route('farm'));
 
         $response->assertOk();
+        $response->assertSee('Life on the Farm');
+        $response->assertSee('Nurtured Ecosystems');
+        $response->assertSee('Soil First');
+        $response->assertSee('Ethical Livestock Management');
+        $response->assertSee('Respect for Natural Cycles');
+        $response->assertSee('Forest Regeneration');
+        $response->assertSee('class="mb-3 flex min-h-14 w-full items-start justify-center text-xl font-bold leading-tight text-white"', false);
         $response->assertSee('Ethically raised livestock.');
         $response->assertSee('Grass-Fed Beef');
         $response->assertSee('Vegetable Garden.');
-        $response->assertSee('Growing with nature.');
-        $response->assertSee('Farm Experiences');
         $response->assertDontSee('assets/images/carousel/', false);
         $response->assertDontSee('assets/icons/', false);
         $response->assertDontSee('data:image/svg+xml', false);
+        $response->assertSee('class="container mx-auto px-4 py-16 sm:px-6 md:py-20 lg:px-8"', false);
         $response->assertSee('class="fas fa-tractor text-4xl md:text-5xl opacity-80 mb-4 block"', false);
     }
 

@@ -43,35 +43,4 @@
     {{-- Floating Buttons --}}
     <x-floating-buttons />
 
-    @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const heroEl = document.querySelector('.heroSwiper');
-                if (!heroEl) {
-                    return;
-                }
-
-                const slidesCount = parseInt(heroEl.dataset.slidesCount || '0', 10);
-                new Swiper('.heroSwiper', {
-                    autoplay: {
-                        delay: 3000,
-                        disableOnInteraction: false,
-                    },
-                    loop: slidesCount > 1,
-                    effect: 'fade',
-                    fadeEffect: {
-                        crossFade: true
-                    },
-                    keyboard: {
-                        enabled: true,
-                    },
-                    a11y: {
-                        prevSlideMessage: 'Previous slide',
-                        nextSlideMessage: 'Next slide',
-                    },
-                });
-            });
-        </script>
-    @endpush
 </x-page-layout>

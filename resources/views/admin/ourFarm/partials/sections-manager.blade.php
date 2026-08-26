@@ -314,15 +314,15 @@ function farmSectionsManager(config) {
             ethical_livestock: 'Ethical Livestock',
             product_cards: 'Farm Product Cards',
             field_banners: 'Garden & Orchard Banners',
-            growing_nature: 'Growing With Nature',
-            farm_experiences: 'Farm Experiences Header',
+            growing_nature: 'Nurtured Ecosystems',
+            farm_experiences: 'Life on the Farm Header',
         },
         helpText: {
             ethical_livestock: 'Banner copy, checklist cards, colors, and livestock images.',
             product_cards: 'Repeatable cards for beef, pork, lamb, and other farm products.',
             field_banners: 'Full-width image banners with left or right aligned copy.',
-            growing_nature: 'Section title, background color, icons, and nature principles.',
-            farm_experiences: 'Heading displayed above the separately managed experience cards.',
+            growing_nature: 'Section title, background color, icons, and ecosystem principles.',
+            farm_experiences: 'Heading displayed above the separately managed Life on the Farm cards.',
         },
 
         init() {
@@ -362,14 +362,14 @@ function farmSectionsManager(config) {
 
         itemHeading(key) {
             if (key === 'field_banners') return 'Banner Cards';
-            if (key === 'growing_nature') return 'Nature Principle Cards';
+            if (key === 'growing_nature') return 'Ecosystem Cards';
             return 'Product Cards';
         },
 
         itemSingular(key) {
             if (key === 'ethical_livestock') return 'Checklist Item';
             if (key === 'field_banners') return 'Banner';
-            if (key === 'growing_nature') return 'Nature Principle';
+            if (key === 'growing_nature') return 'Ecosystem Principle';
             return 'Product Card';
         },
 

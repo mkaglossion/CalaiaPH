@@ -33,7 +33,26 @@ class InformationPageCmsTest extends TestCase
             ]);
         }
 
-        $this->get(route('our-story'))->assertSee('The Beginning');
+        $this->get(route('our-story'))
+            ->assertSee('Our Story: Respect and Connect')
+            ->assertSee('At Calaia, we believe in a world where nature, farming, and community thrive in perfect harmony')
+            ->assertSee('regenerative land stewardship')
+            ->assertSee('<strong class="font-bold text-gray-900">living sanctuary</strong>', false)
+            ->assertSee('<strong class="font-bold text-gray-900">regenerative land stewardship</strong>', false)
+            ->assertSee('<strong class="font-bold text-gray-900">biodynamic farming and forest regeneration</strong>', false)
+            ->assertSee('<strong class="font-bold text-gray-900">unfiltered outdoor living</strong>', false)
+            ->assertSee('<strong class="font-bold text-gray-900">ethical food production</strong>', false)
+            ->assertSee('<strong class="font-bold text-gray-900">authenticity and simplicity</strong>', false)
+            ->assertSee('<strong class="font-bold text-gray-900">a safe and inclusive environment</strong>', false)
+            ->assertSee('<strong class="font-bold text-gray-900">well-being</strong>', false)
+            ->assertSee('<strong class="font-bold text-gray-900">humane animal care</strong>', false)
+            ->assertSee('The Beginning')
+            ->assertSee('Our Journey')
+            ->assertSee('Mission & Vision', false)
+            ->assertSee('Our Values')
+            ->assertSee('Our Impact')
+            ->assertSee('Looking Forward')
+            ->assertSee('Join Our Growing Community');
         $this->get(route('sustainability'))->assertSee('Our Environmental Commitment');
         $this->get(route('our-services'))->assertSee('Accommodation Services');
         $this->get(route('contact'))->assertSee('Visit or Contact Us');
@@ -53,7 +72,9 @@ class InformationPageCmsTest extends TestCase
         $indexResponse->assertOk();
         $indexResponse->assertSee('Information CMS');
         $indexResponse->assertSee('Full page content');
+        $indexResponse->assertSee('At Calaia, we believe in a world where nature, farming, and community thrive in perfect harmony');
         $indexResponse->assertSee('The Beginning');
+        $indexResponse->assertSee('Our Journey');
         $indexResponse->assertSee('data-lucide="info"', false);
         $indexResponse->assertSeeInOrder(['Shop', 'Information', 'Policies &amp; Terms'], false);
         $indexResponse->assertDontSee(route('admin.information.index', ['page' => 'sustainability']), false);

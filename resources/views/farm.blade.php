@@ -24,6 +24,7 @@
     @endphp
 
     <main id="main">
+      @if ($ethicalSection || $productSection)
       <section class="py-16" style="background-color: #f5efe7;" aria-labelledby="sustainable-farming-heading">
         <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div class="mx-auto max-w-4xl">
@@ -123,6 +124,7 @@
           @endif
         </div>
       </section>
+      @endif
 
       @if ($fieldSection && count($fieldSection->items ?? []))
         <section>
@@ -148,37 +150,6 @@
               <div class="h-80 md:h-100"></div>
             </article>
           @endforeach
-        </section>
-      @endif
-
-      @if ($natureSection)
-        <section class="py-20" aria-labelledby="growing-nature-heading">
-          <div class="mx-auto max-w-6xl px-6">
-            <div class="rounded-3xl px-6 py-10 text-center text-white shadow-lg md:px-14 md:py-14" style="background-color: {{ $safeColor($natureSection, '#3f6668') }};">
-              <h2 id="growing-nature-heading" class="mb-6 text-2xl font-extrabold md:text-4xl">{{ $natureSection->title }}</h2>
-              <div class="mx-auto mb-12 w-3/4 border-t border-white/30" aria-hidden="true"></div>
-              <div class="grid grid-cols-1 place-items-center gap-8 md:grid-cols-3 md:gap-12" role="list">
-                @foreach ($natureSection->items ?? [] as $principle)
-                  <div class="flex flex-col items-center text-center" role="listitem">
-                    @if (filled($principle['image_url'] ?? null))
-                      <div class="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-md">
-                        <img
-                          src="{{ \App\Helpers\ImageHelper::src($principle['image_url']) }}"
-                          alt=""
-                          class="h-20 w-20 object-contain"
-                          loading="lazy"
-                          aria-hidden="true"
-                          onerror="this.parentElement.remove();"
-                        >
-                      </div>
-                    @endif
-                    <h3 class="mb-3 text-xl font-bold text-white">{{ $principle['title'] ?? '' }}</h3>
-                    <p class="max-w-xs text-sm leading-relaxed text-white/80 md:text-base">{{ $principle['description'] ?? '' }}</p>
-                  </div>
-                @endforeach
-              </div>
-            </div>
-          </div>
         </section>
       @endif
 
@@ -234,12 +205,45 @@
         </section>
       @endif
 
+      @if ($natureSection)
+        <section class="py-20" aria-labelledby="growing-nature-heading">
+          <div class="mx-auto max-w-6xl px-6">
+            <div class="rounded-3xl px-6 py-10 text-center text-white shadow-lg md:px-14 md:py-14" style="background-color: {{ $safeColor($natureSection, '#3f6668') }};">
+              <h2 id="growing-nature-heading" class="mb-6 text-2xl font-extrabold md:text-4xl">{{ $natureSection->title }}</h2>
+              <div class="mx-auto mb-12 w-3/4 border-t border-white/30" aria-hidden="true"></div>
+              <div class="grid grid-cols-1 items-start gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10" role="list">
+                @foreach ($natureSection->items ?? [] as $principle)
+                  <div class="flex h-full w-full flex-col items-center text-center" role="listitem">
+                    <div class="mx-auto mb-6 flex h-24 w-24 items-center justify-center">
+                      @if (filled($principle['image_url'] ?? null))
+                      <div class="flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-md">
+                        <img
+                          src="{{ \App\Helpers\ImageHelper::src($principle['image_url']) }}"
+                          alt=""
+                          class="h-20 w-20 object-contain"
+                          loading="lazy"
+                          aria-hidden="true"
+                          onerror="this.parentElement.remove();"
+                        >
+                      </div>
+                      @endif
+                    </div>
+                    <h3 class="mb-3 flex min-h-14 w-full items-start justify-center text-xl font-bold leading-tight text-white">{{ $principle['title'] ?? '' }}</h3>
+                    <p class="max-w-xs text-sm leading-relaxed text-white/80 md:text-base">{{ $principle['description'] ?? '' }}</p>
+                  </div>
+                @endforeach
+              </div>
+            </div>
+          </div>
+        </section>
+      @endif
+
       <x-messenger-cta
         :copy="$farmCta"
-        section-class="pb-16 md:pb-20"
+        section-class="container mx-auto px-4 py-16 sm:px-6 md:py-20 lg:px-8"
         section-style="background-color: #f5efe7;"
         title-id="farm-cta-heading"
-        title="{{ $farmCtaTitle ?? 'Ready to Reserve Your Farm Experience?' }}"
+        title="{{ $farmCtaTitle ?? 'Ready for your farm experience?' }}"
         intro="{{ $farmCtaIntro ?? 'Message us on Messenger to ask about farm visits, group reservations, and special arrangements.' }}"
         button-url="https://m.me/410774518796277"
         button-label="{{ $farmCtaButton ?? 'Message Us on Messenger' }}"

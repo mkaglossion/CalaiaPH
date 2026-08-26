@@ -15,7 +15,7 @@ class FarmExperienceSeeder extends Seeder
     {
         $experiences = [
             [
-                'title' => 'Animal Feeding Experience',
+                'title' => 'Interactive Animal Encounters',
                 'desc' => 'Get up close with our farm animals. Learn about their care and dietary needs while you feed them.',
                 'time' => 'Weekends 9AM–2PM',
                 'capacity' => 'Groups up to 20 people',
@@ -26,7 +26,7 @@ class FarmExperienceSeeder extends Seeder
                 'sort_order' => 0,
             ],
             [
-                'title' => 'Harvest Days',
+                'title' => 'Seasonal Pickings',
                 'desc' => 'Participate in seasonal harvesting. Learn sustainable farming practices and take home fresh produce.',
                 'time' => 'Morning hours seasonal',
                 'capacity' => 'Take home harvest',
@@ -37,7 +37,7 @@ class FarmExperienceSeeder extends Seeder
                 'sort_order' => 1,
             ],
             [
-                'title' => 'Farm Tours',
+                'title' => 'Learning & Discovery',
                 'desc' => 'Explore our farm and learn about sustainable agriculture, animal welfare, and eco-friendly practices.',
                 'time' => 'By appointment',
                 'capacity' => 'Educational experience',
