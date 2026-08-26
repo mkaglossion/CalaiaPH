@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Staycation;
+use App\Models\StaycationText;
 use App\Models\StaycationSwiperImage;
 use App\Models\PeakPeriod;
 use App\Services\CloudinaryImageService;
@@ -74,6 +75,7 @@ class StaycationController extends Controller
             'children' => 'required|integer|min:0',
             'max_guest_capacity' => 'nullable|integer|min:1|max:30',
             'included_guest_capacity' => 'nullable|integer|min:1|max:30',
+            'description' => 'nullable|string|max:1000',
             'priceConfigs' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
@@ -174,7 +176,14 @@ class StaycationController extends Controller
             $staycationData['price_configs'] = $priceConfigs;
         }
 
-        $staycation = Staycation::create($staycationData);
+        $staycation = DB::transaction(function () use ($staycationData, $request) {
+            $staycation = Staycation::create($staycationData);
+            if ($request->exists('description')) {
+                $this->saveRoomDescription($staycation, $request->input('description'));
+            }
+
+            return $staycation;
+        });
 
         return response()->json([
             'message' => 'Room added successfully.',
@@ -182,6 +191,7 @@ class StaycationController extends Controller
             'staycation' => [
                 'id' => $staycation->id,
                 'name' => $staycation->name,
+                'room_description' => $staycation->resolveRoomDescription(),
                 'days' => $staycation->days,
                 'capacity' => $staycation->capacity,
                 'max_guest_capacity' => $staycation->max_guest_capacity ?? $maxGuestCapacity ?? $capacity,
@@ -212,6 +222,7 @@ class StaycationController extends Controller
             'children' => 'required|integer|min:0',
             'max_guest_capacity' => 'nullable|integer|min:1|max:30',
             'included_guest_capacity' => 'nullable|integer|min:1|max:30',
+            'description' => 'nullable|string|max:1000',
             'priceConfigs' => 'nullable|string', // JSON string from frontend
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'remove_image' => 'nullable|in:1',
@@ -321,16 +332,22 @@ class StaycationController extends Controller
             $updateData['image'] = $staycation_list->image;
         }
 
-        $staycation_list->update($updateData);
+        DB::transaction(function () use ($staycation_list, $updateData, $request) {
+            $staycation_list->update($updateData);
+            if ($request->exists('description')) {
+                $this->saveRoomDescription($staycation_list, $request->input('description'));
+            }
+        });
 
         // Return updated data for table refresh
-        $updatedStaycation = $staycation_list->fresh();
+        $updatedStaycation = $staycation_list->fresh('texts');
 
         return response()->json([
             'message' => 'Room updated successfully.',
             'staycation' => [
                 'id' => $updatedStaycation->id,
                 'name' => $updatedStaycation->name,
+                'room_description' => $updatedStaycation->resolveRoomDescription(),
                 'days' => $updatedStaycation->days,
                 'capacity' => $updatedStaycation->capacity,
                 'max_guest_capacity' => $updatedStaycation->max_guest_capacity ?? $maxGuestCapacity ?? $capacity,
@@ -346,6 +363,23 @@ class StaycationController extends Controller
                 'updated_at' => $updatedStaycation->updated_at
             ]
         ]);
+    }
+
+    private function saveRoomDescription(Staycation $staycation, ?string $description): void
+    {
+        StaycationText::updateOrCreate(
+            [
+                'staycation_id' => $staycation->id,
+                'section' => 'description',
+            ],
+            [
+                'title' => 'Room Description',
+                'content' => trim((string) $description),
+            ]
+        );
+
+        $staycation->unsetRelation('texts');
+        $staycation->load('texts');
     }
 
     public function reorder(Request $request)

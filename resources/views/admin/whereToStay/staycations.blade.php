@@ -385,6 +385,20 @@
                     <span x-text="`Base included adults: ${Math.max(1, form.included_guest_capacity || 1)} - Additional-adult fee starts at adult #${Math.max(1, form.included_guest_capacity || 1) + 1}`"></span>
                 </div>
 
+                <div>
+                    <label for="staycation_description" class="block text-sm font-medium mb-1">Room Description</label>
+                    <textarea
+                        id="staycation_description"
+                        name="description"
+                        x-model="form.room_description"
+                        rows="3"
+                        maxlength="1000"
+                        class="w-full border rounded px-3 py-2"
+                        placeholder="Enter the room description shown on booking cards."
+                    ></textarea>
+                    <p class="mt-1 text-xs text-gray-500">Shown on this room's card at the staycation availability page.</p>
+                </div>
+
                 <!-- Dynamic Price Configs -->
                 <div class="space-y-3">
                     <span class="block text-sm font-medium">Room Pricing Overrides</span>
@@ -1201,6 +1215,7 @@ function staycationManager() {
         form: {
             id: null,
             name: '',
+            room_description: '',
             days: 1,
             quantity: 1,
             adults: 1,
@@ -1481,7 +1496,7 @@ function staycationManager() {
 
         resetForm() {
             this.destroyPriceConfigSortable();
-            this.form = { id: null, name: '', days: 1, quantity: 1, adults: 1, children: 0, included_guest_capacity: 1, max_guest_capacity: 1, priceConfigs: [], image: null, imagePreview: null, existingImage: null, removeImage: false };
+            this.form = { id: null, name: '', room_description: '', days: 1, quantity: 1, adults: 1, children: 0, included_guest_capacity: 1, max_guest_capacity: 1, priceConfigs: [], image: null, imagePreview: null, existingImage: null, removeImage: false };
             this.editModeStaycation = false;
             this.isSpecialStaycation = false;
             this.removeImage(); // Explicitly clear image and input
@@ -1711,6 +1726,7 @@ function staycationManager() {
             if (staycation) {
                 this.form.id = staycation.id;
                 this.form.name = staycation.name;
+                this.form.room_description = staycation.room_description || '';
                 this.form.days = staycation.days || 1;
                 this.updateSpecialRoomStatus();
                 this.form.quantity = staycation.capacity;
@@ -2232,6 +2248,7 @@ function staycationManager() {
             const formData = new FormData();
             formData.append('_token', csrf);
             formData.append('name', this.form.name);
+            formData.append('description', this.form.room_description || '');
             formData.append('days', this.form.days);
             formData.append('quantity', this.form.quantity);
             formData.append('adults', this.form.adults);

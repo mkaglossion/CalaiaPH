@@ -596,8 +596,8 @@
                                             type="button"
                                             @click.stop="showRoomDetailsModal(
                                                 {{ $staycation->id }},
-                                                '{{ addslashes($roomDetail['name']) }}',
-                                                '{{ addslashes($roomDetail['description']) }}',
+                                                @js($roomDetail['name']),
+                                                @js($roomDetail['description']),
                                                 {{ json_encode(array_values(array_filter(array_map('trim', $features)))) }},
                                                 {{ json_encode($staycation->swiperImages ? $staycation->swiperImages->map(function($img) { return $img->image_url; })->toArray() : []) }}
                                             )"

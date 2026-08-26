@@ -3716,7 +3716,7 @@ class BookingController extends Controller
             ];
 
             // Prepare room details for display
-            $description = $staycation->texts->first()->description ?? 'Experience the beauty of nature with our premium accommodation options.';
+            $description = $staycation->resolveRoomDescription();
             $image = $staycation->image ?? \App\Helpers\ImageHelper::placeholder();
 
             $name = strtolower((string) $staycation->name);

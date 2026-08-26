@@ -331,16 +331,7 @@ class PagesController extends Controller
 
     private function resolveStaycationDescription(Staycation $staycation): string
     {
-        $textRecord = $staycation->texts->first(function ($text) {
-            $section = strtolower(trim((string) ($text->section ?? '')));
-            return !in_array($section, ['features', 'vr'], true);
-        });
-
-        $description = preg_replace('/\s+/', ' ', trim((string) ($textRecord?->content ?? '')));
-
-        return $description !== ''
-            ? $description
-            : 'Experience the beauty of nature with our premium accommodation options.';
+        return $staycation->resolveRoomDescription();
     }
 
     private function buildVrDataForStaycation(Staycation $staycation, string $roomType): array

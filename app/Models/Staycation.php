@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use DateTimeInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
@@ -42,7 +44,7 @@ class Staycation extends Model
         });
     }
 
-    public function scopeOrdered($query)
+    public function scopeOrdered(Builder $query): Builder
     {
         if (Schema::hasColumn($this->getTable(), 'sort_order')) {
             return $query->orderBy('sort_order', 'asc')->orderBy('id', 'asc');
@@ -54,6 +56,31 @@ class Staycation extends Model
     public function texts()
     {
         return $this->hasMany(StaycationText::class);
+    }
+
+    public function resolveRoomDescription(): string
+    {
+        $texts = $this->relationLoaded('texts')
+            ? $this->texts
+            : $this->texts()->orderByDesc('id')->get();
+
+        $descriptionText = $texts
+            ->sortByDesc('id')
+            ->first(fn ($text) => strtolower(trim((string) $text->section)) === 'description');
+
+        // Keep older text records working until they are saved through the
+        // dedicated Room Description field in the admin room editor.
+        $descriptionText ??= $texts
+            ->sortByDesc('id')
+            ->first(function ($text) {
+                $section = strtolower(trim((string) $text->section));
+
+                return !in_array($section, ['features', 'vr'], true);
+            });
+
+        $description = preg_replace('/\s+/', ' ', trim((string) ($descriptionText?->content ?? '')));
+
+        return $description;
     }
 
     public function swiperImages()
@@ -91,7 +118,7 @@ class Staycation extends Model
      * Resolve the configured room rate for a given date and season.
      * Returns null when no room-specific config matches that date.
      */
-    public function getConfiguredRateForDate($date, string $seasonKey): ?float
+    public function getConfiguredRateForDate(DateTimeInterface|string $date, string $seasonKey): ?float
     {
         $matchingConfig = $this->getMatchingPriceConfigForDate($date);
         if (!$matchingConfig) {
@@ -112,7 +139,7 @@ class Staycation extends Model
      * 2. Date range
      * 3. Day-of-week
      */
-    public function getMatchingPriceConfigForDate($date): ?array
+    public function getMatchingPriceConfigForDate(DateTimeInterface|string $date): ?array
     {
         $configs = $this->price_configs ?? [];
         if (!is_array($configs) || empty($configs)) {

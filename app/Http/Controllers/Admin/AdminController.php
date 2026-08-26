@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Carbon\Carbon;
 use App\Models\Activity;
 use App\Models\ActivityPackage;
@@ -58,7 +59,7 @@ class AdminController extends Controller
             $sortBy = 'featured';
         }
 
-        $staycationsQuery = Staycation::query();
+        $staycationsQuery = Staycation::with('texts');
         switch ($sortBy) {
             case 'name_asc':
                 $staycationsQuery->orderBy('name', 'asc');
@@ -124,6 +125,7 @@ class AdminController extends Controller
                 $pricingService->getStaycationRate($staycation, $todayCarbon, $currentSeasonKey)
             );
             $staycation->setAttribute('current_season_preview', $currentSeason);
+            $staycation->setAttribute('room_description', $staycation->resolveRoomDescription());
 
             return $staycation;
         });
@@ -131,14 +133,14 @@ class AdminController extends Controller
         return view('admin.whereToStay.staycations', compact('staycations', 'images', 'texts', 'currentSeason', 'currentSeasonKey', 'sortBy', 'sortOptions'));
     }
 
-    private function normalizeStaycationTexts($texts)
+    private function normalizeStaycationTexts(Collection $texts): Collection
     {
         return $texts
-            ->groupBy(function ($text) {
+            ->groupBy(function (StaycationText $text): string {
                 $section = strtolower(trim((string) ($text->section ?? '')));
                 return $section . '|' . (string) ($text->staycation_id ?? '');
             })
-            ->map(function ($group) {
+            ->map(function (Collection $group): ?StaycationText {
                 $latest = $group->sortByDesc('id')->first();
                 if (!$latest) {
                     return null;
@@ -156,7 +158,7 @@ class AdminController extends Controller
             ->values();
     }
 
-    private function mergeVrTextGroup($group, $latest)
+    private function mergeVrTextGroup(Collection $group, StaycationText $latest): array
     {
         $merged = $this->decodeJsonTextContent($latest->content);
         $merged['images'] = [];

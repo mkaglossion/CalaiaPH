@@ -25,7 +25,7 @@
               $roomType = strtolower(trim((string) ($roomDetail['type'] ?? $staycation->type ?? 'camping')));
               $roomTypeColor = $roomType === 'glamping' ? '#a75e3e' : '#00848d';
               $roomTypeBg = $roomType === 'glamping' ? 'rgba(167,94,62,0.10)' : 'rgba(0,132,141,0.10)';
-              $roomDescription = $roomDetail['description'] ?? 'Experience the beauty of nature with our premium accommodation options.';
+              $roomDescription = $roomDetail['description'] ?? '';
               $roomStatus = strtolower((string) ($roomDetail['status'] ?? 'available'));
               $roomStatusLabel = ucfirst($roomStatus);
               $roomStatusBg = $roomStatus === 'limited' ? '#fef3c7' : ($roomStatus === 'unavailable' ? '#fee2e2' : '#dcfce7');
@@ -47,11 +47,11 @@
                   <div class="swiper-wrapper">
                     @forelse(($staycation->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" alt="{{ $img->title ?? $staycation->name }}" class="h-[20rem] w-full object-cover sm:h-88 lg:h-104" onerror="this.onerror=null; this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" alt="{{ $img->title ?? $staycation->name }}" class="h-80 w-full object-cover sm:h-88 lg:h-104" onerror="this.onerror=null; this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @empty
                       <div class="swiper-slide">
-                        <div class="flex h-[20rem] w-full items-center justify-center bg-gray-100 text-gray-400 sm:h-88 lg:h-104">No image uploaded</div>
+                        <div class="flex h-80 w-full items-center justify-center bg-gray-100 text-gray-400 sm:h-88 lg:h-104">No image uploaded</div>
                       </div>
                     @endforelse
                   </div>
@@ -188,11 +188,11 @@
                       <div class="swiper-wrapper">
                         @forelse(($staycation->swiperImages ?? []) as $img)
                           <div class="swiper-slide">
-                            <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="h-[20rem] w-full object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? $staycation->name }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                            <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="h-80 w-full object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? $staycation->name }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                           </div>
                         @empty
                           <div class="swiper-slide">
-                            <div class="flex h-[20rem] w-full items-center justify-center bg-gray-100 text-gray-400 sm:h-80 md:h-104">No image uploaded</div>
+                            <div class="flex h-80 w-full items-center justify-center bg-gray-100 text-gray-400 sm:h-80 md:h-104">No image uploaded</div>
                           </div>
                         @endforelse
                       </div>
@@ -260,7 +260,7 @@
                     @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-[20rem] object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Standard Glamping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-80 object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Standard Glamping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -308,7 +308,7 @@
                     @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-[20rem] object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Premium Glamping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-80 object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Premium Glamping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -371,7 +371,7 @@
                     @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-[20rem] object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Dome Tent' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-80 object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Dome Tent' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -426,7 +426,7 @@
                     @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-[20rem] object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Bell Tent' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-80 object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Bell Tent' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -481,7 +481,7 @@
                     @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-[20rem] object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'BYOT' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-80 object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'BYOT' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -536,7 +536,7 @@
                     @endphp
                     @foreach(($staycation?->swiperImages ?? []) as $img)
                       <div class="swiper-slide">
-                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-[20rem] object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Car Camping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
+                        <img src="{{ \App\Helpers\ImageHelper::src($img->image_path) }}" class="w-full h-80 object-cover sm:h-80 md:h-104" alt="{{ $img->title ?? 'Car Camping' }}" onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';">
                       </div>
                     @endforeach
                   </div>
@@ -624,8 +624,8 @@
                       style="will-change: background-position;"
                       :style="getVRPanoramaStyle()"
                     ></div>
-                    <div class="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent"></div>
-                    <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 to-transparent"></div>
+                    <div class="absolute inset-x-0 top-0 h-24 bg-linear-to-b from-black/50 to-transparent"></div>
+                    <div class="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-black/50 to-transparent"></div>
                     <div x-show="getCurrentVRImage()?.isPanoramic" class="absolute left-3 top-3 rounded-full bg-black/55 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80">
                       Drag to look around
                     </div>
