@@ -85,7 +85,7 @@ class PolicyPage extends Model
 
     public static function navigationItems(): array
     {
-        return static::resolvedNavigationItems();
+        return static::resolvedNavigationItems(respectNavigationVisibility: true);
     }
 
     public static function adminNavigationItems(): array
@@ -96,11 +96,22 @@ class PolicyPage extends Model
                 'route' => 'admin.policies.index',
                 'params' => ['page' => $item['slug']],
             ],
-            static::resolvedNavigationItems(includeUnpublished: true)
+            static::resolvedNavigationItems(
+                includeUnpublished: true,
+                respectNavigationVisibility: true
+            )
         );
     }
 
-    private static function resolvedNavigationItems(bool $includeUnpublished = false): array
+    public static function isVisibleInNavigation(string $slug): bool
+    {
+        return (bool) config("policy_pages.pages.{$slug}.show_in_navigation", true);
+    }
+
+    private static function resolvedNavigationItems(
+        bool $includeUnpublished = false,
+        bool $respectNavigationVisibility = false
+    ): array
     {
         $defaults = config('policy_pages.pages', []);
         $stored = collect();
@@ -118,6 +129,10 @@ class PolicyPage extends Model
         $items = [];
 
         foreach ($defaults as $slug => $pageDefaults) {
+            if ($respectNavigationVisibility && ! static::isVisibleInNavigation($slug)) {
+                continue;
+            }
+
             $page = $stored->get($slug);
 
             if ($tableAvailable && $page !== null && ! $page->is_published && ! $includeUnpublished) {

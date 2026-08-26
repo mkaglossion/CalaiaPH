@@ -1,6 +1,18 @@
 <?php
 
 return [
+    'home_availability_widget' => [
+        // Temporarily hidden; retain the underlying logic for easy restoration.
+        'show_availability_status' => false,
+        'show_guest_selector' => false,
+    ],
+
+    'staycation_availability' => [
+        // Temporarily hidden because room slots no longer have a fixed maximum.
+        'show_room_slot_counter' => false,
+        'show_empty_room_target' => false,
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Booking Configuration

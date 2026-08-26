@@ -16,6 +16,8 @@
             && filled(config('broadcasting.connections.pusher.key'))
             && filled(config('broadcasting.connections.pusher.options.cluster'))
             && !in_array(request()->getHost(), ['127.0.0.1', 'localhost']);
+        $showRoomSlotCounter = (bool) config('booking.staycation_availability.show_room_slot_counter', false);
+        $showEmptyRoomTarget = (bool) config('booking.staycation_availability.show_empty_room_target', false);
     @endphp
 
     @if($enablePageRealtime)
@@ -331,26 +333,26 @@
                                 </form>
                             </div>
 
-                            {{-- Add Room Button (hidden when max 4 rooms reached) --}}
-                            <button type="button"
-                                    class="px-4 py-2 rounded-lg font-semibold bg-[#8f5d54] text-white hover:bg-[#7a4e48] transition flex items-center gap-2 mt-5"
-                                    @click="addRoomSlot()"
-                                    x-show="maxSlots < 4"
-                                    x-cloak
-                            >
-                                <i class="bi bi-plus-lg"></i>
-                                Add Room
-                            </button>
+                            <div data-room-slot-controls class="ml-auto flex w-full sm:w-auto items-center justify-end gap-3 mt-2 sm:mt-5">
+                                <button type="button"
+                                        class="px-4 py-2 rounded-lg font-semibold bg-[#8f5d54] text-white hover:bg-[#7a4e48] transition inline-flex items-center gap-2"
+                                        @click="addRoomSlot()"
+                                >
+                                    <i class="bi bi-plus-lg"></i>
+                                    Add Room
+                                </button>
 
-                            <button type="button"
-                                    class="px-4 py-2 rounded-lg font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition mt-5"
-                                    @click="resetAll()"
-                                    :disabled="selectedCount() === 0 && maxSlots === targetRooms"
-                            >
-                                Reset All
-                            </button>
+                                <button type="button"
+                                        class="px-4 py-2 rounded-lg font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                        @click="resetAll()"
+                                        :disabled="selectedCount() === 0 && maxSlots === Math.max(Number(targetRooms) || 1, 1)"
+                                >
+                                    Reset All
+                                </button>
+                            </div>
 
-                            {{-- Rooms Counter --}}
+                            @if($showRoomSlotCounter)
+                            {{-- Temporarily hidden room-slot counter; retained for easy restoration. --}}
                             <div class="ml-auto flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 mt-5">
                                 <span class="text-sm text-gray-600">Slots:</span>
                                 <span class="font-bold text-[#8f5d54]" x-text="maxSlots"></span>
@@ -360,6 +362,7 @@
                                 <span class="text-sm text-gray-600">Filled:</span>
                                 <span class="font-bold text-green-600" x-text="selectedCount()"></span>
                             </div>
+                            @endif
                         </div>
                     </div>
 
@@ -452,17 +455,18 @@
                                                  str_contains($roomNameLower, 'bring your own tent') ||
                                                  str_contains($roomNameLower, 'bring your own');
                                         $isCarCamping = !$isBYOT && str_contains($roomNameLower, 'car camping');
+                                        $hasPriceRange = ($priceRange['min_price'] ?? 0) > 0
+                                            && ($priceRange['max_price'] ?? 0) > 0
+                                            && $priceRange['min_price'] != $priceRange['max_price'];
                                     @endphp
 
-                                    <div class="text-sm sm:text-base md:text-lg font-bold text-[#8f5d54] mb-1.5 md:mb-2">
-                                        @if($priceRange['min_price'] > 0 && $priceRange['max_price'] > 0)
-                                            @if($priceRange['min_price'] == $priceRange['max_price'])
-                                                {{ $priceRange['min_label'] }}
-                                            @else
-                                                {{ $priceRange['min_label'] }} - {{ $priceRange['max_label'] }}
-                                            @endif
+                                    <div data-staycation-price-display data-price-kind="{{ $hasPriceRange ? 'range' : 'single' }}" class="text-sm sm:text-base md:text-lg font-bold text-[#8f5d54] mb-1.5 md:mb-2">
+                                        @if($hasPriceRange)
+                                            {{ $priceRange['min_label'] }} - {{ $priceRange['max_label'] }}
+                                        @elseif(($priceRange['min_price'] ?? 0) > 0)
+                                            Starting at {{ $priceRange['min_label'] }}
                                         @else
-                                            &#8369;{{ number_format($roomDetail['price'], 0) }}
+                                            Starting at &#8369;{{ number_format($roomDetail['price'], 0) }}
                                         @endif
 
                                         @if($isBYOT || $isCarCamping)
@@ -745,9 +749,11 @@
                                 <template x-if="selectedCount() === 0">
                                     <div class="text-sm text-gray-600">
                                         <p>No rooms selected yet.</p>
+                                        @if($showEmptyRoomTarget)
                                         <p class="text-xs text-gray-500 mt-1">
                                             Target: <span x-text="targetRooms"></span> rooms
                                         </p>
+                                        @endif
                                     </div>
                                 </template>
 
@@ -1326,22 +1332,13 @@
                 targetAdults: targetAdults,
                 targetChildren: targetChildren,
 
-                maxSlots: Math.min(Math.max(targetRooms, 1), 4),
+                maxSlots: Math.max(Number(targetRooms) || 1, 1),
 
                 // Dynamic VAT rate from admin settings
                 vatRate: vatRate,
                 vatRatePercentage: vatRatePercentage,
 
                 addRoomSlot() {
-                    if (this.maxSlots >= 4) {
-                        Swal.fire({
-                            title: 'Maximum Limit Reached',
-                            text: 'You cannot add more than 4 rooms.',
-                            icon: 'warning',
-                            confirmButtonColor: '#8f5d54'
-                        });
-                        return;
-                    }
                     this.maxSlots++;
                 },
 
@@ -2111,7 +2108,7 @@
 
                 resetAll() {
                     this.selectedRooms = {};
-                    this.maxSlots = Math.min(Math.max(this.targetRooms, 1), 4);
+                    this.maxSlots = Math.max(Number(this.targetRooms) || 1, 1);
                 },
 
                 showCalendar(type, roomId) {
@@ -2197,13 +2194,14 @@
                     const priceRange = roomDetail?.price_range || null;
                     if (priceRange && priceRange.min_price > 0 && priceRange.max_price > 0) {
                         if (priceRange.min_price === priceRange.max_price) {
-                            this.roomDetailsPrice = priceRange.min_label || '\u20B1' + priceRange.min_price.toLocaleString();
+                            const singlePrice = priceRange.min_label || '\u20B1' + priceRange.min_price.toLocaleString();
+                            this.roomDetailsPrice = 'Starting at ' + singlePrice;
                         } else {
                             this.roomDetailsPrice = (priceRange.min_label || '\u20B1' + priceRange.min_price.toLocaleString()) + ' - ' + (priceRange.max_label || '\u20B1' + priceRange.max_price.toLocaleString());
                         }
                         this.roomDetailsPriceLabel = '/ night';
                     } else if (roomDetail?.price) {
-                        this.roomDetailsPrice = '\u20B1' + parseInt(roomDetail.price).toLocaleString();
+                        this.roomDetailsPrice = 'Starting at \u20B1' + parseInt(roomDetail.price).toLocaleString();
                         const roomNameLower = (name || '').toLowerCase();
                         const isBYOT = roomNameLower.includes('byot') || roomNameLower.includes('bring your own');
                         const isCarCamping = roomNameLower.includes('car camping');

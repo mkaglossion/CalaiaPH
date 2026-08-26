@@ -50,6 +50,8 @@ class PolicyPageCmsTest extends TestCase
         $indexResponse->assertSee('Full page content');
         $indexResponse->assertSee('data-lucide="file-lock-2"', false);
         $indexResponse->assertSeeInOrder(['Shop', 'Policies &amp; Terms', 'Booking Confirmation'], false);
+        $indexResponse->assertDontSee(route('admin.policies.index', ['page' => 'data-deletion']), false);
+        $indexResponse->assertDontSee(route('admin.policies.index', ['page' => 'cookies-policy']), false);
 
         $updateResponse = $this->actingAs($admin)->put(route('admin.policies.update', $policyPage->slug), [
             'nav_label' => 'Privacy Center',
@@ -100,6 +102,23 @@ class PolicyPageCmsTest extends TestCase
         $response = $this->get(route('privacy-notice'));
         $response->assertOk();
         $response->assertDontSee('Data Deletion');
+    }
+
+    public function test_hidden_policy_links_remain_available_but_do_not_appear_in_the_footer(): void
+    {
+        $this->get(route('data-deletion'))->assertOk();
+        $this->get(route('cookies-policy'))->assertOk();
+
+        $footer = view('components.footer')->render();
+        $this->assertStringNotContainsString('href="'.route('data-deletion').'"', $footer);
+        $this->assertStringNotContainsString('href="'.route('cookies-policy').'"', $footer);
+        $this->assertStringContainsString('href="'.route('privacy-notice').'"', $footer);
+        $this->assertStringContainsString('href="'.route('calaia-policy').'"', $footer);
+        $this->assertStringContainsString('href="'.route('terms-service').'"', $footer);
+
+        $adminItems = collect(PolicyPage::adminNavigationItems());
+        $this->assertFalse($adminItems->contains('params.page', 'data-deletion'));
+        $this->assertFalse($adminItems->contains('params.page', 'cookies-policy'));
     }
 
     public function test_every_policy_page_content_field_is_database_driven(): void

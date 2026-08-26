@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use App\Mail\BookingConfirmation;
 use DateTime;
 // use App\Services\BookingService; // Removed duplicate
@@ -480,7 +481,7 @@ class BookingController extends Controller
         $request->validate([
             'checkin' => 'required|date',
             'checkout' => 'required|date|after:checkin',
-            'rooms' => 'required|integer|min:1|max:4',
+            'rooms' => 'required|integer|min:1',
             'adults' => 'required|integer|min:1',
             'children' => 'nullable|integer|min:0',
             'pets' => 'required|integer|min:0',
@@ -2894,6 +2895,7 @@ class BookingController extends Controller
             $totalAvailable = 0;
             if (Schema::hasTable('staycation_inventories')) {
                 $totalAvailable = \App\Models\StaycationInventory::where('date', $key)
+                    ->where('is_blocked', false)
                     ->sum('available_quantity');
             }
 
@@ -3496,7 +3498,7 @@ class BookingController extends Controller
         $validated = $request->validate([
             'checkin' => 'required|date_format:Y-m-d',
             'checkout' => 'required|date_format:Y-m-d|after:checkin',
-            'rooms_count' => 'required|integer|min:1|max:4',
+            'rooms_count' => 'required|integer|min:1',
             'adults_total' => 'required|integer|min:1',
             'children_total' => 'nullable|integer|min:0',
             'pets_total' => 'required|integer|min:0',
@@ -3506,11 +3508,54 @@ class BookingController extends Controller
             'rooms.*.pets' => 'integer|min:0',
         ]);
 
+        $roomsCount = (int) $validated['rooms_count'];
+        if (count($validated['rooms']) !== $roomsCount) {
+            throw ValidationException::withMessages([
+                'rooms' => 'The room details must match the selected number of rooms.',
+            ]);
+        }
+
+        $checkin = Carbon::createFromFormat('Y-m-d', $validated['checkin'])->startOfDay();
+        $checkout = Carbon::createFromFormat('Y-m-d', $validated['checkout'])->startOfDay();
+        $nightDates = [];
+        for ($date = $checkin->copy(); $date->lt($checkout); $date->addDay()) {
+            $nightDates[] = $date->format('Y-m-d');
+        }
+
+        $inventoryRows = StaycationInventory::query()
+            ->selectRaw('date, SUM(available_quantity) as available_rooms')
+            ->whereIn('date', $nightDates)
+            ->where('is_blocked', false)
+            ->groupBy('date')
+            ->get();
+
+        $availableByDate = [];
+        foreach ($inventoryRows as $inventoryRow) {
+            $dateKey = Carbon::parse($inventoryRow->date)->format('Y-m-d');
+            $availableByDate[$dateKey] = (int) $inventoryRow->getAttribute('available_rooms');
+        }
+
+        $maximumAvailableRooms = null;
+        foreach ($nightDates as $nightDate) {
+            $availableRooms = $availableByDate[$nightDate] ?? 0;
+            $maximumAvailableRooms = $maximumAvailableRooms === null
+                ? $availableRooms
+                : min($maximumAvailableRooms, $availableRooms);
+        }
+        $maximumAvailableRooms ??= 0;
+
+        if ($roomsCount > $maximumAvailableRooms) {
+            $roomLabel = $maximumAvailableRooms === 1 ? 'room is' : 'rooms are';
+            throw ValidationException::withMessages([
+                'rooms_count' => "Only {$maximumAvailableRooms} {$roomLabel} available across all selected nights.",
+            ]);
+        }
+
         // Store booking data in session
         session(['booking' => [
             'checkin' => $validated['checkin'],
             'checkout' => $validated['checkout'],
-            'rooms_count' => $validated['rooms_count'],
+            'rooms_count' => $roomsCount,
             'adults_total' => $validated['adults_total'],
             'children_total' => (int)($validated['children_total'] ?? 0),
             'pets_total' => $validated['pets_total'],
@@ -3668,6 +3713,7 @@ class BookingController extends Controller
             // Fetch inventory for this staycation in the selected range
             $inventories = StaycationInventory::where('staycation_id', $staycation->id)
                 ->whereBetween('date', [$checkinCarbon->format('Y-m-d'), $checkoutCarbon->copy()->subDay()->format('Y-m-d')])
+                ->where('is_blocked', false)
                 ->get(['date', 'available_quantity'])
                 ->keyBy(function ($i) { return \Carbon\Carbon::parse($i->date)->format('Y-m-d'); });
 

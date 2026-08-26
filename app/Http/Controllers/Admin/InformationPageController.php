@@ -13,7 +13,9 @@ class InformationPageController extends Controller
 {
     public function index(Request $request): View
     {
-        $pages = InformationPage::ensureDefaults();
+        $pages = InformationPage::ensureDefaults()
+            ->filter(static fn (InformationPage $page): bool => InformationPage::isVisibleInNavigation($page->slug))
+            ->values();
         $requestedSlug = (string) $request->query('page', $pages->first()?->slug);
         $policyPage = $pages->firstWhere('slug', $requestedSlug) ?? $pages->firstOrFail();
 
@@ -37,7 +39,7 @@ class InformationPageController extends Controller
         InformationPage $informationPage,
         PolicyContentSanitizer $sanitizer
     ): RedirectResponse {
-        $validated = $request->validate([
+        $rules = [
             'nav_label' => ['required', 'string', 'max:80'],
             'meta_title' => ['required', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:1000'],
@@ -47,7 +49,50 @@ class InformationPageController extends Controller
             'hero_description' => ['nullable', 'string', 'max:1000'],
             'body_html' => ['required', 'string', 'max:1000000'],
             'is_published' => ['required', 'boolean'],
-        ]);
+        ];
+
+        if ($informationPage->slug === 'contact') {
+            $rules['contact_address'] = ['required', 'string', 'max:500'];
+            $rules['contact_phone'] = ['required', 'string', 'max:30', 'regex:/^[0-9+().\-\s]+$/'];
+            $rules['contact_email'] = ['required', 'email:rfc', 'max:255'];
+            $rules['contact_hours'] = ['required', 'string', 'max:255'];
+        }
+
+        $validated = $request->validate($rules);
+
+        if ($informationPage->slug === 'contact') {
+            $validated['contact_address'] = $this->synchronizedContactValue(
+                (string) $validated['contact_address'],
+                $informationPage->resolvedContactAddress(),
+                InformationPage::extractContactAddressFromHtml($validated['body_html'])
+            );
+
+            $currentPhone = $informationPage->resolvedContactPhone();
+            $fieldPhone = trim((string) $validated['contact_phone']);
+            $bodyPhone = InformationPage::extractContactPhoneFromHtml($validated['body_html']);
+
+            // The dedicated field wins when it was changed. Otherwise, keep
+            // legacy visual-editor updates working by syncing the phone link.
+            if ($this->samePhone($fieldPhone, $currentPhone) && $bodyPhone !== null) {
+                $validated['contact_phone'] = $bodyPhone;
+            } else {
+                $validated['contact_phone'] = $fieldPhone;
+            }
+
+            $validated['contact_email'] = $this->synchronizedContactValue(
+                (string) $validated['contact_email'],
+                $informationPage->resolvedContactEmail(),
+                InformationPage::extractContactEmailFromHtml($validated['body_html']),
+                caseInsensitive: true
+            );
+            $bodyHours = InformationPage::extractContactHoursFromHtml($validated['body_html']);
+            $hoursValue = $this->synchronizedContactValue(
+                InformationPage::contactHoursValue((string) $validated['contact_hours']),
+                $informationPage->resolvedContactHoursValue(),
+                $bodyHours !== null ? InformationPage::contactHoursValue($bodyHours) : null
+            );
+            $validated['contact_hours'] = InformationPage::formatContactHours($hoursValue);
+        }
 
         $validated['body_html'] = $sanitizer->sanitize($validated['body_html']);
 
@@ -63,5 +108,27 @@ class InformationPageController extends Controller
         return redirect()
             ->route('admin.information.index', ['page' => $informationPage->slug])
             ->with('success', $informationPage->nav_label.' was updated successfully.');
+    }
+
+    private function samePhone(string $left, string $right): bool
+    {
+        $normalize = static fn (string $phone): string => preg_replace('/\D/', '', $phone) ?? '';
+
+        return $normalize($left) === $normalize($right);
+    }
+
+    private function synchronizedContactValue(
+        string $fieldValue,
+        string $currentValue,
+        ?string $bodyValue,
+        bool $caseInsensitive = false
+    ): string {
+        $fieldValue = trim($fieldValue);
+        $currentValue = trim($currentValue);
+        $unchanged = $caseInsensitive
+            ? strcasecmp($fieldValue, $currentValue) === 0
+            : $fieldValue === $currentValue;
+
+        return $unchanged && $bodyValue !== null ? trim($bodyValue) : $fieldValue;
     }
 }

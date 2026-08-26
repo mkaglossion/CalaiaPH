@@ -173,6 +173,38 @@
             </section>
         </div>
 
+        @if(!$supportsLastUpdated && $policyPage->slug === 'contact')
+            <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+                <div class="mb-5">
+                    <h2 class="text-xl font-semibold text-gray-900">Shared contact details</h2>
+                    <p class="text-sm text-gray-500">One source for the Contact page, site footer, and maintenance page.</p>
+                </div>
+
+                <div class="grid gap-5 lg:grid-cols-2">
+                    <label class="block space-y-2 lg:col-span-2">
+                        <span class="text-sm font-semibold text-gray-700">Address</span>
+                        <input type="text" name="contact_address" value="{{ old('contact_address', $policyPage->resolvedContactAddress()) }}" maxlength="500" autocomplete="street-address" required class="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20">
+                    </label>
+
+                    <label class="block space-y-2">
+                        <span class="text-sm font-semibold text-gray-700">Phone</span>
+                        <input type="tel" name="contact_phone" value="{{ old('contact_phone', $policyPage->resolvedContactPhone()) }}" maxlength="30" autocomplete="tel" required class="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20" placeholder="+63 956 319 2448">
+                    </label>
+
+                    <label class="block space-y-2">
+                        <span class="text-sm font-semibold text-gray-700">Email</span>
+                        <input type="email" name="contact_email" value="{{ old('contact_email', $policyPage->resolvedContactEmail()) }}" maxlength="255" autocomplete="email" required class="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20">
+                    </label>
+
+                    <label class="block space-y-2 lg:col-span-2">
+                        <span class="text-sm font-semibold text-gray-700">Business hours</span>
+                        <input type="text" name="contact_hours" value="{{ old('contact_hours', $policyPage->resolvedContactHours()) }}" maxlength="255" required class="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20" placeholder="Open Daily 8:00 AM – 6:00 PM">
+                        <span class="block text-xs text-gray-500">Save here once and all public contact blocks update together.</span>
+                    </label>
+                </div>
+            </section>
+        @endif
+
         @php($bodyHtml = old('body_html', $editableBodyHtml))
         <section class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             <div class="flex flex-col gap-3 border-b border-gray-200 bg-gray-50 p-4 lg:flex-row lg:items-center lg:justify-between">

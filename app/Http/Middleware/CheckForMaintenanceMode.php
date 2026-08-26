@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\InformationPage;
 use App\Models\SystemSetting;
 use Closure;
 use Illuminate\Http\Request;
@@ -62,12 +63,18 @@ class CheckForMaintenanceMode
         }
 
         // Return maintenance mode response using Blade view
+        $contactDetails = InformationPage::contactDetails();
+
         return response()->view('system.maintenance', [
             'message' => $settings['maintenance_message'] ?? 'We are currently performing maintenance. Please check back later.',
             'logo' => $settings['logo_url'] ?? null,
             'favicon' => $settings['favicon_url'] ?? ($settings['logo_url'] ?? null),
             'lastUpdated' => now()->format('Y-m-d h:i A'),
             'statusLabel' => 'Scheduled Maintenance',
+            'contactPhone' => $contactDetails['phone'],
+            'contactPhoneUri' => $contactDetails['phone_uri'],
+            'contactEmail' => $contactDetails['email'],
+            'socialLinks' => SystemSetting::socialLinks($settings),
         ], 503, [
             'Retry-After' => '300', // Tell browsers to retry after 5 minutes
         ]);

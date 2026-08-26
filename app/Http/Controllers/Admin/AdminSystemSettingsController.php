@@ -49,6 +49,8 @@ class AdminSystemSettingsController extends Controller
             'footer_facebook_url' => 'nullable|url:http,https|max:2048',
             'footer_messenger_url' => 'nullable|url:http,https|max:2048',
             'footer_email' => 'nullable|email:rfc|max:255',
+            'header_logo_width' => 'required|integer|min:'.SystemSetting::HEADER_LOGO_WIDTH_MIN.'|max:'.SystemSetting::HEADER_LOGO_WIDTH_MAX,
+            'mobile_header_logo_width' => 'required|integer|min:'.SystemSetting::MOBILE_HEADER_LOGO_WIDTH_MIN.'|max:'.SystemSetting::MOBILE_HEADER_LOGO_WIDTH_MAX,
             'logo_file' => 'nullable|file|mimes:jpg,jpeg,png,webp,svg|max:10240',
             'remove_logo' => 'nullable|in:1',
             'favicon_file' => 'nullable|file|mimes:jpg,jpeg,png,webp,svg,ico|max:2048',
@@ -78,6 +80,8 @@ class AdminSystemSettingsController extends Controller
                 ? $request->boolean('system_maintenance')
                 : (bool) ($current['system_maintenance'] ?? false),
             'maintenance_message' => trim((string) ($validated['maintenance_message'] ?? '')),
+            'header_logo_width' => (int) $validated['header_logo_width'],
+            'mobile_header_logo_width' => (int) $validated['mobile_header_logo_width'],
             'footer_title' => $stringSetting('footer_title'),
             'footer_description' => $stringSetting('footer_description'),
             'footer_social_heading' => $stringSetting('footer_social_heading'),

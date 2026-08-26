@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\InformationPage;
 use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,7 +24,7 @@ class SystemSettingsFooterTest extends TestCase
             ->assertSee('name="footer_instagram_url"', false)
             ->assertSee('name="footer_facebook_url"', false)
             ->assertSee('name="footer_messenger_url"', false)
-            ->assertSee('name="footer_email"', false);
+            ->assertDontSee('name="footer_email"', false);
 
         $payload = array_merge($this->basePayload(), [
             'footer_social_heading' => 'Connect with Calaia today',
@@ -48,14 +49,30 @@ class SystemSettingsFooterTest extends TestCase
         $footer = view('components.footer', [
             'systemSettings' => SystemSetting::refreshCache(),
         ])->render();
+        $contactEmail = InformationPage::contactDetails()['email'];
 
         $this->assertStringContainsString('Connect with Calaia today', $footer);
         $this->assertStringContainsString('href="https://www.instagram.com/calaia.dynamic/"', $footer);
         $this->assertStringContainsString('href="https://www.facebook.com/calaia.dynamic/"', $footer);
         $this->assertStringContainsString('href="https://m.me/calaia-dynamic"', $footer);
-        $this->assertStringContainsString('href="mailto:hello@calaia.test"', $footer);
+        $this->assertStringContainsString('href="mailto:'.$contactEmail.'"', $footer);
         $this->assertStringNotContainsString('https://www.instagram.com/calaia.ph/', $footer);
-        $this->assertStringNotContainsString('mailto:calaia.ph@gmail.com', $footer);
+        $this->assertStringNotContainsString('mailto:hello@calaia.test', $footer);
+
+        $maintenance = view('system.maintenance', [
+            'message' => 'Scheduled maintenance.',
+            'logo' => null,
+            'favicon' => null,
+            'contactPhone' => '+63 905 129 4741',
+            'contactPhoneUri' => 'tel:+639051294741',
+            'contactEmail' => $contactEmail,
+            'socialLinks' => SystemSetting::socialLinks(SystemSetting::refreshCache()),
+        ])->render();
+
+        $this->assertStringContainsString('href="https://www.instagram.com/calaia.dynamic/"', $maintenance);
+        $this->assertStringContainsString('href="https://www.facebook.com/calaia.dynamic/"', $maintenance);
+        $this->assertStringContainsString('href="https://m.me/calaia-dynamic"', $maintenance);
+        $this->assertStringNotContainsString('https://www.instagram.com/calaia.ph/', $maintenance);
     }
 
     public function test_blank_social_settings_hide_the_public_social_banner(): void
@@ -88,11 +105,11 @@ class SystemSettingsFooterTest extends TestCase
             'systemSettings' => SystemSetting::refreshCache(),
         ])->render();
 
-        $this->assertStringNotContainsString('Social Media Banner', $footer);
+        $this->assertStringContainsString('Social Media Banner', $footer);
         $this->assertStringNotContainsString('bi bi-instagram text-2xl', $footer);
         $this->assertStringNotContainsString('bi bi-facebook text-2xl', $footer);
         $this->assertStringNotContainsString('bi bi-messenger text-2xl', $footer);
-        $this->assertStringNotContainsString('bi bi-envelope-fill text-2xl', $footer);
+        $this->assertStringContainsString('bi bi-envelope-fill text-2xl', $footer);
     }
 
     private function basePayload(): array

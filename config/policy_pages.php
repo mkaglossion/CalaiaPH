@@ -18,6 +18,7 @@ return [
         'data-deletion' => [
             'route' => 'data-deletion',
             'nav_label' => 'Data Deletion',
+            'show_in_navigation' => false,
             'meta_title' => 'Data Deletion Instructions - Calaia Farm',
             'meta_description' => 'Learn how to request deletion of personal information associated with your CalaiaPH account and Facebook Login.',
             'meta_keywords' => 'CalaiaPH, Facebook data deletion, account deletion, privacy request, personal data',
@@ -44,6 +45,7 @@ return [
         'cookies-policy' => [
             'route' => 'cookies-policy',
             'nav_label' => 'Cookies Policy',
+            'show_in_navigation' => false,
             'meta_title' => 'Cookies Policy - Calaia Farm',
             'meta_description' => 'Learn about how Calaia Farm uses cookies and manages your browsing preferences. Understand our cookie usage and how to control your cookie settings.',
             'meta_keywords' => 'Calaia Farm, cookies policy, cookie settings, data protection, privacy, Philippines farm',

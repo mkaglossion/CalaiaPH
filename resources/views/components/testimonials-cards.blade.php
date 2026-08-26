@@ -32,7 +32,7 @@
     </div>
 
   {{-- Swiper Slider --}}
-  <div class="relative">
+  <div class="relative pb-1" data-testimonials-carousel>
     <div class="swiper testimonialsSwiper">
         <div class="swiper-wrapper">
           @foreach($testimonials as $idx => $testimonial)
@@ -99,9 +99,10 @@
         <div class="swiper-button-next text-[#8f5d54]! w-12! h-12! right-4! md:right-8!"></div>
         <div class="swiper-button-prev text-[#8f5d54]! w-12! h-12! left-4! md:left-8!"></div>
 
-        {{-- Pagination --}}
-        <div class="swiper-pagination bottom-2!"></div>
-      </div>
+    </div>
+
+    {{-- Pagination sits outside the card/swiper so it never overlaps testimonial content. --}}
+    <div class="testimonials-pagination" aria-label="Testimonial slides"></div>
     </div>
 
     {{-- Swiper CSS & JS --}}
@@ -111,11 +112,21 @@
     {{-- Custom Swiper Styles --}}
     <style>
         /* Pagination dots */
-        .testimonialsSwiper .swiper-pagination-bullet {
+        [data-testimonials-carousel] .testimonials-pagination {
+            position: static;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-height: 0.75rem;
+            margin-top: 1.25rem;
+        }
+        [data-testimonials-carousel] .testimonials-pagination .swiper-pagination-bullet {
             background-color: #8f5d54 !important;
             opacity: 0.3;
+            margin: 0 !important;
         }
-        .testimonialsSwiper .swiper-pagination-bullet-active {
+        [data-testimonials-carousel] .testimonials-pagination .swiper-pagination-bullet-active {
             background-color: #8f5d54 !important;
             opacity: 1 !important;
         }
@@ -134,33 +145,38 @@
 
     <script>
       document.addEventListener('DOMContentLoaded', function () {
-        const swiper = new Swiper('.testimonialsSwiper', {
-          slidesPerView: 1,
-          spaceBetween: 20,
-          centeredSlides: false,
-          loop: true,
-          autoplay: {
-            delay: 5000,
-            disableOnInteraction: false,
-          },
-          pagination: {
-            el: '.swiper-pagination',
-            clickable: true,
-          },
-          navigation: {
-            nextEl: '.swiper-button-next',
-            prevEl: '.swiper-button-prev',
-          },
-          breakpoints: {
-            640: {
-              slidesPerView: 2,
-              spaceBetween: 30,
+        document.querySelectorAll('[data-testimonials-carousel]').forEach(function (carousel) {
+          const swiperElement = carousel.querySelector('.testimonialsSwiper');
+          if (!swiperElement) return;
+
+          new Swiper(swiperElement, {
+            slidesPerView: 1,
+            spaceBetween: 20,
+            centeredSlides: false,
+            loop: true,
+            autoplay: {
+              delay: 5000,
+              disableOnInteraction: false,
             },
-            1024: {
-              slidesPerView: 3,
-              spaceBetween: 40,
+            pagination: {
+              el: carousel.querySelector('.testimonials-pagination'),
+              clickable: true,
             },
-          },
+            navigation: {
+              nextEl: carousel.querySelector('.swiper-button-next'),
+              prevEl: carousel.querySelector('.swiper-button-prev'),
+            },
+            breakpoints: {
+              640: {
+                slidesPerView: 2,
+                spaceBetween: 30,
+              },
+              1024: {
+                slidesPerView: 3,
+                spaceBetween: 40,
+              },
+            },
+          });
         });
       });
     </script>

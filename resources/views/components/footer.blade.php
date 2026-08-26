@@ -6,29 +6,24 @@
   $footerTitle = trim((string) $footerSettings['footer_title']);
   $footerDescription = trim((string) $footerSettings['footer_description']);
   $footerSocialHeading = trim((string) $footerSettings['footer_social_heading']);
-  $footerEmail = trim((string) $footerSettings['footer_email']);
-  $footerSocialLinks = collect([
-    [
-      'url' => trim((string) $footerSettings['footer_instagram_url']),
-      'label' => 'Follow us on Instagram',
-      'icon' => 'bi bi-instagram',
-    ],
-    [
-      'url' => trim((string) $footerSettings['footer_facebook_url']),
-      'label' => 'Follow us on Facebook',
-      'icon' => 'bi bi-facebook',
-    ],
-    [
-      'url' => trim((string) $footerSettings['footer_messenger_url']),
-      'label' => 'Contact us on Messenger',
-      'icon' => 'bi bi-messenger',
-    ],
-    [
+  $contactDetails = \App\Models\InformationPage::contactDetails();
+  $footerEmail = $contactDetails['email'];
+  $footerPhone = $contactDetails['phone'];
+  $footerPhoneUri = $contactDetails['phone_uri'];
+  $showFooterContactColumn = (bool) config('information_pages.show_footer_contact_column', false);
+  $footerSocialLinks = collect(\App\Models\SystemSetting::socialLinks($footerSettings))
+    ->map(static fn (array $link): array => [
+      ...$link,
+      'label' => ($link['icon'] === 'messenger' ? 'Contact us on ' : 'Follow us on ').$link['label'],
+      'icon' => $link['bootstrap_icon'],
+    ])
+    ->push([
       'url' => $footerEmail !== '' ? 'mailto:'.$footerEmail : '',
       'label' => 'Email us',
       'icon' => 'bi bi-envelope-fill',
-    ],
-  ])->filter(fn (array $link): bool => $link['url'] !== '')->values();
+    ])
+    ->filter(fn (array $link): bool => $link['url'] !== '')
+    ->values();
   $nav = config('navigation.main', []);
   $informationLinks = \App\Models\InformationPage::navigationItems();
   $policyLinks = \App\Models\PolicyPage::navigationItems();
@@ -62,17 +57,15 @@
   <!-- Main Footer Content -->
   <div class="py-8">
     <div class="max-w-7xl mx-auto px-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="mx-auto grid max-w-6xl grid-cols-1 items-start gap-y-8 md:grid-cols-2 md:gap-x-10 {{ $showFooterContactColumn ? 'lg:grid-cols-12' : 'lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]' }} lg:gap-x-12">
         <!-- Company Info -->
-        <div class="text-center md:text-left">
+        <div class="text-center md:text-left {{ $showFooterContactColumn ? 'lg:col-span-3' : '' }} lg:pr-6">
           <h3 class="text-xl font-bold uppercase mb-3">{{ $footerTitle }}</h3>
-          <p class="text-gray-200 leading-relaxed text-base whitespace-pre-line">
-            {{ $footerDescription }}
-          </p>
+          <p class="max-w-lg text-base leading-7 text-gray-200 whitespace-pre-line">{{ $footerDescription }}</p>
         </div>
 
         <!-- Quick Links -->
-        <div class="text-left">
+        <div class="text-left {{ $showFooterContactColumn ? 'lg:col-span-3' : '' }}">
           <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center" onclick="toggleSection(this)">
             <span>EXPLORE</span>
             <i class="bi bi-plus md:hidden"></i>
@@ -89,7 +82,7 @@
         </div>
 
         <!-- Useful Links -->
-        <div class="text-left">
+        <div class="text-left {{ $showFooterContactColumn ? 'lg:col-span-3' : '' }}">
           <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center" onclick="toggleSection(this)">
             <span>INFORMATION</span>
             <i class="bi bi-plus md:hidden"></i>
@@ -105,37 +98,39 @@
           </ul>
         </div>
 
-        <!-- Contact Info -->
-        <div class="text-left">
-          <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center" onclick="toggleSection(this)">
-            <span>CONTACT</span>
-            <i class="bi bi-plus md:hidden"></i>
-          </h3>
-          <div class="space-y-2 hidden md:block">
-            <div class="flex items-center justify-center md:justify-start">
-              <i class="bi bi-geo-alt-fill mr-3 text-gray-200"></i>
-              <span class="text-gray-200 text-base">Calaca, Batangas, Philippines</span>
-            </div>
-            @if ($footerEmail !== '')
+        @if ($showFooterContactColumn)
+          <!-- Contact Info (temporarily hidden through information_pages configuration) -->
+          <div class="text-left lg:col-span-3">
+            <h3 class="text-xl font-semibold uppercase mb-3 cursor-pointer md:cursor-default flex justify-between items-center" onclick="toggleSection(this)">
+              <span>CONTACT</span>
+              <i class="bi bi-plus md:hidden"></i>
+            </h3>
+            <div class="space-y-2 hidden md:block">
               <div class="flex items-center justify-center md:justify-start">
-                <i class="bi bi-envelope-fill mr-3 text-gray-200"></i>
-                <a href="mailto:{{ $footerEmail }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
-                  {{ $footerEmail }}
+                <i class="bi bi-geo-alt-fill mr-3 text-gray-200"></i>
+                <span class="text-gray-200 text-base">{{ $contactDetails['address'] }}</span>
+              </div>
+              @if ($footerEmail !== '')
+                <div class="flex items-center justify-center md:justify-start">
+                  <i class="bi bi-envelope-fill mr-3 text-gray-200"></i>
+                  <a href="mailto:{{ $footerEmail }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
+                    {{ $footerEmail }}
+                  </a>
+                </div>
+              @endif
+              <div class="flex items-center justify-center md:justify-start">
+                <i class="bi bi-telephone-fill mr-3 text-gray-200"></i>
+                <a href="{{ $footerPhoneUri }}" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
+                  {{ $footerPhone }}
                 </a>
               </div>
-            @endif
-            <div class="flex items-center justify-center md:justify-start">
-              <i class="bi bi-telephone-fill mr-3 text-gray-200"></i>
-              <a href="tel:+639051294741" class="text-gray-200 hover:text-white hover:underline transition-colors duration-200 text-base">
-                +63 956 319 2448
-              </a>
-            </div>
-            <div class="flex items-center justify-center md:justify-start">
-              <i class="bi bi-clock-fill mr-3 text-gray-200"></i>
-              <span class="text-gray-200 text-base">Open Daily: 8:00 AM - 6:00 PM</span>
+              <div class="flex items-center justify-center md:justify-start">
+                <i class="bi bi-clock-fill mr-3 text-gray-200"></i>
+                <span class="text-gray-200 text-base">{{ $contactDetails['hours'] }}</span>
+              </div>
             </div>
           </div>
-        </div>
+        @endif
       </div>
 
       <!-- Policies Section -->

@@ -1,3 +1,11 @@
+@props(['phone' => null])
+
+@php
+  $contactDetails = \App\Models\InformationPage::contactDetails();
+  $contactPhone = trim((string) ($phone ?: $contactDetails['phone']));
+  $contactPhoneUri = \App\Models\InformationPage::contactPhoneUri($contactPhone);
+@endphp
+
 {{-- SECTION: Visit or Contact Us --}}
 <section id="contact" class="py-16 bg-linear-to-br from-primary/5 to-primary/10" aria-labelledby="contact-heading">
   <div class="policy-container px-4">
@@ -25,28 +33,28 @@
               <i class="fa fa-location-dot text-[#8f5d54] mt-1 mr-4 shrink-0" aria-hidden="true"></i>
               <div>
                 <span class="font-medium text-gray-900">Address</span>
-                <address class="text-gray-600 not-italic">Purok 3, Brgy. Buso-buso, Calaca, Philippines</address>
+                <address class="text-gray-600 not-italic">{{ $contactDetails['address'] }}</address>
               </div>
             </li>
             <li class="flex items-center">
               <i class="fa fa-phone text-[#8f5d54] mr-4 shrink-0" aria-hidden="true"></i>
               <div>
                 <span class="font-medium text-gray-900">Phone</span>
-                <a href="tel:+639051294741" class="text-gray-600 hover:text-[#8f5d54] transition-colors">+63 905 129 4741</a>
+                <a href="{{ $contactPhoneUri }}" class="text-gray-600 hover:text-[#8f5d54] transition-colors">{{ $contactPhone }}</a>
               </div>
             </li>
             <li class="flex items-center">
               <i class="fa fa-envelope text-[#8f5d54] mr-4 shrink-0" aria-hidden="true"></i>
               <div>
                 <span class="font-medium text-gray-900">Email</span>
-                <a href="mailto:calaia@calaia.com" class="text-gray-600 hover:text-[#8f5d54] transition-colors">calaia@calaia.com</a>
+                <a href="{{ $contactDetails['email_uri'] }}" class="text-gray-600 hover:text-[#8f5d54] transition-colors">{{ $contactDetails['email'] }}</a>
               </div>
             </li>
             <li class="flex items-start">
               <i class="fa fa-clock text-[#8f5d54] mt-1 mr-4 shrink-0" aria-hidden="true"></i>
               <div>
                 <span class="font-medium text-gray-900">Hours</span>
-                <span class="text-gray-600 block">Monday–Saturday: 9AM – 3PM</span>
+                <span class="text-gray-600 block">Open Daily {{ $contactDetails['hours_value'] }}</span>
               </div>
             </li>
             <li class="flex items-center gap-4 pt-2">

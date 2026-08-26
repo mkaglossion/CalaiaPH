@@ -6,6 +6,11 @@
     'totalDayTourQuantity' => null,
 ])
 
+@php
+    $showAvailabilityStatus = (bool) config('booking.home_availability_widget.show_availability_status', false);
+    $showGuestSelector = (bool) config('booking.home_availability_widget.show_guest_selector', false);
+@endphp
+
 <div class="bg-white rounded-2xl shadow-2xl p-4 md:p-6 border border-gray-100 mx-4 md:mx-auto max-w-7xl relative z-10 -mt-12 md:-mt-16"
         x-data='bookingWidget({
             inventory: @json($inventory ?? (object)[]),
@@ -43,7 +48,7 @@
                 </div>
             </template>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
+            <div class="grid grid-cols-1 {{ $showGuestSelector ? 'md:grid-cols-4' : 'md:grid-cols-3' }} gap-3 md:gap-4">
                 {{-- COL 1: CHECK-IN --}}
                 <div class="flex flex-col">
                     <div class="relative group">
@@ -63,17 +68,17 @@
                         </div>
                     </div>
 
-                    <div class="min-h-10px mt-1">
-                        <p class="text-xs text-gray-500 font-medium">
-                            Check-in Time
-                        </p>
-
-                        <p class="text-xs font-medium"
-                           x-show="availabilityText"
-                           x-text="availabilityText"
-                           :class="hasAvailability() ? 'text-green-600' : 'text-red-600'">
-                        </p>
-                    </div>
+                    @if($showAvailabilityStatus)
+                        <div class="min-h-10px mt-1">
+                            <p class="text-xs text-gray-500 font-medium">Check-in Time</p>
+                            <p
+                                class="text-xs font-medium"
+                                x-show="availabilityText"
+                                x-text="availabilityText"
+                                :class="hasAvailability() ? 'text-green-600' : 'text-red-600'"
+                            ></p>
+                        </div>
+                    @endif
                 </div>
 
                 {{-- COL 2: CHECK-OUT --}}
@@ -95,14 +100,15 @@
                         </div>
                     </div>
 
-                    <div class="min-h-10px mt-1">
-                        <p class="text-xs text-gray-500 font-medium">
-                            Check-out Time
-                        </p>
-                    </div>
+                    @if($showAvailabilityStatus)
+                        <div class="min-h-10px mt-1">
+                            <p class="text-xs text-gray-500 font-medium">Check-out Time</p>
+                        </div>
+                    @endif
                 </div>
 
-                {{-- COL 3: GUESTS + ROOMS (DROPDOWN PANEL) --}}
+                @if($showGuestSelector)
+                {{-- COL 3: GUESTS + ROOMS (temporarily hidden by booking configuration) --}}
                 <div class="flex flex-col relative" @click.outside="closeGuestsPanel()">
                     <button
                         type="button"
@@ -152,7 +158,7 @@
                         <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between border border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 gap-2 sm:gap-0">
                             <div>
                                 <p class="text-xs md:text-sm font-medium text-gray-800">Rooms</p>
-                                <p class="text-xs text-gray-500">Choose 1 to 4 rooms</p>
+                                <p class="text-xs text-gray-500">No fixed limit; subject to available inventory</p>
                             </div>
                             <div class="flex items-center gap-1.5 sm:gap-2">
                                 <button type="button"
@@ -269,10 +275,11 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
 
 
-                {{-- COL 5: SUBMIT --}}
+                {{-- FINAL COLUMN: SUBMIT --}}
                 <div class="flex flex-col">
                     <button
                         type="button"
@@ -286,13 +293,13 @@
                         </span>
                         <span x-text="isLoading ? 'Checking...' : 'Check Availability'"></span>
                     </button>
-                    <div class="min-h-10px mt-1">
-                        <p class="text-xs text-red-600 font-medium transition-opacity" 
-                           x-show="availabilityText && !hasAvailability()"
-                           x-cloak>
-                            <i class="bi bi-exclamation-circle mr-1"></i>Please select different dates
-                        </p>
-                    </div>
+                    @if($showAvailabilityStatus)
+                        <div class="min-h-10px mt-1">
+                            <p class="text-xs text-red-600 font-medium transition-opacity" x-show="availabilityText && !hasAvailability()" x-cloak>
+                                <i class="bi bi-exclamation-circle mr-1"></i>Please select different dates
+                            </p>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -442,12 +449,40 @@
                 return !this.availabilityText.toLowerCase().includes('no available');
             },
 
+            get maximumSelectableRooms() {
+                const fallback = Math.max(1, Number(this.totalQuantity || 0));
+                const checkIn = this.$refs.checkIn?.value;
+                const checkOut = this.$refs.checkOut?.value;
+                if (!checkIn || !checkOut) return fallback;
+
+                const start = new Date(checkIn + 'T00:00:00');
+                const end = new Date(checkOut + 'T00:00:00');
+                if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start >= end) return fallback;
+
+                let minimumAvailable = Infinity;
+                const current = new Date(start);
+                while (current < end) {
+                    const year = current.getFullYear();
+                    const month = String(current.getMonth() + 1).padStart(2, '0');
+                    const day = String(current.getDate()).padStart(2, '0');
+                    const details = this.inventory[`${year}-${month}-${day}`];
+                    const quantity = Number(details?.available_quantity ?? details?.min_quantity ?? 0);
+                    minimumAvailable = Math.min(minimumAvailable, Number.isFinite(quantity) ? quantity : 0);
+                    current.setDate(current.getDate() + 1);
+                }
+
+                return Number.isFinite(minimumAvailable) ? Math.max(0, minimumAvailable) : fallback;
+            },
+
             setRoomsCount(val) {
                 const next = Number(val || 1);
-                if (next > 4) {
+                const maximum = this.maximumSelectableRooms;
+                if (next > maximum) {
                     Swal.fire({
-                        title: 'Maximum Rooms Reached',
-                        text: 'You can only add up to 4 rooms.',
+                        title: 'Availability Limit Reached',
+                        text: maximum > 0
+                            ? `Only ${maximum} room${maximum === 1 ? '' : 's'} are available for the selected dates.`
+                            : 'No rooms are available for the selected dates.',
                         icon: 'warning',
                         confirmButtonText: 'OK',
                         confirmButtonColor: '#a75e3e'
@@ -535,6 +570,7 @@
 
                 const summaryHtml = `
                     <div class="text-left space-y-0">
+                        @if($showGuestSelector)
                         <div class="flex items-center gap-3 pb-4 border-b border-gray-200">
                             <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                                 <i class="bi bi-house text-gray-600 text-lg"></i>
@@ -554,6 +590,7 @@
                                 <p class="text-base font-bold text-gray-900">${guestDetails}</p>
                             </div>
                         </div>
+                        @endif
 
                         <div class="flex items-start gap-3 py-4 border-b border-gray-200">
                             <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">

@@ -10,6 +10,14 @@ use Throwable;
 
 class InformationPage extends Model
 {
+    public const DEFAULT_CONTACT_ADDRESS = 'Purok 3, Brgy. Bisaya, Calaca City, Batangas, Philippines';
+
+    public const DEFAULT_CONTACT_PHONE = '+63 905 129 4741';
+
+    public const DEFAULT_CONTACT_EMAIL = 'calaia@calaia.com';
+
+    public const DEFAULT_CONTACT_HOURS = 'Open Daily 8:00 AM – 6:00 PM';
+
     private const BODY_START_MARKER = '<!-- INFORMATION_PAGE_BODY_START -->';
 
     private const BODY_END_MARKER = '<!-- INFORMATION_PAGE_BODY_END -->';
@@ -23,6 +31,10 @@ class InformationPage extends Model
         'hero_eyebrow',
         'hero_title',
         'hero_description',
+        'contact_address',
+        'contact_phone',
+        'contact_email',
+        'contact_hours',
         'body_html',
         'is_published',
         'sort_order',
@@ -50,7 +62,7 @@ class InformationPage extends Model
     public function editableBodyHtml(): string
     {
         if ($this->hasStoredBody()) {
-            return (string) $this->body_html;
+            return $this->replaceContactDetails((string) $this->body_html);
         }
 
         $defaultView = config("information_pages.pages.{$this->slug}.default_view");
@@ -83,7 +95,7 @@ class InformationPage extends Model
 
         $applicationUrl = rtrim(url('/'), '/').'/';
 
-        return str_replace($applicationUrl, '/', $bodyHtml);
+        return $this->replaceContactDetails(str_replace($applicationUrl, '/', $bodyHtml));
     }
 
     public function renderedBodyHtml(): string
@@ -94,7 +106,7 @@ class InformationPage extends Model
             return $html;
         }
 
-        return str_replace(
+        $html = str_replace(
             ['{{contact_form}}', '{{contact_map}}'],
             [
                 view('pages.information.partials.contact-form')->render(),
@@ -102,6 +114,289 @@ class InformationPage extends Model
             ],
             $html
         );
+
+        return $this->replaceContactDetails($html);
+    }
+
+    public function resolvedContactAddress(): string
+    {
+        $address = trim((string) $this->contact_address);
+
+        return $address !== '' ? $address : self::DEFAULT_CONTACT_ADDRESS;
+    }
+
+    public function resolvedContactPhone(): string
+    {
+        $phone = trim((string) $this->contact_phone);
+
+        return $phone !== '' ? $phone : self::DEFAULT_CONTACT_PHONE;
+    }
+
+    public function resolvedContactEmail(): string
+    {
+        $email = trim((string) $this->contact_email);
+
+        return $email !== '' ? $email : self::DEFAULT_CONTACT_EMAIL;
+    }
+
+    public function resolvedContactHours(): string
+    {
+        return self::formatContactHours($this->resolvedContactHoursValue());
+    }
+
+    public function resolvedContactHoursValue(): string
+    {
+        return self::contactHoursValue((string) $this->contact_hours);
+    }
+
+    public static function contactHoursValue(?string $hours): string
+    {
+        $hours = trim((string) $hours);
+        $hours = preg_replace('/^Open Daily\s*:?[\s\x{00A0}]*/iu', '', $hours) ?? '';
+
+        if ($hours !== '') {
+            return $hours;
+        }
+
+        return preg_replace('/^Open Daily\s*/iu', '', self::DEFAULT_CONTACT_HOURS) ?? '8:00 AM – 6:00 PM';
+    }
+
+    public static function formatContactHours(string $hours): string
+    {
+        return 'Open Daily '.self::contactHoursValue($hours);
+    }
+
+    /**
+     * @return array{address: string, phone: string, phone_uri: string, email: string, email_uri: string, hours: string, hours_value: string}
+     */
+    public static function contactDetails(): array
+    {
+        $details = [
+            'address' => self::DEFAULT_CONTACT_ADDRESS,
+            'phone' => self::DEFAULT_CONTACT_PHONE,
+            'email' => self::DEFAULT_CONTACT_EMAIL,
+            'hours' => self::DEFAULT_CONTACT_HOURS,
+        ];
+
+        try {
+            if (Schema::hasTable('information_pages')) {
+                $columns = collect(['contact_address', 'contact_phone', 'contact_email', 'contact_hours'])
+                    ->filter(static fn (string $column): bool => Schema::hasColumn('information_pages', $column))
+                    ->values()
+                    ->all();
+
+                $page = $columns === []
+                    ? null
+                    : static::query()->where('slug', 'contact')->first($columns);
+
+                if ($page !== null) {
+                    $details['address'] = $page->resolvedContactAddress();
+                    $details['phone'] = $page->resolvedContactPhone();
+                    $details['email'] = $page->resolvedContactEmail();
+                    $details['hours'] = $page->resolvedContactHours();
+                }
+            }
+        } catch (Throwable) {
+            // Use public defaults while a deployment is migrating.
+        }
+
+        return [
+            ...$details,
+            'phone_uri' => self::contactPhoneUri($details['phone']),
+            'email_uri' => 'mailto:'.$details['email'],
+            'hours_value' => self::contactHoursValue($details['hours']),
+        ];
+    }
+
+    public static function contactPhone(): string
+    {
+        return static::contactDetails()['phone'];
+    }
+
+    public static function contactPhoneUri(?string $phone = null): string
+    {
+        $phone = trim((string) ($phone ?? static::contactPhone()));
+        $normalized = preg_replace('/[^0-9+]/', '', $phone) ?? '';
+
+        if (str_starts_with($normalized, '09')) {
+            $normalized = '+63'.substr($normalized, 1);
+        }
+
+        return 'tel:'.$normalized;
+    }
+
+    public static function extractContactPhoneFromHtml(?string $html): ?string
+    {
+        if (!is_string($html) || trim($html) === '') {
+            return null;
+        }
+
+        if (preg_match('/<a\b[^>]*\bhref\s*=\s*["\']tel:[^"\']*["\'][^>]*>(.*?)<\/a>/is', $html, $matches)) {
+            $phone = html_entity_decode(strip_tags((string) $matches[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        } else {
+            // Visual editors may preserve the displayed number while removing
+            // the tel link. Read the Philippine phone text as a fallback.
+            $plainText = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $plainText = preg_replace('/\s+/', ' ', $plainText) ?? '';
+
+            if (!preg_match('/(?:\+?63|0)[0-9\s().-]{8,20}/', $plainText, $matches)) {
+                return null;
+            }
+
+            $phone = $matches[0];
+        }
+
+        $phone = preg_replace('/\s+/', ' ', trim($phone)) ?? '';
+
+        if ($phone === '' || !preg_match('/^[0-9+().\-\s]+$/', $phone)) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D/', '', $phone) ?? '';
+
+        return strlen($digits) >= 7 ? $phone : null;
+    }
+
+    public static function extractContactAddressFromHtml(?string $html): ?string
+    {
+        return self::extractLabeledValue($html, 'Address', 'address|p|span');
+    }
+
+    public static function extractContactEmailFromHtml(?string $html): ?string
+    {
+        if (!is_string($html) || trim($html) === '') {
+            return null;
+        }
+
+        if (preg_match('/\bmailto:([^"\'?#\s>]+)/i', $html, $matches)) {
+            $email = rawurldecode(html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+
+            return filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
+        }
+
+        $plainText = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        return preg_match('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', $plainText, $matches)
+            ? $matches[0]
+            : null;
+    }
+
+    public static function extractContactHoursFromHtml(?string $html): ?string
+    {
+        $labeledHours = self::extractLabeledValue($html, 'Hours', 'p|span|time');
+
+        if ($labeledHours !== null || !is_string($html)) {
+            return $labeledHours;
+        }
+
+        if (preg_match(
+            '/<(?:p|span|time)\b[^>]*>\s*Open Daily\s*<\/(?:p|span|time)>\s*<(?:p|span|time)\b[^>]*>(.*?)<\/(?:p|span|time)>/is',
+            $html,
+            $matches
+        )) {
+            $value = html_entity_decode(strip_tags((string) $matches[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $value = preg_replace('/\s+/u', ' ', trim($value)) ?? '';
+
+            return $value !== '' ? self::formatContactHours($value) : null;
+        }
+
+        if (!preg_match('/<(?:p|span|time)\b[^>]*>(\s*Open Daily\b.*?)<\/(?:p|span|time)>/is', $html, $matches)) {
+            return null;
+        }
+
+        $hours = html_entity_decode(strip_tags((string) $matches[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $hours = preg_replace('/\s+/u', ' ', trim($hours)) ?? '';
+
+        return $hours !== '' ? $hours : null;
+    }
+
+    private static function extractLabeledValue(
+        ?string $html,
+        string $label,
+        string $valueTags
+    ): ?string {
+        if (!is_string($html) || trim($html) === '') {
+            return null;
+        }
+
+        $pattern = '/<(?:span|p|strong|h[1-6])\b[^>]*>\s*'.preg_quote($label, '/').'\s*<\/(?:span|p|strong|h[1-6])>\s*<(?:'.$valueTags.')\b[^>]*>(.*?)<\/(?:'.$valueTags.')>/is';
+
+        if (!preg_match($pattern, $html, $matches)) {
+            return null;
+        }
+
+        $value = html_entity_decode(strip_tags((string) $matches[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $value = preg_replace('/\s+/u', ' ', trim($value)) ?? '';
+
+        return $value !== '' ? $value : null;
+    }
+
+    private function replaceContactDetails(string $html): string
+    {
+        if ($this->slug !== 'contact' || $html === '') {
+            return $html;
+        }
+
+        $address = $this->resolvedContactAddress();
+        $phone = $this->resolvedContactPhone();
+        $phoneUri = self::contactPhoneUri($phone);
+        $email = $this->resolvedContactEmail();
+        $hours = $this->resolvedContactHours();
+        $hoursValue = $this->resolvedContactHoursValue();
+
+        $html = $this->replaceLabeledValue($html, 'Address', 'address|p|span', $address);
+        $html = $this->replaceLabeledValue($html, 'Phone', 'a|p|span', $phone, $phoneUri);
+        $html = $this->replaceLabeledValue($html, 'Email', 'a|p|span', $email, 'mailto:'.$email);
+        $html = $this->replaceLabeledValue($html, 'Hours', 'p|span|time', $hours);
+        $html = preg_replace_callback(
+            '/(<(p|span|time)\b[^>]*>)\s*Open Daily\s*(<\/\2>)(\s*)(<(p|span|time)\b[^>]*>)(.*?)(<\/\6>)/is',
+            static fn (array $matches): string => $matches[5].'Open Daily '.e($hoursValue).$matches[8],
+            $html
+        ) ?? $html;
+        $html = preg_replace_callback(
+            '/(<(p|span|time)\b[^>]*>)(\s*Open Daily\b.*?)(<\/\2>)(?!\s*<(?:p|span|time)\b)/is',
+            static fn (array $matches): string => $matches[1].'Open Daily '.e($hoursValue).$matches[4],
+            $html
+        ) ?? $html;
+        $html = preg_replace_callback(
+            '/<i\b([^>]*\bfa-clock\b[^>]*)>.*?Open Daily.*?<\/i>/is',
+            static fn (array $matches): string => '<i'.$matches[1].'></i>'
+                .'<span class="text-gray-600 font-normal" style="font-weight: 400 !important;">'
+                .'Open Daily '.e($hoursValue).'</span>',
+            $html
+        ) ?? $html;
+
+        return preg_replace_callback(
+            '/(<a\b[^>]*\bhref\s*=\s*)(["\'])tel:[^"\']*\2([^>]*>)(.*?)(<\/a>)/is',
+            static fn (array $matches): string => $matches[1]
+                .$matches[2].e($phoneUri).$matches[2]
+                .$matches[3].e($phone).$matches[5],
+            $html
+        ) ?? $html;
+    }
+
+    private function replaceLabeledValue(
+        string $html,
+        string $label,
+        string $valueTags,
+        string $value,
+        ?string $href = null
+    ): string {
+        $pattern = '/(<(?:span|p|strong|h[1-6])\b[^>]*>\s*'.preg_quote($label, '/').'\s*<\/(?:span|p|strong|h[1-6])>\s*<('.$valueTags.')\b)([^>]*)(>)(.*?)(<\/\2>)/is';
+
+        return preg_replace_callback($pattern, static function (array $matches) use ($value, $href): string {
+            $attributes = $matches[3];
+
+            if ($href !== null && strtolower($matches[2]) === 'a') {
+                if (preg_match('/\bhref\s*=\s*(["\']).*?\1/is', $attributes)) {
+                    $attributes = preg_replace('/\bhref\s*=\s*(["\']).*?\1/is', 'href="'.e($href).'"', $attributes) ?? $attributes;
+                } else {
+                    $attributes .= ' href="'.e($href).'"';
+                }
+            }
+
+            return $matches[1].$attributes.$matches[4].e($value).$matches[6];
+        }, $html) ?? $html;
     }
 
     public static function ensureDefaults(): Collection
@@ -156,6 +451,11 @@ class InformationPage extends Model
         );
     }
 
+    public static function isVisibleInNavigation(string $slug): bool
+    {
+        return (bool) config("information_pages.pages.{$slug}.show_in_navigation", true);
+    }
+
     private static function resolvedNavigationItems(bool $includeUnpublished = false): array
     {
         $defaults = config('information_pages.pages', []);
@@ -174,6 +474,10 @@ class InformationPage extends Model
         $items = [];
 
         foreach ($defaults as $slug => $pageDefaults) {
+            if (! static::isVisibleInNavigation($slug)) {
+                continue;
+            }
+
             $page = $stored->get($slug);
 
             if ($tableAvailable && $page !== null && ! $page->is_published && ! $includeUnpublished) {
@@ -204,6 +508,18 @@ class InformationPage extends Model
             'hero_eyebrow' => $defaults['hero_eyebrow'],
             'hero_title' => $defaults['hero_title'],
             'hero_description' => $defaults['hero_description'],
+            'contact_address' => $slug === 'contact'
+                ? ($defaults['contact_address'] ?? self::DEFAULT_CONTACT_ADDRESS)
+                : null,
+            'contact_phone' => $slug === 'contact'
+                ? ($defaults['contact_phone'] ?? self::DEFAULT_CONTACT_PHONE)
+                : null,
+            'contact_email' => $slug === 'contact'
+                ? ($defaults['contact_email'] ?? self::DEFAULT_CONTACT_EMAIL)
+                : null,
+            'contact_hours' => $slug === 'contact'
+                ? ($defaults['contact_hours'] ?? self::DEFAULT_CONTACT_HOURS)
+                : null,
             'body_html' => null,
             'is_published' => true,
             'sort_order' => $defaults['sort_order'],

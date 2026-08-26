@@ -9,6 +9,13 @@ use Throwable;
 
 class SystemSetting extends Model
 {
+    public const HEADER_LOGO_WIDTH_MIN = 120;
+    public const HEADER_LOGO_WIDTH_MAX = 420;
+    public const HEADER_LOGO_WIDTH_DEFAULT = 220;
+    public const MOBILE_HEADER_LOGO_WIDTH_MIN = 80;
+    public const MOBILE_HEADER_LOGO_WIDTH_MAX = 360;
+    public const MOBILE_HEADER_LOGO_WIDTH_DEFAULT = 220;
+
     protected $fillable = [
         'app_name',
         'app_timezone',
@@ -21,6 +28,8 @@ class SystemSetting extends Model
         'maintenance_message',
         'logo_url',
         'logo_public_id',
+        'header_logo_width',
+        'mobile_header_logo_width',
         'favicon_url',
         'favicon_public_id',
         'footer_title',
@@ -36,6 +45,8 @@ class SystemSetting extends Model
         'enable_new_bookings' => 'boolean',
         'system_maintenance' => 'boolean',
         'vat_rate' => 'float',
+        'header_logo_width' => 'integer',
+        'mobile_header_logo_width' => 'integer',
     ];
 
     public static function cacheKey(): string
@@ -57,6 +68,8 @@ class SystemSetting extends Model
             'maintenance_message' => '',
             'logo_url' => null,
             'logo_public_id' => null,
+            'header_logo_width' => self::HEADER_LOGO_WIDTH_DEFAULT,
+            'mobile_header_logo_width' => self::MOBILE_HEADER_LOGO_WIDTH_DEFAULT,
             'favicon_url' => null,
             'favicon_public_id' => null,
             'footer_title' => 'CALAIA FARM',
@@ -113,6 +126,51 @@ class SystemSetting extends Model
         Cache::forever(static::cacheKey(), $data);
 
         return $data;
+    }
+
+    public static function socialLinks(?array $settings = null): array
+    {
+        $settings = array_merge(static::defaults(), $settings ?? static::cachedData());
+
+        return collect([
+            [
+                'url' => trim((string) $settings['footer_instagram_url']),
+                'label' => 'Instagram',
+                'icon' => 'instagram',
+                'bootstrap_icon' => 'bi bi-instagram',
+            ],
+            [
+                'url' => trim((string) $settings['footer_facebook_url']),
+                'label' => 'Facebook',
+                'icon' => 'facebook',
+                'bootstrap_icon' => 'bi bi-facebook',
+            ],
+            [
+                'url' => trim((string) $settings['footer_messenger_url']),
+                'label' => 'Messenger',
+                'icon' => 'messenger',
+                'bootstrap_icon' => 'bi bi-messenger',
+            ],
+        ])
+            ->filter(static fn (array $link): bool => $link['url'] !== '')
+            ->values()
+            ->all();
+    }
+
+    public static function headerLogoWidth(mixed $value = null): int
+    {
+        return max(
+            self::HEADER_LOGO_WIDTH_MIN,
+            min(self::HEADER_LOGO_WIDTH_MAX, (int) ($value ?? self::HEADER_LOGO_WIDTH_DEFAULT))
+        );
+    }
+
+    public static function mobileHeaderLogoWidth(mixed $value = null): int
+    {
+        return max(
+            self::MOBILE_HEADER_LOGO_WIDTH_MIN,
+            min(self::MOBILE_HEADER_LOGO_WIDTH_MAX, (int) ($value ?? self::MOBILE_HEADER_LOGO_WIDTH_DEFAULT))
+        );
     }
 
     public static function refreshCache(): array

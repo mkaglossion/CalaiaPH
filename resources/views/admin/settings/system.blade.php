@@ -13,11 +13,17 @@
     <div class="space-y-6">
         @php
             $logoPreview = !empty($settings['logo_url'] ?? null)
-                ? \App\Helpers\CloudinaryHelper::optimize($settings['logo_url'], 420, false, false, 'good')
+                ? \App\Helpers\CloudinaryHelper::logo($settings['logo_url'], 420)
                 : null;
             $faviconPreview = !empty($settings['favicon_url'] ?? null)
                 ? \App\Helpers\CloudinaryHelper::thumbnail($settings['favicon_url'], 96)
                 : null;
+            $headerLogoWidth = \App\Models\SystemSetting::headerLogoWidth(old('header_logo_width', $settings['header_logo_width'] ?? null));
+            $mobileHeaderLogoWidth = \App\Models\SystemSetting::mobileHeaderLogoWidth(old('mobile_header_logo_width', $settings['mobile_header_logo_width'] ?? null));
+            $headerLogoWidthMin = \App\Models\SystemSetting::HEADER_LOGO_WIDTH_MIN;
+            $headerLogoWidthMax = \App\Models\SystemSetting::HEADER_LOGO_WIDTH_MAX;
+            $mobileHeaderLogoWidthMin = \App\Models\SystemSetting::MOBILE_HEADER_LOGO_WIDTH_MIN;
+            $mobileHeaderLogoWidthMax = \App\Models\SystemSetting::MOBILE_HEADER_LOGO_WIDTH_MAX;
             $adminPrimaryButton = 'inline-flex items-center justify-center rounded-xl bg-[#8f5d54] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#7a4d46]';
             $adminOutlineButton = 'inline-flex items-center gap-2 rounded-xl border border-[#d8bcb7] bg-white px-4 py-3 text-sm font-medium text-[#8f5d54] transition hover:bg-[#fdf7f5]';
         @endphp
@@ -37,7 +43,14 @@
                     @method('PUT')
 
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
-                        <section class="branding-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-full flex flex-col">
+                        <section
+                            class="branding-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-full flex flex-col"
+                            x-data="{
+                                desktopLogoWidth: {{ $headerLogoWidth }},
+                                mobileLogoWidth: {{ $mobileHeaderLogoWidth }},
+                                previewLogoWidth: {{ $headerLogoWidth }}
+                            }"
+                        >
                             <div class="flex items-start gap-4">
                                 <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                                     <i data-lucide="image" class="h-5 w-5"></i>
@@ -56,6 +69,7 @@
                                         src="{{ $logoPreview }}"
                                         alt="Current logo preview"
                                         class="preview-image preview-image-logo"
+                                        :style="`width: ${previewLogoWidth}px`"
                                     >
                                 @else
                                     <div class="flex h-full min-h-[9rem] items-center justify-center text-slate-400">
@@ -86,6 +100,74 @@
                                 Recommended: Transparent PNG, max 2MB
                             </p>
                             @error('logo_file') <span class="mt-2 block text-sm text-red-500">{{ $message }}</span> @enderror
+
+                            <div class="mt-6 space-y-6 border-t border-slate-200 pt-5">
+                                <div>
+                                    <label for="header_logo_width" class="block text-sm font-medium text-slate-700">Desktop logo width</label>
+                                    <div class="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+                                        <input
+                                            id="header_logo_width"
+                                            name="header_logo_width"
+                                            type="range"
+                                            min="{{ $headerLogoWidthMin }}"
+                                            max="{{ $headerLogoWidthMax }}"
+                                            step="4"
+                                            x-model.number="desktopLogoWidth"
+                                            @input="previewLogoWidth = desktopLogoWidth"
+                                            class="h-2 w-full cursor-pointer accent-[#8f5d54]"
+                                        >
+                                        <div class="inline-flex items-center overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
+                                            <input
+                                                type="number"
+                                                min="{{ $headerLogoWidthMin }}"
+                                                max="{{ $headerLogoWidthMax }}"
+                                                step="4"
+                                                x-model.number="desktopLogoWidth"
+                                                @input="previewLogoWidth = desktopLogoWidth"
+                                                @change="desktopLogoWidth = Math.min({{ $headerLogoWidthMax }}, Math.max({{ $headerLogoWidthMin }}, Number(desktopLogoWidth) || {{ \App\Models\SystemSetting::HEADER_LOGO_WIDTH_DEFAULT }})); previewLogoWidth = desktopLogoWidth"
+                                                class="w-20 border-0 bg-transparent px-3 py-2 text-right text-sm font-semibold text-slate-800 outline-none focus:ring-0"
+                                                aria-label="Desktop logo width in pixels"
+                                            >
+                                            <span class="border-l border-slate-200 px-3 py-2 text-sm text-slate-500">px</span>
+                                        </div>
+                                    </div>
+                                    @error('header_logo_width') <span class="mt-2 block text-sm text-red-500">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div>
+                                    <label for="mobile_header_logo_width" class="block text-sm font-medium text-slate-700">Mobile logo width</label>
+                                    <div class="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+                                        <input
+                                            id="mobile_header_logo_width"
+                                            name="mobile_header_logo_width"
+                                            type="range"
+                                            min="{{ $mobileHeaderLogoWidthMin }}"
+                                            max="{{ $mobileHeaderLogoWidthMax }}"
+                                            step="4"
+                                            x-model.number="mobileLogoWidth"
+                                            @input="previewLogoWidth = mobileLogoWidth"
+                                            class="h-2 w-full cursor-pointer accent-[#8f5d54]"
+                                        >
+                                        <div class="inline-flex items-center overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
+                                            <input
+                                                type="number"
+                                                min="{{ $mobileHeaderLogoWidthMin }}"
+                                                max="{{ $mobileHeaderLogoWidthMax }}"
+                                                step="4"
+                                                x-model.number="mobileLogoWidth"
+                                                @input="previewLogoWidth = mobileLogoWidth"
+                                                @change="mobileLogoWidth = Math.min({{ $mobileHeaderLogoWidthMax }}, Math.max({{ $mobileHeaderLogoWidthMin }}, Number(mobileLogoWidth) || {{ \App\Models\SystemSetting::MOBILE_HEADER_LOGO_WIDTH_DEFAULT }})); previewLogoWidth = mobileLogoWidth"
+                                                class="w-20 border-0 bg-transparent px-3 py-2 text-right text-sm font-semibold text-slate-800 outline-none focus:ring-0"
+                                                aria-label="Mobile logo width in pixels"
+                                            >
+                                            <span class="border-l border-slate-200 px-3 py-2 text-sm text-slate-500">px</span>
+                                        </div>
+                                    </div>
+                                    @error('mobile_header_logo_width') <span class="mt-2 block text-sm text-red-500">{{ $message }}</span> @enderror
+                                </div>
+
+                                <p class="text-xs text-slate-500">Move either slider to preview its size. Mobile width is still safely capped by the available header space.</p>
+                            </div>
                         </section>
 
                         <section class="branding-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-full flex flex-col">
@@ -262,13 +344,6 @@
                                 'icon' => 'message-circle',
                                 'placeholder' => 'https://m.me/your-page-id',
                             ],
-                            [
-                                'name' => 'footer_email',
-                                'label' => 'Footer Email',
-                                'type' => 'email',
-                                'icon' => 'mail',
-                                'placeholder' => 'hello@example.com',
-                            ],
                         ];
                     @endphp
 
@@ -280,7 +355,7 @@
                             <div>
                                 <h3 class="text-lg font-semibold text-slate-900">Social Connections</h3>
                                 <p class="mt-1 text-sm text-slate-500">
-                                    Manage the heading and destinations shown in the footer social banner. Clear a link to hide its icon. The footer email also updates the Contact column.
+                                    Manage the heading and social destinations shown in the footer and maintenance page. Contact details are managed in Information &gt; Contact Us.
                                 </p>
                             </div>
                         </div>
@@ -417,13 +492,13 @@
                                 <div>
                                     <h3 class="text-lg font-semibold text-slate-900">Operating Rules</h3>
                                     <p class="mt-1 text-sm text-slate-500">
-                                        Set business hours and VAT for admin calculations and public forms.
+                                        Manage VAT and booking availability rules. Public contact hours are managed in Information &gt; Contact Us.
                                     </p>
                                 </div>
                             </div>
 
                             <div class="mt-5 space-y-5 flex-1">
-                                <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                                <div data-hidden-system-business-hours class="hidden" aria-hidden="true">
                                     <div>
                                         <label for="business_hours_start" class="block text-sm font-medium text-slate-700">Business Hours Start</label>
                                         <input type="time" id="business_hours_start" name="business_hours_start" value="{{ $settings['business_hours_start'] ?? '06:00' }}"
@@ -684,7 +759,7 @@
 
     .preview-image-logo {
         max-width: min(100%, 28rem);
-        max-height: 6rem;
+        max-height: 100%;
     }
 
     .preview-image-favicon {

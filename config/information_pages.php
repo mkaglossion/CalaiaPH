@@ -1,6 +1,10 @@
 <?php
 
 return [
+    // Keep the detailed footer contact block available for future use without
+    // duplicating the Contact Us link in the current footer navigation.
+    'show_footer_contact_column' => false,
+
     'pages' => [
         'our-story' => [
             'route' => 'our-story',
@@ -17,6 +21,7 @@ return [
         'sustainability' => [
             'route' => 'sustainability',
             'nav_label' => 'Sustainability',
+            'show_in_navigation' => false,
             'meta_title' => 'Sustainability - Calaia Farm',
             'meta_description' => 'Learn about Calaia Farm\'s commitment to sustainability, environmental stewardship, and organic farming practices that create a thriving future for our community and planet.',
             'meta_keywords' => 'sustainability, organic farming, environmental stewardship, green practices, Calaia Farm',
@@ -29,6 +34,7 @@ return [
         'our-services' => [
             'route' => 'our-services',
             'nav_label' => 'Our Services',
+            'show_in_navigation' => false,
             'meta_title' => 'Our Services - Calaia Farm',
             'meta_description' => 'Experience our range of accommodations, farm experiences, dining, events, and wellness services at Calaia Farm. From peaceful retreats to educational programs, discover the perfect escape.',
             'meta_keywords' => 'farm services, accommodation, dining, farm tours, events, Calaia Farm',
@@ -47,6 +53,10 @@ return [
             'hero_eyebrow' => null,
             'hero_title' => 'Get In Touch',
             'hero_description' => "We'd love to hear from you.\nReach out to plan your visit or ask any questions.",
+            'contact_address' => 'Purok 3, Brgy. Bisaya, Calaca City, Batangas, Philippines',
+            'contact_phone' => '+63 905 129 4741',
+            'contact_email' => 'calaia@calaia.com',
+            'contact_hours' => 'Open Daily 8:00 AM – 6:00 PM',
             'default_view' => 'contact',
             'sort_order' => 40,
         ],

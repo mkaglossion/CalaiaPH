@@ -127,6 +127,20 @@ class CloudinaryHelper
     }
 
     /**
+     * Generate a logo URL with transparent outer pixels trimmed before resizing.
+     */
+    public static function logo(?string $url, int $width = 420): ?string
+    {
+        $optimized = self::optimize($url, $width, false, false, 'good');
+
+        if (!self::isCloudinary($optimized)) {
+            return $optimized;
+        }
+
+        return preg_replace('#/upload/#', '/upload/e_trim/', $optimized, 1);
+    }
+
+    /**
      * Upload a base64 encoded image to Cloudinary
      *
      * @param string $base64Image Base64 encoded image data (with or without data URI prefix)

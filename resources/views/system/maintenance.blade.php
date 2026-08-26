@@ -135,6 +135,15 @@
             font-weight: 600;
         }
 
+        .footer-text a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .footer-text a:hover {
+            text-decoration: underline;
+        }
+
         .social-links {
             display: flex;
             justify-content: center;
@@ -362,23 +371,46 @@
             <div class="footer">
                 <div class="footer-text">
                     <span>You can contact us:</span>
-                    <span>Phone: <strong>+63 956-319-2448</strong></span>
-                    <span>Email: <strong>calaia.ph@gmail.com</strong></span>
+                    <span>Phone: <strong><a href="{{ $contactPhoneUri }}">{{ $contactPhone }}</a></strong></span>
+                    @if($contactEmail !== '')
+                        <span>Email: <strong><a href="mailto:{{ $contactEmail }}">{{ $contactEmail }}</a></strong></span>
+                    @endif
                 </div>
-                <div class="social-links">
-                    <a href="https://www.facebook.com/calaia.ph/" class="social-link" title="Facebook">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                        </svg>
-                    </a>
-                    <a href="https://www.instagram.com/calaia.ph/" class="social-link" title="Instagram">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2"/>
-                            <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
-                            <circle cx="18" cy="6" r="1" fill="currentColor"/>
-                        </svg>
-                    </a>
-                </div>
+                @if(!empty($socialLinks))
+                    <div class="social-links">
+                        @foreach($socialLinks as $socialLink)
+                            <a
+                                href="{{ $socialLink['url'] }}"
+                                class="social-link"
+                                title="{{ $socialLink['label'] }}"
+                                aria-label="Open Calaia {{ $socialLink['label'] }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                @switch($socialLink['icon'])
+                                    @case('instagram')
+                                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true">
+                                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2"/>
+                                            <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+                                            <circle cx="18" cy="6" r="1" fill="currentColor"/>
+                                        </svg>
+                                        @break
+                                    @case('facebook')
+                                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true">
+                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                        </svg>
+                                        @break
+                                    @case('messenger')
+                                        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true">
+                                            <path d="M4 4h16v12H8l-4 4V4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                            <path d="m8 12 3-3 2.5 2L17 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        @break
+                                @endswitch
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </div>
     </div>

@@ -69,6 +69,7 @@ class BookingCalendarController extends Controller
                     // Build availability for each date
                     foreach ($inventoryDates as $dateStr) {
                         $totalAvailable = StaycationInventory::where('date', $dateStr)
+                            ->where('is_blocked', false)
                             ->sum('available_quantity');
                         
                         $availability[$dateStr] = [

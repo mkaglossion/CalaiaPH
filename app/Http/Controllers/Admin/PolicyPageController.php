@@ -13,7 +13,9 @@ class PolicyPageController extends Controller
 {
     public function index(Request $request): View
     {
-        $pages = PolicyPage::ensureDefaults();
+        $pages = PolicyPage::ensureDefaults()
+            ->filter(static fn (PolicyPage $page): bool => PolicyPage::isVisibleInNavigation($page->slug))
+            ->values();
         $requestedSlug = (string) $request->query('page', $pages->first()?->slug);
         $policyPage = $pages->firstWhere('slug', $requestedSlug) ?? $pages->firstOrFail();
 

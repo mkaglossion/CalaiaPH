@@ -348,12 +348,38 @@
           if (p > 0) summary += ` ${p} ${petLabel}`;
           return summary;
         },
+        get maximumSelectableRooms() {
+          const fallback = Math.max(1, Number(this.totalQuantity || 0));
+          if (!this.checkin || !this.checkout) return fallback;
+
+          const start = this.parseDate(this.checkin);
+          const end = this.parseDate(this.checkout);
+          if (!start || !end || start >= end) return fallback;
+
+          let minimumAvailable = Infinity;
+          const current = new Date(start);
+          while (current < end) {
+            const dateString = this.formatDateForCompare(current);
+            const available = this.getQty(this.availability[dateString]);
+            minimumAvailable = Math.min(minimumAvailable, available === null ? 0 : available);
+            current.setDate(current.getDate() + 1);
+          }
+
+          return Number.isFinite(minimumAvailable) ? Math.max(0, minimumAvailable) : fallback;
+        },
         setRoomsCount(val) {
           const next = Number(val || 1);
-          if (next > 4) { fireSwalOverModal({ title:'Maximum Rooms Reached', text:'You can only add up to 4 rooms.', icon:'warning', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' }); return; }
+          const maximum = this.maximumSelectableRooms;
+          if (next > maximum) {
+            const message = maximum > 0
+              ? `Only ${maximum} room${maximum === 1 ? '' : 's'} are available for the selected dates.`
+              : 'No rooms are available for the selected dates.';
+            fireSwalOverModal({ title:'Availability Limit Reached', text:message, icon:'warning', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' });
+            return;
+          }
           if (next < 1) { fireSwalOverModal({ title:'Minimum Rooms Required', text:'You need at least 1 room.', icon:'warning', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' }); return; }
           this.roomsCount = next;
-          if (this.rooms.length < next) { while (this.rooms.length < next) this.rooms.push({ adults: 1, children: 0 }); }
+          if (this.rooms.length < next) { while (this.rooms.length < next) this.rooms.push({ adults: 1, children: 0, pets: 0 }); }
           else if (this.rooms.length > next) { this.rooms = this.rooms.slice(0, next); }
           this.calculatePrice();
         },
@@ -587,6 +613,15 @@
             fireSwalOverModal({ title:'Unavailable Dates', text:'Some dates in your selected range are fully booked. Please select different dates.', icon:'error', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' });
             return;
           }
+
+          if (this.roomsCount > this.maximumSelectableRooms) {
+            const maximum = this.maximumSelectableRooms;
+            const message = maximum > 0
+              ? `Only ${maximum} room${maximum === 1 ? '' : 's'} are available across all selected nights.`
+              : 'No rooms are available across all selected nights.';
+            fireSwalOverModal({ title:'Availability Limit Reached', text:message, icon:'warning', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' });
+            return;
+          }
           
           // Save booking session data including rooms and guests
           fetch('/booking/save-session', {
@@ -605,8 +640,16 @@
               rooms: this.rooms
             })
           })
-          .then(response => {
-            if (!response.ok) throw new Error('Failed to save session');
+          .then(async response => {
+            if (!response.ok) {
+              const responseType = response.headers.get('content-type') || '';
+              const payload = responseType.includes('application/json') ? await response.json() : null;
+              const validationMessage = payload?.errors?.rooms_count?.[0]
+                || payload?.errors?.rooms?.[0]
+                || payload?.message
+                || 'Failed to save booking data. Please try again.';
+              throw new Error(validationMessage);
+            }
             // After session is saved, redirect to availability page
             const url = new URL(window.location.origin + '/booking/staycation/availability');
             url.searchParams.set('checkin', this.checkin);
@@ -615,7 +658,7 @@
           })
           .catch(error => {
             console.error('Session save error:', error);
-            fireSwalOverModal({ title:'Error', text:'Failed to save booking data. Please try again.', icon:'error', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' });
+            fireSwalOverModal({ title:'Unable to Continue', text:error.message || 'Failed to save booking data. Please try again.', icon:'error', confirmButtonText:'OK', confirmButtonColor:'#8f5d54' });
           });
         },
         parseDate(dateStr) { const [y,m,d] = (dateStr || '').split('-').map(Number); if (!y || !m || !d) return null; return new Date(y, m - 1, d); },
@@ -1326,7 +1369,7 @@
                 <div class="flex items-start justify-between gap-2 sm:gap-3">
                   <div>
                     <h3 class="text-sm sm:text-base font-semibold text-gray-800">Rooms & Guests</h3>
-                    <p class="text-xs text-gray-500">Up to 4 rooms. Add guests per room.</p>
+                    <p class="text-xs text-gray-500">Add rooms and guests based on availability for your selected dates.</p>
                   </div>
                   <button type="button" class="text-gray-400 hover:text-gray-600 shrink-0 text-lg" @click="closeGuestsPanel()">
                     <i class="bi bi-x-lg"></i>
@@ -1379,7 +1422,7 @@
               <div class="mt-3 flex items-center justify-between border border-gray-200 rounded-xl p-2 sm:p-3">
                 <div>
                   <p class="text-xs sm:text-sm font-medium text-gray-800">Rooms</p>
-                  <p class="text-xs text-gray-500">Choose 1 to 4 rooms</p>
+                  <p class="text-xs text-gray-500">No fixed limit; subject to available inventory</p>
                 </div>
                 <div class="flex items-center gap-1 sm:gap-2">
                   <button type="button" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-gray-300 hover:border-brand/70 disabled:opacity-40 text-xs flex items-center justify-center"

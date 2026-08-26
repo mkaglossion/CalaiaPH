@@ -1,11 +1,9 @@
 @props(['active' => 'home'])
 
 @php
-  $logoSource = $systemSettings['logo_url'] ?? null;
-  $desktopLogo = $logoSource
-    ? \App\Helpers\CloudinaryHelper::optimize($logoSource, 420, false, false, 'good')
-    : null;
-  $mobileLogo = $desktopLogo;
+  $storeCartCount = collect(session('cart', []))->sum(
+    static fn ($item): int => max(0, (int) ($item['quantity'] ?? 0))
+  );
 
   $nav = config('navigation.main', []);
 @endphp
@@ -13,6 +11,8 @@
 <header
   x-data="{
     mobileOpen: false,
+    storeCartCount: {{ $storeCartCount }},
+    cartRefreshBound: false,
     init() {
       // Initialize modal store with default closed state
       try {
@@ -41,6 +41,28 @@
           showCart: false,
           showForgotPassword: false
         });
+      }
+
+      if (!this.cartRefreshBound) {
+        this.cartRefreshBound = true;
+        window.addEventListener('cart:refresh', () => this.refreshStoreCartCount());
+      }
+    },
+    async refreshStoreCartCount() {
+      try {
+        const response = await fetch('{{ route('cart.index') }}', {
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          credentials: 'same-origin'
+        });
+
+        if (!response.ok) return;
+        const data = await response.json();
+        this.storeCartCount = Number(data.count || 0);
+      } catch (error) {
+        console.error('Failed to refresh store cart count:', error);
       }
     },
     closeAll() {
@@ -72,17 +94,12 @@
     <!-- ✅ DESKTOP LOGO ROW (ABOVE NAV) -->
     <div class="hidden md:flex justify-center py-3">
       <a href="{{ url('/') }}" class="inline-flex items-center justify-center">
-        @if($desktopLogo)
-          <img
-            src="{{ $desktopLogo }}"
-            alt="{{ $systemSettings['app_name'] ?? 'Calaia PH' }}"
-            class="h-20 w-auto object-contain"
-          >
-        @else
-          <span class="text-xl font-semibold tracking-[0.35em] text-white uppercase">
-            {{ $systemSettings['app_name'] ?? 'Calaia PH' }}
-          </span>
-        @endif
+        <x-responsive-brand-logo
+          :settings="$systemSettings"
+          viewport="desktop"
+          class="block object-contain"
+          fallback-class="text-xl font-semibold tracking-[0.35em] text-white uppercase"
+        />
       </a>
     </div>
 
@@ -209,25 +226,19 @@
     <!-- ✅ MOBILE TOP BAR -->
     <div class="md:hidden flex items-center justify-between py-3">
       <!-- Logo -->
-      <a href="{{ url('/') }}" class="inline-flex items-center">
-        @if($mobileLogo)
-          <img
-            src="{{ $mobileLogo }}"
-            alt="{{ $systemSettings['app_name'] ?? 'Calaia PH' }}"
-            class="h-16 w-auto object-contain"
-          >
-        @else
-          <span class="text-base font-semibold tracking-[0.25em] text-white uppercase">
-            {{ $systemSettings['app_name'] ?? 'Calaia PH' }}
-          </span>
-        @endif
+      <a href="{{ url('/') }}" class="inline-flex min-w-0 flex-1 items-center pr-1">
+        <x-responsive-brand-logo
+          :settings="$systemSettings"
+          viewport="mobile"
+          class="block object-contain"
+          fallback-class="text-base font-semibold tracking-[0.25em] text-white uppercase"
+        />
       </a>
 
       <!-- Actions + Hamburger -->
-      <div class="flex items-center gap-2">
+      <div data-mobile-header-actions class="flex shrink-0 items-center gap-1">
         <x-booking-wishlist-link />
         <x-booking-cart-link />
-        <x-cart />
 
         <button
           type="button"
@@ -290,6 +301,22 @@
         @endforeach
 
           <div class="pt-3 mt-3 border-t border-brand/15">
+            <a
+              href="{{ route('cart.index') }}"
+              data-mobile-store-cart-link
+              @click="mobileOpen = false"
+              class="flex items-center rounded-lg px-3 py-2 text-white transition hover:bg-white/50"
+              :aria-label="`Shopping Cart with ${storeCartCount} item${storeCartCount === 1 ? '' : 's'}`"
+            >
+              <span>Shopping Cart</span>
+              <span
+                x-cloak
+                x-show="storeCartCount > 0"
+                x-text="storeCartCount"
+                class="ml-auto min-w-6 rounded-full bg-white px-1.5 text-center text-xs font-bold leading-6 text-brand"
+              ></span>
+            </a>
+
           @auth
             <a href="{{ route('profile.show') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('profile.show') }}'" class="block px-3 py-2 rounded-lg hover:bg-white/50 transition text-white">
               <i class="bi bi-person me-2"></i>Profile

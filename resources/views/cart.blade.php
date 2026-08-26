@@ -15,27 +15,14 @@
   </head>
   <body class="bg-[#f5efe7] min-h-screen">
     <!-- Logo -->
-    @php
-      $cartLogoSource = $systemSettings['logo_url'] ?? null;
-      $cartLogoUrl = $cartLogoSource
-        ? \App\Helpers\CloudinaryHelper::optimize($cartLogoSource, 420, false, false, 'good')
-        : null;
-    @endphp
-    <div class="bg-linear-to-r from-white via-gray-50 to-white border-b border-gray-100 shadow-sm">
+    <div data-store-cart-logo-header class="bg-brand shadow-sm">
       <div class="container mx-auto px-4 py-6">
         <div class="flex items-center justify-center">
-          <a href="{{ route('home') }}" class="group transition-transform duration-300 hover:scale-105">
-            @if($cartLogoUrl)
-              <img
-                src="{{ $cartLogoUrl }}"
-                alt="{{ $systemSettings['app_name'] ?? 'CalaiaPH' }}"
-                class="h-16 w-auto drop-shadow-sm group-hover:drop-shadow-md transition-all duration-300"
-              >
-            @else
-              <span class="text-xl font-semibold tracking-[0.3em] text-[#8f5d54] uppercase">
-                {{ $systemSettings['app_name'] ?? 'CalaiaPH' }}
-              </span>
-            @endif
+          <a href="{{ route('home') }}" class="group inline-flex w-full items-center justify-center transition-transform duration-300 hover:scale-105">
+            <x-responsive-brand-logo
+              :settings="$systemSettings"
+              class="mx-auto drop-shadow-sm transition-all duration-300 group-hover:drop-shadow-md"
+            />
           </a>
         </div>
       </div>
