@@ -4,8 +4,18 @@
     :keywords="$informationPage->meta_keywords"
     :active-header="$informationPage->slug"
 >
+    @push('styles')
+        <style>
+            .contact-page-content #contact-heading {
+                font-size: clamp(2rem, 4vw, 3rem) !important;
+                line-height: 1.15 !important;
+            }
+        </style>
+    @endpush
+
     {{-- Centralized Hero Banner --}}
     <div class="min-h-screen bg-white">
+        @if($informationPage->shouldShowHero())
         <section class="relative h-screen w-full overflow-hidden bg-linear-to-br from-amber-900 via-amber-800 to-amber-950">
             {{-- Content --}}
             <div class="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
@@ -31,19 +41,22 @@
                 </div>
             </div>
         </section>
+        @endif
 
         <!-- INFORMATION_PAGE_BODY_START -->
-        @if($informationPage->hasStoredBody())
-            {!! $informationPage->renderedBodyHtml() !!}
-        @else
-        {{-- CONTENT --}}
-        <section class="bg-white py-12 sm:py-16 pb-0">
-            <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-                {{-- SECTION: Visit or Contact Us --}}
-                <x-contact-section />
-            </div>
-        </section>
-        @endif
+        <div class="contact-page-content">
+            @if($informationPage->hasStoredBody())
+                {!! $informationPage->renderedBodyHtml() !!}
+            @else
+            {{-- CONTENT --}}
+            <section class="bg-white py-12 sm:py-16 pb-0">
+                <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+                    {{-- SECTION: Visit or Contact Us --}}
+                    <x-contact-section />
+                </div>
+            </section>
+            @endif
+        </div>
         <!-- INFORMATION_PAGE_BODY_END -->
 
         {{-- Floating Buttons --}}

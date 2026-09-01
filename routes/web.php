@@ -676,10 +676,12 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     });
     Route::prefix('/policies')->group(function () {
         Route::get('/', [PolicyPageController::class, 'index'])->name('admin.policies.index');
+        Route::patch('/{policyPage:slug}/hero-visibility', [PolicyPageController::class, 'updateHeroVisibility'])->name('admin.policies.hero-visibility.update');
         Route::put('/{policyPage:slug}', [PolicyPageController::class, 'update'])->name('admin.policies.update');
     });
     Route::prefix('/information')->group(function () {
         Route::get('/', [InformationPageController::class, 'index'])->name('admin.information.index');
+        Route::patch('/{informationPage:slug}/hero-visibility', [InformationPageController::class, 'updateHeroVisibility'])->name('admin.information.hero-visibility.update');
         Route::put('/{informationPage:slug}', [InformationPageController::class, 'update'])->name('admin.information.update');
     });
     Route::prefix('/do')->group(function () {

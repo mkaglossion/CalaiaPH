@@ -29,6 +29,7 @@ class PolicyPageCmsTest extends TestCase
             );
             $this->assertDatabaseHas('policy_pages', [
                 'slug' => $slug,
+                'is_hero_enabled' => true,
                 'is_published' => true,
             ]);
         }
@@ -47,6 +48,10 @@ class PolicyPageCmsTest extends TestCase
 
         $indexResponse->assertOk();
         $indexResponse->assertSee('Policies &amp; Terms CMS', false);
+        $indexResponse->assertSee('Hero banner');
+        $indexResponse->assertSee('name="is_hero_enabled"', false);
+        $indexResponse->assertSee('saveHeroVisibility', false);
+        $indexResponse->assertSee('hero-visibility', false);
         $indexResponse->assertSee('Full page content');
         $indexResponse->assertSee('data-lucide="file-lock-2"', false);
         $indexResponse->assertSeeInOrder(['Shop', 'Policies &amp; Terms', 'Booking Confirmation'], false);
@@ -61,6 +66,7 @@ class PolicyPageCmsTest extends TestCase
             'hero_eyebrow' => 'Your Data',
             'hero_title' => 'Our Privacy Center',
             'hero_description' => 'A fully dynamic privacy page.',
+            'is_hero_enabled' => '1',
             'last_updated' => '2026-07-17',
             'body_html' => '<section><h2>CMS-managed privacy content</h2><p onclick="alert(1)">Safe paragraph.</p><a href="javascript:alert(1)">Unsafe link</a><script>alert(1)</script></section>',
             'is_published' => '1',
@@ -104,6 +110,37 @@ class PolicyPageCmsTest extends TestCase
         $response->assertDontSee('Data Deletion');
     }
 
+    public function test_admin_can_disable_a_policy_page_hero_without_unpublishing_the_page(): void
+    {
+        $admin = User::factory()->create(['user_type' => 'admin']);
+        $policyPage = PolicyPage::query()->where('slug', 'privacy-notice')->firstOrFail();
+
+        $policyPage->update([
+            'body_html' => '<section><h2>Policy content remains visible</h2></section>',
+        ]);
+
+        $this->actingAs($admin)
+            ->patchJson(route('admin.policies.hero-visibility.update', $policyPage->slug), [
+                'is_hero_enabled' => '0',
+            ])
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'is_hero_enabled' => false,
+            ]);
+
+        $this->assertDatabaseHas('policy_pages', [
+            'slug' => 'privacy-notice',
+            'is_hero_enabled' => false,
+            'is_published' => true,
+        ]);
+
+        $response = $this->get(route('privacy-notice'));
+
+        $response->assertOk()->assertSee('Policy content remains visible');
+        $this->assertSame(0, substr_count($response->getContent(), '<section class="relative h-screen'));
+    }
+
     public function test_hidden_policy_links_remain_available_but_do_not_appear_in_the_footer(): void
     {
         $this->get(route('data-deletion'))->assertOk();
@@ -141,6 +178,7 @@ class PolicyPageCmsTest extends TestCase
                     'hero_eyebrow' => "Dynamic {$identifier} eyebrow",
                     'hero_title' => "Dynamic {$identifier} hero",
                     'hero_description' => "Dynamic {$identifier} description",
+                    'is_hero_enabled' => '1',
                     'last_updated' => $date->toDateString(),
                     'body_html' => "<section><h2>Dynamic {$identifier} body</h2><p>Updated {{last_updated}}</p></section>",
                     'is_published' => '1',

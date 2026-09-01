@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\InformationPage;
 use App\Services\PolicyContentSanitizer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -24,11 +25,12 @@ class InformationPageController extends Controller
             'policyPage' => $policyPage,
             'editableBodyHtml' => $policyPage->editableBodyHtml(),
             'cmsTitle' => 'Information CMS',
-            'cmsDescription' => 'Manage footer labels, SEO, hero copy, publication status, and the complete content for every public information page.',
+            'cmsDescription' => 'Manage footer labels, SEO, hero visibility and copy, publication status, and the complete content for every public information page.',
             'cmsNavLabel' => 'Information pages',
             'configNamespace' => 'information_pages',
             'adminIndexRoute' => 'admin.information.index',
             'adminUpdateRoute' => 'admin.information.update',
+            'adminHeroVisibilityRoute' => 'admin.information.hero-visibility.update',
             'supportsLastUpdated' => false,
             'bodyHelpText' => 'Edit visually or switch to HTML source for precise layout changes. Keep the contact form and map placeholders in the Contact Us page.',
         ]);
@@ -47,6 +49,7 @@ class InformationPageController extends Controller
             'hero_eyebrow' => ['nullable', 'string', 'max:120'],
             'hero_title' => ['required', 'string', 'max:255'],
             'hero_description' => ['nullable', 'string', 'max:1000'],
+            'is_hero_enabled' => ['required', 'boolean'],
             'body_html' => ['required', 'string', 'max:1000000'],
             'is_published' => ['required', 'boolean'],
         ];
@@ -108,6 +111,23 @@ class InformationPageController extends Controller
         return redirect()
             ->route('admin.information.index', ['page' => $informationPage->slug])
             ->with('success', $informationPage->nav_label.' was updated successfully.');
+    }
+
+    public function updateHeroVisibility(Request $request, InformationPage $informationPage): JsonResponse
+    {
+        $validated = $request->validate([
+            'is_hero_enabled' => ['required', 'boolean'],
+        ]);
+
+        $informationPage->update([
+            'is_hero_enabled' => $validated['is_hero_enabled'],
+            'updated_by' => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'is_hero_enabled' => $informationPage->fresh()->is_hero_enabled,
+        ]);
     }
 
     private function samePhone(string $left, string $right): bool

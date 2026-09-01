@@ -44,7 +44,7 @@ class FarmPageSectionsCmsTest extends TestCase
         $response->assertDontSee('assets/images/carousel/', false);
         $response->assertDontSee('assets/icons/', false);
         $response->assertDontSee('data:image/svg+xml', false);
-        $response->assertSee('class="container mx-auto px-4 py-16 sm:px-6 md:py-20 lg:px-8"', false);
+        $response->assertSee('class="w-full px-4 py-16 sm:px-6 md:py-20 lg:px-8"', false);
         $response->assertSee('class="fas fa-tractor text-4xl md:text-5xl opacity-80 mb-4 block"', false);
     }
 

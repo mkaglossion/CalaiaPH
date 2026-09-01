@@ -5,6 +5,7 @@
     :active-header="$policyPage->slug"
 >
     <div class="min-h-screen bg-white">
+        @if($policyPage->shouldShowHero())
         <section class="relative h-screen w-full overflow-hidden bg-linear-to-br from-amber-900 via-amber-800 to-amber-950">
             <div class="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
                 <div class="max-w-4xl space-y-8">
@@ -30,6 +31,7 @@
                 </div>
             </div>
         </section>
+        @endif
 
         {!! $policyPage->renderedBodyHtml() !!}
 

@@ -158,7 +158,7 @@
     </div>
     
     <!-- Description -->
-    <p class="text-gray-600 text-xs sm:text-sm mb-2 line-clamp-2 sm:line-clamp-3 grow min-h-6">
+    <p class="text-gray-600 text-xs sm:text-sm mb-2 grow min-h-6">
       {{ $package->description ?? 'Experience an unforgettable adventure with this exclusive package.' }}
     </p>
 

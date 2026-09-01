@@ -1,10 +1,11 @@
 @php
     $cmsTitle = $cmsTitle ?? 'Policies & Terms CMS';
-    $cmsDescription = $cmsDescription ?? 'Manage navigation labels, SEO, hero copy, publication status, and the complete content for every public policy page.';
+    $cmsDescription = $cmsDescription ?? 'Manage navigation labels, SEO, hero visibility and copy, publication status, and the complete content for every public policy page.';
     $cmsNavLabel = $cmsNavLabel ?? 'Policy pages';
     $configNamespace = $configNamespace ?? 'policy_pages';
     $adminIndexRoute = $adminIndexRoute ?? 'admin.policies.index';
     $adminUpdateRoute = $adminUpdateRoute ?? 'admin.policies.update';
+    $adminHeroVisibilityRoute = $adminHeroVisibilityRoute ?? 'admin.policies.hero-visibility.update';
     $supportsLastUpdated = $supportsLastUpdated ?? true;
     $bodyHelpText = $bodyHelpText ?? 'Edit visually or switch to HTML source for precise layout changes.';
     $editableBodyHtml = $editableBodyHtml ?? $policyPage->body_html;
@@ -106,6 +107,38 @@
                         <span class="text-sm font-semibold text-gray-700">Navigation label</span>
                         <input type="text" name="nav_label" value="{{ old('nav_label', $policyPage->nav_label) }}" maxlength="80" required class="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54]/20">
                     </label>
+
+                    <div
+                        x-data="heroVisibilityToggle({
+                            initialEnabled: @js((bool) old('is_hero_enabled', $policyPage->shouldShowHero())),
+                            updateUrl: @js(route($adminHeroVisibilityRoute, $policyPage->slug)),
+                        })"
+                        class="sm:col-span-2 flex flex-col gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <div>
+                            <span class="block text-sm font-semibold text-gray-900">Hero banner</span>
+                            <span class="block text-xs text-gray-500">Hide only the top banner while keeping the page content published and accessible.</span>
+                        </div>
+
+                        <div class="flex shrink-0 items-center gap-3">
+                            <span class="text-sm font-semibold text-gray-700" x-text="saving ? 'Saving...' : (heroEnabled ? 'Enabled' : 'Disabled')"></span>
+                            <input type="hidden" name="is_hero_enabled" value="0">
+                            <label class="relative inline-flex cursor-pointer items-center">
+                                <input
+                                    type="checkbox"
+                                    name="is_hero_enabled"
+                                    value="1"
+                                    x-model="heroEnabled"
+                                    @change="saveHeroVisibility($event.target.checked)"
+                                    :disabled="saving"
+                                    @checked((bool) old('is_hero_enabled', $policyPage->shouldShowHero()))
+                                    class="peer sr-only disabled:cursor-not-allowed"
+                                >
+                                <span class="h-7 w-12 rounded-full border border-gray-500 bg-gray-500 shadow-sm transition peer-checked:border-emerald-700 peer-checked:bg-emerald-600 peer-focus:ring-2 peer-focus:ring-blue-600 peer-focus:ring-offset-2 after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:content-[''] peer-checked:after:translate-x-5"></span>
+                                <span class="sr-only">Enable hero banner</span>
+                            </label>
+                        </div>
+                    </div>
 
                     <label class="space-y-2">
                         <span class="text-sm font-semibold text-gray-700">Hero eyebrow</span>
@@ -254,6 +287,58 @@
 
 @push('scripts')
 <script>
+    function heroVisibilityToggle(config) {
+        return {
+            heroEnabled: Boolean(config.initialEnabled),
+            saving: false,
+
+            async saveHeroVisibility(nextState) {
+                if (this.saving) {
+                    return;
+                }
+
+                const previousState = !nextState;
+                this.heroEnabled = nextState;
+                this.saving = true;
+
+                try {
+                    const response = await fetch(config.updateUrl, {
+                        method: 'PATCH',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        },
+                        body: JSON.stringify({ is_hero_enabled: nextState }),
+                    });
+                    const contentType = response.headers.get('content-type') || '';
+                    const result = contentType.includes('application/json') ? await response.json() : {};
+
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || 'Unable to update the hero banner.');
+                    }
+
+                    this.heroEnabled = Boolean(result.is_hero_enabled);
+                    await Swal.fire({
+                        icon: 'success',
+                        title: this.heroEnabled ? 'Section enabled' : 'Section disabled',
+                        timer: 1100,
+                        showConfirmButton: false,
+                    });
+                } catch (error) {
+                    this.heroEnabled = previousState;
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Unable to update section',
+                        text: error.message || 'Please try again.',
+                    });
+                } finally {
+                    this.saving = false;
+                }
+            },
+        };
+    }
+
     const policyVisualEditor = document.getElementById('policyVisualEditor');
     const policySourceEditor = document.getElementById('policySourceEditor');
     const visualModeButton = document.getElementById('visualModeButton');

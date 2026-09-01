@@ -240,7 +240,7 @@
 
       <x-messenger-cta
         :copy="$farmCta"
-        section-class="container mx-auto px-4 py-16 sm:px-6 md:py-20 lg:px-8"
+        section-class="w-full px-4 py-16 sm:px-6 md:py-20 lg:px-8"
         section-style="background-color: #f5efe7;"
         title-id="farm-cta-heading"
         title="{{ $farmCtaTitle ?? 'Ready for your farm experience?' }}"

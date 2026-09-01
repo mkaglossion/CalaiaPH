@@ -14,6 +14,7 @@
 
     <div class="min-h-screen bg-white">
         {{-- HERO --}}
+        @if($informationPage->shouldShowHero())
         <section class="relative h-screen w-full overflow-hidden bg-linear-to-br from-amber-900 via-amber-800 to-amber-950">
             {{-- Content --}}
             <div class="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
@@ -57,6 +58,7 @@
                 </div>
             </div>
         </section>
+        @endif
 
         <!-- INFORMATION_PAGE_BODY_START -->
         @if($informationPage->hasStoredBody())

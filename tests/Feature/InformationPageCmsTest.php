@@ -29,6 +29,7 @@ class InformationPageCmsTest extends TestCase
             $this->assertDatabaseHas('information_pages', [
                 'slug' => $slug,
                 'body_html' => null,
+                'is_hero_enabled' => true,
                 'is_published' => true,
             ]);
         }
@@ -57,7 +58,10 @@ class InformationPageCmsTest extends TestCase
             ->assertSee('Join Our Growing Community');
         $this->get(route('sustainability'))->assertSee('Our Environmental Commitment');
         $this->get(route('our-services'))->assertSee('Accommodation Services');
-        $this->get(route('contact'))->assertSee('Visit or Contact Us');
+        $this->get(route('contact'))
+            ->assertSee('Visit or Contact Us')
+            ->assertSee('class="contact-page-content"', false)
+            ->assertSee('font-size: clamp(2rem, 4vw, 3rem) !important;', false);
     }
 
     public function test_admin_can_manage_information_content_and_footer_label(): void
@@ -73,6 +77,10 @@ class InformationPageCmsTest extends TestCase
 
         $indexResponse->assertOk();
         $indexResponse->assertSee('Information CMS');
+        $indexResponse->assertSee('Hero banner');
+        $indexResponse->assertSee('name="is_hero_enabled"', false);
+        $indexResponse->assertSee('saveHeroVisibility', false);
+        $indexResponse->assertSee('hero-visibility', false);
         $indexResponse->assertSee('Full page content');
         $indexResponse->assertSee('At &lt;strong class=&quot;font-bold text-gray-900&quot;&gt;Calaia&lt;/strong&gt;, we believe in a world where nature, farming, and community thrive in perfect harmony', false);
         $indexResponse->assertSee('The Beginning');
@@ -90,6 +98,7 @@ class InformationPageCmsTest extends TestCase
             'hero_eyebrow' => 'Since 2018',
             'hero_title' => 'A Dynamic Story',
             'hero_description' => 'Managed from the Information CMS.',
+            'is_hero_enabled' => '1',
             'body_html' => '<section><h2>CMS-managed story content</h2><p onclick="alert(1)">Safe paragraph.</p><a href="javascript:alert(1)">Unsafe link</a><script>alert(1)</script></section>',
             'is_published' => '1',
         ]);
@@ -134,6 +143,37 @@ class InformationPageCmsTest extends TestCase
         $this->assertFalse($adminItems->contains('params.page', 'our-services'));
     }
 
+    public function test_admin_can_disable_an_information_page_hero_without_unpublishing_the_page(): void
+    {
+        $admin = User::factory()->create(['user_type' => 'admin']);
+        $informationPage = InformationPage::query()->where('slug', 'our-story')->firstOrFail();
+
+        $informationPage->update([
+            'body_html' => '<section><h2>Story content remains visible</h2></section>',
+        ]);
+
+        $this->actingAs($admin)
+            ->patchJson(route('admin.information.hero-visibility.update', $informationPage->slug), [
+                'is_hero_enabled' => '0',
+            ])
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'is_hero_enabled' => false,
+            ]);
+
+        $this->assertDatabaseHas('information_pages', [
+            'slug' => 'our-story',
+            'is_hero_enabled' => false,
+            'is_published' => true,
+        ]);
+
+        $response = $this->get(route('our-story'));
+
+        $response->assertOk()->assertSee('Story content remains visible');
+        $this->assertSame(0, substr_count($response->getContent(), '<section class="relative h-screen'));
+    }
+
     public function test_contact_placeholders_keep_the_working_form_and_map(): void
     {
         $admin = User::factory()->create([
@@ -168,6 +208,7 @@ class InformationPageCmsTest extends TestCase
                 'hero_eyebrow' => null,
                 'hero_title' => 'Talk to Our Team',
                 'hero_description' => 'We are ready to help.',
+                'is_hero_enabled' => '1',
                 'contact_address' => $contactAddress,
                 'contact_phone' => $contactPhone,
                 'contact_email' => $contactEmail,
@@ -253,6 +294,7 @@ class InformationPageCmsTest extends TestCase
                 'hero_eyebrow' => $contactPage->hero_eyebrow,
                 'hero_title' => $contactPage->hero_title,
                 'hero_description' => $contactPage->hero_description,
+                'is_hero_enabled' => '1',
                 'contact_address' => $contactPage->resolvedContactAddress(),
                 'contact_phone' => $currentPhone,
                 'contact_email' => $contactPage->resolvedContactEmail(),

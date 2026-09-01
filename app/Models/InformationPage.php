@@ -31,6 +31,7 @@ class InformationPage extends Model
         'hero_eyebrow',
         'hero_title',
         'hero_description',
+        'is_hero_enabled',
         'contact_address',
         'contact_phone',
         'contact_email',
@@ -44,6 +45,7 @@ class InformationPage extends Model
     protected function casts(): array
     {
         return [
+            'is_hero_enabled' => 'boolean',
             'is_published' => 'boolean',
             'sort_order' => 'integer',
         ];
@@ -57,6 +59,11 @@ class InformationPage extends Model
     public function hasStoredBody(): bool
     {
         return is_string($this->body_html) && trim($this->body_html) !== '';
+    }
+
+    public function shouldShowHero(): bool
+    {
+        return $this->is_hero_enabled !== false;
     }
 
     public function editableBodyHtml(): string
@@ -508,6 +515,7 @@ class InformationPage extends Model
             'hero_eyebrow' => $defaults['hero_eyebrow'],
             'hero_title' => $defaults['hero_title'],
             'hero_description' => $defaults['hero_description'],
+            'is_hero_enabled' => true,
             'contact_address' => $slug === 'contact'
                 ? ($defaults['contact_address'] ?? self::DEFAULT_CONTACT_ADDRESS)
                 : null,

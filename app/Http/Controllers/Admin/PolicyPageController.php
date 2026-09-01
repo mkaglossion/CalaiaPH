@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PolicyPage;
 use App\Services\PolicyContentSanitizer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -19,7 +20,11 @@ class PolicyPageController extends Controller
         $requestedSlug = (string) $request->query('page', $pages->first()?->slug);
         $policyPage = $pages->firstWhere('slug', $requestedSlug) ?? $pages->firstOrFail();
 
-        return view('admin.policies.index', compact('pages', 'policyPage'));
+        return view('admin.policies.index', [
+            'pages' => $pages,
+            'policyPage' => $policyPage,
+            'adminHeroVisibilityRoute' => 'admin.policies.hero-visibility.update',
+        ]);
     }
 
     public function update(
@@ -35,6 +40,7 @@ class PolicyPageController extends Controller
             'hero_eyebrow' => ['nullable', 'string', 'max:120'],
             'hero_title' => ['required', 'string', 'max:255'],
             'hero_description' => ['nullable', 'string', 'max:1000'],
+            'is_hero_enabled' => ['required', 'boolean'],
             'last_updated' => ['required', 'date'],
             'body_html' => ['required', 'string', 'max:1000000'],
             'is_published' => ['required', 'boolean'],
@@ -54,5 +60,22 @@ class PolicyPageController extends Controller
         return redirect()
             ->route('admin.policies.index', ['page' => $policyPage->slug])
             ->with('success', $policyPage->nav_label.' was updated successfully.');
+    }
+
+    public function updateHeroVisibility(Request $request, PolicyPage $policyPage): JsonResponse
+    {
+        $validated = $request->validate([
+            'is_hero_enabled' => ['required', 'boolean'],
+        ]);
+
+        $policyPage->update([
+            'is_hero_enabled' => $validated['is_hero_enabled'],
+            'updated_by' => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'is_hero_enabled' => $policyPage->fresh()->is_hero_enabled,
+        ]);
     }
 }

@@ -20,6 +20,7 @@ class PolicyPage extends Model
         'hero_eyebrow',
         'hero_title',
         'hero_description',
+        'is_hero_enabled',
         'last_updated',
         'body_html',
         'is_published',
@@ -31,6 +32,7 @@ class PolicyPage extends Model
     {
         return [
             'last_updated' => 'date',
+            'is_hero_enabled' => 'boolean',
             'is_published' => 'boolean',
             'sort_order' => 'integer',
         ];
@@ -46,6 +48,11 @@ class PolicyPage extends Model
         $lastUpdated = $this->last_updated?->format('F j, Y') ?? '';
 
         return str_replace('{{last_updated}}', e($lastUpdated), (string) $this->body_html);
+    }
+
+    public function shouldShowHero(): bool
+    {
+        return $this->is_hero_enabled !== false;
     }
 
     public static function ensureDefaults(): Collection
@@ -165,6 +172,7 @@ class PolicyPage extends Model
             'hero_eyebrow' => $defaults['hero_eyebrow'],
             'hero_title' => $defaults['hero_title'],
             'hero_description' => $defaults['hero_description'],
+            'is_hero_enabled' => true,
             'last_updated' => $defaults['last_updated'],
             'body_html' => File::exists($contentPath) ? File::get($contentPath) : '',
             'is_published' => true,
