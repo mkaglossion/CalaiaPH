@@ -72,6 +72,8 @@ class SystemSettingsFooterTest extends TestCase
         $this->assertStringContainsString('href="https://www.instagram.com/calaia.dynamic/"', $maintenance);
         $this->assertStringContainsString('href="https://www.facebook.com/calaia.dynamic/"', $maintenance);
         $this->assertStringContainsString('href="https://m.me/calaia-dynamic"', $maintenance);
+        $this->assertStringContainsString('class="messenger-icon"', $maintenance);
+        $this->assertStringContainsString('m5.546-1.459-2.35 3.728', $maintenance);
         $this->assertStringNotContainsString('https://www.instagram.com/calaia.ph/', $maintenance);
     }
 
