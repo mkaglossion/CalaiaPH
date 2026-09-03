@@ -7,11 +7,11 @@ use DateTimeZone;
 use Illuminate\Support\Facades\Cache;
 
 class WeatherModel {
-    private $apiKey;
-    private $baseUrl;
-    private $cacheMinutes;
-    private $timeoutSeconds;
-    private $demoMode = false;
+    private string $apiKey;
+    private string $baseUrl;
+    private int $cacheMinutes;
+    private int $timeoutSeconds;
+    private bool $demoMode = false;
 
     public function __construct() {
         $this->apiKey = (string) config('weather.api_key', '');
@@ -44,9 +44,8 @@ class WeatherModel {
      * @return array|null Forecast data or null on error
      */
     public function getWeatherForecast($city = 'Manila', $country = 'PH') {
-        // If in demo mode, generate forecast data
         if ($this->demoMode) {
-            return $this->getDemoForecastData();
+            return null;
         }
 
         $url = $this->baseUrl . '/forecast?q=' . urlencode($city . ',' . $country) . '&appid=' . $this->apiKey . '&units=metric';
@@ -57,9 +56,9 @@ class WeatherModel {
     /**
      * Get weather forecast data by coordinates.
      */
-    public function getWeatherForecastByCoordinates($lat, $lon) {
+    public function getWeatherForecastByCoordinates(float $lat, float $lon): ?array {
         if ($this->demoMode) {
-            return $this->getDemoForecastData();
+            return null;
         }
 
         $url = $this->baseUrl . '/forecast?lat=' . $lat . '&lon=' . $lon . '&appid=' . $this->apiKey . '&units=metric';
@@ -68,46 +67,14 @@ class WeatherModel {
     }
 
     /**
-     * Get demo forecast data
-     * @return array Demo forecast data
-     */
-    private function getDemoForecastData() {
-        $forecast = [];
-        $currentTime = time();
-
-        for ($i = 0; $i < 6; $i++) {
-            $forecastTime = $currentTime + ($i * 3 * 3600); // Every 3 hours
-            $tempVariation = rand(-2, 2);
-
-            $forecast[] = [
-                'dt' => $forecastTime,
-                'main' => [
-                    'temp' => 28 + $tempVariation,
-                    'humidity' => rand(60, 75)
-                ],
-                'weather' => [
-                    [
-                        'main' => 'Partly Cloudy',
-                        'icon' => '02d',
-                        'description' => 'partly cloudy'
-                    ]
-                ]
-            ];
-        }
-
-        return ['list' => $forecast];
-    }
-
-    /**
      * Get weather data by coordinates
      * @param float $lat Latitude
      * @param float $lon Longitude
      * @return array|null Weather data or null on error
      */
-    public function getWeatherByCoordinates($lat, $lon) {
-        // If in demo mode, return demo data
+    public function getWeatherByCoordinates(float $lat, float $lon): ?array {
         if ($this->demoMode) {
-            return $this->getDemoWeatherData();
+            return null;
         }
 
         $url = $this->baseUrl . '/weather?lat=' . $lat . '&lon=' . $lon . '&appid=' . $this->apiKey . '&units=metric';
@@ -120,10 +87,9 @@ class WeatherModel {
      * @param string $url API URL
      * @return array|null Response data or null on error
      */
-    private function makeApiCall($url) {
-        // If in demo mode, return realistic test data
+    private function makeApiCall(string $url): ?array {
         if ($this->demoMode) {
-            return $this->getDemoWeatherData();
+            return null;
         }
 
         $cacheKey = 'weather_api:' . sha1(preg_replace('/appid=[^&]+/', 'appid=hidden', $url));
@@ -142,7 +108,7 @@ class WeatherModel {
     /**
      * Fetch and validate an OpenWeatherMap response.
      */
-    private function fetchApiData($url) {
+    private function fetchApiData(string $url): ?array {
 
         $context = stream_context_create([
             'http' => [
@@ -163,7 +129,7 @@ class WeatherModel {
 
         $data = json_decode($response, true);
 
-        if (json_last_error() !== JSON_ERROR_NONE) {
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
             return null;
         }
 
@@ -172,53 +138,6 @@ class WeatherModel {
         }
 
         return $data;
-    }
-
-    /**
-     * Get demo weather data for testing
-     * @return array Demo weather data
-     */
-    private function getDemoWeatherData() {
-        $currentHour = date('H');
-        $baseTemp = 28; // Base temperature for the location
-
-        // Simulate temperature variation throughout the day
-        if ($currentHour >= 6 && $currentHour <= 12) {
-            $temp = $baseTemp + rand(2, 5); // Morning: warmer
-        } elseif ($currentHour >= 13 && $currentHour <= 17) {
-            $temp = $baseTemp + rand(5, 8); // Afternoon: hottest
-        } else {
-            $temp = $baseTemp + rand(0, 3); // Evening/Night: cooler
-        }
-
-        return [
-            'main' => [
-                'temp' => $temp,
-                'feels_like' => $temp + rand(1, 3),
-                'humidity' => rand(60, 75),
-                'pressure' => rand(1005, 1015)
-            ],
-            'weather' => [
-                [
-                    'main' => 'Partly Cloudy',
-                    'description' => 'partly cloudy',
-                    'icon' => '02d'
-                ]
-            ],
-            'wind' => [
-                'speed' => rand(2, 8),
-                'deg' => rand(0, 360)
-            ],
-            'clouds' => [
-                'all' => rand(20, 40)
-            ],
-            'name' => 'Calaia Nature Park',
-            'sys' => [
-                'country' => 'PH'
-            ],
-            'visibility' => rand(8000, 10000),
-            'timezone' => 28800
-        ];
     }
 
     /**
@@ -281,6 +200,7 @@ class WeatherModel {
         $sys = $weatherData['sys'] ?? [];
 
         return [
+            'available' => true,
             'temperature' => round($main['temp'] ?? 28),
             'feels_like' => round($main['feels_like'] ?? 30),
             'humidity' => $main['humidity'] ?? 65,
@@ -311,6 +231,11 @@ class WeatherModel {
     private function calculateRainProbability($weatherData) {
         if (!$weatherData) {
             return 0;
+        }
+
+        // Forecast responses provide OpenWeatherMap's probability of precipitation.
+        if (isset($weatherData['pop']) && is_numeric($weatherData['pop'])) {
+            return (int) round(min(1, max(0, (float) $weatherData['pop'])) * 100);
         }
 
         $weather = $weatherData['weather'][0] ?? [];
@@ -369,25 +294,26 @@ class WeatherModel {
      */
     private function getDefaultWeatherData() {
         return [
-            'temperature' => 28,
-            'feels_like' => 30,
-            'humidity' => 65,
-            'pressure' => 1013,
-            'visibility' => 10000,
-            'wind_speed' => 2.5,
-            'wind_direction' => 180,
-            'cloudiness' => 25,
-            'condition' => 'Partly Cloudy',
-            'description' => 'partly cloudy',
-            'icon' => '02d',
-            'city' => 'Calaia Nature Park',
+            'available' => false,
+            'temperature' => null,
+            'feels_like' => null,
+            'humidity' => null,
+            'pressure' => null,
+            'visibility' => null,
+            'wind_speed' => null,
+            'wind_direction' => null,
+            'cloudiness' => null,
+            'condition' => 'Weather data unavailable',
+            'description' => 'Weather data unavailable',
+            'icon' => null,
+            'city' => config('weather.city'),
             'country' => 'PH',
-            'sunrise' => time(),
-            'sunset' => time() + 12*3600,
-            'timezone' => 28800,
-            'rain_probability' => 20,
-            'rain_volume_1h' => 0,
-            'rain_volume_3h' => 0,
+            'sunrise' => null,
+            'sunset' => null,
+            'timezone' => null,
+            'rain_probability' => null,
+            'rain_volume_1h' => null,
+            'rain_volume_3h' => null,
         ];
     }
 
@@ -405,7 +331,7 @@ class WeatherModel {
         $count = 0;
 
         foreach ($forecastData['list'] as $forecast) {
-            if ($count >= 6) break; // Get next 6 hours
+            if ($count >= 6) break; // OpenWeatherMap provides 3-hour forecast periods.
 
             $dt = new DateTime('@' . $forecast['dt']);
             $dt->setTimezone(new DateTimeZone('Asia/Manila'));
@@ -422,12 +348,6 @@ class WeatherModel {
             $count++;
         }
 
-        // If we don't have enough data, fill with defaults
-        while (count($hourlyData) < 6) {
-            $defaultData = $this->getDefaultHourlyForecast();
-            $hourlyData[] = $defaultData[count($hourlyData)];
-        }
-
         return $hourlyData;
     }
 
@@ -436,23 +356,6 @@ class WeatherModel {
      * @return array Default hourly forecast
      */
     private function getDefaultHourlyForecast() {
-        $currentHour = date('G');
-        $forecast = [];
-
-        for ($i = 0; $i < 6; $i++) {
-            $hour = ($currentHour + $i) % 24;
-            $time = date('g:i A', strtotime("+$i hours"));
-
-            $forecast[] = [
-                'time' => $time,
-                'temperature' => 28 + rand(-2, 2), // Random variation
-                'condition' => 'Partly Cloudy',
-                'icon' => '02d',
-                'humidity' => 65 + rand(-10, 10),
-                'rain_probability' => rand(10, 30), // Random rain probability for demo
-            ];
-        }
-
-        return $forecast;
+        return [];
     }
 }

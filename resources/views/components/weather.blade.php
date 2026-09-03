@@ -25,29 +25,33 @@
 
       <div class="mt-4">
         <div class="font-bold text-slate-900 leading-none" style="font-size:22px;">
-          {{ $data['now']['temp'] }}°C
+          @if($data['now']['available'])
+            {{ $data['now']['temp'] }}&deg;C
+          @else
+            --
+          @endif
         </div>
         <div class="text-slate-600 mt-1" style="font-size:11.5px;">
           {{ $data['now']['condition'] }}
         </div>
       </div>
 
-      {{-- HOURLY TITLE --}}
+      {{-- 3-HOUR FORECAST TITLE --}}
       <h1 class="mt-4 font-bold text-slate-900" style="font-size:25px;">
-        Hourly Forecast
+        3-Hour Forecast
       </h1>
 
-      {{-- HOURLY ROW --}}
+      {{-- 3-HOUR FORECAST ROW --}}
       <div class="mt-3 overflow-x-auto">
         <div class="flex gap-8 min-w-max pb-2 justify-center">
-          @foreach($data['hourly'] as $hour)
+          @forelse($data['hourly'] as $hour)
             <div class="text-center">
               <div class="text-slate-500" style="font-size:17px;">
                 {{ $hour['time'] }}
               </div>
 
               <div class="font-bold text-slate-900 mt-1" style="font-size:22px;">
-                {{ $hour['temp'] }}°C
+                {{ $hour['temp'] }}&deg;C
               </div>
 
               <div class="mt-1 inline-flex items-center justify-center rounded-full px-3 py-0.5
@@ -55,7 +59,11 @@
                 {{ $hour['rain'] }}%
               </div>
             </div>
-          @endforeach
+          @empty
+            <div class="text-slate-500 py-4" style="font-size:14px;">
+              Live forecast is temporarily unavailable.
+            </div>
+          @endforelse
         </div>
       </div>
     </div>
