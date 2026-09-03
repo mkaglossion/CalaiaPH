@@ -57,10 +57,8 @@ class WeatherController extends Controller
     public function getCurrentWeather()
     {
         try {
-            // Try to get weather for Calaia Nature Park location
-            // Coordinates for Calaia Nature Park (approximate)
-            $lat = 14.0155;
-            $lon = 120.8454;
+            $lat = (float) config('weather.latitude');
+            $lon = (float) config('weather.longitude');
 
             $weatherData = $this->weatherModel->getWeatherByCoordinates($lat, $lon);
 
@@ -68,9 +66,12 @@ class WeatherController extends Controller
                 return $this->weatherModel->formatWeatherData($weatherData);
             }
 
-            // Fallback to city-based lookup
+            // Fallback to the configured city-based lookup.
             return $this->weatherModel->formatWeatherData(
-                $this->weatherModel->getCurrentWeather('Santa Rosa', 'PH')
+                $this->weatherModel->getCurrentWeather(
+                    config('weather.city'),
+                    config('weather.country')
+                )
             );
 
         } catch (\Exception $e) {
@@ -86,19 +87,21 @@ class WeatherController extends Controller
     public function getHourlyForecast()
     {
         try {
-            // Try to get forecast for Calaia Nature Park location
-            $lat = 14.0155;
-            $lon = 120.8454;
+            $lat = (float) config('weather.latitude');
+            $lon = (float) config('weather.longitude');
 
-            $forecastData = $this->weatherModel->getWeatherByCoordinates($lat, $lon);
+            $forecastData = $this->weatherModel->getWeatherForecastByCoordinates($lat, $lon);
 
             if ($forecastData) {
-                // For forecast, we'll use the city-based approach
-                $cityForecast = $this->weatherModel->getWeatherForecast('Santa Rosa', 'PH');
-                return $this->weatherModel->formatHourlyForecast($cityForecast);
+                return $this->weatherModel->formatHourlyForecast($forecastData);
             }
 
-            return $this->weatherModel->formatHourlyForecast(null);
+            return $this->weatherModel->formatHourlyForecast(
+                $this->weatherModel->getWeatherForecast(
+                    config('weather.city'),
+                    config('weather.country')
+                )
+            );
 
         } catch (\Exception $e) {
             Log::error('Weather Forecast API Error: ' . $e->getMessage());

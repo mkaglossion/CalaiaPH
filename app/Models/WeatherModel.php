@@ -4,18 +4,23 @@ namespace App\Models;
 
 use DateTime;
 use DateTimeZone;
+use Illuminate\Support\Facades\Cache;
 
 class WeatherModel {
     private $apiKey;
-    private $baseUrl = 'https://api.openweathermap.org/data/2.5';
+    private $baseUrl;
+    private $cacheMinutes;
+    private $timeoutSeconds;
     private $demoMode = false;
 
     public function __construct() {
-        // You can set your API key here or use environment variable
-        $this->apiKey = getenv('OPENWEATHER_API_KEY') ?: 'demo_key_for_testing';
+        $this->apiKey = (string) config('weather.api_key', '');
+        $this->baseUrl = rtrim((string) config('weather.base_url'), '/');
+        $this->cacheMinutes = max(0, (int) config('weather.cache_minutes', 30));
+        $this->timeoutSeconds = max(1, (int) config('weather.timeout_seconds', 10));
 
-        // If using demo key, return realistic test data
-        if ($this->apiKey === 'demo_key_for_testing' || $this->apiKey === 'your_openweathermap_api_key_here') {
+        // Keep demo data available for unconfigured local/test environments.
+        if ($this->apiKey === '' || $this->apiKey === 'demo_key_for_testing' || $this->apiKey === 'your_openweathermap_api_key_here') {
             $this->demoMode = true;
         }
     }
@@ -45,6 +50,19 @@ class WeatherModel {
         }
 
         $url = $this->baseUrl . '/forecast?q=' . urlencode($city . ',' . $country) . '&appid=' . $this->apiKey . '&units=metric';
+
+        return $this->makeApiCall($url);
+    }
+
+    /**
+     * Get weather forecast data by coordinates.
+     */
+    public function getWeatherForecastByCoordinates($lat, $lon) {
+        if ($this->demoMode) {
+            return $this->getDemoForecastData();
+        }
+
+        $url = $this->baseUrl . '/forecast?lat=' . $lat . '&lon=' . $lon . '&appid=' . $this->apiKey . '&units=metric';
 
         return $this->makeApiCall($url);
     }
@@ -108,14 +126,36 @@ class WeatherModel {
             return $this->getDemoWeatherData();
         }
 
+        $cacheKey = 'weather_api:' . sha1(preg_replace('/appid=[^&]+/', 'appid=hidden', $url));
+
+        if ($this->cacheMinutes === 0) {
+            return $this->fetchApiData($url);
+        }
+
+        return Cache::remember(
+            $cacheKey,
+            now()->addMinutes($this->cacheMinutes),
+            fn () => $this->fetchApiData($url)
+        );
+    }
+
+    /**
+     * Fetch and validate an OpenWeatherMap response.
+     */
+    private function fetchApiData($url) {
+
         $context = stream_context_create([
             'http' => [
-                'timeout' => 10,
+                'timeout' => $this->timeoutSeconds,
                 'ignore_errors' => true
             ]
         ]);
 
-        $response = file_get_contents($url, false, $context);
+        try {
+            $response = @file_get_contents($url, false, $context);
+        } catch (\Throwable $exception) {
+            return null;
+        }
 
         if ($response === false) {
             return null;
@@ -124,6 +164,10 @@ class WeatherModel {
         $data = json_decode($response, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
+            return null;
+        }
+
+        if (isset($data['cod']) && (int) $data['cod'] >= 400) {
             return null;
         }
 
