@@ -232,7 +232,7 @@ class StaycationWaiverTest extends TestCase
                 'booking_type' => 'staycation',
                 'checkin' => '2026-07-20',
                 'checkout' => '2026-07-21',
-                'adults_total' => 6,
+                'adults_total' => 4,
                 'children_total' => 2,
                 'accommodations' => [],
             ],
@@ -240,7 +240,7 @@ class StaycationWaiverTest extends TestCase
             'selected_rooms' => [
                 (string) $room->id => [
                     'id' => $room->id,
-                    'adults' => 6,
+                    'adults' => 4,
                     'children' => 2,
                     'extra_mattress' => 2,
                     'pets' => 'no',
@@ -255,12 +255,12 @@ class StaycationWaiverTest extends TestCase
         $booking = session('booking');
         $accommodation = array_values($booking['accommodations'])[0];
 
-        $this->assertSame(6, $accommodation['adults']);
+        $this->assertSame(4, $accommodation['adults']);
         $this->assertSame(2, $accommodation['children']);
         $this->assertSame(2, $accommodation['additional_adults']);
-        $this->assertSame(2400.0, (float) $accommodation['additional_adult_price']);
-        $this->assertSame(9200.0, (float) $accommodation['total_price']);
-        $this->assertSame(6, $booking['adults_total']);
+        $this->assertSame(2500.0, (float) $accommodation['additional_adult_price']);
+        $this->assertSame(9300.0, (float) $accommodation['total_price']);
+        $this->assertSame(4, $booking['adults_total']);
         $this->assertSame(2, $booking['children_total']);
 
         $paymentPage = $this->get(route('booking.staycationPayment'));

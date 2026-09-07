@@ -16,9 +16,9 @@ class BookingSettingSeeder extends Seeder
         $settings = [
             [
                 'key' => 'mattress_price_per_night',
-                'label' => 'Extra Mattress Price',
-                'value' => 800,
-                'description' => 'Price per extra mattress per night (₱)',
+                'label' => 'Extra Guest Price',
+                'value' => 1250,
+                'description' => 'Price per guest above the included capacity per night (₱)',
                 'category' => 'pricing',
             ],
             [

@@ -168,7 +168,7 @@ class BookingController extends Controller
 
         // Additional adult fee (legacy: mattress_price key) is GLAMPING-only.
         if ($supportsExtraMattress) {
-            $additionalAdults = $this->resolveAdditionalAdultCount($staycation, $adults);
+            $additionalAdults = $this->resolveAdditionalAdultCount($staycation, $adults + $children);
             $mattressPrice = $this->calculateAdditionalAdultFee($additionalAdults, $nights);
         }
         if (!$isSpecialRoom) {
@@ -4481,18 +4481,17 @@ class BookingController extends Controller
             return 0;
         }
 
-        // Legacy key name, but now this is auto-computed additional-adult count.
-        return $this->resolveAdditionalAdultCount($staycation, $adults);
+        // Legacy key name, but now this is auto-computed extra-guest count.
+        return $this->resolveAdditionalAdultCount($staycation, $adults + $children);
     }
 
     /**
-     * Additional adult count is automatic and based on adult headcount only.
+    * Extra guest count is automatic and based on total headcount.
      * Rule:
-     * - base included adults come from included_guest_capacity
-     * - extra adults are capped by max_guest_capacity
-     * - children do not count as additional adults
+    * - base included guests come from included_guest_capacity
+    * - extra guests are capped by max_guest_capacity
      */
-    protected function resolveAdditionalAdultCount(Staycation $staycation, int $adults): int
+    protected function resolveAdditionalAdultCount(Staycation $staycation, int $totalGuests): int
     {
         if ($this->isSpecialStaycationRoom($staycation) || !$this->supportsExtraMattress($staycation)) {
             return 0;
@@ -4500,8 +4499,8 @@ class BookingController extends Controller
 
         $baseIncludedAdults = $this->resolveIncludedGuestCapacity($staycation);
         $maxAdditionalAdults = max(0, $this->resolveMaxGuestCapacity($staycation) - $baseIncludedAdults);
-        $adultCount = max(1, $adults);
-        $adultOverflow = max(0, $adultCount - $baseIncludedAdults);
+        $guestCount = max(1, $totalGuests);
+        $adultOverflow = max(0, $guestCount - $baseIncludedAdults);
 
         return min($maxAdditionalAdults, $adultOverflow);
     }
@@ -4542,10 +4541,10 @@ class BookingController extends Controller
     protected function resolveMaxGuestCapacity(Staycation $staycation): int
     {
         $included = $this->resolveIncludedGuestCapacity($staycation);
-        $configuredMax = max(0, (int)($staycation->max_guest_capacity ?? 0));
+        $configuredMax = min(6, max(0, (int)($staycation->max_guest_capacity ?? 0)));
 
         if ($configuredMax > 0) {
-            return max($included, $configuredMax);
+            return min(6, max($included, $configuredMax));
         }
 
         // Legacy fallback: derive from adults + children limits when present.
@@ -4553,19 +4552,19 @@ class BookingController extends Controller
         $childrenLimit = max(0, (int)($staycation->children ?? 0));
         $derivedMax = $adultsLimit + $childrenLimit;
         if ($derivedMax > 0) {
-            return max($included, $derivedMax);
+            return min(6, max($included, $derivedMax));
         }
 
         // Last fallback: use capacity if bigger than included.
         $legacyCapacity = max(0, (int)($staycation->capacity ?? 0));
         if ($legacyCapacity > 0) {
-            return max($included, $legacyCapacity);
+            return min(6, max($included, $legacyCapacity));
         }
 
         // Backward-compatible fallback for glamping rooms without explicit max capacity:
         // allow up to 2 additional adults beyond included capacity.
         if ($this->supportsExtraMattress($staycation)) {
-            return max($included, $included + 2);
+            return min(6, max($included, $included + 2));
         }
 
         return max(1, $included);
@@ -4588,7 +4587,7 @@ class BookingController extends Controller
     }
 
     /**
-     * Normalize room guest counts against independently configured adult and child limits.
+     * Normalize room guest counts against one shared occupancy limit.
      */
     protected function clampRoomGuestCounts(Staycation $staycation, int $adults, int $children): array
     {
@@ -4599,36 +4598,9 @@ class BookingController extends Controller
             return [$adults, $children];
         }
 
-        $configuredMaxAdults = max(0, (int)($staycation->max_guest_capacity ?? 0));
-        if ($configuredMaxAdults > 0) {
-            $maxAdults = $this->resolveMaxGuestCapacity($staycation);
-            $maxChildren = max(0, (int)($staycation->children ?? 0));
-
-            return [
-                min($adults, $maxAdults),
-                min($children, $maxChildren),
-            ];
-        }
-
         $maxGuests = $this->resolveMaxGuestCapacity($staycation);
-        $total = $adults + $children;
-        if ($total <= $maxGuests) {
-            return [$adults, $children];
-        }
-
-        $overflow = $total - $maxGuests;
-        if ($children >= $overflow) {
-            $children -= $overflow;
-            return [$adults, $children];
-        }
-
-        $overflow -= $children;
-        $children = 0;
-        $adults = max(1, $adults - $overflow);
-
-        if (($adults + $children) > $maxGuests) {
-            $adults = max(1, $maxGuests - $children);
-        }
+        $children = min($children, max(0, $maxGuests - $adults));
+        $adults = min($adults, $maxGuests);
 
         return [$adults, $children];
     }
@@ -4647,7 +4619,7 @@ class BookingController extends Controller
      */
     protected function calculateAdditionalAdultFee(int $additionalAdultCount, int $nights)
     {
-        $pricePerNight = BookingSetting::getValue('mattress_price_per_night', 1200);
+        $pricePerNight = BookingSetting::getValue('mattress_price_per_night', 1250);
         return (int)$additionalAdultCount * (int)$pricePerNight * max(1, $nights);
     }
 

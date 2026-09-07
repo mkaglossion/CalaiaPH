@@ -190,7 +190,7 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                                     <div>Adults: <span class="font-semibold">{{ $room['adults'] ?? 1 }}</span>, Children: <span class="font-semibold">{{ $room['children'] ?? 0 }}</span></div>
                                     @if($supportsExtraMattress && $additionalAdults > 0)
                                         <div>
-                                            Additional {{ $additionalAdults }} adult{{ $additionalAdults !== 1 ? 's' : '' }}
+                                            Additional {{ $additionalAdults }} guest{{ $additionalAdults !== 1 ? 's' : '' }}
                                         </div>
                                     @endif
                                 @endif
@@ -215,7 +215,7 @@ $vatBreakdown = $vatService->generateBreakdown((float) $grandTotal, false); // f
                                     </div>
                                     @if($supportsExtraMattress && $additionalAdultPrice > 0)
                                         <div class="flex justify-between">
-                                            <span>Additional Adult{{ $additionalAdults !== 1 ? 's' : '' }}:</span>
+                                            <span>Additional Guest{{ $additionalAdults !== 1 ? 's' : '' }}:</span>
                                             <span class="font-semibold">&#8369;{{ number_format($additionalAdultPrice, 0) }}</span>
                                         </div>
                                     @endif

@@ -140,7 +140,7 @@
                                                 </div>
                                                 @if($priceBreakdown['additional_adult_total'] > 0)
                                                     <div class="flex justify-between gap-4">
-                                                        <span>Additional {{ $priceBreakdown['additional_adults_per_room'] }} {{ \Illuminate\Support\Str::plural('adult', $priceBreakdown['additional_adults_per_room']) }} per room</span>
+                                                        <span>Additional {{ $priceBreakdown['additional_adults_per_room'] }} {{ \Illuminate\Support\Str::plural('guest', $priceBreakdown['additional_adults_per_room']) }} per room</span>
                                                         <strong class="text-gray-800">&#8369;{{ number_format($priceBreakdown['additional_adult_total'], 2) }}</strong>
                                                     </div>
                                                 @endif

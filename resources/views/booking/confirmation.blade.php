@@ -444,11 +444,11 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                           @else
                             {{-- Regular rooms: Show guests --}}
                             @if(!empty($accommodation['adults']) || !empty($accommodation['children']))
-                              ({{ $accommodation['adults'] ?? 0 }} adult{{ ($accommodation['adults'] ?? 0) !== 1 ? 's' : '' }}, {{ $accommodation['children'] ?? 0 }} child{{ ($accommodation['children'] ?? 0) !== 1 ? 'ren' : '' }}@if($supportsExtraMattress && $additionalAdults > 0), additional {{ $additionalAdults }} adult{{ $additionalAdults !== 1 ? 's' : '' }}@endif)
+                              ({{ $accommodation['adults'] ?? 0 }} adult{{ ($accommodation['adults'] ?? 0) !== 1 ? 's' : '' }}, {{ $accommodation['children'] ?? 0 }} child{{ ($accommodation['children'] ?? 0) !== 1 ? 'ren' : '' }}@if($supportsExtraMattress && $additionalAdults > 0), additional {{ $additionalAdults }} guest{{ $additionalAdults !== 1 ? 's' : '' }}@endif)
                             @endif
                             - &#8369;{{ number_format($totalPrice, 2) }}
                             @if($supportsExtraMattress && $mattressPrice > 0)
-                              + Additional Adult{{ $additionalAdults !== 1 ? 's' : '' }}: &#8369;{{ number_format($mattressPrice, 2) }}
+                              + Additional Guest{{ $additionalAdults !== 1 ? 's' : '' }}: &#8369;{{ number_format($mattressPrice, 2) }}
                             @endif
                             @if($petPrice > 0)
                               + Pet: &#8369;{{ number_format($petPrice, 2) }}

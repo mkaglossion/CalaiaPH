@@ -526,12 +526,12 @@
                                                         >
                                                     </div>
                                                     <div>
-                                                         <label :for="'children-card-' + {{ $staycation->id }}" class="block text-sm font-semibold text-gray-700 mb-1">Children</label>
+                                                         <label :for="'children-card-' + {{ $staycation->id }}" class="block text-sm font-semibold text-gray-700 mb-1">Children <span class="font-normal text-gray-500">(2 to 12 years old)</span></label>
                                                         <input type="number" min="0" max="20"
                                                                :id="'children-card-' + {{ $staycation->id }}" :name="'children-card-' + {{ $staycation->id }}"
                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                                                                x-model.number="getSelectedRoom({{ $staycation->id }}).children"
-                                                                :max="Math.max(0, getRoomIncludedChildren({{ $staycation->id }}))"
+                                                                :max="Math.max(0, getRoomMaxOccupancy({{ $staycation->id }}) - Number(getSelectedRoom({{ $staycation->id }}).adults || 1))"
                                                                @change="validateAndSetGuests({{ $staycation->id }}, 'children', getSelectedRoom({{ $staycation->id }}).children, getSelectedRoom({{ $staycation->id }}).name.toLowerCase())"
                                                                @click.stop
                                                         >
@@ -1446,7 +1446,7 @@
                 roomDetailsMap: @json($roomDetails),
 
                 bookingSettings: {
-                    mattress_price_per_night: 1200,
+                    mattress_price_per_night: 1250,
                     additional_adult_price_per_night: 1200,
                     pet_price: 2000,
                 },
@@ -1781,7 +1781,7 @@
 
                 getAdditionalAdultLabel(count) {
                     const normalized = Math.max(0, parseInt(count || 0, 10) || 0);
-                    return normalized === 1 ? 'Additional 1 adult' : `Additional ${normalized} adults`;
+                    return normalized === 1 ? 'Additional 1 guest' : `Additional ${normalized} guests`;
                 },
 
                 getSlotClass(slotNum) {
@@ -1870,20 +1870,10 @@
                     return Math.max(1, parseInt(roomDetail?.capacity || 0, 10) || 1);
                 },
 
-                getRoomIncludedChildren(roomId) {
-                    const lookupId = String(roomId).includes('_') ? String(roomId).split('_')[0] : roomId;
-                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[lookupId] ? this.roomDetailsMap[lookupId] : null;
-                    return Math.max(0, parseInt(roomDetail?.children_limit || 0, 10) || 0);
-                },
-
                 getRoomMaxOccupancy(roomId) {
-                    const lookupId = String(roomId).includes('_') ? String(roomId).split('_')[0] : roomId;
-                    const roomDetail = this.roomDetailsMap && this.roomDetailsMap[lookupId] ? this.roomDetailsMap[lookupId] : null;
                     const maxAdults = this.getRoomGuestLimit(roomId);
-                    const maxChildren = this.getRoomIncludedChildren(roomId);
-                    const configuredMaxAdults = Math.max(0, parseInt(roomDetail?.max_guest_capacity || 0, 10) || 0);
 
-                    return configuredMaxAdults > 0 ? maxAdults + maxChildren : maxAdults;
+                    return maxAdults;
                 },
 
                 getRoomMaxExtraMattress(roomId) {
@@ -1901,7 +1891,8 @@
                     const included = this.getRoomIncludedCapacity(lookupKey);
                     const maxAdditionalAdults = this.getRoomMaxExtraMattress(lookupKey);
                     const adults = Math.max(1, parseInt(room.adults || 1, 10) || 1);
-                    const overflow = Math.max(0, adults - included);
+                    const children = Math.max(0, parseInt(room.children || 0, 10) || 0);
+                    const overflow = Math.max(0, adults + children - included);
 
                     return Math.max(0, Math.min(maxAdditionalAdults, overflow));
                 },
@@ -1916,12 +1907,11 @@
                 getRoomCapacityHint(roomId) {
                     const included = this.getRoomIncludedCapacity(roomId);
                     const maxAdults = this.getRoomGuestLimit(roomId);
-                    const maxChildren = this.getRoomIncludedChildren(roomId);
                     if (maxAdults <= included) {
-                        return `Included adults: ${included} • Up to ${maxAdults} adults + ${maxChildren} children • No additional adult allowance`;
+                        return `Base rate includes ${included} guests • Up to ${maxAdults} total guests • No extra guest fee`;
                     }
                     const extraStartsAt = included + 1;
-                    return `Included adults: ${included} • Up to ${maxAdults} adults + ${maxChildren} children • Additional adult fee starts at adult #${extraStartsAt}`;
+                    return `Base rate includes ${included} guests • Up to ${maxAdults} total guests • Extra guest fee starts at guest #${extraStartsAt}`;
                 },
 
                 getRoomGuestCount(roomId) {
@@ -1942,11 +1932,11 @@
                 getRoomExtraMattressLabel(roomId) {
                     const key = String(roomId);
                     const room = this.selectedRooms[key] || this.getSelectedRoom(roomId);
-                    if (!room || !this.supportsExtraMattress(room)) return 'No additional adult charge';
+                    if (!room || !this.supportsExtraMattress(room)) return 'No additional guest charge';
 
                     const count = this.getAutoAdditionalAdultCount(roomId);
                     const fee = this.calculateMattressPrice(room);
-                    if (count < 1) return 'No additional adult charge';
+                    if (count < 1) return 'No additional guest charge';
                     return `${this.getAdditionalAdultLabel(count)} • ${this.formatCurrency(fee)}`;
                 },
 
@@ -2025,12 +2015,18 @@
                         }
 
                         this.setField(roomId, field, adultsValue);
+                        const currentChildren = Math.max(0, parseInt(this.selectedRooms[key].children || 0, 10) || 0);
+                        const maxChildrenForAdults = Math.max(0, this.getRoomMaxOccupancy(roomId) - adultsValue);
+                        if (currentChildren > maxChildrenForAdults) {
+                            this.setField(roomId, 'children', maxChildrenForAdults);
+                        }
                         this.syncExtraMattressWithGuests(roomId);
                         return;
                     }
 
                     if (field === 'children') {
-                        const maxChildren = this.getRoomIncludedChildren(roomId);
+                        const adultsValue = Math.max(1, parseInt(room.adults || 1, 10) || 1);
+                        const maxChildren = Math.max(0, this.getRoomMaxOccupancy(roomId) - adultsValue);
                         let childrenValue = Math.max(0, normalizedValue);
 
                         if (childrenValue > maxChildren) {
@@ -2529,7 +2525,7 @@
                     if (!this.supportsExtraMattress(room)) return 0;
 
                     const additionalAdults = this.getEffectiveMattressCount(room);
-                    const feePerAdult = this.bookingSettings.additional_adult_price_per_night || this.bookingSettings.mattress_price_per_night || 1200;
+                    const feePerAdult = this.bookingSettings.additional_adult_price_per_night || this.bookingSettings.mattress_price_per_night || 1250;
                     return additionalAdults * feePerAdult * nights;
                 },
 

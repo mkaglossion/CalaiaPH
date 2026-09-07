@@ -122,7 +122,7 @@
                                         </div>
                                         @if($item['price_breakdown']['additional_adult_total'] > 0)
                                             <div class="mt-2 flex justify-between gap-4 text-gray-600">
-                                                <span>Additional {{ $item['price_breakdown']['additional_adults_per_room'] }} {{ \Illuminate\Support\Str::plural('adult', $item['price_breakdown']['additional_adults_per_room']) }} per room</span>
+                                                <span>Additional {{ $item['price_breakdown']['additional_adults_per_room'] }} {{ \Illuminate\Support\Str::plural('guest', $item['price_breakdown']['additional_adults_per_room']) }} per room</span>
                                                 <strong class="text-gray-900">&#8369;{{ number_format($item['price_breakdown']['additional_adult_total'], 2) }}</strong>
                                             </div>
                                         @endif

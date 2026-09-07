@@ -73,18 +73,18 @@ class StaycationController extends Controller
             'days' => 'required|integer|min:1',
             'adults' => 'required|integer|min:0',
             'children' => 'required|integer|min:0',
-            'max_guest_capacity' => 'nullable|integer|min:1|max:30',
-            'included_guest_capacity' => 'nullable|integer|min:1|max:30',
+            'max_guest_capacity' => 'nullable|integer|min:1|max:6',
+            'included_guest_capacity' => 'nullable|integer|min:1|max:6',
             'description' => 'nullable|string|max:1000',
             'priceConfigs' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
 
-        $defaultIncludedCapacity = max(1, (int) $request->adults);
+        $defaultIncludedCapacity = max(1, min(6, (int) $request->input('included_guest_capacity', $request->adults)));
         $includedGuestCapacity = max(1, (int)($request->input('included_guest_capacity', $defaultIncludedCapacity)));
         $capacity = $includedGuestCapacity;
         $requestedMaxGuestCapacity = (int)($request->input('max_guest_capacity', 0));
-        $maxGuestCapacity = max($includedGuestCapacity, $requestedMaxGuestCapacity);
+        $maxGuestCapacity = min(6, max($includedGuestCapacity, $requestedMaxGuestCapacity));
         if ($maxGuestCapacity <= 0) {
             $maxGuestCapacity = null;
         }
@@ -220,19 +220,19 @@ class StaycationController extends Controller
             'days' => 'required|integer|min:1',
             'adults' => 'required|integer|min:0',
             'children' => 'required|integer|min:0',
-            'max_guest_capacity' => 'nullable|integer|min:1|max:30',
-            'included_guest_capacity' => 'nullable|integer|min:1|max:30',
+            'max_guest_capacity' => 'nullable|integer|min:1|max:6',
+            'included_guest_capacity' => 'nullable|integer|min:1|max:6',
             'description' => 'nullable|string|max:1000',
             'priceConfigs' => 'nullable|string', // JSON string from frontend
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'remove_image' => 'nullable|in:1',
         ]);
 
-        $defaultIncludedCapacity = max(1, (int) $request->adults);
+        $defaultIncludedCapacity = max(1, min(6, (int) $request->input('included_guest_capacity', $request->adults)));
         $includedGuestCapacity = max(1, (int)($request->input('included_guest_capacity', $defaultIncludedCapacity)));
         $capacity = $includedGuestCapacity;
         $requestedMaxGuestCapacity = (int)($request->input('max_guest_capacity', 0));
-        $maxGuestCapacity = max($includedGuestCapacity, $requestedMaxGuestCapacity);
+        $maxGuestCapacity = min(6, max($includedGuestCapacity, $requestedMaxGuestCapacity));
         if ($maxGuestCapacity <= 0) {
             $maxGuestCapacity = null;
         }

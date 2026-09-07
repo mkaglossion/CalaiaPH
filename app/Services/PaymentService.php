@@ -26,7 +26,16 @@ class PaymentService
         throw new \Exception('Payment intents are no longer used. Use createCheckout instead.');
     }
 
-    public function createCheckout($amount, $type, $successUrl, $failedUrl, $lineItems = null, $referenceId = null, $customerEmail = null, array $metadata = [])
+    public function createCheckout(
+        int|float $amount,
+        string $type,
+        string $successUrl,
+        string $failedUrl,
+        ?array $lineItems = null,
+        ?string $referenceId = null,
+        ?string $customerEmail = null,
+        array $metadata = []
+    )
     {
         Log::info('Creating PayMongo checkout session', [
             'amount' => $amount,
@@ -63,6 +72,7 @@ class PaymentService
                     ];
 
                     $computedTotal += $unitAmount * $qty;
+
                 }
 
                 if ($computedTotal !== $targetAmount) {
@@ -207,7 +217,7 @@ class PaymentService
         }
     }
 
-    public function processStaycationPayment($staycationBooking, $paymentData)
+    public function processStaycationPayment(array $staycationBooking, array $paymentData)
     {
         // Calculate nights and total guests
         $nights = 0;
@@ -407,7 +417,7 @@ class PaymentService
         return redirect()->route('booking.confirmation')->with('success', 'Payment processed successfully!');
     }
 
-    public function processDayvisitPayment($dayvisitBooking, $paymentData)
+    public function processDayvisitPayment(array $dayvisitBooking, array $paymentData)
     {
         $selectedActivities = $dayvisitBooking['selected_activities']
             ?? ($this->canUseSession() ? session('dayvisit_selected_activities', []) : []);
@@ -517,7 +527,7 @@ class PaymentService
         return redirect()->route('booking.confirmation')->with('success', 'Payment processed successfully!');
     }
 
-    public function processRegularBookingPayment($bookingData, $paymentData)
+    public function processRegularBookingPayment(array $bookingData, array $paymentData)
     {
         $selectedActivities = $bookingData['selected_activities']
             ?? ($this->canUseSession() ? session('selected_activities', []) : []);
@@ -766,6 +776,44 @@ class PaymentService
         return $booking;
     }
 
+    private function queueConfirmedStaycationEmail(Booking $booking, array $paymentData): void
+    {
+        $bookingData = is_array($booking->booking_data) ? $booking->booking_data : [];
+        $accommodations = collect($bookingData['accommodations'] ?? [])
+            ->filter(fn ($accommodation) => is_array($accommodation));
+
+        $bookingData['transaction_id'] = $booking->transaction_id;
+        $bookingData['total_guests'] = $accommodations->sum(
+            fn ($accommodation) => (int) ($accommodation['adults'] ?? 0) + (int) ($accommodation['children'] ?? 0)
+        );
+        $bookingData['adults_total'] = $accommodations->sum(fn ($accommodation) => (int) ($accommodation['adults'] ?? 0));
+        $bookingData['children_total'] = $accommodations->sum(fn ($accommodation) => (int) ($accommodation['children'] ?? 0));
+        $bookingData['payment_summary']['grand_total_paid'] = (float) $booking->total_amount;
+
+        try {
+            Mail::to($booking->customer_email)->queue(new BookingConfirmation([
+                'bookingData' => $bookingData,
+                'selectedActivities' => $bookingData['selected_activities'] ?? [],
+                'selectedActivityPackages' => $bookingData['selected_activity_packages'] ?? [],
+                'selectedFoods' => $bookingData['selected_foods'] ?? [],
+                'staycations' => \App\Models\Staycation::all()->keyBy('id'),
+                'foods' => \App\Models\Food::all()->keyBy('id'),
+                'grandTotal' => (float) $booking->total_amount,
+                'customerInfo' => array_merge([
+                    'email' => $booking->customer_email,
+                    'phone' => $booking->customer_phone,
+                ], $paymentData),
+                'isStaycation' => true,
+            ]));
+        } catch (\Throwable $e) {
+            Log::error('Failed to send confirmed staycation booking email', [
+                'booking_transaction' => $booking->transaction_id,
+                'email' => $booking->customer_email,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     /**
      * Update pending booking to paid status after successful payment.
      */
@@ -850,6 +898,10 @@ class PaymentService
                     ? $bookingData['guest_signature_payloads']
                     : [],
             ]);
+        }
+
+        if (($booking->booking_type ?? null) === 'staycation') {
+            $this->queueConfirmedStaycationEmail($booking, $paymentData);
         }
 
         Log::info('Confirmed pending booking after successful payment', [

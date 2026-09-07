@@ -168,7 +168,7 @@
                                             @endif
                                             - â‚±{{ number_format($basePrice, 2) }}
                                             @if($mattressPrice > 0)
-                                                + Additional Adult{{ $additionalAdults !== 1 ? 's' : '' }}: â‚±{{ number_format($mattressPrice, 2) }}
+                                                + Additional Guest{{ $additionalAdults !== 1 ? 's' : '' }}: &#8369;{{ number_format($mattressPrice, 2) }}
                                             @endif
                                             @if($petPrice > 0)
                                                 + Pet: â‚±{{ number_format($petPrice, 2) }}

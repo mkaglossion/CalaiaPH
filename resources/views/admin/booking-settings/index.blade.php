@@ -23,7 +23,7 @@
                 {{-- Extra Mattress Price --}}
                 <div>
                     <label for="mattress_price_per_night" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Extra Mattress Fee (per night)
+                        Extra Guest Fee (per night)
                     </label>
                     <div class="flex items-center">
                         <span class="text-gray-600 text-lg font-semibold">₱</span>
@@ -31,7 +31,7 @@
                             type="number"
                             id="mattress_price_per_night"
                             name="mattress_price_per_night"
-                            value="{{ $settings->where('key', 'mattress_price_per_night')->first()?->value ?? 800 }}"
+                            value="{{ $settings->where('key', 'mattress_price_per_night')->first()?->value ?? 1250 }}"
                             step="0.01"
                             min="0"
                             class="ml-2 block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-[#8f5d54] focus:outline-none focus:ring-2 focus:ring-[#d8bcb7]"
@@ -39,7 +39,7 @@
                         />
                     </div>
                     <p class="text-xs text-gray-500 mt-2">
-                        Auto-applied per extra mattress per night when guest count exceeds room capacity.
+                        Auto-applied per guest above the included 4 guests, up to the 6-guest limit.
                     </p>
                     @error('mattress_price_per_night')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>

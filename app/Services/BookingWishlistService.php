@@ -243,7 +243,7 @@ class BookingWishlistService
         }
 
         $explicitIncluded = max(0, (int) ($staycation->included_guest_capacity ?? 0));
-        $configuredAdults = max(0, (int) ($staycation->max_guest_capacity ?? 0));
+        $configuredAdults = min(6, max(0, (int) ($staycation->max_guest_capacity ?? 0)));
         $legacyAdults = max(0, (int) ($staycation->adults ?? 0));
         $children = max(0, (int) ($staycation->children ?? 0));
         $legacyCapacity = max(0, (int) ($staycation->capacity ?? 0));
@@ -254,14 +254,12 @@ class BookingWishlistService
         $adults = $configuredAdults > 0
             ? max($included, $configuredAdults)
             : $derivedMaximum;
-        $occupancy = $configuredAdults > 0
-            ? $adults + $children
-            : $derivedMaximum;
+        $occupancy = $configuredAdults > 0 ? $adults : $derivedMaximum;
 
         return [
-            'adults' => max(1, min(20, $adults)),
-            'children' => max(0, min(20, $children > 0 ? $children : $occupancy - 1)),
-            'occupancy' => max(1, min(20, $occupancy)),
+            'adults' => max(1, min(6, $adults)),
+            'children' => max(0, min(20, $occupancy - 1)),
+            'occupancy' => max(1, min(6, $occupancy)),
         ];
     }
 
@@ -331,9 +329,9 @@ class BookingWishlistService
             }
         }
 
-        $additionalAdults = $this->resolveAdditionalAdultCount($staycation, $adults);
+        $additionalAdults = $this->resolveAdditionalAdultCount($staycation, $adults + $children);
         $additionalAdultPrice = $additionalAdults
-            * (float) BookingSetting::getValue('mattress_price_per_night', 1200)
+            * (float) BookingSetting::getValue('mattress_price_per_night', 1250)
             * $nights;
         $hasPets = in_array($selection['pets'] ?? false, [true, 1, '1', 'yes'], true);
         $numPets = !$isSpecialRoom && $hasPets
@@ -386,24 +384,24 @@ class BookingWishlistService
         $included = $this->resolveIncludedGuestCapacity($staycation);
         $configured = max(0, (int) ($staycation->max_guest_capacity ?? 0));
         if ($configured > 0) {
-            return max($included, $configured);
+            return min(6, max($included, $configured));
         }
 
         $derived = max(0, (int) ($staycation->adults ?? 0))
             + max(0, (int) ($staycation->children ?? 0));
         if ($derived > 0) {
-            return max($included, $derived);
+            return min(6, max($included, $derived));
         }
 
         $capacity = max(0, (int) ($staycation->capacity ?? 0));
         if ($capacity > 0) {
-            return max($included, $capacity);
+            return min(6, max($included, $capacity));
         }
 
-        return $this->supportsExtraMattress($staycation) ? $included + 2 : $included;
+        return min(6, $this->supportsExtraMattress($staycation) ? $included + 2 : $included);
     }
 
-    private function resolveAdditionalAdultCount(Staycation $staycation, int $adults): int
+    private function resolveAdditionalAdultCount(Staycation $staycation, int $totalGuests): int
     {
         if (!$this->supportsExtraMattress($staycation)) {
             return 0;
@@ -412,7 +410,7 @@ class BookingWishlistService
         $included = $this->resolveIncludedGuestCapacity($staycation);
         $maximumAdditional = max(0, $this->resolveMaxGuestCapacity($staycation) - $included);
 
-        return min($maximumAdditional, max(0, max(1, $adults) - $included));
+        return min($maximumAdditional, max(0, max(1, $totalGuests) - $included));
     }
 
     private function resolveStaycationNightlyRate(Staycation $staycation, Carbon $date): float

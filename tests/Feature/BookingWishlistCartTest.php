@@ -268,7 +268,7 @@ class BookingWishlistCartTest extends TestCase
             ->assertOk()
             ->assertSee('name="quantity" min="1" max="4" value="2"', false)
             ->assertSee('name="adults" min="1" max="4" value="3"', false)
-            ->assertSee('name="children" min="0" max="2" value="1"', false)
+            ->assertSee('name="children" min="0" max="3" value="1"', false)
             ->assertSee('border border-gray-400 bg-white', false)
             ->assertSee('x-data="{ pets: \'yes\' }"', false)
             ->assertSee('name="num_pets" min="1" max="2" value="1"', false)
@@ -291,8 +291,8 @@ class BookingWishlistCartTest extends TestCase
         ]);
         BookingSetting::create([
             'key' => 'mattress_price_per_night',
-            'label' => 'Additional adult per night',
-            'value' => 1200,
+            'label' => 'Additional guest per night',
+            'value' => 1250,
             'category' => 'pricing',
         ]);
         BookingSetting::create([
@@ -310,7 +310,7 @@ class BookingWishlistCartTest extends TestCase
             'selection' => [
                 'room_id' => $room->id,
                 'quantity' => 1,
-                'adults' => 6,
+                'adults' => 4,
                 'children' => 2,
                 'pets' => true,
                 'pet_agreement' => true,
@@ -323,9 +323,9 @@ class BookingWishlistCartTest extends TestCase
             ->assertOk()
             ->assertSee('data-staycation-price-breakdown', false)
             ->assertSee('Accommodation')
-            ->assertSee('Additional 2 adults per room')
+            ->assertSee('Additional 2 guests per room')
             ->assertSee('2 Pets per room')
-            ->assertSee('&#8369;13,200.00', false);
+            ->assertSee('&#8369;13,300.00', false);
 
         $this->post(route('booking.wishlist.add-to-cart'), ['items' => [$saved->id]])
             ->assertRedirect(route('booking.cart.index'));
@@ -334,14 +334,14 @@ class BookingWishlistCartTest extends TestCase
             ->assertOk()
             ->assertSee('data-staycation-price-breakdown', false)
             ->assertSee('&#8369;6,800.00', false)
-            ->assertSee('&#8369;2,400.00', false)
+            ->assertSee('&#8369;2,500.00', false)
             ->assertSee('&#8369;4,000.00', false)
-            ->assertSee('&#8369;13,200.00', false);
+            ->assertSee('&#8369;13,300.00', false);
 
         $key = 'staycation:' . $room->id;
         $this->patch(route('booking.cart.staycation.update', $key), [
             'quantity' => 2,
-            'adults' => 6,
+            'adults' => 4,
             'children' => 2,
             'pets' => 'yes',
             'pet_agreement' => 1,
@@ -352,9 +352,9 @@ class BookingWishlistCartTest extends TestCase
             ->assertOk()
             ->assertSee('Accommodation (2 rooms)')
             ->assertSee('&#8369;13,600.00', false)
-            ->assertSee('&#8369;4,800.00', false)
+            ->assertSee('&#8369;5,000.00', false)
             ->assertSee('&#8369;8,000.00', false)
-            ->assertSee('&#8369;26,400.00', false);
+            ->assertSee('&#8369;26,600.00', false);
     }
 
     public function test_selected_items_copy_to_booking_cart_and_leave_store_cart_untouched(): void
@@ -436,7 +436,7 @@ class BookingWishlistCartTest extends TestCase
             ->assertSee('Adults per room')
             ->assertSee('Children per room')
             ->assertSee('Pets per room')
-            ->assertSee('₱20,000.00');
+            ->assertSee('&#8369;20,000.00', false);
     }
 
     public function test_room_cart_requires_pet_policy_agreement_when_pets_are_selected(): void
