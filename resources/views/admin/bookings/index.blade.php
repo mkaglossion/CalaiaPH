@@ -265,7 +265,10 @@
                         <td class="px-6 py-4 text-sm">
                             @php
                                 $paymentStatus = $booking->effective_payment_status ?? $booking->payment_status ?? 'pending';
-                                $attemptState = $booking->effective_attempt_state ?? data_get($booking, 'booking_data.payment_attempt.state');
+                                // A completed payment always wins over stale attempt metadata.
+                                $attemptState = in_array($paymentStatus, ['paid', 'refunded'], true)
+                                    ? null
+                                    : ($booking->effective_attempt_state ?? data_get($booking, 'booking_data.payment_attempt.state'));
                                 $paymentColors = [
                                     'paid' => 'bg-green-100 text-green-800',
                                     'pending' => 'bg-yellow-100 text-yellow-800',

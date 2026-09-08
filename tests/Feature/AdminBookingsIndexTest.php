@@ -108,6 +108,29 @@ class AdminBookingsIndexTest extends TestCase
         $this->assertSame(['TXN-PAID-1'], $bookings->pluck('transaction_id')->all());
     }
 
+    public function test_index_never_shows_an_expired_attempt_badge_for_a_paid_booking(): void
+    {
+        $this->actingAs(User::factory()->create(['user_type' => 'admin']));
+
+        Booking::create(array_merge(
+            $this->bookingAttributes('TXN-PAID-WITH-STALE-ATTEMPT', 'paid', 'confirmed'),
+            ['booking_data' => ['payment_attempt' => ['state' => 'expired']]]
+        ));
+
+        $view = app(AdminBookingsController::class)->index(Request::create('/admin/bookings', 'GET'));
+        $booking = $view->getData()['bookings']->getCollection()->firstWhere(
+            'transaction_id',
+            'TXN-PAID-WITH-STALE-ATTEMPT'
+        );
+
+        $this->assertSame('paid', $booking->effective_payment_status);
+        $this->assertNull($booking->effective_attempt_state);
+
+        $html = $view->render();
+        $this->assertStringContainsString('Paid', $html);
+        $this->assertStringNotContainsString('Expired Attempt', $html);
+    }
+
     public function test_index_can_show_payment_attempts_when_requested(): void
     {
         Booking::create($this->bookingAttributes('TXN-PAID-1', 'paid', 'confirmed'));
