@@ -28,6 +28,9 @@ class AdminDashboardController extends Controller
         $bookingView = $this->normalizeSalesView($request->query('booking_view', $defaultChartView));
         $pendingWindowMinutes = (int) config('booking.payment_attempt_expiry_minutes', 1440);
         $pendingCutoff = now()->subMinutes($pendingWindowMinutes);
+        $pendingWindowLabel = $pendingWindowMinutes >= 1440
+            ? ((int) ceil($pendingWindowMinutes / 1440)) . '-day'
+            : $pendingWindowMinutes . '-minute';
         $applyRange = function (Builder $query, string $dateColumn) use ($start, $end) {
             return $query->when(
                 $start && $end,
@@ -439,7 +442,7 @@ class AdminDashboardController extends Controller
             [
                 'label' => 'Live Pending',
                 'value' => $fmtInt($pendingBookings),
-                'description' => 'Current 60-minute snapshot',
+                'description' => 'Current 24-hour snapshot',
                 'icon' => 'clock-3',
                 'iconWrap' => 'bg-orange-50 text-orange-500',
                 'linkTone' => 'text-orange-500',
@@ -482,7 +485,7 @@ class AdminDashboardController extends Controller
                 'label' => 'Live Pending Value',
                 'value' => $fmtMoney($pendingRevenue),
                 'caption' => 'Potential booking value',
-                'meta' => "Active payment attempts within {$pendingWindowMinutes} minutes",
+                'meta' => 'Active payment attempts within 24 hours',
                 'accent' => 'text-orange-500',
             ],
             [
