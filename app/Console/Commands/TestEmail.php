@@ -56,10 +56,24 @@ class TestEmail extends Command
         ];
 
         try {
-            Mail::to($email)->send(new BookingConfirmation($bookingData, $selectedActivities));
+            Mail::to($email)->sendNow(new BookingConfirmation([
+                'bookingData' => $bookingData,
+                'selectedActivities' => $selectedActivities,
+                'grandTotal' => 2500,
+                'customerInfo' => [
+                    'first_name' => 'Test',
+                    'last_name' => 'User',
+                    'email' => $email,
+                ],
+                'isDayvisit' => true,
+            ]));
             $this->info('Test email sent successfully!');
-        } catch (\Exception $e) {
+
+            return self::SUCCESS;
+        } catch (\Throwable $e) {
             $this->error('Failed to send test email: ' . $e->getMessage());
+
+            return self::FAILURE;
         }
     }
 }

@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Mail\BookingConfirmation;
 use App\Models\Booking;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class ExpireStalePendingBookingsCommandTest extends TestCase
@@ -48,6 +50,72 @@ class ExpireStalePendingBookingsCommandTest extends TestCase
         $this->assertSame('confirmed', $freshBooking->status);
         $this->assertNull(Cache::get('paymongo_checkout_reference:cs_stale_1'));
         $this->assertNull(Cache::get('paymongo_checkout_context:TXN-STALE-1'));
+    }
+
+    public function test_command_recovers_a_fresh_paid_checkout_without_waiting_for_expiry(): void
+    {
+        config(['services.paymongo.secret_key' => 'test-secret']);
+        Mail::fake();
+        Http::fake([
+            'https://api.paymongo.com/v1/checkout_sessions/cs_fresh_paid' => Http::response([
+                'data' => [
+                    'attributes' => [
+                        'paid_at' => now()->timestamp,
+                        'payments' => [[
+                            'id' => 'pay_fresh_paid',
+                            'attributes' => [
+                                'status' => 'paid',
+                                'amount' => 500000,
+                            ],
+                        ]],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $booking = Booking::create($this->pendingBookingAttributes('TXN-FRESH-PAID', 'cs_fresh_paid'));
+
+        $this->artisan('bookings:expire-stale-pending', ['--minutes' => 1440])
+            ->assertSuccessful();
+
+        $booking->refresh();
+        $this->assertSame('paid', $booking->payment_status);
+        $this->assertSame('confirmed', $booking->status);
+        $this->assertSame('paid', data_get($booking->booking_data, 'payment_attempt.state'));
+        $this->assertSame('pay_fresh_paid', $booking->payment_reference);
+        Mail::assertSent(BookingConfirmation::class, fn (BookingConfirmation $mail) => $mail->hasTo('pending@example.com'));
+        Mail::assertNotQueued(BookingConfirmation::class);
+
+        $this->artisan('bookings:expire-stale-pending', ['--minutes' => 1440])
+            ->assertSuccessful();
+        Mail::assertSentCount(1);
+    }
+
+    public function test_command_sends_confirmation_when_recovering_a_paid_day_visit(): void
+    {
+        config(['services.paymongo.secret_key' => 'test-secret']);
+        Mail::fake();
+        Http::fake([
+            'https://api.paymongo.com/v1/checkout_sessions/cs_dayvisit_paid' => Http::response([
+                'data' => ['attributes' => ['paid_at' => now()->timestamp, 'payments' => [[
+                    'id' => 'pay_dayvisit_paid',
+                    'attributes' => ['status' => 'paid', 'amount' => 250000],
+                ]]]],
+            ]),
+        ]);
+
+        Booking::create(array_merge(
+            $this->pendingBookingAttributes('TXN-DAYVISIT-PAID', 'cs_dayvisit_paid'),
+            ['booking_type' => 'dayvisit']
+        ));
+
+        $this->artisan('bookings:expire-stale-pending', ['--minutes' => 1440])
+            ->assertSuccessful();
+
+        Mail::assertSent(BookingConfirmation::class, fn (BookingConfirmation $mail) =>
+            $mail->hasTo('pending@example.com') && $mail->isDayvisit && !$mail->isStaycation
+        );
+        Mail::assertNotQueued(BookingConfirmation::class);
     }
 
     private function pendingBookingAttributes(string $transactionId, string $checkoutId): array

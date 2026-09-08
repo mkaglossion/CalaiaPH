@@ -15,6 +15,8 @@ use App\Models\Food;
 use App\Models\Staycation;
 use App\Models\AdminSystemAlert;
 use App\Models\AdminActivityLog;
+use App\Services\PaymentService;
+use App\Services\PaymongoWebhookService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -22,6 +24,8 @@ class AdminDashboardController extends Controller
 {
     public function index(Request $request)
     {
+        $this->reconcileRecentPendingPaymongoPayments();
+
         [$start, $end, $rangeLabel, $range] = $this->resolveDateRange($request);
         $defaultChartView = $this->chartViewFromRange($range, 'daily');
         $salesView = $this->normalizeSalesView($request->query('sales_view', $defaultChartView));
@@ -341,6 +345,53 @@ class AdminDashboardController extends Controller
             $viewData,
             $this->buildDashboardViewData($request, $viewData)
         ));
+    }
+
+    private function reconcileRecentPendingPaymongoPayments(): void
+    {
+        $paymentService = app(PaymentService::class);
+
+        Booking::query()
+            ->where('payment_method', 'paymongo')
+            ->where('payment_status', 'pending')
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->whereNotNull('paymongo_checkout_id')
+            ->latest('id')
+            ->limit(25)
+            ->get()
+            ->each(function (Booking $booking) use ($paymentService) {
+                $paymentStatus = $paymentService->getCheckoutPaymentStatus($booking->paymongo_checkout_id);
+
+                if (($paymentStatus['status'] ?? null) !== 'paid') {
+                    return;
+                }
+
+                $paymentService->confirmPendingBooking($booking, [
+                    'checkout_id' => $booking->paymongo_checkout_id,
+                    'payment_reference' => $paymentStatus['payment_reference'] ?? null,
+                    'paid_amount_centavos' => $paymentStatus['paid_amount_centavos'] ?? null,
+                ]);
+            });
+
+        PackageBooking::query()
+            ->where('payment_status', 'pending')
+            ->where('status', 'pending_payment')
+            ->whereNotNull('paymongo_reference')
+            ->latest('id')
+            ->limit(25)
+            ->get()
+            ->each(function (PackageBooking $booking) use ($paymentService) {
+                $paymentStatus = $paymentService->getCheckoutPaymentStatus($booking->paymongo_reference);
+
+                if (($paymentStatus['status'] ?? null) !== 'paid') {
+                    return;
+                }
+
+                PaymongoWebhookService::markPackageBookingPaid(
+                    $booking,
+                    $paymentStatus['payment_reference'] ?? $booking->paymongo_reference
+                );
+            });
     }
 
     private function buildDashboardViewData(Request $request, array $data): array

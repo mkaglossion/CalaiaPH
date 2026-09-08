@@ -319,9 +319,13 @@
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">Payment Information</h2>
                 @php
                     $paymentStatus = strtolower((string) ($booking->payment_status ?? 'pending'));
-                    $attemptState = data_get($booking, 'booking_data.payment_attempt.state');
-                    $isPendingExpired = in_array($paymentStatus, ['pending', 'failed'], true)
-                        || in_array($attemptState, ['pending', 'expired', 'failed'], true);
+                    $isPaymentFinalized = in_array($paymentStatus, ['paid', 'refunded'], true);
+                    $attemptState = $isPaymentFinalized
+                        ? null
+                        : data_get($booking, 'booking_data.payment_attempt.state');
+                    $isPendingExpired = !$isPaymentFinalized
+                        && (in_array($paymentStatus, ['pending', 'failed'], true)
+                            || in_array($attemptState, ['pending', 'expired', 'failed'], true));
                     $attemptLabel = match ($attemptState) {
                         'expired' => 'Expired Attempt',
                         'failed' => 'Failed Attempt',
@@ -381,3 +385,15 @@
     </div>
 </div>
 @endsection
+
+@if(in_array(strtolower((string) ($booking->payment_status ?? 'pending')), ['pending', 'failed'], true))
+@push('scripts')
+<script>
+    window.setInterval(() => {
+        if (document.visibilityState === 'visible') {
+            window.location.reload();
+        }
+    }, 15000);
+</script>
+@endpush
+@endif

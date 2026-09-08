@@ -388,7 +388,7 @@ class PaymentService
         $foods = \App\Models\Food::all()->keyBy('id');
 
         try {
-            Mail::to($paymentData['email'])->queue(new BookingConfirmation([
+            Mail::to($paymentData['email'])->sendNow(new BookingConfirmation([
                 'bookingData' => $staycationBooking,
                 'selectedActivities' => $staycationBooking['selected_activities'] ?? [],
                 'selectedActivityPackages' => $staycationBooking['selected_activity_packages'] ?? [],
@@ -468,7 +468,7 @@ class PaymentService
         }
 
         try {
-            Mail::to($paymentData['email'])->queue(new BookingConfirmation([
+            Mail::to($paymentData['email'])->sendNow(new BookingConfirmation([
                 'bookingData' => $dayvisitBooking,
                 'selectedActivities' => $selectedActivities,
                 'grandTotal' => $grandTotalPaid,
@@ -555,7 +555,7 @@ class PaymentService
         }
 
         try {
-            Mail::to($paymentData['email'])->queue(new BookingConfirmation([
+            Mail::to($paymentData['email'])->sendNow(new BookingConfirmation([
                 'bookingData' => $bookingData,
                 'selectedActivities' => $selectedActivities,
                 'grandTotal' => $grandTotal,
@@ -777,11 +777,19 @@ class PaymentService
         return $booking;
     }
 
-    private function queueConfirmedStaycationEmail(Booking $booking, array $paymentData): void
+    public function sendConfirmedBookingEmail(Booking $booking, array $paymentData = []): bool
     {
         $bookingData = is_array($booking->booking_data) ? $booking->booking_data : [];
         $accommodations = collect($bookingData['accommodations'] ?? [])
             ->filter(fn ($accommodation) => is_array($accommodation));
+        $customerInfo = array_merge(
+            is_array($bookingData['payment_data'] ?? null) ? $bookingData['payment_data'] : [],
+            [
+                'email' => $booking->customer_email,
+                'phone' => $booking->customer_phone,
+            ],
+            $paymentData
+        );
 
         $bookingData['transaction_id'] = $booking->transaction_id;
         $bookingData['total_guests'] = $accommodations->sum(
@@ -792,26 +800,42 @@ class PaymentService
         $bookingData['payment_summary']['grand_total_paid'] = (float) $booking->total_amount;
 
         try {
-            Mail::to($booking->customer_email)->queue(new BookingConfirmation([
+            $mailData = [
                 'bookingData' => $bookingData,
                 'selectedActivities' => $bookingData['selected_activities'] ?? [],
-                'selectedActivityPackages' => $bookingData['selected_activity_packages'] ?? [],
-                'selectedFoods' => $bookingData['selected_foods'] ?? [],
-                'staycations' => \App\Models\Staycation::all()->keyBy('id'),
-                'foods' => \App\Models\Food::all()->keyBy('id'),
                 'grandTotal' => (float) $booking->total_amount,
-                'customerInfo' => array_merge([
-                    'email' => $booking->customer_email,
-                    'phone' => $booking->customer_phone,
-                ], $paymentData),
-                'isStaycation' => true,
-            ]));
+                'customerInfo' => $customerInfo,
+            ];
+
+            if (($booking->booking_type ?? null) === 'staycation') {
+                $mailData = array_merge($mailData, [
+                    'selectedActivityPackages' => $bookingData['selected_activity_packages'] ?? [],
+                    'selectedFoods' => $bookingData['selected_foods'] ?? [],
+                    'staycations' => \App\Models\Staycation::all()->keyBy('id'),
+                    'foods' => \App\Models\Food::all()->keyBy('id'),
+                    'isStaycation' => true,
+                ]);
+            } else {
+                $mailData['isDayvisit'] = true;
+            }
+
+            Mail::to($booking->customer_email)->sendNow(new BookingConfirmation($mailData));
+
+            Log::info('Sent confirmed booking email', [
+                'booking_id' => $booking->id,
+                'booking_transaction' => $booking->transaction_id,
+                'email' => $booking->customer_email,
+            ]);
+
+            return true;
         } catch (\Throwable $e) {
-            Log::error('Failed to send confirmed staycation booking email', [
+            Log::error('Failed to send confirmed booking email', [
                 'booking_transaction' => $booking->transaction_id,
                 'email' => $booking->customer_email,
                 'error' => $e->getMessage(),
             ]);
+
+            return false;
         }
     }
 
@@ -831,12 +855,18 @@ class PaymentService
 
         $checkoutSessionId = $paymentData['checkout_id'] ?? $paymentData['checkout_session_id'] ?? null;
         $paymentReference = $paymentData['payment_reference'] ?? $paymentData['reference_id'] ?? null;
+        $confirmedBookingData = $this->withPaymentAttemptMetadata(
+            is_array($booking->booking_data) ? $booking->booking_data : [],
+            'paid',
+            'payment_confirmed'
+        );
 
         if (($booking->payment_status ?? null) === 'paid') {
             $updates = array_filter([
                 'paymongo_checkout_id' => $checkoutSessionId,
                 'payment_reference' => $paymentReference,
             ], fn ($value) => !empty($value));
+            $updates['booking_data'] = $confirmedBookingData;
 
             if (!empty($updates)) {
                 $booking->update($updates);
@@ -851,11 +881,19 @@ class PaymentService
             return $booking->fresh();
         }
 
-        DB::transaction(function () use ($booking, $grandTotalPaid, $checkoutSessionId, $paymentReference, $paymentData) {
+        $didConfirm = false;
+
+        DB::transaction(function () use ($booking, $grandTotalPaid, $checkoutSessionId, $paymentReference, &$didConfirm) {
             $lockedBooking = Booking::query()->lockForUpdate()->findOrFail($booking->id);
             if (($lockedBooking->payment_status ?? null) === 'paid') {
                 return;
             }
+
+            $confirmedBookingData = $this->withPaymentAttemptMetadata(
+                is_array($lockedBooking->booking_data) ? $lockedBooking->booking_data : [],
+                'paid',
+                'payment_confirmed'
+            );
 
             $lockedBooking->update([
                 'total_amount' => $grandTotalPaid,
@@ -863,6 +901,7 @@ class PaymentService
                 'status' => 'confirmed',
                 'paymongo_checkout_id' => $checkoutSessionId,
                 'payment_reference' => $paymentReference,
+                'booking_data' => $confirmedBookingData,
             ]);
 
             // Handle inventory based on booking type
@@ -894,9 +933,21 @@ class PaymentService
                 // For staycation, reduce inventory
                 $lockedBooking->reduceInventory(true);
             }
+
+            $didConfirm = true;
         });
 
         $booking->refresh();
+        if (!$didConfirm) {
+            Log::info('Skipped duplicate booking confirmation after concurrent payment processing', [
+                'booking_id' => $booking->id,
+                'transaction_id' => $booking->transaction_id,
+                'checkout_session_id' => $checkoutSessionId,
+            ]);
+
+            return $booking;
+        }
+
         if ($booking->bookingGuests()->count() === 0) {
             $bookingData = is_array($booking->booking_data) ? $booking->booking_data : [];
             $this->persistBookingGuests($booking, $bookingData, [
@@ -906,9 +957,7 @@ class PaymentService
             ]);
         }
 
-        if (($booking->booking_type ?? null) === 'staycation') {
-            $this->queueConfirmedStaycationEmail($booking, $paymentData);
-        }
+        $this->sendConfirmedBookingEmail($booking, $paymentData);
 
         Log::info('Confirmed pending booking after successful payment', [
             'booking_id' => $booking->id,
@@ -1077,7 +1126,7 @@ class PaymentService
             'updated_at' => now()->toDateTimeString(),
         ]);
 
-        if (in_array($state, ['failed', 'expired'], true)) {
+        if (in_array($state, ['paid', 'failed', 'expired'], true)) {
             $bookingData['payment_attempt']['closed_at'] = now()->toDateTimeString();
         }
 

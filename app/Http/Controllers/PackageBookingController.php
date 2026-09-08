@@ -125,7 +125,7 @@ class PackageBookingController extends Controller
 
             // Send confirmation email if payment successful
             if ($validated['payment_status'] === 'paid') {
-                Mail::to($booking->email)->queue(new PackageBookingConfirmation($booking));
+                Mail::to($booking->email)->sendNow(new PackageBookingConfirmation($booking));
             }
 
             return response()->json([

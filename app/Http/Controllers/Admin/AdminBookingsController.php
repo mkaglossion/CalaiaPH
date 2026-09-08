@@ -15,18 +15,18 @@ use App\Models\PaymongoWebhookEvent;
 use App\Models\Staycation;
 use App\Models\StaycationInventory;
 use App\Services\PaymentService;
+use App\Services\PaymongoWebhookService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class AdminBookingsController extends Controller
 {
-    private const PENDING_WINDOW_MINUTES = 60;
-
     public function index(Request $request)
     {
         $pendingCutoff = $this->pendingCutoff();
@@ -426,6 +426,21 @@ class AdminBookingsController extends Controller
     {
         $booking = Booking::with(['bookingGuests.signer'])->findOrFail($id);
 
+        if (($booking->payment_method ?? null) === 'paymongo'
+            && in_array(($booking->payment_status ?? null), ['pending', 'failed'], true)
+            && !empty($booking->paymongo_checkout_id)) {
+            $paymentStatus = app(PaymentService::class)->getCheckoutPaymentStatus($booking->paymongo_checkout_id);
+
+            if (($paymentStatus['status'] ?? null) === 'paid') {
+                app(PaymentService::class)->confirmPendingBooking($booking, [
+                    'checkout_id' => $booking->paymongo_checkout_id,
+                    'payment_reference' => $paymentStatus['payment_reference'] ?? null,
+                    'paid_amount_centavos' => $paymentStatus['paid_amount_centavos'] ?? null,
+                ]);
+                $booking = Booking::with(['bookingGuests.signer'])->findOrFail($id);
+            }
+        }
+
         $staycations = Staycation::with('swiperImages')->get()->keyBy('id');
         $bookingData = is_array($booking->booking_data) ? $booking->booking_data : [];
 
@@ -465,9 +480,12 @@ class AdminBookingsController extends Controller
 
         $guest = BookingGuest::where('booking_id', $booking->id)->whereKey($guestId)->firstOrFail();
         abort_unless(!empty($guest->signature_path), 404);
-        abort_unless(Storage::disk('local')->exists($guest->signature_path), 404);
 
-        return Storage::disk('local')->response($guest->signature_path, basename($guest->signature_path), [
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('local');
+        abort_unless($disk->exists($guest->signature_path), 404);
+
+        return $disk->response($guest->signature_path, basename($guest->signature_path), [
             'Cache-Control' => 'private, no-store, max-age=0',
         ]);
     }
@@ -1062,7 +1080,7 @@ class AdminBookingsController extends Controller
 
     private function pendingCutoff(): Carbon
     {
-        return now()->subMinutes(self::PENDING_WINDOW_MINUTES);
+        return now()->subMinutes((int) config('booking.payment_attempt_expiry_minutes', 1440));
     }
 
     private function expireStalePendingBookings(Carbon $pendingCutoff, PaymentService $paymentService): void
@@ -1075,6 +1093,21 @@ class AdminBookingsController extends Controller
             ->orderBy('id')
             ->get()
             ->each(function (Booking $booking) use ($paymentService) {
+                $paymentStatus = $paymentService->getCheckoutPaymentStatus($booking->paymongo_checkout_id);
+
+                if (($paymentStatus['status'] ?? null) === 'paid') {
+                    $paymentService->confirmPendingBooking($booking, [
+                        'checkout_id' => $booking->paymongo_checkout_id,
+                        'payment_reference' => $paymentStatus['payment_reference'] ?? null,
+                        'paid_amount_centavos' => $paymentStatus['paid_amount_centavos'] ?? null,
+                    ]);
+                    return;
+                }
+
+                if (($paymentStatus['status'] ?? null) === 'unknown') {
+                    return;
+                }
+
                 $paymentService->failPendingBooking(
                     $booking,
                     $booking->paymongo_checkout_id,
@@ -1092,7 +1125,21 @@ class AdminBookingsController extends Controller
             ->where('created_at', '<', $pendingCutoff)
             ->orderBy('id')
             ->get()
-            ->each(function (PackageBooking $booking) {
+            ->each(function (PackageBooking $booking) use ($paymentService) {
+                $paymentStatus = $paymentService->getCheckoutPaymentStatus($booking->paymongo_reference);
+
+                if (($paymentStatus['status'] ?? null) === 'paid') {
+                    PaymongoWebhookService::markPackageBookingPaid(
+                        $booking,
+                        $paymentStatus['payment_reference'] ?? $booking->paymongo_reference
+                    );
+                    return;
+                }
+
+                if (($paymentStatus['status'] ?? null) === 'unknown') {
+                    return;
+                }
+
                 $booking->update([
                     'payment_status' => 'failed',
                     'status' => 'cancelled',
@@ -1111,9 +1158,11 @@ class AdminBookingsController extends Controller
             && $createdAt->lt($pendingCutoff);
 
         $booking->effective_payment_status = $isStalePending ? 'failed' : $paymentStatus;
-        $booking->effective_attempt_state = $isStalePending
-            ? 'expired'
-            : ($attemptState ?: ($paymentStatus === 'pending' ? 'pending' : null));
+        $booking->effective_attempt_state = in_array($paymentStatus, ['paid', 'refunded'], true)
+            ? null
+            : ($isStalePending
+                ? 'expired'
+                : ($attemptState ?: ($paymentStatus === 'pending' ? 'pending' : null)));
         $booking->is_stale_pending = $isStalePending;
         $booking->is_live_pending = $paymentStatus === 'pending' && !$isStalePending;
 

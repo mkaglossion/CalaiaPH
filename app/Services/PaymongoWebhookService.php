@@ -456,29 +456,34 @@ class PaymongoWebhookService
         }
 
         try {
-            DB::transaction(function () use ($pb, $paymentReference) {
-                $pb->payment_status = 'paid';
-                $pb->payment_reference = $paymentReference;
-                $pb->status = 'confirmed';
-                $pb->save();
+            $shouldSendConfirmation = false;
 
-                $inv = PackageInventory::where('package_id', $pb->package_id)
-                    ->whereDate('date', $pb->booking_date)
+            DB::transaction(function () use ($pb, $paymentReference, &$shouldSendConfirmation) {
+                $lockedBooking = PackageBooking::query()->lockForUpdate()->findOrFail($pb->id);
+                $shouldSendConfirmation = ($lockedBooking->payment_status ?? null) !== 'paid';
+
+                $lockedBooking->payment_status = 'paid';
+                $lockedBooking->payment_reference = $paymentReference;
+                $lockedBooking->status = 'confirmed';
+                $lockedBooking->save();
+
+                $inv = PackageInventory::where('package_id', $lockedBooking->package_id)
+                    ->whereDate('date', $lockedBooking->booking_date)
                     ->first();
 
-                if (!$inv || ($pb->inventory_booked ?? false)) {
+                if (!$inv || ($lockedBooking->inventory_booked ?? false)) {
                     return;
                 }
 
-                $groups = $pb->groups_booked ?? 1;
+                $groups = $lockedBooking->groups_booked ?? 1;
                 $booked = $inv->bookGroups($groups);
                 if ($booked) {
-                    $pb->inventory_booked = true;
-                    $pb->save();
+                    $lockedBooking->inventory_booked = true;
+                    $lockedBooking->save();
                     AdminSystemAlert::create([
                         'type' => 'inventory',
                         'severity' => 'info',
-                        'message' => "Booked {$groups} group(s) for package inventory via payment processing (package_id={$pb->package_id}, date={$pb->booking_date})",
+                        'message' => "Booked {$groups} group(s) for package inventory via payment processing (package_id={$lockedBooking->package_id}, date={$lockedBooking->booking_date})",
                         'data' => ['booking_id' => $pb->id, 'inventory_id' => $inv->id]
                     ]);
                     Log::info('Booked package inventory via payment processing', ['booking_id' => $pb->id, 'inventory_id' => $inv->id]);
@@ -493,10 +498,13 @@ class PaymongoWebhookService
                 }
             });
 
-            try {
-                Mail::to($pb->email)->queue(new PackageBookingConfirmation($pb));
-            } catch (\Exception $e) {
-                Log::error("Failed to queue package booking confirmation email", ['error' => $e->getMessage(), 'booking_id' => $pb->id]);
+            $pb->refresh();
+            if ($shouldSendConfirmation) {
+                try {
+                    Mail::to($pb->email)->sendNow(new PackageBookingConfirmation($pb));
+                } catch (\Exception $e) {
+                    Log::error("Failed to send package booking confirmation email", ['error' => $e->getMessage(), 'booking_id' => $pb->id]);
+                }
             }
 
             Log::info("PackageBooking marked paid via payment processing", ['id' => $pb->id, 'payment_reference' => $paymentReference]);
@@ -686,7 +694,7 @@ class PaymongoWebhookService
                 $paymentData['paid_amount_centavos'] = $paidAmountCentavos;
             }
 
-            if (($existingBooking->payment_status ?? null) === 'pending') {
+            if (in_array(($existingBooking->payment_status ?? null), ['pending', 'failed'], true)) {
                 /** @var \App\Services\PaymentService $paymentService */
                 $paymentService = app(PaymentService::class);
                 $paymentService->confirmPendingBooking($existingBooking, $paymentData);

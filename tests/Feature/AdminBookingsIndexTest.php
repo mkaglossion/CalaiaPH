@@ -7,6 +7,8 @@ use App\Models\Booking;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class AdminBookingsIndexTest extends TestCase
@@ -123,6 +125,49 @@ class AdminBookingsIndexTest extends TestCase
         $this->assertEqualsCanonicalizing(
             ['TXN-CONFIRMED-OPERATIONAL'],
             $todayView->getData()['bookings']->getCollection()->pluck('transaction_id')->all()
+        );
+    }
+
+    public function test_index_reconciles_a_stale_paid_checkout_before_expiring_it(): void
+    {
+        config([
+            'booking.payment_attempt_expiry_minutes' => 60,
+            'services.paymongo.secret_key' => 'test-secret',
+        ]);
+        Mail::fake();
+        Http::fake([
+            'https://api.paymongo.com/v1/checkout_sessions/cs_stale_paid' => Http::response([
+                'data' => [
+                    'attributes' => [
+                        'payments' => [[
+                            'id' => 'pay_stale_paid',
+                            'attributes' => [
+                                'status' => 'paid',
+                                'amount' => 500000,
+                            ],
+                        ]],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $booking = Booking::create(array_merge(
+            $this->bookingAttributes('TXN-STALE-PAID', 'pending', 'pending'),
+            ['paymongo_checkout_id' => 'cs_stale_paid']
+        ));
+        $booking->forceFill(['created_at' => now()->subHours(2)])->save();
+
+        $view = app(AdminBookingsController::class)->index(Request::create('/admin/bookings', 'GET', [
+            'payment_scope' => 'operational',
+        ]));
+
+        $booking->refresh();
+        $this->assertSame('paid', $booking->payment_status);
+        $this->assertSame('confirmed', $booking->status);
+        $this->assertSame('paid', data_get($booking->booking_data, 'payment_attempt.state'));
+        $this->assertSame(
+            ['TXN-STALE-PAID'],
+            $view->getData()['bookings']->getCollection()->pluck('transaction_id')->all()
         );
     }
 

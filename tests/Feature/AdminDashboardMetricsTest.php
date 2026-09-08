@@ -12,6 +12,8 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class AdminDashboardMetricsTest extends TestCase
@@ -93,6 +95,47 @@ class AdminDashboardMetricsTest extends TestCase
         $this->assertSame(0, $data['lowStockFoods']);
         $this->assertCount(3, $data['recentBookings']);
         $this->assertSame('TXN-PAID-1', $data['recentBookings']->first()->transaction_id);
+    }
+
+    public function test_dashboard_reconciles_a_paid_paymongo_checkout_before_rendering_recent_bookings(): void
+    {
+        config(['services.paymongo.secret_key' => 'test-secret']);
+        Mail::fake();
+        Http::fake([
+            'https://api.paymongo.com/v1/checkout_sessions/cs_dashboard_paid' => Http::response([
+                'data' => [
+                    'attributes' => [
+                        'paid_at' => now()->timestamp,
+                        'payments' => [[
+                            'id' => 'pay_dashboard_paid',
+                            'attributes' => [
+                                'status' => 'paid',
+                                'amount' => 4020000,
+                            ],
+                        ]],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $booking = Booking::create(array_merge(
+            $this->bookingAttributes('TXN-DASHBOARD-PAID', 'pending', 'pending'),
+            [
+                'customer_name' => 'Katrina Rodriguez',
+                'total_amount' => 40200,
+                'paymongo_checkout_id' => 'cs_dashboard_paid',
+            ]
+        ));
+
+        $view = app(AdminDashboardController::class)->index(Request::create('/admin/dashboard', 'GET'));
+
+        $booking->refresh();
+        $recentCard = collect($view->getData()['recentBookingCards'])
+            ->firstWhere('name', 'Katrina Rodriguez');
+
+        $this->assertSame('paid', $booking->payment_status);
+        $this->assertSame('confirmed', $booking->status);
+        $this->assertSame('Confirmed', $recentCard['status'] ?? null);
     }
 
     public function test_dashboard_builds_paid_sales_report_and_live_pending_value(): void

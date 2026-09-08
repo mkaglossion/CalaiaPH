@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Mail\PackageBookingConfirmation;
 use App\Models\Booking;
 use App\Models\AdminSystemAlert;
 use App\Models\Package;
 use App\Models\PackageBooking;
+use App\Models\PaymongoWebhookEvent;
 use App\Services\PaymongoWebhookService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -15,6 +17,53 @@ use Tests\TestCase;
 class PaymongoWebhookTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_webhook_endpoint_accepts_a_valid_live_signature(): void
+    {
+        config(['services.paymongo.webhook_secret' => 'whsec_test_valid']);
+
+        $payload = [
+            'data' => [
+                'id' => 'evt_signature_test',
+                'type' => 'event',
+                'attributes' => [
+                    'type' => 'test.signature_check',
+                    'livemode' => true,
+                    'data' => [
+                        'id' => 'test_signature_resource',
+                        'type' => 'test_resource',
+                        'attributes' => [],
+                    ],
+                ],
+            ],
+        ];
+        $json = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        $timestamp = (string) now()->timestamp;
+        $signature = hash_hmac('sha256', $timestamp . '.' . $json, 'whsec_test_valid');
+
+        $response = $this->call(
+            'POST',
+            '/api/paymongo/webhook',
+            [],
+            [],
+            [],
+            [
+                'CONTENT_TYPE' => 'application/json',
+                'HTTP_ACCEPT' => 'application/json',
+                'HTTP_PAYMONGO_SIGNATURE' => "t={$timestamp},te=,li={$signature}",
+            ],
+            $json
+        );
+
+        $response->assertOk()->assertJson([
+            'success' => true,
+            'handled' => false,
+        ]);
+
+        $event = PaymongoWebhookEvent::latest('id')->firstOrFail();
+        $this->assertTrue($event->signature_valid);
+        $this->assertSame(200, $event->http_status);
+    }
 
     public function test_checkout_session_paid_event_envelope_marks_package_booking_paid(): void
     {
@@ -82,6 +131,11 @@ class PaymongoWebhookTest extends TestCase
         $this->assertSame('confirmed', $booking->status);
         $this->assertSame('paid', $booking->payment_status);
         $this->assertSame('pay_test_123', $booking->payment_reference);
+        Mail::assertSent(PackageBookingConfirmation::class, fn (PackageBookingConfirmation $mail) => $mail->hasTo('mark@example.com'));
+        Mail::assertNotQueued(PackageBookingConfirmation::class);
+
+        $this->assertTrue(PaymongoWebhookService::handleWebhook($payload));
+        Mail::assertSentCount(1);
     }
 
     public function test_checkout_session_paid_event_can_confirm_existing_pending_booking_from_cached_reference(): void
