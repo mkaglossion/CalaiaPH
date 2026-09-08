@@ -5,7 +5,7 @@ Alpine.data('dashboard', (initialRange = 'today', initialSalesView = 'daily', in
   salesView: initialSalesView,
   bookingView: initialBookingView,
   isLoading: false,
-  autoRefresh: false,
+  autoRefresh: true,
   refreshInterval: null,
   showShortcuts: false,
   shortcutUsed: false,
@@ -23,7 +23,7 @@ Alpine.data('dashboard', (initialRange = 'today', initialSalesView = 'daily', in
     this.stopAutoRefresh()
 
     this.refreshInterval = setInterval(() => {
-      if (!this.isLoading) {
+      if (!this.isLoading && document.visibilityState === 'visible') {
         window.location.reload()
       }
     }, 30000)
@@ -74,6 +74,7 @@ Alpine.data('dashboard', (initialRange = 'today', initialSalesView = 'daily', in
     }
 
     document.addEventListener('keydown', this.handleKeydown)
+    this.startAutoRefresh()
   },
 
   destroy() {

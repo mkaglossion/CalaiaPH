@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Booking;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class ExpireStalePendingBookingsCommandTest extends TestCase
@@ -13,6 +14,14 @@ class ExpireStalePendingBookingsCommandTest extends TestCase
 
     public function test_command_expires_only_stale_pending_paymongo_bookings(): void
     {
+        config(['services.paymongo.secret_key' => 'test-secret']);
+
+        Http::fake([
+            'https://api.paymongo.com/v1/checkout_sessions/*' => Http::response([
+                'data' => ['attributes' => ['payments' => []]],
+            ]),
+        ]);
+
         $staleBooking = Booking::create($this->pendingBookingAttributes('TXN-STALE-1', 'cs_stale_1'));
         $staleBooking->forceFill([
             'created_at' => now()->subHours(2),

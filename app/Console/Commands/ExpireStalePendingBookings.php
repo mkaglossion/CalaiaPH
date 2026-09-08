@@ -14,7 +14,7 @@ class ExpireStalePendingBookings extends Command
      *
      * @var string
      */
-    protected $signature = 'bookings:expire-stale-pending {--minutes=60 : Age threshold in minutes before pending PayMongo bookings are cancelled}';
+    protected $signature = 'bookings:expire-stale-pending {--minutes=1440 : Age threshold in minutes before pending PayMongo bookings are cancelled}';
 
     /**
      * The console command description.
@@ -41,6 +41,21 @@ class ExpireStalePendingBookings extends Command
         $count = 0;
 
         foreach ($bookings as $booking) {
+            $paymentStatus = $paymentService->getCheckoutPaymentStatus($booking->paymongo_checkout_id);
+            if ($paymentStatus['status'] === 'paid') {
+                $paymentService->confirmPendingBooking($booking, [
+                    'checkout_id' => $booking->paymongo_checkout_id,
+                    'payment_reference' => $paymentStatus['payment_reference'] ?? null,
+                    'paid_amount_centavos' => $paymentStatus['paid_amount_centavos'] ?? null,
+                ]);
+                continue;
+            }
+
+            if ($paymentStatus['status'] === 'unknown') {
+                $this->warn("Skipped booking {$booking->id}: PayMongo payment status could not be verified.");
+                continue;
+            }
+
             $paymentService->failPendingBookingForCheckout(
                 $booking->paymongo_checkout_id,
                 $booking->transaction_id,

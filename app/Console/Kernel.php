@@ -19,7 +19,7 @@ class Kernel extends ConsoleKernel
             ->onOneServer();
 
         // Expire abandoned PayMongo checkout attempts so only operational bookings remain active.
-        $schedule->command('bookings:expire-stale-pending --minutes=60')
+        $schedule->command('bookings:expire-stale-pending --minutes=' . config('booking.payment_attempt_expiry_minutes', 1440))
             ->everyFifteenMinutes()
             ->withoutOverlapping()
             ->onOneServer();

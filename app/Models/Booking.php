@@ -306,7 +306,7 @@ class Booking extends Model
             foreach ($accommodations as $accommodation) {
                 // Try both 'room_id' and 'id' keys for compatibility
                 $staycationId = $accommodation['room_id'] ?? $accommodation['id'] ?? null;
-                $quantity = $accommodation['quantity'] ?? 1;
+                $quantity = $this->inventoryQuantityForAccommodation($accommodation, $staycationId);
                 
                 if ($staycationId && $quantity > 0) {
                     try {
@@ -391,7 +391,7 @@ class Booking extends Model
             foreach ($accommodations as $accommodation) {
                 // Try both 'room_id' and 'id' keys for compatibility
                 $staycationId = $accommodation['room_id'] ?? $accommodation['id'] ?? null;
-                $quantity = $accommodation['quantity'] ?? 1;
+                $quantity = $this->inventoryQuantityForAccommodation($accommodation, $staycationId);
                 
                 if ($staycationId && $quantity > 0) {
                     try {
@@ -413,6 +413,23 @@ class Booking extends Model
 
         // Restore food inventory
         $this->restoreFoodInventory();
+    }
+
+    private function inventoryQuantityForAccommodation(array $accommodation, int|string|null $staycationId): int
+    {
+        if (!$staycationId) {
+            return 0;
+        }
+
+        $staycation = Staycation::find($staycationId);
+        $roomName = strtolower((string) ($staycation?->name ?? ''));
+        $isUnitQuantityRoom = str_contains($roomName, 'byot')
+            || str_contains($roomName, 'bring your own')
+            || str_contains($roomName, 'car camping');
+
+        return $isUnitQuantityRoom
+            ? max(1, (int) ($accommodation['quantity'] ?? 1))
+            : 1;
     }
 
     /**
@@ -453,7 +470,7 @@ class Booking extends Model
     /**
      * Log a status change in the timeline
      */
-    public function logStatusChange($oldStatus, $newStatus, $triggeredBy = 'system', $adminId = null)
+    public function logStatusChange(string $oldStatus, string $newStatus, string $triggeredBy = 'system', ?int $adminId = null): void
     {
         BookingTimeline::log(
             $this->id,
@@ -470,7 +487,7 @@ class Booking extends Model
     /**
      * Log a payment event
      */
-    public function logPaymentEvent($eventType, $amount, $method, $metadata = null)
+    public function logPaymentEvent(string $eventType, float|int $amount, string $method, ?array $metadata = null): void
     {
         BookingTimeline::log(
             $this->id,

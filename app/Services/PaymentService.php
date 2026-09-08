@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Mail\BookingConfirmation;
@@ -851,7 +852,12 @@ class PaymentService
         }
 
         DB::transaction(function () use ($booking, $grandTotalPaid, $checkoutSessionId, $paymentReference, $paymentData) {
-            $booking->update([
+            $lockedBooking = Booking::query()->lockForUpdate()->findOrFail($booking->id);
+            if (($lockedBooking->payment_status ?? null) === 'paid') {
+                return;
+            }
+
+            $lockedBooking->update([
                 'total_amount' => $grandTotalPaid,
                 'payment_status' => 'paid',
                 'status' => 'confirmed',
@@ -860,25 +866,25 @@ class PaymentService
             ]);
 
             // Handle inventory based on booking type
-            $bookingData = $booking->booking_data ?? [];
-            $bookingType = $booking->booking_type ?? ($bookingData['booking_type'] ?? null);
+            $bookingData = $lockedBooking->booking_data ?? [];
+            $bookingType = $lockedBooking->booking_type ?? ($bookingData['booking_type'] ?? null);
 
             if ($bookingType === 'dayvisit') {
                 // For dayvisit, book the slot via DayTourInventoryService
                 $packageId = $bookingData['package_id'] ?? null;
-                $date = $booking->checkin_date;
+                $date = $lockedBooking->checkin_date;
                 if ($packageId && $date) {
                     try {
                         $dayTourInventoryService = app(\App\Services\DayTourInventoryService::class);
                         $dayTourInventoryService->bookSlot($packageId, $date->toDateString(), $checkoutSessionId);
                         Log::info('Day visit inventory slot booked via webhook', [
-                            'booking_id' => $booking->id,
+                            'booking_id' => $lockedBooking->id,
                             'package_id' => $packageId,
                             'date' => $date->toDateString(),
                         ]);
                     } catch (\Exception $e) {
                         Log::error('Failed to book day visit inventory slot via webhook', [
-                            'booking_id' => $booking->id,
+                            'booking_id' => $lockedBooking->id,
                             'package_id' => $packageId,
                             'error' => $e->getMessage(),
                         ]);
@@ -886,7 +892,7 @@ class PaymentService
                 }
             } else {
                 // For staycation, reduce inventory
-                $booking->reduceInventory(true);
+                $lockedBooking->reduceInventory(true);
             }
         });
 
@@ -912,6 +918,48 @@ class PaymentService
         ]);
 
         return $booking;
+    }
+
+    /**
+     * Read the payment attached to a PayMongo checkout session before expiring it.
+     */
+    public function getCheckoutPaymentStatus(?string $checkoutSessionId): array
+    {
+        if (empty($checkoutSessionId) || empty(config('services.paymongo.secret_key'))) {
+            return ['status' => 'unknown'];
+        }
+
+        try {
+            $response = Http::withBasicAuth(config('services.paymongo.secret_key'), '')
+                ->timeout(10)
+                ->get('https://api.paymongo.com/v1/checkout_sessions/' . $checkoutSessionId);
+
+            if (!$response->successful()) {
+                return ['status' => 'unknown'];
+            }
+
+            $attributes = $response->json('data.attributes', []);
+            $payments = $attributes['payments'] ?? [];
+            $payment = is_array($payments) && !empty($payments) ? reset($payments) : [];
+            $paymentAttributes = is_array($payment['attributes'] ?? null) ? $payment['attributes'] : [];
+
+            if (($paymentAttributes['status'] ?? null) === 'paid' || !empty($attributes['paid_at'])) {
+                return [
+                    'status' => 'paid',
+                    'payment_reference' => $payment['id'] ?? null,
+                    'paid_amount_centavos' => isset($paymentAttributes['amount']) ? (int) $paymentAttributes['amount'] : null,
+                ];
+            }
+
+            return ['status' => 'not_paid'];
+        } catch (\Throwable $e) {
+            Log::warning('Unable to verify PayMongo checkout before expiry', [
+                'checkout_session_id' => $checkoutSessionId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return ['status' => 'unknown'];
+        }
     }
 
     /**

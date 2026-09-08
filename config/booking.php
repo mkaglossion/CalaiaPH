@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'payment_attempt_expiry_minutes' => 1440,
+
     'home_availability_widget' => [
         // Temporarily hidden; retain the underlying logic for easy restoration.
         'show_availability_status' => false,

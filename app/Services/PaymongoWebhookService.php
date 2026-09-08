@@ -118,7 +118,7 @@ class PaymongoWebhookService
                     'paid_amount_centavos' => is_numeric($amount) ? (int) $amount : null,
                 ];
 
-                if (($booking->payment_status ?? null) === 'pending') {
+                if (in_array(($booking->payment_status ?? null), ['pending', 'failed'], true)) {
                     $paymentService = app(PaymentService::class);
                     $paymentService->confirmPendingBooking($booking, $paymentPayload);
                 } else {
@@ -367,7 +367,7 @@ class PaymongoWebhookService
                     'paid_amount_centavos' => is_numeric($amount) ? (int) $amount : null,
                 ];
 
-                if (($booking->payment_status ?? null) === 'pending') {
+                if (in_array(($booking->payment_status ?? null), ['pending', 'failed'], true)) {
                     $paymentService = app(PaymentService::class);
                     $paymentService->confirmPendingBooking($booking, $paymentPayload);
                 } else {

@@ -50,7 +50,7 @@ class StaycationInventory extends Model
     /**
      * Reduce inventory for a specific date
      */
-    public static function reduceForDate($staycationId, $date, $quantity)
+    public static function reduceForDate(int|string $staycationId, string $date, int $quantity)
     {
         return DB::transaction(function () use ($staycationId, $date, $quantity) {
             $inventory = self::lockForUpdate()
@@ -86,7 +86,7 @@ class StaycationInventory extends Model
     /**
      * Increase inventory for a specific date (for cancellations)
      */
-    public static function increaseForDate($staycationId, $date, $quantity)
+    public static function increaseForDate(int|string $staycationId, string $date, int $quantity)
     {
         return DB::transaction(function () use ($staycationId, $date, $quantity) {
             $inventory = self::lockForUpdate()
@@ -118,7 +118,7 @@ class StaycationInventory extends Model
     /**
      * Get available quantity for a specific date
      */
-    public static function getAvailableForDate($staycationId, $date)
+    public static function getAvailableForDate(int|string $staycationId, string $date): int
     {
         $inventory = self::where('staycation_id', $staycationId)
             ->where('date', $date)

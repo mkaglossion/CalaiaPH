@@ -26,7 +26,7 @@ class AdminDashboardController extends Controller
         $defaultChartView = $this->chartViewFromRange($range, 'daily');
         $salesView = $this->normalizeSalesView($request->query('sales_view', $defaultChartView));
         $bookingView = $this->normalizeSalesView($request->query('booking_view', $defaultChartView));
-        $pendingWindowMinutes = 60;
+        $pendingWindowMinutes = (int) config('booking.payment_attempt_expiry_minutes', 1440);
         $pendingCutoff = now()->subMinutes($pendingWindowMinutes);
         $applyRange = function (Builder $query, string $dateColumn) use ($start, $end) {
             return $query->when(

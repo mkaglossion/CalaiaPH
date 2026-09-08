@@ -288,7 +288,7 @@ class AdminDashboardMetricsTest extends TestCase
             $serviceDates,
             ['total_amount' => 400]
         ));
-        $this->setCreatedAt($stale, now()->subMinutes(61));
+        $this->setCreatedAt($stale, now()->subMinutes(1441));
 
         $completed = Booking::create(array_merge(
             $this->bookingAttributes('TXN-PENDING-COMPLETED', 'pending', 'completed'),
