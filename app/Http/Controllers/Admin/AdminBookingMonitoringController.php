@@ -505,8 +505,15 @@ class AdminBookingMonitoringController extends Controller
         }
 
         $scheduleDate = $this->resolveScheduleDate($booking, 'checkin_date');
-        $accommodationLabel = $this->resolveAccommodationLabel($booking);
-        $guestCount = (int) data_get($booking->booking_data, 'total_guests', data_get($booking->booking_data, 'adults_total', data_get($booking->booking_data, 'guests', 0)));
+        $accommodationSummary = $this->summarizeStaycationAccommodations($booking);
+        $storedGuestCount = (int) data_get($booking->booking_data, 'total_guests', data_get($booking->booking_data, 'adults_total', data_get($booking->booking_data, 'guests', 0)));
+        if ($storedGuestCount === 0) {
+            $storedGuestCount = max(0, (int) data_get($booking->booking_data, 'adults', 0))
+                + max(0, (int) data_get($booking->booking_data, 'children', 0));
+        }
+        $guestCount = $accommodationSummary['guest_count'] > 0
+            ? $accommodationSummary['guest_count']
+            : $storedGuestCount;
 
         return $this->buildRow([
             'reference' => $booking->transaction_id,
@@ -520,7 +527,7 @@ class AdminBookingMonitoringController extends Controller
             'total_amount' => (float) $booking->total_amount,
             'status' => $booking->status,
             'payment_status' => $booking->payment_status ?? 'pending',
-            'details' => $accommodationLabel,
+            'details' => $accommodationSummary['label'],
             'quantity' => $guestCount > 0 ? $guestCount : null,
             'schedule_label' => $this->formatDateLabel($scheduleDate),
             'booking_label' => $booking->created_at?->format('M d, Y H:i') ?? 'N/A',
@@ -881,38 +888,71 @@ class AdminBookingMonitoringController extends Controller
         return null;
     }
 
-    private function resolveAccommodationLabel(Booking $booking): string
+    private function summarizeStaycationAccommodations(Booking $booking): array
     {
         $accommodations = data_get($booking->booking_data, 'accommodations', []);
         if (! is_array($accommodations) || empty($accommodations)) {
-            return $booking->display_type_label ?? ucfirst((string) $booking->booking_type);
+            return [
+                'label' => $booking->display_type_label ?? ucfirst((string) $booking->booking_type),
+                'guest_count' => 0,
+            ];
         }
 
-        $first = reset($accommodations);
-        if (! is_array($first)) {
-            return $booking->display_type_label ?? ucfirst((string) $booking->booking_type);
-        }
+        $staycationIds = collect($accommodations)
+            ->filter(fn ($accommodation) => is_array($accommodation))
+            ->map(fn (array $accommodation) => $accommodation['room_id'] ?? $accommodation['id'] ?? null)
+            ->filter()
+            ->unique()
+            ->values();
+        $staycationNames = Staycation::query()
+            ->whereIn('id', $staycationIds)
+            ->pluck('name', 'id');
+        $nameCounts = [];
+        $guestCount = 0;
 
-        $embeddedName = trim((string) (
-            $first['staycation']['name']
-            ?? $first['name']
-            ?? $first['accommodation_name']
-            ?? ''
-        ));
-
-        if ($embeddedName !== '') {
-            return $embeddedName;
-        }
-
-        $staycationId = $first['room_id'] ?? $first['id'] ?? null;
-        if ($staycationId) {
-            $staycation = Staycation::find($staycationId);
-            if ($staycation) {
-                return $staycation->name;
+        foreach ($accommodations as $accommodation) {
+            if (! is_array($accommodation)) {
+                continue;
             }
+
+            $staycationId = $accommodation['room_id'] ?? $accommodation['id'] ?? null;
+            $name = trim((string) (
+                $accommodation['staycation']['name']
+                ?? $accommodation['name']
+                ?? $accommodation['accommodation_name']
+                ?? ($staycationNames[$staycationId] ?? '')
+            ));
+            $name = $name !== ''
+                ? $name
+                : ($booking->display_type_label ?? ucfirst((string) $booking->booking_type));
+
+            $normalizedName = strtolower($name);
+            $usesUnitQuantity = str_contains($normalizedName, 'byot')
+                || str_contains($normalizedName, 'bring your own')
+                || str_contains($normalizedName, 'car camping');
+            $isLegacyAggregatedRoom = ! $usesUnitQuantity
+                && ! array_key_exists('adults', $accommodation)
+                && ! array_key_exists('children', $accommodation)
+                && array_key_exists('price', $accommodation)
+                && array_key_exists('subtotal', $accommodation);
+            $units = ($usesUnitQuantity || $isLegacyAggregatedRoom)
+                ? max(1, (int) ($accommodation['quantity'] ?? 1))
+                : 1;
+
+            $nameCounts[$name] = ($nameCounts[$name] ?? 0) + $units;
+            $guestCount += max(0, (int) ($accommodation['adults'] ?? 0))
+                + max(0, (int) ($accommodation['children'] ?? $accommodation['children_total'] ?? 0));
         }
 
-        return $booking->display_type_label ?? ucfirst((string) $booking->booking_type);
+        $labels = [];
+        foreach ($nameCounts as $name => $count) {
+            $labels[] = $count > 1 ? "{$name} x{$count}" : $name;
+        }
+
+        return [
+            'label' => implode(', ', $labels),
+            'guest_count' => $guestCount,
+        ];
     }
 
     private function extractFoodItems(array $bookingData): array

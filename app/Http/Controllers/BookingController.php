@@ -3304,7 +3304,9 @@ class BookingController extends Controller
                         'adults'         => $adults,
                         'children'       => $children,
                         'extra_mattress' => $extraMattresses,
-                        'quantity'       => $isSpecialRoom ? max(1, (int)($room['extra_mattress'] ?? 1)) : ($adults + (int)($room['children'] ?? 0)),
+                        // A normal accommodation entry represents one real room instance.
+                        // Only BYOT/Car Camping use quantity as the number of booked units.
+                        'quantity'       => $isSpecialRoom ? max(1, (int)($room['extra_mattress'] ?? 1)) : 1,
                         'pets'           => ($room['pets'] ?? 'no'),
                         'pet_agreement'  => (bool)($room['pet_agreement'] ?? false),
                         'num_pets'       => $numPets,

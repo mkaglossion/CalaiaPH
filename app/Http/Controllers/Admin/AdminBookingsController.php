@@ -77,6 +77,7 @@ class AdminBookingsController extends Controller
             
             // Extract food and activity data for display
             $bookingData = $b->booking_data ?? [];
+            $accommodationSummary = $this->summarizeStaycationAccommodations($bookingData);
             $foodItems = [];
             $activityItems = [];
             $petFee = 0;
@@ -149,6 +150,9 @@ class AdminBookingsController extends Controller
             $b->setAttribute('num_pets', $numPets);
             $b->setAttribute('has_pets', $hasPets);
             $b->setAttribute('additional_adults', $additionalAdults);
+            $b->setAttribute('accommodation_summary', $accommodationSummary['label']);
+            $b->setAttribute('accommodation_unit_count', $accommodationSummary['unit_count']);
+            $b->setAttribute('accommodation_guest_count', $accommodationSummary['guest_count']);
             
             return $this->applyDerivedPaymentLifecycleState($b, $pendingCutoff);
         });
@@ -1081,6 +1085,69 @@ class AdminBookingsController extends Controller
     private function pendingCutoff(): Carbon
     {
         return now()->subMinutes((int) config('booking.payment_attempt_expiry_minutes', 1440));
+    }
+
+    private function summarizeStaycationAccommodations(array $bookingData): array
+    {
+        $nameCounts = [];
+        $unitCount = 0;
+        $guestCount = 0;
+
+        foreach ($bookingData['accommodations'] ?? [] as $accommodation) {
+            if (!is_array($accommodation)) {
+                continue;
+            }
+
+            $staycationId = $accommodation['room_id'] ?? $accommodation['id'] ?? null;
+            $name = trim((string) (
+                $accommodation['staycation']['name']
+                ?? $accommodation['name']
+                ?? $accommodation['accommodation_name']
+                ?? ''
+            ));
+
+            if ($name === '' && $staycationId) {
+                $name = (string) Staycation::query()->whereKey($staycationId)->value('name');
+            }
+
+            $normalizedName = strtolower($name);
+            $usesUnitQuantity = str_contains($normalizedName, 'byot')
+                || str_contains($normalizedName, 'bring your own')
+                || str_contains($normalizedName, 'car camping');
+            $isLegacyAggregatedRoom = ! $usesUnitQuantity
+                && ! array_key_exists('adults', $accommodation)
+                && ! array_key_exists('children', $accommodation)
+                && array_key_exists('price', $accommodation)
+                && array_key_exists('subtotal', $accommodation);
+            $units = ($usesUnitQuantity || $isLegacyAggregatedRoom)
+                ? max(1, (int) ($accommodation['quantity'] ?? 1))
+                : 1;
+
+            $name = $name !== '' ? $name : 'Staycation';
+            $nameCounts[$name] = ($nameCounts[$name] ?? 0) + $units;
+            $unitCount += $units;
+            $guestCount += max(0, (int) ($accommodation['adults'] ?? 0))
+                + max(0, (int) ($accommodation['children'] ?? $accommodation['children_total'] ?? 0));
+        }
+
+        $labels = [];
+        foreach ($nameCounts as $name => $count) {
+            $labels[] = $count > 1 ? "{$name} x{$count}" : $name;
+        }
+
+        if ($guestCount === 0) {
+            $guestCount = max(0, (int) ($bookingData['total_guests'] ?? $bookingData['adults_total'] ?? $bookingData['guests'] ?? 0));
+        }
+        if ($guestCount === 0) {
+            $guestCount = max(0, (int) ($bookingData['adults'] ?? 0))
+                + max(0, (int) ($bookingData['children'] ?? 0));
+        }
+
+        return [
+            'label' => $labels !== [] ? implode(', ', $labels) : null,
+            'unit_count' => $unitCount,
+            'guest_count' => $guestCount,
+        ];
     }
 
     private function expireStalePendingBookings(Carbon $pendingCutoff, PaymentService $paymentService): void

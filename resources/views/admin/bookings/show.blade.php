@@ -82,7 +82,12 @@
             <div class="bg-white p-6 rounded-lg shadow">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">Accommodations</h2>
                 <div class="space-y-4">
-                    @foreach($booking->booking_data['accommodations'] as $accommodation)
+                    @php
+                        $accommodationEntries = collect($booking->booking_data['accommodations'])
+                            ->filter(fn ($item) => is_array($item))
+                            ->values();
+                    @endphp
+                    @foreach($accommodationEntries as $accommodation)
                     <div class="border border-gray-200 rounded-lg overflow-hidden">
                         <div class="flex flex-col sm:flex-row h-40">
                             <div class="sm:w-48 shrink-0 h-40">
@@ -91,6 +96,24 @@
                                     $imgSrc = $accommodation['staycation']['image'] ?? $accommodation['image'] ?? $accommodation['image_path']
                                         ?? ($staycationId && isset($staycations[$staycationId]) ? ($staycations[$staycationId]->image ?? null) : null)
                                         ?? $imagePlaceholder;
+                                    $embeddedName = trim((string) (
+                                        $accommodation['staycation']['name']
+                                        ?? $accommodation['name']
+                                        ?? $accommodation['accommodation_name']
+                                        ?? ''
+                                    ));
+                                    $roomName = $embeddedName !== ''
+                                        ? $embeddedName
+                                        : ($staycationId && isset($staycations[$staycationId]) ? $staycations[$staycationId]->name : 'N/A');
+                                    $normalizedRoomName = strtolower((string) $roomName);
+                                    $usesUnitQuantity = str_contains($normalizedRoomName, 'byot')
+                                        || str_contains($normalizedRoomName, 'bring your own')
+                                        || str_contains($normalizedRoomName, 'car camping');
+                                    $isLegacyAggregatedRoom = !$usesUnitQuantity
+                                        && !array_key_exists('adults', $accommodation)
+                                        && !array_key_exists('children', $accommodation)
+                                        && array_key_exists('price', $accommodation)
+                                        && array_key_exists('subtotal', $accommodation);
                                 @endphp
                                 <img src="{{ $imgSrc }}" alt="Room image" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='{{ $imagePlaceholder }}';">
                             </div>
@@ -98,19 +121,17 @@
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <h3 class="font-semibold text-lg text-gray-900">
-                                            @php
-                                                $embeddedName = trim((string) (
-                                                    $accommodation['staycation']['name']
-                                                    ?? $accommodation['name']
-                                                    ?? $accommodation['accommodation_name']
-                                                    ?? ''
-                                                ));
-                                                $staycationId = $accommodation['room_id'] ?? $accommodation['id'] ?? null;
-                                            @endphp
-                                            {{ $embeddedName !== '' ? $embeddedName : ($staycationId && isset($staycations[$staycationId]) ? $staycations[$staycationId]->name : 'N/A') }}
+                                            {{ $roomName }}
                                         </h3>
+                                        @if(!$usesUnitQuantity && !$isLegacyAggregatedRoom && $accommodationEntries->count() > 1)
+                                            <p class="text-xs font-semibold text-blue-600">Room {{ $loop->iteration }} of {{ $accommodationEntries->count() }}</p>
+                                        @endif
                                         <div class="mt-2 space-y-1 text-sm text-gray-600">
+                                            @if($isLegacyAggregatedRoom)
+                                            <p><span class="font-medium">Rooms:</span> {{ $accommodation['quantity'] ?? 1 }}</p>
+                                            @elseif($usesUnitQuantity)
                                             <p><span class="font-medium">Quantity:</span> {{ $accommodation['quantity'] ?? 1 }}</p>
+                                            @endif
                                             @if(isset($accommodation['adults']))
                                             <p><span class="font-medium">Adults:</span> {{ $accommodation['adults'] }}</p>
                                             @endif

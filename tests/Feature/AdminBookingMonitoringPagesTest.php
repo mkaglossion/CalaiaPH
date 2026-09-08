@@ -47,6 +47,74 @@ class AdminBookingMonitoringPagesTest extends TestCase
         $response->assertSee('Today');
     }
 
+    public function test_staycation_monitoring_page_summarizes_all_room_instances_and_guests(): void
+    {
+        $admin = User::factory()->create([
+            'user_type' => 'admin',
+        ]);
+
+        $room = \App\Models\Staycation::create([
+            'name' => 'Premium Glamping',
+            'days' => 1,
+            'type' => 'glamping',
+            'base_quantity' => 4,
+            'capacity' => 4,
+            'adults' => 4,
+            'children' => 2,
+            'price' => 10050,
+        ]);
+
+        Booking::create($this->bookingAttributes([
+            'transaction_id' => 'TXN-MULTI-ROOM',
+            'booking_type' => 'staycation',
+            'booking_data' => [
+                'accommodations' => [
+                    $room->id => ['room_id' => $room->id, 'quantity' => 3, 'adults' => 2, 'children' => 1],
+                    $room->id . '_2' => ['room_id' => $room->id, 'quantity' => 1, 'adults' => 1, 'children' => 0],
+                ],
+            ],
+            'status' => 'confirmed',
+            'payment_status' => 'paid',
+            'total_amount' => 40200,
+        ]));
+
+        $response = $this->actingAs($admin)->get(route('admin.bookings.staycations'));
+
+        $response->assertOk();
+        $response->assertSeeText('Premium Glamping x2');
+        $response->assertSee('<div class="text-sm text-gray-900">4</div>', false);
+    }
+
+    public function test_staycation_monitoring_page_supports_legacy_aggregated_room_data(): void
+    {
+        $admin = User::factory()->create([
+            'user_type' => 'admin',
+        ]);
+
+        Booking::create($this->bookingAttributes([
+            'transaction_id' => 'TXN-LEGACY-ROOMS',
+            'booking_type' => 'staycation',
+            'booking_data' => [
+                'adults' => 4,
+                'children' => 2,
+                'accommodations' => [[
+                    'name' => 'Premium Dome Tent',
+                    'price' => 6800,
+                    'quantity' => 2,
+                    'subtotal' => 13600,
+                ]],
+            ],
+            'status' => 'completed',
+            'payment_status' => 'paid',
+        ]));
+
+        $response = $this->actingAs($admin)->get(route('admin.bookings.staycations'));
+
+        $response->assertOk();
+        $response->assertSeeText('Premium Dome Tent x2');
+        $response->assertSee('<div class="text-sm text-gray-900">6</div>', false);
+    }
+
     public function test_staycation_monitoring_export_downloads_csv(): void
     {
         $admin = User::factory()->create([

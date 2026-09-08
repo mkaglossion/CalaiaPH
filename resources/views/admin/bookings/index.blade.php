@@ -156,7 +156,7 @@
             <td class="px-6 py-4 whitespace-nowrap">
                 @php
                     // Get accommodation name for staycation bookings
-                    $accommodationName = null;
+                    $accommodationName = $booking->accommodation_summary ?? null;
                     $badgeColor = match($booking->booking_type) {
                         'glamping' => 'bg-purple-100 text-purple-800',
                         'camping' => 'bg-green-100 text-green-800',
@@ -171,7 +171,7 @@
                         $bookingData = $booking->booking_data ?? [];
                         $accommodations = $bookingData['accommodations'] ?? [];
 
-                        if (!empty($accommodations) && is_array($accommodations)) {
+                        if (empty($accommodationName) && !empty($accommodations) && is_array($accommodations)) {
                             // Get first accommodation safely
                             $firstAccommodation = reset($accommodations);
                             if ($firstAccommodation !== false) {
@@ -194,11 +194,19 @@
                     }
 
                     // Use accommodation name if available, otherwise fall back to type label
-                    $displayName = $accommodationName ?? ($booking->display_type_label ?? ucfirst($booking->booking_type ?? ''));
+                    $displayName = filled($accommodationName)
+                        ? $accommodationName
+                        : ($booking->display_type_label ?? ucfirst($booking->booking_type ?? ''));
                 @endphp
                 <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ $badgeColor }}">
                     {{ $displayName }}
                 </span>
+                @if($booking instanceof \App\Models\Booking && ($booking->accommodation_unit_count ?? 0) > 0)
+                    <div class="mt-1 text-xs text-gray-600">
+                        {{ $booking->accommodation_unit_count }} {{ $booking->accommodation_unit_count === 1 ? 'room' : 'rooms' }}
+                        &middot; {{ $booking->accommodation_guest_count }} {{ $booking->accommodation_guest_count === 1 ? 'guest' : 'guests' }}
+                    </div>
+                @endif
                 
                 @if(isset($booking->food_items) || isset($booking->activity_items) || isset($booking->pet_fee) || isset($booking->additional_adult_fee))
                     <div class="mt-1 text-xs text-gray-600">

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\Admin\AdminBookingsController;
 use App\Models\Booking;
+use App\Models\Staycation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -12,6 +13,69 @@ use Tests\TestCase;
 class AdminBookingShowTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_show_labels_normal_accommodation_entries_as_separate_rooms(): void
+    {
+        $this->actingAs(User::factory()->create(['user_type' => 'admin']));
+
+        $room = Staycation::create([
+            'name' => 'Premium Glamping',
+            'days' => 1,
+            'type' => 'glamping',
+            'base_quantity' => 4,
+            'capacity' => 4,
+            'adults' => 4,
+            'children' => 2,
+            'price' => 10050,
+        ]);
+
+        $booking = Booking::create(array_merge($this->bookingAttributes(), [
+            'booking_type' => 'staycation',
+            'checkout_date' => '2026-06-12',
+            'payment_status' => 'paid',
+            'status' => 'confirmed',
+            'booking_data' => [
+                'accommodations' => [
+                    $room->id => ['room_id' => $room->id, 'quantity' => 3, 'adults' => 2, 'children' => 1, 'total_price' => 20100],
+                    $room->id . '_2' => ['room_id' => $room->id, 'quantity' => 1, 'adults' => 1, 'children' => 0, 'total_price' => 20100],
+                ],
+            ],
+            'total_amount' => 40200,
+        ]));
+
+        $html = app(AdminBookingsController::class)->show($booking->id)->render();
+
+        $this->assertStringContainsString('Room 1 of 2', $html);
+        $this->assertStringContainsString('Room 2 of 2', $html);
+        $this->assertStringNotContainsString('Quantity:', $html);
+    }
+
+    public function test_show_labels_legacy_aggregated_quantity_as_rooms(): void
+    {
+        $this->actingAs(User::factory()->create(['user_type' => 'admin']));
+
+        $booking = Booking::create(array_merge($this->bookingAttributes(), [
+            'booking_type' => 'staycation',
+            'payment_status' => 'paid',
+            'status' => 'completed',
+            'booking_data' => [
+                'adults' => 4,
+                'children' => 2,
+                'accommodations' => [[
+                    'name' => 'Premium Dome Tent',
+                    'price' => 6800,
+                    'quantity' => 2,
+                    'subtotal' => 13600,
+                ]],
+            ],
+        ]));
+
+        $html = app(AdminBookingsController::class)->show($booking->id)->render();
+
+        $this->assertStringContainsString('Premium Dome Tent', $html);
+        $this->assertStringContainsString('Rooms:', $html);
+        $this->assertStringNotContainsString('Quantity:', $html);
+    }
 
     public function test_show_normalizes_selected_packages_foods_and_activities_for_view(): void
     {

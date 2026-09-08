@@ -257,6 +257,7 @@ class StaycationWaiverTest extends TestCase
 
         $this->assertSame(4, $accommodation['adults']);
         $this->assertSame(2, $accommodation['children']);
+        $this->assertSame(1, $accommodation['quantity']);
         $this->assertSame(2, $accommodation['additional_adults']);
         $this->assertSame(2500.0, (float) $accommodation['additional_adult_price']);
         $this->assertSame(9300.0, (float) $accommodation['total_price']);

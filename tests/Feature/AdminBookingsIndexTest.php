@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\Admin\AdminBookingsController;
 use App\Models\Booking;
+use App\Models\Staycation;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -14,6 +16,84 @@ use Tests\TestCase;
 class AdminBookingsIndexTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_index_summarizes_every_room_and_guest_in_a_multi_room_staycation(): void
+    {
+        $this->actingAs(User::factory()->create(['user_type' => 'admin']));
+
+        $room = Staycation::create([
+            'name' => 'Premium Glamping',
+            'days' => 1,
+            'type' => 'glamping',
+            'base_quantity' => 4,
+            'capacity' => 4,
+            'adults' => 4,
+            'children' => 2,
+            'price' => 10050,
+        ]);
+
+        Booking::create(array_merge($this->bookingAttributes('TXN-MULTI-ROOM', 'paid', 'confirmed'), [
+            'booking_data' => [
+                'accommodations' => [
+                    $room->id => ['room_id' => $room->id, 'quantity' => 3, 'adults' => 2, 'children' => 1],
+                    $room->id . '_2' => ['room_id' => $room->id, 'quantity' => 1, 'adults' => 1, 'children' => 0],
+                ],
+            ],
+            'total_amount' => 40200,
+        ]));
+
+        $view = app(AdminBookingsController::class)->index(Request::create('/admin/bookings', 'GET'));
+        $booking = $view->getData()['bookings']->getCollection()->firstWhere('transaction_id', 'TXN-MULTI-ROOM');
+
+        $this->assertSame('Premium Glamping x2', $booking->accommodation_summary);
+        $this->assertSame(2, $booking->accommodation_unit_count);
+        $this->assertSame(4, $booking->accommodation_guest_count);
+
+        $html = $view->render();
+        $this->assertStringContainsString('Premium Glamping x2', $html);
+        $this->assertStringContainsString('2 rooms', $html);
+        $this->assertStringContainsString('4 guests', $html);
+    }
+
+    public function test_index_supports_legacy_aggregated_rooms_and_missing_recovery_details(): void
+    {
+        $this->actingAs(User::factory()->create(['user_type' => 'admin']));
+
+        Booking::create(array_merge($this->bookingAttributes('TXN-LEGACY-ROOMS', 'paid', 'completed'), [
+            'booking_data' => [
+                'adults' => 4,
+                'children' => 2,
+                'accommodations' => [[
+                    'name' => 'Premium Dome Tent',
+                    'price' => 6800,
+                    'quantity' => 2,
+                    'subtotal' => 13600,
+                ]],
+            ],
+        ]));
+        Booking::create(array_merge($this->bookingAttributes('TXN-RECOVERED-NO-ROOM', 'paid', 'completed'), [
+            'booking_data' => [
+                'booking_type' => 'staycation',
+                'recovered_from_paymongo' => true,
+            ],
+        ]));
+
+        $view = app(AdminBookingsController::class)->index(Request::create('/admin/bookings', 'GET'));
+        $bookings = $view->getData()['bookings']->getCollection();
+        $legacy = $bookings->firstWhere('transaction_id', 'TXN-LEGACY-ROOMS');
+        $recovered = $bookings->firstWhere('transaction_id', 'TXN-RECOVERED-NO-ROOM');
+
+        $this->assertSame('Premium Dome Tent x2', $legacy->accommodation_summary);
+        $this->assertSame(2, $legacy->accommodation_unit_count);
+        $this->assertSame(6, $legacy->accommodation_guest_count);
+        $this->assertNull($recovered->accommodation_summary);
+
+        $html = $view->render();
+        $this->assertStringContainsString('Premium Dome Tent x2', $html);
+        $this->assertStringContainsString('2 rooms', $html);
+        $this->assertStringContainsString('6 guests', $html);
+        $this->assertStringContainsString('Staycation', $html);
+    }
 
     public function test_index_hides_payment_attempts_by_default(): void
     {
