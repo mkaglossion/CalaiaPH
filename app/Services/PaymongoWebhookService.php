@@ -37,6 +37,7 @@ class PaymongoWebhookService
         return match($eventType) {
             'payment.paid' => self::handlePaymentPaid($data),
             'payment.failed' => self::handlePaymentFailed($data),
+            'payment.refunded' => self::handlePaymentRefunded($data),
             'checkout_session.payment_failed' => self::handleCheckoutPaymentFailed($data),
             'checkout_session.payment_success' => self::handleCheckoutPaymentSuccess($data),
             // Current PayMongo naming used in checkout webhooks
@@ -44,6 +45,76 @@ class PaymongoWebhookService
             'checkout_session.payment.failed' => self::handleCheckoutPaymentFailed($data),
             default => self::handleUnknownEvent($eventType, $data),
         };
+    }
+
+    private static function handlePaymentRefunded(array $data): bool
+    {
+        $attributes = is_array($data['attributes'] ?? null) ? $data['attributes'] : [];
+        $metadata = is_array($attributes['metadata'] ?? null) ? $attributes['metadata'] : [];
+        $paymentId = $data['id'] ?? ($attributes['payment_id'] ?? null);
+        $checkoutSessionId = $attributes['checkout_session_id'] ?? null;
+        $referenceNumber = $attributes['reference'] ?? null;
+        $referenceNumber = $referenceNumber ?: ($attributes['reference_number'] ?? null);
+        $referenceNumber = $referenceNumber
+            ?: ($metadata['reference'] ?? null)
+            ?: ($metadata['reference_id'] ?? null)
+            ?: ($metadata['reference_number'] ?? null)
+            ?: ($metadata['booking_reference'] ?? null);
+
+        $booking = null;
+        if ($paymentId) {
+            $booking = Booking::where('payment_reference', $paymentId)->first();
+        }
+        if (!$booking && $referenceNumber) {
+            $booking = self::findBookingByReference($referenceNumber);
+        }
+        if (!$booking && $checkoutSessionId) {
+            $booking = Booking::where('paymongo_checkout_id', $checkoutSessionId)->first();
+        }
+
+        if ($booking instanceof Booking) {
+            if (($booking->payment_status ?? null) !== 'refunded') {
+                $booking->update(['payment_status' => 'refunded']);
+            }
+
+            Log::info('Booking marked refunded via PayMongo webhook', [
+                'booking_id' => $booking->id,
+                'transaction_id' => $booking->transaction_id,
+                'payment_id' => $paymentId,
+            ]);
+
+            return true;
+        }
+
+        $packageBooking = null;
+        if ($paymentId) {
+            $packageBooking = PackageBooking::where('payment_reference', $paymentId)->first();
+        }
+        if (!$packageBooking) {
+            $packageBooking = self::findPackageBookingForWebhook($metadata, $referenceNumber, $checkoutSessionId);
+        }
+
+        if ($packageBooking instanceof PackageBooking) {
+            if (($packageBooking->payment_status ?? null) !== 'refunded') {
+                $packageBooking->update(['payment_status' => 'refunded']);
+            }
+
+            Log::info('Package booking marked refunded via PayMongo webhook', [
+                'booking_id' => $packageBooking->id,
+                'booking_reference' => $packageBooking->booking_reference,
+                'payment_id' => $paymentId,
+            ]);
+
+            return true;
+        }
+
+        Log::warning('PayMongo refund received but no booking was found', [
+            'payment_id' => $paymentId,
+            'checkout_session_id' => $checkoutSessionId,
+            'reference' => $referenceNumber,
+        ]);
+
+        return false;
     }
 
     /**
@@ -450,6 +521,11 @@ class PaymongoWebhookService
 
     public static function markPackageBookingPaid(PackageBooking $pb, ?string $paymentReference = null): bool
     {
+        if (($pb->payment_status ?? null) === 'refunded') {
+            Log::info('Paymongo webhook: ignored late paid event for refunded package booking', ['id' => $pb->id]);
+            return true;
+        }
+
         if (($pb->payment_status ?? null) === 'paid' && ($pb->inventory_booked ?? false)) {
             Log::info('Paymongo webhook: package booking already processed', ['id' => $pb->id]);
             return true;

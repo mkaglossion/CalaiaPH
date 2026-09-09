@@ -804,12 +804,18 @@ class AdminDashboardController extends Controller
             $detailHref = $isPackage
                 ? route('admin.package_bookings.show', $booking->id)
                 : route('admin.bookings.show', $booking->id);
-            $statusTone = match (strtolower((string) $booking->status)) {
+            $paymentStatus = strtolower((string) ($booking->payment_status ?? ''));
+            $displayStatus = $paymentStatus === 'refunded'
+                ? 'Refunded'
+                : ucfirst((string) $booking->status);
+            $statusTone = $paymentStatus === 'refunded'
+                ? 'bg-purple-50 text-purple-700'
+                : match (strtolower((string) $booking->status)) {
                 'completed' => 'bg-emerald-50 text-emerald-700',
                 'confirmed' => 'bg-blue-50 text-blue-700',
                 'cancelled' => 'bg-red-50 text-red-700',
                 default => 'bg-orange-50 text-orange-700',
-            };
+                };
 
             return [
                 'name' => $booking->display_customer_name,
@@ -818,7 +824,7 @@ class AdminDashboardController extends Controller
                 'meta' => (string) ($booking->recent_booking_meta ?? 'No date'),
                 'image' => $booking->recent_booking_image,
                 'amount' => $fmtMoney($booking->total_amount),
-                'status' => ucfirst((string) $booking->status),
+                'status' => $displayStatus,
                 'statusTone' => $statusTone,
                 'href' => $detailHref,
             ];

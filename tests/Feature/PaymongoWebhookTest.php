@@ -215,6 +215,155 @@ class PaymongoWebhookTest extends TestCase
         $this->assertSame('pay_cached_123', $booking->payment_reference);
     }
 
+    public function test_payment_refunded_event_marks_staycation_booking_refunded_by_payment_id(): void
+    {
+        $booking = Booking::create([
+            'transaction_id' => 'TXN-REFUNDED123',
+            'customer_name' => 'Refunded Guest',
+            'customer_email' => 'refunded@example.com',
+            'customer_phone' => '09171234567',
+            'booking_type' => 'staycation',
+            'checkin_date' => '2026-09-24',
+            'checkout_date' => '2026-09-25',
+            'booking_data' => [],
+            'total_amount' => 1500,
+            'payment_method' => 'paymongo',
+            'payment_status' => 'paid',
+            'status' => 'confirmed',
+            'payment_reference' => 'pay_refunded_123',
+        ]);
+
+        $payload = [
+            'data' => [
+                'id' => 'evt_refunded_123',
+                'type' => 'event',
+                'attributes' => [
+                    'type' => 'payment.refunded',
+                    'data' => [
+                        'id' => 'pay_refunded_123',
+                        'type' => 'payment',
+                        'attributes' => [
+                            'status' => 'refunded',
+                            'amount' => 150000,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->assertTrue(PaymongoWebhookService::handleWebhook($payload));
+
+        $booking->refresh();
+        $this->assertSame('refunded', $booking->payment_status);
+        $this->assertSame('confirmed', $booking->status);
+    }
+
+    public function test_replay_command_applies_a_previously_unhandled_refund_event(): void
+    {
+        $booking = Booking::create([
+            'transaction_id' => 'TXN-OLD-REFUND123',
+            'customer_name' => 'Old Refunded Guest',
+            'customer_email' => 'old-refund@example.com',
+            'customer_phone' => '09171234567',
+            'booking_type' => 'staycation',
+            'checkin_date' => '2026-09-24',
+            'checkout_date' => '2026-09-25',
+            'booking_data' => [],
+            'total_amount' => 1500,
+            'payment_method' => 'paymongo',
+            'payment_status' => 'paid',
+            'status' => 'confirmed',
+            'payment_reference' => 'pay_old_refund_123',
+        ]);
+
+        $payload = [
+            'data' => [
+                'id' => 'evt_old_refund_123',
+                'type' => 'event',
+                'attributes' => [
+                    'type' => 'payment.refunded',
+                    'data' => [
+                        'id' => 'pay_old_refund_123',
+                        'type' => 'payment',
+                        'attributes' => ['status' => 'refunded'],
+                    ],
+                ],
+            ],
+        ];
+
+        $event = PaymongoWebhookEvent::create([
+            'event_type' => 'payment.refunded',
+            'resource_type' => 'payment',
+            'reference' => 'TXN-OLD-REFUND123',
+            'payment_id' => 'pay_old_refund_123',
+            'signature_present' => true,
+            'signature_valid' => true,
+            'handled' => false,
+            'http_status' => 200,
+            'message' => 'Webhook processed',
+            'payload' => $payload,
+        ]);
+
+        $this->artisan('paymongo:replay-unhandled', [
+            '--reference' => 'pay_old_refund_123',
+        ])->assertSuccessful();
+
+        $this->assertSame('refunded', $booking->fresh()->payment_status);
+        $this->assertTrue($event->fresh()->handled);
+        $this->assertSame('Webhook replayed successfully', $event->fresh()->message);
+    }
+
+    public function test_payment_refunded_event_marks_package_booking_refunded_and_late_paid_event_does_not_revert_it(): void
+    {
+        $package = Package::create([
+            'name' => 'Refunded Farm Tour',
+            'description' => 'Package refund test',
+            'price' => 2500,
+            'max_guests' => 10,
+            'pricing_type' => 'fixed',
+            'is_active' => true,
+        ]);
+
+        $booking = PackageBooking::create([
+            'booking_reference' => 'PB-REFUND123',
+            'package_id' => $package->id,
+            'booking_date' => '2026-09-24',
+            'total_guests' => 2,
+            'groups_booked' => 1,
+            'first_name' => 'Package',
+            'last_name' => 'Guest',
+            'phone' => '9997826850',
+            'email' => 'package@example.com',
+            'total_amount' => 2500,
+            'status' => 'confirmed',
+            'payment_status' => 'paid',
+            'payment_reference' => 'pay_package_refund_123',
+            'paymongo_reference' => 'cs_package_refund_123',
+        ]);
+
+        $refundPayload = [
+            'data' => [
+                'id' => 'evt_package_refund_123',
+                'type' => 'event',
+                'attributes' => [
+                    'type' => 'payment.refunded',
+                    'data' => [
+                        'id' => 'pay_package_refund_123',
+                        'type' => 'payment',
+                        'attributes' => ['status' => 'refunded'],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->assertTrue(PaymongoWebhookService::handleWebhook($refundPayload));
+        $booking->refresh();
+        $this->assertSame('refunded', $booking->payment_status);
+
+        $this->assertTrue(PaymongoWebhookService::markPackageBookingPaid($booking, 'pay_package_refund_123'));
+        $this->assertSame('refunded', $booking->fresh()->payment_status);
+    }
+
     public function test_checkout_session_paid_event_rescue_create_preserves_staycation_dates_from_metadata(): void
     {
         $payload = [

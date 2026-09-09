@@ -14,7 +14,7 @@ class ReplayUnhandledPaymongoWebhooks extends Command
         {--limit=50 : Maximum number of webhook events to replay}
         {--dry-run : Show candidate events without replaying them}';
 
-    protected $description = 'Replay successful but unhandled PayMongo webhook logs to recover missing bookings';
+    protected $description = 'Replay successful but unhandled PayMongo webhook logs to recover booking payment states';
 
     public function handle(): int
     {
@@ -24,6 +24,7 @@ class ReplayUnhandledPaymongoWebhooks extends Command
             ->where('handled', false)
             ->whereIn('event_type', [
                 'payment.paid',
+                'payment.refunded',
                 'checkout_session.payment.paid',
                 'checkout_session.payment_success',
             ])

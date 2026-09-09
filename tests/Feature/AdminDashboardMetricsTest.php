@@ -138,6 +138,21 @@ class AdminDashboardMetricsTest extends TestCase
         $this->assertSame('Confirmed', $recentCard['status'] ?? null);
     }
 
+    public function test_recent_booking_card_prioritizes_refunded_payment_status(): void
+    {
+        Booking::create(array_merge(
+            $this->bookingAttributes('TXN-DASHBOARD-REFUNDED', 'refunded', 'confirmed'),
+            ['customer_name' => 'Glenn Resurreccion']
+        ));
+
+        $view = app(AdminDashboardController::class)->index(Request::create('/admin/dashboard', 'GET'));
+        $recentCard = collect($view->getData()['recentBookingCards'])
+            ->firstWhere('name', 'Glenn Resurreccion');
+
+        $this->assertSame('Refunded', $recentCard['status'] ?? null);
+        $this->assertSame('bg-purple-50 text-purple-700', $recentCard['statusTone'] ?? null);
+    }
+
     public function test_dashboard_builds_paid_sales_report_and_live_pending_value(): void
     {
         Booking::create(array_merge($this->bookingAttributes('TXN-SALES-1', 'paid', 'confirmed'), [
