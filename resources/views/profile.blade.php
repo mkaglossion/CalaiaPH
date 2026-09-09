@@ -749,5 +749,17 @@
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    @if(session('success') || session('error'))
+        <script>
+            setTimeout(function () {
+                var alerts = document.querySelectorAll('[role=\"alert\"]');
+                alerts.forEach(function (alert) {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(function () { alert.remove(); }, 500);
+                });
+            }, 2500);
+        </script>
+    @endif
 </body>
 </html>

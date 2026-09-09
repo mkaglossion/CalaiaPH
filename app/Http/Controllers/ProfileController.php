@@ -92,6 +92,6 @@ class ProfileController extends Controller
             'date_of_birth' => $request->date_of_birth,
         ]);
 
-        return redirect()->route('profile.show')->with('success', 'Profile updated successfully!');
+        return redirect()->to(route('profile.show') . '#edit')->with('success', 'Profile updated successfully!');
     }
 }
