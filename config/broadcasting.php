@@ -1,14 +1,24 @@
 <?php
 
+$pusherKey = env('PUSHER_APP_KEY');
+$pusherSecret = env('PUSHER_APP_SECRET');
+$pusherAppId = env('PUSHER_APP_ID');
+$defaultConnection = env('BROADCAST_CONNECTION', 'log');
+$hasPusherCredentials = filled($pusherKey) && filled($pusherSecret) && filled($pusherAppId);
+
+if ($defaultConnection === 'pusher' && ! $hasPusherCredentials) {
+    $defaultConnection = 'log';
+}
+
 return [
-    'default' => env('BROADCAST_CONNECTION', 'pusher'),
+    'default' => $defaultConnection,
 
     'connections' => [
         'pusher' => [
             'driver' => 'pusher',
-            'key' => env('PUSHER_APP_KEY'),
-            'secret' => env('PUSHER_APP_SECRET'),
-            'app_id' => env('PUSHER_APP_ID'),
+            'key' => $pusherKey,
+            'secret' => $pusherSecret,
+            'app_id' => $pusherAppId,
             'options' => [
                 'cluster' => env('PUSHER_APP_CLUSTER'),
                 'encrypted' => true,

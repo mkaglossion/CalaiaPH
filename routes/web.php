@@ -547,7 +547,7 @@ Route::middleware('auth')->group(function () {
 
 
 // ========== Admin Routes ==========
-Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin')->middleware(['auth', 'admin', 'admin.activity'])->group(function () {
     // Main Sections
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/dashboard/export', [AdminDashboardController::class, 'export'])->name('admin.dashboard.export');

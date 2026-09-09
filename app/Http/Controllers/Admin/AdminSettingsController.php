@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminActivityLog;
 use App\Models\AdminPreference;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -82,14 +83,62 @@ class AdminSettingsController extends Controller
         return back()->with('success', 'Preferences updated successfully.');
     }
 
-    public function showActivityLog()
+    public function showActivityLog(Request $request)
     {
-        /** @var User $user */
-        $user = Auth::user();
-        $activities = $user->adminActivityLogs()
-            ->latest()
-            ->paginate(10);
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'action' => ['nullable', 'string', 'max:100'],
+            'admin' => ['nullable', 'integer', 'exists:users,id'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', 'after_or_equal:from'],
+        ]);
 
-        return view('admin.settings.activity-log', compact('activities'));
+        $search = trim((string) ($filters['q'] ?? ''));
+
+        $activities = AdminActivityLog::query()
+            ->with('user')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($searchQuery) use ($search) {
+                    $searchQuery
+                        ->where('description', 'like', "%{$search}%")
+                        ->orWhere('action', 'like', "%{$search}%")
+                        ->orWhere('model_type', 'like', "%{$search}%")
+                        ->orWhere('model_id', 'like', "%{$search}%")
+                        ->orWhere('ip_address', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($userQuery) use ($search) {
+                            $userQuery
+                                ->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->when(! empty($filters['action']), fn ($query) => $query->where('action', $filters['action']))
+            ->when(! empty($filters['admin']), fn ($query) => $query->where('user_id', $filters['admin']))
+            ->when(! empty($filters['from']), fn ($query) => $query->whereDate('created_at', '>=', $filters['from']))
+            ->when(! empty($filters['to']), fn ($query) => $query->whereDate('created_at', '<=', $filters['to']))
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        $actions = AdminActivityLog::query()
+            ->whereNotNull('action')
+            ->distinct()
+            ->orderBy('action')
+            ->pluck('action');
+        $admins = User::query()
+            ->where('user_type', 'admin')
+            ->whereHas('adminActivityLogs')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get(['id', 'first_name', 'last_name', 'email']);
+        $stats = [
+            'total' => AdminActivityLog::count(),
+            'today' => AdminActivityLog::whereDate('created_at', today())->count(),
+            'filtered' => $activities->total(),
+            'latest' => AdminActivityLog::latest()->value('created_at'),
+        ];
+
+        return view('admin.settings.activity-log', compact('activities', 'actions', 'admins', 'filters', 'stats'));
     }
 }
