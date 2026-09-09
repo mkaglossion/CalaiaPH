@@ -396,10 +396,10 @@
                     <p class="text-xs text-gray-500">Use room-specific rates here. Season durations are managed in Season Durations.</p>
                     <div x-ref="priceConfigsList" class="space-y-3">
                         <template x-for="(config, index) in form.priceConfigs" :key="config._uid || index">
-                        <div class="border p-3 rounded space-y-2 bg-white/70" :data-price-config-id="config._uid || index">
+                        <div class="border p-3 sm:p-4 rounded space-y-2 bg-white/70" :data-price-config-id="config._uid || index">
 
                             <!-- Config Name and Type -->
-                            <div class="flex space-x-2 items-center">
+                            <div class="flex flex-wrap gap-2 items-center">
                                 <button
                                     type="button"
                                     data-price-config-handle
@@ -421,15 +421,15 @@
                                         <circle cx="14" cy="15" r="1.4" />
                                     </svg>
                                 </button>
-                                <input type="text" :id="'price_config_name_' + index" :name="'price_config_name_' + index" x-model="config.name" placeholder="Example: Standard Glamping - Peak Jan-Jun 2026" class="flex-1 border rounded px-2 py-1" required>
+                                <input type="text" :id="'price_config_name_' + index" :name="'price_config_name_' + index" x-model="config.name" placeholder="Example: Standard Glamping - Peak Jan-Jun 2026" class="w-full sm:flex-1 border rounded px-2 py-1" required>
 
-                                <select :id="'price_config_type_' + index" :name="'price_config_type_' + index" x-model="config.type" class="border rounded px-2 py-1">
+                                <select :id="'price_config_type_' + index" :name="'price_config_type_' + index" x-model="config.type" class="w-full sm:w-auto border rounded px-2 py-1">
                                     <option value="day">Day Pattern</option>
                                     <option value="date">Specific Dates</option>
                                     <option value="range">Date Range</option>
                                 </select>
 
-                                <button type="button" @click="removePriceConfig(index)" class="text-red-500 font-bold">&times;</button>
+                                <button type="button" @click="removePriceConfig(index)" class="text-red-500 font-bold text-xl">&times;</button>
                             </div>
 
                             <p class="text-[11px] text-gray-500">
