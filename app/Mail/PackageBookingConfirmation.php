@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\PackageBooking;
+use App\Services\AdminBookingEmailRecipientService;
 use App\Services\BookingConfirmationContentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,6 +30,12 @@ class PackageBookingConfirmation extends Mailable implements ShouldQueue
             'reference' => $this->booking->booking_reference,
             'package' => $packageName,
         ]);
+
+        $adminRecipients = app(AdminBookingEmailRecipientService::class)->recipients($this->booking->email);
+
+        if ($adminRecipients !== []) {
+            $this->bcc($adminRecipients);
+        }
     }
 
     /**

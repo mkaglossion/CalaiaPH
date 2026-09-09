@@ -113,4 +113,6 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    'booking_admin_address' => env('BOOKING_ADMIN_EMAIL', 'calaia.ph@gmail.com'),
+
 ];
