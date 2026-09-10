@@ -894,8 +894,10 @@ Route::prefix('admin')->middleware(['auth', 'admin', 'admin.activity'])->group(f
         Route::get('/system', [AdminSystemSettingsController::class, 'index'])->name('admin.settings.system');
         Route::put('/system', [AdminSystemSettingsController::class, 'updateSettings'])->name('admin.settings.system.update');
         Route::get('/alerts', [AdminSystemSettingsController::class, 'showAlerts'])->name('admin.settings.alerts');
-        Route::post('/alerts/{id}/resolve', [AdminSystemSettingsController::class, 'resolveAlert'])->name('admin.settings.alerts.resolve');
         Route::post('/alerts/clear-resolved', [AdminSystemSettingsController::class, 'clearResolvedAlerts'])->name('admin.settings.alerts.clear');
+        Route::post('/alerts/{id}/resolve', [AdminSystemSettingsController::class, 'resolveAlert'])
+            ->whereNumber('id')
+            ->name('admin.settings.alerts.resolve');
     });
 
     // ========== Admin Help & Documentation Routes ==========

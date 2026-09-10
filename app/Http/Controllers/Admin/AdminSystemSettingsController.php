@@ -143,7 +143,7 @@ class AdminSystemSettingsController extends Controller
             ->when($status === 'unresolved', fn ($q) => $q->whereNull('resolved_at'))
             ->when($status === 'resolved', fn ($q) => $q->whereNotNull('resolved_at'))
             ->when($severity !== 'all', fn ($q) => $q->where('severity', $severity))
-            ->orderBy('severity', 'desc')
+            ->orderByRaw("CASE severity WHEN 'critical' THEN 3 WHEN 'warning' THEN 2 WHEN 'info' THEN 1 ELSE 0 END DESC")
             ->orderByDesc('created_at');
 
         $alerts = $alertsQuery->paginate(15)->withQueryString();
@@ -162,7 +162,7 @@ class AdminSystemSettingsController extends Controller
         return view('admin.settings.alerts', compact('alerts', 'counts', 'status', 'severity'));
     }
 
-    public function resolveAlert($id)
+    public function resolveAlert(int $id)
     {
         $alert = AdminSystemAlert::findOrFail($id);
         $alert->resolve();
