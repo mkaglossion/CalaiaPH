@@ -43,7 +43,7 @@ class ActivityPackage extends Model
      */
     public function getEffectivePrice()
     {
-        if ($this->price) {
+        if (is_numeric($this->price) && (float) $this->price > 0) {
             return $this->price;
         }
 

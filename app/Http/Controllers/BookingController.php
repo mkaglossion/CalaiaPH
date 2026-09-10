@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use App\Mail\BookingConfirmation;
 use DateTime;
@@ -833,6 +834,11 @@ class BookingController extends Controller
                 break;
         }
         $activities = $activitiesQuery->get();
+        $activities = $this->sortCatalogByDisplayedPrice(
+            $activities,
+            $sortBy,
+            fn (Activity $activity): float => (float) $activity->price
+        );
         
         // Fetch activity packages with their activities
         $activityPackagesQuery = ActivityPackage::where('is_active', true)
@@ -866,6 +872,11 @@ class BookingController extends Controller
                 break;
         }
         $activityPackages = $activityPackagesQuery->get();
+        $activityPackages = $this->sortCatalogByDisplayedPrice(
+            $activityPackages,
+            $sortBy,
+            fn (ActivityPackage $package): float => (float) $package->getEffectivePrice()
+        );
         
         // Get selected foods from session
         $selectedFoods = $this->normalizeStaycationFoods($booking['selected_foods'] ?? session('selected_foods', []));
@@ -3665,10 +3676,9 @@ class BookingController extends Controller
                 $staycationsQuery->orderBy('name', 'desc');
                 break;
             case 'price_asc':
-                $staycationsQuery->orderByRaw('COALESCE(price, 0) asc')->orderBy('name', 'asc');
-                break;
             case 'price_desc':
-                $staycationsQuery->orderByRaw('COALESCE(price, 0) desc')->orderBy('name', 'asc');
+                // Display prices are date-specific and are calculated below.
+                $staycationsQuery->ordered();
                 break;
             case 'oldest':
                 $staycationsQuery->orderBy('created_at', 'asc')->orderBy('name', 'asc');
@@ -3842,6 +3852,19 @@ class BookingController extends Controller
                 'date_pricing' => $datePricing // Date-specific pricing for JavaScript
             ];
         }
+
+        $staycations = $this->sortCatalogByDisplayedPrice(
+            $staycations,
+            $sortBy,
+            function (Staycation $staycation) use ($roomDetails): float {
+                $details = $roomDetails[$staycation->id] ?? [];
+                $minimumDisplayedRate = (float) data_get($details, 'price_range.min_price', 0);
+
+                return $minimumDisplayedRate > 0
+                    ? $minimumDisplayedRate
+                    : (float) ($details['price'] ?? 0);
+            }
+        );
 
         // Get rooms/guests data from session (preserved from check-availability POST)
         $booking = session('booking', []);
@@ -4066,6 +4089,11 @@ class BookingController extends Controller
                 break;
         }
         $foodMenus = $foodMenusQuery->get();
+        $foodMenus = $this->sortCatalogByDisplayedPrice(
+            $foodMenus,
+            $sortBy,
+            fn (Food $food): float => (float) $food->price
+        );
 
         // Fetch food packages for staycation
         $foodPackagesQuery = FoodPackage::with(['foods' => function($q) {
@@ -4103,6 +4131,11 @@ class BookingController extends Controller
                 break;
         }
         $foodPackages = $foodPackagesQuery->get();
+        $foodPackages = $this->sortCatalogByDisplayedPrice(
+            $foodPackages,
+            $sortBy,
+            fn (FoodPackage $package): float => (float) $package->getEffectivePrice()
+        );
 
         // Group food menus by meal_type for display
         $foodMenusByMealType = $foodMenus->groupBy('meal_type');
@@ -4133,6 +4166,29 @@ class BookingController extends Controller
         $vatRatePercentage = $vatService->getCurrentVatRatePercentage();
 
         return view('booking.staycation-food', compact('booking', 'foodMenus', 'foodMenusByMealType', 'foodPackages', 'staycations', 'packagesSettings', 'packageCategoryLabels', 'foodBookingSectionCopy', 'vatRate', 'vatRatePercentage', 'sortBy', 'sortOptions'));
+    }
+
+    private function sortCatalogByDisplayedPrice(Collection $items, string $sortBy, callable $priceResolver): Collection
+    {
+        if (!in_array($sortBy, ['price_asc', 'price_desc'], true)) {
+            return $items;
+        }
+
+        $direction = $sortBy === 'price_desc' ? -1 : 1;
+
+        return $items->sort(function ($left, $right) use ($priceResolver, $direction): int {
+            $priceComparison = (float) $priceResolver($left) <=> (float) $priceResolver($right);
+            if ($priceComparison !== 0) {
+                return $priceComparison * $direction;
+            }
+
+            $nameComparison = strnatcasecmp((string) ($left->name ?? ''), (string) ($right->name ?? ''));
+            if ($nameComparison !== 0) {
+                return $nameComparison;
+            }
+
+            return (int) ($left->id ?? 0) <=> (int) ($right->id ?? 0);
+        })->values();
     }
 
     public function saveFoodSelection(Request $request)

@@ -94,15 +94,11 @@ class FoodPackage extends Model
      */
     public function getEffectivePrice()
     {
-        if ($this->hasStructuredSections()) {
-            if (!empty($this->price) && (float) $this->price > 0) {
-                return $this->price;
-            }
-
-            return $this->calculateItemsTotal();
+        if (is_numeric($this->price) && (float) $this->price > 0) {
+            return $this->price;
         }
 
-        return $this->price ?? $this->calculateItemsTotal();
+        return $this->calculateItemsTotal();
     }
 
     /**
