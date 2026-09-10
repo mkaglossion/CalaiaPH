@@ -51,7 +51,7 @@ class ValidationService
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
-            'social_contact_method' => 'nullable|required_with:social_contact_account|string|in:facebook_messenger,instagram,viber,whatsapp,other',
+            'social_contact_method' => 'nullable|required_with:social_contact_account|string|in:facebook_messenger,instagram,viber',
             'social_contact_account' => 'nullable|required_with:social_contact_method|string|max:255',
             'payment_method' => 'nullable|string|in:paymongo,qr,gcash,paymaya,bank,qrph,grab_pay,billease',
             'special_requests' => 'nullable|string|max:1000',

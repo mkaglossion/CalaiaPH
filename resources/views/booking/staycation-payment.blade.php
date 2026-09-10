@@ -275,7 +275,7 @@ let vatRate = {{ $vatRate }};
                         {{-- Phone --}}
                         <div>
                           <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
-                            Phone Number <span class="text-red-500">*</span>
+                            Mobile Number <span class="text-red-500">*</span>
                           </label>
                           <input
                             type="tel"
@@ -298,8 +298,6 @@ let vatRate = {{ $vatRate }};
                             <option value="facebook_messenger" @selected(old('social_contact_method') === 'facebook_messenger')>Facebook Messenger</option>
                             <option value="instagram" @selected(old('social_contact_method') === 'instagram')>Instagram</option>
                             <option value="viber" @selected(old('social_contact_method') === 'viber')>Viber</option>
-                            <option value="whatsapp" @selected(old('social_contact_method') === 'whatsapp')>WhatsApp</option>
-                            <option value="other" @selected(old('social_contact_method') === 'other')>Other</option>
                           </select>
                         </div>
                         <div>

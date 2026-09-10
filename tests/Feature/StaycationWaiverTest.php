@@ -44,6 +44,41 @@ class StaycationWaiverTest extends TestCase
         $response->assertSessionHasErrors(['camp_waiver_accepted']);
     }
 
+    public function test_staycation_payment_rejects_unsupported_social_contact_methods(): void
+    {
+        foreach (['whatsapp', 'other'] as $method) {
+            $response = $this->postWithCsrf(
+                route('booking.initiatePayment'),
+                [
+                    'first_name' => 'Juan',
+                    'last_name' => 'Dela Cruz',
+                    'email' => 'juan@example.com',
+                    'phone' => '09171234567',
+                    'social_contact_method' => $method,
+                    'social_contact_account' => '@juan',
+                    'payment_method' => 'paymongo',
+                    'terms_and_policy_accepted' => 'on',
+                    'camp_waiver_accepted' => 'on',
+                ],
+                [
+                    'booking' => [
+                        'booking_type' => 'staycation',
+                        'checkin' => '2026-07-01',
+                        'checkout' => '2026-07-02',
+                        'accommodations' => [],
+                        'final_totals' => ['grand_total' => 0],
+                    ],
+                ],
+                route('booking.staycationPayment')
+            );
+
+            $response->assertRedirect(route('booking.staycationPayment'));
+            $response->assertSessionHasErrors(['social_contact_method']);
+        }
+
+        $this->assertDatabaseCount('bookings', 0);
+    }
+
     public function test_complete_staycation_payment_redirects_to_paymongo_checkout(): void
     {
         config()->set('services.paymongo.secret_key', 'sk_test_123');
@@ -205,6 +240,8 @@ class StaycationWaiverTest extends TestCase
         ])->get(route('booking.staycationPayment'));
 
         $response->assertOk();
+        $response->assertSee('<label for="phone" class="block text-sm font-medium text-gray-700 mb-2">', false);
+        $response->assertSee('Mobile Number <span class="text-red-500">*</span>', false);
         $response->assertDontSee('Guest details and waivers');
         $response->assertDontSee('data-guest-card-index="');
         $response->assertDontSee('Guest 4');
@@ -214,6 +251,11 @@ class StaycationWaiverTest extends TestCase
         $response->assertSee('I agree to the Camp Waiver and Release from Liability', false);
         $response->assertSee('Read full booking policy', false);
         $response->assertSee('Review camp waiver', false);
+        $response->assertSee('value="facebook_messenger"', false);
+        $response->assertSee('value="instagram"', false);
+        $response->assertSee('value="viber"', false);
+        $response->assertDontSee('value="whatsapp"', false);
+        $response->assertDontSee('value="other"', false);
     }
 
     public function test_room_selection_preserves_separate_adult_and_child_counts(): void
