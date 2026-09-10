@@ -65,6 +65,8 @@ class StaycationWaiverTest extends TestCase
                 'last_name' => 'Dela Cruz',
                 'email' => 'juan@example.com',
                 'phone' => '09171234567',
+                'social_contact_method' => 'facebook_messenger',
+                'social_contact_account' => 'm.me/juan.delacruz',
                 'payment_method' => 'paymongo',
                 'terms_and_policy_accepted' => 'on',
                 'camp_waiver_accepted' => 'on',
@@ -108,6 +110,8 @@ class StaycationWaiverTest extends TestCase
             'status' => 'pending',
         ]);
         $booking = Booking::sole();
+        $this->assertSame('facebook_messenger', data_get($booking->booking_data, 'booking_contact.social_contact_method'));
+        $this->assertSame('m.me/juan.delacruz', data_get($booking->booking_data, 'booking_contact.social_contact_account'));
         $this->assertDatabaseHas('booking_guests', [
             'booking_id' => $booking->id,
             'full_name' => 'Juan Dela Cruz',

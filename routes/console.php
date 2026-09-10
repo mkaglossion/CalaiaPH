@@ -19,3 +19,11 @@ Schedule::command('bookings:expire-stale-pending --minutes=' . config('booking.p
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->onOneServer();
+
+if (config('booking.checkin_reminder.enabled', true)) {
+    Schedule::command('bookings:send-checkin-reminders')
+        ->dailyAt(config('booking.checkin_reminder.send_time', '09:00'))
+        ->timezone(config('app.timezone', 'Asia/Manila'))
+        ->withoutOverlapping()
+        ->onOneServer();
+}

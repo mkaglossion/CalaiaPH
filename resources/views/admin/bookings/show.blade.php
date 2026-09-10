@@ -285,6 +285,28 @@
                         <p class="text-gray-900">{{ $booking->customer_phone }}</p>
                     </div>
                     @endif
+                    @php
+                        $socialContactMethod = data_get($booking->booking_data, 'booking_contact.social_contact_method')
+                            ?? data_get($booking->booking_data, 'payment_data.social_contact_method');
+                        $socialContactAccount = data_get($booking->booking_data, 'booking_contact.social_contact_account')
+                            ?? data_get($booking->booking_data, 'payment_data.social_contact_account');
+                        $socialContactLabels = [
+                            'facebook_messenger' => 'Facebook Messenger',
+                            'instagram' => 'Instagram',
+                            'viber' => 'Viber',
+                            'whatsapp' => 'WhatsApp',
+                            'other' => 'Other',
+                        ];
+                    @endphp
+                    @if($socialContactMethod && $socialContactAccount)
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Preferred Social / Messaging Contact</label>
+                        <p class="text-gray-900">
+                            <span class="font-medium">{{ $socialContactLabels[$socialContactMethod] ?? ucfirst(str_replace('_', ' ', $socialContactMethod)) }}:</span>
+                            {{ $socialContactAccount }}
+                        </p>
+                    </div>
+                    @endif
                 </div>
             </div>
 

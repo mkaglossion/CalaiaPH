@@ -2115,6 +2115,10 @@ class BookingController extends Controller
             'name' => trim($validated['first_name'] . ' ' . $validated['last_name']),
             'email' => $validated['email'] ?? null,
             'phone' => $validated['phone'] ?? null,
+            'social_contact_method' => $validated['social_contact_method'] ?? null,
+            'social_contact_account' => isset($validated['social_contact_account'])
+                ? trim($validated['social_contact_account'])
+                : null,
         ], fn ($value) => $value !== null && $value !== '');
 
         $booking['booking_type'] = 'staycation';
@@ -2130,6 +2134,10 @@ class BookingController extends Controller
             'last_name' => $validated['last_name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'],
+            'social_contact_method' => $validated['social_contact_method'] ?? null,
+            'social_contact_account' => isset($validated['social_contact_account'])
+                ? trim($validated['social_contact_account'])
+                : null,
             'special_requests' => $validated['special_requests'] ?? null,
             'cancellation_policy' => $validated['cancellation_policy'] ?? null,
             'acceptances' => $booking['acceptances'],
@@ -2309,6 +2317,8 @@ class BookingController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
+            'social_contact_method' => 'nullable|required_with:social_contact_account|string|in:facebook_messenger,instagram,viber,whatsapp,other',
+            'social_contact_account' => 'nullable|required_with:social_contact_method|string|max:255',
             'payment_method' => 'nullable|string|in:paymongo,qr,gcash,paymaya,bank,qrph,grab_pay,billease',
             'applied_promo_id' => 'nullable|exists:promo_codes,id',
             'applied_promo_code' => 'nullable|string',

@@ -290,6 +290,25 @@ let vatRate = {{ $vatRate }};
                         </div>
                       </div>
 
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4 sm:mt-6">
+                        <div>
+                          <label for="social_contact_method" class="block text-sm font-medium text-gray-700 mb-2">Preferred Social / Messaging App (Optional)</label>
+                          <select id="social_contact_method" name="social_contact_method" class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg bg-white text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors">
+                            <option value="">Select an app</option>
+                            <option value="facebook_messenger" @selected(old('social_contact_method') === 'facebook_messenger')>Facebook Messenger</option>
+                            <option value="instagram" @selected(old('social_contact_method') === 'instagram')>Instagram</option>
+                            <option value="viber" @selected(old('social_contact_method') === 'viber')>Viber</option>
+                            <option value="whatsapp" @selected(old('social_contact_method') === 'whatsapp')>WhatsApp</option>
+                            <option value="other" @selected(old('social_contact_method') === 'other')>Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label for="social_contact_account" class="block text-sm font-medium text-gray-700 mb-2">Username, Profile Link, or Number (Optional)</label>
+                          <input type="text" id="social_contact_account" name="social_contact_account" value="{{ old('social_contact_account') }}" autocomplete="off" class="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:ring-2 focus:ring-[#8f5d54] focus:border-transparent transition-colors" placeholder="e.g. @username, profile link, or Viber number">
+                        </div>
+                      </div>
+                      <p class="mt-2 text-xs text-gray-400">Optional. This gives the Calaia admin team another way to contact you about your booking.</p>
+
                       {{-- Special Requests --}}
                       <div class="mt-4 sm:mt-6">
                         <label for="special_requests" class="block text-sm font-medium text-gray-700 mb-2">
@@ -481,7 +500,7 @@ let vatRate = {{ $vatRate }};
                       <div class="mb-4 pl-0">
                         <p class="text-sm font-semibold text-slate-900">Privacy Notice</p>
                         <p class="mt-1 text-xs sm:text-sm text-slate-700 leading-relaxed">
-                          We collect your name, email address, mobile number, booking details, and waiver information for booking processing, payment, confirmation, and customer support.
+                          We collect your name, email address, mobile number, optional social or messaging contact, booking details, and waiver information for booking processing, payment, confirmation, and customer support.
                         </p>
                         <ul class="mt-2 space-y-1 text-xs sm:text-sm text-slate-700 leading-relaxed list-disc list-inside">
                           <li>Used only for reservation and payment-related purposes</li>

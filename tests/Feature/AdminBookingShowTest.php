@@ -145,6 +145,26 @@ class AdminBookingShowTest extends TestCase
         $this->assertStringNotContainsString('Expired Attempt', $html);
     }
 
+    public function test_show_displays_optional_social_contact_information(): void
+    {
+        $this->actingAs(User::factory()->create(['user_type' => 'admin']));
+
+        $booking = Booking::create(array_merge($this->bookingAttributes(), [
+            'booking_data' => [
+                'booking_contact' => [
+                    'social_contact_method' => 'facebook_messenger',
+                    'social_contact_account' => 'm.me/payment.guest',
+                ],
+            ],
+        ]));
+
+        $html = app(AdminBookingsController::class)->show($booking->id)->render();
+
+        $this->assertStringContainsString('Preferred Social / Messaging Contact', $html);
+        $this->assertStringContainsString('Facebook Messenger:', $html);
+        $this->assertStringContainsString('m.me/payment.guest', $html);
+    }
+
     public function test_show_reconciles_a_pending_booking_with_paymongo(): void
     {
         $this->actingAs(User::factory()->create(['user_type' => 'admin']));

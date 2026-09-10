@@ -43,6 +43,7 @@ class Booking extends Model
         'checkin_status',
         'checkin_timestamp',
         'checkout_timestamp',
+        'checkin_reminder_sent_at',
         'paymongo_checkout_id',
         'payment_reference',
     ];
@@ -53,6 +54,7 @@ class Booking extends Model
         'checkout_date' => 'date',
         'checkin_timestamp' => 'datetime',
         'checkout_timestamp' => 'datetime',
+        'checkin_reminder_sent_at' => 'datetime',
         'total_amount' => 'decimal:2',
         'subtotal' => 'decimal:2',
         'vat_amount' => 'decimal:2',

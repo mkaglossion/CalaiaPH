@@ -3,6 +3,12 @@
 return [
     'payment_attempt_expiry_minutes' => 1440,
 
+    'checkin_reminder' => [
+        'enabled' => filter_var(env('BOOKING_CHECKIN_REMINDER_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'days_before' => (int) env('BOOKING_CHECKIN_REMINDER_DAYS_BEFORE', 1),
+        'send_time' => env('BOOKING_CHECKIN_REMINDER_TIME', '09:00'),
+    ],
+
     'home_availability_widget' => [
         // Temporarily hidden; retain the underlying logic for easy restoration.
         'show_availability_status' => false,
