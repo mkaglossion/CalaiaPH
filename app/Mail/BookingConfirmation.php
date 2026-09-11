@@ -18,6 +18,10 @@ class BookingConfirmation extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
+    public const CAMP_WAIVER_FORM_URL = BookingConfirmationContentService::DEFAULT_CAMP_WAIVER_FORM_URL;
+
+    private const ATTACH_CAMP_WAIVER_PDF = false;
+
     /** @var array<string, mixed> */
     public array $bookingData;
 
@@ -115,6 +119,7 @@ class BookingConfirmation extends Mailable implements ShouldQueue
                 'isDayvisit' => $this->isDayvisit,
                 'isSpecialEvent' => $this->isSpecialEvent,
                 'confirmationContent' => $this->confirmationContent,
+                'campWaiverFormUrl' => $this->confirmationContent['camp_waiver']['form_url'] ?? self::CAMP_WAIVER_FORM_URL,
             ],
         );
     }
@@ -126,7 +131,7 @@ class BookingConfirmation extends Mailable implements ShouldQueue
      */
     public function attachments(): array
     {
-        if (!$this->isStaycation) {
+        if (!$this->isStaycation || !self::ATTACH_CAMP_WAIVER_PDF) {
             return [];
         }
 

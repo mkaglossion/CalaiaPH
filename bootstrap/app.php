@@ -45,6 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
             \App\Http\Middleware\CheckForMaintenanceMode::class,
+            \App\Http\Middleware\SecurityHeaders::class,
         ]);
 
         $middleware->alias([
@@ -63,6 +64,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.activity' => \App\Http\Middleware\LogAdminActivity::class,
             'api.throttle' => \App\Http\Middleware\ApiRateLimiter::class,
             'api.security' => \App\Http\Middleware\ApiSecurity::class,
+            'security.headers' => \App\Http\Middleware\SecurityHeaders::class,
             'xss' => \App\Http\Middleware\XssProtection::class,
             'ensure.two.factor.verified' => \App\Http\Middleware\EnsureTwoFactorIsVerified::class,
         ]);

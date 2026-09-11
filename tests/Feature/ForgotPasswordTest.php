@@ -54,14 +54,20 @@ class ForgotPasswordTest extends TestCase
     /**
      * Test forgot password with invalid email.
      */
-    public function test_forgot_password_with_invalid_email(): void
+    public function test_forgot_password_with_unknown_email_uses_generic_response(): void
     {
+        Mail::fake();
+
         $response = $this->postWithCsrf('/forgot-password', [
             'email' => 'nonexistent@example.com',
         ]);
 
-        // Laravel default: shows error for invalid email
-        $response->assertSessionHasErrors('email');
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => 'If an account exists for this email address, a password reset link has been sent.',
+            ]);
+        Mail::assertNothingSent();
     }
 
     /**

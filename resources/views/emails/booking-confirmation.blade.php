@@ -20,21 +20,14 @@
         'phone' => $sharedContactDetails['phone'],
     ]);
     $emailContent = $confirmationContent['email'] ?? [];
-    $privateAcceptanceDetailKeys = ['customer_id', 'ip_address', 'user_agent'];
-    $campWaiverAcceptance = collect($bookingData['acceptances'] ?? [])->first(function ($agreement) {
-        return ($agreement['source'] ?? '') === 'camp_waiver_accepted'
-            || strcasecmp((string) ($agreement['label'] ?? ''), 'Camp Waiver and Release from Liability') === 0;
-    });
-    $campWaiverTransactionId = $bookingData['transaction_id']
-        ?? data_get($bookingData, 'payment_data.reference_id')
-        ?? data_get($bookingData, 'payment_summary.reference_id')
-        ?? null;
-    $campWaiverUrl = !empty($campWaiverTransactionId) && $isStaycation
-        ? route('booking.camp-waiver', ['transactionId' => $campWaiverTransactionId])
-        : null;
-    $campWaiverPdfUrl = !empty($campWaiverTransactionId) && $isStaycation
-        ? route('booking.camp-waiver.pdf', ['transactionId' => $campWaiverTransactionId])
-        : null;
+    $campWaiverService = app(\App\Services\BookingConfirmationContentService::class);
+    $campWaiverEmailContent = $confirmationContent['camp_waiver'] ?? [];
+    $campWaiverEmailTitle = trim((string) ($campWaiverEmailContent['title'] ?? ''));
+    $campWaiverEmailTitle = $campWaiverEmailTitle !== '' ? $campWaiverEmailTitle : '📋 Camp Waiver Form — Required';
+    $campWaiverEmailBody = trim((string) ($campWaiverEmailContent['body'] ?? ''));
+    $campWaiverEmailBody = $campWaiverEmailBody !== '' ? $campWaiverEmailBody : $campWaiverService->defaultCampWaiverEmailBody();
+    $campWaiverEmailBodyLines = preg_split('/\r\n|\r|\n/', $campWaiverEmailBody) ?: [];
+    $campWaiverFormUrl = trim((string) ($campWaiverEmailContent['form_url'] ?? $campWaiverFormUrl ?? \App\Mail\BookingConfirmation::CAMP_WAIVER_FORM_URL));
     @endphp
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
@@ -60,61 +53,6 @@
                 <h3>Booking Details:</h3>
                 <p><strong>Name:</strong> {{ ($customerInfo['first_name'] ?? $bookingData['first_name'] ?? '') . ' ' . ($customerInfo['last_name'] ?? $bookingData['last_name'] ?? '') }}</p>
                 <p><strong>Email:</strong> {{ $customerInfo['email'] ?? $bookingData['email'] ?? '' }}</p>
-                @php
-                    $acceptances = $bookingData['acceptances'] ?? [];
-                @endphp
-                @if(!empty($acceptances))
-                    <p><strong>Accepted Agreements:</strong></p>
-                    <ul>
-                        @foreach($acceptances as $agreement)
-                            @php
-                                $agreementLabel = $agreement['label'] ?? 'Agreement';
-                                $acceptedAt = !empty($agreement['accepted_at']) ? \Carbon\Carbon::parse($agreement['accepted_at'])->format('M d, Y h:i A') : null;
-                                $agreementDetails = is_array($agreement['details'] ?? null) ? $agreement['details'] : [];
-                                $detailLabels = [
-                                    'participant_name' => 'Participant / Guest Name',
-                                    'birth_date' => 'Date of Birth',
-                                    'gender' => 'Gender',
-                                    'address' => 'Address',
-                                    'parent_guardian_name' => 'Parent / Guardian Name',
-                                    'emergency_contact_name' => 'Emergency Contact Name',
-                                    'emergency_contact_phone' => 'Emergency Contact Number',
-                                    'relationship_to_participant' => 'Relationship to Participant',
-                                    'signature_name' => 'Typed Name / Signature',
-                                    'signature_date' => 'Date',
-                                    'parent_signature_name' => 'Parent / Guardian Signature',
-                                    'child_ward_name' => 'Child / Ward Name',
-                                    'parent_signature_date' => 'Parent / Guardian Date',
-                                    'medical_condition' => 'Medical or Physical Condition',
-                                ];
-                            @endphp
-                            <li>
-                                {{ $agreementLabel }} - {{ !empty($agreement['accepted']) ? 'Accepted' : 'Not accepted' }}
-                                @if($acceptedAt)
-                                    ({{ $acceptedAt }})
-                                @endif
-                                @if(!empty($agreementDetails))
-                                    <ul>
-                                        @foreach($agreementDetails as $field => $value)
-                                            @if($value !== null && $value !== '' && !in_array($field, $privateAcceptanceDetailKeys, true))
-                                                <li>
-                                                    {{ $detailLabels[$field] ?? str_replace('_', ' ', ucfirst($field)) }}: {{ $value }}
-                                                </li>
-                                            @endif
-                                        @endforeach
-                                    </ul>
-                                @endif
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
-                @if($isStaycation && !empty($campWaiverUrl))
-                    <p><strong>Camp Waiver:</strong> <a href="{{ $campWaiverUrl }}">Open printable waiver</a></p>
-                    @if(!empty($campWaiverPdfUrl))
-                        <p><strong>Camp Waiver PDF:</strong> <a href="{{ $campWaiverPdfUrl }}">Download PDF</a></p>
-                    @endif
-                    <p>Camp Waiver PDF attached for your records.</p>
-                @endif
                 @php
                 // Use the passed isStaycation flag, default to false if not set
                 if (!isset($isStaycation)) {
@@ -328,6 +266,17 @@
                         <li>Contact us if you need to make changes or have any questions.</li>
                     @endforelse
                 </ul>
+                @if($isStaycation)
+                    <h4>{{ $campWaiverEmailTitle }}</h4>
+                    @foreach($campWaiverEmailBodyLines as $line)
+                        @if(trim((string) $line) !== '')
+                            <p>{{ $line }}</p>
+                        @endif
+                    @endforeach
+                    @if($campWaiverFormUrl !== '')
+                        <p><strong>Waiver Link:</strong> <a href="{{ $campWaiverFormUrl }}">{{ $campWaiverFormUrl }}</a></p>
+                    @endif
+                @endif
             </div>
 
             <div class="booking-details">
@@ -364,10 +313,6 @@
             <p>If you have any questions or need to make changes, please contact us at:</p>
             <p>Email: {{ $supportContent['email'] }}<br>
             Phone: {{ $supportContent['phone'] }}</p>
-
-            @if($isStaycation && !empty($campWaiverPdfUrl))
-                <p><strong>Camp Waiver PDF attached</strong> for your records.</p>
-            @endif
 
             <p>Best regards,<br>
             The CalaiaPH Team</p>

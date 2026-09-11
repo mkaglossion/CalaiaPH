@@ -13,13 +13,15 @@
     {{-- CART BUTTON --}}
     <button
         @click="toggle()"
-        class="relative inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#f6f0eb] hover:bg-[#e9ddd2] border border-[#d3b7aa] transition focus:outline-none"
+        class="relative inline-flex items-center justify-center rounded-lg px-2 py-2 text-white transition hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+        aria-label="Open Shopping Cart"
+        title="Shopping Cart"
     >
-        <i class="bi bi-cart3 text-lg text-[#8f5d54]"></i>
+        <i class="bi bi-cart3 text-xl text-white"></i>
 
         <template x-if="cart.count > 0">
             <span
-                class="absolute -top-1 -right-1 min-w-4.5 h-4.5 rounded-full bg-[#8f5d54] text-white text-[10px] flex items-center justify-center px-1"
+                class="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-600 px-1 text-center text-[11px] font-bold leading-5 text-white"
                 x-text="cart.count"
             ></span>
         </template>

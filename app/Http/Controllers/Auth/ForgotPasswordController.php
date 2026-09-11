@@ -5,12 +5,19 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Mail\PasswordReset;
 use App\Models\User;
+use App\Services\AuthenticationRateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class ForgotPasswordController extends Controller
 {
+    private const GENERIC_RESET_MESSAGE = 'If an account exists for this email address, a password reset link has been sent.';
+
+    public function __construct(private AuthenticationRateLimiter $rateLimiter)
+    {
+    }
+
     /**
      * Show the forgot password form
      */
@@ -24,32 +31,45 @@ class ForgotPasswordController extends Controller
      */
     public function forgotPassword(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email|exists:users,email',
+        $validated = $request->validate([
+            'email' => 'required|email',
         ]);
 
-        $user = User::where('email', $request->email)->first();
-        
-        // Generate password reset token
-        $token = Str::random(60);
-        $user->password_reset_token = $token;
-        $user->password_reset_expires = now()->addHours(24);
-        $user->save();
+        $email = Str::lower(trim((string) $validated['email']));
+        $throttleKey = $this->rateLimiter->key($request, $email, 'password-reset');
 
-        // Send password reset email
-        Mail::to($user->email)->send(new PasswordReset($user, $token));
+        if ($this->rateLimiter->tooManyAttempts($throttleKey, 5)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Too many password reset attempts. Please try again in '.$this->rateLimiter->availableIn($throttleKey).' seconds.',
+            ], 429);
+        }
+
+        $this->rateLimiter->hit($throttleKey, 600);
+        $user = User::where('email', $email)->first();
+
+        if ($user) {
+            // Generate password reset token
+            $token = Str::random(60);
+            $user->password_reset_token = $token;
+            $user->password_reset_expires = now()->addHours(24);
+            $user->save();
+
+            // Send password reset email
+            Mail::to($user->email)->send(new PasswordReset($user, $token));
+        }
 
         // Return JSON response for frontend
         return response()->json([
             'success' => true,
-            'message' => 'Password reset link has been sent to your email address. Please check your inbox.',
+            'message' => self::GENERIC_RESET_MESSAGE,
         ]);
     }
 
     /**
      * Show the reset password form
      */
-    public function showResetForm($token)
+    public function showResetForm(string $token)
     {
         $user = User::where('password_reset_token', $token)
             ->where('password_reset_expires', '>', now())

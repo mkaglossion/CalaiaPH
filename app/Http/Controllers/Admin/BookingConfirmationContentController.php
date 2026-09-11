@@ -22,7 +22,6 @@ class BookingConfirmationContentController extends Controller
             'types' => [
                 'staycation' => 'Staycation',
                 'package' => 'Package',
-                'camp-waiver' => 'Camp Waiver',
                 'dayvisit' => 'Day Visit',
             ],
         ]);
@@ -51,6 +50,7 @@ class BookingConfirmationContentController extends Controller
         $rules = $isCampWaiver ? [
             "contents.$rawBookingType.camp_waiver_title" => ['required', 'string', 'max:255'],
             "contents.$rawBookingType.camp_waiver_body" => ['required', 'string', 'max:20000'],
+            "contents.$rawBookingType.camp_waiver_form_url" => ['nullable', 'url', 'max:2048'],
         ] : [
             "contents.$rawBookingType.page_eyebrow" => ['nullable', 'string', 'max:120'],
             "contents.$rawBookingType.page_title" => ['required', 'string', 'max:255'],
@@ -66,6 +66,7 @@ class BookingConfirmationContentController extends Controller
             "contents.$rawBookingType.payment_button_label" => ['nullable', 'string', 'max:255'],
             "contents.$rawBookingType.camp_waiver_title" => ['nullable', 'string', 'max:255'],
             "contents.$rawBookingType.camp_waiver_body" => ['nullable', 'string', 'max:20000'],
+            "contents.$rawBookingType.camp_waiver_form_url" => ['nullable', 'url', 'max:2048'],
             "contents.$rawBookingType.email_subject" => ['nullable', 'string', 'max:255'],
             "contents.$rawBookingType.email_greeting" => ['nullable', 'string', 'max:255'],
             "contents.$rawBookingType.email_intro" => ['nullable', 'string', 'max:4000'],
@@ -92,6 +93,7 @@ class BookingConfirmationContentController extends Controller
                     'payment_button_label' => null,
                     'camp_waiver_title' => $payload['camp_waiver_title'] ?? '',
                     'camp_waiver_body' => $payload['camp_waiver_body'] ?? '',
+                    'camp_waiver_form_url' => $payload['camp_waiver_form_url'] ?? null,
                     'email_subject' => null,
                     'email_greeting' => null,
                     'email_intro' => null,
@@ -116,6 +118,7 @@ class BookingConfirmationContentController extends Controller
                     'payment_button_label' => $payload['payment_button_label'] ?? null,
                     'camp_waiver_title' => $payload['camp_waiver_title'] ?? null,
                     'camp_waiver_body' => $payload['camp_waiver_body'] ?? null,
+                    'camp_waiver_form_url' => $payload['camp_waiver_form_url'] ?? null,
                     'email_subject' => $payload['email_subject'] ?? null,
                     'email_greeting' => $payload['email_greeting'] ?? null,
                     'email_intro' => $payload['email_intro'] ?? null,
@@ -337,6 +340,7 @@ class BookingConfirmationContentController extends Controller
             $resolved['page']['description'] = $payload['page_description'] ?? $resolved['page']['description'] ?? '';
             $resolved['camp_waiver']['title'] = $payload['camp_waiver_title'] ?? $resolved['camp_waiver']['title'] ?? '';
             $resolved['camp_waiver']['body'] = $payload['camp_waiver_body'] ?? $resolved['camp_waiver']['body'] ?? '';
+            $resolved['camp_waiver']['form_url'] = $payload['camp_waiver_form_url'] ?? $resolved['camp_waiver']['form_url'] ?? '';
 
             return $resolved;
         }
@@ -355,6 +359,9 @@ class BookingConfirmationContentController extends Controller
         $resolved['buttons']['home'] = $payload['home_button_label'] ?? $resolved['buttons']['home'] ?? null;
         $resolved['buttons']['print'] = $payload['print_button_label'] ?? $resolved['buttons']['print'] ?? null;
         $resolved['buttons']['payment'] = $payload['payment_button_label'] ?? $resolved['buttons']['payment'] ?? null;
+        $resolved['camp_waiver']['title'] = $payload['camp_waiver_title'] ?? $resolved['camp_waiver']['title'] ?? '';
+        $resolved['camp_waiver']['body'] = $payload['camp_waiver_body'] ?? $resolved['camp_waiver']['body'] ?? '';
+        $resolved['camp_waiver']['form_url'] = $payload['camp_waiver_form_url'] ?? $resolved['camp_waiver']['form_url'] ?? '';
         $resolved['email']['subject'] = $payload['email_subject'] ?? $resolved['email']['subject'] ?? '';
         $resolved['email']['greeting'] = $payload['email_greeting'] ?? $resolved['email']['greeting'] ?? '';
         $resolved['email']['intro'] = $payload['email_intro'] ?? $resolved['email']['intro'] ?? '';

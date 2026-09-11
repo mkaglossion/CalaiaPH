@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cache;
 class BookingConfirmationContentService
 {
     public const CACHE_KEY = 'booking_confirmation_contents_resolved';
+    public const DEFAULT_CAMP_WAIVER_FORM_URL = 'https://tinyurl.com/Calaiawaiver';
 
     public function all(): array
     {
@@ -115,6 +116,7 @@ class BookingConfirmationContentService
             $resolved['camp_waiver'] = [
                 'title' => $this->fallbackValue($record->camp_waiver_title, $defaults['camp_waiver']['title']),
                 'body' => $this->fallbackValue($record->camp_waiver_body, $defaults['camp_waiver']['body']),
+                'form_url' => $this->fallbackValue($record->camp_waiver_form_url ?? null, $defaults['camp_waiver']['form_url'] ?? null),
             ];
         }
 
@@ -150,8 +152,9 @@ class BookingConfirmationContentService
                     'payment' => null,
                 ],
                 'camp_waiver' => [
-                    'title' => 'Camp Waiver',
-                    'body' => $this->defaultCampWaiverBody(),
+                    'title' => '📋 Camp Waiver Form — Required',
+                    'body' => $this->defaultCampWaiverEmailBody(),
+                    'form_url' => self::DEFAULT_CAMP_WAIVER_FORM_URL,
                 ],
                 'email' => [
                     'subject' => 'Booking Receipt - CalaiaPH',
@@ -187,6 +190,7 @@ class BookingConfirmationContentService
                 'camp_waiver' => [
                     'title' => 'Camp Waiver and Release from Liability',
                     'body' => $this->defaultCampWaiverBody(),
+                    'form_url' => self::DEFAULT_CAMP_WAIVER_FORM_URL,
                 ],
                 'email' => [
                     'subject' => null,
@@ -336,6 +340,16 @@ If guest is under 18 (Parent/Guardian to sign):
 Name and Signature of Parent/Guardian:
 Name of Child/Ward:
 Date:
+TEXT;
+    }
+
+    public function defaultCampWaiverEmailBody(): string
+    {
+        return <<<'TEXT'
+Please note that filling out and signing our camp waiver form is mandatory for all guests, including children, prior to your date of stay.
+Each participant must have their own individual signed waiver — one form per person, with no exceptions.
+We kindly ask that all waivers be completed and submitted at least one day before your check-in date to help ensure a smooth check-in process.
+Thank you so much for your cooperation!
 TEXT;
     }
 

@@ -207,7 +207,8 @@ class SocialLoginController extends Controller
         Auth::guard('web')->login($user, true);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('home'))->with('success', 'Welcome back! You have been logged in successfully.');
+        return redirect()->to($this->pullIntendedUrl($request))
+            ->with('success', 'Welcome back! You have been logged in successfully.');
     }
 
     private function syncExistingUser(
@@ -332,7 +333,7 @@ class SocialLoginController extends Controller
     private function pullIntendedUrl(Request $request): string
     {
         $intended = $request->session()->pull(self::SOCIAL_INTENDED_KEY)
-            ?? $request->session()->get('url.intended');
+            ?? $request->session()->pull('url.intended');
 
         $sanitized = $this->sanitizePublicUrl($request, $intended);
 
@@ -345,19 +346,39 @@ class SocialLoginController extends Controller
             return null;
         }
 
+        $url = trim((string) $url);
+        if (str_contains($url, "\r") || str_contains($url, "\n") || str_starts_with($url, '\\')) {
+            return null;
+        }
+
         $parsedUrl = parse_url($url);
 
         if ($parsedUrl === false) {
             return null;
         }
 
-        $path = '/'.ltrim((string) ($parsedUrl['path'] ?? '/'), '/');
-        $allowedHosts = array_filter([
-            parse_url(config('app.url'), PHP_URL_HOST),
-            $request->getHost(),
-        ]);
+        $scheme = strtolower((string) ($parsedUrl['scheme'] ?? ''));
+        if ($scheme !== '' && ! in_array($scheme, ['http', 'https'], true)) {
+            return null;
+        }
 
-        if (isset($parsedUrl['host']) && ! in_array($parsedUrl['host'], $allowedHosts, true)) {
+        $path = '/'.ltrim((string) ($parsedUrl['path'] ?? '/'), '/');
+        $appHost = strtolower((string) parse_url(config('app.url'), PHP_URL_HOST));
+        $allowedHosts = collect(config('security.allowed_redirect_hosts', []))
+            ->push($appHost)
+            ->filter()
+            ->map(fn ($host) => strtolower((string) $host))
+            ->unique()
+            ->values()
+            ->all();
+
+        $host = isset($parsedUrl['host']) ? strtolower((string) $parsedUrl['host']) : null;
+
+        if ($host !== null && ! in_array($host, $allowedHosts, true)) {
+            return null;
+        }
+
+        if ($host !== null && $scheme !== 'https' && ! in_array($host, ['localhost', '127.0.0.1', '::1'], true)) {
             return null;
         }
 

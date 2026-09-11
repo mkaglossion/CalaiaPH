@@ -9,20 +9,38 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\PendingUser;
+use App\Services\AuthenticationRateLimiter;
 
 class LoginController extends Controller
 {
+    private const GENERIC_LOGIN_ERROR = 'These credentials do not match our records.';
+
+    public function __construct(private AuthenticationRateLimiter $rateLimiter)
+    {
+    }
+
     /**
      * Handle login request from modal
      */
     public function login(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'username' => 'required|string',
             'password' => 'required|string|min:8',
         ]);
 
-        $credentials = $request->only('username', 'password');
+        $credentials = [
+            'username' => trim((string) $validated['username']),
+            'password' => (string) $validated['password'],
+        ];
+        $throttleKey = $this->rateLimiter->key($request, $credentials['username'], 'customer-login');
+
+        if ($this->rateLimiter->tooManyAttempts($throttleKey, 5)) {
+            return redirect('/home')->with(
+                'error',
+                'Too many login attempts. Please try again in '.$this->rateLimiter->availableIn($throttleKey).' seconds.'
+            );
+        }
 
         // Check if user is pending (not verified)
         $pending = PendingUser::where('email', $credentials['username'])
@@ -30,7 +48,9 @@ class LoginController extends Controller
             ->first();
 
         if ($pending) {
-            return redirect('/home')->with('error', 'Please verify your email before logging in.');
+            $this->rateLimiter->hit($throttleKey, 60);
+
+            return redirect('/home')->with('error', self::GENERIC_LOGIN_ERROR);
         }
 
         // Find verified user
@@ -39,7 +59,9 @@ class LoginController extends Controller
             ->first();
 
         if (!$user) {
-            return redirect('/home')->with('error', 'No account found with that email or username.');
+            $this->rateLimiter->hit($throttleKey, 60);
+
+            return redirect('/home')->with('error', self::GENERIC_LOGIN_ERROR);
         }
 
         // Check password - cast to string to handle SensitiveParameterValue objects
@@ -52,17 +74,20 @@ class LoginController extends Controller
             Log::error('Password check failed', [
                 'error' => $e->getMessage(),
                 'user_id' => $user->id,
-                'password_hash_start' => substr($user->password, 0, 30),
             ]);
             return redirect('/home')->with('error', 'An error occurred during login. Please try again.');
         }
         
         if (!$passwordIsValid) {
-            return redirect('/home')->with('error', 'Incorrect password.');
+            $this->rateLimiter->hit($throttleKey, 60);
+
+            return redirect('/home')->with('error', self::GENERIC_LOGIN_ERROR);
         }
 
         // Log user in
         Auth::login($user);
+        $request->session()->regenerate();
+        $this->rateLimiter->clear($throttleKey);
 
         session()->save();
 

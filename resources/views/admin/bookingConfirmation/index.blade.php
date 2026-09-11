@@ -12,7 +12,6 @@
     $types = $types ?? [
         'staycation' => 'Staycation',
         'package' => 'Package',
-        'camp-waiver' => 'Camp Waiver',
         'dayvisit' => 'Day Visit',
     ];
     $hiddenTabs = ['dayvisit'];
@@ -82,6 +81,7 @@
             $support = $content['support'] ?? [];
             $buttons = $content['buttons'] ?? [];
             $email = $content['email'] ?? [];
+            $campWaiver = $content['camp_waiver'] ?? [];
             $previewSrc = route('admin.booking-confirmation.preview', ['tab' => $key]);
             $fieldIdPrefix = 'booking-confirmation-' . $key;
             $controlClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-[#8f5d54] focus:ring-2 focus:ring-[#8f5d54] focus:ring-offset-1';
@@ -345,6 +345,44 @@
                                         <textarea id="{{ $fieldIdPrefix }}-email-intro" name="contents[{{ $key }}][email_intro]" rows="6" class="{{ $textAreaClass }}">{{ old("contents.$key.email_intro", $email['intro'] ?? '') }}</textarea>
                                     </div>
                                 </div>
+
+                                @if($key === 'staycation')
+                                    <div class="rounded-xl border border-gray-200 bg-white p-4 space-y-4 shadow-sm">
+                                        <div>
+                                            <p class="text-sm font-semibold text-gray-900">Camp waiver email note</p>
+                                            <p class="text-xs text-gray-500">Shown inside What&apos;s Next in staycation booking confirmation emails.</p>
+                                        </div>
+                                        <div>
+                                            <label for="{{ $fieldIdPrefix }}-camp-waiver-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                            <input
+                                                id="{{ $fieldIdPrefix }}-camp-waiver-title"
+                                                type="text"
+                                                name="contents[{{ $key }}][camp_waiver_title]"
+                                                value="{{ old("contents.$key.camp_waiver_title", $campWaiver['title'] ?? '') }}"
+                                                class="{{ $controlClass }}"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label for="{{ $fieldIdPrefix }}-camp-waiver-body" class="block text-sm font-medium text-gray-700 mb-1">Body</label>
+                                            <textarea
+                                                id="{{ $fieldIdPrefix }}-camp-waiver-body"
+                                                name="contents[{{ $key }}][camp_waiver_body]"
+                                                rows="6"
+                                                class="{{ $textAreaClass }}"
+                                            >{{ old("contents.$key.camp_waiver_body", $campWaiver['body'] ?? '') }}</textarea>
+                                        </div>
+                                        <div>
+                                            <label for="{{ $fieldIdPrefix }}-camp-waiver-url" class="block text-sm font-medium text-gray-700 mb-1">Waiver form link</label>
+                                            <input
+                                                id="{{ $fieldIdPrefix }}-camp-waiver-url"
+                                                type="url"
+                                                name="contents[{{ $key }}][camp_waiver_form_url]"
+                                                value="{{ old("contents.$key.camp_waiver_form_url", $campWaiver['form_url'] ?? '') }}"
+                                                class="{{ $controlClass }}"
+                                            >
+                                        </div>
+                                    </div>
+                                @endif
 
                                 <div class="rounded-xl border border-gray-200 bg-white p-4 space-y-4 shadow-sm">
                                     <div>

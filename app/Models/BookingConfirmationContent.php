@@ -24,6 +24,7 @@ class BookingConfirmationContent extends Model
         'payment_button_label',
         'camp_waiver_title',
         'camp_waiver_body',
+        'camp_waiver_form_url',
         'email_subject',
         'email_greeting',
         'email_intro',

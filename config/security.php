@@ -99,6 +99,28 @@ return [
         'Permissions-Policy' => 'camera=(), microphone=(), geolocation=()',
     ],
 
+    'web_security_headers' => [
+        'X-Content-Type-Options' => 'nosniff',
+        'X-Frame-Options' => 'SAMEORIGIN',
+        'Referrer-Policy' => 'strict-origin-when-cross-origin',
+        'Content-Security-Policy-Report-Only' => "default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval'; frame-ancestors 'self'",
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Safe Redirect Hosts
+    |--------------------------------------------------------------------------
+    |
+    | Absolute "intended" URLs are allowed only for owned hosts. Relative paths
+    | remain preferred for normal application redirects.
+    |
+    */
+
+    'allowed_redirect_hosts' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', env('ALLOWED_REDIRECT_HOSTS', 'calaia.ph,www.calaia.ph'))
+    ))),
+
     /*
     |--------------------------------------------------------------------------
     | Rate Limiting Logging

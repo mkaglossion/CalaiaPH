@@ -51,7 +51,7 @@ return [
         ['title' => 'Booking Confirmation', 'icon' => 'file-text', 'route' => 'admin.booking-confirmation.index', 'sub' => [
             ['label' => 'Staycation', 'route' => 'admin.booking-confirmation.index', 'params' => ['tab' => 'staycation']],
             ['label' => 'Package', 'route' => 'admin.booking-confirmation.index', 'params' => ['tab' => 'package']],
-            ['label' => 'Camp Waiver', 'route' => 'admin.booking-confirmation.index', 'params' => ['tab' => 'camp-waiver']],
+            //['label' => 'Camp Waiver', 'route' => 'admin.booking-confirmation.index', 'params' => ['tab' => 'camp-waiver']],
         ]],
         ['title' => 'Promo Codes', 'icon' => 'ticket', 'route' => 'admin.promo-codes.index'],
         ['title' => 'Settings', 'icon' => 'settings', 'route' => 'admin.settings.*', 'sub' => [

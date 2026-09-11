@@ -402,7 +402,7 @@ class StaycationWaiverTest extends TestCase
         $this->assertDatabaseCount('booking_guests', 0);
     }
 
-    public function test_booking_confirmation_email_shows_accepted_agreements(): void
+    public function test_booking_confirmation_email_shows_external_waiver_form_instruction(): void
     {
         $mail = new BookingConfirmation([
             'bookingData' => [
@@ -434,20 +434,39 @@ class StaycationWaiverTest extends TestCase
                 ],
                 'next_steps' => [],
                 'support' => [],
+                'camp_waiver' => [
+                    'title' => 'Admin Waiver Reminder',
+                    'body' => "Admin says every guest must sign.\nChildren need individual waivers too.",
+                    'form_url' => 'https://form.jotform.com/calaia/admin-waiver',
+                ],
             ],
             'isStaycation' => true,
         ]);
 
         $html = $mail->render();
 
-        $this->assertStringContainsString('Accepted Agreements', $html);
-        $this->assertStringContainsString('Camp Waiver and Release from Liability', $html);
-        $this->assertStringContainsString(route('booking.camp-waiver', ['transactionId' => 'TXN-2026-0001']), $html);
-        $this->assertStringContainsString(route('booking.camp-waiver.pdf', ['transactionId' => 'TXN-2026-0001']), $html);
-        $this->assertCount(1, $mail->attachments());
+        $this->assertStringContainsString('Admin Waiver Reminder', $html);
+        $this->assertStringContainsString('Admin says every guest must sign.', $html);
+        $this->assertStringContainsString('Children need individual waivers too.', $html);
+        $this->assertStringContainsString('https://form.jotform.com/calaia/admin-waiver', $html);
+        $this->assertStringNotContainsString(BookingConfirmation::CAMP_WAIVER_FORM_URL, $html);
+        $this->assertStringNotContainsString('Accepted Agreements', $html);
+        $this->assertStringNotContainsString(route('booking.camp-waiver', ['transactionId' => 'TXN-2026-0001']), $html);
+        $this->assertStringNotContainsString(route('booking.camp-waiver.pdf', ['transactionId' => 'TXN-2026-0001']), $html);
+        $this->assertCount(0, $mail->attachments());
+
+        $nextStepsPosition = strpos($html, 'What&#039;s Next?');
+        $waiverPosition = strpos($html, 'Admin Waiver Reminder');
+        $paymentPosition = strpos($html, 'Payment Details');
+
+        $this->assertNotFalse($nextStepsPosition);
+        $this->assertNotFalse($waiverPosition);
+        $this->assertNotFalse($paymentPosition);
+        $this->assertGreaterThan($nextStepsPosition, $waiverPosition);
+        $this->assertGreaterThan($waiverPosition, $paymentPosition);
     }
 
-    public function test_booking_confirmation_keeps_one_attachment_after_rendering_more_than_once(): void
+    public function test_booking_confirmation_email_does_not_attach_camp_waiver_pdf(): void
     {
         $mail = new BookingConfirmation([
             'bookingData' => [
@@ -461,8 +480,8 @@ class StaycationWaiverTest extends TestCase
         $mail->render();
         $mail->render();
 
-        $this->assertCount(1, $mail->rawAttachments);
-        $this->assertSame('camp-waiver-TXN-ONE-ATTACHMENT-1.pdf', $mail->rawAttachments[0]['name']);
+        $this->assertCount(0, $mail->attachments());
+        $this->assertCount(0, $mail->rawAttachments);
     }
 
     public function test_booking_confirmation_email_calculates_nights_and_renders_peso_amounts_safely(): void
@@ -571,7 +590,7 @@ class StaycationWaiverTest extends TestCase
         $response->assertSee('+63 917 123 4567');
     }
 
-    public function test_booking_confirmation_shows_camp_waiver_link_for_staycation_bookings(): void
+    public function test_booking_confirmation_hides_camp_waiver_actions_for_staycation_bookings(): void
     {
         $response = $this->withSession([
             'booking' => [
@@ -599,8 +618,11 @@ class StaycationWaiverTest extends TestCase
         ])->get(route('booking.confirmation'));
 
         $response->assertOk();
-        $response->assertSee(route('booking.camp-waiver', ['transactionId' => 'TXN-2026-0002']), false);
-        $response->assertSee(route('booking.camp-waiver.pdf', ['transactionId' => 'TXN-2026-0002']), false);
+        $response->assertDontSee('Camp Waiver');
+        $response->assertDontSee('Print Camp Waiver');
+        $response->assertDontSee('Download PDF');
+        $response->assertDontSee(route('booking.camp-waiver', ['transactionId' => 'TXN-2026-0002']), false);
+        $response->assertDontSee(route('booking.camp-waiver.pdf', ['transactionId' => 'TXN-2026-0002']), false);
     }
 
     public function test_camp_waiver_page_renders_from_confirmed_booking(): void

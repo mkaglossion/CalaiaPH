@@ -2,6 +2,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\Receipt;
@@ -33,7 +35,11 @@ class CartController extends Controller
 
         foreach ($cart as $id => $it) {
             $qty   = (int)($it['quantity'] ?? 0);
-            $basePrice = (float)($it['price'] ?? 0);
+            if ($qty < 1) {
+                continue;
+            }
+
+            $product = $this->resolveCartProduct($id, $it);
 
             // Check if it's a dining item (SET MENUS)
             $isDining = str_contains(strtolower($it['title'] ?? ''), 'set menus');
@@ -49,18 +55,24 @@ class CartController extends Controller
                 }
                 $subtotal = $price; // Price is for the set, not per person
             } else {
-                $price = $basePrice;
+                if (!$product || !$product->is_active) {
+                    continue;
+                }
+
+                $price = (float) $product->price;
                 $subtotal = $price * $qty;
             }
 
             $items[] = [
                 'id'       => $id,
-                'title'    => $it['title'] ?? null,
+                'cart_key' => $id,
+                'product_id' => $product?->id,
+                'title'    => $product?->title ?? ($it['title'] ?? null),
                 'price'    => $price,
-                'image'    => $it['image'] ?? ImageHelper::placeholder(),
+                'image'    => $product ? $this->productImageUrl($product) : ($it['image'] ?? ImageHelper::placeholder()),
                 'quantity' => $qty,
                 'subtotal' => $subtotal,
-                'type'     => $it['type'] ?? null,
+                'type'     => $product?->category ?? ($it['type'] ?? null),
                 'isDining' => $isDining,
             ];
 
@@ -81,6 +93,79 @@ class CartController extends Controller
             'vat_amount' => $vatAmount,
             'final_total' => $finalTotal,
         ];
+    }
+
+    protected function resolveCartProduct(string|int $cartKey, array $item): ?Product
+    {
+        $productId = $item['product_id'] ?? null;
+
+        if ($productId === null && is_numeric($cartKey)) {
+            $productId = $cartKey;
+        }
+
+        return $productId ? Product::find($productId) : null;
+    }
+
+    protected function productImageUrl(Product $product): string
+    {
+        if (empty($product->image)) {
+            return ImageHelper::placeholder();
+        }
+
+        if (str_contains($product->image, 'res.cloudinary.com')) {
+            return $product->image;
+        }
+
+        return asset('storage/' . $product->image);
+    }
+
+    protected function firstCartAvailabilityError(array $cart): ?string
+    {
+        foreach ($cart as $id => $item) {
+            $product = $this->resolveCartProduct($id, is_array($item) ? $item : []);
+            $quantity = (int) ($item['quantity'] ?? 0);
+
+            if (!$product || !$product->is_active) {
+                return 'One or more cart items are no longer available.';
+            }
+
+            if (!$product->is_inventory_managed) {
+                continue;
+            }
+
+            if ($quantity < 1 || $quantity > $product->stock_quantity) {
+                return 'Insufficient stock. Only ' . $product->stock_quantity . ' item(s) available for ' . $product->title . '.';
+            }
+        }
+
+        return null;
+    }
+
+    protected function normalizeProductCartItem(Product $product, int $quantity, array $data = []): array
+    {
+        $isDining = str_contains(strtolower($product->title), 'set menus')
+            || (($data['isDining'] ?? '0') == '1');
+
+        return array_filter([
+            'product_id' => $product->id,
+            'title' => $product->title,
+            'price' => (float) $product->price,
+            'image' => $this->productImageUrl($product),
+            'quantity' => $quantity,
+            'isDining' => $isDining,
+            'type' => $product->category,
+            'meal_period' => $data['meal_period'] ?? null,
+            'reservation_date' => $data['reservation_date'] ?? null,
+            'reservation_time' => $data['reservation_time'] ?? null,
+            'adults' => $data['adults'] ?? null,
+            'children' => $data['children'] ?? null,
+            'salutation' => $data['salutation'] ?? null,
+            'first_name' => $data['first_name'] ?? null,
+            'last_name' => $data['last_name'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'email' => $data['email'] ?? null,
+            'special_requests' => $data['special_requests'] ?? null,
+        ], fn ($value) => $value !== null);
     }
 
     /**
@@ -138,6 +223,9 @@ class CartController extends Controller
         $rawCart = session('cart', []);
         $cart    = is_array($rawCart) ? $rawCart : [];
         $summary = $this->buildCartSummary($cart);
+        $displayCart = collect($summary['items'])
+            ->mapWithKeys(fn (array $item) => [(string) $item['cart_key'] => $item])
+            ->all();
 
         // For header dropdown / AJAX
         if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
@@ -156,7 +244,7 @@ class CartController extends Controller
         }
 
         return view('cart', [
-            'cart'      => $cart,
+            'cart'      => $displayCart,
             'cartCount' => $summary['count'],
             'cartTotal' => $summary['total'],
             'cartReference' => $reference,
@@ -168,11 +256,11 @@ class CartController extends Controller
     public function add(Request $request)
     {
         $data = $request->validate([
-            'id'       => 'required|string',
-            'title'    => 'required|string',
-            'price'    => 'required|numeric|min:0',
+            'id'       => 'required|integer|exists:products,id',
+            'title'    => 'nullable|string',
+            'price'    => 'nullable|numeric|min:0',
             'image'    => 'nullable|string',
-            'quantity' => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:1|max:100',
             'isDining' => 'nullable',
             'meal_period' => 'nullable|string',
             'reservation_date' => 'nullable|string',
@@ -187,8 +275,12 @@ class CartController extends Controller
             'special_requests' => 'nullable|string',
         ]);
 
+        $product = Product::whereKey($data['id'])->where('is_active', true)->first();
+        if (!$product) {
+            return redirect()->back()->with('error', 'This product is no longer available.');
+        }
+
         // Check inventory for products
-        $product = Product::find($data['id']);
         if ($product && $product->is_inventory_managed) {
             $currentCartQuantity = 0;
             $cart = session()->get('cart', []);
@@ -213,49 +305,10 @@ class CartController extends Controller
         if (isset($cart[$id])) {
             // update existing
             $cart[$id]['quantity'] += $data['quantity'];
-            $cart[$id]['price']     = $data['price']; // just in case price changed
-            if (!empty($data['image'])) {
-                $cart[$id]['image'] = $data['image'];
-            }
-            $cart[$id]['isDining'] = ($data['isDining'] ?? '0') == '1';
-            // Store dining reservation details
-            if ($cart[$id]['isDining']) {
-                $cart[$id]['meal_period'] = $data['meal_period'] ?? '';
-                $cart[$id]['reservation_date'] = $data['reservation_date'] ?? '';
-                $cart[$id]['reservation_time'] = $data['reservation_time'] ?? '';
-                $cart[$id]['adults'] = $data['adults'] ?? 0;
-                $cart[$id]['children'] = $data['children'] ?? 0;
-                $cart[$id]['salutation'] = $data['salutation'] ?? '';
-                $cart[$id]['first_name'] = $data['first_name'] ?? '';
-                $cart[$id]['last_name'] = $data['last_name'] ?? '';
-                $cart[$id]['phone'] = $data['phone'] ?? '';
-                $cart[$id]['email'] = $data['email'] ?? '';
-                $cart[$id]['special_requests'] = $data['special_requests'] ?? '';
-            }
+            $cart[$id] = $this->normalizeProductCartItem($product, (int) $cart[$id]['quantity'], array_merge($cart[$id], $data));
         } else {
             // new item
-            $cart[$id] = [
-                'product_id' => $data['id'],
-                'title'    => $data['title'],
-                'price'    => $data['price'],
-                'image'    => $data['image'] ?? '',
-                'quantity' => $data['quantity'],
-                'isDining' => ($data['isDining'] ?? '0') == '1',
-            ];
-            // Store dining reservation details for new items
-            if (($data['isDining'] ?? '0') == '1') {
-                $cart[$id]['meal_period'] = $data['meal_period'] ?? '';
-                $cart[$id]['reservation_date'] = $data['reservation_date'] ?? '';
-                $cart[$id]['reservation_time'] = $data['reservation_time'] ?? '';
-                $cart[$id]['adults'] = $data['adults'] ?? 0;
-                $cart[$id]['children'] = $data['children'] ?? 0;
-                $cart[$id]['salutation'] = $data['salutation'] ?? '';
-                $cart[$id]['first_name'] = $data['first_name'] ?? '';
-                $cart[$id]['last_name'] = $data['last_name'] ?? '';
-                $cart[$id]['phone'] = $data['phone'] ?? '';
-                $cart[$id]['email'] = $data['email'] ?? '';
-                $cart[$id]['special_requests'] = $data['special_requests'] ?? '';
-            }
+            $cart[$id] = $this->normalizeProductCartItem($product, (int) $data['quantity'], $data);
         }
 
         session()->put('cart', $cart);
@@ -271,10 +324,10 @@ class CartController extends Controller
         return redirect()->route('cart.index')->with('success', 'Product added to cart.');
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, string $id)
     {
         $data = $request->validate([
-            'quantity' => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:1|max:100',
         ]);
 
         $cart = session()->get('cart', []);
@@ -285,7 +338,19 @@ class CartController extends Controller
         $id = urldecode($id);
 
         if (isset($cart[$id])) {
+            $product = $this->resolveCartProduct($id, $cart[$id]);
+            if (!$product || !$product->is_active) {
+                unset($cart[$id]);
+                session()->put('cart', $cart);
+
+                return redirect()->back()->with('error', 'This product is no longer available.');
+            }
+            if ($product->is_inventory_managed && (int) $data['quantity'] > $product->stock_quantity) {
+                return redirect()->back()->with('error', 'Insufficient stock. Only ' . $product->stock_quantity . ' items available.');
+            }
+
             $cart[$id]['quantity'] = $data['quantity'];
+            $cart[$id] = $this->normalizeProductCartItem($product, (int) $data['quantity'], $cart[$id]);
 
             // Recalculate price for dining items based on new quantity
             if (isset($cart[$id]['isDining']) && $cart[$id]['isDining']) {
@@ -303,7 +368,19 @@ class CartController extends Controller
         } else {
             $old_key = str_replace('-', '%2F', $id);
             if (isset($cart[$old_key])) {
+                $product = $this->resolveCartProduct($old_key, $cart[$old_key]);
+                if (!$product || !$product->is_active) {
+                    unset($cart[$old_key]);
+                    session()->put('cart', $cart);
+
+                    return redirect()->back()->with('error', 'This product is no longer available.');
+                }
+                if ($product->is_inventory_managed && (int) $data['quantity'] > $product->stock_quantity) {
+                    return redirect()->back()->with('error', 'Insufficient stock. Only ' . $product->stock_quantity . ' items available.');
+                }
+
                 $cart[$old_key]['quantity'] = $data['quantity'];
+                $cart[$old_key] = $this->normalizeProductCartItem($product, (int) $data['quantity'], $cart[$old_key]);
 
                 // Recalculate price
                 if (isset($cart[$old_key]['isDining']) && $cart[$old_key]['isDining']) {
@@ -332,7 +409,7 @@ class CartController extends Controller
         return redirect()->back()->with('success', 'Quantity updated.');
     }
 
-    public function remove(Request $request, $id)
+    public function remove(Request $request, string $id)
     {
         $cart = session()->get('cart', []);
         if (!is_array($cart)) {
@@ -368,6 +445,9 @@ class CartController extends Controller
         $rawCart = session('cart', []);
         $cart    = is_array($rawCart) ? $rawCart : [];
         $summary = $this->buildCartSummary($cart);
+        $displayCart = collect($summary['items'])
+            ->mapWithKeys(fn (array $item) => [(string) $item['cart_key'] => $item])
+            ->all();
         [$region, $province, $city] = $this->resolveServiceArea();
 
         $barangays = collect();
@@ -379,7 +459,7 @@ class CartController extends Controller
         }
 
         return view('checkout', [
-            'cart'      => $cart,
+            'cart'      => $displayCart,
             'cartCount' => $summary['count'],
             'cartTotal' => $summary['total'],
             'vatAmount' => $summary['vat_amount'],
@@ -436,8 +516,19 @@ class CartController extends Controller
 
         $rawCart = session('cart', []);
         $cart    = is_array($rawCart) ? $rawCart : [];
+        if (empty($cart)) {
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+        }
+
+        $availabilityError = $this->firstCartAvailabilityError($cart);
+        if ($availabilityError) {
+            return redirect()->route('cart.index')->with('error', $availabilityError);
+        }
         
         $summary = $this->buildCartSummary($cart);
+        if (empty($summary['items'])) {
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
+        }
         
         // Use final total (with VAT) for payment
         $cartTotal = $summary['final_total'];
@@ -446,29 +537,58 @@ class CartController extends Controller
         $orderReference = 'SHOP-' . strtoupper(uniqid());
 
         // Create shop order in database
-        $shopOrder = ShopOrder::create([
-            'order_reference' => $orderReference,
-            'customer_name' => $data['name'],
-            'customer_email' => $data['email'],
-            'customer_phone' => $data['phone'],
-            'cart_items' => $cart,
-            'original_total' => $summary['total'],
-            'vat_amount' => $summary['vat_amount'],
-            'final_total' => $summary['final_total'],
-            'delivery_option' => $data['delivery_option'],
-            'delivery_address' => $deliveryAddress,
-            'pickup_date' => $data['booking_date'],
-            'payment_method' => $data['payment_method'],
-            'transaction_id' => 'TXN-' . strtoupper(uniqid()),
-            'payment_status' => 'pending',
-            'order_status' => 'pending',
-            'special_requests' => $data['special_requests'] ?? null,
-        ]);
+        try {
+            $shopOrder = DB::transaction(function () use ($data, $deliveryAddress, $orderReference, $summary) {
+                $shopOrder = ShopOrder::create([
+                    'order_reference' => $orderReference,
+                    'customer_name' => $data['name'],
+                    'customer_email' => $data['email'],
+                    'customer_phone' => $data['phone'],
+                    'cart_items' => $summary['items'],
+                    'original_total' => $summary['total'],
+                    'vat_amount' => $summary['vat_amount'],
+                    'final_total' => $summary['final_total'],
+                    'delivery_option' => $data['delivery_option'],
+                    'delivery_address' => $deliveryAddress,
+                    'pickup_date' => $data['booking_date'],
+                    'payment_method' => $data['payment_method'],
+                    'transaction_id' => 'TXN-' . strtoupper(uniqid()),
+                    'payment_status' => 'pending',
+                    'order_status' => 'pending',
+                    'special_requests' => $data['special_requests'] ?? null,
+                ]);
+
+                // Reserve stock using locked product rows so concurrent checkouts cannot go negative.
+                foreach ($summary['items'] as $item) {
+                    if (!empty($item['isDining'])) {
+                        continue;
+                    }
+
+                    $product = Product::query()->lockForUpdate()->find($item['product_id'] ?? null);
+                    if (!$product || !$product->is_active) {
+                        throw new \RuntimeException('One or more cart items are no longer available.');
+                    }
+                    if ($product->is_inventory_managed) {
+                        $quantity = (int) ($item['quantity'] ?? 0);
+                        if ($quantity < 1 || $quantity > $product->stock_quantity) {
+                            throw new \RuntimeException('Insufficient stock. Only ' . $product->stock_quantity . ' item(s) available for ' . $product->title . '.');
+                        }
+
+                        $product->decrement('stock_quantity', $quantity);
+                        event(new ProductStockUpdated($product));
+                    }
+                }
+
+                return $shopOrder;
+            });
+        } catch (\RuntimeException $e) {
+            return redirect()->route('cart.index')->with('error', $e->getMessage());
+        }
 
         // Store normalized delivery address for reporting/reuse.
         if (($data['delivery_option'] ?? null) === 'delivery') {
             CustomerAddress::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'region_id' => $data['region_id'],
                 'province_id' => $data['province_id'] ?? null,
                 'city_id' => $data['city_id'],
@@ -486,17 +606,6 @@ class CartController extends Controller
         $data['vat_amount'] = $summary['vat_amount'];
         $data['original_total'] = $summary['total'];
         $data['order_reference'] = $orderReference;
-
-        // Reduce inventory for products
-        foreach ($cart as $item) {
-            if (isset($item['product_id']) && !$item['isDining']) {
-                $product = Product::find($item['product_id']);
-                if ($product && $product->is_inventory_managed) {
-                    $product->decrement('stock_quantity', $item['quantity']);
-                    event(new ProductStockUpdated($product));
-                }
-            }
-        }
 
         // Redirect to PayMongo for payment
         try {
@@ -549,7 +658,7 @@ class CartController extends Controller
     /**
      * Create PayMongo checkout session
      */
-    protected function createPaymongoCheckout($amount, $email, $name, $transactionId, $summary)
+    protected function createPaymongoCheckout(int $amount, string $email, string $name, string $transactionId, array $summary): array
     {
         $client = new \GuzzleHttp\Client();
         $apiKey = config('services.paymongo.secret_key');
@@ -558,7 +667,7 @@ class CartController extends Controller
         // Note: methods still depend on what is activated in your PayMongo account.
         $paymentMethodTypes = ['qrph', 'card', 'gcash', 'grab_pay', 'paymaya'];
 
-        $lineItems = array_map(function ($item) {
+        $lineItems = array_map(function (array $item) {
             return [
                 'name' => $item['title'],
                 'amount' => (int)($item['subtotal'] * 100),
@@ -731,8 +840,7 @@ class CartController extends Controller
             Mail::to($shopOrder->customer_email)->send(new Receipt(
                 $cart, 
                 $shopOrder->final_total, 
-                $emailData, 
-                $summary
+                $emailData
             ));
 
             Log::info('Receipt email sent after successful payment', [

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use App\Models\Booking;
 
 class CheckInOutController extends Controller
@@ -22,7 +23,8 @@ class CheckInOutController extends Controller
 
         // Fetch active bookings for the user: confirmed status, current date within checkin/checkout
         $today = now()->toDateString();
-        $activeBookings = Booking::where('customer_email', $user->email)
+        $activeBookings = Booking::query()
+            ->ownedBy($user)
             ->where('status', 'confirmed')
             ->where('checkin_date', '<=', $today)
             ->where('checkout_date', '>=', $today)
@@ -40,10 +42,7 @@ class CheckInOutController extends Controller
      */
     public function checkin(Booking $booking)
     {
-        $user = Auth::user();
-        if (!$user || $booking->customer_email !== $user->email) {
-            abort(403);
-        }
+        Gate::authorize('view', $booking);
 
         if (($booking->checkin_status ?? 'pending') === 'pending') {
             $booking->update([
@@ -69,10 +68,7 @@ class CheckInOutController extends Controller
      */
     public function checkout(Booking $booking)
     {
-        $user = Auth::user();
-        if (!$user || $booking->customer_email !== $user->email) {
-            abort(403);
-        }
+        Gate::authorize('view', $booking);
 
         if ($booking->checkin_status === 'checked_in') {
             $updateData = [
@@ -107,10 +103,7 @@ class CheckInOutController extends Controller
      */
     public function nextAfterCheckin(Booking $booking)
     {
-        $user = Auth::user();
-        if (!$user || $booking->customer_email !== $user->email) {
-            abort(403);
-        }
+        Gate::authorize('view', $booking);
 
         // Since activities are already selected during booking, just redirect back
         return redirect()->route('checkinout')->with('success', 'Welcome! You are now checked in.');

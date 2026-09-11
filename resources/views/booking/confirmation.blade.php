@@ -43,7 +43,8 @@ $campWaiverTransactionId = $bookingData['transaction_id']
     ?? data_get($bookingData, 'payment_data.reference_id')
     ?? data_get($bookingData, 'payment_summary.reference_id')
     ?? null;
-$showCampWaiverActions = (bool) (isset($isStaycation) && $isStaycation);
+// Temporarily hidden on the confirmation page; guests receive the waiver form in the confirmation email.
+$showCampWaiverActions = false;
 $campWaiverUrl = $showCampWaiverActions && !empty($campWaiverTransactionId)
     ? route('booking.camp-waiver', ['transactionId' => $campWaiverTransactionId])
     : null;

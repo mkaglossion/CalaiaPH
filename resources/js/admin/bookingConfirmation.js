@@ -57,6 +57,7 @@ Alpine.data('bookingConfirmationCms', (initialTab) => ({
       campWaiver: {
         title: read('camp_waiver_title'),
         body: read('camp_waiver_body'),
+        formUrl: read('camp_waiver_form_url'),
       },
     }
   },

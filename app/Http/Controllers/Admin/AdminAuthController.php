@@ -9,9 +9,16 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\PendingUser;
+use App\Services\AuthenticationRateLimiter;
 
 class AdminAuthController extends Controller
 {
+    private const GENERIC_ADMIN_LOGIN_ERROR = 'These credentials do not match an admin account.';
+
+    public function __construct(private AuthenticationRateLimiter $rateLimiter)
+    {
+    }
+
     public function showLoginForm()
     {
         if (Auth::check() && Auth::user()?->user_type === 'admin') {
@@ -23,19 +30,32 @@ class AdminAuthController extends Controller
 
     public function login(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'username' => 'required|string',
             'password' => 'required|string|min:8',
         ]);
 
-        $credentials = $request->only('username', 'password');
+        $credentials = [
+            'username' => trim((string) $validated['username']),
+            'password' => (string) $validated['password'],
+        ];
+        $throttleKey = $this->rateLimiter->key($request, $credentials['username'], 'admin-login');
+
+        if ($this->rateLimiter->tooManyAttempts($throttleKey, 5)) {
+            return redirect()->route('admin.login')->with(
+                'error',
+                'Too many login attempts. Please try again in '.$this->rateLimiter->availableIn($throttleKey).' seconds.'
+            );
+        }
 
         $pending = PendingUser::where('email', $credentials['username'])
             ->orWhere('username', $credentials['username'])
             ->first();
 
         if ($pending) {
-            return redirect()->route('admin.login')->with('error', 'Please verify your email before logging in.');
+            $this->rateLimiter->hit($throttleKey, 60);
+
+            return redirect()->route('admin.login')->with('error', self::GENERIC_ADMIN_LOGIN_ERROR);
         }
 
         $user = User::where('email', $credentials['username'])
@@ -43,11 +63,15 @@ class AdminAuthController extends Controller
             ->first();
 
         if (!$user) {
-            return redirect()->route('admin.login')->with('error', 'No account found with that email or username.');
+            $this->rateLimiter->hit($throttleKey, 60);
+
+            return redirect()->route('admin.login')->with('error', self::GENERIC_ADMIN_LOGIN_ERROR);
         }
 
         if ($user->user_type !== 'admin') {
-            return redirect()->route('admin.login')->with('error', 'This login is for admin users only.');
+            $this->rateLimiter->hit($throttleKey, 60);
+
+            return redirect()->route('admin.login')->with('error', self::GENERIC_ADMIN_LOGIN_ERROR);
         }
 
         $plainPassword = (string) $credentials['password'];
@@ -59,10 +83,14 @@ class AdminAuthController extends Controller
         }
 
         if (!$passwordIsValid) {
-            return redirect()->route('admin.login')->with('error', 'Incorrect password.');
+            $this->rateLimiter->hit($throttleKey, 60);
+
+            return redirect()->route('admin.login')->with('error', self::GENERIC_ADMIN_LOGIN_ERROR);
         }
 
         Auth::login($user);
+        $request->session()->regenerate();
+        $this->rateLimiter->clear($throttleKey);
         session()->save();
 
         return redirect()->route('admin.dashboard')->with('success', 'Welcome back, admin!');
