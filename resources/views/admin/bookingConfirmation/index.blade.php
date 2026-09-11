@@ -269,13 +269,16 @@
                                         <div class="grid gap-4 sm:grid-cols-2">
                                             <div>
                                                 <label for="{{ $fieldIdPrefix }}-support-email" class="block text-sm font-medium text-gray-700 mb-1">Support Email</label>
-                                                <input id="{{ $fieldIdPrefix }}-support-email" type="email" name="contents[{{ $key }}][support_email]" value="{{ old("contents.$key.support_email", $support['email'] ?? '') }}" class="{{ $controlClass }}">
+                                                <input id="{{ $fieldIdPrefix }}-support-email" type="email" value="{{ $support['email'] ?? '' }}" class="{{ $controlClass }} bg-gray-50" readonly>
                                             </div>
                                             <div>
                                                 <label for="{{ $fieldIdPrefix }}-support-phone" class="block text-sm font-medium text-gray-700 mb-1">Support Phone</label>
-                                                <input id="{{ $fieldIdPrefix }}-support-phone" type="text" name="contents[{{ $key }}][support_phone]" value="{{ old("contents.$key.support_phone", $support['phone'] ?? '') }}" class="{{ $controlClass }}">
+                                                <input id="{{ $fieldIdPrefix }}-support-phone" type="text" value="{{ $support['phone'] ?? '' }}" class="{{ $controlClass }} bg-gray-50" readonly>
                                             </div>
                                         </div>
+                                        <a href="{{ route('admin.information.index', ['page' => 'contact']) }}" class="inline-flex text-xs font-semibold text-[#8f5d54] hover:underline">
+                                            Manage contact details
+                                        </a>
                                     </div>
                                 </div>
 

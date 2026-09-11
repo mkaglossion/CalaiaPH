@@ -4,9 +4,13 @@ namespace Tests\Feature;
 
 use App\Mail\BookingConfirmation;
 use App\Models\Booking;
+use App\Models\InformationPage;
 use App\Models\Staycation;
+use App\Services\BookingConfirmationContentService;
 use App\Services\PaymentService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -443,6 +447,130 @@ class StaycationWaiverTest extends TestCase
         $this->assertCount(1, $mail->attachments());
     }
 
+    public function test_booking_confirmation_keeps_one_attachment_after_rendering_more_than_once(): void
+    {
+        $mail = new BookingConfirmation([
+            'bookingData' => [
+                'transaction_id' => 'TXN-ONE-ATTACHMENT-1',
+                'booking_type' => 'staycation',
+            ],
+            'customerInfo' => ['email' => 'guest@example.com'],
+            'isStaycation' => true,
+        ]);
+
+        $mail->render();
+        $mail->render();
+
+        $this->assertCount(1, $mail->rawAttachments);
+        $this->assertSame('camp-waiver-TXN-ONE-ATTACHMENT-1.pdf', $mail->rawAttachments[0]['name']);
+    }
+
+    public function test_booking_confirmation_email_calculates_nights_and_renders_peso_amounts_safely(): void
+    {
+        $mail = new BookingConfirmation([
+            'bookingData' => [
+                'transaction_id' => 'TXN-EMAIL-FORMAT-1',
+                'checkin' => '2026-12-17',
+                'checkout' => '2026-12-19',
+                'final_totals' => [
+                    'accommodation_total' => 40200,
+                    'grand_total' => 40200,
+                ],
+            ],
+            'customerInfo' => ['email' => 'format@example.com'],
+            'isStaycation' => true,
+        ]);
+
+        $html = $mail->render();
+
+        $this->assertStringContainsString('<strong>Nights:</strong> 2', $html);
+        $this->assertStringContainsString('<strong>Accommodation Total:</strong> &#8369;40,200.00', $html);
+        $this->assertStringContainsString('<strong>Total Amount Paid:</strong> &#8369;40,200.00', $html);
+        $this->assertStringNotContainsString('Ã', $html);
+        $this->assertStringNotContainsString('â', $html);
+    }
+
+    public function test_confirmed_booking_email_uses_recorded_payment_details_and_hides_audit_metadata(): void
+    {
+        $booking = Booking::create([
+            'transaction_id' => 'TXN-EMAIL-PAYMENT-1',
+            'customer_name' => 'Juan Dela Cruz',
+            'customer_email' => 'juan@example.com',
+            'customer_phone' => '09171234567',
+            'booking_type' => 'staycation',
+            'checkin_date' => '2026-12-17',
+            'checkout_date' => '2026-12-19',
+            'booking_data' => [
+                'checkin' => '2026-12-17',
+                'checkout' => '2026-12-19',
+                'payment_attempt' => ['closed_at' => '2026-09-11 10:30:00'],
+                'acceptances' => [[
+                    'source' => 'camp_waiver_accepted',
+                    'label' => 'Camp Waiver and Release from Liability',
+                    'accepted' => true,
+                    'details' => [
+                        'guest_count' => 4,
+                        'ip_address' => '14.200.229.198',
+                        'user_agent' => 'Mozilla/5.0 test browser',
+                    ],
+                ]],
+            ],
+            'total_amount' => 40200,
+            'payment_method' => 'paymongo',
+            'payment_status' => 'paid',
+            'status' => 'confirmed',
+        ]);
+
+        Mail::fake();
+
+        $this->assertTrue(app(PaymentService::class)->sendConfirmedBookingEmail($booking));
+        Mail::assertSent(BookingConfirmation::class, function (BookingConfirmation $mail): bool {
+            $html = $mail->render();
+
+            return str_contains($html, '<strong>Payment Method:</strong> PayMongo')
+                && str_contains($html, '<strong>Payment Date:</strong> Sep 11, 2026 10:30')
+                && !str_contains($html, '14.200.229.198')
+                && !str_contains($html, 'Mozilla/5.0 test browser');
+        });
+    }
+
+    public function test_booking_confirmation_uses_shared_contact_information(): void
+    {
+        $contactPage = InformationPage::ensureDefaults()->firstWhere('slug', 'contact');
+        $contactPage->update([
+            'contact_email' => 'bookings@calaia.test',
+            'contact_phone' => '+63 917 123 4567',
+        ]);
+        app(BookingConfirmationContentService::class)->flushCache();
+
+        $mail = new BookingConfirmation([
+            'bookingData' => [
+                'booking_type' => 'staycation',
+                'transaction_id' => 'TXN-DYNAMIC-CONTACT-1',
+            ],
+            'customerInfo' => ['email' => 'guest@example.com'],
+            'isStaycation' => true,
+        ]);
+        $html = $mail->render();
+
+        $this->assertStringContainsString('Email: bookings@calaia.test', $html);
+        $this->assertStringContainsString('Phone: +63 917 123 4567', $html);
+        $this->assertStringNotContainsString('Email: calaia.ph@gmail.com', $html);
+
+        $response = $this->withSession([
+            'booking' => [
+                'booking_type' => 'staycation',
+                'transaction_id' => 'TXN-DYNAMIC-CONTACT-1',
+                'accommodations' => [],
+            ],
+            'staycation_customer_info' => ['email' => 'guest@example.com'],
+        ])->get(route('booking.confirmation'));
+
+        $response->assertOk();
+        $response->assertSee('bookings@calaia.test');
+        $response->assertSee('+63 917 123 4567');
+    }
+
     public function test_booking_confirmation_shows_camp_waiver_link_for_staycation_bookings(): void
     {
         $response = $this->withSession([
@@ -570,6 +698,39 @@ class StaycationWaiverTest extends TestCase
         $this->assertStringContainsString('juan@example.com', $pdfText);
         $this->assertStringContainsString('IV. MEDICAL AUTHORIZATION', $pdfText);
         $this->assertStringNotContainsString('Waiver Text Continued', $pdfText);
+    }
+
+    public function test_camp_waiver_pdf_is_two_pages_and_hides_audit_metadata(): void
+    {
+        $waiverContent = app(BookingConfirmationContentService::class)->forType('campwaiver')['camp_waiver'];
+        $payload = [
+            'bookingData' => ['transaction_id' => 'TXN-PDF-LAYOUT-1'],
+            'customerInfo' => [
+                'first_name' => 'Juan',
+                'last_name' => 'Dela Cruz',
+                'email' => 'juan@example.com',
+                'phone' => '09171234567',
+            ],
+            'campWaiverAcceptance' => [
+                'accepted_at' => '2026-09-11 10:30:00',
+                'details' => [
+                    'guest_count' => 4,
+                    'adult_count' => 3,
+                    'child_count' => 1,
+                    'ip_address' => '14.200.229.198',
+                    'user_agent' => 'Mozilla/5.0 test browser',
+                ],
+            ],
+            'waiverContent' => $waiverContent,
+        ];
+
+        $html = view('booking.camp-waiver-pdf', $payload)->render();
+        $pdf = Pdf::loadHTML($html)->setPaper('legal', 'portrait');
+        $pdf->render();
+
+        $this->assertSame(2, $pdf->getDomPDF()->getCanvas()->get_page_count());
+        $this->assertStringNotContainsString('14.200.229.198', $html);
+        $this->assertStringNotContainsString('Mozilla/5.0 test browser', $html);
     }
 
     public function test_camp_waiver_preview_transaction_renders_without_404(): void

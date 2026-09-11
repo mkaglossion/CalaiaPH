@@ -6,44 +6,44 @@
   <style>
     @page {
       size: legal;
-      margin: 0.42in;
+      margin: 0.34in;
     }
     body {
       font-family: DejaVu Sans, Arial, sans-serif;
-      font-size: 10.5px;
-      line-height: 1.42;
+      font-size: 9.25px;
+      line-height: 1.28;
       color: #1f2937;
       margin: 0;
       padding: 0;
     }
     .header {
       border-bottom: 2px solid #8f5d54;
-      margin-bottom: 12px;
-      padding-bottom: 10px;
+      margin-bottom: 7px;
+      padding-bottom: 6px;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .eyebrow {
       text-transform: uppercase;
       letter-spacing: 0.18em;
-      font-size: 9px;
+      font-size: 8px;
       color: #8f5d54;
       font-weight: bold;
-      margin: 0 0 6px;
+      margin: 0 0 3px;
     }
     h1 {
       margin: 0;
-      font-size: 21px;
+      font-size: 18px;
       color: #111827;
     }
     .meta {
-      margin-top: 6px;
-      font-size: 9.5px;
+      margin-top: 4px;
+      font-size: 8.25px;
       color: #4b5563;
     }
     .two-up {
       width: 100%;
-      margin-top: 10px;
+      margin-top: 7px;
     }
     .two-up::after {
       content: "";
@@ -64,16 +64,16 @@
     }
     .card {
       border: 1px solid #d1d5db;
-      border-radius: 10px;
-      padding: 10px 12px;
+      border-radius: 6px;
+      padding: 7px 9px;
       background: #f9fafb;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .card h2,
     .section h2 {
-      margin: 0 0 6px;
-      font-size: 12.5px;
+      margin: 0 0 4px;
+      font-size: 11px;
       color: #111827;
     }
     .label {
@@ -81,13 +81,13 @@
       font-weight: bold;
     }
     .row {
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
     .waiver-body {
       white-space: pre-wrap;
-      margin-top: 8px;
-      font-size: 9.75px;
-      line-height: 1.36;
+      margin-top: 5px;
+      font-size: 8.5px;
+      line-height: 1.24;
       word-break: break-word;
       overflow-wrap: anywhere;
       break-inside: auto;
@@ -95,9 +95,9 @@
     }
     .section {
       border: 1px solid #d1d5db;
-      border-radius: 10px;
-      padding: 10px 12px;
-      margin-top: 10px;
+      border-radius: 6px;
+      padding: 7px 9px;
+      margin-top: 7px;
       break-inside: avoid;
       page-break-inside: avoid;
     }
@@ -106,17 +106,17 @@
       page-break-inside: auto;
     }
     .signature-grid {
-      margin-top: 12px;
+      margin-top: 7px;
     }
     .signature-line {
-      margin-top: 28px;
+      margin-top: 14px;
       border-top: 1px dashed #6b7280;
-      padding-top: 7px;
-      font-size: 9.5px;
+      padding-top: 4px;
+      font-size: 8.5px;
     }
     .footer-note {
-      margin-top: 10px;
-      font-size: 9px;
+      margin-top: 6px;
+      font-size: 8px;
       color: #6b7280;
     }
     .page-break {
@@ -133,9 +133,9 @@
   $waiverContent = $waiverContent ?? [];
   $waiverTitle = trim((string) ($waiverContent['title'] ?? '')) !== '' ? $waiverContent['title'] : 'Camp Waiver and Release from Liability';
   $waiverBody = trim((string) ($waiverContent['body'] ?? '')) !== '' ? $waiverContent['body'] : app(\App\Services\BookingConfirmationContentService::class)->defaultCampWaiverBody();
-  $waiverParts = preg_split('/(?=^\s*IV\.\s*MEDICAL AUTHORIZATION\b)/mi', $waiverBody, 2) ?: [$waiverBody];
-  $waiverIntro = trim((string) ($waiverParts[0] ?? ''));
-  $waiverMedical = trim((string) ($waiverParts[1] ?? ''));
+  $waiverParts = preg_split('/(?=^\s*III\.\s*RELEASE OF LIABILITY\b)/mi', $waiverBody, 2) ?: [$waiverBody];
+  $waiverPageOne = trim((string) ($waiverParts[0] ?? ''));
+  $waiverPageTwo = trim((string) ($waiverParts[1] ?? ''));
   $acceptedAt = !empty($campWaiverAcceptance['accepted_at']) ? \Carbon\Carbon::parse($campWaiverAcceptance['accepted_at'])->format('M d, Y h:i A') : null;
   $bookingReference = $bookingData['transaction_id'] ?? ($booking->transaction_id ?? '');
   $detailLabels = [
@@ -154,7 +154,10 @@
       'parent_signature_date' => 'Parent / Guardian Date',
       'medical_condition' => 'Medical or Physical Condition',
   ];
-  $printableDetails = is_array($campWaiverAcceptance['details'] ?? null) ? $campWaiverAcceptance['details'] : [];
+  $privateDetailKeys = ['customer_id', 'ip_address', 'user_agent'];
+  $printableDetails = collect(is_array($campWaiverAcceptance['details'] ?? null) ? $campWaiverAcceptance['details'] : [])
+      ->except($privateDetailKeys)
+      ->all();
 @endphp
 <body>
   <div class="header">
@@ -197,15 +200,15 @@
 
   <div class="section waiver-section">
     <h2>Waiver Text</h2>
-    @if($waiverIntro !== '')
-      <div class="waiver-body">{{ $waiverIntro }}</div>
+    @if($waiverPageOne !== '')
+      <div class="waiver-body">{{ $waiverPageOne }}</div>
     @endif
   </div>
 
-  @if($waiverMedical !== '')
+  @if($waiverPageTwo !== '')
     <div class="page-break"></div>
     <div class="section waiver-section" style="margin-top: 0;">
-      <div class="waiver-body">{{ $waiverMedical }}</div>
+      <div class="waiver-body">{{ $waiverPageTwo }}</div>
     </div>
   @endif
 

@@ -797,6 +797,12 @@ class PaymentService
         );
         $bookingData['adults_total'] = $accommodations->sum(fn ($accommodation) => (int) ($accommodation['adults'] ?? 0));
         $bookingData['children_total'] = $accommodations->sum(fn ($accommodation) => (int) ($accommodation['children'] ?? 0));
+        $bookingData['payment_method'] = $booking->payment_method
+            ?: ($paymentData['payment_method'] ?? data_get($bookingData, 'payment_data.payment_method', 'paymongo'));
+        $bookingData['payment_date'] = $bookingData['payment_date']
+            ?? data_get($bookingData, 'payment_attempt.closed_at')
+            ?? optional($booking->updated_at)->toDateTimeString()
+            ?? now()->toDateTimeString();
         $bookingData['payment_summary']['grand_total_paid'] = (float) $booking->total_amount;
 
         try {

@@ -14,7 +14,11 @@
         ]);
         $pageContent = $confirmationContent['page'] ?? [];
         $nextStepsContent = $confirmationContent['next_steps'] ?? [];
-        $supportContent = $confirmationContent['support'] ?? [];
+        $sharedContactDetails = \App\Models\InformationPage::contactDetails();
+        $supportContent = array_merge($confirmationContent['support'] ?? [], [
+            'email' => $sharedContactDetails['email'],
+            'phone' => $sharedContactDetails['phone'],
+        ]);
         $buttonContent = $confirmationContent['buttons'] ?? [];
         $confirmationSteps = [
             ['label' => 'Details', 'status' => 'completed'],

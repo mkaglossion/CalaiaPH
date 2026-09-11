@@ -7,7 +7,11 @@
     ]);
     $pageContent = $confirmationContent['page'] ?? [];
     $nextStepsContent = $confirmationContent['next_steps'] ?? [];
-    $supportContent = $confirmationContent['support'] ?? [];
+    $sharedContactDetails = \App\Models\InformationPage::contactDetails();
+    $supportContent = array_merge($confirmationContent['support'] ?? [], [
+        'email' => $sharedContactDetails['email'],
+        'phone' => $sharedContactDetails['phone'],
+    ]);
     $emailContent = $confirmationContent['email'] ?? [];
 @endphp
 
@@ -48,8 +52,8 @@
 
 @if(!empty($supportContent['email']) || !empty($supportContent['phone']))
 Support:
-- Email: {{ $supportContent['email'] ?? 'calaia.ph@gmail.com' }}
-- Phone: {{ $supportContent['phone'] ?? '+63 905 129 4741' }}
+- Email: {{ $supportContent['email'] }}
+- Phone: {{ $supportContent['phone'] }}
 @endif
 Thanks,<br>
 {{ config('app.name') }}

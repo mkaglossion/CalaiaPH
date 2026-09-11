@@ -14,8 +14,13 @@
     ]);
     $pageContent = $confirmationContent['page'] ?? [];
     $nextStepsContent = $confirmationContent['next_steps'] ?? [];
-    $supportContent = $confirmationContent['support'] ?? [];
+    $sharedContactDetails = \App\Models\InformationPage::contactDetails();
+    $supportContent = array_merge($confirmationContent['support'] ?? [], [
+        'email' => $sharedContactDetails['email'],
+        'phone' => $sharedContactDetails['phone'],
+    ]);
     $emailContent = $confirmationContent['email'] ?? [];
+    $privateAcceptanceDetailKeys = ['customer_id', 'ip_address', 'user_agent'];
     $campWaiverAcceptance = collect($bookingData['acceptances'] ?? [])->first(function ($agreement) {
         return ($agreement['source'] ?? '') === 'camp_waiver_accepted'
             || strcasecmp((string) ($agreement['label'] ?? ''), 'Camp Waiver and Release from Liability') === 0;
@@ -91,7 +96,7 @@
                                 @if(!empty($agreementDetails))
                                     <ul>
                                         @foreach($agreementDetails as $field => $value)
-                                            @if($value !== null && $value !== '')
+                                            @if($value !== null && $value !== '' && !in_array($field, $privateAcceptanceDetailKeys, true))
                                                 <li>
                                                     {{ $detailLabels[$field] ?? str_replace('_', ' ', ucfirst($field)) }}: {{ $value }}
                                                 </li>
@@ -122,10 +127,27 @@
                 @endphp
                 
                 @if($isStaycation)
+                    @php
+                        $staycationNights = null;
+                        if (!empty($bookingData['checkin']) && !empty($bookingData['checkout'])) {
+                            try {
+                                $computedNights = \Carbon\Carbon::parse($bookingData['checkin'])
+                                    ->startOfDay()
+                                    ->diffInDays(\Carbon\Carbon::parse($bookingData['checkout'])->startOfDay(), false);
+                                $staycationNights = $computedNights > 0 ? (int) $computedNights : null;
+                            } catch (\Throwable $exception) {
+                                $staycationNights = null;
+                            }
+                        }
+
+                        if ($staycationNights === null && is_numeric($bookingData['nights'] ?? null)) {
+                            $staycationNights = max(1, (int) $bookingData['nights']);
+                        }
+                    @endphp
                     <p><strong>Booking Type:</strong> Staycation</p>
                     <p><strong>Check-in:</strong> {{ !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin'])->format('M d, Y') : 'N/A' }}</p>
                     <p><strong>Check-out:</strong> {{ !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout'])->format('M d, Y') : 'N/A' }}</p>
-                    <p><strong>Nights:</strong> {{ $bookingData['nights'] ?? 'N/A' }}</p>
+                    <p><strong>Nights:</strong> {{ $staycationNights ?? 'N/A' }}</p>
                     @php
                         $allAreSpecialRooms = collect($bookingData['accommodations'] ?? [])->every(function($acc) {
                             if (empty($acc)) return true;
@@ -166,12 +188,12 @@
                                             @if(!$isSpecialRoom)
                                             ({{ $adultsCount }} adult{{ $adultsCount !== 1 ? 's' : '' }}, {{ $childrenCount }} child{{ $childrenCount !== 1 ? 'ren' : '' }})
                                             @endif
-                                            - â‚±{{ number_format($basePrice, 2) }}
+                                            - &#8369;{{ number_format($basePrice, 2) }}
                                             @if($mattressPrice > 0)
                                                 + Additional Guest{{ $additionalAdults !== 1 ? 's' : '' }}: &#8369;{{ number_format($mattressPrice, 2) }}
                                             @endif
                                             @if($petPrice > 0)
-                                                + Pet: â‚±{{ number_format($petPrice, 2) }}
+                                                + Pet: &#8369;{{ number_format($petPrice, 2) }}
                                             @endif
                                         </li>
                                     @endif
@@ -190,7 +212,7 @@
                                 $foodQuantity = $foodData['quantity'] ?? 1;
                                 $foodItemTotal = $foodPrice * $foodQuantity;
                                 @endphp
-                                <li>{{ $foodName }} - â‚±{{ number_format($foodPrice, 2) }} Ã— {{ $foodQuantity }} = â‚±{{ number_format($foodItemTotal, 2) }}</li>
+                                <li>{{ $foodName }} - &#8369;{{ number_format($foodPrice, 2) }} &times; {{ $foodQuantity }} = &#8369;{{ number_format($foodItemTotal, 2) }}</li>
                             @endforeach
                         </ul>
                     @endif
@@ -205,7 +227,7 @@
                                 $packageQuantity = (int) ($package['quantity'] ?? 1);
                                 $packageTotal = $packagePrice * $packageQuantity;
                                 @endphp
-                                <li>{{ $packageName }} - â‚±{{ number_format($packagePrice, 2) }} x {{ $packageQuantity }} = â‚±{{ number_format($packageTotal, 2) }}</li>
+                                <li>{{ $packageName }} - &#8369;{{ number_format($packagePrice, 2) }} x {{ $packageQuantity }} = &#8369;{{ number_format($packageTotal, 2) }}</li>
                             @endforeach
                         </ul>
                     @endif
@@ -229,19 +251,19 @@
                     @endphp
                     
                     @if($accommodationTotal > 0)
-                        <p><strong>Accommodation Total:</strong> â‚±{{ number_format($accommodationTotal, 2) }}</p>
+                        <p><strong>Accommodation Total:</strong> &#8369;{{ number_format($accommodationTotal, 2) }}</p>
                     @endif
                     @if($foodTotal > 0)
-                        <p><strong>Food Total:</strong> â‚±{{ number_format($foodTotal, 2) }}</p>
+                        <p><strong>Food Total:</strong> &#8369;{{ number_format($foodTotal, 2) }}</p>
                     @endif
                     @if($activitiesTotal > 0)
-                        <p><strong>Activities Total:</strong> â‚±{{ number_format($activitiesTotal, 2) }}</p>
+                        <p><strong>Activities Total:</strong> &#8369;{{ number_format($activitiesTotal, 2) }}</p>
                     @endif
                     @if($promoDiscount > 0)
                         <p><strong>Promo Discount:</strong> -&#8369;{{ number_format($promoDiscount, 2) }}</p>
                     @endif
                     @if($grandTotal > 0)
-                    <p><strong>Total Amount Paid:</strong> â‚±{{ number_format($grandTotal, 2) }}</p>
+                    <p><strong>Total Amount Paid:</strong> &#8369;{{ number_format($grandTotal, 2) }}</p>
                     @endif
                 @else
                     @php
@@ -252,7 +274,7 @@
                     @endphp
                     <p><strong>Type:</strong> {{ ucfirst($bookingData['type'] ?? 'N/A') }}</p>
                     <p><strong>Package:</strong> {{ $bookingData['package'] ?? 'N/A' }}</p>
-                    <p><strong>Price:</strong> â‚±{{ number_format((float)($bookingData['price'] ?? 0)) }}</p>
+                    <p><strong>Price:</strong> &#8369;{{ number_format((float)($bookingData['price'] ?? 0)) }}</p>
                     <p><strong>Preferred Date:</strong> {{ !empty($bookingData['booking_date']) ? \Carbon\Carbon::parse($bookingData['booking_date'])->format('F j, Y') : 'N/A' }}</p>
                     <p><strong>Number of Guests:</strong> {{ $bookingData['guests'] ?? 'N/A' }}</p>
 
@@ -270,7 +292,7 @@
                             @if(!$isByotOrCamping)
                                 ({{ $activity['guests'] ?? 1 }} guest{{ ($activity['guests'] ?? 1) > 1 ? 's' : '' }})
                             @endif
-                            - â‚±{{ number_format(($activity['price'] ?? 0) * ($activity['guests'] ?? 1)) }}
+                            - &#8369;{{ number_format(($activity['price'] ?? 0) * ($activity['guests'] ?? 1)) }}
                         </li>
                         @endforeach
                     </ul>
@@ -280,14 +302,14 @@
                     });
                     @endphp
                     @if($activitiesTotal > 0)
-                    <p><strong>Activities Total:</strong> â‚±{{ number_format($activitiesTotal, 2) }}</p>
+                    <p><strong>Activities Total:</strong> &#8369;{{ number_format($activitiesTotal, 2) }}</p>
                     @endif
                     @endif
                     @php
                     $grandTotal = ($bookingData['price'] ?? 0) + $activitiesTotal;
                     @endphp
                     @if($grandTotal > 0)
-                    <p><strong>Total Amount Paid:</strong> â‚±{{ number_format($grandTotal, 2) }}</p>
+                    <p><strong>Total Amount Paid:</strong> &#8369;{{ number_format($grandTotal, 2) }}</p>
                     @endif
                     @if($bookingData['special_requests'] ?? $bookingData['customer_info']['special_requests'] ?? false)
                     <p><strong>Special Requests:</strong> {{ $bookingData['special_requests'] ?? $bookingData['customer_info']['special_requests'] ?? '' }}</p>
@@ -310,8 +332,19 @@
 
             <div class="booking-details">
                 <h3>Payment Details:</h3>
+                @php
+                    $paymentMethod = strtolower(trim((string) ($bookingData['payment_method'] ?? '')));
+                    $paymentMethodLabel = match ($paymentMethod) {
+                        'paymongo' => 'PayMongo',
+                        'gcash' => 'GCash',
+                        'paymaya', 'maya' => 'Maya',
+                        'grab_pay' => 'GrabPay',
+                        'qrph', 'qr' => 'QR Ph',
+                        default => $paymentMethod !== '' ? ucfirst(str_replace('_', ' ', $paymentMethod)) : 'N/A',
+                    };
+                @endphp
                 <p><strong>Transaction ID:</strong> {{ $bookingData['transaction_id'] ?? 'N/A' }}</p>
-                <p><strong>Payment Method:</strong> {{ ucfirst($bookingData['payment_method'] ?? 'N/A') }}</p>
+                <p><strong>Payment Method:</strong> {{ $paymentMethodLabel }}</p>
                 <p><strong>Payment Date:</strong> {{ !empty($bookingData['payment_date']) ? \Carbon\Carbon::parse($bookingData['payment_date'])->format('M d, Y H:i') : 'N/A' }}</p>
                 @php
                 $paymentSummary = (array) ($bookingData['payment_summary'] ?? []);
@@ -323,14 +356,14 @@
                     $finalGrandTotal = $grandTotal ?? $bookingData['price'] ?? 0;
                 }
                 @endphp
-                <p><strong>Total Amount Paid:</strong> â‚±{{ number_format($finalGrandTotal, 2) }}</p>
+                <p><strong>Total Amount Paid:</strong> &#8369;{{ number_format($finalGrandTotal, 2) }}</p>
             </div>
 
             <p>{{ $emailContent['closing'] ?? 'We look forward to welcoming you to CalaiaPH!' }}</p>
 
             <p>If you have any questions or need to make changes, please contact us at:</p>
-            <p>Email: {{ $supportContent['email'] ?? 'calaia.ph@gmail.com' }}<br>
-            Phone: {{ $supportContent['phone'] ?? '+63 905 129 4741' }}</p>
+            <p>Email: {{ $supportContent['email'] }}<br>
+            Phone: {{ $supportContent['phone'] }}</p>
 
             @if($isStaycation && !empty($campWaiverPdfUrl))
                 <p><strong>Camp Waiver PDF attached</strong> for your records.</p>

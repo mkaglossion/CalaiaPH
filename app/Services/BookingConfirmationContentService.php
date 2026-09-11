@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BookingConfirmationContent;
+use App\Models\InformationPage;
 use Illuminate\Support\Facades\Cache;
 
 class BookingConfirmationContentService
@@ -33,6 +34,19 @@ class BookingConfirmationContentService
         if ($defaultsUpdated) {
             Cache::put(self::CACHE_KEY, $resolved, now()->addMinutes(30));
         }
+
+        $contactDetails = InformationPage::contactDetails();
+
+        foreach ($resolved as &$content) {
+            if (!is_array($content)) {
+                continue;
+            }
+
+            $content['support'] = is_array($content['support'] ?? null) ? $content['support'] : [];
+            $content['support']['email'] = $contactDetails['email'];
+            $content['support']['phone'] = $contactDetails['phone'];
+        }
+        unset($content);
 
         return $resolved;
     }
@@ -127,8 +141,8 @@ class BookingConfirmationContentService
                 'support' => [
                     'title' => 'Need assistance?',
                     'description' => 'Reach us anytime if you need help with your booking.',
-                    'email' => 'calaia.ph@gmail.com',
-                    'phone' => '+63 905 129 4741',
+                    'email' => InformationPage::DEFAULT_CONTACT_EMAIL,
+                    'phone' => InformationPage::DEFAULT_CONTACT_PHONE,
                 ],
                 'buttons' => [
                     'home' => 'Return to Home',
@@ -162,8 +176,8 @@ class BookingConfirmationContentService
                 'support' => [
                     'title' => 'Need assistance?',
                     'description' => 'Reach us anytime if you need help with your booking content.',
-                    'email' => 'calaia.ph@gmail.com',
-                    'phone' => '+63 905 129 4741',
+                    'email' => InformationPage::DEFAULT_CONTACT_EMAIL,
+                    'phone' => InformationPage::DEFAULT_CONTACT_PHONE,
                 ],
                 'buttons' => [
                     'home' => null,
@@ -198,8 +212,8 @@ class BookingConfirmationContentService
                 'support' => [
                     'title' => 'Need help with your package booking?',
                     'description' => 'Reach us anytime if you need help with your package payment.',
-                    'email' => 'calaia.ph@gmail.com',
-                    'phone' => '+63 905 129 4741',
+                    'email' => InformationPage::DEFAULT_CONTACT_EMAIL,
+                    'phone' => InformationPage::DEFAULT_CONTACT_PHONE,
                 ],
                 'buttons' => [
                     'home' => 'Back to Packages',
@@ -230,8 +244,8 @@ class BookingConfirmationContentService
                 'support' => [
                     'title' => 'Need assistance?',
                     'description' => 'Reach us anytime if you need help with your booking.',
-                    'email' => 'calaia.ph@gmail.com',
-                    'phone' => '+63 905 129 4741',
+                    'email' => InformationPage::DEFAULT_CONTACT_EMAIL,
+                    'phone' => InformationPage::DEFAULT_CONTACT_PHONE,
                 ],
                 'buttons' => [
                     'home' => 'Return to Home',

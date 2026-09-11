@@ -45,6 +45,8 @@ class BookingConfirmation extends Mailable implements ShouldQueue
     public bool $isDayvisit;
     public bool $isSpecialEvent;
 
+    private ?string $campWaiverPdf = null;
+
     /** @var array<string, mixed> */
     public array $confirmationContent;
 
@@ -134,7 +136,7 @@ class BookingConfirmation extends Mailable implements ShouldQueue
 
         return [
             Attachment::fromData(function () {
-                return Pdf::loadView('booking.camp-waiver-pdf', $this->campWaiverPdfPayload())
+                return $this->campWaiverPdf ??= Pdf::loadView('booking.camp-waiver-pdf', $this->campWaiverPdfPayload())
                     ->setPaper('legal', 'portrait')
                     ->output();
             }, $filename)->withMime('application/pdf'),

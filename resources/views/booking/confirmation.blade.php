@@ -29,7 +29,11 @@ $confirmationContent = $confirmationContent ?? app(\App\Services\BookingConfirma
 ]);
 $pageContent = $confirmationContent['page'] ?? [];
 $nextStepsContent = $confirmationContent['next_steps'] ?? [];
-$supportContent = $confirmationContent['support'] ?? [];
+$sharedContactDetails = \App\Models\InformationPage::contactDetails();
+$supportContent = array_merge($confirmationContent['support'] ?? [], [
+    'email' => $sharedContactDetails['email'],
+    'phone' => $sharedContactDetails['phone'],
+]);
 $buttonContent = $confirmationContent['buttons'] ?? [];
 $campWaiverAcceptance = collect($bookingData['acceptances'] ?? [])->first(function ($agreement) {
     return ($agreement['source'] ?? '') === 'camp_waiver_accepted'
@@ -722,7 +726,7 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
           <p class="text-xs text-gray-500 mb-2" data-preview-slot="support.title">{{ $supportContent['title'] ?? 'Need assistance?' }}</p>
           <p class="text-xs text-gray-600">
             <span data-preview-slot="support.description">{{ $supportContent['description'] ?? 'Reach us anytime if you need help with your booking.' }}</span>
-            <a href="mailto:{{ $supportContent['email'] ?? 'calaia.ph@gmail.com' }}" class="text-[#8f5d54] hover:underline" data-preview-slot="support.email">{{ $supportContent['email'] ?? 'calaia.ph@gmail.com' }}</a>
+            <a href="mailto:{{ $supportContent['email'] }}" class="text-[#8f5d54] hover:underline" data-preview-slot="support.email">{{ $supportContent['email'] }}</a>
             @if(!empty($supportContent['phone']))
               or call <span class="font-medium" data-preview-slot="support.phone">{{ $supportContent['phone'] }}</span>
             @endif
