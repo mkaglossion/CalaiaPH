@@ -3,6 +3,10 @@
 return [
     'payment_attempt_expiry_minutes' => 1440,
 
+    // Successful webhook logs remain available for audits before safe cleanup.
+    'paymongo_webhook_retention_days' => max(1, (int) env('PAYMONGO_WEBHOOK_RETENTION_DAYS', 180)),
+    'paymongo_invalid_webhook_retention_days' => max(1, (int) env('PAYMONGO_INVALID_WEBHOOK_RETENTION_DAYS', 30)),
+
     'checkin_reminder' => [
         'enabled' => filter_var(env('BOOKING_CHECKIN_REMINDER_ENABLED', true), FILTER_VALIDATE_BOOL),
         'days_before' => (int) env('BOOKING_CHECKIN_REMINDER_DAYS_BEFORE', 1),

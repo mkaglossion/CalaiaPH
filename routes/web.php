@@ -556,6 +556,7 @@ Route::prefix('admin')->middleware(['auth', 'admin', 'admin.activity'])->group(f
         Route::get('/export', [AdminBookingsController::class, 'export'])->name('admin.bookings.export');
         Route::get('/inventory', [InventoryManagementController::class, 'index'])->name('admin.bookings.inventory');
         Route::get('/paymongo-webhooks', [AdminBookingsController::class, 'paymongoWebhooks'])->name('admin.bookings.paymongo-webhooks');
+        Route::delete('/paymongo-webhooks', [AdminBookingsController::class, 'bulkDeletePaymongoWebhooks'])->name('admin.bookings.paymongo-webhooks.bulk-delete');
         Route::get('/staycations', [AdminBookingMonitoringController::class, 'staycations'])->name('admin.bookings.staycations');
         Route::get('/staycations/export', [AdminBookingMonitoringController::class, 'exportStaycations'])->name('admin.bookings.staycations.export');
         Route::get('/packages', [AdminBookingMonitoringController::class, 'packages'])->name('admin.bookings.packages');

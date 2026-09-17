@@ -4,6 +4,26 @@
 
 @section('content')
 <div class="space-y-6">
+    @if(session('success'))
+        <div
+            data-admin-flash
+            data-admin-flash-library="toastr"
+            data-admin-flash-title="Success"
+            data-admin-flash-type="success"
+            data-admin-flash-message="{{ e(session('success')) }}"
+        ></div>
+    @endif
+
+    @if(session('error'))
+        <div
+            data-admin-flash
+            data-admin-flash-library="toastr"
+            data-admin-flash-title="Error"
+            data-admin-flash-type="error"
+            data-admin-flash-message="{{ e(session('error')) }}"
+        ></div>
+    @endif
+
     @if(isset($tableReady) && !$tableReady)
         <div class="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-800 text-sm">
             PayMongo webhook log table is not yet migrated. Run the migration to enable event storage.
@@ -22,7 +42,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4">
         <div class="p-4 rounded-xl shadow-sm bg-white border border-gray-200">
             <p class="text-xs font-semibold uppercase text-gray-500">Total</p>
             <p class="text-2xl font-bold text-gray-900">{{ number_format($stats['total']) }}</p>
@@ -42,6 +62,10 @@
         <div class="p-4 rounded-xl shadow-sm bg-white border border-amber-200">
             <p class="text-xs font-semibold uppercase text-gray-500">Invalid Signature</p>
             <p class="text-2xl font-bold text-amber-700">{{ number_format($stats['invalid_signature']) }}</p>
+        </div>
+        <div class="p-4 rounded-xl shadow-sm bg-white border border-violet-200">
+            <p class="text-xs font-semibold uppercase text-gray-500">Cleanup Eligible</p>
+            <p class="text-2xl font-bold text-violet-700">{{ number_format($stats['cleanup_eligible']) }}</p>
         </div>
     </div>
 
@@ -90,11 +114,52 @@
         </form>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <form
+        method="POST"
+        action="{{ route('admin.bookings.paymongo-webhooks.bulk-delete') }}"
+        x-data="{
+            selected: [],
+            eligibleIds: @js($eligibleEventIds),
+            togglePage(checked) {
+                this.selected = checked ? [...this.eligibleIds] : [];
+            }
+        }"
+        @submit="if (selected.length === 0 || !window.confirm(`Permanently delete ${selected.length} eligible webhook log(s)?`)) $event.preventDefault()"
+    >
+        @csrf
+        @method('DELETE')
+
+        <div class="mb-3 flex flex-col gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-sm text-gray-600">
+                Invalid or missing-signature HTTP 401 logs can be deleted immediately. Handled, valid HTTP 200 logs are eligible after {{ $retentionDays }} days; payment-recovery and server-error records stay protected. Automatic cleanup retains rejected requests for {{ $invalidRetentionDays }} days.
+            </p>
+            <button
+                type="submit"
+                :disabled="selected.length === 0"
+                class="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                <span>Delete selected</span>
+                <span x-show="selected.length > 0" x-text="`(${selected.length})`"></span>
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="w-12 px-4 py-3 text-left">
+                            <input
+                                type="checkbox"
+                                class="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500"
+                                :checked="eligibleIds.length > 0 && selected.length === eligibleIds.length"
+                                :disabled="eligibleIds.length === 0"
+                                @change="togglePage($event.target.checked)"
+                                aria-label="Select all eligible webhook logs on this page"
+                                title="Select all eligible logs on this page"
+                            >
+                        </th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Received</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Event</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Reference</th>
@@ -107,7 +172,22 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
                     @forelse($events as $event)
+                        @php($canDelete = $event->isEligibleForCleanup($cleanupCutoff))
                         <tr class="align-top">
+                            <td class="px-4 py-3 text-xs">
+                                @if($canDelete)
+                                    <input
+                                        type="checkbox"
+                                        name="event_ids[]"
+                                        value="{{ $event->id }}"
+                                        x-model.number="selected"
+                                        class="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500"
+                                        aria-label="Select webhook log {{ $event->id }}"
+                                    >
+                                @else
+                                    <span class="text-gray-300" title="Protected from cleanup" aria-label="Protected from cleanup">&mdash;</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-3 text-xs text-gray-700 whitespace-nowrap">{{ $event->created_at?->format('Y-m-d H:i:s') }}</td>
                             <td class="px-4 py-3 text-xs text-gray-700">
                                 <div class="font-semibold">{{ $event->event_type ?? 'N/A' }}</div>
@@ -164,7 +244,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-12 text-center text-gray-500">No webhook logs yet.</td>
+                            <td colspan="9" class="px-6 py-12 text-center text-gray-500">No webhook logs yet.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -176,6 +256,7 @@
                 {{ $events->onEachSide(1)->links('pagination::tailwind') }}
             </div>
         @endif
-    </div>
+        </div>
+    </form>
 </div>
 @endsection

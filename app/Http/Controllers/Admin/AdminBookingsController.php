@@ -644,6 +644,10 @@ class AdminBookingsController extends Controller
 
     public function paymongoWebhooks(Request $request)
     {
+        $retentionDays = PaymongoWebhookEvent::retentionDays();
+        $invalidRetentionDays = PaymongoWebhookEvent::invalidRetentionDays();
+        $cleanupCutoff = now()->subDays($retentionDays);
+
         if (!Schema::hasTable('paymongo_webhook_events')) {
             $events = new LengthAwarePaginator(
                 collect(),
@@ -658,10 +662,20 @@ class AdminBookingsController extends Controller
                 'failed' => 0,
                 'handled' => 0,
                 'invalid_signature' => 0,
+                'cleanup_eligible' => 0,
             ];
             $tableReady = false;
+            $eligibleEventIds = collect();
 
-            return view('admin.bookings.paymongo-webhooks', compact('events', 'stats', 'tableReady'));
+            return view('admin.bookings.paymongo-webhooks', compact(
+                'events',
+                'stats',
+                'tableReady',
+                'retentionDays',
+                'invalidRetentionDays',
+                'cleanupCutoff',
+                'eligibleEventIds'
+            ));
         }
 
         $query = PaymongoWebhookEvent::query()->latest();
@@ -709,10 +723,67 @@ class AdminBookingsController extends Controller
             'failed' => PaymongoWebhookEvent::where('http_status', '!=', 200)->count(),
             'handled' => PaymongoWebhookEvent::where('handled', true)->count(),
             'invalid_signature' => PaymongoWebhookEvent::where('signature_present', true)->where('signature_valid', false)->count(),
+            'cleanup_eligible' => PaymongoWebhookEvent::eligibleForCleanup($cleanupCutoff)->count(),
         ];
         $tableReady = true;
+        $eligibleEventIds = $events->getCollection()
+            ->filter(fn (PaymongoWebhookEvent $event) => $event->isEligibleForCleanup($cleanupCutoff))
+            ->pluck('id')
+            ->values();
 
-        return view('admin.bookings.paymongo-webhooks', compact('events', 'stats', 'tableReady'));
+        return view('admin.bookings.paymongo-webhooks', compact(
+            'events',
+            'stats',
+            'tableReady',
+            'retentionDays',
+            'invalidRetentionDays',
+            'cleanupCutoff',
+            'eligibleEventIds'
+        ));
+    }
+
+    public function bulkDeletePaymongoWebhooks(Request $request)
+    {
+        if (!Schema::hasTable('paymongo_webhook_events')) {
+            return back()->with('error', 'PayMongo webhook log table is not available.');
+        }
+
+        $validated = $request->validate([
+            'event_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'event_ids.*' => ['required', 'integer', 'distinct'],
+        ]);
+
+        $eventIds = array_values(array_unique(array_map('intval', $validated['event_ids'])));
+        $retentionDays = PaymongoWebhookEvent::retentionDays();
+        $cleanupCutoff = now()->subDays($retentionDays);
+        $eligibleIds = PaymongoWebhookEvent::eligibleForCleanup($cleanupCutoff)
+            ->whereKey($eventIds)
+            ->pluck('id');
+
+        if ($eligibleIds->isEmpty()) {
+            return back()->with('error', "No selected logs are eligible for cleanup. Invalid or missing-signature HTTP 401 requests can be deleted immediately; handled, valid HTTP 200 events require {$retentionDays} days of retention.");
+        }
+
+        $deleted = PaymongoWebhookEvent::whereKey($eligibleIds)->delete();
+        $skipped = count($eventIds) - $deleted;
+
+        AdminActivityLog::log(
+            'paymongo_webhook_bulk_delete',
+            "Deleted {$deleted} eligible PayMongo webhook log(s)",
+            null,
+            [
+                'deleted_count' => $deleted,
+                'skipped_count' => $skipped,
+                'retention_days' => $retentionDays,
+            ]
+        );
+
+        $message = "Deleted {$deleted} eligible PayMongo webhook log(s) successfully.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} protected or missing selection(s) were skipped.";
+        }
+
+        return back()->with('success', $message);
     }
 
     private function buildMergedBookingsCollection(Request $request, string $paymentScope, Carbon $pendingCutoff)

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\PaymongoWebhookEvent;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -17,6 +18,12 @@ Schedule::command('add-ons:expire-stale-pending')
 // paid booking is confirmed even when the webhook delivery is missed.
 Schedule::command('bookings:expire-stale-pending --minutes=' . config('booking.payment_attempt_expiry_minutes', 1440))
     ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->onOneServer();
+
+Schedule::command('model:prune', ['--model' => PaymongoWebhookEvent::class])
+    ->dailyAt('02:00')
+    ->timezone(config('app.timezone', 'Asia/Manila'))
     ->withoutOverlapping()
     ->onOneServer();
 
