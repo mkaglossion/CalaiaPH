@@ -122,9 +122,32 @@
             eligibleIds: @js($eligibleEventIds),
             togglePage(checked) {
                 this.selected = checked ? [...this.eligibleIds] : [];
+            },
+            async confirmDelete(event) {
+                event.preventDefault();
+
+                if (this.selected.length === 0 || !window.Swal) {
+                    return;
+                }
+
+                const form = event.currentTarget;
+                const result = await Swal.fire({
+                    title: `Delete ${this.selected.length} selected webhook log${this.selected.length === 1 ? '' : 's'}?`,
+                    text: 'This action cannot be undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Delete',
+                    cancelButtonText: 'Cancel',
+                });
+
+                if (result.isConfirmed) {
+                    form.submit();
+                }
             }
         }"
-        @submit="if (selected.length === 0 || !window.confirm(`Permanently delete ${selected.length} eligible webhook log(s)?`)) $event.preventDefault()"
+        @submit="confirmDelete($event)"
     >
         @csrf
         @method('DELETE')

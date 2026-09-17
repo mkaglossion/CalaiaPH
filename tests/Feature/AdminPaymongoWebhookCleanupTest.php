@@ -41,6 +41,9 @@ class AdminPaymongoWebhookCleanupTest extends TestCase
         $response->assertSee('data-admin-flash-library="toastr"', false);
         $response->assertSee('data-admin-flash-type="success"', false);
         $response->assertSee('Webhook logs deleted successfully.');
+        $response->assertSee('This action cannot be undone.');
+        $response->assertSee("confirmButtonText: 'Delete'", false);
+        $response->assertDontSee('window.confirm', false);
         $response->assertSee('value="' . $eligible->id . '"', false);
         $response->assertSee('value="' . $invalidSignature->id . '"', false);
         $response->assertDontSee('value="' . $recent->id . '"', false);
