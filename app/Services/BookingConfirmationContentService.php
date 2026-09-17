@@ -109,6 +109,7 @@ class BookingConfirmationContentService
                 'greeting' => $this->fallbackValue($record->email_greeting, $defaults['email']['greeting']),
                 'intro' => $this->fallbackValue($record->email_intro, $defaults['email']['intro']),
                 'closing' => $this->fallbackValue($record->email_closing, $defaults['email']['closing']),
+                'signoff_name' => $this->fallbackValue($record->email_signoff_name, $defaults['email']['signoff_name']),
             ],
         ];
 
@@ -161,6 +162,7 @@ class BookingConfirmationContentService
                     'greeting' => 'Dear',
                     'intro' => 'Your booking has been successfully processed and confirmed. Below is your receipt. Thank you for choosing CalaiaPH!',
                     'closing' => 'We look forward to welcoming you to CalaiaPH!',
+                    'signoff_name' => 'Calaia Nature Park',
                 ],
             ],
             'campwaiver' => [
@@ -197,6 +199,7 @@ class BookingConfirmationContentService
                     'greeting' => null,
                     'intro' => null,
                     'closing' => null,
+                    'signoff_name' => null,
                 ],
             ],
             'package' => [
@@ -229,6 +232,7 @@ class BookingConfirmationContentService
                     'greeting' => 'Hi',
                     'intro' => 'Your package booking is confirmed.',
                     'closing' => 'If you need changes to your reservation, contact us with your reference number.',
+                    'signoff_name' => 'Calaia Nature Park',
                 ],
             ],
             default => [
@@ -261,6 +265,7 @@ class BookingConfirmationContentService
                     'greeting' => 'Dear',
                     'intro' => 'Your booking has been successfully processed and confirmed. Below is your receipt. Thank you for choosing CalaiaPH!',
                     'closing' => 'We look forward to welcoming you to CalaiaPH!',
+                    'signoff_name' => 'Calaia Nature Park',
                 ],
             ],
         };

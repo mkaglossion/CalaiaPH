@@ -32,6 +32,7 @@ class AdminBookingConfirmationContentTest extends TestCase
         $response->assertSee('Email Copy');
         $response->assertSee('Body 1');
         $response->assertSee('Signature');
+        $response->assertSee('Sign-off name');
         $response->assertSee('Save Package Content');
         $response->assertSee('Camp waiver email note');
         $response->assertSee('Waiver form link');
@@ -67,6 +68,7 @@ class AdminBookingConfirmationContentTest extends TestCase
                     'email_greeting' => 'Dear',
                     'email_intro' => 'Your booking is confirmed.',
                     'email_closing' => 'See you soon.',
+                    'email_signoff_name' => 'Calaia Nature Park',
                 ],
             ],
         ]);
@@ -77,12 +79,14 @@ class AdminBookingConfirmationContentTest extends TestCase
             'camp_waiver_title' => 'Custom Camp Waiver Reminder',
             'camp_waiver_body' => "Admin custom waiver instruction.\nOne form per guest.",
             'camp_waiver_form_url' => 'https://form.jotform.com/calaia/custom-waiver',
+            'email_signoff_name' => 'Calaia Nature Park',
         ]);
 
         $content = app(\App\Services\BookingConfirmationContentService::class)->forType('staycation');
 
         $this->assertSame('Custom Camp Waiver Reminder', $content['camp_waiver']['title']);
         $this->assertSame('https://form.jotform.com/calaia/custom-waiver', $content['camp_waiver']['form_url']);
+        $this->assertSame('Calaia Nature Park', $content['email']['signoff_name']);
         $this->assertSame(['Check your email.', 'Prepare your waiver.'], BookingConfirmationContent::firstWhere('booking_type', 'staycation')->next_steps);
     }
 

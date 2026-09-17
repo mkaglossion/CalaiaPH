@@ -56,5 +56,5 @@ Support:
 - Phone: {{ $supportContent['phone'] }}
 @endif
 Thanks,<br>
-{{ config('app.name') }}
+{{ $emailContent['signoff_name'] ?? 'Calaia Nature Park' }}
 </x-mail::message>

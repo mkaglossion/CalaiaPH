@@ -29,6 +29,7 @@ class BookingConfirmationContent extends Model
         'email_greeting',
         'email_intro',
         'email_closing',
+        'email_signoff_name',
     ];
 
     protected $casts = [

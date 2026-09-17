@@ -71,6 +71,7 @@ class BookingConfirmationContentController extends Controller
             "contents.$rawBookingType.email_greeting" => ['nullable', 'string', 'max:255'],
             "contents.$rawBookingType.email_intro" => ['nullable', 'string', 'max:4000'],
             "contents.$rawBookingType.email_closing" => ['nullable', 'string', 'max:4000'],
+            "contents.$rawBookingType.email_signoff_name" => ['nullable', 'string', 'max:255'],
         ];
 
         $validated = $request->validate($rules);
@@ -98,6 +99,7 @@ class BookingConfirmationContentController extends Controller
                     'email_greeting' => null,
                     'email_intro' => null,
                     'email_closing' => null,
+                    'email_signoff_name' => null,
                 ]
             );
         } else {
@@ -123,6 +125,7 @@ class BookingConfirmationContentController extends Controller
                     'email_greeting' => $payload['email_greeting'] ?? null,
                     'email_intro' => $payload['email_intro'] ?? null,
                     'email_closing' => $payload['email_closing'] ?? null,
+                    'email_signoff_name' => $payload['email_signoff_name'] ?? null,
                 ]
             );
         }
@@ -366,6 +369,7 @@ class BookingConfirmationContentController extends Controller
         $resolved['email']['greeting'] = $payload['email_greeting'] ?? $resolved['email']['greeting'] ?? '';
         $resolved['email']['intro'] = $payload['email_intro'] ?? $resolved['email']['intro'] ?? '';
         $resolved['email']['closing'] = $payload['email_closing'] ?? $resolved['email']['closing'] ?? '';
+        $resolved['email']['signoff_name'] = $payload['email_signoff_name'] ?? $resolved['email']['signoff_name'] ?? '';
 
         return $resolved;
     }

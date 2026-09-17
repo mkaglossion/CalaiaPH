@@ -393,6 +393,10 @@
                                         <label for="{{ $fieldIdPrefix }}-email-closing" class="block text-sm font-medium text-gray-700 mb-1">Signature</label>
                                         <textarea id="{{ $fieldIdPrefix }}-email-closing" name="contents[{{ $key }}][email_closing]" rows="4" class="{{ $textAreaClass }}">{{ old("contents.$key.email_closing", $email['closing'] ?? '') }}</textarea>
                                     </div>
+                                    <div>
+                                        <label for="{{ $fieldIdPrefix }}-email-signoff-name" class="block text-sm font-medium text-gray-700 mb-1">Sign-off name</label>
+                                        <input id="{{ $fieldIdPrefix }}-email-signoff-name" type="text" name="contents[{{ $key }}][email_signoff_name]" value="{{ old("contents.$key.email_signoff_name", $email['signoff_name'] ?? 'Calaia Nature Park') }}" class="{{ $controlClass }}">
+                                    </div>
                                 </div>
                             </div>
 

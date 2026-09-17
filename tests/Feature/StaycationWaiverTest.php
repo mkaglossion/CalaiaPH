@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Mail\BookingConfirmation;
 use App\Models\Booking;
+use App\Models\BookingConfirmationContent;
 use App\Models\InformationPage;
 use App\Models\Staycation;
 use App\Services\BookingConfirmationContentService;
@@ -588,6 +589,28 @@ class StaycationWaiverTest extends TestCase
         $response->assertOk();
         $response->assertSee('bookings@calaia.test');
         $response->assertSee('+63 917 123 4567');
+    }
+
+    public function test_booking_confirmation_uses_dynamic_email_signoff_name(): void
+    {
+        BookingConfirmationContent::updateOrCreate(
+            ['booking_type' => 'staycation'],
+            ['email_signoff_name' => 'Calaia Guest Services']
+        );
+        app(BookingConfirmationContentService::class)->flushCache();
+
+        $mail = new BookingConfirmation([
+            'bookingData' => [
+                'booking_type' => 'staycation',
+                'transaction_id' => 'TXN-DYNAMIC-SIGNOFF-1',
+            ],
+            'customerInfo' => ['email' => 'guest@example.com'],
+            'isStaycation' => true,
+        ]);
+        $html = $mail->render();
+
+        $this->assertStringContainsString('Calaia Guest Services', $html);
+        $this->assertStringNotContainsString('The CalaiaPH Team', $html);
     }
 
     public function test_booking_confirmation_hides_camp_waiver_actions_for_staycation_bookings(): void

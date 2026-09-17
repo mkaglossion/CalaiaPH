@@ -315,7 +315,7 @@
             Phone: {{ $supportContent['phone'] }}</p>
 
             <p>Best regards,<br>
-            The CalaiaPH Team</p>
+            {{ $emailContent['signoff_name'] ?? 'Calaia Nature Park' }}</p>
         </div>
 
         <div class="footer">
