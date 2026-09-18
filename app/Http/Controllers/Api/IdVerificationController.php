@@ -10,7 +10,7 @@ use App\Services\IdVerificationService;
 
 class IdVerificationController extends Controller
 {
-    protected $verificationService;
+    protected IdVerificationService $verificationService;
 
     public function __construct(IdVerificationService $verificationService)
     {
@@ -28,10 +28,11 @@ class IdVerificationController extends Controller
             'id_type' => 'required|in:senior,pwd',
         ]);
 
+        $tempPath = null;
+
         try {
             // Store temporary image
-            $tempPath = $request->file('id_image')->store('temp_id_verification', 'public');
-            $fullPath = Storage::disk('public')->path($tempPath);
+            $tempPath = $request->file('id_image')->store('temp_id_verification', 'local');
 
             // Perform verification
             $result = $this->verificationService->verifyIdImage(
@@ -40,12 +41,8 @@ class IdVerificationController extends Controller
                 $request->id_type
             );
 
-            // Clean up temp file
-            Storage::disk('public')->delete($tempPath);
-
             // Log verification attempt
             Log::info('ID verification attempt', [
-                'id_number' => $request->id_number,
                 'id_type' => $request->id_type,
                 'status' => $result['status'],
                 'confidence_score' => $result['confidence_score'],
@@ -57,16 +54,20 @@ class IdVerificationController extends Controller
         } catch (\Exception $e) {
             Log::error('ID verification API error', [
                 'error' => $e->getMessage(),
-                'id_number' => $request->id_number,
+                'id_type' => $request->id_type,
             ]);
 
             return response()->json([
                 'success' => false,
                 'status' => 'error',
-                'message' => 'Verification failed: ' . $e->getMessage(),
+                'message' => 'Verification is temporarily unavailable. Please try again.',
                 'is_verified' => false,
                 'requires_manual_review' => true,
             ], 500);
+        } finally {
+            if ($tempPath) {
+                Storage::disk('local')->delete($tempPath);
+            }
         }
     }
 
@@ -79,23 +80,30 @@ class IdVerificationController extends Controller
             'id_image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
+        $tempPath = null;
+
         try {
             // Store temporary image
-            $tempPath = $request->file('id_image')->store('temp_id_verification', 'public');
+            $tempPath = $request->file('id_image')->store('temp_id_verification', 'local');
 
             // Quick validation
             $result = $this->verificationService->quickValidate($tempPath);
 
-            // Clean up
-            Storage::disk('public')->delete($tempPath);
-
             return response()->json($result);
 
         } catch (\Exception $e) {
+            Log::error('ID verification quick check error', [
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'valid' => false,
-                'message' => 'Check failed: ' . $e->getMessage(),
+                'message' => 'Image check is temporarily unavailable. Please try again.',
             ], 500);
+        } finally {
+            if ($tempPath) {
+                Storage::disk('local')->delete($tempPath);
+            }
         }
     }
 
@@ -105,10 +113,12 @@ class IdVerificationController extends Controller
     public function verifyBase64(Request $request)
     {
         $request->validate([
-            'id_image_base64' => 'required|string',
+            'id_image_base64' => 'required|string|max:3000000',
             'id_number' => 'required|string|min:6',
             'id_type' => 'required|in:senior,pwd',
         ]);
+
+        $tempFilename = null;
 
         try {
             // Decode base64
@@ -120,7 +130,12 @@ class IdVerificationController extends Controller
             }
 
             $imageData = base64_decode($base64Image, true);
-            if ($imageData === false) {
+            $imageInfo = $imageData === false ? false : @getimagesizefromstring($imageData);
+
+            if ($imageData === false
+                || strlen($imageData) > 2 * 1024 * 1024
+                || $imageInfo === false
+                || ! in_array($imageInfo['mime'] ?? null, ['image/jpeg', 'image/png'], true)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid image data',
@@ -129,7 +144,7 @@ class IdVerificationController extends Controller
 
             // Save to temp file
             $tempFilename = 'temp_id_verification/' . uniqid('id_') . '.jpg';
-            Storage::disk('public')->put($tempFilename, $imageData);
+            Storage::disk('local')->put($tempFilename, $imageData);
 
             // Perform verification
             $result = $this->verificationService->verifyIdImage(
@@ -138,12 +153,8 @@ class IdVerificationController extends Controller
                 $request->id_type
             );
 
-            // Clean up
-            Storage::disk('public')->delete($tempFilename);
-
             // Log verification
             Log::info('ID verification attempt (base64)', [
-                'id_number' => $request->id_number,
                 'id_type' => $request->id_type,
                 'status' => $result['status'],
                 'confidence_score' => $result['confidence_score'],
@@ -159,8 +170,12 @@ class IdVerificationController extends Controller
             return response()->json([
                 'success' => false,
                 'status' => 'error',
-                'message' => 'Verification failed: ' . $e->getMessage(),
+                'message' => 'Verification is temporarily unavailable. Please try again.',
             ], 500);
+        } finally {
+            if ($tempFilename) {
+                Storage::disk('local')->delete($tempFilename);
+            }
         }
     }
 }

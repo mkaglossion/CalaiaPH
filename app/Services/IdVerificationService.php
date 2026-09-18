@@ -28,7 +28,7 @@ class IdVerificationService
     public function verifyIdImage(string $imagePath, string $idNumber, string $idType): array
     {
         try {
-            $fullPath = Storage::disk('public')->path($imagePath);
+            $fullPath = Storage::disk('local')->path($imagePath);
             
             if (!file_exists($fullPath)) {
                 return $this->errorResult('ID image file not found');
@@ -74,10 +74,9 @@ class IdVerificationService
             Log::error('ID verification failed', [
                 'error' => $e->getMessage(),
                 'image_path' => $imagePath,
-                'id_number' => $idNumber,
             ]);
             
-            return $this->errorResult('Verification system error: ' . $e->getMessage());
+            return $this->errorResult('Verification is temporarily unavailable. Please try again.');
         }
     }
 
@@ -142,7 +141,7 @@ class IdVerificationService
             ];
 
         } catch (\Exception $e) {
-            return ['passed' => false, 'message' => 'Quality check failed: ' . $e->getMessage(), 'score' => 0];
+            return ['passed' => false, 'message' => 'Image quality could not be checked.', 'score' => 0];
         }
     }
 
@@ -326,7 +325,7 @@ class IdVerificationService
     /**
      * Sample a region of the image for text-like patterns
      */
-    private function sampleRegion($image, int $x, int $y, int $width, int $height): int
+    private function sampleRegion(\GdImage $image, int $x, int $y, int $width, int $height): int
     {
         $edgeCount = 0;
         $samplePoints = min(100, $width * $height / 100);
@@ -467,14 +466,14 @@ class IdVerificationService
             ];
 
         } catch (\Exception $e) {
-            return ['passed' => false, 'message' => 'Visual check error: ' . $e->getMessage()];
+            return ['passed' => false, 'message' => 'Visual checks could not be completed.'];
         }
     }
 
     /**
      * Check for photo area (typically top-left or top-right)
      */
-    private function checkForPhotoArea($image, int $width, int $height): bool
+    private function checkForPhotoArea(\GdImage $image, int $width, int $height): bool
     {
         // Sample top-left corner for photo-like area
         $photoRegion = [
@@ -493,7 +492,7 @@ class IdVerificationService
     /**
      * Check for signature area (typically bottom)
      */
-    private function checkForSignatureArea($image, int $width, int $height): bool
+    private function checkForSignatureArea(\GdImage $image, int $width, int $height): bool
     {
         $sigRegion = [
             'x' => intval($width * 0.5),
@@ -511,7 +510,7 @@ class IdVerificationService
     /**
      * Check color profile matches expected ID type
      */
-    private function checkColorProfile($image, string $idType): bool
+    private function checkColorProfile(\GdImage $image, string $idType): bool
     {
         // Sample colors from the image
         $width = imagesx($image);
@@ -548,7 +547,7 @@ class IdVerificationService
     /**
      * Detect security patterns (hologram, watermark areas)
      */
-    private function detectSecurityPattern($image, int $width, int $height): bool
+    private function detectSecurityPattern(\GdImage $image, int $width, int $height): bool
     {
         // Check for reflective/shiny areas that might indicate holograms
         $centerX = intval($width / 2);
@@ -582,7 +581,7 @@ class IdVerificationService
     /**
      * Calculate variance of a region
      */
-    private function calculateRegionVariance($image, array $region): float
+    private function calculateRegionVariance(\GdImage $image, array $region): float
     {
         $pixels = [];
         
@@ -736,7 +735,7 @@ class IdVerificationService
     public function quickValidate(string $imagePath): array
     {
         try {
-            $fullPath = Storage::disk('public')->path($imagePath);
+            $fullPath = Storage::disk('local')->path($imagePath);
             
             if (!file_exists($fullPath)) {
                 return ['valid' => false, 'message' => 'File not found'];
@@ -752,7 +751,7 @@ class IdVerificationService
             ];
 
         } catch (\Exception $e) {
-            return ['valid' => false, 'message' => 'Validation error: ' . $e->getMessage()];
+            return ['valid' => false, 'message' => 'Image validation is temporarily unavailable.'];
         }
     }
 }

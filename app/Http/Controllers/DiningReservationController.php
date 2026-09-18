@@ -101,7 +101,7 @@ class DiningReservationController extends Controller
             ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create reservation: ' . $e->getMessage()
+                'message' => 'Failed to create the reservation. Please try again.'
             ], 500);
         }
     }
@@ -230,7 +230,7 @@ class DiningReservationController extends Controller
             Log::error('Day-visit reservation error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create reservation: ' . $e->getMessage()
+                'message' => 'Failed to create the reservation. Please try again.'
             ], 500);
         }
     }

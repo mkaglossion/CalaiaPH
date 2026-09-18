@@ -13,12 +13,17 @@
 
     # Disable caching for development to prevent cache errors
     <IfModule mod_headers.c>
+        Header always unset X-Powered-By
         Header set Cache-Control "no-cache, no-store, must-revalidate"
         Header set Pragma "no-cache"
         Header set Expires "0"
     </IfModule>
 
     RewriteEngine On
+
+    # Keep one production origin without affecting localhost or preview hosts.
+    RewriteCond %{HTTP_HOST} ^www\.calaia\.ph$ [NC]
+    RewriteRule ^ https://calaia.ph%{REQUEST_URI} [R=301,L,NE]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

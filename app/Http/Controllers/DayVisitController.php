@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Services\BookingService;
 use App\Services\PaymentService;
 use App\Services\ValidationService;
@@ -18,11 +19,11 @@ use Carbon\Carbon;
 
 class DayVisitController extends Controller
 {
-    protected $bookingService;
-    protected $paymentService;
-    protected $inventoryService;
-    protected $dayTourInventoryService;
-    protected $vatService;
+    protected BookingService $bookingService;
+    protected PaymentService $paymentService;
+    protected InventoryService $inventoryService;
+    protected DayTourInventoryService $dayTourInventoryService;
+    protected VatService $vatService;
 
     public function __construct(
         BookingService $bookingService, 
@@ -71,7 +72,7 @@ class DayVisitController extends Controller
     /**
      * Helper function to format price without .00 for whole numbers
      */
-    private function formatPrice($price)
+    private function formatPrice(int|float|string $price): string
     {
         $num = (float) $price;
         if (fmod($num, 1) == 0) {
@@ -588,7 +589,7 @@ class DayVisitController extends Controller
                 'payment_status' => 'failed',
                 'status' => 'cancelled',
             ]);
-            return redirect()->back()->with('error', 'Failed to initiate payment: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to initiate payment. Please try again.');
         }
     }
 

@@ -395,12 +395,6 @@ class BookingController extends Controller
         return $input;
     }
 
-    public function debugSession()
-    {
-        // Dump the entire session
-        dd(session()->all());
-    }
-
     /**
      * Get booking settings (pricing) as JSON
      * Available publicly for frontend price calculations
@@ -465,9 +459,11 @@ class BookingController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
+            report($e);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error calculating price: ' . $e->getMessage(),
+                'message' => 'Unable to calculate the price right now.',
                 'total' => 0
             ], 500);
         }
@@ -524,9 +520,11 @@ class BookingController extends Controller
                 'nights' => $priceResult['nights'] ?? 0,
             ]);
         } catch (\Exception $e) {
+            report($e);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error calculating price: ' . $e->getMessage(),
+                'message' => 'Unable to calculate the price right now.',
                 'total' => 0
             ], 500);
         }
@@ -2550,7 +2548,7 @@ class BookingController extends Controller
                 'payment_status' => 'failed',
                 'status' => 'cancelled',
             ]);
-            return redirect()->back()->with('error', 'Failed to initiate payment: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to initiate payment. Please try again.');
         }
     }
 
@@ -2570,7 +2568,9 @@ class BookingController extends Controller
                 'payment_intent_id' => $paymentIntent->id
             ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            report($e);
+
+            return response()->json(['error' => 'Unable to create the payment request.'], 500);
         }
     }
 
@@ -4242,9 +4242,11 @@ class BookingController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
+            report($e);
+
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred: ' . $e->getMessage()
+                'message' => 'Unable to save the food selection right now.'
             ], 500);
         }
     }

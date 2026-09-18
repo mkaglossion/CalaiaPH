@@ -7,10 +7,13 @@ use App\Mail\PasswordReset;
 use App\Models\Booking;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\IdVerificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 use ReflectionClass;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
@@ -314,7 +317,69 @@ class SecurityHardeningTest extends TestCase
             ->assertHeader('X-Content-Type-Options', 'nosniff')
             ->assertHeader('X-Frame-Options', 'SAMEORIGIN')
             ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+            ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()')
             ->assertHeader('Content-Security-Policy-Report-Only');
+    }
+
+    public function test_report_only_csp_does_not_allow_every_https_origin_or_unsafe_eval(): void
+    {
+        $response = $this->get(route('home'));
+        $policy = (string) $response->headers->get('Content-Security-Policy-Report-Only');
+
+        $this->assertStringContainsString("default-src 'self';", $policy);
+        $this->assertStringContainsString("object-src 'none';", $policy);
+        $this->assertStringContainsString('https://res.cloudinary.com', $policy);
+        $this->assertStringNotContainsString("default-src 'self' https:", $policy);
+        $this->assertStringNotContainsString("'unsafe-eval'", $policy);
+    }
+
+    public function test_id_verification_uses_private_temporary_storage_and_hides_internal_errors(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $service = Mockery::mock(IdVerificationService::class);
+        $service->shouldReceive('verifyIdImage')
+            ->once()
+            ->andThrow(new \RuntimeException('internal-provider-secret'));
+        $this->app->instance(IdVerificationService::class, $service);
+
+        $response = $this->withoutMiddleware([
+            \App\Http\Middleware\ApiRateLimiter::class,
+            \App\Http\Middleware\ApiSecurity::class,
+            \App\Http\Middleware\XssProtection::class,
+        ])->postWithCsrf(route('api.id-verification.verify'), [
+            'id_image' => UploadedFile::fake()->image('id.jpg', 800, 500),
+            'id_number' => 'PWD-123456',
+            'id_type' => 'pwd',
+        ]);
+
+        $response->assertStatus(500)
+            ->assertJsonPath('message', 'Verification is temporarily unavailable. Please try again.')
+            ->assertDontSee('internal-provider-secret');
+
+        $this->assertSame([], Storage::disk('local')->allFiles('temp_id_verification'));
+        $this->assertSame([], Storage::disk('public')->allFiles('temp_id_verification'));
+    }
+
+    public function test_base64_id_verification_rejects_non_image_payloads(): void
+    {
+        Storage::fake('local');
+
+        $response = $this->withoutMiddleware([
+            \App\Http\Middleware\ApiRateLimiter::class,
+            \App\Http\Middleware\ApiSecurity::class,
+            \App\Http\Middleware\XssProtection::class,
+        ])->postWithCsrf(route('api.id-verification.verify-base64'), [
+            'id_image_base64' => base64_encode('not-an-image'),
+            'id_number' => 'PWD-123456',
+            'id_type' => 'pwd',
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonPath('message', 'Invalid image data');
+
+        $this->assertSame([], Storage::disk('local')->allFiles('temp_id_verification'));
     }
 
     public function test_customer_cannot_check_in_another_customers_booking(): void

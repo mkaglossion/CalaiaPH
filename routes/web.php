@@ -385,8 +385,6 @@ if (app()->environment('local')) {
         return response()->json($data);
     });
 
-    Route::get('/debug-session', [BookingController::class, 'debugSession']);
-
     Route::get('/booking/reset-inventory', function () {
         session()->forget('inventory');
         return redirect('/booking/widget')->with('success', 'Inventory reset!');

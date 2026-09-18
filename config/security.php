@@ -103,8 +103,39 @@ return [
         'X-Content-Type-Options' => 'nosniff',
         'X-Frame-Options' => 'SAMEORIGIN',
         'Referrer-Policy' => 'strict-origin-when-cross-origin',
-        'Content-Security-Policy-Report-Only' => "default-src 'self' https: data: blob: 'unsafe-inline' 'unsafe-eval'; frame-ancestors 'self'",
+        'Permissions-Policy' => 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+        'Content-Security-Policy-Report-Only' => implode(' ', [
+            "default-src 'self';",
+            "base-uri 'self';",
+            "object-src 'none';",
+            "frame-ancestors 'self';",
+            "form-action 'self';",
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com https://unpkg.com https://use.fontawesome.com;",
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://unpkg.com https://use.fontawesome.com;",
+            "font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com https://use.fontawesome.com;",
+            "img-src 'self' data: blob: https://res.cloudinary.com https://maps.google.com https://www.google.com https://www.facebook.com;",
+            "media-src 'self' blob: https://res.cloudinary.com;",
+            "connect-src 'self' https://api.openweathermap.org https://api.cloudinary.com https://api.paymongo.com https://*.pusher.com wss://*.pusher.com;",
+            "frame-src 'self' https://maps.google.com https://www.google.com https://www.facebook.com;",
+            "worker-src 'self' blob:;",
+            "manifest-src 'self';",
+        ]),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Trusted Hosts
+    |--------------------------------------------------------------------------
+    |
+    | Exact production hosts accepted by Laravel. TrustHosts automatically
+    | skips local requests and unit tests, so development remains unaffected.
+    |
+    */
+
+    'trusted_hosts' => array_values(array_map(
+        static fn (string $host): string => '^'.preg_quote($host, '/').'$',
+        array_filter(array_map('trim', explode(',', env('TRUSTED_HOSTS', 'calaia.ph,www.calaia.ph'))))
+    )),
 
     /*
     |--------------------------------------------------------------------------
