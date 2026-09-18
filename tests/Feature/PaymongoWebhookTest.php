@@ -8,7 +8,9 @@ use App\Models\AdminSystemAlert;
 use App\Models\Package;
 use App\Models\PackageBooking;
 use App\Models\PaymongoWebhookEvent;
+use App\Models\ShopOrder;
 use App\Services\PaymongoWebhookService;
+use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
@@ -138,6 +140,116 @@ class PaymongoWebhookTest extends TestCase
         Mail::assertSentCount(1);
     }
 
+    public function test_package_booking_rejects_a_paid_amount_mismatch(): void
+    {
+        Mail::fake();
+
+        $package = Package::create([
+            'name' => 'Secure Farm Tour',
+            'description' => 'Package payment validation test',
+            'price' => 2500,
+            'max_guests' => 10,
+            'pricing_type' => 'fixed',
+            'is_active' => true,
+        ]);
+
+        $booking = PackageBooking::create([
+            'booking_reference' => 'PB-AMOUNT1',
+            'package_id' => $package->id,
+            'booking_date' => '2026-06-10',
+            'total_guests' => 2,
+            'groups_booked' => 1,
+            'first_name' => 'Secure',
+            'last_name' => 'Customer',
+            'phone' => '9997826850',
+            'email' => 'secure@example.com',
+            'total_amount' => 2500,
+            'status' => 'pending_payment',
+            'payment_status' => 'pending',
+            'paymongo_reference' => 'cs_package_amount_1',
+        ]);
+
+        $this->assertFalse(PaymongoWebhookService::markPackageBookingPaid(
+            $booking,
+            'pay_package_amount_1',
+            100
+        ));
+
+        $booking->refresh();
+        $this->assertSame('pending_payment', $booking->status);
+        $this->assertSame('pending', $booking->payment_status);
+        Mail::assertNothingSent();
+    }
+
+    public function test_pending_booking_rejects_underpayment_without_changing_the_total(): void
+    {
+        $booking = Booking::create([
+            'transaction_id' => 'TXN-UNDERPAY1',
+            'customer_name' => 'Secure Customer',
+            'customer_email' => 'secure@example.com',
+            'customer_phone' => '09171234567',
+            'booking_type' => 'staycation',
+            'checkin_date' => '2026-06-10',
+            'checkout_date' => '2026-06-11',
+            'booking_data' => ['booking_type' => 'staycation'],
+            'total_amount' => 8800,
+            'payment_method' => 'paymongo',
+            'payment_status' => 'pending',
+            'status' => 'pending',
+        ]);
+
+        try {
+            app(PaymentService::class)->confirmPendingBooking($booking, [
+                'checkout_id' => 'cs_underpay_1',
+                'payment_reference' => 'pay_underpay_1',
+                'paid_amount_centavos' => 100,
+            ]);
+            $this->fail('Underpayment should not confirm a pending booking.');
+        } catch (\UnexpectedValueException $e) {
+            $this->assertSame('Verified payment amount does not match the booking total.', $e->getMessage());
+        }
+
+        $booking->refresh();
+        $this->assertSame('pending', $booking->payment_status);
+        $this->assertSame('pending', $booking->status);
+        $this->assertSame(8800.0, (float) $booking->total_amount);
+    }
+
+    public function test_browser_cancel_callback_does_not_change_package_payment_state(): void
+    {
+        $package = Package::create([
+            'name' => 'Cancellation Test Package',
+            'description' => 'Cancellation callback test',
+            'price' => 2500,
+            'max_guests' => 10,
+            'pricing_type' => 'fixed',
+            'is_active' => true,
+        ]);
+
+        $booking = PackageBooking::create([
+            'booking_reference' => 'PB-CANCEL1',
+            'package_id' => $package->id,
+            'booking_date' => '2026-06-10',
+            'total_guests' => 2,
+            'groups_booked' => 1,
+            'first_name' => 'Secure',
+            'last_name' => 'Customer',
+            'phone' => '9997826850',
+            'email' => 'secure@example.com',
+            'total_amount' => 2500,
+            'status' => 'pending_payment',
+            'payment_status' => 'pending',
+            'paymongo_reference' => 'cs_cancel_1',
+        ]);
+
+        $this->get(route('booking.payment-cancelled', ['checkout_id' => 'cs_cancel_1']))
+            ->assertRedirect('/packages');
+
+        $booking->refresh();
+        $this->assertSame('pending_payment', $booking->status);
+        $this->assertSame('pending', $booking->payment_status);
+    }
+
     public function test_checkout_session_paid_event_can_confirm_existing_pending_booking_from_cached_reference(): void
     {
         $booking = Booking::create([
@@ -213,6 +325,123 @@ class PaymongoWebhookTest extends TestCase
         $this->assertSame('confirmed', $booking->status);
         $this->assertSame('cs_cached_123', $booking->paymongo_checkout_id);
         $this->assertSame('pay_cached_123', $booking->payment_reference);
+    }
+
+    public function test_shop_order_webhook_rejects_paid_amount_mismatch(): void
+    {
+        $order = ShopOrder::create([
+            'order_reference' => 'SHOP-SECURE123',
+            'customer_name' => 'Shop Customer',
+            'customer_email' => 'shop@example.com',
+            'customer_phone' => '09171234567',
+            'cart_items' => [
+                [
+                    'title' => 'Calaia Tomato Pack',
+                    'price' => 5000,
+                    'quantity' => 1,
+                    'subtotal' => 5000,
+                ],
+            ],
+            'original_total' => 5000,
+            'vat_amount' => 600,
+            'final_total' => 5600,
+            'delivery_option' => 'pickup',
+            'pickup_date' => '2026-06-10',
+            'payment_method' => 'paymongo',
+            'transaction_id' => 'TXN-SHOP-SECURE123',
+            'payment_status' => 'pending',
+            'order_status' => 'pending',
+            'paymongo_checkout_id' => 'cs_shop_secure_123',
+        ]);
+
+        $payload = [
+            'data' => [
+                'id' => 'evt_shop_amount_mismatch',
+                'type' => 'event',
+                'attributes' => [
+                    'type' => 'checkout_session.payment.paid',
+                    'data' => [
+                        'id' => 'cs_shop_secure_123',
+                        'type' => 'checkout_session',
+                        'attributes' => [
+                            'reference_number' => 'TXN-SHOP-SECURE123',
+                            'payments' => [
+                                [
+                                    'id' => 'pay_shop_wrong_amount',
+                                    'type' => 'payment',
+                                    'attributes' => [
+                                        'amount' => 100,
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->assertFalse(PaymongoWebhookService::handleWebhook($payload));
+        $this->assertSame('pending', $order->fresh()->payment_status);
+        $this->assertNull($order->fresh()->paid_at);
+    }
+
+    public function test_shop_order_webhook_marks_paid_when_amount_matches_order_total(): void
+    {
+        $order = ShopOrder::create([
+            'order_reference' => 'SHOP-PAID123',
+            'customer_name' => 'Shop Customer',
+            'customer_email' => 'shop@example.com',
+            'customer_phone' => '09171234567',
+            'cart_items' => [
+                [
+                    'title' => 'Calaia Tomato Pack',
+                    'price' => 5000,
+                    'quantity' => 1,
+                    'subtotal' => 5000,
+                ],
+            ],
+            'original_total' => 5000,
+            'vat_amount' => 600,
+            'final_total' => 5600,
+            'delivery_option' => 'pickup',
+            'pickup_date' => '2026-06-10',
+            'payment_method' => 'paymongo',
+            'transaction_id' => 'TXN-SHOP-PAID123',
+            'payment_status' => 'pending',
+            'order_status' => 'pending',
+            'paymongo_checkout_id' => 'cs_shop_paid_123',
+        ]);
+
+        $payload = [
+            'data' => [
+                'id' => 'evt_shop_amount_match',
+                'type' => 'event',
+                'attributes' => [
+                    'type' => 'checkout_session.payment.paid',
+                    'data' => [
+                        'id' => 'cs_shop_paid_123',
+                        'type' => 'checkout_session',
+                        'attributes' => [
+                            'reference_number' => 'TXN-SHOP-PAID123',
+                            'payments' => [
+                                [
+                                    'id' => 'pay_shop_correct_amount',
+                                    'type' => 'payment',
+                                    'attributes' => [
+                                        'amount' => 560000,
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->assertTrue(PaymongoWebhookService::handleWebhook($payload));
+        $this->assertSame(ShopOrder::PAYMENT_STATUS_PAID, $order->fresh()->payment_status);
+        $this->assertSame(ShopOrder::ORDER_STATUS_READY, $order->fresh()->order_status);
+        $this->assertNotNull($order->fresh()->paid_at);
     }
 
     public function test_payment_refunded_event_marks_staycation_booking_refunded_by_payment_id(): void

@@ -200,10 +200,13 @@
             <i data-lucide="history" class="w-4 h-4"></i>
             Activity Log
           </a>
-          <a href="{{ route('logout') }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-200 hover:bg-white/10 transition">
-            <i data-lucide="log-out" class="w-4 h-4"></i>
-            Log Out
-          </a>
+          <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="flex w-full items-center gap-2 px-3 py-2 rounded-lg text-left text-sm text-red-200 hover:bg-white/10 transition">
+              <i data-lucide="log-out" class="w-4 h-4"></i>
+              Log Out
+            </button>
+          </form>
         </div>
       </div>
     </div>
@@ -464,10 +467,13 @@
               </div>
             </div>
 
-            <a href="{{ route('logout') }}" role="menuitem" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition text-sm text-red-600 focus:outline-none focus:bg-gray-100 rounded-b-lg pb-2">
-              <i data-lucide="log-out" class="w-4 h-4"></i>
-              Log Out
-            </a>
+            <form method="POST" action="{{ route('logout') }}">
+              @csrf
+              <button type="submit" role="menuitem" class="flex w-full items-center gap-2 px-4 py-2 hover:bg-gray-100 transition text-left text-sm text-red-600 focus:outline-none focus:bg-gray-100 rounded-b-lg pb-2">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+                Log Out
+              </button>
+            </form>
           </div>
         </div>
       </div>

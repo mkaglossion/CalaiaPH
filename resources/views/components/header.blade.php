@@ -191,9 +191,12 @@
 
               <div class="border-t border-gray-200 my-2"></div>
 
-              <a href="{{ route('logout') }}" class="block w-full text-left px-4 py-2 hover:bg-red-50 transition text-red-600 font-medium">
-                <i class="bi bi-box-arrow-right me-2"></i>Log Out
-              </a>
+              <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="block w-full text-left px-4 py-2 hover:bg-red-50 transition text-red-600 font-medium">
+                  <i class="bi bi-box-arrow-right me-2"></i>Log Out
+                </button>
+              </form>
             </div>
           </div>
 
@@ -341,9 +344,12 @@
               <i class="bi bi-person-check me-2"></i>Check-in / Check-out
             </a>
 
-            <a href="{{ route('logout') }}" @click.prevent="mobileOpen = false; window.location.href = '{{ route('logout') }}'" class="block px-3 py-3 rounded-lg hover:bg-white/50 transition text-white pb-12">
-              <i class="bi bi-box-arrow-right me-2"></i>Log Out
-            </a>
+            <form method="POST" action="{{ route('logout') }}">
+              @csrf
+              <button type="submit" @click="mobileOpen = false" class="block w-full px-3 py-3 rounded-lg hover:bg-white/50 transition text-left text-white pb-12">
+                <i class="bi bi-box-arrow-right me-2"></i>Log Out
+              </button>
+            </form>
           @else
             <button
               @click="$store.modals.showLogin = true; mobileOpen = false"

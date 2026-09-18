@@ -106,7 +106,10 @@ class ExpireStalePendingBookingsCommandTest extends TestCase
 
         Booking::create(array_merge(
             $this->pendingBookingAttributes('TXN-DAYVISIT-PAID', 'cs_dayvisit_paid'),
-            ['booking_type' => 'dayvisit']
+            [
+                'booking_type' => 'dayvisit',
+                'total_amount' => 2500,
+            ]
         ));
 
         $this->artisan('bookings:expire-stale-pending', ['--minutes' => 1440])

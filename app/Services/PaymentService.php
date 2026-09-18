@@ -853,11 +853,20 @@ class PaymentService
         $paidAmountCentavos = isset($paymentData['paid_amount_centavos'])
             ? (int) $paymentData['paid_amount_centavos']
             : null;
-        $expectedAmountCentavos = (int) ($paymentData['expected_amount_centavos'] ?? 0);
-        $chargedAmountCentavos = $paidAmountCentavos ?? ($expectedAmountCentavos > 0 ? $expectedAmountCentavos : null);
-        $grandTotalPaid = $chargedAmountCentavos !== null
-            ? ((float) $chargedAmountCentavos / 100)
-            : $booking->total_amount;
+        $expectedAmountCentavos = (int) round(((float) $booking->total_amount) * 100);
+
+        if ($paidAmountCentavos === null || $paidAmountCentavos !== $expectedAmountCentavos) {
+            Log::warning('Rejected booking payment with missing or mismatched amount', [
+                'booking_id' => $booking->id,
+                'transaction_id' => $booking->transaction_id,
+                'expected_amount_centavos' => $expectedAmountCentavos,
+                'paid_amount_centavos' => $paidAmountCentavos,
+            ]);
+
+            throw new \UnexpectedValueException('Verified payment amount does not match the booking total.');
+        }
+
+        $grandTotalPaid = (float) $booking->total_amount;
 
         $checkoutSessionId = $paymentData['checkout_id'] ?? $paymentData['checkout_session_id'] ?? null;
         $paymentReference = $paymentData['payment_reference'] ?? $paymentData['reference_id'] ?? null;

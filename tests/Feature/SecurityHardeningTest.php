@@ -11,6 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use ReflectionClass;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Mockery;
@@ -35,14 +36,14 @@ class SecurityHardeningTest extends TestCase
             $this->postWithCsrf(route('login.submit'), [
                 'username' => 'missing@example.com',
                 'password' => 'wrongpass',
-            ])->assertRedirect('/home')
+            ])->assertRedirect(route('home'))
                 ->assertSessionHas('error', 'These credentials do not match our records.');
         }
 
         $this->postWithCsrf(route('login.submit'), [
             'username' => 'missing@example.com',
             'password' => 'wrongpass',
-        ])->assertRedirect('/home')
+        ])->assertRedirect(route('home'))
             ->assertSessionHas('error', fn (string $message) => str_contains($message, 'Too many login attempts.'));
     }
 
@@ -62,7 +63,7 @@ class SecurityHardeningTest extends TestCase
         $this->postWithCsrf(route('login.submit'), [
             'username' => 'customer@example.com',
             'password' => 'password',
-        ])->assertRedirect('/home');
+        ])->assertRedirect(route('home'));
 
         $this->assertAuthenticatedAs($user);
         $this->assertSame(0, RateLimiter::attempts('customer-login|customer@example.com|127.0.0.1'));
@@ -122,6 +123,100 @@ class SecurityHardeningTest extends TestCase
 
         $this->assertNotEmpty($user->fresh()->password_reset_token);
         Mail::assertSent(PasswordReset::class);
+    }
+
+    public function test_password_reset_logs_out_the_current_user_session(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'customer@example.com',
+            'password' => Hash::make('old-password'),
+            'password_reset_token' => 'reset-token',
+            'password_reset_expires' => now()->addHour(),
+        ]);
+
+        $this->actingAs($user)
+            ->postWithCsrf(route('reset.password.post'), [
+                'token' => 'reset-token',
+                'email' => 'customer@example.com',
+                'password' => 'new-password',
+                'password_confirmation' => 'new-password',
+            ])->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertGuest();
+        $this->assertNull($user->fresh()->password_reset_token);
+        $this->assertTrue(Hash::check('new-password', $user->fresh()->password));
+    }
+
+    public function test_logout_requires_post_and_csrf(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('logout'))
+            ->assertMethodNotAllowed();
+
+        $csrfMiddleware = new \App\Http\Middleware\VerifyCsrfToken(app(), app('encrypter'));
+        $except = (new ReflectionClass($csrfMiddleware))->getProperty('except');
+        $except->setAccessible(true);
+        $this->assertSame([], $except->getValue($csrfMiddleware));
+
+        $this->actingAs($user)
+            ->postWithCsrf(route('logout'))
+            ->assertRedirect(route('home'));
+
+        $this->assertGuest();
+    }
+
+    public function test_homepage_uses_root_url_and_legacy_home_redirects_permanently(): void
+    {
+        $this->assertSame(url('/'), route('home'));
+
+        $this->get('/')
+            ->assertOk();
+
+        $this->get('/home')
+            ->assertRedirect('/')
+            ->assertStatus(301);
+
+        $this->postWithCsrf('/home')
+            ->assertMethodNotAllowed();
+    }
+
+    public function test_package_checkout_validation_does_not_echo_the_public_token(): void
+    {
+        $response = $this->postJson('/api/payment/create-checkout', [
+            'booking_id' => 'invalid',
+            'token' => 'sensitive-public-token',
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertDontSee('sensitive-public-token')
+            ->assertJsonMissingPath('received_data');
+    }
+
+    public function test_special_event_write_api_requires_an_admin(): void
+    {
+        $payload = [
+            'name' => 'Secure Event',
+            'description' => 'Admin-only event content.',
+            'features' => 'Feature one',
+        ];
+
+        $this->postJson('/api/special-events', $payload)
+            ->assertUnauthorized();
+
+        $customer = User::factory()->create(['user_type' => 'client']);
+        $this->actingAs($customer)
+            ->postJson('/api/special-events', $payload)
+            ->assertForbidden();
+
+        $admin = User::factory()->create(['user_type' => 'admin']);
+        $this->actingAs($admin)
+            ->postJson('/api/special-events', $payload)
+            ->assertCreated();
+
+        $this->assertDatabaseHas('events', ['name' => 'Secure Event']);
     }
 
     public function test_oauth_callback_rejects_external_intended_url(): void

@@ -36,7 +36,7 @@ class LoginController extends Controller
         $throttleKey = $this->rateLimiter->key($request, $credentials['username'], 'customer-login');
 
         if ($this->rateLimiter->tooManyAttempts($throttleKey, 5)) {
-            return redirect('/home')->with(
+            return redirect()->route('home')->with(
                 'error',
                 'Too many login attempts. Please try again in '.$this->rateLimiter->availableIn($throttleKey).' seconds.'
             );
@@ -50,7 +50,7 @@ class LoginController extends Controller
         if ($pending) {
             $this->rateLimiter->hit($throttleKey, 60);
 
-            return redirect('/home')->with('error', self::GENERIC_LOGIN_ERROR);
+            return redirect()->route('home')->with('error', self::GENERIC_LOGIN_ERROR);
         }
 
         // Find verified user
@@ -61,7 +61,7 @@ class LoginController extends Controller
         if (!$user) {
             $this->rateLimiter->hit($throttleKey, 60);
 
-            return redirect('/home')->with('error', self::GENERIC_LOGIN_ERROR);
+            return redirect()->route('home')->with('error', self::GENERIC_LOGIN_ERROR);
         }
 
         // Check password - cast to string to handle SensitiveParameterValue objects
@@ -75,13 +75,13 @@ class LoginController extends Controller
                 'error' => $e->getMessage(),
                 'user_id' => $user->id,
             ]);
-            return redirect('/home')->with('error', 'An error occurred during login. Please try again.');
+            return redirect()->route('home')->with('error', 'An error occurred during login. Please try again.');
         }
         
         if (!$passwordIsValid) {
             $this->rateLimiter->hit($throttleKey, 60);
 
-            return redirect('/home')->with('error', self::GENERIC_LOGIN_ERROR);
+            return redirect()->route('home')->with('error', self::GENERIC_LOGIN_ERROR);
         }
 
         // Log user in
@@ -91,7 +91,7 @@ class LoginController extends Controller
 
         session()->save();
 
-        return redirect('/home')->with('success', 'Welcome back! You have been logged in successfully.');
+        return redirect()->route('home')->with('success', 'Welcome back! You have been logged in successfully.');
 
     }
 
@@ -114,6 +114,6 @@ class LoginController extends Controller
         }
 
         // ✅ Handle normal browser logout
-        return redirect('/home')->with('info', 'You have been logged out successfully. See you next time!');
+        return redirect()->route('home')->with('info', 'You have been logged out successfully. See you next time!');
     }
 }

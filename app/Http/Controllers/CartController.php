@@ -16,6 +16,7 @@ use App\Models\Barangay;
 use App\Models\CustomerAddress;
 use App\Events\ProductStockUpdated;
 use App\Services\VatService;
+use App\Services\PaymongoWebhookService;
 use App\Models\ShopOrder;
 
 class CartController extends Controller
@@ -651,7 +652,7 @@ class CartController extends Controller
             }
         } catch (\Exception $e) {
             Log::error('Checkout Payment Error: ' . $e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->with('error', 'Payment error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Payment could not be initialized. Please try again.');
         }
     }
 
@@ -751,7 +752,6 @@ class CartController extends Controller
             Log::info('PayMongo checkout verification response', [
                 'status' => $statusCode,
                 'checkout_id' => $checkoutId,
-                'data' => $data
             ]);
 
             if ($statusCode !== 200) {
@@ -759,7 +759,14 @@ class CartController extends Controller
             }
 
             $checkoutData = $data['data']['attributes'] ?? [];
-            $paymentStatus = $checkoutData['payment_intent']['attributes']['status'] ?? 'unknown';
+            $payment = is_array($checkoutData['payments'][0] ?? null)
+                ? $checkoutData['payments'][0]
+                : [];
+            $paymentAttributes = is_array($payment['attributes'] ?? null)
+                ? $payment['attributes']
+                : [];
+            $paymentStatus = $paymentAttributes['status']
+                ?? ($checkoutData['payment_status'] ?? ($checkoutData['payment_intent']['attributes']['status'] ?? 'unknown'));
             
             // Check if payment was successful
             if ($paymentStatus !== 'succeeded' && $paymentStatus !== 'paid') {
@@ -770,33 +777,35 @@ class CartController extends Controller
                 return redirect()->route('checkout.failed');
             }
 
-            // Get the shop order from session or database
-            $shopOrderId = session('current_shop_order_id');
-            $shopOrder = null;
-            
-            if ($shopOrderId) {
-                $shopOrder = ShopOrder::find($shopOrderId);
-            }
-            
-            // If not found by session, try to find by PayMongo checkout ID
-            if (!$shopOrder) {
-                $shopOrder = ShopOrder::where('paymongo_checkout_id', $checkoutId)->first();
-            }
+            // Bind the verified provider checkout to its own server-side order.
+            $shopOrder = ShopOrder::where('paymongo_checkout_id', $checkoutId)->first();
             
             if (!$shopOrder) {
                 Log::error('Shop order not found for checkout', [
                     'checkout_id' => $checkoutId,
-                    'session_order_id' => $shopOrderId
                 ]);
                 return redirect()->route('checkout.failed')->with('error', 'Order not found. Please contact support.');
             }
 
-            // Update order status to paid
-            $shopOrder->update([
-                'payment_status' => 'paid',
-                'order_status' => 'ready',
-                'paid_at' => now(),
-            ]);
+            $paidAmountCentavos = $paymentAttributes['amount'] ?? ($checkoutData['amount'] ?? null);
+            if (!is_numeric($paidAmountCentavos)) {
+                Log::warning('PayMongo checkout response did not include a paid amount', [
+                    'checkout_id' => $checkoutId,
+                    'shop_order_id' => $shopOrder->id,
+                ]);
+                return redirect()->route('checkout.failed')->with('error', 'Payment amount could not be verified.');
+            }
+
+            $paymentReference = $payment['id'] ?? data_get($checkoutData, 'payment_intent.id');
+            if (!PaymongoWebhookService::markShopOrderPaidFromVerifiedCheckout(
+                $checkoutId,
+                $paymentReference,
+                (int) $paidAmountCentavos
+            )) {
+                return redirect()->route('checkout.failed')->with('error', 'Payment amount did not match the order.');
+            }
+
+            $shopOrder->refresh();
 
             // Build summary for email
             $cart = $shopOrder->cart_items;

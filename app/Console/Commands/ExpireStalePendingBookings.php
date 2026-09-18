@@ -86,7 +86,8 @@ class ExpireStalePendingBookings extends Command
             if ($paymentStatus['status'] === 'paid') {
                 PaymongoWebhookService::markPackageBookingPaid(
                     $packageBooking,
-                    $paymentStatus['payment_reference'] ?? $packageBooking->paymongo_reference
+                    $paymentStatus['payment_reference'] ?? $packageBooking->paymongo_reference,
+                    $paymentStatus['paid_amount_centavos'] ?? null
                 );
                 continue;
             }

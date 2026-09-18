@@ -120,12 +120,9 @@ if (app()->environment('local')) {
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.post');
 
-Route::get('/', function () {
-    return redirect('/home');
-});
-
 // ========== Public Routes ==========
-Route::get('/home', [PagesController::class, 'home'])->name('home');
+Route::get('/', [PagesController::class, 'home'])->name('home');
+Route::get('/home', fn () => redirect()->route('home', [], 301));
 if (app()->environment('local')) {
     Route::get('/settings-test', function() { return view('settings-test'); })->name('settings.test');
 }
@@ -486,7 +483,7 @@ Route::get('/auth/google/redirect', [SocialLoginController::class, 'redirectToGo
 Route::get('/auth/google/callback', [SocialLoginController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 Route::get('/auth/facebook/redirect', [SocialLoginController::class, 'redirectToFacebook'])->name('auth.facebook.redirect');
 Route::get('/auth/facebook/callback', [SocialLoginController::class, 'handleFacebookCallback'])->name('auth.facebook.callback');
-Route::match(['GET', 'POST'], '/logout', [LoginController::class, 'logout'])->name('logout');
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Password Reset Routes
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])->name('forgot.password');
@@ -925,13 +922,14 @@ Route::group(['middleware' => ['api.throttle:upload', 'api.security', 'xss']], f
     Route::post('/api/id-verification/quick-check', [IdVerificationController::class, 'quickCheck'])->name('api.id-verification.quick-check');
     Route::post('/api/id-verification/verify-base64', [IdVerificationController::class, 'verifyBase64'])->name('api.id-verification.verify-base64');
 
-    // API Routes for Special Events
-    Route::post('/api/special-events/upload-image', [EventApiController::class, 'uploadImage']);
-
 });
 
-// Special Events API Routes (10 requests per minute - stricter for write operations)
-Route::group(['middleware' => ['api.throttle:api_strict', 'api.security', 'xss']], function () {
+// Special Events write APIs are admin-only, including direct Cloudinary uploads.
+Route::group(['middleware' => ['auth', 'admin', 'api.throttle:upload', 'api.security', 'xss']], function () {
+    Route::post('/api/special-events/upload-image', [EventApiController::class, 'uploadImage']);
+});
+
+Route::group(['middleware' => ['auth', 'admin', 'api.throttle:api_strict', 'api.security', 'xss']], function () {
     Route::post('/api/special-events', [EventApiController::class, 'store']);
     Route::post('/api/special-events/{event}', [EventApiController::class, 'update']);
     Route::put('/api/special-events/{event}', [EventApiController::class, 'update']);

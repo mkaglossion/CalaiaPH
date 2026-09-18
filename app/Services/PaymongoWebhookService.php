@@ -168,8 +168,12 @@ class PaymongoWebhookService
                 return true;
             }
 
-            if (self::markShopOrderPaid($referenceNumber, $checkoutSessionId, $paymentId, $amount)) {
+            $matchedShopOrder = false;
+            if (self::markShopOrderPaid($referenceNumber, $checkoutSessionId, $paymentId, $amount, $matchedShopOrder)) {
                 return true;
+            }
+            if ($matchedShopOrder) {
+                return false;
             }
 
             // Try existing Booking flow first (transaction_id or checkout_session_id)
@@ -213,7 +217,7 @@ class PaymongoWebhookService
             // Then try PackageBooking
             $pb = self::findPackageBookingForWebhook($metadata, $referenceNumber, $checkoutSessionId);
             if ($pb) {
-                return self::markPackageBookingPaid($pb, $paymentId);
+                return self::markPackageBookingPaid($pb, $paymentId, $amount);
             }
 
             // CRITICAL: Payment received but no booking found anywhere
@@ -416,8 +420,12 @@ class PaymongoWebhookService
             return true;
         }
 
-        if (self::markShopOrderPaid($referenceNumber, $checkoutSessionId, $paymentId, $amount)) {
+        $matchedShopOrder = false;
+        if (self::markShopOrderPaid($referenceNumber, $checkoutSessionId, $paymentId, $amount, $matchedShopOrder)) {
             return true;
+        }
+        if ($matchedShopOrder) {
+            return false;
         }
 
         // 1) Try Booking via reference (transaction_id or checkout_session_id)
@@ -464,7 +472,7 @@ class PaymongoWebhookService
         $pb = self::findPackageBookingForWebhook($metadata, $referenceNumber, $checkoutSessionId);
 
         if ($pb && $paymentId) {
-            return self::markPackageBookingPaid($pb, $paymentId);
+            return self::markPackageBookingPaid($pb, $paymentId, $amount);
         }
 
         // CRITICAL: Checkout succeeded but no booking found anywhere
@@ -519,7 +527,11 @@ class PaymongoWebhookService
         return false;
     }
 
-    public static function markPackageBookingPaid(PackageBooking $pb, ?string $paymentReference = null): bool
+    public static function markPackageBookingPaid(
+        PackageBooking $pb,
+        ?string $paymentReference = null,
+        $amountCentavos = null
+    ): bool
     {
         if (($pb->payment_status ?? null) === 'refunded') {
             Log::info('Paymongo webhook: ignored late paid event for refunded package booking', ['id' => $pb->id]);
@@ -534,8 +546,24 @@ class PaymongoWebhookService
         try {
             $shouldSendConfirmation = false;
 
-            DB::transaction(function () use ($pb, $paymentReference, &$shouldSendConfirmation) {
+            $processed = DB::transaction(function () use ($pb, $paymentReference, $amountCentavos, &$shouldSendConfirmation) {
                 $lockedBooking = PackageBooking::query()->lockForUpdate()->findOrFail($pb->id);
+
+                if (is_numeric($amountCentavos)) {
+                    $expectedAmountCentavos = (int) round(((float) $lockedBooking->total_amount) * 100);
+                    if ((int) $amountCentavos !== $expectedAmountCentavos) {
+                        Log::warning('Rejected PayMongo package payment with amount mismatch', [
+                            'package_booking_id' => $lockedBooking->id,
+                            'booking_reference' => $lockedBooking->booking_reference,
+                            'payment_reference' => $paymentReference,
+                            'expected_amount_centavos' => $expectedAmountCentavos,
+                            'paid_amount_centavos' => (int) $amountCentavos,
+                        ]);
+
+                        return false;
+                    }
+                }
+
                 $shouldSendConfirmation = ($lockedBooking->payment_status ?? null) !== 'paid';
 
                 $lockedBooking->payment_status = 'paid';
@@ -543,12 +571,14 @@ class PaymongoWebhookService
                 $lockedBooking->status = 'confirmed';
                 $lockedBooking->save();
 
-                $inv = PackageInventory::where('package_id', $lockedBooking->package_id)
+                $inv = PackageInventory::query()
+                    ->lockForUpdate()
+                    ->where('package_id', $lockedBooking->package_id)
                     ->whereDate('date', $lockedBooking->booking_date)
                     ->first();
 
                 if (!$inv || ($lockedBooking->inventory_booked ?? false)) {
-                    return;
+                    return true;
                 }
 
                 $groups = $lockedBooking->groups_booked ?? 1;
@@ -572,7 +602,13 @@ class PaymongoWebhookService
                     ]);
                     Log::warning('Failed to book package inventory via payment processing', ['booking_id' => $pb->id, 'inventory_id' => $inv->id]);
                 }
+
+                return true;
             });
+
+            if (!$processed) {
+                return false;
+            }
 
             $pb->refresh();
             if ($shouldSendConfirmation) {
@@ -597,19 +633,36 @@ class PaymongoWebhookService
         }
     }
 
+    public static function markShopOrderPaidFromVerifiedCheckout(
+        string $checkoutSessionId,
+        ?string $paymentReference,
+        int $amountCentavos
+    ): bool {
+        return self::markShopOrderPaid(
+            null,
+            $checkoutSessionId,
+            $paymentReference,
+            $amountCentavos
+        );
+    }
+
     private static function markShopOrderPaid(
         ?string $referenceNumber,
         ?string $checkoutSessionId = null,
         ?string $paymentReference = null,
-        $amountCentavos = null
+        $amountCentavos = null,
+        ?bool &$matchedOrder = null
     ): bool {
         $query = ShopOrder::query();
+        $matchedOrder = false;
 
         if (!empty($checkoutSessionId)) {
             $query->where('paymongo_checkout_id', $checkoutSessionId);
         } elseif (!empty($referenceNumber)) {
-            $query->where('transaction_id', $referenceNumber)
-                ->orWhere('order_reference', $referenceNumber);
+            $query->where(function ($orderQuery) use ($referenceNumber) {
+                $orderQuery->where('transaction_id', $referenceNumber)
+                    ->orWhere('order_reference', $referenceNumber);
+            });
         } else {
             return false;
         }
@@ -618,20 +671,48 @@ class PaymongoWebhookService
         if (!$order) {
             return false;
         }
+        $matchedOrder = true;
 
-        if (($order->payment_status ?? null) === ShopOrder::PAYMENT_STATUS_PAID) {
+        $markedPaid = DB::transaction(function () use ($order, $checkoutSessionId, $paymentReference, $amountCentavos) {
+            $lockedOrder = ShopOrder::query()->lockForUpdate()->findOrFail($order->id);
+
+            if (($lockedOrder->payment_status ?? null) === ShopOrder::PAYMENT_STATUS_PAID) {
+                return true;
+            }
+
+            if (is_numeric($amountCentavos)) {
+                $expectedAmountCentavos = (int) round(((float) $lockedOrder->final_total) * 100);
+                if ((int) $amountCentavos !== $expectedAmountCentavos) {
+                    Log::warning('Rejected PayMongo shop payment with amount mismatch', [
+                        'shop_order_id' => $lockedOrder->id,
+                        'order_reference' => $lockedOrder->order_reference,
+                        'transaction_id' => $lockedOrder->transaction_id,
+                        'checkout_session_id' => $checkoutSessionId,
+                        'payment_reference' => $paymentReference,
+                        'expected_amount_centavos' => $expectedAmountCentavos,
+                        'paid_amount_centavos' => (int) $amountCentavos,
+                    ]);
+
+                    return false;
+                }
+            }
+
+            $lockedOrder->payment_status = ShopOrder::PAYMENT_STATUS_PAID;
+            $lockedOrder->order_status = ShopOrder::ORDER_STATUS_CONFIRMED;
+            $lockedOrder->paid_at = now();
+
+            if (!empty($checkoutSessionId) && empty($lockedOrder->paymongo_checkout_id)) {
+                $lockedOrder->paymongo_checkout_id = $checkoutSessionId;
+            }
+
+            $lockedOrder->save();
+
             return true;
+        });
+
+        if (!$markedPaid) {
+            return false;
         }
-
-        $order->payment_status = ShopOrder::PAYMENT_STATUS_PAID;
-        $order->order_status = ShopOrder::ORDER_STATUS_CONFIRMED;
-        $order->paid_at = now();
-
-        if (!empty($checkoutSessionId) && empty($order->paymongo_checkout_id)) {
-            $order->paymongo_checkout_id = $checkoutSessionId;
-        }
-
-        $order->save();
 
         Log::info('ShopOrder marked paid via PayMongo webhook', [
             'shop_order_id' => $order->id,

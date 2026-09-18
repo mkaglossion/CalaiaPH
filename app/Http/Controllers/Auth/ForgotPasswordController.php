@@ -7,6 +7,7 @@ use App\Mail\PasswordReset;
 use App\Models\User;
 use App\Services\AuthenticationRateLimiter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -111,6 +112,12 @@ class ForgotPasswordController extends Controller
         $user->password_reset_token = null;
         $user->password_reset_expires = null;
         $user->save();
+
+        if (Auth::id() === $user->id) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         return response()->json([
             'success' => true,

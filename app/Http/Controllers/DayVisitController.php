@@ -504,6 +504,7 @@ class DayVisitController extends Controller
             'special_requests' => $request->special_requests,
             'cancellation_policy' => $request->cancellation_policy,
             'payment_method' => $request->payment_method,
+            'expected_amount_centavos' => (int) round($grandTotal * 100),
         ]);
 
         $successUrl = url('/booking/dayvisit/payment/success?checkout_id={CHECKOUT_ID}');
@@ -612,9 +613,18 @@ class DayVisitController extends Controller
             ]);
 
             $data = json_decode($response->getBody(), true);
-            $checkout = (object) $data['data']['attributes'];
+            $checkoutAttributes = $data['data']['attributes'] ?? [];
+            $payment = is_array($checkoutAttributes['payments'][0] ?? null)
+                ? $checkoutAttributes['payments'][0]
+                : [];
+            $paymentAttributes = is_array($payment['attributes'] ?? null)
+                ? $payment['attributes']
+                : [];
+            $paymentStatus = $paymentAttributes['status']
+                ?? ($checkoutAttributes['payment_status'] ?? data_get($checkoutAttributes, 'payment_intent.attributes.status'));
+            $paidAmountCentavos = $paymentAttributes['amount'] ?? ($checkoutAttributes['amount'] ?? null);
 
-            if ($checkout->payment_intent && $checkout->payment_intent->status === 'succeeded') {
+            if (in_array($paymentStatus, ['succeeded', 'paid'], true) && is_numeric($paidAmountCentavos)) {
                 // Payment successful, process the booking
                 $bookingData = Session::get('dayvisit_booking_data');
                 $paymentData = Session::get('dayvisit_payment_data');
@@ -626,34 +636,29 @@ class DayVisitController extends Controller
                     ->where('payment_status', 'pending')
                     ->first();
 
+                $expectedAmountCentavos = $existingBooking
+                    ? (int) round(((float) $existingBooking->total_amount) * 100)
+                    : (int) ($paymentData['expected_amount_centavos'] ?? 0);
+                if ($expectedAmountCentavos < 1 || (int) $paidAmountCentavos !== $expectedAmountCentavos) {
+                    Log::warning('Rejected day visit payment with amount mismatch', [
+                        'booking_id' => $existingBooking?->id,
+                        'checkout_id' => $checkoutId,
+                        'expected_amount_centavos' => $expectedAmountCentavos,
+                        'paid_amount_centavos' => (int) $paidAmountCentavos,
+                    ]);
+
+                    return redirect()->route('dayvisit.payment')->with('error', 'Payment amount mismatch.');
+                }
+
                 if ($existingBooking) {
-                    // Update the pending booking to confirmed
-                    $date = $bookingData['booking_date'] ?? now()->format('Y-m-d');
-                    $packageId = $bookingData['package_id'] ?? null;
-
-                    if ($packageId) {
-                        $slotBooked = $this->dayTourInventoryService->bookSlot(
-                            $packageId, 
-                            $date, 
-                            $checkoutId
-                        );
-
-                        if (!$slotBooked) {
-                            \Illuminate\Support\Facades\Log::error('Failed to book inventory slot after payment', [
-                                'package_id' => $packageId,
-                                'date' => $date,
-                                'checkout_id' => $checkoutId
-                            ]);
-                        }
-                    }
-
                     $paymentData['checkout_id'] = $checkoutId;
+                    $paymentData['paid_amount_centavos'] = (int) $paidAmountCentavos;
 
                     // Confirm the pending booking
                     $this->paymentService->confirmPendingBooking($existingBooking, $paymentData);
 
                     // Set payment reference
-                    $paymentReference = $checkout->payments[0]['id'] ?? $checkoutId;
+                    $paymentReference = $payment['id'] ?? $checkoutId;
                     $existingBooking->update([
                         'payment_reference' => $paymentReference,
                     ]);
@@ -696,6 +701,7 @@ class DayVisitController extends Controller
 
                 // Process the payment
                 $paymentData['checkout_id'] = $checkoutId;
+                $paymentData['paid_amount_centavos'] = (int) $paidAmountCentavos;
                 $result = $this->paymentService->processDayvisitPayment($bookingData, $paymentData);
 
                 $referenceId = $paymentData['reference_id'] ?? null;
@@ -712,7 +718,12 @@ class DayVisitController extends Controller
                 return redirect()->route('dayvisit.payment')->with('error', 'Payment was not successful.');
             }
         } catch (\Exception $e) {
-            return redirect()->route('dayvisit.payment')->with('error', 'Payment verification failed: ' . $e->getMessage());
+            Log::error('Day visit payment verification failed', [
+                'checkout_id' => $checkoutId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('dayvisit.payment')->with('error', 'Payment verification failed.');
         }
     }
 
@@ -725,7 +736,6 @@ class DayVisitController extends Controller
 
         \Illuminate\Support\Facades\Log::info('PayMongo payment failed callback received', [
             'checkout_id' => $checkoutId,
-            'all_params' => $request->all(),
         ]);
 
         if ($checkoutId) {
@@ -745,7 +755,6 @@ class DayVisitController extends Controller
                 \Illuminate\Support\Facades\Log::warning('PayMongo day visit payment failed', [
                     'checkout_id' => $checkoutId,
                     'status' => $paymentIntentStatus,
-                    'payment_intent' => data_get($data, 'data.attributes.payment_intent'),
                 ]);
 
                 // If payment actually succeeded, redirect to success handler

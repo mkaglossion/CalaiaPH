@@ -73,7 +73,7 @@ class PaymentController extends Controller
             Log::error('Payment confirmation error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error confirming payment: ' . $e->getMessage()
+                'message' => 'Unable to confirm payment.'
             ], 500);
         }
     }
@@ -83,12 +83,6 @@ class PaymentController extends Controller
      */
     public function createCheckout(Request $request)
     {
-        Log::info('Payment checkout request received', [
-            'all_data' => $request->all(),
-            'booking_id' => $request->input('booking_id'),
-            'token_present' => !empty($request->input('token')),
-        ]);
-
         try {
             $validated = $request->validate([
                 'booking_id' => 'required|integer|exists:package_bookings,id',
@@ -97,7 +91,7 @@ class PaymentController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Payment validation failed', [
                 'errors' => $e->errors(),
-                'input' => $request->all()
+                'booking_id' => $request->input('booking_id'),
             ]);
             
             // Format errors for frontend display
@@ -112,7 +106,6 @@ class PaymentController extends Controller
                 'success' => false,
                 'message' => 'Validation failed: ' . implode(', ', $errorMessages),
                 'errors' => $e->errors(),
-                'received_data' => $request->all()
             ], 422);
         }
 
@@ -215,7 +208,7 @@ class PaymentController extends Controller
             Log::error('PayMongo checkout error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Payment initialization failed: ' . $e->getMessage()
+                'message' => 'Payment initialization failed.'
             ], 500);
         }
     }
@@ -249,8 +242,14 @@ class PaymentController extends Controller
                         $paymentReference = data_get($data, 'data.attributes.payments.0.id')
                             ?: data_get($data, 'data.attributes.payment_intent.id')
                             ?: $checkoutSessionId;
+                        $paidAmountCentavos = data_get($data, 'data.attributes.payments.0.attributes.amount')
+                            ?? data_get($data, 'data.attributes.amount');
 
-                        if (PaymongoWebhookService::markPackageBookingPaid($booking, $paymentReference)) {
+                        if (PaymongoWebhookService::markPackageBookingPaid(
+                            $booking,
+                            $paymentReference,
+                            $paidAmountCentavos
+                        )) {
                             return redirect('/packages')->with('success', 'Booking confirmed! Check your email for details.');
                         }
                     }
@@ -270,26 +269,9 @@ class PaymentController extends Controller
      */
     public function paymentCancelled(Request $request)
     {
-        try {
-            $checkoutSessionId = $request->query('checkout_session_id') ?: $request->query('checkout_id');
-
-            if ($checkoutSessionId) {
-                $booking = PackageBooking::where('paymongo_reference', $checkoutSessionId)->first();
-                
-                if ($booking) {
-                    $booking->update([
-                        'status' => 'cancelled',
-                        'payment_status' => 'failed',
-                    ]);
-                }
-            }
-
-            return redirect('/packages')->with('warning', 'Payment was cancelled. Your booking has been removed.');
-
-        } catch (\Exception $e) {
-            Log::error('Payment cancelled handler error: ' . $e->getMessage());
-            return redirect('/packages')->with('error', 'An error occurred');
-        }
+        // A browser redirect is not trusted payment evidence. Pending bookings
+        // are reconciled through signed webhooks or server-side provider checks.
+        return redirect('/packages')->with('warning', 'Payment was cancelled. No payment was recorded.');
     }
 
     /**

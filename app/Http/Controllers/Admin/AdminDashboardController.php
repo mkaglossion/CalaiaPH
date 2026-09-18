@@ -389,7 +389,8 @@ class AdminDashboardController extends Controller
 
                 PaymongoWebhookService::markPackageBookingPaid(
                     $booking,
-                    $paymentStatus['payment_reference'] ?? $booking->paymongo_reference
+                    $paymentStatus['payment_reference'] ?? $booking->paymongo_reference,
+                    $paymentStatus['paid_amount_centavos'] ?? null
                 );
             });
     }

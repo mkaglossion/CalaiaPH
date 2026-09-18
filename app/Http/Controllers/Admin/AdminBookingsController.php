@@ -1269,7 +1269,8 @@ class AdminBookingsController extends Controller
                 if (($paymentStatus['status'] ?? null) === 'paid') {
                     PaymongoWebhookService::markPackageBookingPaid(
                         $booking,
-                        $paymentStatus['payment_reference'] ?? $booking->paymongo_reference
+                        $paymentStatus['payment_reference'] ?? $booking->paymongo_reference,
+                        $paymentStatus['paid_amount_centavos'] ?? null
                     );
                     return;
                 }
