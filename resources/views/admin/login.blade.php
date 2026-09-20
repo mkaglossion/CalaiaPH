@@ -21,6 +21,11 @@
         data-admin-flash-message="{{ e(session('success')) }}"
       ></div>
     @endif
+    @if(request()->boolean('idle'))
+      <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        Your admin session expired due to inactivity. Please log in again.
+      </div>
+    @endif
 
     <h2 class="text-2xl sm:text-3xl font-semibold mb-4 text-center" style="color:#8f5d54;">Admin Log In</h2>
     <form method="POST" action="{{ route('admin.login.post') }}" class="space-y-4">

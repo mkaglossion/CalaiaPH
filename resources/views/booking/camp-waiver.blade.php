@@ -184,5 +184,6 @@
       }
     }
   </style>
+  @include('layouts.partials.idle-session')
 </body>
 </html>

@@ -711,3 +711,7 @@
     @include('booking.partials.wishlist-script')
   @endonce
 </header>
+@if (request()->boolean('idle') && ! auth()->check())
+  <x-flash-message type="warning" message="Your session expired due to inactivity. Please log in again." />
+@endif
+@include('layouts.partials.idle-session')

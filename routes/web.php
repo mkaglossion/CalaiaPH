@@ -482,6 +482,9 @@ Route::get('/auth/google/callback', [SocialLoginController::class, 'handleGoogle
 Route::get('/auth/facebook/redirect', [SocialLoginController::class, 'redirectToFacebook'])->name('auth.facebook.redirect');
 Route::get('/auth/facebook/callback', [SocialLoginController::class, 'handleFacebookCallback'])->name('auth.facebook.callback');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::post('/session/keep-alive', fn () => response()->noContent())
+    ->middleware('auth')
+    ->name('session.keep-alive');
 
 // Password Reset Routes
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])->name('forgot.password');

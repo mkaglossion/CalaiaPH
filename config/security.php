@@ -154,6 +154,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Session Idle Timeout
+    |--------------------------------------------------------------------------
+    |
+    | This controls how many idle minutes any authenticated customer or admin
+    | may leave their account open before a fresh login is required.
+    |
+    */
+
+    'session_idle_timeout_minutes' => (int) env('SESSION_IDLE_TIMEOUT_MINUTES', 30),
+
+    /*
+    |--------------------------------------------------------------------------
     | WWW Redirect Map
     |--------------------------------------------------------------------------
     |

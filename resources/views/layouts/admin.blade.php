@@ -776,6 +776,8 @@
     }
   </script>
 
+  @include('layouts.partials.idle-session')
+
   @stack('scripts')
 </body>
 </html>

@@ -52,6 +52,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\CheckForMaintenanceMode::class,
             \App\Http\Middleware\SecurityHeaders::class,
             \App\Http\Middleware\CanonicalHostMiddleware::class,
+            \App\Http\Middleware\EnforceIdleTimeout::class,
         ]);
 
         $middleware->alias([
