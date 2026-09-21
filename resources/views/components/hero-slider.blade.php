@@ -18,18 +18,37 @@
         $isPrimarySlide = $index === 0;
         $optimizedSrc = \App\Helpers\CloudinaryHelper::swiperSlide($imagePath) ?? \App\Helpers\ImageHelper::src($imagePath);
         $optimizedSrcset = \App\Helpers\CloudinaryHelper::srcset($imagePath);
+        $isVideo = \App\Helpers\ImageHelper::isVideo($imagePath);
       @endphp
       <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
-        @if(str_contains($image->image_path ?? $image, '/video/'))
+        @if($isVideo)
+          @php
+            $videoSrc = \App\Helpers\ImageHelper::videoMp4($imagePath) ?? \App\Helpers\ImageHelper::src($imagePath);
+            $videoPoster = \App\Helpers\ImageHelper::videoThumbnail($imagePath) ?? \App\Helpers\ImageHelper::placeholder();
+          @endphp
+          <img
+            src="{{ $videoPoster }}"
+            alt=""
+            aria-hidden="true"
+            class="absolute inset-0 z-0 w-full h-full object-cover object-center"
+            loading="{{ $isPrimarySlide ? 'eager' : 'lazy' }}"
+            fetchpriority="{{ $isPrimarySlide ? 'high' : 'auto' }}"
+            decoding="async"
+            onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
+          >
           <video
-            src="{{ \App\Helpers\ImageHelper::src($imagePath) }}"
-            class="w-full h-full object-cover object-center"
+            class="absolute inset-0 z-0 w-full h-full object-cover object-center opacity-0 transition-opacity duration-300"
             autoplay
             muted
             loop
             playsinline
+            webkit-playsinline
             preload="metadata"
-          ></video>
+            poster="{{ $videoPoster }}"
+            data-hero-video
+          >
+            <source src="{{ $videoSrc }}" type="video/mp4">
+          </video>
         @else
           <img
             src="{{ $optimizedSrc }}"
@@ -95,6 +114,25 @@
 @verbatim
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('[data-hero-video]').forEach(function(video) {
+    const showVideo = function() {
+      video.classList.remove('opacity-0');
+    };
+    const showPoster = function() {
+      video.classList.add('opacity-0');
+    };
+
+    video.muted = true;
+    video.defaultMuted = true;
+    video.addEventListener('playing', showVideo);
+    video.addEventListener('error', showPoster);
+
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(showPoster);
+    }
+  });
+
   const heroSliders = document.querySelectorAll('.heroSwiper');
   heroSliders.forEach(function(slider) {
     const slidesCount = parseInt(slider.dataset.slidesCount);

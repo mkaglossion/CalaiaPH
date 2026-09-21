@@ -83,4 +83,26 @@ class ImageHelper
 
         return $path;
     }
+
+    public static function videoMp4(?string $path): ?string
+    {
+        if (!is_string($path)) {
+            return $path;
+        }
+
+        $path = trim($path);
+
+        if (str_contains($path, 'res.cloudinary.com') && preg_match('#/video/upload/#', $path)) {
+            $mp4 = preg_replace(
+                '#/video/upload/#',
+                '/video/upload/f_mp4,vc_h264,q_auto/',
+                $path,
+                1
+            );
+
+            return preg_replace('#\.(mp4|webm|ogg|mov|avi|wmv)(\?.*)?$#i', '.mp4$2', $mp4) ?: $mp4;
+        }
+
+        return $path;
+    }
 }
