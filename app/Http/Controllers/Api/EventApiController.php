@@ -28,7 +28,7 @@ class EventApiController extends Controller
 
             try {
                 $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
-                    'folder' => env('CLOUDINARY_UPLOAD_FOLDER', 'special_events'),
+                    'folder' => config('cloudinary.upload.folder') ?: 'special_events',
                     'resource_type' => 'auto',
                 ]);
                 return response()->json([

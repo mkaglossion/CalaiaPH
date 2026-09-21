@@ -6,7 +6,9 @@
 ])
 
 {{-- Swiper CSS --}}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+@once('swiper-css')
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+@endonce
 
 <div class="swiper heroSwiper w-full h-64 sm:h-80 md:h-96 lg:h-125 xl:h-150" data-slides-count="{{ count($images) }}">
   <div class="swiper-wrapper">
@@ -44,7 +46,7 @@
             loop
             playsinline
             webkit-playsinline
-            preload="auto"
+            preload="{{ $isPrimarySlide ? 'metadata' : 'none' }}"
             poster="{{ $videoPoster }}"
             data-hero-video
           >
@@ -110,7 +112,9 @@
 </div>
 
 {{-- Swiper JS --}}
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+@once('swiper-js')
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
+@endonce
 
 @verbatim
 <script>

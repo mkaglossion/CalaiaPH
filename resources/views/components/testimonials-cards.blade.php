@@ -1,5 +1,4 @@
 @php
-  $testimonials = \App\Models\Testimonial::active()->ordered()->get();
   $sectionBackground = \App\Models\TestimonialSectionSetting::current();
   $bgImage = $sectionBackground?->background_image_path;
   $bgImageUrl = $bgImage
@@ -106,8 +105,12 @@
     </div>
 
     {{-- Swiper CSS & JS --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    @once('swiper-css')
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    @endonce
+    @once('swiper-js')
+      <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
+    @endonce
 
     {{-- Custom Swiper Styles --}}
     <style>

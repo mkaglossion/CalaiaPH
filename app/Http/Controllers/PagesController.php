@@ -112,8 +112,7 @@ class PagesController extends Controller
 
         // Build day tour availability data with a single grouped query.
         $dayTourAvailability = [];
-        $dayTours = DayTour::where('is_active', true)->get();
-        $totalDayTourGroups = $dayTours->sum('max_groups_per_day');
+        $totalDayTourGroups = (int) DayTour::where('is_active', true)->sum('max_groups_per_day');
 
         $dayTourInventoryByDate = collect();
         if (Schema::hasTable('day_tour_inventories')) {

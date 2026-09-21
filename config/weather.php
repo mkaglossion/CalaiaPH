@@ -10,5 +10,7 @@ return [
     'longitude' => (float) env('WEATHER_LONGITUDE', 120.8133),
 
     'cache_minutes' => (int) env('WEATHER_CACHE_MINUTES', 30),
-    'timeout_seconds' => (int) env('WEATHER_TIMEOUT_SECONDS', 10),
+    'stale_minutes' => (int) env('WEATHER_STALE_MINUTES', 120),
+    'connect_timeout_seconds' => (int) env('WEATHER_CONNECT_TIMEOUT_SECONDS', 2),
+    'timeout_seconds' => (int) env('WEATHER_TIMEOUT_SECONDS', 4),
 ];

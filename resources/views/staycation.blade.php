@@ -1,4 +1,4 @@
-<x-page-layout activeHeader="staycation">
+<x-page-layout activeHeader="staycation" :include-staycation-script="true">
 
 
 

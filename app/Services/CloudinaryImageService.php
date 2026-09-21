@@ -9,7 +9,7 @@ class CloudinaryImageService
 {
     public function upload(UploadedFile $file, string $folder): array
     {
-        $baseFolder = trim((string) env('CLOUDINARY_UPLOAD_FOLDER', 'calaia'), '/');
+        $baseFolder = trim((string) (config('cloudinary.upload.folder') ?: 'calaia'), '/');
         $targetFolder = trim($baseFolder.'/'.$folder, '/');
         $result = Cloudinary::uploadApi()->upload($file->getRealPath(), [
             'folder' => $targetFolder,

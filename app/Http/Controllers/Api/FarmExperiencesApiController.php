@@ -27,7 +27,7 @@ class FarmExperiencesApiController extends Controller
 
             try {
                 $uploadResult = Cloudinary::uploadApi()->upload($filePath, [
-                    'folder' => env('CLOUDINARY_UPLOAD_FOLDER', 'farm_experiences'),
+                    'folder' => config('cloudinary.upload.folder') ?: 'farm_experiences',
                     'resource_type' => 'auto'
                 ]);
                 return response()->json([

@@ -1,11 +1,61 @@
 {
+  "resources/js/admin/bookingConfirmation.js": {
+    "file": "assets/bookingConfirmation-7Cc41b5N.js",
+    "name": "bookingConfirmation",
+    "src": "resources/js/admin/bookingConfirmation.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/admin/bookingSettings.js": {
+    "file": "assets/bookingSettings-CDlVOQFv.js",
+    "name": "bookingSettings",
+    "src": "resources/js/admin/bookingSettings.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/admin/cms-manager.js": {
+    "file": "assets/cms-manager-4v-oh95v.js",
+    "name": "cms-manager",
+    "src": "resources/js/admin/cms-manager.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/admin/dashboard.js": {
+    "file": "assets/dashboard-C2SQ_yC5.js",
+    "name": "dashboard",
+    "src": "resources/js/admin/dashboard.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/admin/flash.js": {
+    "file": "assets/flash-Dplzc5WC.js",
+    "name": "flash",
+    "src": "resources/js/admin/flash.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/admin/seasonDurations.js": {
+    "file": "assets/seasonDurations-B111TcWi.js",
+    "name": "seasonDurations",
+    "src": "resources/js/admin/seasonDurations.js",
+    "isDynamicEntry": true
+  },
   "resources/js/app.js": {
-    "file": "assets/app-KigaBZXD.js",
+    "file": "assets/app-CX4OZFdw.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
+    "dynamicImports": [
+      "resources/js/admin/dashboard.js",
+      "resources/js/admin/bookingConfirmation.js",
+      "resources/js/admin/bookingSettings.js",
+      "resources/js/admin/flash.js",
+      "resources/js/admin/seasonDurations.js",
+      "resources/js/admin/cms-manager.js"
+    ],
     "css": [
-      "assets/app-Dsm1wd8-.css"
+      "assets/app-C66KJPgK.css"
     ]
   },
   "resources/js/booking/staycation.js": {

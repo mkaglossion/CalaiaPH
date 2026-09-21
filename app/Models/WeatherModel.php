@@ -5,11 +5,14 @@ namespace App\Models;
 use DateTime;
 use DateTimeZone;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class WeatherModel {
     private string $apiKey;
     private string $baseUrl;
     private int $cacheMinutes;
+    private int $staleMinutes;
+    private int $connectTimeoutSeconds;
     private int $timeoutSeconds;
     private bool $demoMode = false;
 
@@ -17,7 +20,9 @@ class WeatherModel {
         $this->apiKey = (string) config('weather.api_key', '');
         $this->baseUrl = rtrim((string) config('weather.base_url'), '/');
         $this->cacheMinutes = max(0, (int) config('weather.cache_minutes', 30));
-        $this->timeoutSeconds = max(1, (int) config('weather.timeout_seconds', 10));
+        $this->staleMinutes = max($this->cacheMinutes + 1, (int) config('weather.stale_minutes', 120));
+        $this->connectTimeoutSeconds = max(1, (int) config('weather.connect_timeout_seconds', 2));
+        $this->timeoutSeconds = max($this->connectTimeoutSeconds, (int) config('weather.timeout_seconds', 4));
 
         // Keep demo data available for unconfigured local/test environments.
         if ($this->apiKey === '' || $this->apiKey === 'demo_key_for_testing' || $this->apiKey === 'your_openweathermap_api_key_here') {
@@ -98,11 +103,27 @@ class WeatherModel {
             return $this->fetchApiData($url);
         }
 
-        return Cache::remember(
+        $lastSuccessKey = $cacheKey . ':last_success';
+        $unavailable = ['__weather_unavailable' => true];
+
+        $data = Cache::flexible(
             $cacheKey,
-            now()->addMinutes($this->cacheMinutes),
-            fn () => $this->fetchApiData($url)
+            [$this->cacheMinutes * 60, $this->staleMinutes * 60],
+            function () use ($url, $lastSuccessKey, $unavailable): array {
+                $freshData = $this->fetchApiData($url);
+
+                if ($freshData !== null) {
+                    Cache::put($lastSuccessKey, $freshData, now()->addMinutes($this->staleMinutes));
+
+                    return $freshData;
+                }
+
+                return Cache::get($lastSuccessKey, $unavailable);
+            },
+            ['seconds' => $this->timeoutSeconds + 1]
         );
+
+        return isset($data['__weather_unavailable']) ? null : $data;
     }
 
     /**
@@ -110,26 +131,21 @@ class WeatherModel {
      */
     private function fetchApiData(string $url): ?array {
 
-        $context = stream_context_create([
-            'http' => [
-                'timeout' => $this->timeoutSeconds,
-                'ignore_errors' => true
-            ]
-        ]);
-
         try {
-            $response = @file_get_contents($url, false, $context);
-        } catch (\Throwable $exception) {
+            $response = Http::acceptJson()
+                ->connectTimeout($this->connectTimeoutSeconds)
+                ->timeout($this->timeoutSeconds)
+                ->get($url);
+        } catch (\Throwable) {
             return null;
         }
 
-        if ($response === false) {
+        if (! $response->successful()) {
             return null;
         }
 
-        $data = json_decode($response, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+        $data = $response->json();
+        if (! is_array($data)) {
             return null;
         }
 

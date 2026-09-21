@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\WeatherModel;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class WeatherForecastAccuracyTest extends TestCase
@@ -43,5 +45,49 @@ class WeatherForecastAccuracyTest extends TestCase
         $this->assertNull($current['temperature']);
         $this->assertNull($current['rain_probability']);
         $this->assertSame([], $model->formatHourlyForecast(null));
+    }
+
+    public function test_weather_api_response_is_reused_from_cache(): void
+    {
+        Cache::flush();
+        config()->set('weather.api_key', 'test-key');
+        config()->set('weather.cache_minutes', 30);
+        config()->set('weather.stale_minutes', 120);
+        config()->set('weather.connect_timeout_seconds', 2);
+        config()->set('weather.timeout_seconds', 4);
+
+        Http::fake([
+            '*' => Http::response(['cod' => 200, 'name' => 'Calaca'], 200),
+        ]);
+
+        $model = new WeatherModel();
+        $first = $model->getWeatherByCoordinates(13.9298, 120.8133);
+        $second = $model->getWeatherByCoordinates(13.9298, 120.8133);
+
+        $this->assertSame($first, $second);
+        Http::assertSentCount(1);
+    }
+
+    public function test_weather_failure_uses_last_successful_response(): void
+    {
+        Cache::flush();
+        config()->set('weather.api_key', 'test-key');
+
+        Http::fakeSequence()
+            ->push(['cod' => 200, 'name' => 'Calaca'], 200)
+            ->pushStatus(503);
+
+        $model = new WeatherModel();
+        $successful = $model->getWeatherByCoordinates(13.9298, 120.8133);
+
+        $url = 'https://api.openweathermap.org/data/2.5/weather?lat=13.9298&lon=120.8133&appid=test-key&units=metric';
+        $cacheKey = 'weather_api:' . sha1(preg_replace('/appid=[^&]+/', 'appid=hidden', $url));
+        Cache::forget($cacheKey);
+        Cache::forget('illuminate:cache:flexible:created:' . $cacheKey);
+
+        $fallback = $model->getWeatherByCoordinates(13.9298, 120.8133);
+
+        $this->assertSame($successful, $fallback);
+        Http::assertSentCount(2);
     }
 }

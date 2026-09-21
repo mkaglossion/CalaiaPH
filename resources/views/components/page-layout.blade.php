@@ -4,7 +4,8 @@
     'description' => 'Welcome to CalaiaPH, your ultimate destination for farm stays, day tours, and outdoor adventures.',
     'keywords' => 'farm stay, day tours, outdoor activities, nature retreat, CalaiaPH, Philippines farm experience',
     'bodyClass' => '',
-    'activeHeader' => 'home'
+    'activeHeader' => 'home',
+    'includeStaycationScript' => false,
 ])
 
 <!doctype html>
@@ -24,7 +25,10 @@
     <meta http-equiv="Expires" content="0">
     
     {{-- Vite handles all app CSS/JS. Do not hardcode asset links. --}}
-    @vite(['resources/js/app.js', 'resources/js/booking/staycation.js'])
+    @vite(['resources/js/app.js'])
+    @if($includeStaycationScript)
+        @vite(['resources/js/booking/staycation.js'])
+    @endif
     <title>{{ $title }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">

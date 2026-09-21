@@ -24,9 +24,9 @@ class HeroSliderVideoCompatibilityTest extends TestCase
         $this->assertStringContainsString('playsinline', $html);
         $this->assertStringContainsString('webkit-playsinline', $html);
         $this->assertStringContainsString('poster="https://res.cloudinary.com/demo/video/upload/so_0,w_1280/v123/hero.jpg"', $html);
-        $this->assertStringContainsString('src="https://res.cloudinary.com/demo/video/upload/f_mp4,vc_h264,ac_none,q_auto/v123/hero.mp4"', $html);
-        $this->assertStringContainsString('<source src="https://res.cloudinary.com/demo/video/upload/f_mp4,vc_h264,ac_none,q_auto/v123/hero.mp4" type="video/mp4">', $html);
-        $this->assertStringContainsString('preload="auto"', $html);
+        $this->assertStringContainsString('src="https://res.cloudinary.com/demo/video/upload/c_limit,w_1280/q_auto:eco/f_mp4,vc_h264,ac_none/v123/hero.mp4"', $html);
+        $this->assertStringContainsString('<source src="https://res.cloudinary.com/demo/video/upload/c_limit,w_1280/q_auto:eco/f_mp4,vc_h264,ac_none/v123/hero.mp4" type="video/mp4">', $html);
+        $this->assertStringContainsString('preload="metadata"', $html);
         $this->assertStringContainsString("video.setAttribute('playsinline', '')", $html);
         $this->assertStringContainsString('syncHeroVideos(slider)', $html);
     }

@@ -65,18 +65,8 @@ class Weather extends Component
             $lat = (float) config('weather.latitude');
             $lon = (float) config('weather.longitude');
 
-            $weatherData = $weatherModel->getWeatherByCoordinates($lat, $lon);
-
-            if ($weatherData) {
-                return $weatherModel->formatWeatherData($weatherData);
-            }
-
-            // Fallback to the configured city-based lookup.
             return $weatherModel->formatWeatherData(
-                $weatherModel->getCurrentWeather(
-                    config('weather.city'),
-                    config('weather.country')
-                )
+                $weatherModel->getWeatherByCoordinates($lat, $lon)
             );
 
         } catch (\Exception $e) {
@@ -96,17 +86,8 @@ class Weather extends Component
             $lat = (float) config('weather.latitude');
             $lon = (float) config('weather.longitude');
 
-            $forecastData = $weatherModel->getWeatherForecastByCoordinates($lat, $lon);
-
-            if ($forecastData) {
-                return $weatherModel->formatHourlyForecast($forecastData);
-            }
-
             return $weatherModel->formatHourlyForecast(
-                $weatherModel->getWeatherForecast(
-                    config('weather.city'),
-                    config('weather.country')
-                )
+                $weatherModel->getWeatherForecastByCoordinates($lat, $lon)
             );
 
         } catch (\Exception $e) {

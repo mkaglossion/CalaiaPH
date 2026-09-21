@@ -101,7 +101,7 @@ class DayTourController extends Controller
                     
                     // Upload to Cloudinary with transformations
                     $uploadedFile = Cloudinary::uploadApi()->upload($filePath, [
-                        'folder' => env('CLOUDINARY_UPLOAD_FOLDER', 'daytour-images'),
+                        'folder' => config('cloudinary.upload.folder') ?: 'daytour-images',
                         'public_id' => 'daytour-' . $tour->id . '-' . time(),
                         // Upload a larger master so the site can display crisp images on wide/retina screens
                         'width' => 1600,
@@ -162,7 +162,7 @@ class DayTourController extends Controller
                     $filePath = $file->getRealPath();
                     
                     $uploadedFile = Cloudinary::uploadApi()->upload($filePath, [
-                        'folder' => env('CLOUDINARY_UPLOAD_FOLDER', 'daytour-images'),
+                        'folder' => config('cloudinary.upload.folder') ?: 'daytour-images',
                         'public_id' => 'daytour-' . $dayTour->id . '-' . time(),
                         // Use a larger size for better clarity when images are displayed large
                         'width' => 1600,

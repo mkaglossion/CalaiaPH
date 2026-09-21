@@ -66,18 +66,8 @@ class WeatherController extends Controller
             $lat = (float) config('weather.latitude');
             $lon = (float) config('weather.longitude');
 
-            $weatherData = $this->weatherModel->getWeatherByCoordinates($lat, $lon);
-
-            if ($weatherData) {
-                return $this->weatherModel->formatWeatherData($weatherData);
-            }
-
-            // Fallback to the configured city-based lookup.
             return $this->weatherModel->formatWeatherData(
-                $this->weatherModel->getCurrentWeather(
-                    config('weather.city'),
-                    config('weather.country')
-                )
+                $this->weatherModel->getWeatherByCoordinates($lat, $lon)
             );
 
         } catch (\Exception $e) {
@@ -96,17 +86,8 @@ class WeatherController extends Controller
             $lat = (float) config('weather.latitude');
             $lon = (float) config('weather.longitude');
 
-            $forecastData = $this->weatherModel->getWeatherForecastByCoordinates($lat, $lon);
-
-            if ($forecastData) {
-                return $this->weatherModel->formatHourlyForecast($forecastData);
-            }
-
             return $this->weatherModel->formatHourlyForecast(
-                $this->weatherModel->getWeatherForecast(
-                    config('weather.city'),
-                    config('weather.country')
-                )
+                $this->weatherModel->getWeatherForecastByCoordinates($lat, $lon)
             );
 
         } catch (\Exception $e) {

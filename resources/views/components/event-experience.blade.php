@@ -44,6 +44,8 @@
                             src="{{ \App\Helpers\ImageHelper::src($section->image_path) }}"
                             alt="{{ $section->title }}"
                             class="w-full h-80 object-cover rounded-lg shadow-lg"
+                            loading="lazy"
+                            decoding="async"
                             onerror="this.onerror=null;this.src='{{ \App\Helpers\ImageHelper::placeholder() }}';"
                         >
                     </div>
