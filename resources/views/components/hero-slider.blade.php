@@ -16,9 +16,9 @@
       @php
         $imagePath = $image->image_path ?? $image;
         $isPrimarySlide = $index === 0;
-        $optimizedSrc = \App\Helpers\CloudinaryHelper::swiperSlide($imagePath) ?? \App\Helpers\ImageHelper::src($imagePath);
-        $optimizedSrcset = \App\Helpers\CloudinaryHelper::srcset($imagePath);
         $isVideo = \App\Helpers\ImageHelper::isVideo($imagePath);
+        $optimizedSrc = $isVideo ? null : (\App\Helpers\CloudinaryHelper::swiperSlide($imagePath) ?? \App\Helpers\ImageHelper::src($imagePath));
+        $optimizedSrcset = $isVideo ? null : \App\Helpers\CloudinaryHelper::srcset($imagePath);
       @endphp
       <div class="swiper-slide relative flex items-center justify-center bg-black overflow-hidden">
         @if($isVideo)
@@ -38,12 +38,13 @@
           >
           <video
             class="absolute inset-0 z-0 w-full h-full object-cover object-center opacity-0 transition-opacity duration-300"
+            src="{{ $videoSrc }}"
             autoplay
             muted
             loop
             playsinline
             webkit-playsinline
-            preload="metadata"
+            preload="auto"
             poster="{{ $videoPoster }}"
             data-hero-video
           >
@@ -114,6 +115,62 @@
 @verbatim
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  function prepareHeroVideo(video) {
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+  }
+
+  function showVideo(video) {
+    video.classList.remove('opacity-0');
+  }
+
+  function showPoster(video) {
+    video.classList.add('opacity-0');
+  }
+
+  function pauseHeroVideo(video) {
+    video.pause();
+    showPoster(video);
+  }
+
+  function playHeroVideo(video) {
+    prepareHeroVideo(video);
+
+    const requestPlay = function() {
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(function() {
+          showPoster(video);
+        });
+      }
+    };
+
+    if (video.readyState >= 2) {
+      requestPlay();
+      return;
+    }
+
+    video.load();
+    video.addEventListener('canplay', requestPlay, { once: true });
+    video.addEventListener('loadeddata', requestPlay, { once: true });
+  }
+
+  function syncHeroVideos(slider) {
+    slider.querySelectorAll('[data-hero-video]').forEach(function(video) {
+      const activeSlide = video.closest('.swiper-slide-active');
+
+      if (activeSlide) {
+        playHeroVideo(video);
+      } else {
+        pauseHeroVideo(video);
+      }
+    });
+  }
+
   document.querySelectorAll('[data-hero-video]').forEach(function(video) {
     const showVideo = function() {
       video.classList.remove('opacity-0');
@@ -122,15 +179,9 @@ document.addEventListener('DOMContentLoaded', function () {
       video.classList.add('opacity-0');
     };
 
-    video.muted = true;
-    video.defaultMuted = true;
+    prepareHeroVideo(video);
     video.addEventListener('playing', showVideo);
     video.addEventListener('error', showPoster);
-
-    const playPromise = video.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(showPoster);
-    }
   });
 
   const heroSliders = document.querySelectorAll('.heroSwiper');
@@ -156,7 +207,28 @@ document.addEventListener('DOMContentLoaded', function () {
         firstSlideMessage: 'This is the first slide',
         lastSlideMessage: 'This is the last slide',
       },
+      on: {
+        init: function() {
+          syncHeroVideos(slider);
+        },
+        slideChangeTransitionStart: function() {
+          slider.querySelectorAll('[data-hero-video]').forEach(pauseHeroVideo);
+        },
+        slideChangeTransitionEnd: function() {
+          syncHeroVideos(slider);
+        },
+      },
     });
+
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) {
+        syncHeroVideos(slider);
+      }
+    });
+
+    window.addEventListener('touchstart', function() {
+      syncHeroVideos(slider);
+    }, { once: true, passive: true });
   });
 });
 </script>

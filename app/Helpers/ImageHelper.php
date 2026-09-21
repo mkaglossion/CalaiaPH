@@ -95,7 +95,7 @@ class ImageHelper
         if (str_contains($path, 'res.cloudinary.com') && preg_match('#/video/upload/#', $path)) {
             $mp4 = preg_replace(
                 '#/video/upload/#',
-                '/video/upload/f_mp4,vc_h264,q_auto/',
+                '/video/upload/f_mp4,vc_h264,ac_none,q_auto/',
                 $path,
                 1
             );
