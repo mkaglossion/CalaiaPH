@@ -264,7 +264,7 @@ class AdminController extends Controller
         $activityPackages = ActivityPackage::with('activities')->latest()->get();
         
         // Load all activities for the activity selector in the modal
-        $allActivities = Activity::all(['id', 'name', 'description', 'price']);
+        $allActivities = Activity::with(['swiperImages', 'texts'])->get(['id', 'name', 'description', 'price']);
         
         return view('admin.whatToDo.activities', compact('activities', 'images', 'texts', 'activityPackages', 'allActivities', 'sortBy', 'sortOptions'));
     }

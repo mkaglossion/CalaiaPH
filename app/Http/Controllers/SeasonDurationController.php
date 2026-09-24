@@ -143,7 +143,8 @@ class SeasonDurationController extends Controller
             return redirect()->back()->with('error', $message)->withInput();
         }
 
-        $peakPeriod->update($validator->validated());
+        $validated = $validator->validated();
+        $peakPeriod->update($validated);
 
         // Broadcast pricing update for all unit types
         broadcast(new PricingUpdated())->toOthers();

@@ -502,4 +502,84 @@ class PricingService
 
         return $staycation->price ?? 0;
     }
+
+    /**
+     * Calculate staycation price with multiple parameters
+     * Alternative pricing method used by frontend/booking system
+     * 
+     * @param array $roomIds
+     * @param string $checkinDate (Y-m-d format)
+     * @param string $checkoutDate (Y-m-d format)
+     * @param string $accommodationType
+     * @param int $numberOfGuests
+     * @param int $additionalAdults
+     * @param int $numberOfPets
+     * @param int|null $mattressQuantity
+     * @return array
+     */
+    public function calculateStaycationPrice(
+        array $roomIds,
+        string $checkinDate,
+        string $checkoutDate,
+        string $accommodationType,
+        int $numberOfGuests,
+        int $additionalAdults = 0,
+        int $numberOfPets = 0,
+        ?int $mattressQuantity = null
+    ): array {
+        try {
+            $checkin = Carbon::parse($checkinDate);
+            $checkout = Carbon::parse($checkoutDate);
+
+            if ($checkout->lte($checkin)) {
+                throw new \Exception('Check-out date must be after check-in date.');
+            }
+
+            // Calculate base room rate
+            $subtotal = 0;
+            $nights = $checkout->diffInDays($checkin);
+
+            // Get pricing from BookingSetting
+            $baseRate = \App\Models\BookingSetting::where('key', 'weekday_mon_rate')
+                ->where('category', 'pricing')
+                ->value('value') ?? 3000;
+
+            $subtotal = $baseRate * $nights;
+
+            // Apply additional adult fees
+            if ($additionalAdults > 0) {
+                $additionalAdultFee = \App\Models\BookingSetting::where('key', 'additional_adult_fee')
+                    ->where('category', 'pricing')
+                    ->value('value') ?? 500;
+                $subtotal += ($additionalAdultFee * $additionalAdults * $nights);
+            }
+
+            // Apply pet fees
+            if ($numberOfPets > 0) {
+                $petFee = \App\Models\BookingSetting::where('key', 'pet_price')
+                    ->where('category', 'pricing')
+                    ->value('value') ?? 1000;
+                $subtotal += ($petFee * $numberOfPets * $nights);
+            }
+
+            // Apply mattress fees
+            if ($mattressQuantity && $mattressQuantity > 0) {
+                $mattressFee = \App\Models\BookingSetting::where('key', 'mattress_price_per_night')
+                    ->where('category', 'pricing')
+                    ->value('value') ?? 500;
+                $subtotal += ($mattressFee * $mattressQuantity * $nights);
+            }
+
+            return [
+                'success' => true,
+                'subtotal' => $subtotal,
+                'accommodation_type' => $accommodationType,
+                'nights' => $nights,
+                'checkin' => $checkinDate,
+                'checkout' => $checkoutDate,
+            ];
+        } catch (\Exception $e) {
+            throw new \Exception('Pricing calculation failed: ' . $e->getMessage());
+        }
+    }
 }

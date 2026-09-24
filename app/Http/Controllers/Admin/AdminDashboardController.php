@@ -256,10 +256,10 @@ class AdminDashboardController extends Controller
             ->unique()
             ->values();
         $recentStaycations = $recentStaycationIds->isNotEmpty()
-            ? Staycation::query()->with('swiperImages')->whereIn('id', $recentStaycationIds)->get()->keyBy('id')
+            ? Staycation::query()->with(['swiperImages', 'texts', 'inventories'])->whereIn('id', $recentStaycationIds)->get()->keyBy('id')
             : collect();
         $recentDayTours = $recentDayTourIds->isNotEmpty()
-            ? DayTour::query()->with('swiperImages')->whereIn('id', $recentDayTourIds)->get()->keyBy('id')
+            ? DayTour::query()->with(['swiperImages', 'texts', 'activities', 'inventories'])->whereIn('id', $recentDayTourIds)->get()->keyBy('id')
             : collect();
         $recentBookings = $recentBookings
             ->map(function ($booking) use ($recentStaycations, $recentDayTours) {

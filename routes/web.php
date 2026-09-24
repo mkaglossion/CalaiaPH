@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\PolicyPageController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\InventoryManagementController;
 use App\Http\Controllers\Admin\DayTourInventoryController;
+use App\Http\Controllers\Admin\GenericMediaController;
 
 use App\Http\Controllers\Admin\HomeSwiperImageController;
 use App\Http\Controllers\Admin\DayTourSwiperImageController;
@@ -784,6 +785,15 @@ Route::prefix('admin')->middleware(['auth', 'admin', 'admin.activity'])->group(f
     Route::resource('menu-image', MenuSwiperImageController::class)->only(['store', 'destroy']);
     Route::resource('event-image', EventSwiperImageController::class)->only(['store', 'destroy']);
     Route::resource('farmInfo-image', FarmInfoSwiperImageController::class)->only(['store', 'destroy']);
+
+    // Shared media endpoints for incrementally migrating swiper image forms.
+    Route::prefix('media/{mediaType}')->controller(GenericMediaController::class)->group(function () {
+        Route::get('/parent/{parentId}', 'getImages')->name('admin.media.images');
+        Route::get('/{parentId?}', 'index')->name('admin.media.index');
+        Route::post('/{parentId?}', 'store')->name('admin.media.store');
+        Route::put('/image/{imageId}', 'update')->name('admin.media.update');
+        Route::delete('/image/{imageId}', 'destroy')->name('admin.media.destroy');
+    });
 
     // List Controllers
     Route::resource('activity-list', ActivityController::class)->only(['store', 'show', 'update', 'destroy']);

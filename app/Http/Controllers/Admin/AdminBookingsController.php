@@ -71,7 +71,7 @@ class AdminBookingsController extends Controller
             : 'checkin_date';
         $this->applyDateRangeFilter($bookingQuery, $request, $bookingDateColumn);
 
-        $bookingsCollection = $bookingQuery->orderBy('created_at', 'desc')->get()->map(function($b) use ($pendingCutoff) {
+        $bookingsCollection = $bookingQuery->with(['bookingGuests', 'bookingGuests.signer'])->orderBy('created_at', 'desc')->get()->map(function($b) use ($pendingCutoff) {
             $b->resource_type = 'booking';
             $b->resource_id = $b->id;
             

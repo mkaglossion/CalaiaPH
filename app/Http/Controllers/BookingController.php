@@ -797,7 +797,7 @@ class BookingController extends Controller
         }
 
         // Fetch staycations from the database
-        $staycations = Staycation::ordered()->get()->keyBy('id'); // Key by ID for proper lookup
+        $staycations = Staycation::ordered()->with(['staycationAccommodations', 'swiperImages', 'texts'])->get()->keyBy('id'); // Key by ID for proper lookup
 
         $booking = session('booking', []);
 
@@ -831,7 +831,7 @@ class BookingController extends Controller
                 $activitiesQuery->orderBy('sort_order', 'asc')->orderBy('id', 'asc');
                 break;
         }
-        $activities = $activitiesQuery->get();
+        $activities = $activitiesQuery->with(['swiperImages', 'texts'])->get();
         $activities = $this->sortCatalogByDisplayedPrice(
             $activities,
             $sortBy,
@@ -869,7 +869,7 @@ class BookingController extends Controller
                 $activityPackagesQuery->latest();
                 break;
         }
-        $activityPackages = $activityPackagesQuery->get();
+        $activityPackages = $activityPackagesQuery->with(['activities'])->get();
         $activityPackages = $this->sortCatalogByDisplayedPrice(
             $activityPackages,
             $sortBy,
@@ -887,7 +887,7 @@ class BookingController extends Controller
                 return is_numeric($id) ? (int) $id : null;
             }, $selectedFoods)));
         }
-        $foods = $foodIds ? \App\Models\Food::whereIn('id', $foodIds)->get()->keyBy('id') : collect();
+        $foods = $foodIds ? \App\Models\Food::whereIn('id', $foodIds)->with(['swiperImages', 'texts'])->get()->keyBy('id') : collect();
 
         // Get selected activities from session
         $selectedActivities = $booking['selected_activities'] ?? session('selected_activities', []);
@@ -2992,9 +2992,9 @@ class BookingController extends Controller
         'dayvisit' => [
             'session_key' => 'dayvisit_booking_data',
             'activities_view' => 'booking.dayvisit-activities',
-            'activities_error_route' => 'booking.dayvisit',
+            'activities_error_route' => 'dayvisit.index',
             'payment_view' => 'booking.dayvisit-payment',
-            'payment_error_route' => 'booking.dayvisit',
+            'payment_error_route' => 'dayvisit.index',
             'var_name' => 'bookingData',
         ],
     ];
