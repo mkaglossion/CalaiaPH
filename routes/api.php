@@ -47,3 +47,48 @@ Route::middleware('api')->group(function () {
     Route::post('/paymongo/webhook', [PaymongoWebhookController::class, 'handle'])
         ->middleware('api.throttle:api');
 });
+
+// General booking/pricing API routes (60 req/min)
+Route::middleware(['api.throttle:api', 'api.security', 'xss'])->group(function () {
+    Route::get('/activities', [\App\Http\Controllers\BookingController::class, 'getActivitiesApi'])->name('api.activities');
+    Route::get('/activity-images/{id}', function($id) {
+        $activity = \App\Models\Activity::find($id);
+        return $activity ? $activity->swiperImages->pluck('image_path') : [];
+    })->name('api.activity-images');
+    Route::get('/booking/activities', [\App\Http\Controllers\BookingController::class, 'getActivitiesApi'])->name('api.booking.activities');
+
+    // API Routes for inventory (public access for preview purposes)
+    Route::get('/inventory/{roomId}', [\App\Http\Controllers\Admin\InventoryController::class, 'getInventory'])->name('api.inventory.get');
+    Route::get('/day-tour-inventory/{dayTourId}', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getInventory'])->name('api.day-tour-inventory.get');
+
+    // Pricing API routes
+    Route::get('/pricing/peak-types', [\App\Http\Controllers\SeasonDurationController::class, 'getPeakTypes'])->name('api.pricing.peakTypes');
+    Route::get('/pricing/holidays', [\App\Http\Controllers\SeasonDurationController::class, 'getHolidays'])->name('api.pricing.holidays');
+    Route::get('/pricing/weekend-config', [\App\Http\Controllers\SeasonDurationController::class, 'getWeekendConfig'])->name('api.pricing.weekendConfig');
+
+    // Real-time pricing endpoints for calendar
+    Route::post('/pricing/day-tour', [\App\Http\Controllers\BookingController::class, 'calculateDayTourPrice'])->name('api.pricing.dayTour');
+    Route::post('/pricing/staycation', [\App\Http\Controllers\BookingController::class, 'calculateStaycationPriceCalendar'])->name('api.pricing.staycationCalendar');
+
+    // VAT rate configuration (public access for pricing calculations)
+    Route::get('/vat-rate', function() {
+        $vatService = app(\App\Services\VatService::class);
+        return [
+            'rate' => $vatService->getCurrentVatRate(),
+            'rate_percentage' => $vatService->getCurrentVatRatePercentage(),
+            'label' => $vatService->getCurrentVatRatePercentage() . '% VAT',
+        ];
+    })->name('api.vat-rate');
+});
+
+// Booking API routes (30 req/min) - stricter rate limiting for booking operations
+Route::middleware(['api.throttle:booking', 'api.security'])->group(function () {
+    Route::get('/booking/settings', [\App\Http\Controllers\BookingController::class, 'getBookingSettings'])->name('api.booking.settings');
+    Route::post('/booking/calculate-staycation-price', [\App\Http\Controllers\BookingController::class, 'calculateStaycationPrice'])->name('api.booking.calculateStaycationPrice');
+    Route::get('/booking/staycation/availability', [\App\Http\Controllers\BookingController::class, 'getStaycationAvailabilityApi'])->name('api.booking.staycationAvailability');
+    Route::get('/booking/staycation/prices', [\App\Http\Controllers\BookingController::class, 'getStaycationPricesApi'])->name('api.booking.staycationPrices');
+
+    // Day visit API routes
+    Route::get('/booking/dayvisit/availability', [\App\Http\Controllers\DayVisitController::class, 'getAvailabilityApi'])->name('api.dayvisit.availability');
+    Route::get('/booking/dayvisit/activities', [\App\Http\Controllers\DayVisitController::class, 'getActivitiesApi'])->name('api.booking.dayvisit.activities');
+});

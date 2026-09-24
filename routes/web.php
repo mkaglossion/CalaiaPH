@@ -157,50 +157,7 @@ Route::get('/booking', [BookingController::class, 'create'])->name('booking.crea
 Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
 Route::get('/booking/calendar', [BookingCalendarController::class, 'show'])->name('booking.calendar');
 // Centralized API for activities - protected with rate limiting and security
-// General API routes (60 req/min)
-Route::middleware(['api.throttle:api', 'api.security', 'xss'])->group(function () {
-    Route::get('/api/activities', [BookingController::class, 'getActivitiesApi'])->name('api.activities');
-    Route::get('/api/activity-images/{id}', function($id) {
-        $activity = \App\Models\Activity::find($id);
-        return $activity ? $activity->swiperImages->pluck('image_path') : [];
-    })->name('api.activity-images');
-    Route::get('/api/booking/activities', [BookingController::class, 'getActivitiesApi'])->name('api.booking.activities');
 
-    // API Routes for inventory (public access for preview purposes)
-    Route::get('/api/inventory/{roomId}', [\App\Http\Controllers\Admin\InventoryController::class, 'getInventory'])->name('api.inventory.get');
-    Route::get('/api/day-tour-inventory/{dayTourId}', [\App\Http\Controllers\Admin\DayTourInventoryController::class, 'getInventory'])->name('api.day-tour-inventory.get');
-
-    // Pricing API routes
-    Route::get('api/pricing/peak-types', [SeasonDurationController::class, 'getPeakTypes'])->name('api.pricing.peakTypes');
-    Route::get('api/pricing/holidays', [SeasonDurationController::class, 'getHolidays'])->name('api.pricing.holidays');
-    Route::get('api/pricing/weekend-config', [SeasonDurationController::class, 'getWeekendConfig'])->name('api.pricing.weekendConfig');
-
-    // Real-time pricing endpoints for calendar
-    Route::post('api/pricing/day-tour', [BookingController::class, 'calculateDayTourPrice'])->name('api.pricing.dayTour');
-    Route::post('api/pricing/staycation', [BookingController::class, 'calculateStaycationPriceCalendar'])->name('api.pricing.staycationCalendar');
-
-    // VAT rate configuration (public access for pricing calculations)
-    Route::get('/api/vat-rate', function() {
-        $vatService = app(\App\Services\VatService::class);
-        return [
-            'rate' => $vatService->getCurrentVatRate(),
-            'rate_percentage' => $vatService->getCurrentVatRatePercentage(),
-            'label' => $vatService->getCurrentVatRatePercentage() . '% VAT',
-        ];
-    })->name('api.vat-rate');
-});
-
-// Booking API routes (30 req/min) - stricter rate limiting for booking operations
-Route::middleware(['api.throttle:booking', 'api.security'])->group(function () {
-    Route::get('/api/booking/settings', [BookingController::class, 'getBookingSettings'])->name('api.booking.settings');
-    Route::post('/api/booking/calculate-staycation-price', [BookingController::class, 'calculateStaycationPrice'])->name('api.booking.calculateStaycationPrice');
-    Route::get('/api/booking/staycation/availability', [BookingController::class, 'getStaycationAvailabilityApi'])->name('api.booking.staycationAvailability');
-    Route::get('/api/booking/staycation/prices', [BookingController::class, 'getStaycationPricesApi'])->name('api.booking.staycationPrices');
-
-    // Day visit API routes
-    Route::get('/api/booking/dayvisit/availability', [DayVisitController::class, 'getAvailabilityApi'])->name('api.dayvisit.availability');
-    Route::get('/api/booking/dayvisit/activities', [DayVisitController::class, 'getActivitiesApi'])->name('api.booking.dayvisit.activities');
-});
 Route::get('/booking/activities', [BookingController::class, 'activities'])->name('booking.activities');
 Route::post('/booking/activities', [BookingController::class, 'storeActivities'])->name('booking.storeActivities');
 Route::get('/booking/staycation/activities', [BookingController::class, 'staycationActivities'])->name('booking.staycationActivities');
