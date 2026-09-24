@@ -260,7 +260,7 @@ class XssProtection
     {
         // Content Security Policy
         $csp = "default-src 'self'; ";
-        $csp .= "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com; ";
+        $csp .= "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com; ";
         $csp .= "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; ";
         $csp .= "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; ";
         $csp .= "img-src 'self' data: https: blob:; ";

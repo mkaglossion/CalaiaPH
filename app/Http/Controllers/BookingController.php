@@ -1092,11 +1092,10 @@ class BookingController extends Controller
 
                 $foodPackage = $foodPackages[$packageId];
                 $includedFoods = $item['included_foods'] ?? [];
+                // Always use fresh sections from database to ensure included_foods names are not stale
                 $packageSections = $this->hydrateFoodPackageSections(
                     $foodPackage,
-                    is_array($item['package_sections'] ?? null)
-                        ? $item['package_sections']
-                        : ($foodPackage->sections ?? [])
+                    $foodPackage->sections ?? []
                 );
                 $selectedChoices = $this->hydrateFoodPackageChoices(
                     $foodPackage,
