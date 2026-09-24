@@ -19,13 +19,13 @@ class AccommodationVariant extends Model
     }
 
     // Helper to get texts via the staycation
-    public function getText($title)
+    public function getText(string $title): ?string
     {
         return $this->staycation?->texts->firstWhere('title', $title)?->content;
     }
 
     // Get the text content for this variant by title
-    public function text($title)
+    public function text(string $title): ?string
     {
         return $this->staycation?->texts->firstWhere('title', $title)?->content;
     }
