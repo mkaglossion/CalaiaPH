@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-09-25T01:39:01+00:00",
+  "generated_at": "2026-09-25T02:23:48+00:00",
   "stats": {
     "routes": 377,
-    "files": 823,
+    "files": 824,
     "by_type": {
-      "Other": 583,
+      "Other": 584,
       "Controller": 119,
       "Middleware": 2,
       "Job": 5,
@@ -13,12 +13,12 @@
       "Service": 19
     },
     "graph": {
-      "nodes": 1370,
-      "edges": 2154,
+      "nodes": 1371,
+      "edges": 2162,
       "by_type": {
         "Route": 529,
         "Controller": 165,
-        "Other": 542,
+        "Other": 543,
         "Database": 1,
         "Service": 26,
         "Model": 95,
@@ -10181,6 +10181,14 @@
         "type": "Other",
         "name": "2026_09_24_000000_repair_missing_accommodation_variants_table",
         "file": "database\\migrations\\2026_09_24_000000_repair_missing_accommodation_variants_table.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
+        "id": "other:2026_09_25_000001_correct_farm_animals_role_typo",
+        "type": "Other",
+        "name": "2026_09_25_000001_correct_farm_animals_role_typo",
+        "file": "database\\migrations\\2026_09_25_000001_correct_farm_animals_role_typo.php",
         "line": 1,
         "meta": {}
       },
@@ -24556,6 +24564,62 @@
         "meta": {}
       },
       {
+        "from": "other:2026_09_25_000001_correct_farm_animals_role_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000001_correct_farm_animals_role_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000001_correct_farm_animals_role_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000001_correct_farm_animals_role_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000001_correct_farm_animals_role_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000001_correct_farm_animals_role_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000001_correct_farm_animals_role_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000001_correct_farm_animals_role_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
         "from": "other:store.blade",
         "to": "str:Str",
         "kind": "DEPENDS_ON",
@@ -27378,12 +27442,12 @@
       }
     ],
     "stats": {
-      "nodes": 1370,
-      "edges": 2154,
+      "nodes": 1371,
+      "edges": 2162,
       "by_type": {
         "Route": 529,
         "Controller": 165,
-        "Other": 542,
+        "Other": 543,
         "Database": 1,
         "Service": 26,
         "Model": 95,

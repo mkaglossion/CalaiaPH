@@ -458,7 +458,7 @@
                                 </span>
                                 <div>
                                     <p class="font-bold text-gray-900 text-base">Email</p>
-                                    <a href="mailto:calaia.ph@gmail.com" class="text-amber-800 hover:text-amber-700 font-semibold break-all">calaia.ph@gmail.com</a>
+                                    <a href="{{ \App\Models\InformationPage::contactDetails()['email_uri'] }}" class="text-amber-800 hover:text-amber-700 font-semibold break-all">{{ \App\Models\InformationPage::contactDetails()['email'] }}</a>
                                 </div>
                             </div>
                             <div class="flex items-start gap-4">
@@ -469,7 +469,7 @@
                                 </span>
                                 <div>
                                     <p class="font-bold text-gray-900 text-base">Phone</p>
-                                    <p class="text-gray-700 font-semibold">+63 949 139 4912</p>
+                                    <a href="{{ \App\Models\InformationPage::contactDetails()['phone_uri'] }}" class="text-gray-700 font-semibold">{{ \App\Models\InformationPage::contactDetails()['phone'] }}</a>
                                 </div>
                             </div>
                             <div class="flex items-start gap-4 md:col-span-2">

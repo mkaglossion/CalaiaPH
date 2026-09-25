@@ -512,7 +512,7 @@
                                     <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-600 text-white font-bold text-sm shrink-0">1</span>
                                     <div>
                                         <p class="font-semibold text-gray-900">Submit Your Complaint</p>
-                                        <p class="text-sm text-gray-700">Contact us via email at calaia.ph@gmail.com with details about your complaint</p>
+                                        <p class="text-sm text-gray-700">Contact us via email at {{ \App\Models\InformationPage::contactDetails()['email'] }} with details about your complaint</p>
                                     </div>
                                 </li>
                                 <li class="flex gap-4">
@@ -710,7 +710,7 @@
                                     </span>
                                     <div>
                                         <p class="font-semibold text-gray-900">Email</p>
-                                        <a href="mailto:calaia.ph@gmail.com" class="text-amber-800 hover:text-amber-700">calaia.ph@gmail.com</a>
+                                        <a href="{{ \App\Models\InformationPage::contactDetails()['email_uri'] }}" class="text-amber-800 hover:text-amber-700">{{ \App\Models\InformationPage::contactDetails()['email'] }}</a>
                                     </div>
                                 </div>
                                 <div class="flex items-start">
@@ -721,7 +721,7 @@
                                     </span>
                                     <div>
                                         <p class="font-semibold text-gray-900">Phone</p>
-                                        <p class="text-gray-700">+63 949 139 4912</p>
+                                        <a href="{{ \App\Models\InformationPage::contactDetails()['phone_uri'] }}" class="text-gray-700">{{ \App\Models\InformationPage::contactDetails()['phone'] }}</a>
                                     </div>
                                 </div>
                                 <div class="flex items-start">

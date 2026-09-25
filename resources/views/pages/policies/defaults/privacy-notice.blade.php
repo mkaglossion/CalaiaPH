@@ -20,7 +20,7 @@
                             This Privacy Policy explains our personal data practices and the choices you can make about the way your personal data is used. We are aware of our responsibilities to protect your personal data, to keep it secure and comply with applicable privacy and data protection laws.
                         </p>
                         <p class="text-base sm:text-lg leading-relaxed">
-                            Calaia Farm, located at Purok 3, Brgy. Bisaya, Calaca, Batangas, Philippines 4212, is responsible for using your personal data. Our data protection team can be contacted via <a href="mailto:calaia.ph@gmail.com" class="font-bold text-amber-800 hover:text-amber-700 break-all">calaia.ph@gmail.com</a>.
+                            Calaia Farm, located at Purok 3, Brgy. Bisaya, Calaca, Batangas, Philippines 4212, is responsible for using your personal data. Our data protection team can be contacted via <a href="{{ \App\Models\InformationPage::contactDetails()['email_uri'] }}" class="font-bold text-amber-800 hover:text-amber-700 break-all">{{ \App\Models\InformationPage::contactDetails()['email'] }}</a>.
                         </p>
                     </div>
                 </article>
@@ -329,7 +329,7 @@
                             From time to time, we would like to use your name, email address, and other relevant contact information to send you information that we think may be of interest to you, including about our farm activities, products and services, events, offers and promotions, but we can only do so with your consent.
                         </p>
                         <p class="text-lg leading-relaxed text-gray-800">
-                            You may choose not to receive marketing communications or opt-out from receiving marketing communications at any time, free of charge, by following the unsubscribe instructions contained in the marketing communications or contacting us at <a href="mailto:calaia.ph@gmail.com" class="font-bold text-amber-800 hover:text-amber-700">calaia.ph@gmail.com</a>.
+                            You may choose not to receive marketing communications or opt-out from receiving marketing communications at any time, free of charge, by following the unsubscribe instructions contained in the marketing communications or contacting us at <a href="{{ \App\Models\InformationPage::contactDetails()['email_uri'] }}" class="font-bold text-amber-800 hover:text-amber-700">{{ \App\Models\InformationPage::contactDetails()['email'] }}</a>.
                         </p>
                     </div>
                 </article>
@@ -481,7 +481,7 @@
                                 </span>
                                 <div>
                                     <p class="font-semibold text-gray-900 mb-1">Email</p>
-                                    <a href="mailto:calaia.ph@gmail.com" class="text-amber-800 hover:text-amber-700 font-medium">calaia.ph@gmail.com</a>
+                                    <a href="{{ \App\Models\InformationPage::contactDetails()['email_uri'] }}" class="text-amber-800 hover:text-amber-700 font-medium">{{ \App\Models\InformationPage::contactDetails()['email'] }}</a>
                                 </div>
                             </div>
                             <div class="flex items-start">
@@ -538,7 +538,7 @@
                                     </span>
                                     <div>
                                         <p class="font-semibold text-gray-900">Email</p>
-                                        <a href="mailto:calaia.ph@gmail.com" class="text-amber-800 hover:text-amber-700">calaia.ph@gmail.com</a>
+                                        <a href="{{ \App\Models\InformationPage::contactDetails()['email_uri'] }}" class="text-amber-800 hover:text-amber-700">{{ \App\Models\InformationPage::contactDetails()['email'] }}</a>
                                     </div>
                                 </div>
                                 <div class="flex items-start">
@@ -549,7 +549,7 @@
                                     </span>
                                     <div>
                                         <p class="font-semibold text-gray-900">Phone</p>
-                                        <p class="text-gray-700">+63 949 139 4912</p>
+                                        <a href="{{ \App\Models\InformationPage::contactDetails()['phone_uri'] }}" class="text-gray-700">{{ \App\Models\InformationPage::contactDetails()['phone'] }}</a>
                                     </div>
                                 </div>
                                 <div class="flex items-start">

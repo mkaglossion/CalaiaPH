@@ -425,7 +425,7 @@
                                 <i class="fas fa-envelope text-blue-600"></i>
                             </div>
                             <p class="font-medium text-gray-800">Email</p>
-                            <a href="mailto:calaia.ph@gmail.com" class="text-amber-800 hover:text-amber-700 text-sm">calaia.ph@gmail.com</a>
+                            <a href="{{ \App\Models\InformationPage::contactDetails()['email_uri'] }}" class="text-amber-800 hover:text-amber-700 text-sm">{{ \App\Models\InformationPage::contactDetails()['email'] }}</a>
                         </div>
 
                         <div class="bg-white p-4 rounded-lg shadow-sm text-center">
@@ -433,7 +433,7 @@
                                 <i class="fas fa-phone text-green-600"></i>
                             </div>
                             <p class="font-medium text-gray-800">Phone</p>
-                            <p class="text-amber-800 text-sm">+63 949 139 4912</p>
+                            <a href="{{ \App\Models\InformationPage::contactDetails()['phone_uri'] }}" class="text-amber-800 hover:text-amber-700 text-sm">{{ \App\Models\InformationPage::contactDetails()['phone'] }}</a>
                         </div>
 
                         <div class="bg-white p-4 rounded-lg shadow-sm text-center">

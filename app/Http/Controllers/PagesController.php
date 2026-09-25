@@ -208,7 +208,7 @@ class PagesController extends Controller
         $checkin = now()->addDay()->format('Y-m-d');
         $checkout = now()->addDays(3)->format('Y-m-d');
 
-        // Calculate availability and details for each staycation
+        // Load the short display range for all staycations in one query.
         $availability = [];
         $roomDetails = [];
 
@@ -217,13 +217,17 @@ class PagesController extends Controller
 
         $today = now();
 
+        $staycationIds = $staycations->pluck('id');
+        $inventoriesByStaycation = StaycationInventory::query()
+            ->whereIn('staycation_id', $staycationIds)
+            ->whereBetween('date', [$checkinCarbon->format('Y-m-d'), $checkoutCarbon->copy()->subDay()->format('Y-m-d')])
+            ->get(['staycation_id', 'date', 'available_quantity'])
+            ->groupBy('staycation_id');
+
         foreach ($staycations as $staycation) {
             $totalNights = $checkinCarbon->diffInDays($checkoutCarbon);
 
-            // Fetch inventory for this staycation in the selected range
-            $inventories = StaycationInventory::where('staycation_id', $staycation->id)
-                ->whereBetween('date', [$checkinCarbon->format('Y-m-d'), $checkoutCarbon->copy()->subDay()->format('Y-m-d')])
-                ->get(['date', 'available_quantity'])
+            $inventories = ($inventoriesByStaycation->get($staycation->id) ?? collect())
                 ->keyBy(function ($i) { return \Carbon\Carbon::parse($i->date)->format('Y-m-d'); });
 
             $inventoryDetails = [];

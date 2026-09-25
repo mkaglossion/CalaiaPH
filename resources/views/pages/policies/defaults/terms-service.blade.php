@@ -122,7 +122,7 @@
                             You may not reproduce, modify, distribute, transmit, or use any content from the Site without our express written permission. Any unauthorized use of our intellectual property may result in legal action.
                         </p>
                         <p class="text-base sm:text-lg leading-relaxed text-gray-800">
-                            If you believe your intellectual property rights have been violated, please contact us immediately at <a href="mailto:calaia.ph@gmail.com" class="font-bold text-amber-800 hover:text-amber-700">calaia.ph@gmail.com</a>.
+                            If you believe your intellectual property rights have been violated, please contact us immediately at <a href="{{ \App\Models\InformationPage::contactDetails()['email_uri'] }}" class="font-bold text-amber-800 hover:text-amber-700">{{ \App\Models\InformationPage::contactDetails()['email'] }}</a>.
                         </p>
                     </div>
                 </article>
@@ -364,7 +364,7 @@
                                 </span>
                                 <div>
                                     <p class="font-bold text-gray-900 text-base">Email</p>
-                                    <a href="mailto:calaia.ph@gmail.com" class="text-amber-800 hover:text-amber-700 font-semibold break-all">calaia.ph@gmail.com</a>
+                                    <a href="{{ \App\Models\InformationPage::contactDetails()['email_uri'] }}" class="text-amber-800 hover:text-amber-700 font-semibold break-all">{{ \App\Models\InformationPage::contactDetails()['email'] }}</a>
                                 </div>
                             </div>
                             <div class="flex items-start gap-4">

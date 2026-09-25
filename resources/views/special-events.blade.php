@@ -1,3 +1,5 @@
+@php($contactDetails = \App\Models\InformationPage::contactDetails())
+
 <x-page-layout 
     title="CalaiaPH - Special Events"
     description="Create unforgettable special events at CalaiaPH. From weddings to corporate retreats, our beautiful farm setting provides the perfect backdrop for your celebration."
@@ -75,7 +77,7 @@
                 {{ $specialEventsCtaPrimaryLabel ?? 'Plan Custom Event' }}
               </a>
               <a
-                href="{{ $specialEventsCtaSecondaryUrl ?? 'https://mail.google.com/mail/?view=cm&fs=1&to=calaia.ph@gmail.com' }}"
+                href="{{ $specialEventsCtaSecondaryUrl ?? 'https://mail.google.com/mail/?view=cm&fs=1&to='.rawurlencode($contactDetails['email']) }}"
                 target="{{ $specialEventsCtaSecondaryTarget }}"
                 @if($specialEventsCtaSecondaryRel) rel="{{ $specialEventsCtaSecondaryRel }}" @endif
                 class="inline-flex items-center justify-center gap-2 border-2 border-brand text-brand px-8 py-4 rounded-xl font-semibold hover:bg-brand hover:text-white transition-colors duration-300"
