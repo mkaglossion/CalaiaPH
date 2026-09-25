@@ -10,13 +10,16 @@ use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\PendingUser;
 use App\Services\AuthenticationRateLimiter;
+use App\Services\TwoFactorSessionService;
 
 class AdminAuthController extends Controller
 {
     private const GENERIC_ADMIN_LOGIN_ERROR = 'These credentials do not match an admin account.';
 
-    public function __construct(private AuthenticationRateLimiter $rateLimiter)
-    {
+    public function __construct(
+        private AuthenticationRateLimiter $rateLimiter,
+        private TwoFactorSessionService $twoFactorSession
+    ) {
     }
 
     public function showLoginForm()
@@ -93,6 +96,12 @@ class AdminAuthController extends Controller
         $this->rateLimiter->clear($throttleKey);
         session()->save();
 
-        return redirect()->route('admin.dashboard')->with('success', 'Welcome back, admin!');
+        return $this->twoFactorSession
+            ->redirectAfterPrimaryAuthentication(
+                $request,
+                $user,
+                route('admin.dashboard'),
+                'Welcome back, admin!'
+            );
     }
 }

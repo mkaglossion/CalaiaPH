@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Services\TwoFactorSessionService;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\InvalidStateException;
@@ -19,6 +20,10 @@ use Throwable;
 class SocialLoginController extends Controller
 {
     private const SOCIAL_INTENDED_KEY = 'social_login.intended';
+
+    public function __construct(private TwoFactorSessionService $twoFactorSession)
+    {
+    }
 
     public function redirectToGoogle(Request $request): RedirectResponse
     {
@@ -207,8 +212,13 @@ class SocialLoginController extends Controller
         Auth::guard('web')->login($user, true);
         $request->session()->regenerate();
 
-        return redirect()->to($this->pullIntendedUrl($request))
-            ->with('success', 'Welcome back! You have been logged in successfully.');
+        return $this->twoFactorSession
+            ->redirectAfterPrimaryAuthentication(
+                $request,
+                $user,
+                $this->pullIntendedUrl($request),
+                'Welcome back! You have been logged in successfully.'
+            );
     }
 
     private function syncExistingUser(

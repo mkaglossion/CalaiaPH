@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\SocialLoginController;
+use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AddOnTransactionController;
 use App\Http\Controllers\PagesController;
@@ -171,7 +172,7 @@ Route::post('/booking/save-session', [BookingController::class, 'saveBookingSess
 Route::get('/booking/staycation/availability', [BookingController::class, 'staycationAvailability'])->name('booking.staycationAvailability');
 Route::get('/booking/wishlist', [BookingWishlistController::class, 'index'])->name('booking.wishlist.index');
 
-Route::middleware('auth')->prefix('booking')->name('booking.')->group(function () {
+Route::middleware(['auth', 'ensure.two.factor.verified'])->prefix('booking')->name('booking.')->group(function () {
     Route::get('/wishlist/state', [BookingWishlistController::class, 'state'])->name('wishlist.state');
     Route::post('/wishlist/toggle', [BookingWishlistController::class, 'toggle'])->name('wishlist.toggle');
     Route::delete('/wishlist/selected', [BookingWishlistController::class, 'removeSelected'])->name('wishlist.selected.destroy');
@@ -444,6 +445,18 @@ Route::post('/session/keep-alive', fn () => response()->noContent())
     ->middleware('auth')
     ->name('session.keep-alive');
 
+Route::middleware('auth')->prefix('two-factor')->name('two-factor.')->group(function () {
+    Route::get('/setup', [TwoFactorController::class, 'setup'])->name('setup');
+    Route::post('/setup', [TwoFactorController::class, 'confirmSetup'])->name('setup.confirm');
+    Route::get('/challenge', [TwoFactorController::class, 'challenge'])->name('challenge');
+    Route::post('/challenge', [TwoFactorController::class, 'verifyChallenge'])->name('challenge.verify');
+    Route::get('/recovery', [TwoFactorController::class, 'recovery'])->name('recovery');
+    Route::post('/recovery', [TwoFactorController::class, 'verifyRecovery'])->name('recovery.verify');
+    Route::get('/recovery-codes', [TwoFactorController::class, 'recoveryCodes'])->name('recovery-codes');
+    Route::post('/recovery-codes/continue', [TwoFactorController::class, 'continueAfterRecoveryCodes'])->name('recovery-codes.continue');
+    Route::post('/recovery-codes/regenerate', [TwoFactorController::class, 'regenerateRecoveryCodes'])->name('recovery-codes.regenerate');
+});
+
 // Password Reset Routes
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])->name('forgot.password');
 Route::post('/forgot-password', [ForgotPasswordController::class, 'forgotPassword'])->name('forgot.password.post');
@@ -452,7 +465,7 @@ Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'
 
 Route::resource('testimonials', TestimonialController::class)->only(['create', 'store']);
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'ensure.two.factor.verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -494,7 +507,7 @@ Route::middleware('auth')->group(function () {
 
 
 // ========== Admin Routes ==========
-Route::prefix('admin')->middleware(['auth', 'admin', 'admin.activity'])->group(function () {
+Route::prefix('admin')->middleware(['auth', 'admin', 'ensure.two.factor.verified', 'admin.activity'])->group(function () {
     // Main Sections
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/dashboard/export', [AdminDashboardController::class, 'export'])->name('admin.dashboard.export');
@@ -893,11 +906,11 @@ Route::group(['middleware' => ['api.throttle:upload', 'api.security', 'xss']], f
 });
 
 // Special Events write APIs are admin-only, including direct Cloudinary uploads.
-Route::group(['middleware' => ['auth', 'admin', 'api.throttle:upload', 'api.security', 'xss']], function () {
+Route::group(['middleware' => ['auth', 'admin', 'ensure.two.factor.verified', 'api.throttle:upload', 'api.security', 'xss']], function () {
     Route::post('/api/special-events/upload-image', [EventApiController::class, 'uploadImage']);
 });
 
-Route::group(['middleware' => ['auth', 'admin', 'api.throttle:api_strict', 'api.security', 'xss']], function () {
+Route::group(['middleware' => ['auth', 'admin', 'ensure.two.factor.verified', 'api.throttle:api_strict', 'api.security', 'xss']], function () {
     Route::post('/api/special-events', [EventApiController::class, 'store']);
     Route::post('/api/special-events/{event}', [EventApiController::class, 'update']);
     Route::put('/api/special-events/{event}', [EventApiController::class, 'update']);

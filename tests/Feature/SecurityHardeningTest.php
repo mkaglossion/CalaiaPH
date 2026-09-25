@@ -66,7 +66,7 @@ class SecurityHardeningTest extends TestCase
         $this->postWithCsrf(route('login.submit'), [
             'username' => 'customer@example.com',
             'password' => 'password',
-        ])->assertRedirect(route('home'));
+        ])->assertRedirect(route('two-factor.setup'));
 
         $this->assertAuthenticatedAs($user);
         $this->assertSame(0, RateLimiter::attempts('customer-login|customer@example.com|127.0.0.1'));
@@ -236,7 +236,7 @@ class SecurityHardeningTest extends TestCase
 
         $this->withSession(['url.intended' => 'https://evil-example.com/phish'])
             ->get(route('auth.google.callback', ['code' => 'code', 'state' => 'state']))
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('two-factor.setup'));
 
         $this->assertAuthenticatedAs($user->fresh());
     }
@@ -255,7 +255,7 @@ class SecurityHardeningTest extends TestCase
 
         $this->withSession(['url.intended' => 'https://calaia.ph/packages?from=oauth'])
             ->get(route('auth.google.callback', ['code' => 'code', 'state' => 'state']))
-            ->assertRedirect(url('/packages?from=oauth'));
+            ->assertRedirect(route('two-factor.setup'));
     }
 
     public function test_store_cart_ignores_browser_submitted_price_on_add_and_checkout(): void

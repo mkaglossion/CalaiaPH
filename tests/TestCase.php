@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\Services\TwoFactorSessionService;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Str;
 
@@ -42,5 +43,14 @@ abstract class TestCase extends BaseTestCase
             ->withSession(array_merge($session, ['_token' => $token]))
             ->withHeaders(['X-CSRF-TOKEN' => $token])
             ->postJson($uri, array_merge(['_token' => $token], $data));
+    }
+
+    public function actingAs($user, $guard = null)
+    {
+        parent::actingAs($user, $guard);
+
+        return $this->withSession([
+            TwoFactorSessionService::VERIFIED_USER_ID => $user->getAuthIdentifier(),
+        ]);
     }
 }

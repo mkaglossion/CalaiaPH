@@ -44,6 +44,8 @@
   class="bg-gray-100 min-h-screen overflow-x-hidden"
   style="font-family: 'Montserrat', sans-serif;"
 >
+  <x-flash-message />
+
   {{-- Mobile Overlay --}}
   <div
     x-cloak

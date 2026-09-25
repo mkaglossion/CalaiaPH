@@ -20,7 +20,8 @@
         "@alpinejs/collapse": "^3.15.12",
         "alpinejs": "^3.15.12",
         "laravel-echo": "^2.3.7",
-        "pusher-js": "^8.5.0"
+        "pusher-js": "^8.5.0",
+        "qrcode": "^1.5.4"
     },
     "overrides": {
         "ws": "^8.17.1"

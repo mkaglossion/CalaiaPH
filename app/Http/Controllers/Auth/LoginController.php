@@ -10,13 +10,16 @@ use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\PendingUser;
 use App\Services\AuthenticationRateLimiter;
+use App\Services\TwoFactorSessionService;
 
 class LoginController extends Controller
 {
     private const GENERIC_LOGIN_ERROR = 'These credentials do not match our records.';
 
-    public function __construct(private AuthenticationRateLimiter $rateLimiter)
-    {
+    public function __construct(
+        private AuthenticationRateLimiter $rateLimiter,
+        private TwoFactorSessionService $twoFactorSession
+    ) {
     }
 
     /**
@@ -91,7 +94,13 @@ class LoginController extends Controller
 
         session()->save();
 
-        return redirect()->route('home')->with('success', 'Welcome back! You have been logged in successfully.');
+        return $this->twoFactorSession
+            ->redirectAfterPrimaryAuthentication(
+                $request,
+                $user,
+                route('home'),
+                'Welcome back! You have been logged in successfully.'
+            );
 
     }
 
@@ -100,6 +109,7 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
     {
+        $this->twoFactorSession->clear($request);
         Auth::logout();
 
         $request->session()->invalidate();

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Services\TwoFactorSessionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
@@ -120,7 +121,7 @@ class SocialLoginTest extends TestCase
             ->withSession(['url.intended' => route('packages')])
             ->get(route('auth.google.callback', ['code' => 'code', 'state' => 'state']));
 
-        $response->assertRedirect(route('packages'));
+        $response->assertRedirect(route('two-factor.setup'));
         $this->assertAuthenticatedAs($user->fresh());
         $this->assertSame('google', $user->fresh()->provider_name);
         $this->assertSame('google-123', $user->fresh()->provider_id);
@@ -154,8 +155,12 @@ class SocialLoginTest extends TestCase
             ->withSession(['url.intended' => route('home')])
             ->get(route('auth.google.callback', ['code' => 'code', 'state' => 'state']));
 
-        $response->assertRedirect(route('home'));
-        $response->assertSessionHas('success', 'Welcome back! You have been logged in successfully.');
+        $response->assertRedirect(route('two-factor.setup'));
+        $response->assertSessionMissing('success');
+        $response->assertSessionHas(
+            TwoFactorSessionService::LOGIN_SUCCESS_MESSAGE,
+            'Welcome back! You have been logged in successfully.'
+        );
         $this->assertAuthenticatedAs($admin->fresh());
         $this->assertSame('google', $admin->fresh()->provider_name);
         $this->assertSame('google-admin', $admin->fresh()->provider_id);

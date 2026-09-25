@@ -1,6 +1,10 @@
 {
+  "_rolldown-runtime-hePW80VL.js": {
+    "file": "assets/rolldown-runtime-hePW80VL.js",
+    "name": "rolldown-runtime"
+  },
   "resources/js/admin/bookingConfirmation.js": {
-    "file": "assets/bookingConfirmation-C_UFypDk.js",
+    "file": "assets/bookingConfirmation-wUYhmvUt.js",
     "name": "bookingConfirmation",
     "src": "resources/js/admin/bookingConfirmation.js",
     "isDynamicEntry": true,
@@ -21,7 +25,7 @@
     "isDynamicEntry": true
   },
   "resources/js/admin/dashboard.js": {
-    "file": "assets/dashboard-B0qfIoW7.js",
+    "file": "assets/dashboard-BUk-5DAV.js",
     "name": "dashboard",
     "src": "resources/js/admin/dashboard.js",
     "isDynamicEntry": true,
@@ -42,10 +46,13 @@
     "isDynamicEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-zPx9L4_0.js",
+    "file": "assets/app-D1Bb0UAG.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
+    "imports": [
+      "_rolldown-runtime-hePW80VL.js"
+    ],
     "dynamicImports": [
       "resources/js/admin/dashboard.js",
       "resources/js/admin/bookingConfirmation.js",
@@ -55,7 +62,7 @@
       "resources/js/admin/cms-manager.js"
     ],
     "css": [
-      "assets/app-CKn_ogK-.css"
+      "assets/app-DGt95VIl.css"
     ]
   },
   "resources/js/booking/staycation.js": {
@@ -63,5 +70,14 @@
     "name": "staycation",
     "src": "resources/js/booking/staycation.js",
     "isEntry": true
+  },
+  "resources/js/two-factor-setup.js": {
+    "file": "assets/two-factor-setup-CWHW6BDa.js",
+    "name": "two-factor-setup",
+    "src": "resources/js/two-factor-setup.js",
+    "isEntry": true,
+    "imports": [
+      "_rolldown-runtime-hePW80VL.js"
+    ]
   }
 }

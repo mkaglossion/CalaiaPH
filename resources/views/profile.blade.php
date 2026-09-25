@@ -10,6 +10,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body class="min-h-screen bg-[#f5efe7]">
+    <x-flash-message />
+
     <x-header active="profile" />
 
     <main id="main-content" class="py-8" style="min-height:100vh;">
@@ -79,29 +81,6 @@
                     </div>
                 </div>
             </section>
-
-            {{-- ALERTS --}}
-            @if(session('success'))
-                <div
-                    role="alert"
-                    class="border rounded-lg p-4 mb-6 flex items-start gap-3"
-                    style="background-color:rgba(122,125,82,0.08);border-color:#7a7d52;color:#222c1e;"
-                >
-                    <i class="bi bi-check-circle mt-0.5" aria-hidden="true" style="color:#7a7d52;"></i>
-                    <span>{{ session('success') }}</span>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div
-                    role="alert"
-                    class="border rounded-lg p-4 mb-6 flex items-start gap-3"
-                    style="background-color:rgba(132,60,35,0.08);border-color:#843c23;color:#4d3327;"
-                >
-                    <i class="bi bi-exclamation-triangle mt-0.5" aria-hidden="true" style="color:#843c23;"></i>
-                    <span>{{ session('error') }}</span>
-                </div>
-            @endif
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {{-- MAIN COLUMN --}}
