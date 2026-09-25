@@ -445,8 +445,7 @@
             <div class="contact-info">
                 <strong>Questions?</strong><br>
                 <a href="mailto:calaia.ph@gmail.com">calaia.ph@gmail.com</a>
-                • (02) 8633 8888
-                • +63 905 129 4741
+                • {{ \App\Models\InformationPage::contactDetails()['phone'] }}
             </div>
 
             <div class="divider"></div>

@@ -58,7 +58,7 @@
 
             <p>If you have any questions, please contact us at:</p>
             <p>Email: calaia.ph@gmail.com<br>
-            Phone: +63 905 129 4741</p>
+            Phone: {{ \App\Models\InformationPage::contactDetails()['phone'] }}</p>
 
             <p>We look forward to seeing you at CalaiaPH!</p>
 

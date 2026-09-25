@@ -12,7 +12,7 @@ class InformationPage extends Model
 {
     public const DEFAULT_CONTACT_ADDRESS = 'Purok 3, Brgy. Bisaya, Calaca City, Batangas, Philippines';
 
-    public const DEFAULT_CONTACT_PHONE = '+63 905 129 4741';
+    public const DEFAULT_CONTACT_PHONE = '+63 956 319 2448';
 
     public const DEFAULT_CONTACT_EMAIL = 'calaia@calaia.com';
 

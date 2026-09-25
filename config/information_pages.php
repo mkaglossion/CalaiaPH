@@ -54,7 +54,7 @@ return [
             'hero_title' => 'Get In Touch',
             'hero_description' => "We'd love to hear from you.\nReach out to plan your visit or ask any questions.",
             'contact_address' => 'Purok 3, Brgy. Bisaya, Calaca City, Batangas, Philippines',
-            'contact_phone' => '+63 905 129 4741',
+            'contact_phone' => '+63 956 319 2448',
             'contact_email' => 'calaia@calaia.com',
             'contact_hours' => 'Open Daily 8:00 AM – 6:00 PM',
             'default_view' => 'contact',
