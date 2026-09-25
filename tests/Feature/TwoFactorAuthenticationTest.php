@@ -52,11 +52,27 @@ class TwoFactorAuthenticationTest extends TestCase
         ])->assertRedirect(route('two-factor.recovery-codes'));
 
         $this->assertNotNull($user->fresh()->two_factor_confirmed_at);
+        $recoveryCodes = session(TwoFactorSessionService::PENDING_RECOVERY_CODES);
+
+        $this->assertIsArray($recoveryCodes);
+        $this->assertNotEmpty($recoveryCodes);
+
+        $download = $this->get(route('two-factor.recovery-codes.download'));
+
+        $download
+            ->assertOk()
+            ->assertDownload('calaia-recovery-codes.txt')
+            ->assertSee($recoveryCodes[0]);
+
+        $this->assertStringContainsString('no-store', (string) $download->headers->get('Cache-Control'));
 
         $this->postWithCsrf(route('two-factor.recovery-codes.continue'), [
             'saved_recovery_codes' => '1',
         ])->assertRedirect(route('profile.show'))
             ->assertSessionHas('success', 'Welcome back! You have been logged in successfully.');
+
+        $this->get(route('two-factor.recovery-codes.download'))
+            ->assertNotFound();
     }
 
     public function test_valid_totp_unlocks_customer_profile_access(): void
@@ -92,6 +108,9 @@ class TwoFactorAuthenticationTest extends TestCase
             'username' => 'admin@example.com',
             'password' => 'password',
         ])->assertRedirect(route('two-factor.challenge'));
+
+        $this->get(route('two-factor.recovery-codes.download'))
+            ->assertForbidden();
 
         $this->get(route('admin.dashboard'))
             ->assertRedirect(route('two-factor.challenge'));

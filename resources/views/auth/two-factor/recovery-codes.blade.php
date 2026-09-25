@@ -18,6 +18,14 @@
                     @endforeach
                 </ul>
             </div>
+
+            <a
+                href="{{ route('two-factor.recovery-codes.download') }}"
+                download="calaia-recovery-codes.txt"
+                class="flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 font-semibold text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+                Download recovery codes (.txt)
+            </a>
         @else
             <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                 Recovery codes are only shown immediately after setup or regeneration.

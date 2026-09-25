@@ -9,6 +9,7 @@
      */
 
     $messages = collect();
+    $errorBag = $errors ?? new \Illuminate\Support\ViewErrorBag();
 
     // If type and message props are provided, use only those
     if ($type && $message) {
@@ -18,9 +19,9 @@
         ]);
     } else {
         // Otherwise, collect from errors and session
-        if ($errors->any()) {
+        if ($errorBag->any()) {
             // Show all errors
-            foreach ($errors->all() as $error) {
+            foreach ($errorBag->all() as $error) {
                 $messages->push([
                     'type' => 'error',
                     'text' => $error,

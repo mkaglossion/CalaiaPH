@@ -453,6 +453,8 @@ Route::middleware('auth')->prefix('two-factor')->name('two-factor.')->group(func
     Route::get('/recovery', [TwoFactorController::class, 'recovery'])->name('recovery');
     Route::post('/recovery', [TwoFactorController::class, 'verifyRecovery'])->name('recovery.verify');
     Route::get('/recovery-codes', [TwoFactorController::class, 'recoveryCodes'])->name('recovery-codes');
+    Route::get('/recovery-codes/download', [TwoFactorController::class, 'downloadRecoveryCodes'])
+        ->name('recovery-codes.download');
     Route::post('/recovery-codes/continue', [TwoFactorController::class, 'continueAfterRecoveryCodes'])->name('recovery-codes.continue');
     Route::post('/recovery-codes/regenerate', [TwoFactorController::class, 'regenerateRecoveryCodes'])->name('recovery-codes.regenerate');
 });

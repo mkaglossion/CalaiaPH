@@ -7,6 +7,7 @@ use App\Services\TwoFactorService;
 use App\Services\TwoFactorSessionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
 
@@ -200,6 +201,33 @@ class TwoFactorController extends Controller
             'codes' => $request->session()->get(TwoFactorSessionService::PENDING_RECOVERY_CODES, []),
             'isAdmin' => $request->user()->user_type === 'admin',
             'mustAcknowledge' => (bool) $request->session()->get(TwoFactorSessionService::MUST_ACK_RECOVERY_CODES, false),
+        ]);
+    }
+
+    public function downloadRecoveryCodes(Request $request): Response
+    {
+        $user = $request->user();
+        $codes = $request->session()->get(TwoFactorSessionService::PENDING_RECOVERY_CODES, []);
+
+        abort_unless($this->twoFactor->hasEnabledTwoFactor($user), 404);
+        abort_unless($this->session->isVerified($request, $user), 403);
+        abort_unless(is_array($codes) && count($codes) > 0, 404);
+
+        $content = implode(PHP_EOL, [
+            'CalaiaPH Two-Factor Authentication Recovery Codes',
+            'Account: '.$this->twoFactor->maskedAccount($user),
+            'Generated: '.now()->toDateTimeString(),
+            '',
+            ...$codes,
+            '',
+            'Each recovery code can only be used once. Store this file securely.',
+        ]);
+
+        return response($content, 200, [
+            'Content-Type' => 'text/plain; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="calaia-recovery-codes.txt"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, private',
+            'Pragma' => 'no-cache',
         ]);
     }
 
