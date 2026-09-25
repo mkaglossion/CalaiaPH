@@ -44,7 +44,7 @@ class TwoFactorAuthenticationTest extends TestCase
 
         $this->assertSame(1, substr_count($setupPage->getContent(), 'name="code"'));
 
-        $secret = session(TwoFactorSessionService::SETUP_SECRET);
+        $secret = session(TwoFactorSessionService::SETUP_KEY);
         $code = app(TwoFactorService::class)->currentCode($secret);
 
         $this->postWithCsrf(route('two-factor.setup.confirm'), [
@@ -83,6 +83,19 @@ class TwoFactorAuthenticationTest extends TestCase
             'username' => 'customer@example.com',
             'password' => 'password',
         ])->assertRedirect(route('two-factor.challenge'));
+
+        $this->assertIsInt(session(TwoFactorSessionService::CHALLENGE_STARTED_AT));
+
+        $challengePage = $this->get(route('two-factor.challenge'));
+
+        $challengePage
+            ->assertOk()
+            ->assertSee('Verification session expires in')
+            ->assertSee('05:00')
+            ->assertSee('data-otp-segmented', false);
+
+        $this->assertSame(6, substr_count($challengePage->getContent(), 'data-otp-cell'));
+        $this->assertSame(1, substr_count($challengePage->getContent(), 'name="code"'));
 
         $this->get(route('profile.show'))
             ->assertRedirect(route('two-factor.challenge'));
@@ -138,6 +151,48 @@ class TwoFactorAuthenticationTest extends TestCase
         $this->postWithCsrf(route('two-factor.challenge.verify'), [
             'code' => '000000',
         ])->assertSessionHasErrors('code');
+    }
+
+    public function test_two_factor_challenge_expires_five_minutes_after_login(): void
+    {
+        [, $secret] = $this->userWithTwoFactor(['email' => 'customer@example.com']);
+
+        $this->postWithCsrf(route('login.submit'), [
+            'username' => 'customer@example.com',
+            'password' => 'password',
+        ])->assertRedirect(route('two-factor.challenge'));
+
+        $this->travel(4)->minutes();
+
+        $this->get(route('two-factor.challenge'))
+            ->assertOk();
+
+        $this->travel(1)->minutes();
+
+        $this->postWithCsrf(route('two-factor.challenge.verify'), [
+            'code' => app(TwoFactorService::class)->currentCode($secret),
+        ])->assertRedirect(route('home'))
+            ->assertSessionHas('error', 'Your two-factor verification session expired. Please log in again.');
+
+        $this->assertGuest();
+    }
+
+    public function test_expired_challenge_cannot_be_bypassed_with_a_recovery_code(): void
+    {
+        [, , $codes] = $this->userWithTwoFactor(['email' => 'customer@example.com']);
+
+        $this->postWithCsrf(route('login.submit'), [
+            'username' => 'customer@example.com',
+            'password' => 'password',
+        ])->assertRedirect(route('two-factor.challenge'));
+
+        $this->travel(5)->minutes();
+
+        $this->postWithCsrf(route('two-factor.recovery.verify'), [
+            'recovery_code' => $codes[0],
+        ])->assertRedirect(route('home'));
+
+        $this->assertGuest();
     }
 
     public function test_recovery_code_can_be_used_once_only(): void

@@ -193,3 +193,39 @@ body, h1, h2, h3, h4, h5, h6, p, a, li {
 [x-cloak] {
   display: none !important;
 }
+
+.otp-segmented-cell {
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.otp-segmented-cell[data-filled='true'] {
+  border-color: #9ca3af;
+  background-color: #f9fafb;
+}
+
+.otp-segmented-cell[data-active='true'] {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgb(37 99 235 / 20%);
+}
+
+@media (max-height: 640px) {
+  .auth-card-compact .auth-card-icon,
+  .auth-card-compact .auth-card-subtitle,
+  .auth-card-compact .auth-card-footer {
+    display: none;
+  }
+
+  .auth-card-compact .auth-card-header {
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-height: 520px) {
+  .auth-card-compact .challenge-guidance {
+    display: none;
+  }
+
+  .auth-card-compact .challenge-expiry {
+    margin-bottom: 0.5rem;
+  }
+}

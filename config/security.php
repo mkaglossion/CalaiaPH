@@ -166,6 +166,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Two-Factor Challenge Timeout
+    |--------------------------------------------------------------------------
+    |
+    | A user must complete the second authentication step within this many
+    | minutes after primary authentication. Page refreshes do not extend it.
+    |
+    */
+
+    'two_factor_challenge_timeout_minutes' => max(1, (int) env('TWO_FACTOR_CHALLENGE_TIMEOUT_MINUTES', 5)),
+
+    /*
+    |--------------------------------------------------------------------------
     | WWW Redirect Map
     |--------------------------------------------------------------------------
     |

@@ -8,6 +8,7 @@ use App\Services\TwoFactorSessionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
 
@@ -29,11 +30,11 @@ class TwoFactorController extends Controller
                 : redirect()->route('two-factor.challenge');
         }
 
-        $secret = $request->session()->get(TwoFactorSessionService::SETUP_SECRET);
+        $secret = $request->session()->get(TwoFactorSessionService::SETUP_KEY);
 
         if (! is_string($secret) || $secret === '') {
             $secret = $this->twoFactor->generateSecret();
-            $request->session()->put(TwoFactorSessionService::SETUP_SECRET, $secret);
+            $request->session()->put(TwoFactorSessionService::SETUP_KEY, $secret);
         }
 
         return view('auth.two-factor.setup', [
@@ -47,7 +48,7 @@ class TwoFactorController extends Controller
     public function confirmSetup(Request $request): RedirectResponse
     {
         $user = $request->user();
-        $secret = $request->session()->get(TwoFactorSessionService::SETUP_SECRET);
+        $secret = $request->session()->get(TwoFactorSessionService::SETUP_KEY);
         $code = $this->codeFromRequest($request);
         $key = $this->rateLimitKey($request, 'setup');
 
@@ -108,16 +109,30 @@ class TwoFactorController extends Controller
             return $this->session->redirectToIntended($request, $user);
         }
 
+        if ($expiredResponse = $this->expiredChallengeResponse($request)) {
+            return $expiredResponse;
+        }
+
         return view('auth.two-factor.challenge', [
             'maskedAccount' => $this->twoFactor->maskedAccount($user),
             'isAdmin' => $user->user_type === 'admin',
             'mode' => 'code',
+            ...$this->challengeTiming($request),
         ]);
     }
 
     public function verifyChallenge(Request $request): RedirectResponse
     {
         $user = $request->user();
+
+        if (! $this->twoFactor->hasEnabledTwoFactor($user)) {
+            return redirect()->route('two-factor.setup');
+        }
+
+        if ($expiredResponse = $this->expiredChallengeResponse($request)) {
+            return $expiredResponse;
+        }
+
         $code = $this->codeFromRequest($request);
         $key = $this->rateLimitKey($request, 'code');
 
@@ -132,10 +147,6 @@ class TwoFactorController extends Controller
             'digits' => ['nullable', 'array', 'size:6'],
             'digits.*' => ['nullable', 'regex:/^\d?$/'],
         ]);
-
-        if (! $this->twoFactor->hasEnabledTwoFactor($user)) {
-            return redirect()->route('two-factor.setup');
-        }
 
         if (! $this->twoFactor->verifyCode($this->twoFactor->decryptSecret($user), $code)) {
             RateLimiter::hit($key, 60);
@@ -158,16 +169,34 @@ class TwoFactorController extends Controller
             return redirect()->route('two-factor.setup');
         }
 
+        if ($this->session->isVerified($request, $user)) {
+            return $this->session->redirectToIntended($request, $user);
+        }
+
+        if ($expiredResponse = $this->expiredChallengeResponse($request)) {
+            return $expiredResponse;
+        }
+
         return view('auth.two-factor.challenge', [
             'maskedAccount' => $this->twoFactor->maskedAccount($user),
             'isAdmin' => $user->user_type === 'admin',
             'mode' => 'recovery',
+            ...$this->challengeTiming($request),
         ]);
     }
 
     public function verifyRecovery(Request $request): RedirectResponse
     {
         $user = $request->user();
+
+        if (! $this->twoFactor->hasEnabledTwoFactor($user)) {
+            return redirect()->route('two-factor.setup');
+        }
+
+        if ($expiredResponse = $this->expiredChallengeResponse($request)) {
+            return $expiredResponse;
+        }
+
         $key = $this->rateLimitKey($request, 'recovery');
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
@@ -278,5 +307,36 @@ class TwoFactorController extends Controller
     private function rateLimitKey(Request $request, string $suffix): string
     {
         return 'two-factor-'.$suffix.'|'.$request->user()->getAuthIdentifier().'|'.$request->ip();
+    }
+
+    /**
+     * @return array{challengeExpiresAt: int, serverNow: int, challengeRemainingSeconds: int}
+     */
+    private function challengeTiming(Request $request): array
+    {
+        $serverNow = now()->timestamp;
+        $expiresAt = $this->session->challengeExpiresAt($request) ?? $serverNow;
+
+        return [
+            'challengeExpiresAt' => $expiresAt,
+            'serverNow' => $serverNow,
+            'challengeRemainingSeconds' => max(0, $expiresAt - $serverNow),
+        ];
+    }
+
+    private function expiredChallengeResponse(Request $request): ?RedirectResponse
+    {
+        if (! $this->session->challengeHasExpired($request)) {
+            return null;
+        }
+
+        $isAdmin = $request->user()?->user_type === 'admin';
+
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route($isAdmin ? 'admin.login' : 'home')
+            ->with('error', 'Your two-factor verification session expired. Please log in again.');
     }
 }

@@ -37,12 +37,15 @@ class TwoFactorService
         $issuer = rawurlencode((string) config('app.name', 'CalaiaPH'));
         $account = rawurlencode($user->email ?: $user->username ?: 'account-'.$user->getKey());
 
-        return 'otpauth://totp/'.$issuer.':'.$account
-            .'?secret='.$secret
-            .'&issuer='.$issuer
-            .'&algorithm=SHA1'
-            .'&digits='.self::DIGITS
-            .'&period='.self::PERIOD;
+        $query = http_build_query([
+            'secret' => $secret,
+            'issuer' => (string) config('app.name', 'CalaiaPH'),
+            'algorithm' => 'SHA1',
+            'digits' => self::DIGITS,
+            'period' => self::PERIOD,
+        ], '', '&', PHP_QUERY_RFC3986);
+
+        return 'otpauth://totp/'.$issuer.':'.$account.'?'.$query;
     }
 
     public function verifyCode(?string $secret, string $code): bool

@@ -6,6 +6,14 @@ import Alpine from 'alpinejs'
 import Collapse from '@alpinejs/collapse'
 
 async function startApplication() {
+  if (document.querySelector('[data-otp-segmented]')) {
+    await import('./otp-input.js')
+  }
+
+  if (document.querySelector('[data-two-factor-countdown]')) {
+    await import('./two-factor-challenge.js')
+  }
+
   if (window.location.pathname.startsWith('/admin')) {
     await Promise.all([
       import('./admin/dashboard.js'),

@@ -8,7 +8,7 @@
   {{-- Tailwind loaded via Vite/PostCSS; avoid CDN in templates for production safety. --}}
   @vite(['resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-gray-100 font-sans">
+<body class="@yield('body-class', 'min-h-screen') bg-gray-100 font-sans">
   @yield('content')
 </body>
 </html>

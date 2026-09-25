@@ -4,7 +4,7 @@
     "name": "rolldown-runtime"
   },
   "resources/js/admin/bookingConfirmation.js": {
-    "file": "assets/bookingConfirmation-C3HIFGNa.js",
+    "file": "assets/bookingConfirmation-X4awr2ri.js",
     "name": "bookingConfirmation",
     "src": "resources/js/admin/bookingConfirmation.js",
     "isDynamicEntry": true,
@@ -25,7 +25,7 @@
     "isDynamicEntry": true
   },
   "resources/js/admin/dashboard.js": {
-    "file": "assets/dashboard-CUBZ741t.js",
+    "file": "assets/dashboard-gHfs6clI.js",
     "name": "dashboard",
     "src": "resources/js/admin/dashboard.js",
     "isDynamicEntry": true,
@@ -46,7 +46,7 @@
     "isDynamicEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-B9DpCjTA.js",
+    "file": "assets/app-DeCLpUre.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -54,6 +54,8 @@
       "_rolldown-runtime-hePW80VL.js"
     ],
     "dynamicImports": [
+      "resources/js/otp-input.js",
+      "resources/js/two-factor-challenge.js",
       "resources/js/admin/dashboard.js",
       "resources/js/admin/bookingConfirmation.js",
       "resources/js/admin/bookingSettings.js",
@@ -62,7 +64,7 @@
       "resources/js/admin/cms-manager.js"
     ],
     "css": [
-      "assets/app-CpEUWEWG.css"
+      "assets/app-Ckb2bwA9.css"
     ]
   },
   "resources/js/booking/staycation.js": {
@@ -70,6 +72,18 @@
     "name": "staycation",
     "src": "resources/js/booking/staycation.js",
     "isEntry": true
+  },
+  "resources/js/otp-input.js": {
+    "file": "assets/otp-input-C62W4Q2s.js",
+    "name": "otp-input",
+    "src": "resources/js/otp-input.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/two-factor-challenge.js": {
+    "file": "assets/two-factor-challenge-B15PvHlK.js",
+    "name": "two-factor-challenge",
+    "src": "resources/js/two-factor-challenge.js",
+    "isDynamicEntry": true
   },
   "resources/js/two-factor-setup.js": {
     "file": "assets/two-factor-setup-CWHW6BDa.js",

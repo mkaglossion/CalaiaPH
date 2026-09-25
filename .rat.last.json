@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-09-25T02:23:48+00:00",
+  "generated_at": "2026-09-25T17:06:29+00:00",
   "stats": {
-    "routes": 377,
-    "files": 824,
+    "routes": 387,
+    "files": 837,
     "by_type": {
-      "Other": 584,
-      "Controller": 119,
+      "Other": 594,
+      "Controller": 120,
       "Middleware": 2,
       "Job": 5,
       "Mail": 1,
       "Model": 94,
-      "Service": 19
+      "Service": 21
     },
     "graph": {
-      "nodes": 1371,
-      "edges": 2162,
+      "nodes": 1394,
+      "edges": 2245,
       "by_type": {
-        "Route": 529,
-        "Controller": 165,
-        "Other": 543,
+        "Route": 539,
+        "Controller": 166,
+        "Other": 553,
         "Database": 1,
-        "Service": 26,
+        "Service": 28,
         "Model": 95,
         "Filesystem": 1,
         "Cache": 1,
@@ -48,7 +48,7 @@
         "type": "Route",
         "name": "GET /debug/maintenance",
         "file": "routes\\web.php",
-        "line": 110,
+        "line": 111,
         "meta": {
           "action": "Closure"
         }
@@ -58,7 +58,7 @@
         "type": "Route",
         "name": "GET /admin/login",
         "file": "routes\\web.php",
-        "line": 121,
+        "line": 122,
         "meta": {
           "action": "AdminAuthController@showLoginForm"
         }
@@ -76,7 +76,7 @@
         "type": "Route",
         "name": "POST /admin/login",
         "file": "routes\\web.php",
-        "line": 122,
+        "line": 123,
         "meta": {
           "action": "AdminAuthController@login"
         }
@@ -86,7 +86,7 @@
         "type": "Route",
         "name": "GET /",
         "file": "routes\\web.php",
-        "line": 125,
+        "line": 126,
         "meta": {
           "action": "PagesController@home"
         }
@@ -104,7 +104,7 @@
         "type": "Route",
         "name": "GET /home",
         "file": "routes\\web.php",
-        "line": 126,
+        "line": 127,
         "meta": {
           "action": "fn () => redirect()->route('home', [], 301"
         }
@@ -114,7 +114,7 @@
         "type": "Route",
         "name": "GET /settings-test",
         "file": "routes\\web.php",
-        "line": 128,
+        "line": 129,
         "meta": {
           "action": "Closure"
         }
@@ -124,7 +124,7 @@
         "type": "Route",
         "name": "GET /our-story",
         "file": "routes\\web.php",
-        "line": 130,
+        "line": 131,
         "meta": {
           "action": "PagesController@ourStory"
         }
@@ -134,7 +134,7 @@
         "type": "Route",
         "name": "GET /sustainability",
         "file": "routes\\web.php",
-        "line": 131,
+        "line": 132,
         "meta": {
           "action": "PagesController@sustainability"
         }
@@ -144,7 +144,7 @@
         "type": "Route",
         "name": "GET /our-services",
         "file": "routes\\web.php",
-        "line": 132,
+        "line": 133,
         "meta": {
           "action": "PagesController@ourServices"
         }
@@ -154,7 +154,7 @@
         "type": "Route",
         "name": "GET /daytour",
         "file": "routes\\web.php",
-        "line": 133,
+        "line": 134,
         "meta": {
           "action": "DayTourController@index"
         }
@@ -172,7 +172,7 @@
         "type": "Route",
         "name": "GET /day-tour-swiper-images/daytour/{id}",
         "file": "routes\\web.php",
-        "line": 134,
+        "line": 135,
         "meta": {
           "action": "App\\Http\\Controllers\\Admin\\DayTourSwiperImageController@getImages"
         }
@@ -190,7 +190,7 @@
         "type": "Route",
         "name": "GET /packages",
         "file": "routes\\web.php",
-        "line": 135,
+        "line": 136,
         "meta": {
           "action": "PagesController@packages"
         }
@@ -200,7 +200,7 @@
         "type": "Route",
         "name": "GET /staycation",
         "file": "routes\\web.php",
-        "line": 136,
+        "line": 137,
         "meta": {
           "action": "PagesController@staycation"
         }
@@ -210,7 +210,7 @@
         "type": "Route",
         "name": "GET /activities",
         "file": "routes\\web.php",
-        "line": 137,
+        "line": 138,
         "meta": {
           "action": "PagesController@activities"
         }
@@ -220,7 +220,7 @@
         "type": "Route",
         "name": "GET /dining",
         "file": "routes\\web.php",
-        "line": 138,
+        "line": 139,
         "meta": {
           "action": "PagesController@dining"
         }
@@ -230,7 +230,7 @@
         "type": "Route",
         "name": "POST /dining/reserve",
         "file": "routes\\web.php",
-        "line": 139,
+        "line": 140,
         "meta": {
           "action": "DiningReservationController@store"
         }
@@ -248,7 +248,7 @@
         "type": "Route",
         "name": "POST /dining/prefill",
         "file": "routes\\web.php",
-        "line": 140,
+        "line": 141,
         "meta": {
           "action": "DiningReservationController@prefillBooking"
         }
@@ -258,7 +258,7 @@
         "type": "Route",
         "name": "GET /dining-reservation",
         "file": "routes\\web.php",
-        "line": 141,
+        "line": 142,
         "meta": {
           "action": "DiningReservationController@dayVisitForm"
         }
@@ -268,7 +268,7 @@
         "type": "Route",
         "name": "POST /dining-reservation/store",
         "file": "routes\\web.php",
-        "line": 142,
+        "line": 143,
         "meta": {
           "action": "DiningReservationController@storeDayVisit"
         }
@@ -278,7 +278,7 @@
         "type": "Route",
         "name": "GET /special-events",
         "file": "routes\\web.php",
-        "line": 143,
+        "line": 144,
         "meta": {
           "action": "PagesController@specialEvents"
         }
@@ -288,7 +288,7 @@
         "type": "Route",
         "name": "GET /farm",
         "file": "routes\\web.php",
-        "line": 144,
+        "line": 145,
         "meta": {
           "action": "PagesController@farm"
         }
@@ -298,7 +298,7 @@
         "type": "Route",
         "name": "GET /shop",
         "file": "routes\\web.php",
-        "line": 145,
+        "line": 146,
         "meta": {
           "action": "PagesController@shop"
         }
@@ -308,7 +308,7 @@
         "type": "Route",
         "name": "GET /contact",
         "file": "routes\\web.php",
-        "line": 146,
+        "line": 147,
         "meta": {
           "action": "PagesController@contact"
         }
@@ -318,7 +318,7 @@
         "type": "Route",
         "name": "POST /contact",
         "file": "routes\\web.php",
-        "line": 147,
+        "line": 148,
         "meta": {
           "action": "ContactController@submit"
         }
@@ -336,7 +336,7 @@
         "type": "Route",
         "name": "GET /privacy-notice",
         "file": "routes\\web.php",
-        "line": 148,
+        "line": 149,
         "meta": {
           "action": "PagesController@privacyNotice"
         }
@@ -346,7 +346,7 @@
         "type": "Route",
         "name": "GET /data-deletion",
         "file": "routes\\web.php",
-        "line": 149,
+        "line": 150,
         "meta": {
           "action": "PagesController@dataDeletion"
         }
@@ -356,7 +356,7 @@
         "type": "Route",
         "name": "GET /calaia-policy",
         "file": "routes\\web.php",
-        "line": 150,
+        "line": 151,
         "meta": {
           "action": "PagesController@calaiaPolicy"
         }
@@ -366,7 +366,7 @@
         "type": "Route",
         "name": "GET /cookies-policy",
         "file": "routes\\web.php",
-        "line": 151,
+        "line": 152,
         "meta": {
           "action": "PagesController@cookiesPolicy"
         }
@@ -376,7 +376,7 @@
         "type": "Route",
         "name": "GET /terms-service",
         "file": "routes\\web.php",
-        "line": 152,
+        "line": 153,
         "meta": {
           "action": "PagesController@termsService"
         }
@@ -386,7 +386,7 @@
         "type": "Route",
         "name": "GET /weather",
         "file": "routes\\web.php",
-        "line": 154,
+        "line": 155,
         "meta": {
           "action": "WeatherController@show"
         }
@@ -404,7 +404,7 @@
         "type": "Route",
         "name": "GET /booking",
         "file": "routes\\web.php",
-        "line": 157,
+        "line": 158,
         "meta": {
           "action": "BookingController@create"
         }
@@ -422,7 +422,7 @@
         "type": "Route",
         "name": "POST /booking",
         "file": "routes\\web.php",
-        "line": 158,
+        "line": 159,
         "meta": {
           "action": "BookingController@store"
         }
@@ -432,7 +432,7 @@
         "type": "Route",
         "name": "GET /booking/calendar",
         "file": "routes\\web.php",
-        "line": 159,
+        "line": 160,
         "meta": {
           "action": "BookingCalendarController@show"
         }
@@ -450,7 +450,7 @@
         "type": "Route",
         "name": "GET /booking/activities",
         "file": "routes\\web.php",
-        "line": 162,
+        "line": 163,
         "meta": {
           "action": "BookingController@activities"
         }
@@ -460,7 +460,7 @@
         "type": "Route",
         "name": "POST /booking/activities",
         "file": "routes\\web.php",
-        "line": 163,
+        "line": 164,
         "meta": {
           "action": "BookingController@storeActivities"
         }
@@ -470,7 +470,7 @@
         "type": "Route",
         "name": "GET /booking/staycation/activities",
         "file": "routes\\web.php",
-        "line": 164,
+        "line": 165,
         "meta": {
           "action": "BookingController@staycationActivities"
         }
@@ -480,7 +480,7 @@
         "type": "Route",
         "name": "POST /booking/staycation/activities",
         "file": "routes\\web.php",
-        "line": 165,
+        "line": 166,
         "meta": {
           "action": "BookingController@storeStaycationActivities"
         }
@@ -490,7 +490,7 @@
         "type": "Route",
         "name": "GET /booking/staycation/payment",
         "file": "routes\\web.php",
-        "line": 166,
+        "line": 167,
         "meta": {
           "action": "BookingController@staycationPayment"
         }
@@ -500,7 +500,7 @@
         "type": "Route",
         "name": "GET /booking/payment/success",
         "file": "routes\\web.php",
-        "line": 167,
+        "line": 168,
         "meta": {
           "action": "BookingController@paymentSuccess"
         }
@@ -510,7 +510,7 @@
         "type": "Route",
         "name": "GET /booking/payment/failed",
         "file": "routes\\web.php",
-        "line": 168,
+        "line": 169,
         "meta": {
           "action": "BookingController@paymentFailed"
         }
@@ -520,7 +520,7 @@
         "type": "Route",
         "name": "POST /booking/save-session",
         "file": "routes\\web.php",
-        "line": 170,
+        "line": 171,
         "meta": {
           "action": "BookingController@saveBookingSession"
         }
@@ -530,7 +530,7 @@
         "type": "Route",
         "name": "GET /booking/staycation/availability",
         "file": "routes\\web.php",
-        "line": 171,
+        "line": 172,
         "meta": {
           "action": "BookingController@staycationAvailability"
         }
@@ -540,7 +540,7 @@
         "type": "Route",
         "name": "GET /booking/wishlist",
         "file": "routes\\web.php",
-        "line": 172,
+        "line": 173,
         "meta": {
           "action": "BookingWishlistController@index"
         }
@@ -558,7 +558,7 @@
         "type": "Route",
         "name": "GET /wishlist/state",
         "file": "routes\\web.php",
-        "line": 175,
+        "line": 176,
         "meta": {
           "action": "BookingWishlistController@state"
         }
@@ -568,7 +568,7 @@
         "type": "Route",
         "name": "POST /wishlist/toggle",
         "file": "routes\\web.php",
-        "line": 176,
+        "line": 177,
         "meta": {
           "action": "BookingWishlistController@toggle"
         }
@@ -578,7 +578,7 @@
         "type": "Route",
         "name": "DELETE /wishlist/selected",
         "file": "routes\\web.php",
-        "line": 177,
+        "line": 178,
         "meta": {
           "action": "BookingWishlistController@removeSelected"
         }
@@ -588,7 +588,7 @@
         "type": "Route",
         "name": "DELETE /wishlist/{wishlistItem}",
         "file": "routes\\web.php",
-        "line": 178,
+        "line": 179,
         "meta": {
           "action": "BookingWishlistController@destroy"
         }
@@ -598,7 +598,7 @@
         "type": "Route",
         "name": "POST /wishlist/add-to-cart",
         "file": "routes\\web.php",
-        "line": 179,
+        "line": 180,
         "meta": {
           "action": "BookingWishlistController@addSelectedToCart"
         }
@@ -608,7 +608,7 @@
         "type": "Route",
         "name": "GET /cart",
         "file": "routes\\web.php",
-        "line": 181,
+        "line": 182,
         "meta": {
           "action": "BookingCartController@index"
         }
@@ -626,7 +626,7 @@
         "type": "Route",
         "name": "DELETE /cart/clear",
         "file": "routes\\web.php",
-        "line": 182,
+        "line": 183,
         "meta": {
           "action": "BookingCartController@clear"
         }
@@ -636,7 +636,7 @@
         "type": "Route",
         "name": "PATCH /cart/{key}/staycation",
         "file": "routes\\web.php",
-        "line": 183,
+        "line": 184,
         "meta": {
           "action": "BookingCartController@updateStaycation"
         }
@@ -646,7 +646,7 @@
         "type": "Route",
         "name": "PATCH /cart/{key}/quantity",
         "file": "routes\\web.php",
-        "line": 184,
+        "line": 185,
         "meta": {
           "action": "BookingCartController@updateQuantity"
         }
@@ -656,7 +656,7 @@
         "type": "Route",
         "name": "DELETE /cart/{key}",
         "file": "routes\\web.php",
-        "line": 185,
+        "line": 186,
         "meta": {
           "action": "BookingCartController@destroy"
         }
@@ -666,7 +666,7 @@
         "type": "Route",
         "name": "POST /cart/checkout",
         "file": "routes\\web.php",
-        "line": 186,
+        "line": 187,
         "meta": {
           "action": "BookingController@checkoutBookingCart"
         }
@@ -676,7 +676,7 @@
         "type": "Route",
         "name": "GET /api/external/glamping-image",
         "file": "routes\\web.php",
-        "line": 189,
+        "line": 190,
         "meta": {
           "action": "Closure"
         }
@@ -686,7 +686,7 @@
         "type": "Route",
         "name": "GET /api/internal/glamping-image",
         "file": "routes\\web.php",
-        "line": 221,
+        "line": 222,
         "meta": {
           "action": "Closure"
         }
@@ -696,7 +696,7 @@
         "type": "Route",
         "name": "GET /api/internal/camping-image",
         "file": "routes\\web.php",
-        "line": 245,
+        "line": 246,
         "meta": {
           "action": "Closure"
         }
@@ -706,7 +706,7 @@
         "type": "Route",
         "name": "GET /booking/staycation/food",
         "file": "routes\\web.php",
-        "line": 270,
+        "line": 271,
         "meta": {
           "action": "BookingController@staycationFood"
         }
@@ -716,7 +716,7 @@
         "type": "Route",
         "name": "POST /booking/staycation/food/save",
         "file": "routes\\web.php",
-        "line": 271,
+        "line": 272,
         "meta": {
           "action": "BookingController@saveFoodSelection"
         }
@@ -726,7 +726,7 @@
         "type": "Route",
         "name": "GET /test-inventory/{dayTourId}",
         "file": "routes\\web.php",
-        "line": 273,
+        "line": 274,
         "meta": {
           "action": "Closure"
         }
@@ -736,7 +736,7 @@
         "type": "Route",
         "name": "POST /booking/select-dates",
         "file": "routes\\web.php",
-        "line": 278,
+        "line": 279,
         "meta": {
           "action": "BookingController@selectDates"
         }
@@ -746,7 +746,7 @@
         "type": "Route",
         "name": "POST /booking/check-availability",
         "file": "routes\\web.php",
-        "line": 279,
+        "line": 280,
         "meta": {
           "action": "BookingController@checkAvailability"
         }
@@ -756,7 +756,7 @@
         "type": "Route",
         "name": "GET /booking/payment",
         "file": "routes\\web.php",
-        "line": 280,
+        "line": 281,
         "meta": {
           "action": "BookingController@payment"
         }
@@ -766,7 +766,7 @@
         "type": "Route",
         "name": "POST /booking/create-payment-intent",
         "file": "routes\\web.php",
-        "line": 281,
+        "line": 282,
         "meta": {
           "action": "BookingController@createPaymentIntent"
         }
@@ -776,7 +776,7 @@
         "type": "Route",
         "name": "POST /booking/initiate-payment",
         "file": "routes\\web.php",
-        "line": 282,
+        "line": 283,
         "meta": {
           "action": "BookingController@initiatePayment"
         }
@@ -786,7 +786,7 @@
         "type": "Route",
         "name": "POST /booking/payment",
         "file": "routes\\web.php",
-        "line": 283,
+        "line": 284,
         "meta": {
           "action": "BookingController@processPayment"
         }
@@ -796,7 +796,7 @@
         "type": "Route",
         "name": "GET /test-paymongo",
         "file": "routes\\web.php",
-        "line": 285,
+        "line": 286,
         "meta": {
           "action": "Closure"
         }
@@ -806,7 +806,7 @@
         "type": "Route",
         "name": "GET /test-success",
         "file": "routes\\web.php",
-        "line": 315,
+        "line": 316,
         "meta": {
           "action": "Closure"
         }
@@ -816,7 +816,7 @@
         "type": "Route",
         "name": "GET /test-failed",
         "file": "routes\\web.php",
-        "line": 319,
+        "line": 320,
         "meta": {
           "action": "Closure"
         }
@@ -826,7 +826,7 @@
         "type": "Route",
         "name": "GET /booking/confirmation",
         "file": "routes\\web.php",
-        "line": 323,
+        "line": 324,
         "meta": {
           "action": "BookingController@confirmation"
         }
@@ -836,7 +836,7 @@
         "type": "Route",
         "name": "GET /booking/widget",
         "file": "routes\\web.php",
-        "line": 324,
+        "line": 325,
         "meta": {
           "action": "BookingController@widget"
         }
@@ -846,7 +846,7 @@
         "type": "Route",
         "name": "POST /booking/calculate-price",
         "file": "routes\\web.php",
-        "line": 325,
+        "line": 326,
         "meta": {
           "action": "BookingController@getDynamicPrice"
         }
@@ -856,7 +856,7 @@
         "type": "Route",
         "name": "GET /debug-pricing",
         "file": "routes\\web.php",
-        "line": 327,
+        "line": 328,
         "meta": {
           "action": "Closure"
         }
@@ -866,7 +866,7 @@
         "type": "Route",
         "name": "GET /booking/reset-inventory",
         "file": "routes\\web.php",
-        "line": 346,
+        "line": 347,
         "meta": {
           "action": "Closure"
         }
@@ -876,7 +876,7 @@
         "type": "Route",
         "name": "GET /booking/dayvisit",
         "file": "routes\\web.php",
-        "line": 352,
+        "line": 353,
         "meta": {
           "action": "DayVisitController@index"
         }
@@ -894,7 +894,7 @@
         "type": "Route",
         "name": "POST /booking/dayvisit/storeAvailability",
         "file": "routes\\web.php",
-        "line": 354,
+        "line": 355,
         "meta": {
           "action": "DayVisitController@storeAvailability"
         }
@@ -904,7 +904,7 @@
         "type": "Route",
         "name": "GET /booking/dayvisit/activities",
         "file": "routes\\web.php",
-        "line": 355,
+        "line": 356,
         "meta": {
           "action": "DayVisitController@activities"
         }
@@ -914,7 +914,7 @@
         "type": "Route",
         "name": "POST /booking/dayvisit/activities",
         "file": "routes\\web.php",
-        "line": 356,
+        "line": 357,
         "meta": {
           "action": "DayVisitController@storeActivities"
         }
@@ -924,7 +924,7 @@
         "type": "Route",
         "name": "GET /booking/dayvisit/payment",
         "file": "routes\\web.php",
-        "line": 357,
+        "line": 358,
         "meta": {
           "action": "DayVisitController@payment"
         }
@@ -934,7 +934,7 @@
         "type": "Route",
         "name": "POST /booking/dayvisit/payment",
         "file": "routes\\web.php",
-        "line": 358,
+        "line": 359,
         "meta": {
           "action": "DayVisitController@processPayment"
         }
@@ -944,7 +944,7 @@
         "type": "Route",
         "name": "POST /booking/dayvisit/initiate-payment",
         "file": "routes\\web.php",
-        "line": 359,
+        "line": 360,
         "meta": {
           "action": "DayVisitController@initiatePayment"
         }
@@ -954,7 +954,7 @@
         "type": "Route",
         "name": "GET /booking/dayvisit/payment/success",
         "file": "routes\\web.php",
-        "line": 360,
+        "line": 361,
         "meta": {
           "action": "DayVisitController@paymentSuccess"
         }
@@ -964,7 +964,7 @@
         "type": "Route",
         "name": "GET /booking/dayvisit/payment/failed",
         "file": "routes\\web.php",
-        "line": 361,
+        "line": 362,
         "meta": {
           "action": "DayVisitController@paymentFailed"
         }
@@ -974,7 +974,7 @@
         "type": "Route",
         "name": "GET /test-payment",
         "file": "routes\\web.php",
-        "line": 365,
+        "line": 366,
         "meta": {
           "action": "juan@example.com"
         }
@@ -984,7 +984,7 @@
         "type": "Route",
         "name": "GET /test-activities",
         "file": "routes\\web.php",
-        "line": 396,
+        "line": 397,
         "meta": {
           "action": "juan@example.com"
         }
@@ -1002,7 +1002,7 @@
         "type": "Route",
         "name": "POST /cart/add",
         "file": "routes\\web.php",
-        "line": 414,
+        "line": 415,
         "meta": {
           "action": "CartController@add"
         }
@@ -1012,7 +1012,7 @@
         "type": "Route",
         "name": "PATCH /cart/{id}",
         "file": "routes\\web.php",
-        "line": 415,
+        "line": 416,
         "meta": {
           "action": "CartController@update"
         }
@@ -1022,7 +1022,7 @@
         "type": "Route",
         "name": "DELETE /cart/{id}",
         "file": "routes\\web.php",
-        "line": 416,
+        "line": 417,
         "meta": {
           "action": "CartController@remove"
         }
@@ -1032,7 +1032,7 @@
         "type": "Route",
         "name": "GET /checkout",
         "file": "routes\\web.php",
-        "line": 418,
+        "line": 419,
         "meta": {
           "action": "CartController@checkoutForm"
         }
@@ -1042,7 +1042,7 @@
         "type": "Route",
         "name": "POST /checkout",
         "file": "routes\\web.php",
-        "line": 419,
+        "line": 420,
         "meta": {
           "action": "CartController@checkoutSubmit"
         }
@@ -1052,7 +1052,7 @@
         "type": "Route",
         "name": "GET /checkout/success",
         "file": "routes\\web.php",
-        "line": 420,
+        "line": 421,
         "meta": {
           "action": "CartController@checkoutSuccess"
         }
@@ -1062,7 +1062,7 @@
         "type": "Route",
         "name": "GET /checkout/confirmation",
         "file": "routes\\web.php",
-        "line": 421,
+        "line": 422,
         "meta": {
           "action": "Closure"
         }
@@ -1072,7 +1072,7 @@
         "type": "Route",
         "name": "GET /checkout/failed",
         "file": "routes\\web.php",
-        "line": 425,
+        "line": 426,
         "meta": {
           "action": "Closure"
         }
@@ -1082,7 +1082,7 @@
         "type": "Route",
         "name": "POST /register-step-one",
         "file": "routes\\web.php",
-        "line": 430,
+        "line": 431,
         "meta": {
           "action": "RegisterController@registerStepOne"
         }
@@ -1100,7 +1100,7 @@
         "type": "Route",
         "name": "GET /verify/{token}",
         "file": "routes\\web.php",
-        "line": 431,
+        "line": 432,
         "meta": {
           "action": "RegisterController@verify"
         }
@@ -1110,7 +1110,7 @@
         "type": "Route",
         "name": "GET /set-credentials/{token}",
         "file": "routes\\web.php",
-        "line": 432,
+        "line": 433,
         "meta": {
           "action": "RegisterController@showSetCredentialsForm"
         }
@@ -1120,7 +1120,7 @@
         "type": "Route",
         "name": "POST /set-credentials/{token}",
         "file": "routes\\web.php",
-        "line": 433,
+        "line": 434,
         "meta": {
           "action": "RegisterController@setCredentials"
         }
@@ -1130,7 +1130,7 @@
         "type": "Route",
         "name": "GET /verify-email/{token}",
         "file": "routes\\web.php",
-        "line": 434,
+        "line": 435,
         "meta": {
           "action": "RegisterController@verifyEmail"
         }
@@ -1140,7 +1140,7 @@
         "type": "Route",
         "name": "GET /login",
         "file": "routes\\web.php",
-        "line": 436,
+        "line": 437,
         "meta": {
           "action": "Closure"
         }
@@ -1150,7 +1150,7 @@
         "type": "Route",
         "name": "POST /login",
         "file": "routes\\web.php",
-        "line": 437,
+        "line": 438,
         "meta": {
           "action": "LoginController@login"
         }
@@ -1168,7 +1168,7 @@
         "type": "Route",
         "name": "GET /auth/google/redirect",
         "file": "routes\\web.php",
-        "line": 438,
+        "line": 439,
         "meta": {
           "action": "SocialLoginController@redirectToGoogle"
         }
@@ -1186,7 +1186,7 @@
         "type": "Route",
         "name": "GET /auth/google/callback",
         "file": "routes\\web.php",
-        "line": 439,
+        "line": 440,
         "meta": {
           "action": "SocialLoginController@handleGoogleCallback"
         }
@@ -1196,7 +1196,7 @@
         "type": "Route",
         "name": "GET /auth/facebook/redirect",
         "file": "routes\\web.php",
-        "line": 440,
+        "line": 441,
         "meta": {
           "action": "SocialLoginController@redirectToFacebook"
         }
@@ -1206,7 +1206,7 @@
         "type": "Route",
         "name": "GET /auth/facebook/callback",
         "file": "routes\\web.php",
-        "line": 441,
+        "line": 442,
         "meta": {
           "action": "SocialLoginController@handleFacebookCallback"
         }
@@ -1216,7 +1216,7 @@
         "type": "Route",
         "name": "POST /logout",
         "file": "routes\\web.php",
-        "line": 442,
+        "line": 443,
         "meta": {
           "action": "LoginController@logout"
         }
@@ -1226,9 +1226,117 @@
         "type": "Route",
         "name": "POST /session/keep-alive",
         "file": "routes\\web.php",
-        "line": 443,
+        "line": 444,
         "meta": {
           "action": "fn () => response()->noContent())\n    ->middleware('auth')\n    ->name('session.keep-alive'"
+        }
+      },
+      {
+        "id": "route:GET:/setup",
+        "type": "Route",
+        "name": "GET /setup",
+        "file": "routes\\web.php",
+        "line": 449,
+        "meta": {
+          "action": "TwoFactorController@setup"
+        }
+      },
+      {
+        "id": "controller:TwoFactorController",
+        "type": "Controller",
+        "name": "TwoFactorController",
+        "file": "",
+        "line": 0,
+        "meta": {}
+      },
+      {
+        "id": "route:POST:/setup",
+        "type": "Route",
+        "name": "POST /setup",
+        "file": "routes\\web.php",
+        "line": 450,
+        "meta": {
+          "action": "TwoFactorController@confirmSetup"
+        }
+      },
+      {
+        "id": "route:GET:/challenge",
+        "type": "Route",
+        "name": "GET /challenge",
+        "file": "routes\\web.php",
+        "line": 451,
+        "meta": {
+          "action": "TwoFactorController@challenge"
+        }
+      },
+      {
+        "id": "route:POST:/challenge",
+        "type": "Route",
+        "name": "POST /challenge",
+        "file": "routes\\web.php",
+        "line": 452,
+        "meta": {
+          "action": "TwoFactorController@verifyChallenge"
+        }
+      },
+      {
+        "id": "route:GET:/recovery",
+        "type": "Route",
+        "name": "GET /recovery",
+        "file": "routes\\web.php",
+        "line": 453,
+        "meta": {
+          "action": "TwoFactorController@recovery"
+        }
+      },
+      {
+        "id": "route:POST:/recovery",
+        "type": "Route",
+        "name": "POST /recovery",
+        "file": "routes\\web.php",
+        "line": 454,
+        "meta": {
+          "action": "TwoFactorController@verifyRecovery"
+        }
+      },
+      {
+        "id": "route:GET:/recovery-codes",
+        "type": "Route",
+        "name": "GET /recovery-codes",
+        "file": "routes\\web.php",
+        "line": 455,
+        "meta": {
+          "action": "TwoFactorController@recoveryCodes"
+        }
+      },
+      {
+        "id": "route:GET:/recovery-codes/download",
+        "type": "Route",
+        "name": "GET /recovery-codes/download",
+        "file": "routes\\web.php",
+        "line": 456,
+        "meta": {
+          "action": "TwoFactorController@downloadRecoveryCodes"
+        }
+      },
+      {
+        "id": "route:POST:/recovery-codes/continue",
+        "type": "Route",
+        "name": "POST /recovery-codes/continue",
+        "file": "routes\\web.php",
+        "line": 458,
+        "meta": {
+          "action": "TwoFactorController@continueAfterRecoveryCodes"
+        }
+      },
+      {
+        "id": "route:POST:/recovery-codes/regenerate",
+        "type": "Route",
+        "name": "POST /recovery-codes/regenerate",
+        "file": "routes\\web.php",
+        "line": 459,
+        "meta": {
+          "action": "TwoFactorController@regenerateRecoveryCodes"
         }
       },
       {
@@ -1236,7 +1344,7 @@
         "type": "Route",
         "name": "GET /forgot-password",
         "file": "routes\\web.php",
-        "line": 448,
+        "line": 463,
         "meta": {
           "action": "ForgotPasswordController@showForgotForm"
         }
@@ -1254,7 +1362,7 @@
         "type": "Route",
         "name": "POST /forgot-password",
         "file": "routes\\web.php",
-        "line": 449,
+        "line": 464,
         "meta": {
           "action": "ForgotPasswordController@forgotPassword"
         }
@@ -1264,7 +1372,7 @@
         "type": "Route",
         "name": "GET /reset-password/{token}",
         "file": "routes\\web.php",
-        "line": 450,
+        "line": 465,
         "meta": {
           "action": "ForgotPasswordController@showResetForm"
         }
@@ -1274,7 +1382,7 @@
         "type": "Route",
         "name": "POST /reset-password",
         "file": "routes\\web.php",
-        "line": 451,
+        "line": 466,
         "meta": {
           "action": "ForgotPasswordController@resetPassword"
         }
@@ -1284,7 +1392,7 @@
         "type": "Route",
         "name": "GET /profile",
         "file": "routes\\web.php",
-        "line": 456,
+        "line": 471,
         "meta": {
           "action": "ProfileController@show"
         }
@@ -1302,7 +1410,7 @@
         "type": "Route",
         "name": "GET /profile/edit",
         "file": "routes\\web.php",
-        "line": 457,
+        "line": 472,
         "meta": {
           "action": "ProfileController@edit"
         }
@@ -1312,7 +1420,7 @@
         "type": "Route",
         "name": "PUT /profile",
         "file": "routes\\web.php",
-        "line": 458,
+        "line": 473,
         "meta": {
           "action": "ProfileController@update"
         }
@@ -1322,7 +1430,7 @@
         "type": "Route",
         "name": "GET /profile/bookings/{booking}",
         "file": "routes\\web.php",
-        "line": 459,
+        "line": 474,
         "meta": {
           "action": "ProfileController@bookingDetails"
         }
@@ -1332,7 +1440,7 @@
         "type": "Route",
         "name": "GET /profile/bookings/{booking}/add-ons/create",
         "file": "routes\\web.php",
-        "line": 460,
+        "line": 475,
         "meta": {
           "action": "AddOnTransactionController@create"
         }
@@ -1350,7 +1458,7 @@
         "type": "Route",
         "name": "POST /profile/bookings/{booking}/add-ons",
         "file": "routes\\web.php",
-        "line": 461,
+        "line": 476,
         "meta": {
           "action": "AddOnTransactionController@store"
         }
@@ -1360,7 +1468,7 @@
         "type": "Route",
         "name": "GET /profile/bookings/{booking}/add-ons/{addOnTransaction}/pay",
         "file": "routes\\web.php",
-        "line": 462,
+        "line": 477,
         "meta": {
           "action": "AddOnTransactionController@resumePayment"
         }
@@ -1370,7 +1478,7 @@
         "type": "Route",
         "name": "GET /profile/bookings/{booking}/add-ons/{addOnTransaction}",
         "file": "routes\\web.php",
-        "line": 463,
+        "line": 478,
         "meta": {
           "action": "ProfileController@addOnDetails"
         }
@@ -1380,7 +1488,7 @@
         "type": "Route",
         "name": "GET /profile/add-ons/payment/success",
         "file": "routes\\web.php",
-        "line": 464,
+        "line": 479,
         "meta": {
           "action": "AddOnTransactionController@paymentSuccess"
         }
@@ -1390,7 +1498,7 @@
         "type": "Route",
         "name": "GET /profile/add-ons/payment/cancelled",
         "file": "routes\\web.php",
-        "line": 465,
+        "line": 480,
         "meta": {
           "action": "AddOnTransactionController@paymentCancelled"
         }
@@ -1400,7 +1508,7 @@
         "type": "Route",
         "name": "GET /booking/history",
         "file": "routes\\web.php",
-        "line": 466,
+        "line": 481,
         "meta": {
           "action": "Closure"
         }
@@ -1410,7 +1518,7 @@
         "type": "Route",
         "name": "GET /checkinout",
         "file": "routes\\web.php",
-        "line": 488,
+        "line": 503,
         "meta": {
           "action": "CheckInOutController@index"
         }
@@ -1428,7 +1536,7 @@
         "type": "Route",
         "name": "POST /checkinout/checkin/{booking}",
         "file": "routes\\web.php",
-        "line": 489,
+        "line": 504,
         "meta": {
           "action": "CheckInOutController@checkin"
         }
@@ -1438,7 +1546,7 @@
         "type": "Route",
         "name": "POST /checkinout/checkout/{booking}",
         "file": "routes\\web.php",
-        "line": 490,
+        "line": 505,
         "meta": {
           "action": "CheckInOutController@checkout"
         }
@@ -1448,7 +1556,7 @@
         "type": "Route",
         "name": "GET /checkinout/next/{booking}",
         "file": "routes\\web.php",
-        "line": 491,
+        "line": 506,
         "meta": {
           "action": "CheckInOutController@nextAfterCheckin"
         }
@@ -1458,7 +1566,7 @@
         "type": "Route",
         "name": "GET /dashboard",
         "file": "routes\\web.php",
-        "line": 499,
+        "line": 514,
         "meta": {
           "action": "AdminDashboardController@index"
         }
@@ -1476,7 +1584,7 @@
         "type": "Route",
         "name": "GET /dashboard/export",
         "file": "routes\\web.php",
-        "line": 500,
+        "line": 515,
         "meta": {
           "action": "AdminDashboardController@export"
         }
@@ -1494,7 +1602,7 @@
         "type": "Route",
         "name": "GET /export",
         "file": "routes\\web.php",
-        "line": 512,
+        "line": 527,
         "meta": {
           "action": "AdminBookingsController@export"
         }
@@ -1504,7 +1612,7 @@
         "type": "Route",
         "name": "GET /inventory",
         "file": "routes\\web.php",
-        "line": 513,
+        "line": 528,
         "meta": {
           "action": "InventoryManagementController@index"
         }
@@ -1522,7 +1630,7 @@
         "type": "Route",
         "name": "GET /paymongo-webhooks",
         "file": "routes\\web.php",
-        "line": 514,
+        "line": 529,
         "meta": {
           "action": "AdminBookingsController@paymongoWebhooks"
         }
@@ -1532,7 +1640,7 @@
         "type": "Route",
         "name": "DELETE /paymongo-webhooks",
         "file": "routes\\web.php",
-        "line": 515,
+        "line": 530,
         "meta": {
           "action": "AdminBookingsController@bulkDeletePaymongoWebhooks"
         }
@@ -1542,7 +1650,7 @@
         "type": "Route",
         "name": "GET /staycations",
         "file": "routes\\web.php",
-        "line": 516,
+        "line": 531,
         "meta": {
           "action": "AdminBookingMonitoringController@staycations"
         }
@@ -1560,7 +1668,7 @@
         "type": "Route",
         "name": "GET /staycations/export",
         "file": "routes\\web.php",
-        "line": 517,
+        "line": 532,
         "meta": {
           "action": "AdminBookingMonitoringController@exportStaycations"
         }
@@ -1570,7 +1678,7 @@
         "type": "Route",
         "name": "GET /packages/export",
         "file": "routes\\web.php",
-        "line": 519,
+        "line": 534,
         "meta": {
           "action": "AdminBookingMonitoringController@exportPackages"
         }
@@ -1580,7 +1688,7 @@
         "type": "Route",
         "name": "GET /food-and-beverage",
         "file": "routes\\web.php",
-        "line": 520,
+        "line": 535,
         "meta": {
           "action": "AdminBookingMonitoringController@foodAndBeverage"
         }
@@ -1590,7 +1698,7 @@
         "type": "Route",
         "name": "GET /food-and-beverage/export",
         "file": "routes\\web.php",
-        "line": 521,
+        "line": 536,
         "meta": {
           "action": "AdminBookingMonitoringController@exportFoodAndBeverage"
         }
@@ -1600,7 +1708,7 @@
         "type": "Route",
         "name": "GET /activities/export",
         "file": "routes\\web.php",
-        "line": 523,
+        "line": 538,
         "meta": {
           "action": "AdminBookingMonitoringController@exportActivities"
         }
@@ -1610,7 +1718,7 @@
         "type": "Route",
         "name": "GET /extra-fees",
         "file": "routes\\web.php",
-        "line": 526,
+        "line": 541,
         "meta": {
           "action": "BookingSettingsController@index"
         }
@@ -1628,7 +1736,7 @@
         "type": "Route",
         "name": "POST /extra-fees",
         "file": "routes\\web.php",
-        "line": 527,
+        "line": 542,
         "meta": {
           "action": "BookingSettingsController@update"
         }
@@ -1638,7 +1746,7 @@
         "type": "Route",
         "name": "POST /mobile-layout",
         "file": "routes\\web.php",
-        "line": 528,
+        "line": 543,
         "meta": {
           "action": "BookingSettingsController@updateMobileLayout"
         }
@@ -1648,7 +1756,7 @@
         "type": "Route",
         "name": "GET /package/{id}",
         "file": "routes\\web.php",
-        "line": 531,
+        "line": 546,
         "meta": {
           "action": "AdminPackageBookingsController@show"
         }
@@ -1666,7 +1774,7 @@
         "type": "Route",
         "name": "POST /package/{id}/confirm",
         "file": "routes\\web.php",
-        "line": 532,
+        "line": 547,
         "meta": {
           "action": "AdminPackageBookingsController@confirm"
         }
@@ -1676,7 +1784,7 @@
         "type": "Route",
         "name": "POST /package/{id}/complete",
         "file": "routes\\web.php",
-        "line": 533,
+        "line": 548,
         "meta": {
           "action": "AdminPackageBookingsController@complete"
         }
@@ -1686,7 +1794,7 @@
         "type": "Route",
         "name": "POST /package/{id}/cancel",
         "file": "routes\\web.php",
-        "line": 534,
+        "line": 549,
         "meta": {
           "action": "AdminPackageBookingsController@cancel"
         }
@@ -1696,7 +1804,7 @@
         "type": "Route",
         "name": "POST /package/record-payment",
         "file": "routes\\web.php",
-        "line": 535,
+        "line": 550,
         "meta": {
           "action": "AdminPackageBookingsController@recordPayment"
         }
@@ -1706,7 +1814,7 @@
         "type": "Route",
         "name": "GET /{bookingId}/guests/{guestId}/signature",
         "file": "routes\\web.php",
-        "line": 537,
+        "line": 552,
         "meta": {
           "action": "AdminBookingsController@guestSignature"
         }
@@ -1716,7 +1824,7 @@
         "type": "Route",
         "name": "GET /{id}",
         "file": "routes\\web.php",
-        "line": 538,
+        "line": 553,
         "meta": {
           "action": "AdminBookingsController@show"
         }
@@ -1726,7 +1834,7 @@
         "type": "Route",
         "name": "POST /{id}/cancel",
         "file": "routes\\web.php",
-        "line": 539,
+        "line": 554,
         "meta": {
           "action": "AdminBookingsController@cancel"
         }
@@ -1736,7 +1844,7 @@
         "type": "Route",
         "name": "GET /monitor",
         "file": "routes\\web.php",
-        "line": 544,
+        "line": 559,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\ReservationMonitorController@index"
         }
@@ -1754,7 +1862,7 @@
         "type": "Route",
         "name": "GET /api/recent",
         "file": "routes\\web.php",
-        "line": 545,
+        "line": 560,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\ReservationMonitorController@getRecent"
         }
@@ -1764,7 +1872,7 @@
         "type": "Route",
         "name": "GET /api/stats",
         "file": "routes\\web.php",
-        "line": 546,
+        "line": 561,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\ReservationMonitorController@getStats"
         }
@@ -1774,7 +1882,7 @@
         "type": "Route",
         "name": "GET /booking/{id}",
         "file": "routes\\web.php",
-        "line": 547,
+        "line": 562,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\ReservationMonitorController@getBookingDetails"
         }
@@ -1784,7 +1892,7 @@
         "type": "Route",
         "name": "GET /{id}/timeline",
         "file": "routes\\web.php",
-        "line": 548,
+        "line": 563,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\ReservationMonitorController@timeline"
         }
@@ -1794,7 +1902,7 @@
         "type": "Route",
         "name": "POST /record-payment",
         "file": "routes\\web.php",
-        "line": 549,
+        "line": 564,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\ReservationMonitorController@recordPayment"
         }
@@ -1804,7 +1912,7 @@
         "type": "Route",
         "name": "POST /bulk-update",
         "file": "routes\\web.php",
-        "line": 550,
+        "line": 565,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\ReservationMonitorController@bulkUpdate"
         }
@@ -1814,7 +1922,7 @@
         "type": "Route",
         "name": "POST /export",
         "file": "routes\\web.php",
-        "line": 551,
+        "line": 566,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\ReservationMonitorController@export"
         }
@@ -1824,7 +1932,7 @@
         "type": "Route",
         "name": "PUT /dining/{id}/status",
         "file": "routes\\web.php",
-        "line": 554,
+        "line": 569,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\ReservationMonitorController@updateDiningStatus"
         }
@@ -1834,7 +1942,7 @@
         "type": "Route",
         "name": "PUT /{id}/status",
         "file": "routes\\web.php",
-        "line": 555,
+        "line": 570,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\ReservationMonitorController@updateStatus"
         }
@@ -1852,7 +1960,7 @@
         "type": "Route",
         "name": "GET /day",
         "file": "routes\\web.php",
-        "line": 566,
+        "line": 581,
         "meta": {
           "action": "AdminController@dayTour"
         }
@@ -1870,7 +1978,7 @@
         "type": "Route",
         "name": "GET /day-tour",
         "file": "routes\\web.php",
-        "line": 567,
+        "line": 582,
         "meta": {
           "action": "AdminPagesController@dayTour"
         }
@@ -1880,7 +1988,7 @@
         "type": "Route",
         "name": "GET /day-tour/days",
         "file": "routes\\web.php",
-        "line": 568,
+        "line": 583,
         "meta": {
           "action": "AdminController@dayTourDays"
         }
@@ -1890,7 +1998,7 @@
         "type": "Route",
         "name": "GET /day-tour/inventory",
         "file": "routes\\web.php",
-        "line": 569,
+        "line": 584,
         "meta": {
           "action": "Closure"
         }
@@ -1900,7 +2008,7 @@
         "type": "Route",
         "name": "POST /day-tour/inventory",
         "file": "routes\\web.php",
-        "line": 570,
+        "line": 585,
         "meta": {
           "action": "DayTourInventoryController@store"
         }
@@ -1918,7 +2026,7 @@
         "type": "Route",
         "name": "PUT /day-tour/inventory/{inventory}",
         "file": "routes\\web.php",
-        "line": 571,
+        "line": 586,
         "meta": {
           "action": "DayTourInventoryController@update"
         }
@@ -1928,7 +2036,7 @@
         "type": "Route",
         "name": "DELETE /day-tour/inventory/{inventory}",
         "file": "routes\\web.php",
-        "line": 572,
+        "line": 587,
         "meta": {
           "action": "DayTourInventoryController@delete"
         }
@@ -1938,7 +2046,7 @@
         "type": "Route",
         "name": "GET /create",
         "file": "routes\\web.php",
-        "line": 577,
+        "line": 592,
         "meta": {
           "action": "Closure"
         }
@@ -1948,7 +2056,7 @@
         "type": "Route",
         "name": "POST /",
         "file": "routes\\web.php",
-        "line": 578,
+        "line": 593,
         "meta": {
           "action": "PackageController@store"
         }
@@ -1966,7 +2074,7 @@
         "type": "Route",
         "name": "POST /reorder",
         "file": "routes\\web.php",
-        "line": 579,
+        "line": 594,
         "meta": {
           "action": "PackageController@reorder"
         }
@@ -1976,7 +2084,7 @@
         "type": "Route",
         "name": "GET /{package}/edit",
         "file": "routes\\web.php",
-        "line": 580,
+        "line": 595,
         "meta": {
           "action": "PackageController@edit"
         }
@@ -1986,7 +2094,7 @@
         "type": "Route",
         "name": "PUT /{package}",
         "file": "routes\\web.php",
-        "line": 581,
+        "line": 596,
         "meta": {
           "action": "PackageController@update"
         }
@@ -1996,7 +2104,7 @@
         "type": "Route",
         "name": "DELETE /{package}",
         "file": "routes\\web.php",
-        "line": 582,
+        "line": 597,
         "meta": {
           "action": "PackageController@destroy"
         }
@@ -2006,7 +2114,7 @@
         "type": "Route",
         "name": "POST {package}/toggle-status",
         "file": "routes\\web.php",
-        "line": 584,
+        "line": 599,
         "meta": {
           "action": "PackageController@toggleStatus"
         }
@@ -2016,7 +2124,7 @@
         "type": "Route",
         "name": "POST /inventory",
         "file": "routes\\web.php",
-        "line": 588,
+        "line": 603,
         "meta": {
           "action": "PackageInventoryController@storeInventory"
         }
@@ -2034,7 +2142,7 @@
         "type": "Route",
         "name": "POST /inventory/bulk-upsert",
         "file": "routes\\web.php",
-        "line": 589,
+        "line": 604,
         "meta": {
           "action": "PackageInventoryController@bulkUpsert"
         }
@@ -2044,7 +2152,7 @@
         "type": "Route",
         "name": "DELETE /inventory/bulk-delete",
         "file": "routes\\web.php",
-        "line": 590,
+        "line": 605,
         "meta": {
           "action": "PackageInventoryController@bulkDeleteByIds"
         }
@@ -2054,7 +2162,7 @@
         "type": "Route",
         "name": "PUT /inventory/{inventory}",
         "file": "routes\\web.php",
-        "line": 591,
+        "line": 606,
         "meta": {
           "action": "PackageInventoryController@updateInventoryRecord"
         }
@@ -2064,7 +2172,7 @@
         "type": "Route",
         "name": "DELETE /inventory/{inventory}",
         "file": "routes\\web.php",
-        "line": 592,
+        "line": 607,
         "meta": {
           "action": "PackageInventoryController@destroyInventory"
         }
@@ -2074,7 +2182,7 @@
         "type": "Route",
         "name": "GET /information",
         "file": "routes\\web.php",
-        "line": 593,
+        "line": 608,
         "meta": {
           "action": "AdminPagesController@packages"
         }
@@ -2084,7 +2192,7 @@
         "type": "Route",
         "name": "POST swiper-images/reorder",
         "file": "routes\\web.php",
-        "line": 599,
+        "line": 614,
         "meta": {
           "action": "PackageSwiperImageController@reorder"
         }
@@ -2102,7 +2210,7 @@
         "type": "Route",
         "name": "GET /where-to-stay",
         "file": "routes\\web.php",
-        "line": 607,
+        "line": 622,
         "meta": {
           "action": "AdminPagesController@whereToStay"
         }
@@ -2112,7 +2220,7 @@
         "type": "Route",
         "name": "POST /copy",
         "file": "routes\\web.php",
-        "line": 608,
+        "line": 623,
         "meta": {
           "action": "StaycationPageTextController@saveCopy"
         }
@@ -2130,7 +2238,7 @@
         "type": "Route",
         "name": "GET /accommodations",
         "file": "routes\\web.php",
-        "line": 610,
+        "line": 625,
         "meta": {
           "action": "AdminController@staycationAccommodation"
         }
@@ -2140,7 +2248,7 @@
         "type": "Route",
         "name": "GET /settings",
         "file": "routes\\web.php",
-        "line": 611,
+        "line": 626,
         "meta": {
           "action": "AdminController@staySettings"
         }
@@ -2166,7 +2274,7 @@
         "type": "Route",
         "name": "GET /preview",
         "file": "routes\\web.php",
-        "line": 622,
+        "line": 637,
         "meta": {
           "action": "BookingConfirmationContentController@preview"
         }
@@ -2176,7 +2284,7 @@
         "type": "Route",
         "name": "PUT /{bookingType}",
         "file": "routes\\web.php",
-        "line": 623,
+        "line": 638,
         "meta": {
           "action": "BookingConfirmationContentController@update"
         }
@@ -2194,7 +2302,7 @@
         "type": "Route",
         "name": "PATCH /{policyPage:slug}/hero-visibility",
         "file": "routes\\web.php",
-        "line": 627,
+        "line": 642,
         "meta": {
           "action": "PolicyPageController@updateHeroVisibility"
         }
@@ -2204,7 +2312,7 @@
         "type": "Route",
         "name": "PUT /{policyPage:slug}",
         "file": "routes\\web.php",
-        "line": 628,
+        "line": 643,
         "meta": {
           "action": "PolicyPageController@update"
         }
@@ -2222,7 +2330,7 @@
         "type": "Route",
         "name": "PATCH /{informationPage:slug}/hero-visibility",
         "file": "routes\\web.php",
-        "line": 632,
+        "line": 647,
         "meta": {
           "action": "InformationPageController@updateHeroVisibility"
         }
@@ -2232,7 +2340,7 @@
         "type": "Route",
         "name": "PUT /{informationPage:slug}",
         "file": "routes\\web.php",
-        "line": 633,
+        "line": 648,
         "meta": {
           "action": "InformationPageController@update"
         }
@@ -2242,7 +2350,7 @@
         "type": "Route",
         "name": "POST /category-label",
         "file": "routes\\web.php",
-        "line": 637,
+        "line": 652,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\ActivityPackageSettingController@updateCategoryLabel"
         }
@@ -2260,7 +2368,7 @@
         "type": "Route",
         "name": "GET /api/activity-packages",
         "file": "routes\\web.php",
-        "line": 638,
+        "line": 653,
         "meta": {
           "action": "ActivityPackageController@apiIndex"
         }
@@ -2278,7 +2386,7 @@
         "type": "Route",
         "name": "GET /what-to-do",
         "file": "routes\\web.php",
-        "line": 646,
+        "line": 661,
         "meta": {
           "action": "AdminPagesController@whatToDo"
         }
@@ -2296,7 +2404,7 @@
         "type": "Route",
         "name": "GET /menus",
         "file": "routes\\web.php",
-        "line": 651,
+        "line": 666,
         "meta": {
           "action": "AdminController@menu"
         }
@@ -2314,7 +2422,7 @@
         "type": "Route",
         "name": "GET /api/foods",
         "file": "routes\\web.php",
-        "line": 662,
+        "line": 677,
         "meta": {
           "action": "FoodController@apiIndex"
         }
@@ -2332,7 +2440,7 @@
         "type": "Route",
         "name": "GET /api/packages",
         "file": "routes\\web.php",
-        "line": 671,
+        "line": 686,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\FoodPackageController@apiIndex"
         }
@@ -2350,7 +2458,7 @@
         "type": "Route",
         "name": "GET /api/packages/{package}/details",
         "file": "routes\\web.php",
-        "line": 672,
+        "line": 687,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\FoodPackageController@getPackageDetails"
         }
@@ -2360,7 +2468,7 @@
         "type": "Route",
         "name": "POST category-images/copy",
         "file": "routes\\web.php",
-        "line": 678,
+        "line": 693,
         "meta": {
           "action": "DiningCategoryImageController@saveCopy"
         }
@@ -2378,7 +2486,7 @@
         "type": "Route",
         "name": "GET /events",
         "file": "routes\\web.php",
-        "line": 681,
+        "line": 696,
         "meta": {
           "action": "AdminController@event"
         }
@@ -2388,7 +2496,7 @@
         "type": "Route",
         "name": "GET /manager",
         "file": "routes\\web.php",
-        "line": 685,
+        "line": 700,
         "meta": {
           "action": "AdminController@specialEventsManager"
         }
@@ -2414,7 +2522,7 @@
         "type": "Route",
         "name": "PUT /section-background",
         "file": "routes\\web.php",
-        "line": 694,
+        "line": 709,
         "meta": {
           "action": "TestimonialController@updateSectionBackground"
         }
@@ -2424,7 +2532,7 @@
         "type": "Route",
         "name": "POST /{id}",
         "file": "routes\\web.php",
-        "line": 695,
+        "line": 710,
         "meta": {
           "action": "TestimonialController@update"
         }
@@ -2434,7 +2542,7 @@
         "type": "Route",
         "name": "DELETE /{id}",
         "file": "routes\\web.php",
-        "line": 696,
+        "line": 711,
         "meta": {
           "action": "TestimonialController@destroy"
         }
@@ -2444,7 +2552,7 @@
         "type": "Route",
         "name": "GET /farmInfos",
         "file": "routes\\web.php",
-        "line": 699,
+        "line": 714,
         "meta": {
           "action": "AdminController@farmInfo"
         }
@@ -2454,7 +2562,7 @@
         "type": "Route",
         "name": "GET /our-farm",
         "file": "routes\\web.php",
-        "line": 700,
+        "line": 715,
         "meta": {
           "action": "AdminPagesController@ourFarm"
         }
@@ -2464,7 +2572,7 @@
         "type": "Route",
         "name": "GET /experiences",
         "file": "routes\\web.php",
-        "line": 701,
+        "line": 716,
         "meta": {
           "action": "FarmExperiencesController@index"
         }
@@ -2482,7 +2590,7 @@
         "type": "Route",
         "name": "POST /experiences/save",
         "file": "routes\\web.php",
-        "line": 702,
+        "line": 717,
         "meta": {
           "action": "FarmExperiencesController@save"
         }
@@ -2492,7 +2600,7 @@
         "type": "Route",
         "name": "POST /experiences/upload-image",
         "file": "routes\\web.php",
-        "line": 703,
+        "line": 718,
         "meta": {
           "action": "FarmExperiencesController@uploadImage"
         }
@@ -2502,7 +2610,7 @@
         "type": "Route",
         "name": "POST /sections/upload",
         "file": "routes\\web.php",
-        "line": 704,
+        "line": 719,
         "meta": {
           "action": "FarmPageSectionController@upload"
         }
@@ -2520,7 +2628,7 @@
         "type": "Route",
         "name": "PUT /sections/{farmPageSection:key}",
         "file": "routes\\web.php",
-        "line": 705,
+        "line": 720,
         "meta": {
           "action": "FarmPageSectionController@update"
         }
@@ -2538,7 +2646,7 @@
         "type": "Route",
         "name": "GET /shopstore",
         "file": "routes\\web.php",
-        "line": 710,
+        "line": 725,
         "meta": {
           "action": "AdminPagesController@shopStore"
         }
@@ -2548,7 +2656,7 @@
         "type": "Route",
         "name": "GET /shopitems",
         "file": "routes\\web.php",
-        "line": 711,
+        "line": 726,
         "meta": {
           "action": "AdminController@shopitems"
         }
@@ -2558,7 +2666,7 @@
         "type": "Route",
         "name": "GET /orders",
         "file": "routes\\web.php",
-        "line": 712,
+        "line": 727,
         "meta": {
           "action": "AdminController@shopOrders"
         }
@@ -2576,7 +2684,7 @@
         "type": "Route",
         "name": "POST shop-swiper-images/bulk-delete",
         "file": "routes\\web.php",
-        "line": 719,
+        "line": 734,
         "meta": {
           "action": "ShopSwiperImageController@bulkDelete"
         }
@@ -2594,7 +2702,7 @@
         "type": "Route",
         "name": "POST cms/{page}/swiper-images/reorder",
         "file": "routes\\web.php",
-        "line": 722,
+        "line": 737,
         "meta": {
           "action": "AdminPagesController@reorderImages"
         }
@@ -2604,7 +2712,7 @@
         "type": "Route",
         "name": "GET /season-durations",
         "file": "routes\\web.php",
-        "line": 727,
+        "line": 742,
         "meta": {
           "action": "SeasonDurationController@index"
         }
@@ -2622,7 +2730,7 @@
         "type": "Route",
         "name": "GET /config",
         "file": "routes\\web.php",
-        "line": 728,
+        "line": 743,
         "meta": {
           "action": "Closure"
         }
@@ -2632,7 +2740,7 @@
         "type": "Route",
         "name": "POST peak-periods",
         "file": "routes\\web.php",
-        "line": 733,
+        "line": 748,
         "meta": {
           "action": "SeasonDurationController@storePeakPeriod"
         }
@@ -2642,7 +2750,7 @@
         "type": "Route",
         "name": "PUT peak-periods/{peakPeriod}",
         "file": "routes\\web.php",
-        "line": 734,
+        "line": 749,
         "meta": {
           "action": "SeasonDurationController@updatePeakPeriod"
         }
@@ -2652,7 +2760,7 @@
         "type": "Route",
         "name": "DELETE peak-periods/{peakPeriod}",
         "file": "routes\\web.php",
-        "line": 735,
+        "line": 750,
         "meta": {
           "action": "SeasonDurationController@destroyPeakPeriod"
         }
@@ -2662,7 +2770,7 @@
         "type": "Route",
         "name": "POST event-experience-sections/reorder",
         "file": "routes\\web.php",
-        "line": 760,
+        "line": 775,
         "meta": {
           "action": "EventExperienceSectionController@reorder"
         }
@@ -2680,7 +2788,7 @@
         "type": "Route",
         "name": "POST /accommodations-text",
         "file": "routes\\web.php",
-        "line": 764,
+        "line": 779,
         "meta": {
           "action": "AccommodationTextController@store"
         }
@@ -2698,7 +2806,7 @@
         "type": "Route",
         "name": "GET day-tour-swiper-images/daytour/{id}",
         "file": "routes\\web.php",
-        "line": 769,
+        "line": 784,
         "meta": {
           "action": "DayTourSwiperImageController@getImages"
         }
@@ -2708,7 +2816,7 @@
         "type": "Route",
         "name": "GET package-images/package/{id}",
         "file": "routes\\web.php",
-        "line": 775,
+        "line": 790,
         "meta": {
           "action": "PackageImageController@getImages"
         }
@@ -2726,7 +2834,7 @@
         "type": "Route",
         "name": "GET /parent/{parentId}",
         "file": "routes\\web.php",
-        "line": 791,
+        "line": 806,
         "meta": {
           "action": "'getImages')->name('admin.media.images'"
         }
@@ -2736,7 +2844,7 @@
         "type": "Route",
         "name": "GET /{parentId?}",
         "file": "routes\\web.php",
-        "line": 792,
+        "line": 807,
         "meta": {
           "action": "'index')->name('admin.media.index'"
         }
@@ -2746,7 +2854,7 @@
         "type": "Route",
         "name": "POST /{parentId?}",
         "file": "routes\\web.php",
-        "line": 793,
+        "line": 808,
         "meta": {
           "action": "'store')->name('admin.media.store'"
         }
@@ -2756,7 +2864,7 @@
         "type": "Route",
         "name": "PUT /image/{imageId}",
         "file": "routes\\web.php",
-        "line": 794,
+        "line": 809,
         "meta": {
           "action": "'update')->name('admin.media.update'"
         }
@@ -2766,7 +2874,7 @@
         "type": "Route",
         "name": "DELETE /image/{imageId}",
         "file": "routes\\web.php",
-        "line": 795,
+        "line": 810,
         "meta": {
           "action": "'destroy')->name('admin.media.destroy'"
         }
@@ -2776,7 +2884,7 @@
         "type": "Route",
         "name": "POST staycation-list/reorder",
         "file": "routes\\web.php",
-        "line": 800,
+        "line": 815,
         "meta": {
           "action": "StaycationController@reorder"
         }
@@ -2794,7 +2902,7 @@
         "type": "Route",
         "name": "GET food",
         "file": "routes\\web.php",
-        "line": 820,
+        "line": 835,
         "meta": {
           "action": "InventoryController@food"
         }
@@ -2804,7 +2912,7 @@
         "type": "Route",
         "name": "GET shop",
         "file": "routes\\web.php",
-        "line": 821,
+        "line": 836,
         "meta": {
           "action": "InventoryController@shop"
         }
@@ -2814,7 +2922,7 @@
         "type": "Route",
         "name": "POST store",
         "file": "routes\\web.php",
-        "line": 822,
+        "line": 837,
         "meta": {
           "action": "InventoryController@store"
         }
@@ -2824,7 +2932,7 @@
         "type": "Route",
         "name": "POST bulk",
         "file": "routes\\web.php",
-        "line": 823,
+        "line": 838,
         "meta": {
           "action": "InventoryController@bulk"
         }
@@ -2834,7 +2942,7 @@
         "type": "Route",
         "name": "POST quickset",
         "file": "routes\\web.php",
-        "line": 824,
+        "line": 839,
         "meta": {
           "action": "InventoryController@quickset"
         }
@@ -2844,7 +2952,7 @@
         "type": "Route",
         "name": "POST delete",
         "file": "routes\\web.php",
-        "line": 825,
+        "line": 840,
         "meta": {
           "action": "InventoryController@delete"
         }
@@ -2854,7 +2962,7 @@
         "type": "Route",
         "name": "POST /quickset",
         "file": "routes\\web.php",
-        "line": 830,
+        "line": 845,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\DayTourInventoryController@quickset"
         }
@@ -2864,7 +2972,7 @@
         "type": "Route",
         "name": "POST /store",
         "file": "routes\\web.php",
-        "line": 831,
+        "line": 846,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\DayTourInventoryController@store"
         }
@@ -2874,7 +2982,7 @@
         "type": "Route",
         "name": "GET /{dayTourId}/calendar",
         "file": "routes\\web.php",
-        "line": 833,
+        "line": 848,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\DayTourInventoryController@getCalendar"
         }
@@ -2884,7 +2992,7 @@
         "type": "Route",
         "name": "POST /{dayTourId}/update",
         "file": "routes\\web.php",
-        "line": 834,
+        "line": 849,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\DayTourInventoryController@updateInventory"
         }
@@ -2894,7 +3002,7 @@
         "type": "Route",
         "name": "POST /{dayTourId}/block",
         "file": "routes\\web.php",
-        "line": 835,
+        "line": 850,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\DayTourInventoryController@blockDate"
         }
@@ -2904,7 +3012,7 @@
         "type": "Route",
         "name": "POST /{dayTourId}/unblock",
         "file": "routes\\web.php",
-        "line": 836,
+        "line": 851,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\DayTourInventoryController@unblockDate"
         }
@@ -2914,7 +3022,7 @@
         "type": "Route",
         "name": "POST /{dayTourId}/bulk-update",
         "file": "routes\\web.php",
-        "line": 837,
+        "line": 852,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\DayTourInventoryController@bulkUpdate"
         }
@@ -2924,7 +3032,7 @@
         "type": "Route",
         "name": "POST /{dayTourId}/initialize",
         "file": "routes\\web.php",
-        "line": 838,
+        "line": 853,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\DayTourInventoryController@initialize"
         }
@@ -2934,7 +3042,7 @@
         "type": "Route",
         "name": "GET /availability/all",
         "file": "routes\\web.php",
-        "line": 839,
+        "line": 854,
         "meta": {
           "action": "\\App\\Http\\Controllers\\Admin\\DayTourInventoryController@getAllAvailability"
         }
@@ -2952,7 +3060,7 @@
         "type": "Route",
         "name": "GET /password",
         "file": "routes\\web.php",
-        "line": 846,
+        "line": 861,
         "meta": {
           "action": "AdminSettingsController@edit"
         }
@@ -2962,7 +3070,7 @@
         "type": "Route",
         "name": "PUT /password",
         "file": "routes\\web.php",
-        "line": 847,
+        "line": 862,
         "meta": {
           "action": "AdminSettingsController@updatePassword"
         }
@@ -2972,7 +3080,7 @@
         "type": "Route",
         "name": "PUT /preferences",
         "file": "routes\\web.php",
-        "line": 848,
+        "line": 863,
         "meta": {
           "action": "AdminSettingsController@updatePreferences"
         }
@@ -2982,7 +3090,7 @@
         "type": "Route",
         "name": "GET /activity-log",
         "file": "routes\\web.php",
-        "line": 849,
+        "line": 864,
         "meta": {
           "action": "AdminSettingsController@showActivityLog"
         }
@@ -2992,7 +3100,7 @@
         "type": "Route",
         "name": "GET /system",
         "file": "routes\\web.php",
-        "line": 851,
+        "line": 866,
         "meta": {
           "action": "AdminSystemSettingsController@index"
         }
@@ -3010,7 +3118,7 @@
         "type": "Route",
         "name": "PUT /system",
         "file": "routes\\web.php",
-        "line": 852,
+        "line": 867,
         "meta": {
           "action": "AdminSystemSettingsController@updateSettings"
         }
@@ -3020,7 +3128,7 @@
         "type": "Route",
         "name": "GET /alerts",
         "file": "routes\\web.php",
-        "line": 853,
+        "line": 868,
         "meta": {
           "action": "AdminSystemSettingsController@showAlerts"
         }
@@ -3030,7 +3138,7 @@
         "type": "Route",
         "name": "POST /alerts/clear-resolved",
         "file": "routes\\web.php",
-        "line": 854,
+        "line": 869,
         "meta": {
           "action": "AdminSystemSettingsController@clearResolvedAlerts"
         }
@@ -3040,7 +3148,7 @@
         "type": "Route",
         "name": "POST /alerts/{id}/resolve",
         "file": "routes\\web.php",
-        "line": 855,
+        "line": 870,
         "meta": {
           "action": "AdminSystemSettingsController@resolveAlert"
         }
@@ -3050,7 +3158,7 @@
         "type": "Route",
         "name": "GET /help",
         "file": "routes\\web.php",
-        "line": 861,
+        "line": 876,
         "meta": {
           "action": "Closure"
         }
@@ -3060,7 +3168,7 @@
         "type": "Route",
         "name": "PATCH promo-codes/{promo_code}/toggle-status",
         "file": "routes\\web.php",
-        "line": 875,
+        "line": 890,
         "meta": {
           "action": "PromoCodesController@toggleStatus"
         }
@@ -3078,7 +3186,7 @@
         "type": "Route",
         "name": "GET /api/search",
         "file": "routes\\web.php",
-        "line": 878,
+        "line": 893,
         "meta": {
           "action": "AdminDashboardController@search"
         }
@@ -3088,7 +3196,7 @@
         "type": "Route",
         "name": "POST /api/promo-codes/apply",
         "file": "routes\\web.php",
-        "line": 882,
+        "line": 897,
         "meta": {
           "action": "PromoCodesController@applyPromoCode"
         }
@@ -3098,7 +3206,7 @@
         "type": "Route",
         "name": "POST /api/id-verification/verify",
         "file": "routes\\web.php",
-        "line": 889,
+        "line": 904,
         "meta": {
           "action": "IdVerificationController@verify"
         }
@@ -3116,7 +3224,7 @@
         "type": "Route",
         "name": "POST /api/id-verification/quick-check",
         "file": "routes\\web.php",
-        "line": 890,
+        "line": 905,
         "meta": {
           "action": "IdVerificationController@quickCheck"
         }
@@ -3126,7 +3234,7 @@
         "type": "Route",
         "name": "POST /api/id-verification/verify-base64",
         "file": "routes\\web.php",
-        "line": 891,
+        "line": 906,
         "meta": {
           "action": "IdVerificationController@verifyBase64"
         }
@@ -3136,7 +3244,7 @@
         "type": "Route",
         "name": "POST /api/special-events/upload-image",
         "file": "routes\\web.php",
-        "line": 897,
+        "line": 912,
         "meta": {
           "action": "EventApiController@uploadImage"
         }
@@ -3154,7 +3262,7 @@
         "type": "Route",
         "name": "POST /api/special-events",
         "file": "routes\\web.php",
-        "line": 901,
+        "line": 916,
         "meta": {
           "action": "EventApiController@store"
         }
@@ -3164,7 +3272,7 @@
         "type": "Route",
         "name": "POST /api/special-events/{event}",
         "file": "routes\\web.php",
-        "line": 902,
+        "line": 917,
         "meta": {
           "action": "EventApiController@update"
         }
@@ -3174,7 +3282,7 @@
         "type": "Route",
         "name": "PUT /api/special-events/{event}",
         "file": "routes\\web.php",
-        "line": 903,
+        "line": 918,
         "meta": {
           "action": "EventApiController@update"
         }
@@ -3184,7 +3292,7 @@
         "type": "Route",
         "name": "DELETE /api/special-events/{event}",
         "file": "routes\\web.php",
-        "line": 904,
+        "line": 919,
         "meta": {
           "action": "EventApiController@destroy"
         }
@@ -3194,7 +3302,7 @@
         "type": "Route",
         "name": "GET /booking/payment-confirmation/{booking}/{token}",
         "file": "routes\\web.php",
-        "line": 908,
+        "line": 923,
         "meta": {
           "action": "PaymentController@showConfirmation"
         }
@@ -3212,7 +3320,7 @@
         "type": "Route",
         "name": "GET /booking/payment-success",
         "file": "routes\\web.php",
-        "line": 909,
+        "line": 924,
         "meta": {
           "action": "PaymentController@paymentSuccess"
         }
@@ -3222,7 +3330,7 @@
         "type": "Route",
         "name": "GET /booking/payment-cancelled",
         "file": "routes\\web.php",
-        "line": 910,
+        "line": 925,
         "meta": {
           "action": "PaymentController@paymentCancelled"
         }
@@ -3232,7 +3340,7 @@
         "type": "Route",
         "name": "GET /booking/camp-waiver/{transactionId}",
         "file": "routes\\web.php",
-        "line": 911,
+        "line": 926,
         "meta": {
           "action": "BookingController@campWaiver"
         }
@@ -3242,7 +3350,7 @@
         "type": "Route",
         "name": "GET /booking/camp-waiver/{transactionId}/pdf",
         "file": "routes\\web.php",
-        "line": 912,
+        "line": 927,
         "meta": {
           "action": "BookingController@campWaiverPdf"
         }
@@ -3252,7 +3360,7 @@
         "type": "Route",
         "name": "GET testimonials",
         "file": "routes\\web.php",
-        "line": 453,
+        "line": 468,
         "meta": {
           "action": "TestimonialController::class",
           "resource": true
@@ -3271,7 +3379,7 @@
         "type": "Route",
         "name": "POST testimonials",
         "file": "routes\\web.php",
-        "line": 453,
+        "line": 468,
         "meta": {
           "action": "TestimonialController::class",
           "resource": true
@@ -3282,7 +3390,7 @@
         "type": "Route",
         "name": "PUT testimonials",
         "file": "routes\\web.php",
-        "line": 453,
+        "line": 468,
         "meta": {
           "action": "TestimonialController::class",
           "resource": true
@@ -3293,7 +3401,7 @@
         "type": "Route",
         "name": "PATCH testimonials",
         "file": "routes\\web.php",
-        "line": 453,
+        "line": 468,
         "meta": {
           "action": "TestimonialController::class",
           "resource": true
@@ -3304,7 +3412,7 @@
         "type": "Route",
         "name": "DELETE testimonials",
         "file": "routes\\web.php",
-        "line": 453,
+        "line": 468,
         "meta": {
           "action": "TestimonialController::class",
           "resource": true
@@ -3315,7 +3423,7 @@
         "type": "Route",
         "name": "GET users",
         "file": "routes\\web.php",
-        "line": 501,
+        "line": 516,
         "meta": {
           "action": "AdminUsersController::class",
           "resource": true
@@ -3334,7 +3442,7 @@
         "type": "Route",
         "name": "POST users",
         "file": "routes\\web.php",
-        "line": 501,
+        "line": 516,
         "meta": {
           "action": "AdminUsersController::class",
           "resource": true
@@ -3345,7 +3453,7 @@
         "type": "Route",
         "name": "PUT users",
         "file": "routes\\web.php",
-        "line": 501,
+        "line": 516,
         "meta": {
           "action": "AdminUsersController::class",
           "resource": true
@@ -3356,7 +3464,7 @@
         "type": "Route",
         "name": "PATCH users",
         "file": "routes\\web.php",
-        "line": 501,
+        "line": 516,
         "meta": {
           "action": "AdminUsersController::class",
           "resource": true
@@ -3367,7 +3475,7 @@
         "type": "Route",
         "name": "DELETE users",
         "file": "routes\\web.php",
-        "line": 501,
+        "line": 516,
         "meta": {
           "action": "AdminUsersController::class",
           "resource": true
@@ -3378,7 +3486,7 @@
         "type": "Route",
         "name": "GET swiper-images",
         "file": "routes\\web.php",
-        "line": 594,
+        "line": 609,
         "meta": {
           "action": "PackageSwiperImageController::class",
           "resource": true
@@ -3397,7 +3505,7 @@
         "type": "Route",
         "name": "POST swiper-images",
         "file": "routes\\web.php",
-        "line": 594,
+        "line": 609,
         "meta": {
           "action": "PackageSwiperImageController::class",
           "resource": true
@@ -3408,7 +3516,7 @@
         "type": "Route",
         "name": "PUT swiper-images",
         "file": "routes\\web.php",
-        "line": 594,
+        "line": 609,
         "meta": {
           "action": "PackageSwiperImageController::class",
           "resource": true
@@ -3419,7 +3527,7 @@
         "type": "Route",
         "name": "PATCH swiper-images",
         "file": "routes\\web.php",
-        "line": 594,
+        "line": 609,
         "meta": {
           "action": "PackageSwiperImageController::class",
           "resource": true
@@ -3430,7 +3538,7 @@
         "type": "Route",
         "name": "DELETE swiper-images",
         "file": "routes\\web.php",
-        "line": 594,
+        "line": 609,
         "meta": {
           "action": "PackageSwiperImageController::class",
           "resource": true
@@ -3441,7 +3549,7 @@
         "type": "Route",
         "name": "GET texts",
         "file": "routes\\web.php",
-        "line": 600,
+        "line": 615,
         "meta": {
           "action": "PackageTextController::class",
           "resource": true
@@ -3460,7 +3568,7 @@
         "type": "Route",
         "name": "POST texts",
         "file": "routes\\web.php",
-        "line": 600,
+        "line": 615,
         "meta": {
           "action": "PackageTextController::class",
           "resource": true
@@ -3471,7 +3579,7 @@
         "type": "Route",
         "name": "PUT texts",
         "file": "routes\\web.php",
-        "line": 600,
+        "line": 615,
         "meta": {
           "action": "PackageTextController::class",
           "resource": true
@@ -3482,7 +3590,7 @@
         "type": "Route",
         "name": "PATCH texts",
         "file": "routes\\web.php",
-        "line": 600,
+        "line": 615,
         "meta": {
           "action": "PackageTextController::class",
           "resource": true
@@ -3493,7 +3601,7 @@
         "type": "Route",
         "name": "DELETE texts",
         "file": "routes\\web.php",
-        "line": 600,
+        "line": 615,
         "meta": {
           "action": "PackageTextController::class",
           "resource": true
@@ -3504,7 +3612,7 @@
         "type": "Route",
         "name": "GET activity-packages",
         "file": "routes\\web.php",
-        "line": 639,
+        "line": 654,
         "meta": {
           "action": "ActivityPackageController::class",
           "resource": true
@@ -3523,7 +3631,7 @@
         "type": "Route",
         "name": "POST activity-packages",
         "file": "routes\\web.php",
-        "line": 639,
+        "line": 654,
         "meta": {
           "action": "ActivityPackageController::class",
           "resource": true
@@ -3534,7 +3642,7 @@
         "type": "Route",
         "name": "PUT activity-packages",
         "file": "routes\\web.php",
-        "line": 639,
+        "line": 654,
         "meta": {
           "action": "ActivityPackageController::class",
           "resource": true
@@ -3545,7 +3653,7 @@
         "type": "Route",
         "name": "PATCH activity-packages",
         "file": "routes\\web.php",
-        "line": 639,
+        "line": 654,
         "meta": {
           "action": "ActivityPackageController::class",
           "resource": true
@@ -3556,7 +3664,7 @@
         "type": "Route",
         "name": "DELETE activity-packages",
         "file": "routes\\web.php",
-        "line": 639,
+        "line": 654,
         "meta": {
           "action": "ActivityPackageController::class",
           "resource": true
@@ -3567,7 +3675,7 @@
         "type": "Route",
         "name": "GET foods",
         "file": "routes\\web.php",
-        "line": 653,
+        "line": 668,
         "meta": {
           "action": "FoodController::class",
           "resource": true
@@ -3586,7 +3694,7 @@
         "type": "Route",
         "name": "POST foods",
         "file": "routes\\web.php",
-        "line": 653,
+        "line": 668,
         "meta": {
           "action": "FoodController::class",
           "resource": true
@@ -3597,7 +3705,7 @@
         "type": "Route",
         "name": "PUT foods",
         "file": "routes\\web.php",
-        "line": 653,
+        "line": 668,
         "meta": {
           "action": "FoodController::class",
           "resource": true
@@ -3608,7 +3716,7 @@
         "type": "Route",
         "name": "PATCH foods",
         "file": "routes\\web.php",
-        "line": 653,
+        "line": 668,
         "meta": {
           "action": "FoodController::class",
           "resource": true
@@ -3619,7 +3727,7 @@
         "type": "Route",
         "name": "DELETE foods",
         "file": "routes\\web.php",
-        "line": 653,
+        "line": 668,
         "meta": {
           "action": "FoodController::class",
           "resource": true
@@ -3630,7 +3738,7 @@
         "type": "Route",
         "name": "GET packages",
         "file": "routes\\web.php",
-        "line": 663,
+        "line": 678,
         "meta": {
           "action": "FoodPackageController::class",
           "resource": true
@@ -3649,7 +3757,7 @@
         "type": "Route",
         "name": "POST packages",
         "file": "routes\\web.php",
-        "line": 663,
+        "line": 678,
         "meta": {
           "action": "FoodPackageController::class",
           "resource": true
@@ -3660,7 +3768,7 @@
         "type": "Route",
         "name": "PUT packages",
         "file": "routes\\web.php",
-        "line": 663,
+        "line": 678,
         "meta": {
           "action": "FoodPackageController::class",
           "resource": true
@@ -3671,7 +3779,7 @@
         "type": "Route",
         "name": "PATCH packages",
         "file": "routes\\web.php",
-        "line": 663,
+        "line": 678,
         "meta": {
           "action": "FoodPackageController::class",
           "resource": true
@@ -3682,7 +3790,7 @@
         "type": "Route",
         "name": "DELETE packages",
         "file": "routes\\web.php",
-        "line": 663,
+        "line": 678,
         "meta": {
           "action": "FoodPackageController::class",
           "resource": true
@@ -3693,7 +3801,7 @@
         "type": "Route",
         "name": "GET category-images",
         "file": "routes\\web.php",
-        "line": 673,
+        "line": 688,
         "meta": {
           "action": "DiningCategoryImageController::class",
           "resource": true
@@ -3712,7 +3820,7 @@
         "type": "Route",
         "name": "POST category-images",
         "file": "routes\\web.php",
-        "line": 673,
+        "line": 688,
         "meta": {
           "action": "DiningCategoryImageController::class",
           "resource": true
@@ -3723,7 +3831,7 @@
         "type": "Route",
         "name": "PUT category-images",
         "file": "routes\\web.php",
-        "line": 673,
+        "line": 688,
         "meta": {
           "action": "DiningCategoryImageController::class",
           "resource": true
@@ -3734,7 +3842,7 @@
         "type": "Route",
         "name": "PATCH category-images",
         "file": "routes\\web.php",
-        "line": 673,
+        "line": 688,
         "meta": {
           "action": "DiningCategoryImageController::class",
           "resource": true
@@ -3745,7 +3853,7 @@
         "type": "Route",
         "name": "DELETE category-images",
         "file": "routes\\web.php",
-        "line": 673,
+        "line": 688,
         "meta": {
           "action": "DiningCategoryImageController::class",
           "resource": true
@@ -3756,7 +3864,7 @@
         "type": "Route",
         "name": "GET shop-swiper-images",
         "file": "routes\\web.php",
-        "line": 714,
+        "line": 729,
         "meta": {
           "action": "ShopSwiperImageController::class",
           "resource": true
@@ -3775,7 +3883,7 @@
         "type": "Route",
         "name": "POST shop-swiper-images",
         "file": "routes\\web.php",
-        "line": 714,
+        "line": 729,
         "meta": {
           "action": "ShopSwiperImageController::class",
           "resource": true
@@ -3786,7 +3894,7 @@
         "type": "Route",
         "name": "PUT shop-swiper-images",
         "file": "routes\\web.php",
-        "line": 714,
+        "line": 729,
         "meta": {
           "action": "ShopSwiperImageController::class",
           "resource": true
@@ -3797,7 +3905,7 @@
         "type": "Route",
         "name": "PATCH shop-swiper-images",
         "file": "routes\\web.php",
-        "line": 714,
+        "line": 729,
         "meta": {
           "action": "ShopSwiperImageController::class",
           "resource": true
@@ -3808,7 +3916,7 @@
         "type": "Route",
         "name": "DELETE shop-swiper-images",
         "file": "routes\\web.php",
-        "line": 714,
+        "line": 729,
         "meta": {
           "action": "ShopSwiperImageController::class",
           "resource": true
@@ -3819,7 +3927,7 @@
         "type": "Route",
         "name": "GET home-texts",
         "file": "routes\\web.php",
-        "line": 741,
+        "line": 756,
         "meta": {
           "action": "HomeTextController::class",
           "resource": true
@@ -3838,7 +3946,7 @@
         "type": "Route",
         "name": "POST home-texts",
         "file": "routes\\web.php",
-        "line": 741,
+        "line": 756,
         "meta": {
           "action": "HomeTextController::class",
           "resource": true
@@ -3849,7 +3957,7 @@
         "type": "Route",
         "name": "PUT home-texts",
         "file": "routes\\web.php",
-        "line": 741,
+        "line": 756,
         "meta": {
           "action": "HomeTextController::class",
           "resource": true
@@ -3860,7 +3968,7 @@
         "type": "Route",
         "name": "PATCH home-texts",
         "file": "routes\\web.php",
-        "line": 741,
+        "line": 756,
         "meta": {
           "action": "HomeTextController::class",
           "resource": true
@@ -3871,7 +3979,7 @@
         "type": "Route",
         "name": "DELETE home-texts",
         "file": "routes\\web.php",
-        "line": 741,
+        "line": 756,
         "meta": {
           "action": "HomeTextController::class",
           "resource": true
@@ -3882,7 +3990,7 @@
         "type": "Route",
         "name": "GET day-tour-texts",
         "file": "routes\\web.php",
-        "line": 742,
+        "line": 757,
         "meta": {
           "action": "DayTourTextController::class",
           "resource": true
@@ -3901,7 +4009,7 @@
         "type": "Route",
         "name": "POST day-tour-texts",
         "file": "routes\\web.php",
-        "line": 742,
+        "line": 757,
         "meta": {
           "action": "DayTourTextController::class",
           "resource": true
@@ -3912,7 +4020,7 @@
         "type": "Route",
         "name": "PUT day-tour-texts",
         "file": "routes\\web.php",
-        "line": 742,
+        "line": 757,
         "meta": {
           "action": "DayTourTextController::class",
           "resource": true
@@ -3923,7 +4031,7 @@
         "type": "Route",
         "name": "PATCH day-tour-texts",
         "file": "routes\\web.php",
-        "line": 742,
+        "line": 757,
         "meta": {
           "action": "DayTourTextController::class",
           "resource": true
@@ -3934,7 +4042,7 @@
         "type": "Route",
         "name": "DELETE day-tour-texts",
         "file": "routes\\web.php",
-        "line": 742,
+        "line": 757,
         "meta": {
           "action": "DayTourTextController::class",
           "resource": true
@@ -3945,7 +4053,7 @@
         "type": "Route",
         "name": "GET stay-texts",
         "file": "routes\\web.php",
-        "line": 743,
+        "line": 758,
         "meta": {
           "action": "StayTextController::class",
           "resource": true
@@ -3964,7 +4072,7 @@
         "type": "Route",
         "name": "POST stay-texts",
         "file": "routes\\web.php",
-        "line": 743,
+        "line": 758,
         "meta": {
           "action": "StayTextController::class",
           "resource": true
@@ -3975,7 +4083,7 @@
         "type": "Route",
         "name": "PUT stay-texts",
         "file": "routes\\web.php",
-        "line": 743,
+        "line": 758,
         "meta": {
           "action": "StayTextController::class",
           "resource": true
@@ -3986,7 +4094,7 @@
         "type": "Route",
         "name": "PATCH stay-texts",
         "file": "routes\\web.php",
-        "line": 743,
+        "line": 758,
         "meta": {
           "action": "StayTextController::class",
           "resource": true
@@ -3997,7 +4105,7 @@
         "type": "Route",
         "name": "DELETE stay-texts",
         "file": "routes\\web.php",
-        "line": 743,
+        "line": 758,
         "meta": {
           "action": "StayTextController::class",
           "resource": true
@@ -4008,7 +4116,7 @@
         "type": "Route",
         "name": "GET do-texts",
         "file": "routes\\web.php",
-        "line": 744,
+        "line": 759,
         "meta": {
           "action": "DoTextController::class",
           "resource": true
@@ -4027,7 +4135,7 @@
         "type": "Route",
         "name": "POST do-texts",
         "file": "routes\\web.php",
-        "line": 744,
+        "line": 759,
         "meta": {
           "action": "DoTextController::class",
           "resource": true
@@ -4038,7 +4146,7 @@
         "type": "Route",
         "name": "PUT do-texts",
         "file": "routes\\web.php",
-        "line": 744,
+        "line": 759,
         "meta": {
           "action": "DoTextController::class",
           "resource": true
@@ -4049,7 +4157,7 @@
         "type": "Route",
         "name": "PATCH do-texts",
         "file": "routes\\web.php",
-        "line": 744,
+        "line": 759,
         "meta": {
           "action": "DoTextController::class",
           "resource": true
@@ -4060,7 +4168,7 @@
         "type": "Route",
         "name": "DELETE do-texts",
         "file": "routes\\web.php",
-        "line": 744,
+        "line": 759,
         "meta": {
           "action": "DoTextController::class",
           "resource": true
@@ -4071,7 +4179,7 @@
         "type": "Route",
         "name": "GET food-texts",
         "file": "routes\\web.php",
-        "line": 745,
+        "line": 760,
         "meta": {
           "action": "FoodTextController::class",
           "resource": true
@@ -4090,7 +4198,7 @@
         "type": "Route",
         "name": "POST food-texts",
         "file": "routes\\web.php",
-        "line": 745,
+        "line": 760,
         "meta": {
           "action": "FoodTextController::class",
           "resource": true
@@ -4101,7 +4209,7 @@
         "type": "Route",
         "name": "PUT food-texts",
         "file": "routes\\web.php",
-        "line": 745,
+        "line": 760,
         "meta": {
           "action": "FoodTextController::class",
           "resource": true
@@ -4112,7 +4220,7 @@
         "type": "Route",
         "name": "PATCH food-texts",
         "file": "routes\\web.php",
-        "line": 745,
+        "line": 760,
         "meta": {
           "action": "FoodTextController::class",
           "resource": true
@@ -4123,7 +4231,7 @@
         "type": "Route",
         "name": "DELETE food-texts",
         "file": "routes\\web.php",
-        "line": 745,
+        "line": 760,
         "meta": {
           "action": "FoodTextController::class",
           "resource": true
@@ -4134,7 +4242,7 @@
         "type": "Route",
         "name": "GET special-texts",
         "file": "routes\\web.php",
-        "line": 746,
+        "line": 761,
         "meta": {
           "action": "SpecialTextController::class",
           "resource": true
@@ -4153,7 +4261,7 @@
         "type": "Route",
         "name": "POST special-texts",
         "file": "routes\\web.php",
-        "line": 746,
+        "line": 761,
         "meta": {
           "action": "SpecialTextController::class",
           "resource": true
@@ -4164,7 +4272,7 @@
         "type": "Route",
         "name": "PUT special-texts",
         "file": "routes\\web.php",
-        "line": 746,
+        "line": 761,
         "meta": {
           "action": "SpecialTextController::class",
           "resource": true
@@ -4175,7 +4283,7 @@
         "type": "Route",
         "name": "PATCH special-texts",
         "file": "routes\\web.php",
-        "line": 746,
+        "line": 761,
         "meta": {
           "action": "SpecialTextController::class",
           "resource": true
@@ -4186,7 +4294,7 @@
         "type": "Route",
         "name": "DELETE special-texts",
         "file": "routes\\web.php",
-        "line": 746,
+        "line": 761,
         "meta": {
           "action": "SpecialTextController::class",
           "resource": true
@@ -4197,7 +4305,7 @@
         "type": "Route",
         "name": "GET farm-texts",
         "file": "routes\\web.php",
-        "line": 747,
+        "line": 762,
         "meta": {
           "action": "FarmTextController::class",
           "resource": true
@@ -4216,7 +4324,7 @@
         "type": "Route",
         "name": "POST farm-texts",
         "file": "routes\\web.php",
-        "line": 747,
+        "line": 762,
         "meta": {
           "action": "FarmTextController::class",
           "resource": true
@@ -4227,7 +4335,7 @@
         "type": "Route",
         "name": "PUT farm-texts",
         "file": "routes\\web.php",
-        "line": 747,
+        "line": 762,
         "meta": {
           "action": "FarmTextController::class",
           "resource": true
@@ -4238,7 +4346,7 @@
         "type": "Route",
         "name": "PATCH farm-texts",
         "file": "routes\\web.php",
-        "line": 747,
+        "line": 762,
         "meta": {
           "action": "FarmTextController::class",
           "resource": true
@@ -4249,7 +4357,7 @@
         "type": "Route",
         "name": "DELETE farm-texts",
         "file": "routes\\web.php",
-        "line": 747,
+        "line": 762,
         "meta": {
           "action": "FarmTextController::class",
           "resource": true
@@ -4260,7 +4368,7 @@
         "type": "Route",
         "name": "GET shop-texts",
         "file": "routes\\web.php",
-        "line": 748,
+        "line": 763,
         "meta": {
           "action": "ShopTextController::class",
           "resource": true
@@ -4279,7 +4387,7 @@
         "type": "Route",
         "name": "POST shop-texts",
         "file": "routes\\web.php",
-        "line": 748,
+        "line": 763,
         "meta": {
           "action": "ShopTextController::class",
           "resource": true
@@ -4290,7 +4398,7 @@
         "type": "Route",
         "name": "PUT shop-texts",
         "file": "routes\\web.php",
-        "line": 748,
+        "line": 763,
         "meta": {
           "action": "ShopTextController::class",
           "resource": true
@@ -4301,7 +4409,7 @@
         "type": "Route",
         "name": "PATCH shop-texts",
         "file": "routes\\web.php",
-        "line": 748,
+        "line": 763,
         "meta": {
           "action": "ShopTextController::class",
           "resource": true
@@ -4312,7 +4420,7 @@
         "type": "Route",
         "name": "DELETE shop-texts",
         "file": "routes\\web.php",
-        "line": 748,
+        "line": 763,
         "meta": {
           "action": "ShopTextController::class",
           "resource": true
@@ -4323,7 +4431,7 @@
         "type": "Route",
         "name": "GET activity-text",
         "file": "routes\\web.php",
-        "line": 749,
+        "line": 764,
         "meta": {
           "action": "ActivityTextController::class",
           "resource": true
@@ -4342,7 +4450,7 @@
         "type": "Route",
         "name": "POST activity-text",
         "file": "routes\\web.php",
-        "line": 749,
+        "line": 764,
         "meta": {
           "action": "ActivityTextController::class",
           "resource": true
@@ -4353,7 +4461,7 @@
         "type": "Route",
         "name": "PUT activity-text",
         "file": "routes\\web.php",
-        "line": 749,
+        "line": 764,
         "meta": {
           "action": "ActivityTextController::class",
           "resource": true
@@ -4364,7 +4472,7 @@
         "type": "Route",
         "name": "PATCH activity-text",
         "file": "routes\\web.php",
-        "line": 749,
+        "line": 764,
         "meta": {
           "action": "ActivityTextController::class",
           "resource": true
@@ -4375,7 +4483,7 @@
         "type": "Route",
         "name": "DELETE activity-text",
         "file": "routes\\web.php",
-        "line": 749,
+        "line": 764,
         "meta": {
           "action": "ActivityTextController::class",
           "resource": true
@@ -4386,7 +4494,7 @@
         "type": "Route",
         "name": "GET staycation-text",
         "file": "routes\\web.php",
-        "line": 750,
+        "line": 765,
         "meta": {
           "action": "StaycationTextController::class",
           "resource": true
@@ -4405,7 +4513,7 @@
         "type": "Route",
         "name": "POST staycation-text",
         "file": "routes\\web.php",
-        "line": 750,
+        "line": 765,
         "meta": {
           "action": "StaycationTextController::class",
           "resource": true
@@ -4416,7 +4524,7 @@
         "type": "Route",
         "name": "PUT staycation-text",
         "file": "routes\\web.php",
-        "line": 750,
+        "line": 765,
         "meta": {
           "action": "StaycationTextController::class",
           "resource": true
@@ -4427,7 +4535,7 @@
         "type": "Route",
         "name": "PATCH staycation-text",
         "file": "routes\\web.php",
-        "line": 750,
+        "line": 765,
         "meta": {
           "action": "StaycationTextController::class",
           "resource": true
@@ -4438,7 +4546,7 @@
         "type": "Route",
         "name": "DELETE staycation-text",
         "file": "routes\\web.php",
-        "line": 750,
+        "line": 765,
         "meta": {
           "action": "StaycationTextController::class",
           "resource": true
@@ -4449,7 +4557,7 @@
         "type": "Route",
         "name": "GET menu-text",
         "file": "routes\\web.php",
-        "line": 757,
+        "line": 772,
         "meta": {
           "action": "MenuTextController::class",
           "resource": true
@@ -4468,7 +4576,7 @@
         "type": "Route",
         "name": "POST menu-text",
         "file": "routes\\web.php",
-        "line": 757,
+        "line": 772,
         "meta": {
           "action": "MenuTextController::class",
           "resource": true
@@ -4479,7 +4587,7 @@
         "type": "Route",
         "name": "PUT menu-text",
         "file": "routes\\web.php",
-        "line": 757,
+        "line": 772,
         "meta": {
           "action": "MenuTextController::class",
           "resource": true
@@ -4490,7 +4598,7 @@
         "type": "Route",
         "name": "PATCH menu-text",
         "file": "routes\\web.php",
-        "line": 757,
+        "line": 772,
         "meta": {
           "action": "MenuTextController::class",
           "resource": true
@@ -4501,7 +4609,7 @@
         "type": "Route",
         "name": "DELETE menu-text",
         "file": "routes\\web.php",
-        "line": 757,
+        "line": 772,
         "meta": {
           "action": "MenuTextController::class",
           "resource": true
@@ -4512,7 +4620,7 @@
         "type": "Route",
         "name": "GET event-text",
         "file": "routes\\web.php",
-        "line": 758,
+        "line": 773,
         "meta": {
           "action": "EventTextController::class",
           "resource": true
@@ -4531,7 +4639,7 @@
         "type": "Route",
         "name": "POST event-text",
         "file": "routes\\web.php",
-        "line": 758,
+        "line": 773,
         "meta": {
           "action": "EventTextController::class",
           "resource": true
@@ -4542,7 +4650,7 @@
         "type": "Route",
         "name": "PUT event-text",
         "file": "routes\\web.php",
-        "line": 758,
+        "line": 773,
         "meta": {
           "action": "EventTextController::class",
           "resource": true
@@ -4553,7 +4661,7 @@
         "type": "Route",
         "name": "PATCH event-text",
         "file": "routes\\web.php",
-        "line": 758,
+        "line": 773,
         "meta": {
           "action": "EventTextController::class",
           "resource": true
@@ -4564,7 +4672,7 @@
         "type": "Route",
         "name": "DELETE event-text",
         "file": "routes\\web.php",
-        "line": 758,
+        "line": 773,
         "meta": {
           "action": "EventTextController::class",
           "resource": true
@@ -4575,7 +4683,7 @@
         "type": "Route",
         "name": "GET event-sections",
         "file": "routes\\web.php",
-        "line": 759,
+        "line": 774,
         "meta": {
           "action": "EventSectionController::class",
           "resource": true
@@ -4594,7 +4702,7 @@
         "type": "Route",
         "name": "POST event-sections",
         "file": "routes\\web.php",
-        "line": 759,
+        "line": 774,
         "meta": {
           "action": "EventSectionController::class",
           "resource": true
@@ -4605,7 +4713,7 @@
         "type": "Route",
         "name": "PUT event-sections",
         "file": "routes\\web.php",
-        "line": 759,
+        "line": 774,
         "meta": {
           "action": "EventSectionController::class",
           "resource": true
@@ -4616,7 +4724,7 @@
         "type": "Route",
         "name": "PATCH event-sections",
         "file": "routes\\web.php",
-        "line": 759,
+        "line": 774,
         "meta": {
           "action": "EventSectionController::class",
           "resource": true
@@ -4627,7 +4735,7 @@
         "type": "Route",
         "name": "DELETE event-sections",
         "file": "routes\\web.php",
-        "line": 759,
+        "line": 774,
         "meta": {
           "action": "EventSectionController::class",
           "resource": true
@@ -4638,7 +4746,7 @@
         "type": "Route",
         "name": "GET event-experience-sections",
         "file": "routes\\web.php",
-        "line": 761,
+        "line": 776,
         "meta": {
           "action": "EventExperienceSectionController::class",
           "resource": true
@@ -4657,7 +4765,7 @@
         "type": "Route",
         "name": "POST event-experience-sections",
         "file": "routes\\web.php",
-        "line": 761,
+        "line": 776,
         "meta": {
           "action": "EventExperienceSectionController::class",
           "resource": true
@@ -4668,7 +4776,7 @@
         "type": "Route",
         "name": "PUT event-experience-sections",
         "file": "routes\\web.php",
-        "line": 761,
+        "line": 776,
         "meta": {
           "action": "EventExperienceSectionController::class",
           "resource": true
@@ -4679,7 +4787,7 @@
         "type": "Route",
         "name": "PATCH event-experience-sections",
         "file": "routes\\web.php",
-        "line": 761,
+        "line": 776,
         "meta": {
           "action": "EventExperienceSectionController::class",
           "resource": true
@@ -4690,7 +4798,7 @@
         "type": "Route",
         "name": "DELETE event-experience-sections",
         "file": "routes\\web.php",
-        "line": 761,
+        "line": 776,
         "meta": {
           "action": "EventExperienceSectionController::class",
           "resource": true
@@ -4701,7 +4809,7 @@
         "type": "Route",
         "name": "GET farmInfo-text",
         "file": "routes\\web.php",
-        "line": 762,
+        "line": 777,
         "meta": {
           "action": "FarmInfoTextController::class",
           "resource": true
@@ -4720,7 +4828,7 @@
         "type": "Route",
         "name": "POST farmInfo-text",
         "file": "routes\\web.php",
-        "line": 762,
+        "line": 777,
         "meta": {
           "action": "FarmInfoTextController::class",
           "resource": true
@@ -4731,7 +4839,7 @@
         "type": "Route",
         "name": "PUT farmInfo-text",
         "file": "routes\\web.php",
-        "line": 762,
+        "line": 777,
         "meta": {
           "action": "FarmInfoTextController::class",
           "resource": true
@@ -4742,7 +4850,7 @@
         "type": "Route",
         "name": "PATCH farmInfo-text",
         "file": "routes\\web.php",
-        "line": 762,
+        "line": 777,
         "meta": {
           "action": "FarmInfoTextController::class",
           "resource": true
@@ -4753,7 +4861,7 @@
         "type": "Route",
         "name": "DELETE farmInfo-text",
         "file": "routes\\web.php",
-        "line": 762,
+        "line": 777,
         "meta": {
           "action": "FarmInfoTextController::class",
           "resource": true
@@ -4764,7 +4872,7 @@
         "type": "Route",
         "name": "GET day-text",
         "file": "routes\\web.php",
-        "line": 763,
+        "line": 778,
         "meta": {
           "action": "DayPackageTextController::class",
           "resource": true
@@ -4783,7 +4891,7 @@
         "type": "Route",
         "name": "POST day-text",
         "file": "routes\\web.php",
-        "line": 763,
+        "line": 778,
         "meta": {
           "action": "DayPackageTextController::class",
           "resource": true
@@ -4794,7 +4902,7 @@
         "type": "Route",
         "name": "PUT day-text",
         "file": "routes\\web.php",
-        "line": 763,
+        "line": 778,
         "meta": {
           "action": "DayPackageTextController::class",
           "resource": true
@@ -4805,7 +4913,7 @@
         "type": "Route",
         "name": "PATCH day-text",
         "file": "routes\\web.php",
-        "line": 763,
+        "line": 778,
         "meta": {
           "action": "DayPackageTextController::class",
           "resource": true
@@ -4816,7 +4924,7 @@
         "type": "Route",
         "name": "DELETE day-text",
         "file": "routes\\web.php",
-        "line": 763,
+        "line": 778,
         "meta": {
           "action": "DayPackageTextController::class",
           "resource": true
@@ -4827,7 +4935,7 @@
         "type": "Route",
         "name": "GET home-swiper-images",
         "file": "routes\\web.php",
-        "line": 767,
+        "line": 782,
         "meta": {
           "action": "HomeSwiperImageController::class",
           "resource": true
@@ -4846,7 +4954,7 @@
         "type": "Route",
         "name": "POST home-swiper-images",
         "file": "routes\\web.php",
-        "line": 767,
+        "line": 782,
         "meta": {
           "action": "HomeSwiperImageController::class",
           "resource": true
@@ -4857,7 +4965,7 @@
         "type": "Route",
         "name": "PUT home-swiper-images",
         "file": "routes\\web.php",
-        "line": 767,
+        "line": 782,
         "meta": {
           "action": "HomeSwiperImageController::class",
           "resource": true
@@ -4868,7 +4976,7 @@
         "type": "Route",
         "name": "PATCH home-swiper-images",
         "file": "routes\\web.php",
-        "line": 767,
+        "line": 782,
         "meta": {
           "action": "HomeSwiperImageController::class",
           "resource": true
@@ -4879,7 +4987,7 @@
         "type": "Route",
         "name": "DELETE home-swiper-images",
         "file": "routes\\web.php",
-        "line": 767,
+        "line": 782,
         "meta": {
           "action": "HomeSwiperImageController::class",
           "resource": true
@@ -4890,7 +4998,7 @@
         "type": "Route",
         "name": "GET day-tour-swiper-images",
         "file": "routes\\web.php",
-        "line": 768,
+        "line": 783,
         "meta": {
           "action": "DayTourSwiperImageController::class",
           "resource": true
@@ -4909,7 +5017,7 @@
         "type": "Route",
         "name": "POST day-tour-swiper-images",
         "file": "routes\\web.php",
-        "line": 768,
+        "line": 783,
         "meta": {
           "action": "DayTourSwiperImageController::class",
           "resource": true
@@ -4920,7 +5028,7 @@
         "type": "Route",
         "name": "PUT day-tour-swiper-images",
         "file": "routes\\web.php",
-        "line": 768,
+        "line": 783,
         "meta": {
           "action": "DayTourSwiperImageController::class",
           "resource": true
@@ -4931,7 +5039,7 @@
         "type": "Route",
         "name": "PATCH day-tour-swiper-images",
         "file": "routes\\web.php",
-        "line": 768,
+        "line": 783,
         "meta": {
           "action": "DayTourSwiperImageController::class",
           "resource": true
@@ -4942,7 +5050,7 @@
         "type": "Route",
         "name": "DELETE day-tour-swiper-images",
         "file": "routes\\web.php",
-        "line": 768,
+        "line": 783,
         "meta": {
           "action": "DayTourSwiperImageController::class",
           "resource": true
@@ -4953,7 +5061,7 @@
         "type": "Route",
         "name": "GET stay-swiper-images",
         "file": "routes\\web.php",
-        "line": 770,
+        "line": 785,
         "meta": {
           "action": "StaySwiperImageController::class",
           "resource": true
@@ -4972,7 +5080,7 @@
         "type": "Route",
         "name": "POST stay-swiper-images",
         "file": "routes\\web.php",
-        "line": 770,
+        "line": 785,
         "meta": {
           "action": "StaySwiperImageController::class",
           "resource": true
@@ -4983,7 +5091,7 @@
         "type": "Route",
         "name": "PUT stay-swiper-images",
         "file": "routes\\web.php",
-        "line": 770,
+        "line": 785,
         "meta": {
           "action": "StaySwiperImageController::class",
           "resource": true
@@ -4994,7 +5102,7 @@
         "type": "Route",
         "name": "PATCH stay-swiper-images",
         "file": "routes\\web.php",
-        "line": 770,
+        "line": 785,
         "meta": {
           "action": "StaySwiperImageController::class",
           "resource": true
@@ -5005,7 +5113,7 @@
         "type": "Route",
         "name": "DELETE stay-swiper-images",
         "file": "routes\\web.php",
-        "line": 770,
+        "line": 785,
         "meta": {
           "action": "StaySwiperImageController::class",
           "resource": true
@@ -5016,7 +5124,7 @@
         "type": "Route",
         "name": "GET do-swiper-images",
         "file": "routes\\web.php",
-        "line": 771,
+        "line": 786,
         "meta": {
           "action": "DoSwiperImageController::class",
           "resource": true
@@ -5035,7 +5143,7 @@
         "type": "Route",
         "name": "POST do-swiper-images",
         "file": "routes\\web.php",
-        "line": 771,
+        "line": 786,
         "meta": {
           "action": "DoSwiperImageController::class",
           "resource": true
@@ -5046,7 +5154,7 @@
         "type": "Route",
         "name": "PUT do-swiper-images",
         "file": "routes\\web.php",
-        "line": 771,
+        "line": 786,
         "meta": {
           "action": "DoSwiperImageController::class",
           "resource": true
@@ -5057,7 +5165,7 @@
         "type": "Route",
         "name": "PATCH do-swiper-images",
         "file": "routes\\web.php",
-        "line": 771,
+        "line": 786,
         "meta": {
           "action": "DoSwiperImageController::class",
           "resource": true
@@ -5068,7 +5176,7 @@
         "type": "Route",
         "name": "DELETE do-swiper-images",
         "file": "routes\\web.php",
-        "line": 771,
+        "line": 786,
         "meta": {
           "action": "DoSwiperImageController::class",
           "resource": true
@@ -5079,7 +5187,7 @@
         "type": "Route",
         "name": "GET food-swiper-images",
         "file": "routes\\web.php",
-        "line": 772,
+        "line": 787,
         "meta": {
           "action": "FoodSwiperImageController::class",
           "resource": true
@@ -5098,7 +5206,7 @@
         "type": "Route",
         "name": "POST food-swiper-images",
         "file": "routes\\web.php",
-        "line": 772,
+        "line": 787,
         "meta": {
           "action": "FoodSwiperImageController::class",
           "resource": true
@@ -5109,7 +5217,7 @@
         "type": "Route",
         "name": "PUT food-swiper-images",
         "file": "routes\\web.php",
-        "line": 772,
+        "line": 787,
         "meta": {
           "action": "FoodSwiperImageController::class",
           "resource": true
@@ -5120,7 +5228,7 @@
         "type": "Route",
         "name": "PATCH food-swiper-images",
         "file": "routes\\web.php",
-        "line": 772,
+        "line": 787,
         "meta": {
           "action": "FoodSwiperImageController::class",
           "resource": true
@@ -5131,7 +5239,7 @@
         "type": "Route",
         "name": "DELETE food-swiper-images",
         "file": "routes\\web.php",
-        "line": 772,
+        "line": 787,
         "meta": {
           "action": "FoodSwiperImageController::class",
           "resource": true
@@ -5142,7 +5250,7 @@
         "type": "Route",
         "name": "GET special-swiper-images",
         "file": "routes\\web.php",
-        "line": 773,
+        "line": 788,
         "meta": {
           "action": "SpecialSwiperImageController::class",
           "resource": true
@@ -5161,7 +5269,7 @@
         "type": "Route",
         "name": "POST special-swiper-images",
         "file": "routes\\web.php",
-        "line": 773,
+        "line": 788,
         "meta": {
           "action": "SpecialSwiperImageController::class",
           "resource": true
@@ -5172,7 +5280,7 @@
         "type": "Route",
         "name": "PUT special-swiper-images",
         "file": "routes\\web.php",
-        "line": 773,
+        "line": 788,
         "meta": {
           "action": "SpecialSwiperImageController::class",
           "resource": true
@@ -5183,7 +5291,7 @@
         "type": "Route",
         "name": "PATCH special-swiper-images",
         "file": "routes\\web.php",
-        "line": 773,
+        "line": 788,
         "meta": {
           "action": "SpecialSwiperImageController::class",
           "resource": true
@@ -5194,7 +5302,7 @@
         "type": "Route",
         "name": "DELETE special-swiper-images",
         "file": "routes\\web.php",
-        "line": 773,
+        "line": 788,
         "meta": {
           "action": "SpecialSwiperImageController::class",
           "resource": true
@@ -5205,7 +5313,7 @@
         "type": "Route",
         "name": "GET package-images",
         "file": "routes\\web.php",
-        "line": 774,
+        "line": 789,
         "meta": {
           "action": "PackageImageController::class",
           "resource": true
@@ -5224,7 +5332,7 @@
         "type": "Route",
         "name": "POST package-images",
         "file": "routes\\web.php",
-        "line": 774,
+        "line": 789,
         "meta": {
           "action": "PackageImageController::class",
           "resource": true
@@ -5235,7 +5343,7 @@
         "type": "Route",
         "name": "PUT package-images",
         "file": "routes\\web.php",
-        "line": 774,
+        "line": 789,
         "meta": {
           "action": "PackageImageController::class",
           "resource": true
@@ -5246,7 +5354,7 @@
         "type": "Route",
         "name": "PATCH package-images",
         "file": "routes\\web.php",
-        "line": 774,
+        "line": 789,
         "meta": {
           "action": "PackageImageController::class",
           "resource": true
@@ -5257,7 +5365,7 @@
         "type": "Route",
         "name": "DELETE package-images",
         "file": "routes\\web.php",
-        "line": 774,
+        "line": 789,
         "meta": {
           "action": "PackageImageController::class",
           "resource": true
@@ -5268,7 +5376,7 @@
         "type": "Route",
         "name": "GET farm-swiper-images",
         "file": "routes\\web.php",
-        "line": 776,
+        "line": 791,
         "meta": {
           "action": "FarmSwiperImageController::class",
           "resource": true
@@ -5287,7 +5395,7 @@
         "type": "Route",
         "name": "POST farm-swiper-images",
         "file": "routes\\web.php",
-        "line": 776,
+        "line": 791,
         "meta": {
           "action": "FarmSwiperImageController::class",
           "resource": true
@@ -5298,7 +5406,7 @@
         "type": "Route",
         "name": "PUT farm-swiper-images",
         "file": "routes\\web.php",
-        "line": 776,
+        "line": 791,
         "meta": {
           "action": "FarmSwiperImageController::class",
           "resource": true
@@ -5309,7 +5417,7 @@
         "type": "Route",
         "name": "PATCH farm-swiper-images",
         "file": "routes\\web.php",
-        "line": 776,
+        "line": 791,
         "meta": {
           "action": "FarmSwiperImageController::class",
           "resource": true
@@ -5320,7 +5428,7 @@
         "type": "Route",
         "name": "DELETE farm-swiper-images",
         "file": "routes\\web.php",
-        "line": 776,
+        "line": 791,
         "meta": {
           "action": "FarmSwiperImageController::class",
           "resource": true
@@ -5331,7 +5439,7 @@
         "type": "Route",
         "name": "GET activity-image",
         "file": "routes\\web.php",
-        "line": 777,
+        "line": 792,
         "meta": {
           "action": "ActivitySwiperImageController::class",
           "resource": true
@@ -5350,7 +5458,7 @@
         "type": "Route",
         "name": "POST activity-image",
         "file": "routes\\web.php",
-        "line": 777,
+        "line": 792,
         "meta": {
           "action": "ActivitySwiperImageController::class",
           "resource": true
@@ -5361,7 +5469,7 @@
         "type": "Route",
         "name": "PUT activity-image",
         "file": "routes\\web.php",
-        "line": 777,
+        "line": 792,
         "meta": {
           "action": "ActivitySwiperImageController::class",
           "resource": true
@@ -5372,7 +5480,7 @@
         "type": "Route",
         "name": "PATCH activity-image",
         "file": "routes\\web.php",
-        "line": 777,
+        "line": 792,
         "meta": {
           "action": "ActivitySwiperImageController::class",
           "resource": true
@@ -5383,7 +5491,7 @@
         "type": "Route",
         "name": "DELETE activity-image",
         "file": "routes\\web.php",
-        "line": 777,
+        "line": 792,
         "meta": {
           "action": "ActivitySwiperImageController::class",
           "resource": true
@@ -5394,7 +5502,7 @@
         "type": "Route",
         "name": "GET staycation-image",
         "file": "routes\\web.php",
-        "line": 778,
+        "line": 793,
         "meta": {
           "action": "StaycationSwiperImageController::class",
           "resource": true
@@ -5413,7 +5521,7 @@
         "type": "Route",
         "name": "POST staycation-image",
         "file": "routes\\web.php",
-        "line": 778,
+        "line": 793,
         "meta": {
           "action": "StaycationSwiperImageController::class",
           "resource": true
@@ -5424,7 +5532,7 @@
         "type": "Route",
         "name": "PUT staycation-image",
         "file": "routes\\web.php",
-        "line": 778,
+        "line": 793,
         "meta": {
           "action": "StaycationSwiperImageController::class",
           "resource": true
@@ -5435,7 +5543,7 @@
         "type": "Route",
         "name": "PATCH staycation-image",
         "file": "routes\\web.php",
-        "line": 778,
+        "line": 793,
         "meta": {
           "action": "StaycationSwiperImageController::class",
           "resource": true
@@ -5446,7 +5554,7 @@
         "type": "Route",
         "name": "DELETE staycation-image",
         "file": "routes\\web.php",
-        "line": 778,
+        "line": 793,
         "meta": {
           "action": "StaycationSwiperImageController::class",
           "resource": true
@@ -5457,7 +5565,7 @@
         "type": "Route",
         "name": "GET menu-image",
         "file": "routes\\web.php",
-        "line": 785,
+        "line": 800,
         "meta": {
           "action": "MenuSwiperImageController::class",
           "resource": true
@@ -5476,7 +5584,7 @@
         "type": "Route",
         "name": "POST menu-image",
         "file": "routes\\web.php",
-        "line": 785,
+        "line": 800,
         "meta": {
           "action": "MenuSwiperImageController::class",
           "resource": true
@@ -5487,7 +5595,7 @@
         "type": "Route",
         "name": "PUT menu-image",
         "file": "routes\\web.php",
-        "line": 785,
+        "line": 800,
         "meta": {
           "action": "MenuSwiperImageController::class",
           "resource": true
@@ -5498,7 +5606,7 @@
         "type": "Route",
         "name": "PATCH menu-image",
         "file": "routes\\web.php",
-        "line": 785,
+        "line": 800,
         "meta": {
           "action": "MenuSwiperImageController::class",
           "resource": true
@@ -5509,7 +5617,7 @@
         "type": "Route",
         "name": "DELETE menu-image",
         "file": "routes\\web.php",
-        "line": 785,
+        "line": 800,
         "meta": {
           "action": "MenuSwiperImageController::class",
           "resource": true
@@ -5520,7 +5628,7 @@
         "type": "Route",
         "name": "GET event-image",
         "file": "routes\\web.php",
-        "line": 786,
+        "line": 801,
         "meta": {
           "action": "EventSwiperImageController::class",
           "resource": true
@@ -5539,7 +5647,7 @@
         "type": "Route",
         "name": "POST event-image",
         "file": "routes\\web.php",
-        "line": 786,
+        "line": 801,
         "meta": {
           "action": "EventSwiperImageController::class",
           "resource": true
@@ -5550,7 +5658,7 @@
         "type": "Route",
         "name": "PUT event-image",
         "file": "routes\\web.php",
-        "line": 786,
+        "line": 801,
         "meta": {
           "action": "EventSwiperImageController::class",
           "resource": true
@@ -5561,7 +5669,7 @@
         "type": "Route",
         "name": "PATCH event-image",
         "file": "routes\\web.php",
-        "line": 786,
+        "line": 801,
         "meta": {
           "action": "EventSwiperImageController::class",
           "resource": true
@@ -5572,7 +5680,7 @@
         "type": "Route",
         "name": "DELETE event-image",
         "file": "routes\\web.php",
-        "line": 786,
+        "line": 801,
         "meta": {
           "action": "EventSwiperImageController::class",
           "resource": true
@@ -5583,7 +5691,7 @@
         "type": "Route",
         "name": "GET farmInfo-image",
         "file": "routes\\web.php",
-        "line": 787,
+        "line": 802,
         "meta": {
           "action": "FarmInfoSwiperImageController::class",
           "resource": true
@@ -5602,7 +5710,7 @@
         "type": "Route",
         "name": "POST farmInfo-image",
         "file": "routes\\web.php",
-        "line": 787,
+        "line": 802,
         "meta": {
           "action": "FarmInfoSwiperImageController::class",
           "resource": true
@@ -5613,7 +5721,7 @@
         "type": "Route",
         "name": "PUT farmInfo-image",
         "file": "routes\\web.php",
-        "line": 787,
+        "line": 802,
         "meta": {
           "action": "FarmInfoSwiperImageController::class",
           "resource": true
@@ -5624,7 +5732,7 @@
         "type": "Route",
         "name": "PATCH farmInfo-image",
         "file": "routes\\web.php",
-        "line": 787,
+        "line": 802,
         "meta": {
           "action": "FarmInfoSwiperImageController::class",
           "resource": true
@@ -5635,7 +5743,7 @@
         "type": "Route",
         "name": "DELETE farmInfo-image",
         "file": "routes\\web.php",
-        "line": 787,
+        "line": 802,
         "meta": {
           "action": "FarmInfoSwiperImageController::class",
           "resource": true
@@ -5646,7 +5754,7 @@
         "type": "Route",
         "name": "GET activity-list",
         "file": "routes\\web.php",
-        "line": 799,
+        "line": 814,
         "meta": {
           "action": "ActivityController::class",
           "resource": true
@@ -5665,7 +5773,7 @@
         "type": "Route",
         "name": "POST activity-list",
         "file": "routes\\web.php",
-        "line": 799,
+        "line": 814,
         "meta": {
           "action": "ActivityController::class",
           "resource": true
@@ -5676,7 +5784,7 @@
         "type": "Route",
         "name": "PUT activity-list",
         "file": "routes\\web.php",
-        "line": 799,
+        "line": 814,
         "meta": {
           "action": "ActivityController::class",
           "resource": true
@@ -5687,7 +5795,7 @@
         "type": "Route",
         "name": "PATCH activity-list",
         "file": "routes\\web.php",
-        "line": 799,
+        "line": 814,
         "meta": {
           "action": "ActivityController::class",
           "resource": true
@@ -5698,7 +5806,7 @@
         "type": "Route",
         "name": "DELETE activity-list",
         "file": "routes\\web.php",
-        "line": 799,
+        "line": 814,
         "meta": {
           "action": "ActivityController::class",
           "resource": true
@@ -5709,7 +5817,7 @@
         "type": "Route",
         "name": "GET staycation-list",
         "file": "routes\\web.php",
-        "line": 801,
+        "line": 816,
         "meta": {
           "action": "StaycationController::class",
           "resource": true
@@ -5728,7 +5836,7 @@
         "type": "Route",
         "name": "POST staycation-list",
         "file": "routes\\web.php",
-        "line": 801,
+        "line": 816,
         "meta": {
           "action": "StaycationController::class",
           "resource": true
@@ -5739,7 +5847,7 @@
         "type": "Route",
         "name": "PUT staycation-list",
         "file": "routes\\web.php",
-        "line": 801,
+        "line": 816,
         "meta": {
           "action": "StaycationController::class",
           "resource": true
@@ -5750,7 +5858,7 @@
         "type": "Route",
         "name": "PATCH staycation-list",
         "file": "routes\\web.php",
-        "line": 801,
+        "line": 816,
         "meta": {
           "action": "StaycationController::class",
           "resource": true
@@ -5761,7 +5869,7 @@
         "type": "Route",
         "name": "DELETE staycation-list",
         "file": "routes\\web.php",
-        "line": 801,
+        "line": 816,
         "meta": {
           "action": "StaycationController::class",
           "resource": true
@@ -5772,7 +5880,7 @@
         "type": "Route",
         "name": "GET menu-list",
         "file": "routes\\web.php",
-        "line": 809,
+        "line": 824,
         "meta": {
           "action": "MenuController::class",
           "resource": true
@@ -5791,7 +5899,7 @@
         "type": "Route",
         "name": "POST menu-list",
         "file": "routes\\web.php",
-        "line": 809,
+        "line": 824,
         "meta": {
           "action": "MenuController::class",
           "resource": true
@@ -5802,7 +5910,7 @@
         "type": "Route",
         "name": "PUT menu-list",
         "file": "routes\\web.php",
-        "line": 809,
+        "line": 824,
         "meta": {
           "action": "MenuController::class",
           "resource": true
@@ -5813,7 +5921,7 @@
         "type": "Route",
         "name": "PATCH menu-list",
         "file": "routes\\web.php",
-        "line": 809,
+        "line": 824,
         "meta": {
           "action": "MenuController::class",
           "resource": true
@@ -5824,7 +5932,7 @@
         "type": "Route",
         "name": "DELETE menu-list",
         "file": "routes\\web.php",
-        "line": 809,
+        "line": 824,
         "meta": {
           "action": "MenuController::class",
           "resource": true
@@ -5835,7 +5943,7 @@
         "type": "Route",
         "name": "GET event-list",
         "file": "routes\\web.php",
-        "line": 810,
+        "line": 825,
         "meta": {
           "action": "EventController::class",
           "resource": true
@@ -5854,7 +5962,7 @@
         "type": "Route",
         "name": "POST event-list",
         "file": "routes\\web.php",
-        "line": 810,
+        "line": 825,
         "meta": {
           "action": "EventController::class",
           "resource": true
@@ -5865,7 +5973,7 @@
         "type": "Route",
         "name": "PUT event-list",
         "file": "routes\\web.php",
-        "line": 810,
+        "line": 825,
         "meta": {
           "action": "EventController::class",
           "resource": true
@@ -5876,7 +5984,7 @@
         "type": "Route",
         "name": "PATCH event-list",
         "file": "routes\\web.php",
-        "line": 810,
+        "line": 825,
         "meta": {
           "action": "EventController::class",
           "resource": true
@@ -5887,7 +5995,7 @@
         "type": "Route",
         "name": "DELETE event-list",
         "file": "routes\\web.php",
-        "line": 810,
+        "line": 825,
         "meta": {
           "action": "EventController::class",
           "resource": true
@@ -5898,7 +6006,7 @@
         "type": "Route",
         "name": "GET farmInfo-list",
         "file": "routes\\web.php",
-        "line": 811,
+        "line": 826,
         "meta": {
           "action": "FarmInfoController::class",
           "resource": true
@@ -5917,7 +6025,7 @@
         "type": "Route",
         "name": "POST farmInfo-list",
         "file": "routes\\web.php",
-        "line": 811,
+        "line": 826,
         "meta": {
           "action": "FarmInfoController::class",
           "resource": true
@@ -5928,7 +6036,7 @@
         "type": "Route",
         "name": "PUT farmInfo-list",
         "file": "routes\\web.php",
-        "line": 811,
+        "line": 826,
         "meta": {
           "action": "FarmInfoController::class",
           "resource": true
@@ -5939,7 +6047,7 @@
         "type": "Route",
         "name": "PATCH farmInfo-list",
         "file": "routes\\web.php",
-        "line": 811,
+        "line": 826,
         "meta": {
           "action": "FarmInfoController::class",
           "resource": true
@@ -5950,7 +6058,7 @@
         "type": "Route",
         "name": "DELETE farmInfo-list",
         "file": "routes\\web.php",
-        "line": 811,
+        "line": 826,
         "meta": {
           "action": "FarmInfoController::class",
           "resource": true
@@ -5961,7 +6069,7 @@
         "type": "Route",
         "name": "GET products",
         "file": "routes\\web.php",
-        "line": 812,
+        "line": 827,
         "meta": {
           "action": "ProductController::class",
           "resource": true
@@ -5980,7 +6088,7 @@
         "type": "Route",
         "name": "POST products",
         "file": "routes\\web.php",
-        "line": 812,
+        "line": 827,
         "meta": {
           "action": "ProductController::class",
           "resource": true
@@ -5991,7 +6099,7 @@
         "type": "Route",
         "name": "PUT products",
         "file": "routes\\web.php",
-        "line": 812,
+        "line": 827,
         "meta": {
           "action": "ProductController::class",
           "resource": true
@@ -6002,7 +6110,7 @@
         "type": "Route",
         "name": "PATCH products",
         "file": "routes\\web.php",
-        "line": 812,
+        "line": 827,
         "meta": {
           "action": "ProductController::class",
           "resource": true
@@ -6013,7 +6121,7 @@
         "type": "Route",
         "name": "DELETE products",
         "file": "routes\\web.php",
-        "line": 812,
+        "line": 827,
         "meta": {
           "action": "ProductController::class",
           "resource": true
@@ -6024,7 +6132,7 @@
         "type": "Route",
         "name": "GET day-tours",
         "file": "routes\\web.php",
-        "line": 815,
+        "line": 830,
         "meta": {
           "action": "DayTourController::class",
           "resource": true
@@ -6043,7 +6151,7 @@
         "type": "Route",
         "name": "POST day-tours",
         "file": "routes\\web.php",
-        "line": 815,
+        "line": 830,
         "meta": {
           "action": "DayTourController::class",
           "resource": true
@@ -6054,7 +6162,7 @@
         "type": "Route",
         "name": "PUT day-tours",
         "file": "routes\\web.php",
-        "line": 815,
+        "line": 830,
         "meta": {
           "action": "DayTourController::class",
           "resource": true
@@ -6065,7 +6173,7 @@
         "type": "Route",
         "name": "PATCH day-tours",
         "file": "routes\\web.php",
-        "line": 815,
+        "line": 830,
         "meta": {
           "action": "DayTourController::class",
           "resource": true
@@ -6076,7 +6184,7 @@
         "type": "Route",
         "name": "DELETE day-tours",
         "file": "routes\\web.php",
-        "line": 815,
+        "line": 830,
         "meta": {
           "action": "DayTourController::class",
           "resource": true
@@ -6087,7 +6195,7 @@
         "type": "Route",
         "name": "GET staycation-accommodations",
         "file": "routes\\web.php",
-        "line": 816,
+        "line": 831,
         "meta": {
           "action": "StaycationAccommodationController::class",
           "resource": true
@@ -6106,7 +6214,7 @@
         "type": "Route",
         "name": "POST staycation-accommodations",
         "file": "routes\\web.php",
-        "line": 816,
+        "line": 831,
         "meta": {
           "action": "StaycationAccommodationController::class",
           "resource": true
@@ -6117,7 +6225,7 @@
         "type": "Route",
         "name": "PUT staycation-accommodations",
         "file": "routes\\web.php",
-        "line": 816,
+        "line": 831,
         "meta": {
           "action": "StaycationAccommodationController::class",
           "resource": true
@@ -6128,7 +6236,7 @@
         "type": "Route",
         "name": "PATCH staycation-accommodations",
         "file": "routes\\web.php",
-        "line": 816,
+        "line": 831,
         "meta": {
           "action": "StaycationAccommodationController::class",
           "resource": true
@@ -6139,7 +6247,7 @@
         "type": "Route",
         "name": "DELETE staycation-accommodations",
         "file": "routes\\web.php",
-        "line": 816,
+        "line": 831,
         "meta": {
           "action": "StaycationAccommodationController::class",
           "resource": true
@@ -6150,7 +6258,7 @@
         "type": "Route",
         "name": "GET promo-codes",
         "file": "routes\\web.php",
-        "line": 866,
+        "line": 881,
         "meta": {
           "action": "PromoCodesController::class",
           "resource": true
@@ -6169,7 +6277,7 @@
         "type": "Route",
         "name": "POST promo-codes",
         "file": "routes\\web.php",
-        "line": 866,
+        "line": 881,
         "meta": {
           "action": "PromoCodesController::class",
           "resource": true
@@ -6180,7 +6288,7 @@
         "type": "Route",
         "name": "PUT promo-codes",
         "file": "routes\\web.php",
-        "line": 866,
+        "line": 881,
         "meta": {
           "action": "PromoCodesController::class",
           "resource": true
@@ -6191,7 +6299,7 @@
         "type": "Route",
         "name": "PATCH promo-codes",
         "file": "routes\\web.php",
-        "line": 866,
+        "line": 881,
         "meta": {
           "action": "PromoCodesController::class",
           "resource": true
@@ -6202,7 +6310,7 @@
         "type": "Route",
         "name": "DELETE promo-codes",
         "file": "routes\\web.php",
-        "line": 866,
+        "line": 881,
         "meta": {
           "action": "PromoCodesController::class",
           "resource": true
@@ -7182,6 +7290,14 @@
         "name": "FarmExperiencesApiController",
         "file": "app\\Http\\Controllers\\Api\\FarmExperiencesApiController.php",
         "line": 1,
+        "meta": {}
+      },
+      {
+        "id": "service:TwoFactorSessionService",
+        "type": "Service",
+        "name": "TwoFactorSessionService",
+        "file": "",
+        "line": 0,
         "meta": {}
       },
       {
@@ -8325,6 +8441,14 @@
         "type": "Service",
         "name": "PromoCodeService",
         "file": "app\\Services\\PromoCodeService.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
+        "id": "service:TwoFactorService",
+        "type": "Service",
+        "name": "TwoFactorService",
+        "file": "app\\Services\\TwoFactorService.php",
         "line": 1,
         "meta": {}
       },
@@ -10193,6 +10317,30 @@
         "meta": {}
       },
       {
+        "id": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "type": "Other",
+        "name": "2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "file": "database\\migrations\\2026_09_25_000002_sync_policy_phone_and_farm_typo.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
+        "id": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "type": "Other",
+        "name": "2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "file": "database\\migrations\\2026_09_25_000003_correct_homepage_farm_animals_role_typo.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
+        "id": "other:2026_09_25_000004_add_mandatory_two_factor_columns_to_users",
+        "type": "Other",
+        "name": "2026_09_25_000004_add_mandatory_two_factor_columns_to_users",
+        "file": "database\\migrations\\2026_09_25_000004_add_mandatory_two_factor_columns_to_users.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
         "id": "other:BarangaySeeder",
         "type": "Other",
         "name": "BarangaySeeder",
@@ -10745,6 +10893,30 @@
         "meta": {}
       },
       {
+        "id": "other:challenge.blade",
+        "type": "Other",
+        "name": "challenge.blade",
+        "file": "resources\\views\\auth\\two-factor\\challenge.blade.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
+        "id": "other:recovery-codes.blade",
+        "type": "Other",
+        "name": "recovery-codes.blade",
+        "file": "resources\\views\\auth\\two-factor\\recovery-codes.blade.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
+        "id": "other:setup.blade",
+        "type": "Other",
+        "name": "setup.blade",
+        "file": "resources\\views\\auth\\two-factor\\setup.blade.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
         "id": "other:calendar.blade",
         "type": "Other",
         "name": "calendar.blade",
@@ -11141,6 +11313,22 @@
         "type": "Other",
         "name": "app-layout.blade",
         "file": "resources\\views\\components\\app-layout.blade.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
+        "id": "other:card.blade",
+        "type": "Other",
+        "name": "card.blade",
+        "file": "resources\\views\\components\\auth\\card.blade.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
+        "id": "other:otp-input.blade",
+        "type": "Other",
+        "name": "otp-input.blade",
+        "file": "resources\\views\\components\\auth\\otp-input.blade.php",
         "line": 1,
         "meta": {}
       },
@@ -11961,6 +12149,14 @@
         "meta": {}
       },
       {
+        "id": "other:AdminPackageImageRemovalTest",
+        "type": "Other",
+        "name": "AdminPackageImageRemovalTest",
+        "file": "tests\\Feature\\AdminPackageImageRemovalTest.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
         "id": "other:AdminPaymongoWebhookCleanupTest",
         "type": "Other",
         "name": "AdminPaymongoWebhookCleanupTest",
@@ -12237,6 +12433,14 @@
         "type": "Other",
         "name": "TestimonialsPaginationLayoutTest",
         "file": "tests\\Feature\\TestimonialsPaginationLayoutTest.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
+        "id": "other:TwoFactorAuthenticationTest",
+        "type": "Other",
+        "name": "TwoFactorAuthenticationTest",
+        "file": "tests\\Feature\\TwoFactorAuthenticationTest.php",
         "line": 1,
         "meta": {}
       },
@@ -12927,6 +13131,76 @@
         "to": "controller:LoginController",
         "kind": "CALLS",
         "label": "LoginController@logout",
+        "meta": {}
+      },
+      {
+        "from": "route:GET:/setup",
+        "to": "controller:TwoFactorController",
+        "kind": "CALLS",
+        "label": "TwoFactorController@setup",
+        "meta": {}
+      },
+      {
+        "from": "route:POST:/setup",
+        "to": "controller:TwoFactorController",
+        "kind": "CALLS",
+        "label": "TwoFactorController@confirmSetup",
+        "meta": {}
+      },
+      {
+        "from": "route:GET:/challenge",
+        "to": "controller:TwoFactorController",
+        "kind": "CALLS",
+        "label": "TwoFactorController@challenge",
+        "meta": {}
+      },
+      {
+        "from": "route:POST:/challenge",
+        "to": "controller:TwoFactorController",
+        "kind": "CALLS",
+        "label": "TwoFactorController@verifyChallenge",
+        "meta": {}
+      },
+      {
+        "from": "route:GET:/recovery",
+        "to": "controller:TwoFactorController",
+        "kind": "CALLS",
+        "label": "TwoFactorController@recovery",
+        "meta": {}
+      },
+      {
+        "from": "route:POST:/recovery",
+        "to": "controller:TwoFactorController",
+        "kind": "CALLS",
+        "label": "TwoFactorController@verifyRecovery",
+        "meta": {}
+      },
+      {
+        "from": "route:GET:/recovery-codes",
+        "to": "controller:TwoFactorController",
+        "kind": "CALLS",
+        "label": "TwoFactorController@recoveryCodes",
+        "meta": {}
+      },
+      {
+        "from": "route:GET:/recovery-codes/download",
+        "to": "controller:TwoFactorController",
+        "kind": "CALLS",
+        "label": "TwoFactorController@downloadRecoveryCodes",
+        "meta": {}
+      },
+      {
+        "from": "route:POST:/recovery-codes/continue",
+        "to": "controller:TwoFactorController",
+        "kind": "CALLS",
+        "label": "TwoFactorController@continueAfterRecoveryCodes",
+        "meta": {}
+      },
+      {
+        "from": "route:POST:/recovery-codes/regenerate",
+        "to": "controller:TwoFactorController",
+        "kind": "CALLS",
+        "label": "TwoFactorController@regenerateRecoveryCodes",
         "meta": {}
       },
       {
@@ -17711,6 +17985,97 @@
         "meta": {}
       },
       {
+        "from": "controller:TwoFactorController",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "controller:TwoFactorController",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "controller:TwoFactorController",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "controller:TwoFactorController",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "controller:TwoFactorController",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "controller:TwoFactorController",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "controller:TwoFactorController",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "controller:TwoFactorController",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "controller:TwoFactorController",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "controller:TwoFactorController",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "controller:TwoFactorController",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "controller:TwoFactorController",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "controller:TwoFactorController",
+        "to": "auth:Auth",
+        "kind": "DEPENDS_ON",
+        "label": "Auth::",
+        "meta": {}
+      },
+      {
         "from": "controller:BookingCalendarController",
         "to": "schema:Schema",
         "kind": "DEPENDS_ON",
@@ -18317,6 +18682,13 @@
         "to": "auth:Auth",
         "kind": "DEPENDS_ON",
         "label": "Auth::",
+        "meta": {}
+      },
+      {
+        "from": "other:EnsureTwoFactorIsVerified",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
         "meta": {}
       },
       {
@@ -19598,6 +19970,55 @@
         "to": "log:Log",
         "kind": "DEPENDS_ON",
         "label": "Log::",
+        "meta": {}
+      },
+      {
+        "from": "service:TwoFactorService",
+        "to": "str:Str",
+        "kind": "DEPENDS_ON",
+        "label": "Str::",
+        "meta": {}
+      },
+      {
+        "from": "service:TwoFactorService",
+        "to": "str:Str",
+        "kind": "DEPENDS_ON",
+        "label": "Str::",
+        "meta": {}
+      },
+      {
+        "from": "service:TwoFactorService",
+        "to": "str:Str",
+        "kind": "DEPENDS_ON",
+        "label": "Str::",
+        "meta": {}
+      },
+      {
+        "from": "service:TwoFactorService",
+        "to": "str:Str",
+        "kind": "DEPENDS_ON",
+        "label": "Str::",
+        "meta": {}
+      },
+      {
+        "from": "service:TwoFactorService",
+        "to": "str:Str",
+        "kind": "DEPENDS_ON",
+        "label": "Str::",
+        "meta": {}
+      },
+      {
+        "from": "service:TwoFactorService",
+        "to": "str:Str",
+        "kind": "DEPENDS_ON",
+        "label": "Str::",
+        "meta": {}
+      },
+      {
+        "from": "service:TwoFactorService",
+        "to": "str:Str",
+        "kind": "DEPENDS_ON",
+        "label": "Str::",
         "meta": {}
       },
       {
@@ -24620,6 +25041,195 @@
         "meta": {}
       },
       {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000004_add_mandatory_two_factor_columns_to_users",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000004_add_mandatory_two_factor_columns_to_users",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000004_add_mandatory_two_factor_columns_to_users",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000004_add_mandatory_two_factor_columns_to_users",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000004_add_mandatory_two_factor_columns_to_users",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000004_add_mandatory_two_factor_columns_to_users",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
         "from": "other:store.blade",
         "to": "str:Str",
         "kind": "DEPENDS_ON",
@@ -25979,6 +26589,83 @@
       },
       {
         "from": "controller:web",
+        "to": "route:Route",
+        "kind": "DEPENDS_ON",
+        "label": "Route::",
+        "meta": {}
+      },
+      {
+        "from": "controller:web",
+        "to": "route:Route",
+        "kind": "DEPENDS_ON",
+        "label": "Route::",
+        "meta": {}
+      },
+      {
+        "from": "controller:web",
+        "to": "route:Route",
+        "kind": "DEPENDS_ON",
+        "label": "Route::",
+        "meta": {}
+      },
+      {
+        "from": "controller:web",
+        "to": "route:Route",
+        "kind": "DEPENDS_ON",
+        "label": "Route::",
+        "meta": {}
+      },
+      {
+        "from": "controller:web",
+        "to": "route:Route",
+        "kind": "DEPENDS_ON",
+        "label": "Route::",
+        "meta": {}
+      },
+      {
+        "from": "controller:web",
+        "to": "route:Route",
+        "kind": "DEPENDS_ON",
+        "label": "Route::",
+        "meta": {}
+      },
+      {
+        "from": "controller:web",
+        "to": "route:Route",
+        "kind": "DEPENDS_ON",
+        "label": "Route::",
+        "meta": {}
+      },
+      {
+        "from": "controller:web",
+        "to": "route:Route",
+        "kind": "DEPENDS_ON",
+        "label": "Route::",
+        "meta": {}
+      },
+      {
+        "from": "controller:web",
+        "to": "route:Route",
+        "kind": "DEPENDS_ON",
+        "label": "Route::",
+        "meta": {}
+      },
+      {
+        "from": "controller:web",
+        "to": "route:Route",
+        "kind": "DEPENDS_ON",
+        "label": "Route::",
+        "meta": {}
+      },
+      {
+        "from": "controller:web",
+        "to": "route:Route",
+        "kind": "DEPENDS_ON",
+        "label": "Route::",
+        "meta": {}
+      },
+      {
+        "from": "controller:web",
         "to": "auth:Auth",
         "kind": "DEPENDS_ON",
         "label": "Auth::",
@@ -26255,6 +26942,13 @@
         "to": "schema:Schema",
         "kind": "DEPENDS_ON",
         "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:AdminPackageImageRemovalTest",
+        "to": "model:User",
+        "kind": "WRITES",
+        "label": "User",
         "meta": {}
       },
       {
@@ -27183,6 +27877,13 @@
       },
       {
         "from": "other:SocialLoginTest",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "other:SocialLoginTest",
         "to": "model:User",
         "kind": "WRITES",
         "label": "User",
@@ -27350,6 +28051,83 @@
         "meta": {}
       },
       {
+        "from": "other:TwoFactorAuthenticationTest",
+        "to": "model:User",
+        "kind": "WRITES",
+        "label": "User",
+        "meta": {}
+      },
+      {
+        "from": "other:TwoFactorAuthenticationTest",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "other:TwoFactorAuthenticationTest",
+        "to": "service:TwoFactorService",
+        "kind": "CALLS",
+        "label": "TwoFactorService",
+        "meta": {}
+      },
+      {
+        "from": "other:TwoFactorAuthenticationTest",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "other:TwoFactorAuthenticationTest",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
+        "meta": {}
+      },
+      {
+        "from": "other:TwoFactorAuthenticationTest",
+        "to": "service:TwoFactorService",
+        "kind": "CALLS",
+        "label": "TwoFactorService",
+        "meta": {}
+      },
+      {
+        "from": "other:TwoFactorAuthenticationTest",
+        "to": "service:TwoFactorService",
+        "kind": "CALLS",
+        "label": "TwoFactorService",
+        "meta": {}
+      },
+      {
+        "from": "other:TwoFactorAuthenticationTest",
+        "to": "service:TwoFactorService",
+        "kind": "CALLS",
+        "label": "TwoFactorService",
+        "meta": {}
+      },
+      {
+        "from": "other:TwoFactorAuthenticationTest",
+        "to": "model:User",
+        "kind": "WRITES",
+        "label": "User",
+        "meta": {}
+      },
+      {
+        "from": "other:TwoFactorAuthenticationTest",
+        "to": "service:TwoFactorService",
+        "kind": "CALLS",
+        "label": "TwoFactorService",
+        "meta": {}
+      },
+      {
+        "from": "other:TwoFactorAuthenticationTest",
+        "to": "model:User",
+        "kind": "WRITES",
+        "label": "User",
+        "meta": {}
+      },
+      {
         "from": "other:WeatherForecastAccuracyTest",
         "to": "cache:Cache",
         "kind": "DEPENDS_ON",
@@ -27410,6 +28188,13 @@
         "to": "http:Http",
         "kind": "DEPENDS_ON",
         "label": "Http::",
+        "meta": {}
+      },
+      {
+        "from": "other:TestCase",
+        "to": "service:TwoFactorSessionService",
+        "kind": "CALLS",
+        "label": "TwoFactorSessionService",
         "meta": {}
       },
       {
@@ -27442,14 +28227,14 @@
       }
     ],
     "stats": {
-      "nodes": 1371,
-      "edges": 2162,
+      "nodes": 1394,
+      "edges": 2245,
       "by_type": {
-        "Route": 529,
-        "Controller": 165,
-        "Other": 543,
+        "Route": 539,
+        "Controller": 166,
+        "Other": 553,
         "Database": 1,
-        "Service": 26,
+        "Service": 28,
         "Model": 95,
         "Filesystem": 1,
         "Cache": 1,
