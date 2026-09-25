@@ -52,7 +52,7 @@
                 duration_value: '', duration_unit: 'hours', max_guests: '',
                 max_groups_per_day: '', pricing_type: 'per_pax',
                 imagePreview: null, inclusionsList: [], sessions: [],
-                is_active: true
+                is_active: true, removeImage: false
             },
 
             init() {
@@ -82,7 +82,7 @@
             },
 
             resetForm() {
-                this.form = { id: null, name: '', description: '', price: '', duration_value: '', duration_unit: 'hours', max_guests: '', max_groups_per_day: '', pricing_type: 'per_pax', imagePreview: null, inclusionsList: [], sessions: this.defaultSessions(), is_active: true };
+                this.form = { id: null, name: '', description: '', price: '', duration_value: '', duration_unit: 'hours', max_guests: '', max_groups_per_day: '', pricing_type: 'per_pax', imagePreview: null, inclusionsList: [], sessions: this.defaultSessions(), is_active: true, removeImage: false };
                 this.isPackageEditMode = false;
                 this.errors = [];
                 if (this.$refs.imageFile) this.$refs.imageFile.value = '';
@@ -101,6 +101,22 @@
 
             removeInclusion(idx) {
                 this.form.inclusionsList.splice(idx, 1);
+            },
+
+            handlePackageImageChange(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    this.form.imagePreview = event.target.result;
+                    this.form.removeImage = false;
+                };
+                reader.readAsDataURL(file);
+            },
+
+            removePackageImage() {
+                this.form.imagePreview = null;
+                this.form.removeImage = true;
+                if (this.$refs.imageFile) this.$refs.imageFile.value = '';
             },
 
             initSortable() {
@@ -211,6 +227,7 @@
                         this.form.max_groups_per_day = String(parseInt(data.max_groups_per_day) || 1);
                         this.form.pricing_type = data.pricing_type || 'per_pax';
                         this.form.imagePreview = data.image || null;
+                        this.form.removeImage = false;
                         this.form.inclusionsList = Array.isArray(data.inclusions) ? data.inclusions : [];
                         this.form.sessions = this.parseSessionsForForm(data.sessions);
                         this.form.is_active = Boolean(data.is_active);
@@ -258,6 +275,7 @@
                 formData.append('sessions', JSON.stringify(selectedSessions));
                 formData.append('is_active', this.form.is_active ? 1 : 0);
                 if (this.$refs.imageFile?.files.length > 0) formData.append('image', this.$refs.imageFile.files[0]);
+                if (this.form.removeImage) formData.append('remove_image', '1');
                 let url = '{{ route('admin.packages.store') }}';
                 if (this.isPackageEditMode && this.form.id) { url = `/admin/packages/${this.form.id}`; formData.append('_method', 'PUT'); }
                 try {

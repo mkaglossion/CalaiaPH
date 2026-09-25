@@ -152,6 +152,7 @@ class PackageController extends Controller
             'sessions' => 'nullable|string',
             'price_configs' => 'nullable|string',
             'is_active' => 'boolean',
+            'remove_image' => 'nullable|boolean',
         ]);
 
         try {
@@ -199,10 +200,25 @@ class PackageController extends Controller
                         'errors' => ['image' => ['Failed to upload image: ' . $e->getMessage()]]
                     ], 422);
                 }
+            } elseif ($request->boolean('remove_image')) {
+                try {
+                    if ($package->image_public_id ?? false) {
+                        Cloudinary::uploadApi()->destroy($package->image_public_id);
+                    }
+
+                    $imageData['image'] = null;
+                    $imageData['image_public_id'] = null;
+                } catch (\Exception $e) {
+                    return response()->json([
+                        'success' => false,
+                        'errors' => ['image' => ['Failed to remove image: ' . $e->getMessage()]]
+                    ], 422);
+                }
             }
 
             // Remove image from validated if it wasn't a file
             unset($validated['image']);
+            unset($validated['remove_image']);
 
             $package->update(array_merge($validated, $imageData));
 
