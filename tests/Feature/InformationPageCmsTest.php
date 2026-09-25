@@ -283,7 +283,7 @@ class InformationPageCmsTest extends TestCase
         $admin = User::factory()->create(['user_type' => 'admin']);
         $contactPage = InformationPage::query()->where('slug', 'contact')->firstOrFail();
         $currentPhone = $contactPage->resolvedContactPhone();
-        $updatedPhone = '+63 956 319 2448';
+        $updatedPhone = '+63 917 555 0199';
 
         $this->actingAs($admin)
             ->put(route('admin.information.update', $contactPage->slug), [
@@ -311,7 +311,7 @@ class InformationPageCmsTest extends TestCase
 
         $contactDetails = InformationPage::contactDetails();
         $this->assertSame($updatedPhone, $contactDetails['phone']);
-        $this->assertSame('tel:+639563192448', $contactDetails['phone_uri']);
+        $this->assertSame('tel:+639175550199', $contactDetails['phone_uri']);
 
         $maintenance = view('system.maintenance', [
             'message' => 'Scheduled maintenance.',
@@ -322,7 +322,7 @@ class InformationPageCmsTest extends TestCase
             'contactEmail' => $contactDetails['email'],
         ])->render();
         $this->assertStringContainsString($updatedPhone, $maintenance);
-        $this->assertStringContainsString('href="tel:+639563192448"', $maintenance);
+        $this->assertStringContainsString('href="tel:+639175550199"', $maintenance);
         $this->assertStringNotContainsString($currentPhone, $maintenance);
     }
 

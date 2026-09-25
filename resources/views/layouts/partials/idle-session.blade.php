@@ -5,6 +5,7 @@
         (() => {
           const timeoutMs = {{ (int) config('security.session_idle_timeout_minutes', 30) }} * 60 * 1000;
           const heartbeatIntervalMs = Math.min(60000, Math.max(10000, Math.floor(timeoutMs / 2)));
+          const heartbeatTimeoutMs = 5000; // 5 second timeout for heartbeat requests
           const logoutUrl = @json(route('logout'));
           const heartbeatUrl = @json(route('session.keep-alive'));
           const loginUrl = @json(auth()->user()->user_type === 'admin'
@@ -17,15 +18,28 @@
           let lastHandledAt = 0;
           let timer = null;
           let expired = false;
+          let heartbeatController = null;
 
           const storedActivity = Number(window.localStorage.getItem(activityStorageKey));
           if (Number.isFinite(storedActivity) && storedActivity > lastActivityAt - timeoutMs) {
             lastActivityAt = storedActivity;
           }
 
+          const abortPendingHeartbeat = () => {
+            if (heartbeatController) {
+              heartbeatController.abort();
+              heartbeatController = null;
+            }
+          };
+
           const expireSession = () => {
             if (expired) return;
             expired = true;
+
+            abortPendingHeartbeat();
+
+            const expireController = new AbortController();
+            const expireTimeout = setTimeout(() => expireController.abort(), 3000);
 
             fetch(logoutUrl, {
               method: 'POST',
@@ -34,7 +48,13 @@
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': token,
               },
+              signal: expireController.signal,
+            }).catch((error) => {
+              if (error.name !== 'AbortError') {
+                console.warn('Logout request failed:', error);
+              }
             }).finally(() => {
+              clearTimeout(expireTimeout);
               window.location.replace(loginUrl);
             });
           };
@@ -50,6 +70,10 @@
             if (expired || now - lastHeartbeatAt < heartbeatIntervalMs) return;
             lastHeartbeatAt = now;
 
+            abortPendingHeartbeat();
+            heartbeatController = new AbortController();
+            const heartbeatTimeout = setTimeout(() => heartbeatController.abort(), heartbeatTimeoutMs);
+
             fetch(heartbeatUrl, {
               method: 'POST',
               credentials: 'same-origin',
@@ -57,11 +81,23 @@
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': token,
               },
+              signal: heartbeatController.signal,
             }).then((response) => {
+              clearTimeout(heartbeatTimeout);
               if (response.status === 401 || response.status === 419) {
                 expireSession();
               }
-            }).catch(() => {});
+            }).catch((error) => {
+              clearTimeout(heartbeatTimeout);
+              if (error.name === 'AbortError') {
+                // Expected abort (timeout or page unload) - silently ignore
+                return;
+              }
+              // Log unexpected errors for debugging
+              console.warn('Heartbeat request failed:', error.message);
+            }).finally(() => {
+              heartbeatController = null;
+            });
           };
 
           const markActive = () => {
@@ -94,6 +130,13 @@
               scheduleExpiry();
               sendHeartbeat();
             }
+          });
+
+          // Abort pending requests on page unload to prevent lingering canceled requests
+          window.addEventListener('beforeunload', () => {
+            expired = true;
+            abortPendingHeartbeat();
+            clearTimeout(timer);
           });
 
           window.localStorage.setItem(activityStorageKey, String(lastActivityAt));

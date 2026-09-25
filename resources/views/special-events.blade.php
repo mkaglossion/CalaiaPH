@@ -1,4 +1,6 @@
-@php($contactDetails = \App\Models\InformationPage::contactDetails())
+@php
+  $contactDetails = \App\Models\InformationPage::contactDetails();
+@endphp
 
 <x-page-layout 
     title="CalaiaPH - Special Events"
@@ -70,7 +72,7 @@
               <a
                 href="{{ $specialEventsCtaPrimaryUrl ?? 'https://m.me/410774518796277' }}"
                 target="{{ $specialEventsCtaPrimaryTarget }}"
-                @if($specialEventsCtaPrimaryRel) rel="{{ $specialEventsCtaPrimaryRel }}" @endif
+                {!! $specialEventsCtaPrimaryRel !== '' ? 'rel="'.e($specialEventsCtaPrimaryRel).'"' : '' !!}
                 class="inline-flex items-center justify-center gap-2 bg-brand text-white px-8 py-4 rounded-xl font-semibold hover:bg-brand transition-colors duration-300"
               >
                 <i class="bi bi-messenger"></i>
@@ -79,7 +81,7 @@
               <a
                 href="{{ $specialEventsCtaSecondaryUrl ?? 'https://mail.google.com/mail/?view=cm&fs=1&to='.rawurlencode($contactDetails['email']) }}"
                 target="{{ $specialEventsCtaSecondaryTarget }}"
-                @if($specialEventsCtaSecondaryRel) rel="{{ $specialEventsCtaSecondaryRel }}" @endif
+                {!! $specialEventsCtaSecondaryRel !== '' ? 'rel="'.e($specialEventsCtaSecondaryRel).'"' : '' !!}
                 class="inline-flex items-center justify-center gap-2 border-2 border-brand text-brand px-8 py-4 rounded-xl font-semibold hover:bg-brand hover:text-white transition-colors duration-300"
               >
                 <i class="bi bi-envelope"></i>
