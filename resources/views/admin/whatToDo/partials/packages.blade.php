@@ -198,9 +198,24 @@
                         <div>
                             <label class="block font-semibold mb-2 text-gray-700">Package Image</label>
                             <input type="file" x-ref="imageFile" accept="image/*" class="w-full border border-gray-300 rounded-xl px-4 py-2.5"
-                                @change="const file = $el.files[0]; if(file) { const r = new FileReader(); r.onload = (e) => form.imagePreview = e.target.result; r.readAsDataURL(file); }">
+                                @change="handlePackageImageChange($el.files[0])">
                             <template x-if="form.imagePreview">
-                                <div class="relative inline-block mt-3"><img :src="form.imagePreview" alt="Preview" class="h-32 rounded-lg border"></div>
+                                <div class="mt-3 flex items-start gap-3">
+                                    <img
+                                        :src="form.imagePreview"
+                                        alt="Preview"
+                                        class="h-32 w-32 rounded-lg border object-cover"
+                                        x-on:error="$event.currentTarget.src='{{ \App\Helpers\ImageHelper::placeholder() }}'"
+                                    >
+                                    <button
+                                        type="button"
+                                        @click="removePackageImage()"
+                                        class="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                                    >
+                                        <i class="fas fa-times"></i>
+                                        Remove image
+                                    </button>
+                                </div>
                             </template>
                         </div>
                         <div>
