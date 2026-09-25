@@ -21,12 +21,12 @@ class FarmText extends Model
         return $this->text;
     }
 
-    public function setTitleAttribute($value)
+    public function setTitleAttribute(mixed $value): void
     {
         $this->attributes['label'] = $value;
     }
 
-    public function setContentAttribute($value)
+    public function setContentAttribute(mixed $value): void
     {
         $this->attributes['text'] = $value;
     }
