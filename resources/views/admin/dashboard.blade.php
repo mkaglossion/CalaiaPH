@@ -238,7 +238,7 @@
     <x-admin.dashboard.section-card
       title="Paid Booking Revenue by Category"
       subtitle="Paid booking revenue only; refunds are reported separately."
-      body-class="min-w-0 grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 xl:grid-cols-[minmax(180px,208px)_minmax(0,1fr)] xl:items-center"
+      body-class="min-w-0 grid grid-cols-1 justify-items-center gap-5 px-4 py-4 sm:px-5 md:grid-cols-[minmax(180px,220px)_minmax(0,1fr)] md:items-center md:justify-items-stretch 2xl:grid-cols-1 2xl:justify-items-center"
     >
       <x-slot:actions>
         <button
@@ -252,8 +252,8 @@
         </button>
       </x-slot:actions>
 
-        <div class="flex min-w-0 justify-center xl:justify-self-center xl:pr-0" data-revenue-by-category-chart>
-          <svg viewBox="0 0 200 200" class="h-48 w-48 xl:h-52 xl:w-52 2xl:h-60 2xl:w-60" role="img" aria-label="Paid booking revenue by category">
+        <div class="flex w-full min-w-0 justify-center md:justify-self-center" data-revenue-by-category-chart>
+          <svg viewBox="0 0 200 200" class="h-auto w-full max-w-48 sm:max-w-52 2xl:max-w-60" role="img" aria-label="Paid booking revenue by category">
             <circle cx="100" cy="100" r="{{ $salesDistributionRadius }}" fill="none" stroke="#e5e7eb" stroke-width="22"></circle>
             @php $revenueDistributionOffset = 0; @endphp
             @foreach($salesDistributionItems as $item)
@@ -278,7 +278,7 @@
           </svg>
         </div>
 
-        <div class="min-w-0 space-y-4 xl:pl-2">
+        <div class="mx-auto w-full max-w-md min-w-0 space-y-4 md:max-w-none md:pl-2 2xl:max-w-md 2xl:pl-0">
           @foreach($salesDistributionItems as $item)
             <div class="grid grid-cols-[16px_minmax(0,1fr)_auto] items-start gap-3">
               <span class="mt-1 h-3 w-3 rounded-full" style="background-color: {{ $item->color }};"></span>
