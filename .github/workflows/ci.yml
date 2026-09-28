@@ -53,9 +53,6 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - name: Install PHP dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist
-
       - name: Prepare application
         run: |
           cp .env.example .env
@@ -67,7 +64,12 @@ jobs:
           mkdir -p storage/framework/views
           mkdir -p storage/logs
           touch database/database.sqlite
-          php artisan key:generate --force --ansi
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Generate application key
+        run: php artisan key:generate --force --ansi
 
       - name: Install Node dependencies
         run: npm ci

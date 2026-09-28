@@ -38,8 +38,12 @@ jobs:
           mkdir -p storage/framework/views
           mkdir -p storage/logs
           touch database/database.sqlite
-          composer install --no-interaction --no-progress --prefer-dist
-          php artisan key:generate --force --ansi
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Generate application key
+        run: php artisan key:generate --force --ansi
 
       - name: Sync version file
         run: php artisan app:sync-version --ansi
