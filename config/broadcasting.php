@@ -3,7 +3,7 @@
 $pusherKey = env('PUSHER_APP_KEY');
 $pusherSecret = env('PUSHER_APP_SECRET');
 $pusherAppId = env('PUSHER_APP_ID');
-$defaultConnection = env('BROADCAST_CONNECTION', 'log');
+$defaultConnection = env('BROADCAST_CONNECTION') ?: 'log';
 $hasPusherCredentials = filled($pusherKey) && filled($pusherSecret) && filled($pusherAppId);
 
 if ($defaultConnection === 'pusher' && ! $hasPusherCredentials) {
