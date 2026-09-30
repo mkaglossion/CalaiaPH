@@ -3659,8 +3659,6 @@ class BookingController extends Controller
         $checkoutCarbon = \Carbon\Carbon::parse($checkout);
         $currentSeason = $this->getSeasonTypeForDate($checkinCarbon);
 
-        Log::info('Season for staycationAvailability check-in date: ' . $currentSeason);
-
         // Get all staycations from admin panel
         $staycationsQuery = Staycation::with([
             'texts',
@@ -3982,7 +3980,6 @@ class BookingController extends Controller
             }
             
             if (!empty($dayTypePricing)) {
-                Log::info('Day type pricing from price_configs for ' . $staycation->name . '.', $dayTypePricing);
                 return $dayTypePricing;
             }
         }
@@ -4000,8 +3997,6 @@ class BookingController extends Controller
             $key = strtolower($seasonName) . '_' . strtolower($dayTypeName);
             $dayTypePricing[$key] = $config->price;
         }
-        
-        Log::info('Day type pricing from PricingConfig for ' . $staycation->name . '.', $dayTypePricing);
         
         return $dayTypePricing;
     }
