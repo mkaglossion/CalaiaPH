@@ -1,55 +1,318 @@
-## Introduction
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-The Laravel VS Code extension integrates the [Laravel LSP](https://github.com/laravel/lsp) server with Visual Studio Code, providing completions, hover information, diagnostics, links, and code actions for your PHP and Blade files.
+<p align="center">
+<a href="https://github.com/mkaglossion/CalaiaPH/actions"><img src="https://github.com/mkaglossion/CalaiaPH/actions/workflows/ci.yml/badge.svg" alt="CalaiaPH Build Status"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Laravel Total Downloads"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Laravel Latest Stable Version"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="Laravel License"></a>
+</p>
 
-The extension supports all Laravel versions currently listed under the [support policy](https://laravel.com/docs/releases#support-policy) and requires PHP 8.2 or later.
+# CalaiaPH
 
-## LSP Documentation
+A booking and content-management platform for CalaiaPH, built with **Laravel 13**. The website supports staycations, day visits, tours, activities, packages, and dining, with an admin panel for managing bookings, reservations, inventory, pricing, and site content.
 
-Documentation for Laravel LSP can be found in the [Laravel LSP repository](https://github.com/laravel/lsp).
+## Tech Stack
+
+- **Backend**: Laravel 13.34.0 (PHP 8.3+)
+- **Frontend**: Laravel Blade + Alpine.js
+- **Build Tool**: Vite 8
+- **Styling**: Tailwind CSS 4
+- **Database**: MySQL/MariaDB (SQLite for automated tests)
+- **Testing**: PHPUnit 12
+- **Payments**: PayMongo
+- **Media Storage**: Cloudinary PHP SDK
+- **Authentication**: Laravel Socialite
+- **Broadcasting**: Laravel Echo + Pusher
+- **Package Managers**: Composer + npm
+
+## Features
+
+✅ **Guest Bookings**
+- Staycation and day-visit booking flows
+- Availability calendars, inventory, and dynamic pricing
+- Activities, packages, add-ons, and dining reservations
+- Booking confirmations, payment processing, and camp waivers
+
+✅ **Admin Panel**
+- Booking dashboard, reservation monitoring, and exports
+- Inventory and pricing management
+- Activities, packages, user, and site content management
+- Activity logging and operational alerts
+
+✅ **Integrations**
+- PayMongo checkout and payment webhook handling
+- Cloudinary image uploads and delivery
+- Google and Facebook sign-in
+- Weather information and optional real-time broadcasting
+
+✅ **Security**
+- Request validation and API security middleware
+- Rate-limited booking, upload, and API endpoints
+- Configurable session and cookie security settings
+- Optional RAT static security scanning
+
+## Requirements
+
+- **PHP 8.3+** with required Laravel extensions
+- **Composer 2**
+- **Node.js 22+** + **npm**
+- **Database**: MySQL or MariaDB for local development
+- **Git**
+- **Python 3.9+** (optional, for RAT scanning)
 
 ## Installation
 
-Open the Extensions view in Visual Studio Code, search for "Laravel", and select **Install**.
+### 1) Clone the repository
 
-## Configuration
-
-No configuration is required by default.
-
-To choose the PHP environment used by the Laravel LSP server, configure `Laravel.phpEnvironment` in your Visual Studio Code settings:
-
-```json
-{
-    "Laravel.phpEnvironment": "sail"
-}
+```bash
+git clone https://github.com/mkaglossion/CalaiaPH.git
+cd CalaiaPH
 ```
 
-To raise the Laravel LSP server process memory limit (the default is `512M`):
+### 2) Install dependencies
 
-```json
-{
-    "Laravel.memoryLimit": "1G"
-}
+```bash
+composer install
+npm ci
 ```
 
-For the full list of available configuration options, open the extension's settings in Visual Studio Code.
+### 3) Create the environment file
 
-## Updates
+Windows PowerShell:
 
-The extension checks for Laravel LSP updates at most once every two hours. To force an update check without waiting, run `Laravel: Update LSP` from the command palette.
+```powershell
+Copy-Item .env.example .env
+```
 
-## Contributing
+macOS/Linux:
 
-Thank you for considering contributing to the Laravel VS Code extension! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+cp .env.example .env
+```
 
-## Code of Conduct
+### 4) Generate the application key
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+php artisan key:generate
+```
 
-## Security Vulnerabilities
+### 5) Configure the database
 
-Please review [our security policy](https://github.com/laravel/vs-code-extension/security/policy) on how to report security vulnerabilities.
+Update `.env` with your local MySQL/MariaDB credentials:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=calaiaph
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Configure integration credentials as needed. See `.env.example` for PayMongo, Cloudinary, mail, weather, Pusher, and Google/Facebook OAuth settings. Keep real credentials private and use test credentials for local development.
+
+### 6) Run migrations
+
+Confirm `.env` points to the intended local database before running migrations:
+
+```bash
+php artisan migrate
+```
+
+### 7) Build frontend assets
+
+```bash
+npm run build
+```
+
+### 8) Start the development servers
+
+Start Laravel, the queue listener, and Vite together:
+
+```bash
+composer run dev
+```
+
+Or start them separately in different terminals:
+
+```bash
+php artisan serve
+php artisan queue:listen --tries=1
+npm run dev
+```
+
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
+
+## Running Tests
+
+```bash
+# Run all tests
+php artisan test
+```
+
+Tests use an in-memory SQLite database configured in `phpunit.xml`; a local MySQL database is not needed to run them.
+
+## Security Scanning
+
+Run the optional RAT (`squeak/rat`) security scanner:
+
+```bash
+# Quick scan
+php artisan rat
+
+# Deep analysis
+php artisan rat --deep
+```
+
+Review scan output against the current code and configuration; results can change as the project changes.
+
+## Project Structure
+
+```text
+CalaiaPH/
+├── app/
+│   ├── Facades/             # Application facades
+│   ├── Http/
+│   │   ├── Controllers/     # Website, API, and admin controllers
+│   │   ├── Middleware/      # Request and access middleware
+│   │   └── Requests/        # Form request validation
+│   ├── Models/              # Eloquent models
+│   ├── Providers/           # Service providers
+│   └── Services/            # Booking, payment, and integration services
+├── config/                  # Application and integration configuration
+├── database/
+│   ├── factories/           # Model factories
+│   ├── migrations/          # Database schema migrations
+│   └── seeders/             # Database seeders
+├── resources/
+│   ├── css/                 # Stylesheets
+│   ├── js/                  # Frontend scripts
+│   ├── mail/                # Mail resources
+│   └── views/               # Blade templates
+├── routes/
+│   ├── api.php              # API routes
+│   ├── channels.php         # Broadcast channels
+│   ├── console.php          # Artisan schedules and commands
+│   └── web.php              # Website and admin routes
+└── tests/
+    ├── Feature/             # Feature tests
+    └── Unit/                # Unit tests
+```
+
+## Available Routes
+
+### Public Routes
+
+- `GET /` → CalaiaPH home page
+- `GET /our-story` → Our story
+- `GET /sustainability` → Sustainability information
+- `GET /our-services` → Guest services
+- `GET /staycation` → Staycation information
+- `GET /daytour` → Day-tour information
+- `GET /packages` → Packages
+- `GET /activities` → Activities
+- `GET /dining` → Dining
+
+### Booking Routes
+
+- `GET /booking` → Start a booking
+- `GET /booking/calendar` → Booking calendar
+- `GET /booking/staycation` → Staycation booking
+- `GET /booking/dayvisit` → Day-visit booking
+- `GET /booking/payment` → Booking payment step
+
+### Authenticated Routes
+
+- `GET /profile` → View customer profile
+- `GET /profile/edit` → Edit customer profile
+- `GET /booking/history` → View booking history
+- `GET /booking/cart` → View booking cart
+
+### Admin Routes
+
+- `GET /admin/login` → Admin sign-in
+- `GET /admin/dashboard` → Admin dashboard
+- `GET /admin/bookings` → Manage bookings
+- `GET /admin/bookings/inventory` → Manage booking inventory
+- `GET /admin/reservations/monitor` → Monitor reservations
+
+## Useful Commands
+
+### Database
+
+```bash
+php artisan migrate                # Run pending migrations
+php artisan migrate:rollback       # Roll back the last migration batch
+php artisan db:seed                # Run database seeders
+```
+
+> **Warning:** `php artisan migrate:fresh --seed` drops every table in the configured database before reseeding. Run it only when you intend to erase that database.
+
+For safer local database dump verification on Windows, use `tools/db-safe.ps1`:
+
+```powershell
+.\tools\db-safe.ps1 -DumpPath "<dump.sql>"
+.\tools\db-safe.ps1 -RestoreDatabase <name>
+```
+
+### Development
+
+```bash
+php artisan serve                  # Start the Laravel development server
+php artisan route:list             # List registered routes
+php artisan tinker                 # Open the Laravel REPL
+php artisan queue:failed           # List failed queue jobs
+php artisan optimize:clear         # Clear framework caches
+npm run dev                        # Start the Vite development server
+npm run build                      # Build production frontend assets
+```
+
+### Code Quality and Maintenance
+
+```bash
+php artisan test                   # Run automated tests
+php artisan rat --deep             # Run deep RAT security analysis
+php artisan schedule:list          # List scheduled tasks
+php artisan config:clear           # Clear cached configuration
+php artisan route:clear            # Clear cached routes
+php artisan view:clear             # Clear compiled Blade views
+```
+
+## Architecture
+
+CalaiaPH uses Laravel-rendered Blade pages with Alpine.js for interactive behavior and Tailwind CSS for styling. Vite builds the frontend assets. Laravel routes requests to controllers and services, which use Eloquent models to work with the database. Queued work and scheduled Artisan commands support background tasks and booking workflows.
+
+Payment processing, media storage, social sign-in, weather data, and optional broadcasting are configured through environment variables and integrated with the Laravel application.
+
+## Environment Setup
+
+### Windows (Laragon)
+
+Install PHP 8.3+, Composer, Node.js 22+, npm, and MySQL/MariaDB. Copy `.env.example` to `.env` using PowerShell, set your local database and integration values, then follow the installation steps above.
+
+### macOS/Linux
+
+Install PHP 8.3+ with the Laravel-required extensions, Composer 2, Node.js 22+, npm, and MySQL/MariaDB using your package manager. Copy `.env.example` to `.env`, configure your local settings, and follow the installation steps above.
+
+## Documentation
+
+- **Laravel 13**: https://laravel.com/docs/13.x
+- **Laravel Boost**: https://laravel.com/docs/ai
+- **Alpine.js**: https://alpinejs.dev/
+- **Tailwind CSS**: https://tailwindcss.com/docs
+- **Vite**: https://vite.dev/guide/
+- **PayMongo**: https://developers.paymongo.com/
+- **Cloudinary PHP SDK**: https://cloudinary.com/documentation/php_integration
+
+Laravel provides the application foundation with expressive routing, dependency injection, database migrations, Eloquent ORM, queues, caching, and testing tools. See the [Laravel documentation](https://laravel.com/docs/13.x) for framework guidance and [Laravel Learn](https://laravel.com/learn) for practical lessons.
+
+For AI-assisted development, this project includes [Laravel Boost](https://laravel.com/docs/ai) as a development dependency. To install and configure Boost locally:
+
+```bash
+composer require laravel/boost --dev
+php artisan boost:install
+```
 
 ## License
 
-The Laravel VS Code extension is open-sourced software licensed under the [MIT license](https://opensource.org/license/mit).
+The Composer project metadata declares this application as MIT-licensed. A separate `LICENSE` file is not currently included in the repository.
