@@ -989,6 +989,8 @@ class BookingController extends Controller
             
             // Update accommodation with calculated prices
             $acc['accommodation_price'] = $pricingResult['accommodation_price'];
+            $acc['room_name'] = $staycation->name;
+            $acc['nightly_breakdown'] = $pricingResult['breakdown'];
             $acc['extra_mattress'] = $extraMattresses;
             $acc['mattress_price'] = $pricingResult['mattress_price'];
             $acc['additional_adults'] = $pricingResult['additional_adults'] ?? $extraMattresses;
@@ -2211,42 +2213,19 @@ class BookingController extends Controller
             'guest_count' => $guestCounts['total'],
         ], fn ($value) => $value !== null && $value !== '');
 
-        $lineItems = [];
-        foreach ($booking['accommodations'] ?? [] as $accommodation) {
-            if (!empty($accommodation['total_price'])) {
-                $lineItems[] = [
-                    'name' => $accommodation['room_name'] ?? 'Accommodation',
-                    'unit_price' => (float) $accommodation['total_price'],
-                    'quantity' => 1,
-                ];
-            }
-        }
-        foreach ($booking['selected_foods'] ?? [] as $food) {
-            if (!empty($food['name']) && isset($food['price'])) {
-                $lineItems[] = [
-                    'name' => $food['name'],
-                    'unit_price' => (float) $food['price'],
-                    'quantity' => (int) ($food['quantity'] ?? 1),
-                ];
-            }
-        }
-        foreach ($booking['selected_activities'] ?? [] as $activity) {
-            if (!empty($activity['name']) && isset($activity['price'])) {
-                $lineItems[] = [
-                    'name' => $activity['name'],
-                    'unit_price' => (float) $activity['price'],
-                    'quantity' => (int) ($activity['guests'] ?? 1),
-                ];
-            }
-        }
-        foreach ($booking['selected_activity_packages'] ?? [] as $activityPackage) {
-            if (!empty($activityPackage['name']) && isset($activityPackage['price'])) {
-                $lineItems[] = [
-                    'name' => $activityPackage['name'],
-                    'unit_price' => (float) $activityPackage['price'],
-                    'quantity' => (int) ($activityPackage['quantity'] ?? 1),
-                ];
-            }
+        $lineItems = app(\App\Services\StaycationPriceBreakdownService::class)->paymongoLineItems($booking);
+
+        $lineItemTotal = collect($lineItems)->sum(
+            fn (array $item): float => (float) $item['unit_price'] * (int) $item['quantity']
+        );
+        $vatLineTotal = round($grandTotalWithVat - $lineItemTotal, 2);
+
+        if ($vatLineTotal > 0 && (float) ($paymentData['promo_discount'] ?? 0) === 0.0) {
+            $lineItems[] = [
+                'name' => 'VAT',
+                'unit_price' => $vatLineTotal,
+                'quantity' => 1,
+            ];
         }
 
         try {
@@ -2603,7 +2582,10 @@ class BookingController extends Controller
                 return redirect()->route('booking.payment')->with('error', 'Checkout session mismatch.');
             }
 
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client([
+                'connect_timeout' => config('services.paymongo.connect_timeout'),
+                'timeout' => config('services.paymongo.timeout'),
+            ]);
             $response = $client->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutId}", [
                 'headers' => [
                     'Authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
@@ -2856,7 +2838,10 @@ class BookingController extends Controller
         }
 
         try {
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client([
+                'connect_timeout' => config('services.paymongo.connect_timeout'),
+                'timeout' => config('services.paymongo.timeout'),
+            ]);
             $response = $client->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutId}", [
                 'headers' => [
                     'Authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
@@ -3331,6 +3316,8 @@ class BookingController extends Controller
                         'pet_agreement'  => (bool)($room['pet_agreement'] ?? false),
                         'num_pets'       => $numPets,
                         'base_price'     => $accommodationPrice,
+                        'room_name'      => $staycation->name,
+                        'nightly_breakdown' => $pricingResult['breakdown'],
                         'mattress_price' => $mattressPrice,
                         'additional_adults' => $pricingResult['additional_adults'] ?? $extraMattresses,
                         'additional_adult_price' => $pricingResult['additional_adult_price'] ?? $mattressPrice,
@@ -3659,8 +3646,6 @@ class BookingController extends Controller
         $checkoutCarbon = \Carbon\Carbon::parse($checkout);
         $currentSeason = $this->getSeasonTypeForDate($checkinCarbon);
 
-        Log::info('Season for staycationAvailability check-in date: ' . $currentSeason);
-
         // Get all staycations from admin panel
         $staycationsQuery = Staycation::with([
             'texts',
@@ -3982,7 +3967,6 @@ class BookingController extends Controller
             }
             
             if (!empty($dayTypePricing)) {
-                Log::info('Day type pricing from price_configs for ' . $staycation->name . '.', $dayTypePricing);
                 return $dayTypePricing;
             }
         }
@@ -4000,8 +3984,6 @@ class BookingController extends Controller
             $key = strtolower($seasonName) . '_' . strtolower($dayTypeName);
             $dayTypePricing[$key] = $config->price;
         }
-        
-        Log::info('Day type pricing from PricingConfig for ' . $staycation->name . '.', $dayTypePricing);
         
         return $dayTypePricing;
     }

@@ -605,7 +605,10 @@ class DayVisitController extends Controller
         }
 
         try {
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client([
+                'connect_timeout' => config('services.paymongo.connect_timeout'),
+                'timeout' => config('services.paymongo.timeout'),
+            ]);
             $response = $client->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutId}", [
                 'headers' => [
                     'Authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
@@ -741,7 +744,10 @@ class DayVisitController extends Controller
 
         if ($checkoutId) {
             try {
-                $client = new \GuzzleHttp\Client();
+                $client = new \GuzzleHttp\Client([
+                    'connect_timeout' => config('services.paymongo.connect_timeout'),
+                    'timeout' => config('services.paymongo.timeout'),
+                ]);
                 $response = $client->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutId}", [
                     'headers' => [
                         'Authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\HomeSwiperImage;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use App\Facades\Cloudinary;
 
 class HomeSwiperImageController extends Controller
 {

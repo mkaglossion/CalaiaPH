@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use App\Facades\Cloudinary;
 use Illuminate\Http\UploadedFile;
 
 class CloudinaryImageService

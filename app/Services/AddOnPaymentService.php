@@ -22,8 +22,20 @@ class AddOnPaymentService
             return null;
         }
 
-        $response = Http::withBasicAuth($apiKey, '')
-            ->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutSessionId}");
+        try {
+            $response = Http::withBasicAuth($apiKey, '')
+                ->connectTimeout(config('services.paymongo.connect_timeout'))
+                ->timeout(config('services.paymongo.timeout'))
+                ->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutSessionId}");
+        } catch (\Throwable $e) {
+            Log::warning('Unable to recover pending add-on checkout URL.', [
+                'add_on_id' => $addOn->id,
+                'checkout_session_id' => $checkoutSessionId,
+                'exception' => $e,
+            ]);
+
+            return null;
+        }
 
         if (!$response->successful()) {
             Log::warning('Unable to recover pending add-on checkout URL.', [
@@ -59,8 +71,20 @@ class AddOnPaymentService
             return false;
         }
 
-        $response = Http::withBasicAuth($apiKey, '')
-            ->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutSessionId}");
+        try {
+            $response = Http::withBasicAuth($apiKey, '')
+                ->connectTimeout(config('services.paymongo.connect_timeout'))
+                ->timeout(config('services.paymongo.timeout'))
+                ->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutSessionId}");
+        } catch (\Throwable $e) {
+            Log::warning('Unable to verify add-on checkout session.', [
+                'add_on_id' => $addOn->id,
+                'checkout_session_id' => $checkoutSessionId,
+                'exception' => $e,
+            ]);
+
+            return false;
+        }
 
         if (!$response->successful()) {
             Log::warning('Unable to verify add-on checkout session.', [

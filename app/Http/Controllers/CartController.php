@@ -661,7 +661,10 @@ class CartController extends Controller
      */
     protected function createPaymongoCheckout(int $amount, string $email, string $name, string $transactionId, array $summary): array
     {
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client([
+            'connect_timeout' => config('services.paymongo.connect_timeout'),
+            'timeout' => config('services.paymongo.timeout'),
+        ]);
         $apiKey = config('services.paymongo.secret_key');
 
         // Offer QR Ph + Card + E-Wallets on hosted checkout.
@@ -735,7 +738,10 @@ class CartController extends Controller
 
         try {
             // Verify payment with PayMongo
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client([
+                'connect_timeout' => config('services.paymongo.connect_timeout'),
+                'timeout' => config('services.paymongo.timeout'),
+            ]);
             $apiKey = config('services.paymongo.secret_key');
             
             $response = $client->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutId}", [

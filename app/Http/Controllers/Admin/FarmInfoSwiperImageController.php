@@ -8,7 +8,7 @@ use App\Models\FarmInfo;
 use App\Models\FarmInfoSwiperImage;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use App\Facades\Cloudinary;
 
 class FarmInfoSwiperImageController extends Controller
 {

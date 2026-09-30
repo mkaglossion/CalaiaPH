@@ -134,6 +134,8 @@ class PaymentController extends Controller
 
             // Create PayMongo checkout
             $response = Http::withBasicAuth($apiKey, '')
+                ->connectTimeout(config('services.paymongo.connect_timeout'))
+                ->timeout(config('services.paymongo.timeout'))
                 ->post('https://api.paymongo.com/v1/checkout_sessions', [
                     'data' => [
                         'attributes' => [
@@ -228,6 +230,8 @@ class PaymentController extends Controller
             // Fetch checkout session details from PayMongo
             $apiKey = config('services.paymongo.secret_key');
             $response = Http::withBasicAuth($apiKey, '')
+                ->connectTimeout(config('services.paymongo.connect_timeout'))
+                ->timeout(config('services.paymongo.timeout'))
                 ->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutSessionId}");
 
             if ($response->successful()) {

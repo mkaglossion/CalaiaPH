@@ -85,6 +85,25 @@ class AdminActivityLogTest extends TestCase
         $this->assertArrayNotHasKey('mobile_number', $activity->changes);
     }
 
+    public function test_activity_log_can_be_created_without_manually_supplying_an_id(): void
+    {
+        $admin = User::factory()->create(['user_type' => 'admin']);
+
+        $activity = AdminActivityLog::create([
+            'user_id' => $admin->id,
+            'action' => 'admin_test_action',
+            'description' => 'Created without a manually supplied ID',
+        ]);
+
+        $this->assertNotNull($activity->id);
+        $this->assertGreaterThan(0, $activity->id);
+        $this->assertDatabaseHas('admin_activity_logs', [
+            'id' => $activity->id,
+            'user_id' => $admin->id,
+            'action' => 'admin_test_action',
+        ]);
+    }
+
     public function test_existing_detailed_activity_prevents_duplicate_generic_log(): void
     {
         $admin = User::factory()->create(['user_type' => 'admin']);

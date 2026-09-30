@@ -19,6 +19,8 @@ return [
         'api_secret' => env('CLOUDINARY_API_SECRET'),
     ],
 
+    'cloudinary_url' => env('CLOUDINARY_URL'),
+
     'url' => [
         'secure' => true, // force https
     ],

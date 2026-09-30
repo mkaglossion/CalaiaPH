@@ -8,7 +8,7 @@ use App\Models\Menu;
 use App\Models\MenuSwiperImage;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use App\Facades\Cloudinary;
 
 
 class MenuSwiperImageController extends Controller

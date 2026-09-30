@@ -19,6 +19,7 @@ $nights = 0;
 $accommodationTotal = 0;
 $foodTotal = 0;
 $activitiesTotal = 0;
+$petTotal = 0;
 $paymentSummary = [];
 $grandTotal = 0;
 $selectedActivityPackages = $selectedActivityPackages ?? ($bookingData['selected_activity_packages'] ?? []);
@@ -82,25 +83,8 @@ if (isset($isStaycation) && $isStaycation && !empty($bookingData['accommodations
     // Use total_guests from PaymentService if available, otherwise calculate.
     $totalGuests = $bookingData['total_guests'] ?? collect($bookingData['accommodations'])->sum(function($acc) { return ($acc['adults'] ?? 0) + ($acc['children'] ?? 0); });
 
-    // Use nights from PaymentService if available, otherwise calculate.
-    if (isset($bookingData['nights']) && $bookingData['nights'] > 0) {
-        $nights = $bookingData['nights'];
-    } elseif (!empty($bookingData['checkin']) && !empty($bookingData['checkout'])) {
-        $checkin = \Carbon\Carbon::parse($bookingData['checkin']);
-        $checkout = \Carbon\Carbon::parse($bookingData['checkout']);
-
-        // Make sure checkout >= checkin
-        if ($checkout->lt($checkin)) {
-            $temp = $checkin;
-            $checkin = $checkout;
-            $checkout = $temp;
-        }
-
-        // diffInDays always positive, use max to ensure at least 1 night
-        $nights = max(1, $checkout->diffInDays($checkin));
-    } else {
-        $nights = 1; // default to 1 night if no dates
-    }
+    // Use the same canonical night count as the pricing breakdown.
+    $nights = app(\App\Services\StaycationPriceBreakdownService::class)->nights($bookingData);
 
     if (!empty($paymentSummary)) {
         $accommodationTotal = (float) ($bookingData['final_totals']['accommodation_total'] ?? 0);
@@ -417,48 +401,41 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                 <h3 class="text-2xl font-medium text-gray-900 mb-2">Selected Accommodations:</h3>
                 <ul class="text-sm text-gray-600 space-y-1">
                   @php
-                  $checkin = !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin']) : null;
-                  $checkout = !empty($bookingData['checkout']) ? \Carbon\Carbon::parse($bookingData['checkout']) : null;
-                  $nights = $checkin && $checkout ? max(1, $checkout->diffInDays($checkin)) : 0;
+                  $nights = app(\App\Services\StaycationPriceBreakdownService::class)->nights($bookingData);
                   @endphp
                   @foreach ($bookingData['accommodations'] as $roomId => $accommodation)
                     @if (!empty($accommodation))
                       @php
                       $staycation = $staycations->get($accommodation['accommodation_id'] ?? $roomId);
                       $name = strtolower($staycation->name ?? '');
-                      $roomType = strtolower((string)(($staycation ? $staycation->type : null) ?? ($accommodation['type'] ?? '')));
-                      $supportsExtraMattress = $roomType === 'glamping'
-                        || str_contains($name, 'dome')
-                        || str_contains($name, 'bell');
                       $isBYOT = stripos($name, 'byot') !== false || stripos($name, 'bring your own tent') !== false;
                       $isCarCamping = stripos($name, 'car camping') !== false;
                       $quantity = $accommodation['quantity'] ?? 1;
-                      $extraMattressCount = (int)($accommodation['extra_mattress'] ?? 0);
-                      $basePrice = $accommodation['base_price'] ?? 0;
-                      $additionalAdults = (int)($accommodation['additional_adults'] ?? $extraMattressCount);
-                      $mattressPrice = $accommodation['additional_adult_price'] ?? ($accommodation['mattress_price'] ?? 0);
                       $petPrice = $accommodation['pet_price'] ?? 0;
-                      $totalPrice = $accommodation['total_price'] ?? 0;
+                      $petTotal += (float) $petPrice;
+                      $priceLines = app(\App\Services\StaycationPriceBreakdownService::class)
+                        ->accommodationLines($accommodation, $bookingData, $staycation->name ?? null);
+                      $totalPrice = (float) ($accommodation['total_price'] ?? collect($priceLines)->sum('total'));
                       @endphp
                       @if($staycation)
-                        <li>&bull; {{ $staycation->name }}
+                        <li>
+                          <div class="flex justify-between gap-4">
+                            <span>&bull; {{ $staycation->name }}
                           @if($isBYOT || $isCarCamping)
-                            {{-- BYOT/Car Camping: Show quantity only --}}
                             - {{ $quantity }} unit{{ $quantity !== 1 ? 's' : '' }}
-                            - &#8369;{{ number_format($totalPrice, 2) }}
                           @else
-                            {{-- Regular rooms: Show guests --}}
                             @if(!empty($accommodation['adults']) || !empty($accommodation['children']))
-                              ({{ $accommodation['adults'] ?? 0 }} adult{{ ($accommodation['adults'] ?? 0) !== 1 ? 's' : '' }}, {{ $accommodation['children'] ?? 0 }} child{{ ($accommodation['children'] ?? 0) !== 1 ? 'ren' : '' }}@if($supportsExtraMattress && $additionalAdults > 0), additional {{ $additionalAdults }} guest{{ $additionalAdults !== 1 ? 's' : '' }}@endif)
-                            @endif
-                            - &#8369;{{ number_format($totalPrice, 2) }}
-                            @if($supportsExtraMattress && $mattressPrice > 0)
-                              + Additional Guest{{ $additionalAdults !== 1 ? 's' : '' }}: &#8369;{{ number_format($mattressPrice, 2) }}
-                            @endif
-                            @if($petPrice > 0)
-                              + Pet: &#8369;{{ number_format($petPrice, 2) }}
+                              ({{ $accommodation['adults'] ?? 0 }} adult{{ ($accommodation['adults'] ?? 0) !== 1 ? 's' : '' }}, {{ $accommodation['children'] ?? 0 }} child{{ ($accommodation['children'] ?? 0) !== 1 ? 'ren' : '' }})
                             @endif
                           @endif
+                            </span>
+                            <span class="font-semibold whitespace-nowrap">&#8369;{{ number_format($totalPrice, 2) }}</span>
+                          </div>
+                          <ul class="ml-5 mt-1 list-disc space-y-0.5 text-xs text-gray-500">
+                            @foreach($priceLines as $priceLine)
+                              <li>{{ $priceLine['name'] }}: &#8369;{{ number_format($priceLine['unit_price'], 2) }} &times; {{ $priceLine['quantity'] }} = &#8369;{{ number_format($priceLine['total'], 2) }}</li>
+                            @endforeach
+                          </ul>
                         </li>
                       @endif
                     @endif
@@ -524,6 +501,24 @@ if (!isset($isStaycation) && !isset($isDayvisit)) {
                 <div class="flex justify-between items-center text-sm">
                   <span>Activities Total:</span>
                   <span>&#8369;{{ number_format($activitiesTotal, 2) }}</span>
+                </div>
+                @endif
+                @if($foodTotal <= 0)
+                <div class="flex justify-between items-center text-sm text-gray-500">
+                  <span>Food:</span>
+                  <span>None &middot; &#8369;0.00</span>
+                </div>
+                @endif
+                @if($activitiesTotal <= 0)
+                <div class="flex justify-between items-center text-sm text-gray-500">
+                  <span>Activities:</span>
+                  <span>None &middot; &#8369;0.00</span>
+                </div>
+                @endif
+                @if($petTotal <= 0)
+                <div class="flex justify-between items-center text-sm text-gray-500">
+                  <span>Pets:</span>
+                  <span>None &middot; &#8369;0.00</span>
                 </div>
                 @endif
                 @if((float)($paymentSummary['promo_discount'] ?? 0) > 0)
