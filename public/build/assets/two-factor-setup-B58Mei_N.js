@@ -1,0 +1,1 @@
+import e from"qrcode";var t=document.getElementById(`two-factor-qr`),n=document.getElementById(`two-factor-qr-error`);t&&e.toCanvas(t,t.dataset.qrUri,{width:220,margin:2,errorCorrectionLevel:`M`,color:{dark:`#172033`,light:`#ffffff`}}).catch(()=>{t.hidden=!0,n&&(n.hidden=!1)});
