@@ -1,90 +1,318 @@
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+
+<p align="center">
+<a href="https://github.com/mkaglossion/CalaiaPH/actions"><img src="https://github.com/mkaglossion/CalaiaPH/actions/workflows/ci.yml/badge.svg" alt="CalaiaPH Build Status"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Laravel Total Downloads"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Laravel Latest Stable Version"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="Laravel License"></a>
+</p>
+
 # CalaiaPH
 
-CalaiaPH is a Laravel web application for managing bookings, staycations, day tours, activities, packages, and related content.
+A booking and content-management platform for CalaiaPH, built with **Laravel 13**. The website supports staycations, day visits, tours, activities, packages, and dining, with an admin panel for managing bookings, reservations, inventory, pricing, and site content.
+
+## Tech Stack
+
+- **Backend**: Laravel 13.34.0 (PHP 8.3+)
+- **Frontend**: Laravel Blade + Alpine.js
+- **Build Tool**: Vite 8
+- **Styling**: Tailwind CSS 4
+- **Database**: MySQL/MariaDB (SQLite for automated tests)
+- **Testing**: PHPUnit 12
+- **Payments**: PayMongo
+- **Media Storage**: Cloudinary PHP SDK
+- **Authentication**: Laravel Socialite
+- **Broadcasting**: Laravel Echo + Pusher
+- **Package Managers**: Composer + npm
+
+## Features
+
+✅ **Guest Bookings**
+- Staycation and day-visit booking flows
+- Availability calendars, inventory, and dynamic pricing
+- Activities, packages, add-ons, and dining reservations
+- Booking confirmations, payment processing, and camp waivers
+
+✅ **Admin Panel**
+- Booking dashboard, reservation monitoring, and exports
+- Inventory and pricing management
+- Activities, packages, user, and site content management
+- Activity logging and operational alerts
+
+✅ **Integrations**
+- PayMongo checkout and payment webhook handling
+- Cloudinary image uploads and delivery
+- Google and Facebook sign-in
+- Weather information and optional real-time broadcasting
+
+✅ **Security**
+- Request validation and API security middleware
+- Rate-limited booking, upload, and API endpoints
+- Configurable session and cookie security settings
+- Optional RAT static security scanning
 
 ## Requirements
 
-- PHP 8.3 or later, with the extensions required by Laravel and the project
-- Composer 2
-- Node.js 22 and npm
-- MySQL/MariaDB, or SQLite for local development and tests
+- **PHP 8.3+** with required Laravel extensions
+- **Composer 2**
+- **Node.js 22+** + **npm**
+- **Database**: MySQL or MariaDB for local development
+- **Git**
+- **Python 3.9+** (optional, for RAT scanning)
 
-This project uses Laravel 13 and PHPUnit 12. The Cloudinary PHP SDK is used directly for media uploads.
+## Installation
 
-## Local setup
+### 1) Clone the repository
 
-1. Install PHP and Composer dependencies:
-
-   ```powershell
-   composer install
-   ```
-
-2. Create your local environment file and application key:
-
-   ```powershell
-   Copy-Item .env.example .env
-   php artisan key:generate
-   ```
-
-3. Configure the database connection in `.env`. Set `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` for MySQL/MariaDB, or configure SQLite.
-
-4. Configure Cloudinary in `.env` if you need media uploads. Set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`, or provide `CLOUDINARY_URL`. `CLOUDINARY_UPLOAD_FOLDER` is optional.
-
-5. Install frontend dependencies and build the assets:
-
-   ```powershell
-   npm ci
-   npm run build
-   ```
-
-6. Run database migrations after confirming the configured database is the intended local database:
-
-   ```powershell
-   php artisan migrate
-   ```
-
-## Development
-
-Start the Laravel server:
-
-```powershell
-php artisan serve
+```bash
+git clone https://github.com/mkaglossion/CalaiaPH.git
+cd CalaiaPH
 ```
 
-Or run the project's combined development command, which starts the web server, queue listener, and Vite:
+### 2) Install dependencies
 
-```powershell
-composer run dev
+```bash
+composer install
+npm ci
 ```
 
-Useful commands:
+### 3) Create the environment file
+
+Windows PowerShell:
 
 ```powershell
-php artisan route:list
-php artisan queue:failed
-php artisan optimize:clear
-npm run dev
+Copy-Item .env.example .env
+```
+
+macOS/Linux:
+
+```bash
+cp .env.example .env
+```
+
+### 4) Generate the application key
+
+```bash
+php artisan key:generate
+```
+
+### 5) Configure the database
+
+Update `.env` with your local MySQL/MariaDB credentials:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=calaiaph
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Configure integration credentials as needed. See `.env.example` for PayMongo, Cloudinary, mail, weather, Pusher, and Google/Facebook OAuth settings. Keep real credentials private and use test credentials for local development.
+
+### 6) Run migrations
+
+Confirm `.env` points to the intended local database before running migrations:
+
+```bash
+php artisan migrate
+```
+
+### 7) Build frontend assets
+
+```bash
 npm run build
 ```
 
-## Tests
+### 8) Start the development servers
 
-Run the feature tests with:
+Start Laravel, the queue listener, and Vite together:
 
-```powershell
+```bash
+composer run dev
+```
+
+Or start them separately in different terminals:
+
+```bash
+php artisan serve
+php artisan queue:listen --tries=1
+npm run dev
+```
+
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
+
+## Running Tests
+
+```bash
+# Run all tests
 php artisan test
 ```
 
-The PHPUnit configuration uses an in-memory SQLite database and isolated testing environment.
+Tests use an in-memory SQLite database configured in `phpunit.xml`; a local MySQL database is not needed to run them.
 
-## Database safety
+## Security Scanning
 
-- `php artisan migrate:fresh --seed` drops all tables before reseeding. Use it only when you intend to erase the selected database.
-- `tools/db-safe.ps1 -DumpPath "<dump.sql>" -Force` backs up `calaiaph`, imports the dump into a new database copy, verifies it, and prints the phpMyAdmin URL.
-- `tools/db-safe.ps1 -RestoreDatabase <name>` checks an existing restore copy.
-- `-Force` skips the confirmation prompt during import.
+Run the optional RAT (`squeak/rat`) security scanner:
 
-## Laravel documentation
+```bash
+# Quick scan
+php artisan rat
 
-- [Laravel 13 documentation](https://laravel.com/docs/13.x)
-- [Laravel 13 upgrade guide](https://laravel.com/docs/13.x/upgrade)
+# Deep analysis
+php artisan rat --deep
+```
+
+Review scan output against the current code and configuration; results can change as the project changes.
+
+## Project Structure
+
+```text
+CalaiaPH/
+├── app/
+│   ├── Facades/             # Application facades
+│   ├── Http/
+│   │   ├── Controllers/     # Website, API, and admin controllers
+│   │   ├── Middleware/      # Request and access middleware
+│   │   └── Requests/        # Form request validation
+│   ├── Models/              # Eloquent models
+│   ├── Providers/           # Service providers
+│   └── Services/            # Booking, payment, and integration services
+├── config/                  # Application and integration configuration
+├── database/
+│   ├── factories/           # Model factories
+│   ├── migrations/          # Database schema migrations
+│   └── seeders/             # Database seeders
+├── resources/
+│   ├── css/                 # Stylesheets
+│   ├── js/                  # Frontend scripts
+│   ├── mail/                # Mail resources
+│   └── views/               # Blade templates
+├── routes/
+│   ├── api.php              # API routes
+│   ├── channels.php         # Broadcast channels
+│   ├── console.php          # Artisan schedules and commands
+│   └── web.php              # Website and admin routes
+└── tests/
+    ├── Feature/             # Feature tests
+    └── Unit/                # Unit tests
+```
+
+## Available Routes
+
+### Public Routes
+
+- `GET /` → CalaiaPH home page
+- `GET /our-story` → Our story
+- `GET /sustainability` → Sustainability information
+- `GET /our-services` → Guest services
+- `GET /staycation` → Staycation information
+- `GET /daytour` → Day-tour information
+- `GET /packages` → Packages
+- `GET /activities` → Activities
+- `GET /dining` → Dining
+
+### Booking Routes
+
+- `GET /booking` → Start a booking
+- `GET /booking/calendar` → Booking calendar
+- `GET /booking/staycation` → Staycation booking
+- `GET /booking/dayvisit` → Day-visit booking
+- `GET /booking/payment` → Booking payment step
+
+### Authenticated Routes
+
+- `GET /profile` → View customer profile
+- `GET /profile/edit` → Edit customer profile
+- `GET /booking/history` → View booking history
+- `GET /booking/cart` → View booking cart
+
+### Admin Routes
+
+- `GET /admin/login` → Admin sign-in
+- `GET /admin/dashboard` → Admin dashboard
+- `GET /admin/bookings` → Manage bookings
+- `GET /admin/bookings/inventory` → Manage booking inventory
+- `GET /admin/reservations/monitor` → Monitor reservations
+
+## Useful Commands
+
+### Database
+
+```bash
+php artisan migrate                # Run pending migrations
+php artisan migrate:rollback       # Roll back the last migration batch
+php artisan db:seed                # Run database seeders
+```
+
+> **Warning:** `php artisan migrate:fresh --seed` drops every table in the configured database before reseeding. Run it only when you intend to erase that database.
+
+For safer local database dump verification on Windows, use `tools/db-safe.ps1`:
+
+```powershell
+.\tools\db-safe.ps1 -DumpPath "<dump.sql>"
+.\tools\db-safe.ps1 -RestoreDatabase <name>
+```
+
+### Development
+
+```bash
+php artisan serve                  # Start the Laravel development server
+php artisan route:list             # List registered routes
+php artisan tinker                 # Open the Laravel REPL
+php artisan queue:failed           # List failed queue jobs
+php artisan optimize:clear         # Clear framework caches
+npm run dev                        # Start the Vite development server
+npm run build                      # Build production frontend assets
+```
+
+### Code Quality and Maintenance
+
+```bash
+php artisan test                   # Run automated tests
+php artisan rat --deep             # Run deep RAT security analysis
+php artisan schedule:list          # List scheduled tasks
+php artisan config:clear           # Clear cached configuration
+php artisan route:clear            # Clear cached routes
+php artisan view:clear             # Clear compiled Blade views
+```
+
+## Architecture
+
+CalaiaPH uses Laravel-rendered Blade pages with Alpine.js for interactive behavior and Tailwind CSS for styling. Vite builds the frontend assets. Laravel routes requests to controllers and services, which use Eloquent models to work with the database. Queued work and scheduled Artisan commands support background tasks and booking workflows.
+
+Payment processing, media storage, social sign-in, weather data, and optional broadcasting are configured through environment variables and integrated with the Laravel application.
+
+## Environment Setup
+
+### Windows (Laragon)
+
+Install PHP 8.3+, Composer, Node.js 22+, npm, and MySQL/MariaDB. Copy `.env.example` to `.env` using PowerShell, set your local database and integration values, then follow the installation steps above.
+
+### macOS/Linux
+
+Install PHP 8.3+ with the Laravel-required extensions, Composer 2, Node.js 22+, npm, and MySQL/MariaDB using your package manager. Copy `.env.example` to `.env`, configure your local settings, and follow the installation steps above.
+
+## Documentation
+
+- **Laravel 13**: https://laravel.com/docs/13.x
+- **Laravel Boost**: https://laravel.com/docs/ai
+- **Alpine.js**: https://alpinejs.dev/
+- **Tailwind CSS**: https://tailwindcss.com/docs
+- **Vite**: https://vite.dev/guide/
+- **PayMongo**: https://developers.paymongo.com/
+- **Cloudinary PHP SDK**: https://cloudinary.com/documentation/php_integration
+
+Laravel provides the application foundation with expressive routing, dependency injection, database migrations, Eloquent ORM, queues, caching, and testing tools. See the [Laravel documentation](https://laravel.com/docs/13.x) for framework guidance and [Laravel Learn](https://laravel.com/learn) for practical lessons.
+
+For AI-assisted development, this project includes [Laravel Boost](https://laravel.com/docs/ai) as a development dependency. To install and configure Boost locally:
+
+```bash
+composer require laravel/boost --dev
+php artisan boost:install
+```
+
+## License
+
+The Composer project metadata declares this application as MIT-licensed. A separate `LICENSE` file is not currently included in the repository.
