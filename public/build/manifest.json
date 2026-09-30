@@ -1,6 +1,6 @@
 {
   "resources/js/admin/bookingConfirmation.js": {
-    "file": "assets/bookingConfirmation-CyKg85Rk.js",
+    "file": "assets/bookingConfirmation-URTsFh_k.js",
     "name": "bookingConfirmation",
     "src": "resources/js/admin/bookingConfirmation.js",
     "isDynamicEntry": true,
@@ -21,7 +21,7 @@
     "isDynamicEntry": true
   },
   "resources/js/admin/dashboard.js": {
-    "file": "assets/dashboard-DgLvXmb9.js",
+    "file": "assets/dashboard-B6Y6yux3.js",
     "name": "dashboard",
     "src": "resources/js/admin/dashboard.js",
     "isDynamicEntry": true,
@@ -42,7 +42,7 @@
     "isDynamicEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-CWLGjUF_.js",
+    "file": "assets/app-DYxRHw82.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -55,7 +55,7 @@
       "resources/js/admin/cms-manager.js"
     ],
     "css": [
-      "assets/app-BfJUouz_.css"
+      "assets/app-CBgM91RC.css"
     ]
   },
   "resources/js/booking/staycation.js": {

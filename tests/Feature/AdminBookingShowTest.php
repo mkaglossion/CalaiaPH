@@ -77,6 +77,55 @@ class AdminBookingShowTest extends TestCase
         $this->assertStringNotContainsString('Quantity:', $html);
     }
 
+    public function test_show_renders_staycation_price_breakdown(): void
+    {
+        $this->actingAs(User::factory()->create(['user_type' => 'admin']));
+
+        $room = Staycation::create([
+            'name' => 'Premium Glamping',
+            'days' => 1,
+            'type' => 'glamping',
+            'base_quantity' => 3,
+            'capacity' => 4,
+            'max_guest_capacity' => 6,
+            'included_guest_capacity' => 4,
+            'adults' => 4,
+            'children' => 2,
+            'price' => 0,
+        ]);
+
+        $booking = Booking::create(array_merge($this->bookingAttributes(), [
+            'booking_type' => 'staycation',
+            'checkin_date' => '2026-11-15',
+            'checkout_date' => '2026-11-17',
+            'payment_status' => 'paid',
+            'status' => 'confirmed',
+            'booking_data' => [
+                'checkin' => '2026-11-15',
+                'checkout' => '2026-11-17',
+                'accommodations' => [[
+                    'room_id' => $room->id,
+                    'accommodation_id' => $room->id,
+                    'accommodation_price' => 18400,
+                    'additional_adults' => 1,
+                    'additional_adult_price' => 2500,
+                    'pet_price' => 0,
+                    'total_price' => 20900,
+                ]],
+            ],
+            'total_amount' => 20900,
+        ]));
+
+        $html = app(AdminBookingsController::class)->show($booking->id)->render();
+
+        $this->assertStringContainsString('Price breakdown', $html);
+        $this->assertStringContainsString('Premium Glamping - Nov 15, 2026', $html);
+        $this->assertStringContainsString('Extra guest/mattress (1 guest x 2 nights)', $html);
+        $this->assertStringContainsString('Recorded amount breakdown', $html);
+        $this->assertStringContainsString('None · &#8369;0.00', $html);
+        $this->assertStringContainsString('&#8369;20,900.00', $html);
+    }
+
     public function test_show_normalizes_selected_packages_foods_and_activities_for_view(): void
     {
         $booking = Booking::create([

@@ -66,21 +66,7 @@
                 
                 @if($isStaycation)
                     @php
-                        $staycationNights = null;
-                        if (!empty($bookingData['checkin']) && !empty($bookingData['checkout'])) {
-                            try {
-                                $computedNights = \Carbon\Carbon::parse($bookingData['checkin'])
-                                    ->startOfDay()
-                                    ->diffInDays(\Carbon\Carbon::parse($bookingData['checkout'])->startOfDay(), false);
-                                $staycationNights = $computedNights > 0 ? (int) $computedNights : null;
-                            } catch (\Throwable $exception) {
-                                $staycationNights = null;
-                            }
-                        }
-
-                        if ($staycationNights === null && is_numeric($bookingData['nights'] ?? null)) {
-                            $staycationNights = max(1, (int) $bookingData['nights']);
-                        }
+                        $staycationNights = app(\App\Services\StaycationPriceBreakdownService::class)->nights($bookingData);
                     @endphp
                     <p><strong>Booking Type:</strong> Staycation</p>
                     <p><strong>Check-in:</strong> {{ !empty($bookingData['checkin']) ? \Carbon\Carbon::parse($bookingData['checkin'])->format('M d, Y') : 'N/A' }}</p>
@@ -109,30 +95,28 @@
                                     $adultsCount = $accommodation['adults'] ?? 0;
                                     $childrenCount = $accommodation['children'] ?? 0;
                                     $quantity = $accommodation['quantity'] ?? 1;
-                                    $basePrice = $accommodation['base_price'] ?? 0;
-                                    $additionalAdults = (int)($accommodation['additional_adults'] ?? $accommodation['extra_mattress'] ?? 0);
-                                    $mattressPrice = $accommodation['additional_adult_price'] ?? ($accommodation['mattress_price'] ?? 0);
                                     $petPrice = $accommodation['pet_price'] ?? 0;
-                                    $totalPrice = $accommodation['total_price'] ?? ($basePrice + $mattressPrice + $petPrice);
                                     $roomName = $staycation->name ?? '';
                                     $isSpecialRoom = stripos($roomName, 'byot') !== false || stripos($roomName, 'car camping') !== false || stripos($roomName, 'bring your own') !== false;
+                                    $priceLines = app(\App\Services\StaycationPriceBreakdownService::class)
+                                        ->accommodationLines($accommodation, $bookingData, $roomName);
+                                    $totalPrice = (float) ($accommodation['total_price'] ?? collect($priceLines)->sum('total'));
                                     @endphp
                                     @if($staycation)
                                         <li>
-                                            {{ $staycation->name }}
+                                            <strong>{{ $staycation->name }}</strong>
                                             @if($quantity > 1)
                                                 - {{ $quantity }} units
                                             @endif
                                             @if(!$isSpecialRoom)
                                             ({{ $adultsCount }} adult{{ $adultsCount !== 1 ? 's' : '' }}, {{ $childrenCount }} child{{ $childrenCount !== 1 ? 'ren' : '' }})
                                             @endif
-                                            - &#8369;{{ number_format($basePrice, 2) }}
-                                            @if($mattressPrice > 0)
-                                                + Additional Guest{{ $additionalAdults !== 1 ? 's' : '' }}: &#8369;{{ number_format($mattressPrice, 2) }}
-                                            @endif
-                                            @if($petPrice > 0)
-                                                + Pet: &#8369;{{ number_format($petPrice, 2) }}
-                                            @endif
+                                            <br><strong>Accommodation total:</strong> &#8369;{{ number_format($totalPrice, 2) }}
+                                            <ul>
+                                                @foreach($priceLines as $priceLine)
+                                                    <li>{{ $priceLine['name'] }}: &#8369;{{ number_format($priceLine['unit_price'], 2) }} &times; {{ $priceLine['quantity'] }} = &#8369;{{ number_format($priceLine['total'], 2) }}</li>
+                                                @endforeach
+                                            </ul>
                                         </li>
                                     @endif
                                 @endif
@@ -196,6 +180,15 @@
                     @endif
                     @if($activitiesTotal > 0)
                         <p><strong>Activities Total:</strong> &#8369;{{ number_format($activitiesTotal, 2) }}</p>
+                    @endif
+                    @if($foodTotal <= 0)
+                        <p><strong>Food:</strong> None - &#8369;0.00</p>
+                    @endif
+                    @if($activitiesTotal <= 0)
+                        <p><strong>Activities:</strong> None - &#8369;0.00</p>
+                    @endif
+                    @if(collect($bookingData['accommodations'] ?? [])->sum(fn ($accommodation) => (float) ($accommodation['pet_price'] ?? 0)) <= 0)
+                        <p><strong>Pets:</strong> None - &#8369;0.00</p>
                     @endif
                     @if($promoDiscount > 0)
                         <p><strong>Promo Discount:</strong> -&#8369;{{ number_format($promoDiscount, 2) }}</p>

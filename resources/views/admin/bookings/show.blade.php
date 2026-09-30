@@ -89,8 +89,8 @@
                     @endphp
                     @foreach($accommodationEntries as $accommodation)
                     <div class="border border-gray-200 rounded-lg overflow-hidden">
-                        <div class="flex flex-col sm:flex-row h-40">
-                            <div class="sm:w-48 shrink-0 h-40">
+                        <div class="flex flex-col items-stretch sm:flex-row">
+                            <div class="h-48 shrink-0 sm:h-auto sm:min-h-48 sm:w-48">
                                 @php
                                     $staycationId = $accommodation['room_id'] ?? $accommodation['id'] ?? null;
                                     $imgSrc = $accommodation['staycation']['image'] ?? $accommodation['image'] ?? $accommodation['image_path']
@@ -114,13 +114,15 @@
                                         && !array_key_exists('children', $accommodation)
                                         && array_key_exists('price', $accommodation)
                                         && array_key_exists('subtotal', $accommodation);
+                                    $priceLines = app(\App\Services\StaycationPriceBreakdownService::class)
+                                        ->accommodationLines($accommodation, (array) $booking->booking_data, $roomName);
                                 @endphp
-                                <img src="{{ $imgSrc }}" alt="Room image" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='{{ $imagePlaceholder }}';">
+                                <img src="{{ $imgSrc }}" alt="Room image" class="h-full min-h-48 w-full object-cover" onerror="this.onerror=null;this.src='{{ $imagePlaceholder }}';">
                             </div>
-                            <div class="flex-1 p-4 overflow-auto">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <h3 class="font-semibold text-lg text-gray-900">
+                            <div class="min-w-0 flex-1 p-4 sm:p-5">
+                                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                    <div class="min-w-0">
+                                        <h3 class="wrap-break-word text-lg font-semibold text-gray-900">
                                             {{ $roomName }}
                                         </h3>
                                         @if(!$usesUnitQuantity && !$isLegacyAggregatedRoom && $accommodationEntries->count() > 1)
@@ -149,10 +151,24 @@
                                             @endif
                                         </div>
                                     </div>
-                                    <div class="text-right">
+                                    <div class="shrink-0 text-left sm:text-right">
+                                        <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Room total</p>
                                         <p class="text-lg font-semibold text-gray-900">&#8369;{{ number_format((float) ($accommodation['total_price'] ?? 0), 2) }}</p>
                                     </div>
                                 </div>
+                                @if($priceLines)
+                                <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Price breakdown</p>
+                                    <div class="mt-2 space-y-2 text-xs text-slate-600">
+                                        @foreach($priceLines as $priceLine)
+                                        <div class="grid grid-cols-1 gap-0.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3">
+                                            <span class="wrap-break-word">{{ $priceLine['name'] }}</span>
+                                            <span class="font-medium whitespace-nowrap text-slate-700">&#8369;{{ number_format($priceLine['unit_price'], 2) }} &times; {{ $priceLine['quantity'] }} = &#8369;{{ number_format($priceLine['total'], 2) }}</span>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -377,6 +393,28 @@
                     };
                 @endphp
                 <div class="space-y-3">
+                    @if($booking->isStaycationFamilyBooking())
+                    @php
+                        $adminAccommodationTotal = collect($booking->booking_data['accommodations'] ?? [])
+                            ->filter(fn ($accommodation) => is_array($accommodation))
+                            ->sum(fn ($accommodation) => (float) ($accommodation['total_price'] ?? 0));
+                        $adminFoodTotal = collect($foodItems)->sum(fn ($food) => (float) ($food['total_price'] ?? 0));
+                        $adminActivitiesTotal = collect($singleActivities)->sum(fn ($activity) => (float) ($activity['total_price'] ?? 0))
+                            + collect($activityPackages)->sum(fn ($activity) => (float) ($activity['total_price'] ?? 0));
+                        $adminPetTotal = collect($booking->booking_data['accommodations'] ?? [])
+                            ->filter(fn ($accommodation) => is_array($accommodation))
+                            ->sum(fn ($accommodation) => (float) ($accommodation['pet_price'] ?? 0));
+                    @endphp
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <p class="mb-2 text-sm font-semibold text-gray-700">Recorded amount breakdown</p>
+                        <div class="space-y-1 text-sm">
+                            <div class="flex justify-between gap-3"><span>Accommodation</span><span>&#8369;{{ number_format($adminAccommodationTotal, 2) }}</span></div>
+                            <div class="flex justify-between gap-3"><span>Food</span><span>@if($adminFoodTotal > 0)&#8369;{{ number_format($adminFoodTotal, 2) }}@else None · &#8369;0.00 @endif</span></div>
+                            <div class="flex justify-between gap-3"><span>Activities</span><span>@if($adminActivitiesTotal > 0)&#8369;{{ number_format($adminActivitiesTotal, 2) }}@else None · &#8369;0.00 @endif</span></div>
+                            <div class="flex justify-between gap-3"><span>Pets</span><span>@if($adminPetTotal > 0)&#8369;{{ number_format($adminPetTotal, 2) }}@else None · &#8369;0.00 @endif</span></div>
+                        </div>
+                    </div>
+                    @endif
                     <div class="flex justify-between items-center pb-2 border-b border-gray-200">
                         <span class="text-gray-600">Subtotal</span>
                         <span class="font-semibold text-gray-900">&#8369;{{ number_format((float) ($booking->subtotal ?? $booking->total_amount), 2) }}</span>
