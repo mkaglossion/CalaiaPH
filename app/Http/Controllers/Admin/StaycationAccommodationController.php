@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Staycation;
 use App\Models\StaycationAccommodation;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use App\Facades\Cloudinary;
 use Illuminate\Support\Facades\Log;
 
 class StaycationAccommodationController extends Controller

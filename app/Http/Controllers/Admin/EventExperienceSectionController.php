@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\EventExperienceSection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use App\Facades\Cloudinary;
 
 class EventExperienceSectionController extends Controller
 {

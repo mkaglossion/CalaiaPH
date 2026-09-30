@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\DayTourSwiperImage;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use App\Facades\Cloudinary;
 
 class DayTourSwiperImageController extends Controller
 {
