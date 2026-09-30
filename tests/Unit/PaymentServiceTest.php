@@ -5,10 +5,14 @@ namespace Tests\Unit;
 use App\Services\PaymentService;
 use GuzzleHttp\Psr7\Response;
 use Mockery;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use Tests\TestCase;
 
 class PaymentServiceTest extends TestCase
 {
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
     public function test_create_checkout_preserves_discounted_final_amount_when_line_items_do_not_match(): void
     {
         config()->set('services.paymongo.secret_key', 'sk_test_123');

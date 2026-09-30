@@ -11,6 +11,6 @@ return [
 
     'cache_minutes' => (int) env('WEATHER_CACHE_MINUTES', 30),
     'stale_minutes' => (int) env('WEATHER_STALE_MINUTES', 120),
-    'connect_timeout_seconds' => (int) env('WEATHER_CONNECT_TIMEOUT_SECONDS', 2),
-    'timeout_seconds' => (int) env('WEATHER_TIMEOUT_SECONDS', 4),
+    'connect_timeout_seconds' => (int) env('WEATHER_CONNECT_TIMEOUT_SECONDS', 1),
+    'timeout_seconds' => (int) env('WEATHER_TIMEOUT_SECONDS', 2),
 ];

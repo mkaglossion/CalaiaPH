@@ -2582,7 +2582,10 @@ class BookingController extends Controller
                 return redirect()->route('booking.payment')->with('error', 'Checkout session mismatch.');
             }
 
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client([
+                'connect_timeout' => config('services.paymongo.connect_timeout'),
+                'timeout' => config('services.paymongo.timeout'),
+            ]);
             $response = $client->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutId}", [
                 'headers' => [
                     'Authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),
@@ -2835,7 +2838,10 @@ class BookingController extends Controller
         }
 
         try {
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client([
+                'connect_timeout' => config('services.paymongo.connect_timeout'),
+                'timeout' => config('services.paymongo.timeout'),
+            ]);
             $response = $client->get("https://api.paymongo.com/v1/checkout_sessions/{$checkoutId}", [
                 'headers' => [
                     'Authorization' => 'Basic ' . base64_encode(config('services.paymongo.secret_key') . ':'),

@@ -47,7 +47,10 @@ class PaymentService
             'customer_email' => $customerEmail,
         ]);
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client([
+            'connect_timeout' => config('services.paymongo.connect_timeout'),
+            'timeout' => config('services.paymongo.timeout'),
+        ]);
 
         try {
             $targetAmount = max(1, (int) round($amount));
@@ -995,7 +998,8 @@ class PaymentService
 
         try {
             $response = Http::withBasicAuth(config('services.paymongo.secret_key'), '')
-                ->timeout(10)
+                ->connectTimeout(config('services.paymongo.connect_timeout'))
+                ->timeout(config('services.paymongo.timeout'))
                 ->get('https://api.paymongo.com/v1/checkout_sessions/' . $checkoutSessionId);
 
             if (!$response->successful()) {

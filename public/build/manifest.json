@@ -1,6 +1,6 @@
 {
   "resources/js/admin/bookingConfirmation.js": {
-    "file": "assets/bookingConfirmation-URTsFh_k.js",
+    "file": "assets/bookingConfirmation-CEhg5LYe.js",
     "name": "bookingConfirmation",
     "src": "resources/js/admin/bookingConfirmation.js",
     "isDynamicEntry": true,
@@ -21,7 +21,7 @@
     "isDynamicEntry": true
   },
   "resources/js/admin/dashboard.js": {
-    "file": "assets/dashboard-B6Y6yux3.js",
+    "file": "assets/dashboard-OaKqta_S.js",
     "name": "dashboard",
     "src": "resources/js/admin/dashboard.js",
     "isDynamicEntry": true,
@@ -42,7 +42,7 @@
     "isDynamicEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-DYxRHw82.js",
+    "file": "assets/app-DHKjFpOV.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,

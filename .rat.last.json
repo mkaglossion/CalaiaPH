@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-09-25T02:23:48+00:00",
+  "generated_at": "2026-09-30T09:13:18+00:00",
   "stats": {
     "routes": 377,
-    "files": 824,
+    "files": 831,
     "by_type": {
-      "Other": 584,
+      "Other": 590,
       "Controller": 119,
       "Middleware": 2,
       "Job": 5,
       "Mail": 1,
       "Model": 94,
-      "Service": 19
+      "Service": 20
     },
     "graph": {
-      "nodes": 1371,
-      "edges": 2162,
+      "nodes": 1378,
+      "edges": 2200,
       "by_type": {
         "Route": 529,
         "Controller": 165,
-        "Other": 543,
+        "Other": 549,
         "Database": 1,
-        "Service": 26,
+        "Service": 27,
         "Model": 95,
         "Filesystem": 1,
         "Cache": 1,
@@ -8329,6 +8329,14 @@
         "meta": {}
       },
       {
+        "id": "service:StaycationPriceBreakdownService",
+        "type": "Service",
+        "name": "StaycationPriceBreakdownService",
+        "file": "app\\Services\\StaycationPriceBreakdownService.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
         "id": "other:AdminLayout",
         "type": "Other",
         "name": "AdminLayout",
@@ -10193,6 +10201,30 @@
         "meta": {}
       },
       {
+        "id": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "type": "Other",
+        "name": "2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "file": "database\\migrations\\2026_09_25_000002_sync_policy_phone_and_farm_typo.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
+        "id": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "type": "Other",
+        "name": "2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "file": "database\\migrations\\2026_09_25_000003_correct_homepage_farm_animals_role_typo.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
+        "id": "other:2026_09_30_000000_repair_admin_activity_logs_id",
+        "type": "Other",
+        "name": "2026_09_30_000000_repair_admin_activity_logs_id",
+        "file": "database\\migrations\\2026_09_30_000000_repair_admin_activity_logs_id.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
         "id": "other:BarangaySeeder",
         "type": "Other",
         "name": "BarangaySeeder",
@@ -11961,6 +11993,14 @@
         "meta": {}
       },
       {
+        "id": "other:AdminPackageImageRemovalTest",
+        "type": "Other",
+        "name": "AdminPackageImageRemovalTest",
+        "file": "tests\\Feature\\AdminPackageImageRemovalTest.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
         "id": "other:AdminPaymongoWebhookCleanupTest",
         "type": "Other",
         "name": "AdminPaymongoWebhookCleanupTest",
@@ -12081,6 +12121,14 @@
         "meta": {}
       },
       {
+        "id": "other:NetworkResilienceTest",
+        "type": "Other",
+        "name": "NetworkResilienceTest",
+        "file": "tests\\Feature\\NetworkResilienceTest.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
         "id": "other:PaymongoWebhookTest",
         "type": "Other",
         "name": "PaymongoWebhookTest",
@@ -12157,6 +12205,14 @@
         "type": "Other",
         "name": "StaycationCatalogSortingTest",
         "file": "tests\\Feature\\StaycationCatalogSortingTest.php",
+        "line": 1,
+        "meta": {}
+      },
+      {
+        "id": "other:StaycationPriceBreakdownTest",
+        "type": "Other",
+        "name": "StaycationPriceBreakdownTest",
+        "file": "tests\\Feature\\StaycationPriceBreakdownTest.php",
         "line": 1,
         "meta": {}
       },
@@ -17873,13 +17929,6 @@
       },
       {
         "from": "controller:BookingController",
-        "to": "log:Log",
-        "kind": "DEPENDS_ON",
-        "label": "Log::",
-        "meta": {}
-      },
-      {
-        "from": "controller:BookingController",
         "to": "service:VatService",
         "kind": "CALLS",
         "label": "VatService",
@@ -18706,9 +18755,23 @@
       },
       {
         "from": "service:AddOnPaymentService",
+        "to": "log:Log",
+        "kind": "DEPENDS_ON",
+        "label": "Log::",
+        "meta": {}
+      },
+      {
+        "from": "service:AddOnPaymentService",
         "to": "http:Http",
         "kind": "DEPENDS_ON",
         "label": "Http::",
+        "meta": {}
+      },
+      {
+        "from": "service:AddOnPaymentService",
+        "to": "log:Log",
+        "kind": "DEPENDS_ON",
+        "label": "Log::",
         "meta": {}
       },
       {
@@ -24620,6 +24683,174 @@
         "meta": {}
       },
       {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000002_sync_policy_phone_and_farm_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_25_000003_correct_homepage_farm_animals_role_typo",
+        "to": "db:DB",
+        "kind": "DEPENDS_ON",
+        "label": "DB::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_30_000000_repair_admin_activity_logs_id",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_30_000000_repair_admin_activity_logs_id",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:2026_09_30_000000_repair_admin_activity_logs_id",
+        "to": "schema:Schema",
+        "kind": "DEPENDS_ON",
+        "label": "Schema::",
+        "meta": {}
+      },
+      {
         "from": "other:store.blade",
         "to": "str:Str",
         "kind": "DEPENDS_ON",
@@ -24631,6 +24862,13 @@
         "to": "service:BookingConfirmationContentService",
         "kind": "CALLS",
         "label": "BookingConfirmationContentService",
+        "meta": {}
+      },
+      {
+        "from": "other:show.blade",
+        "to": "service:StaycationPriceBreakdownService",
+        "kind": "CALLS",
+        "label": "StaycationPriceBreakdownService",
         "meta": {}
       },
       {
@@ -24726,9 +24964,30 @@
       },
       {
         "from": "other:confirmation.blade",
+        "to": "service:StaycationPriceBreakdownService",
+        "kind": "CALLS",
+        "label": "StaycationPriceBreakdownService",
+        "meta": {}
+      },
+      {
+        "from": "other:confirmation.blade",
         "to": "service:VatService",
         "kind": "CALLS",
         "label": "VatService",
+        "meta": {}
+      },
+      {
+        "from": "other:confirmation.blade",
+        "to": "service:StaycationPriceBreakdownService",
+        "kind": "CALLS",
+        "label": "StaycationPriceBreakdownService",
+        "meta": {}
+      },
+      {
+        "from": "other:confirmation.blade",
+        "to": "service:StaycationPriceBreakdownService",
+        "kind": "CALLS",
+        "label": "StaycationPriceBreakdownService",
         "meta": {}
       },
       {
@@ -24925,6 +25184,20 @@
         "to": "service:BookingConfirmationContentService",
         "kind": "CALLS",
         "label": "BookingConfirmationContentService",
+        "meta": {}
+      },
+      {
+        "from": "other:booking-confirmation.blade",
+        "to": "service:StaycationPriceBreakdownService",
+        "kind": "CALLS",
+        "label": "StaycationPriceBreakdownService",
+        "meta": {}
+      },
+      {
+        "from": "other:booking-confirmation.blade",
+        "to": "service:StaycationPriceBreakdownService",
+        "kind": "CALLS",
+        "label": "StaycationPriceBreakdownService",
         "meta": {}
       },
       {
@@ -26013,6 +26286,13 @@
         "meta": {}
       },
       {
+        "from": "other:AdminActivityLogTest",
+        "to": "model:User",
+        "kind": "WRITES",
+        "label": "User",
+        "meta": {}
+      },
+      {
         "from": "other:AdminBookingConfirmationContentTest",
         "to": "model:User",
         "kind": "WRITES",
@@ -26147,6 +26427,13 @@
       },
       {
         "from": "controller:AdminBookingShowTest",
+        "to": "model:User",
+        "kind": "WRITES",
+        "label": "User",
+        "meta": {}
+      },
+      {
+        "from": "controller:AdminBookingShowTest",
         "to": "http:Http",
         "kind": "DEPENDS_ON",
         "label": "Http::",
@@ -26255,6 +26542,13 @@
         "to": "schema:Schema",
         "kind": "DEPENDS_ON",
         "label": "Schema::",
+        "meta": {}
+      },
+      {
+        "from": "other:AdminPackageImageRemovalTest",
+        "to": "model:User",
+        "kind": "WRITES",
+        "label": "User",
         "meta": {}
       },
       {
@@ -26846,6 +27140,20 @@
         "meta": {}
       },
       {
+        "from": "other:NetworkResilienceTest",
+        "to": "http:Http",
+        "kind": "DEPENDS_ON",
+        "label": "Http::",
+        "meta": {}
+      },
+      {
+        "from": "other:NetworkResilienceTest",
+        "to": "service:AddOnPaymentService",
+        "kind": "CALLS",
+        "label": "AddOnPaymentService",
+        "meta": {}
+      },
+      {
         "from": "other:PaymongoWebhookTest",
         "to": "service:PaymongoWebhookService",
         "kind": "CALLS",
@@ -27189,6 +27497,20 @@
         "meta": {}
       },
       {
+        "from": "other:StaycationPriceBreakdownTest",
+        "to": "storage:Storage",
+        "kind": "DEPENDS_ON",
+        "label": "Storage::",
+        "meta": {}
+      },
+      {
+        "from": "other:StaycationPriceBreakdownTest",
+        "to": "service:PaymentService",
+        "kind": "CALLS",
+        "label": "PaymentService",
+        "meta": {}
+      },
+      {
         "from": "other:StaycationRoomDescriptionTest",
         "to": "model:User",
         "kind": "WRITES",
@@ -27442,14 +27764,14 @@
       }
     ],
     "stats": {
-      "nodes": 1371,
-      "edges": 2162,
+      "nodes": 1378,
+      "edges": 2200,
       "by_type": {
         "Route": 529,
         "Controller": 165,
-        "Other": 543,
+        "Other": 549,
         "Database": 1,
-        "Service": 26,
+        "Service": 27,
         "Model": 95,
         "Filesystem": 1,
         "Cache": 1,
