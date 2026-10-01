@@ -7,7 +7,6 @@ use App\Models\Booking;
 use App\Policies\BookingPolicy;
 use App\Contracts\AddOnCheckoutGateway;
 use App\Services\PaymongoAddOnCheckoutGateway;
-use Cloudinary\Cloudinary as CloudinaryClient;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
@@ -21,18 +20,6 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(AddOnCheckoutGateway::class, PaymongoAddOnCheckoutGateway::class);
-        $this->app->singleton(CloudinaryClient::class, function ($app) {
-            $cloudinaryUrl = $app['config']->get('cloudinary.cloudinary_url');
-
-            if (filled($cloudinaryUrl)) {
-                return new CloudinaryClient($cloudinaryUrl);
-            }
-
-            return new CloudinaryClient([
-                'cloud' => $app['config']->get('cloudinary.cloud'),
-                'url' => $app['config']->get('cloudinary.url'),
-            ]);
-        });
     }
 
     /**

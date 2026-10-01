@@ -7,7 +7,7 @@ use App\Models\Package;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use App\Facades\Cloudinary;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class PackageController extends Controller
 {

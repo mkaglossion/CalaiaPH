@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Food;
 use App\Models\FoodPackage;
 use App\Models\FoodPackageSetting;
-use App\Facades\Cloudinary;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;

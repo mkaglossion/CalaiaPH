@@ -9,7 +9,7 @@ use App\Models\FoodText;
 use App\Models\Food;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Facades\Cloudinary;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class DiningCategoryImageController extends Controller
 {

@@ -8,7 +8,7 @@ use App\Models\Event;
 use App\Models\EventSwiperImage;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use App\Facades\Cloudinary;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class EventSwiperImageController extends Controller
 {

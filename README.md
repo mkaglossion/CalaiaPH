@@ -1,90 +1,93 @@
-# CalaiaPH
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-CalaiaPH is a Laravel web application for managing bookings, staycations, day tours, activities, packages, and related content.
+<p align="center">
+<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+</p>
 
-## Requirements
+## About Laravel
 
-- PHP 8.3 or later, with the extensions required by Laravel and the project
-- Composer 2
-- Node.js 22 and npm
-- MySQL/MariaDB, or SQLite for local development and tests
+Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-This project uses Laravel 13 and PHPUnit 12. The Cloudinary PHP SDK is used directly for media uploads.
+- [Simple, fast routing engine](https://laravel.com/docs/routing).
+- [Powerful dependency injection container](https://laravel.com/docs/container).
+- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+- [Robust background job processing](https://laravel.com/docs/queues).
+- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-## Local setup
+Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-1. Install PHP and Composer dependencies:
+## Learning Laravel
 
-   ```powershell
-   composer install
-   ```
+Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
 
-2. Create your local environment file and application key:
+If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
-   ```powershell
-   Copy-Item .env.example .env
-   php artisan key:generate
-   ```
+## Laravel Sponsors
 
-3. Configure the database connection in `.env`. Set `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` for MySQL/MariaDB, or configure SQLite.
+We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
 
-4. Configure Cloudinary in `.env` if you need media uploads. Set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`, or provide `CLOUDINARY_URL`. `CLOUDINARY_UPLOAD_FOLDER` is optional.
+### Premium Partners
 
-5. Install frontend dependencies and build the assets:
+- **[Vehikl](https://vehikl.com)**
+- **[Tighten Co.](https://tighten.co)**
+- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
+- **[64 Robots](https://64robots.com)**
+- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
+- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
+- **[Redberry](https://redberry.international/laravel-development)**
+- **[Active Logic](https://activelogic.com)**
 
-   ```powershell
-   npm ci
-   npm run build
-   ```
+## Contributing
 
-6. Run database migrations after confirming the configured database is the intended local database:
+Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-   ```powershell
-   php artisan migrate
-   ```
+## Code of Conduct
 
-## Development
+In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-Start the Laravel server:
+## Security Vulnerabilities
 
-```powershell
-php artisan serve
-```
+If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
-Or run the project's combined development command, which starts the web server, queue listener, and Vite:
+## License
 
-```powershell
-composer run dev
-```
+The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
-Useful commands:
+php artisan migrate               # Run all migrations
+php artisan migrate:rollback      # Rollback last migration
+php artisan migrate:refresh       # Reset and re-run migrations
+php artisan db:seed               # Run seeders only
 
-```powershell
-php artisan route:list
-php artisan queue:failed
-php artisan optimize:clear
-npm run dev
-npm run build
-```
+Destructive database commands:
+- `php artisan migrate:fresh --seed` drops all tables before reseeding.
+- Use only when you intentionally want to erase the current database.
 
-## Tests
+php artisan make:model ModelName            # Create a model
+php artisan make:model ModelName -mcf       # Model + Migration + Controller + Factory
+php artisan make:controller ControllerName  # Create a controller
+php artisan make:migration create_table_name_table  # Create a migration
+php artisan make:seeder SeederName          # Create a seeder
 
-Run the feature tests with:
+php artisan breeze:install   # Install Laravel Breeze
+php artisan ui bootstrap --auth  # (For Laravel UI-based auth)
 
-```powershell
-php artisan test
-```
+php artisan optimize:clear   # Clear all caches
+php artisan config:clear     # Clear config cache
+php artisan config:cache     # Cache configuration
+php artisan route:clear      # Clear route cache
 
-The PHPUnit configuration uses an in-memory SQLite database and isolated testing environment.
-
-## Database safety
-
-- `php artisan migrate:fresh --seed` drops all tables before reseeding. Use it only when you intend to erase the selected database.
-- `tools/db-safe.ps1 -DumpPath "<dump.sql>" -Force` backs up `calaiaph`, imports the dump into a new database copy, verifies it, and prints the phpMyAdmin URL.
+Safe local DB flow:
+- `php artisan test` uses isolated testing config and should not touch local MariaDB.
+- `tools/db-safe.ps1 -DumpPath "<dump.sql>" -Force` backs up `calaiaph`, imports the dump into a new DB copy, verifies it, and prints the phpMyAdmin URL.
 - `tools/db-safe.ps1 -RestoreDatabase <name>` checks an existing restore copy.
-- `-Force` skips the confirmation prompt during import.
+- Add `-Force` to skip the confirmation prompt during import.
 
-## Laravel documentation
-
-- [Laravel 13 documentation](https://laravel.com/docs/13.x)
-- [Laravel 13 upgrade guide](https://laravel.com/docs/13.x/upgrade)
+php artisan serve            # Start local dev server
+php artisan route:list       # List all routes
+php artisan env              # Show current environment
+php artisan queue:failed     # List failed jobs
