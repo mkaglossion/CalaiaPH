@@ -19,7 +19,7 @@ A booking and content-management platform for CalaiaPH, built with **Laravel 13*
 
 ## Tech Stack
 
-- **Backend**: Laravel 13.34.0 (PHP 8.3+)
+- **Backend**: Laravel 12 (PHP 8.3+)
 - **Frontend**: Laravel Blade + Alpine.js
 - **Build Tool**: Vite 8
 - **Styling**: Tailwind CSS 4
@@ -302,7 +302,7 @@ Install PHP 8.3+ with the Laravel-required extensions, Composer 2, Node.js 22+, 
 
 ## Documentation
 
-- **Laravel 13**: https://laravel.com/docs/13.x
+- **Laravel 12**: https://laravel.com/docs/12.x
 - **Laravel Boost**: https://laravel.com/docs/ai
 - **Alpine.js**: https://alpinejs.dev/
 - **Tailwind CSS**: https://tailwindcss.com/docs
@@ -310,7 +310,7 @@ Install PHP 8.3+ with the Laravel-required extensions, Composer 2, Node.js 22+, 
 - **PayMongo**: https://developers.paymongo.com/
 - **Cloudinary PHP SDK**: https://cloudinary.com/documentation/php_integration
 
-Laravel provides the application foundation with expressive routing, dependency injection, database migrations, Eloquent ORM, queues, caching, and testing tools. See the [Laravel documentation](https://laravel.com/docs/13.x) for framework guidance and [Laravel Learn](https://laravel.com/learn) for practical lessons.
+Laravel provides the application foundation with expressive routing, dependency injection, database migrations, Eloquent ORM, queues, caching, and testing tools. See the [Laravel documentation](https://laravel.com/docs/12.x) for framework guidance and [Laravel Learn](https://laravel.com/learn) for practical lessons.
 
 For AI-assisted development, this project includes [Laravel Boost](https://laravel.com/docs/ai) as a development dependency. To install and configure Boost locally:
 
