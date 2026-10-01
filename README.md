@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/PHP-8.3%2B-777BB4?style=flat&logo=php&logoColor=white" alt="PHP 8.3+">
-  <img src="https://img.shields.io/badge/Laravel-12.x-FF2D20?style=flat&logo=laravel&logoColor=white" alt="Laravel 13">
+  <img src="https://img.shields.io/badge/PHP-%5E8.3-777BB4?style=flat&logo=php&logoColor=white" alt="PHP ^8.3">
+  <img src="https://img.shields.io/badge/Laravel-13.x-FF2D20?style=flat&logo=laravel&logoColor=white" alt="Laravel 13.x">
   <img src="https://img.shields.io/badge/Alpine.js-3.x-8BC0D0?style=flat&logo=alpine.js&logoColor=white" alt="Alpine.js">
   <img src="https://img.shields.io/badge/Tailwind_CSS-4.x-06B6D4?style=flat&logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
   <img src="https://img.shields.io/badge/Vite-8.x-646CFF?style=flat&logo=vite&logoColor=white" alt="Vite 8">
@@ -15,11 +15,11 @@
 
 # CalaiaPH
 
-A booking and content-management platform for CalaiaPH, built with **Laravel 13**. The website supports staycations, day visits, tours, activities, packages, and dining, with an admin panel for managing bookings, reservations, inventory, pricing, and site content.
+A booking and content-management platform for CalaiaPH, built with **Laravel 13.x**. The website supports staycations, day visits, tours, activities, packages, and dining, with an admin panel for managing bookings, reservations, inventory, pricing, and site content.
 
 ## Tech Stack
 
-- **Backend**: Laravel 12 (PHP 8.3+)
+- **Backend**: Laravel 13.x (PHP ^8.3)
 - **Frontend**: Laravel Blade + Alpine.js
 - **Build Tool**: Vite 8
 - **Styling**: Tailwind CSS 4
@@ -59,7 +59,7 @@ A booking and content-management platform for CalaiaPH, built with **Laravel 13*
 
 ## Requirements
 
-- **PHP 8.3+** with required Laravel extensions
+- **PHP ^8.3** with required Laravel extensions
 - **Composer 2**
 - **Node.js 22+** + **npm**
 - **Database**: MySQL or MariaDB for local development
@@ -157,6 +157,21 @@ php artisan test
 ```
 
 Tests use an in-memory SQLite database configured in `phpunit.xml`; a local MySQL database is not needed to run them.
+
+## Production Deployment (PuTTY/SSH)
+
+Deploy the matching `composer.json` and `composer.lock` files before installing dependencies. Laravel 13 requires PHP ^8.3. Confirm the production PHP runtime before installing dependencies, and do not run `composer update` on the production server.
+
+```bash
+cd /home/dwmngr/web/CalaiaPH
+php -v
+composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+php artisan optimize:clear
+php artisan optimize
+composer check-platform-reqs --no-dev
+```
+
+If the application is deployed in a different directory, replace the `cd` path. Build frontend assets locally with `npm run build` and deploy the resulting `public/build` directory when Node.js is not available on the production server. Never copy `.env` from local development; configure production credentials directly on the server.
 
 ## Security Scanning
 
@@ -294,15 +309,15 @@ Payment processing, media storage, social sign-in, weather data, and optional br
 
 ### Windows (Laragon)
 
-Install PHP 8.3+, Composer, Node.js 22+, npm, and MySQL/MariaDB. Copy `.env.example` to `.env` using PowerShell, set your local database and integration values, then follow the installation steps above.
+Install PHP ^8.3, Composer, Node.js 22+, npm, and MySQL/MariaDB. Copy `.env.example` to `.env` using PowerShell, set your local database and integration values, then follow the installation steps above.
 
 ### macOS/Linux
 
-Install PHP 8.3+ with the Laravel-required extensions, Composer 2, Node.js 22+, npm, and MySQL/MariaDB using your package manager. Copy `.env.example` to `.env`, configure your local settings, and follow the installation steps above.
+Install PHP ^8.3 with the Laravel-required extensions, Composer 2, Node.js 22+, npm, and MySQL/MariaDB using your package manager. Copy `.env.example` to `.env`, configure your local settings, and follow the installation steps above.
 
 ## Documentation
 
-- **Laravel 12**: https://laravel.com/docs/12.x
+- **Laravel 13**: https://laravel.com/docs/13.x
 - **Laravel Boost**: https://laravel.com/docs/ai
 - **Alpine.js**: https://alpinejs.dev/
 - **Tailwind CSS**: https://tailwindcss.com/docs
@@ -310,7 +325,7 @@ Install PHP 8.3+ with the Laravel-required extensions, Composer 2, Node.js 22+, 
 - **PayMongo**: https://developers.paymongo.com/
 - **Cloudinary PHP SDK**: https://cloudinary.com/documentation/php_integration
 
-Laravel provides the application foundation with expressive routing, dependency injection, database migrations, Eloquent ORM, queues, caching, and testing tools. See the [Laravel documentation](https://laravel.com/docs/12.x) for framework guidance and [Laravel Learn](https://laravel.com/learn) for practical lessons.
+Laravel provides the application foundation with expressive routing, dependency injection, database migrations, Eloquent ORM, queues, caching, and testing tools. See the [Laravel documentation](https://laravel.com/docs/13.x) for framework guidance and [Laravel Learn](https://laravel.com/learn) for practical lessons.
 
 For AI-assisted development, this project includes [Laravel Boost](https://laravel.com/docs/ai) as a development dependency. To install and configure Boost locally:
 
