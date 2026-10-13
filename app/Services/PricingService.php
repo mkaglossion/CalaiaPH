@@ -13,6 +13,12 @@ use Illuminate\Support\Collection;
 
 class PricingService
 {
+    private array $pricingConfigsByUnitType = [];
+    private array $holidayDatesByRange = [];
+    private array $seasonTypesByDate = [];
+    private ?array $weekendDayIds = null;
+    private ?array $peakTypePriorities = null;
+
     /**
      * Calculate total price for a booking
      * 
@@ -40,7 +46,7 @@ class PricingService
             ];
         }
 
-        $pricingConfigs = PricingConfig::where('unit_type', $unitType)
+        $pricingConfigs = $this->pricingConfigsByUnitType[$unitType] ??= PricingConfig::where('unit_type', $unitType)
             ->with(['peakType', 'dayType'])
             ->get();
 
@@ -319,7 +325,9 @@ class PricingService
      */
     private function getHolidayDates(Carbon $checkIn, Carbon $checkOut): array
     {
-        return Holiday::whereBetween('date', [
+        $rangeKey = $checkIn->toDateString() . '|' . $checkOut->toDateString();
+
+        return $this->holidayDatesByRange[$rangeKey] ??= Holiday::whereBetween('date', [
             $checkIn->format('Y-m-d'),
             $checkOut->copy()->subDay()->format('Y-m-d')
         ])
@@ -337,10 +345,14 @@ class PricingService
      */
     private function getWeekendDayIds(): array
     {
-        $weekendId = DayType::where('name', 'Weekend')->value('id');
-        return DayTypeDay::where('day_type_id', $weekendId)
-            ->pluck('weekday')
-            ->toArray();
+        if ($this->weekendDayIds === null) {
+            $weekendId = DayType::where('name', 'Weekend')->value('id');
+            $this->weekendDayIds = DayTypeDay::where('day_type_id', $weekendId)
+                ->pluck('weekday')
+                ->toArray();
+        }
+
+        return $this->weekendDayIds;
     }
 
     /**
@@ -350,7 +362,7 @@ class PricingService
      */
     private function getPeakTypePriorities(): array
     {
-        return PeakType::pluck('priority', 'name')->toArray();
+        return $this->peakTypePriorities ??= PeakType::pluck('priority', 'name')->toArray();
     }
 
     /**
@@ -365,7 +377,11 @@ class PricingService
     private function determineSeasonType(Carbon $date, array $priorities): ?string
     {
         $dateStr = $date->format('Y-m-d');
-        
+
+        if (array_key_exists($dateStr, $this->seasonTypesByDate)) {
+            return $this->seasonTypesByDate[$dateStr];
+        }
+
         $matchingPeriods = PeakPeriod::where(function($query) use ($dateStr) {
                 $query->where(function($q) use ($dateStr) {
                     $q->where('start_date', '<=', $dateStr)
@@ -376,7 +392,7 @@ class PricingService
             ->get();
 
         if ($matchingPeriods->isEmpty()) {
-            return null;
+            return $this->seasonTypesByDate[$dateStr] = null;
         }
 
         $highestPriority = -999;
@@ -390,7 +406,7 @@ class PricingService
             }
         }
 
-        return $selectedType;
+        return $this->seasonTypesByDate[$dateStr] = $selectedType;
     }
 
     /**
