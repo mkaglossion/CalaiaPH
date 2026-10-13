@@ -4,6 +4,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use App\Models\WeatherModel;
 
 class Weather extends Component
@@ -15,8 +16,21 @@ class Weather extends Component
      */
     public function __construct()
     {
-        $weatherModel = new WeatherModel();
+        $cacheKey = 'weather_widget:' . sha1(implode('|', [
+            config('weather.latitude'),
+            config('weather.longitude'),
+            config('weather.api_key'),
+        ]));
 
+        $this->data = Cache::remember(
+            $cacheKey,
+            now()->addMinutes(max(1, (int) config('weather.cache_minutes', 30))),
+            fn (): array => $this->buildWeatherData(new WeatherModel())
+        );
+    }
+
+    private function buildWeatherData(WeatherModel $weatherModel): array
+    {
         // Get current weather data
         $currentWeather = $this->getCurrentWeather($weatherModel);
 
@@ -33,7 +47,7 @@ class Weather extends Component
         $tips = $this->generateWeatherTips($currentWeather);
 
         // Format data for the view
-        $this->data = [
+        return [
             'location' => $currentWeather['city'] ?? 'Calaia Nature Park',
             'now' => [
                 'available' => $currentWeather['available'] ?? false,
