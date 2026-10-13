@@ -96,7 +96,7 @@
     {{-- ========================= --}}
     {{-- Section 2: Season Durations --}}
     {{-- ========================= --}}
-    <div class="bg-white/70 backdrop-blur-lg rounded-2xl shadow-sm border border-gray-200 p-6" x-data="durationManager(@js($seasonDurationTypes), @js($seasonDurationRoutes))">
+    <div data-season-duration-manager class="bg-white/70 backdrop-blur-lg rounded-2xl shadow-sm border border-gray-200 p-6" x-data="durationManager(@js($seasonDurationTypes), @js($seasonDurationRoutes))">
         <div class="flex justify-between items-center mb-4">
             <div>
                 <h2 class="text-xl font-semibold">Season Durations</h2>
