@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Activity;
 use App\Models\ActivityPackage;
+use App\Models\BookingSetting;
 use App\Models\Food;
 use App\Models\FoodPackage;
 use App\Models\Staycation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class StaycationCatalogSortingTest extends TestCase
@@ -29,6 +31,59 @@ class StaycationCatalogSortingTest extends TestCase
                 'Zulu Premium Room',
                 'Alpha Budget Room',
             ]);
+    }
+
+    public function test_availability_batches_inventory_and_peak_period_queries_across_rooms(): void
+    {
+        for ($order = 1; $order <= 8; $order++) {
+            $this->room("Test Room {$order}", 1000, $order);
+        }
+
+        $queries = [];
+        DB::listen(function ($query) use (&$queries): void {
+            $queries[] = strtolower($query->sql);
+        });
+
+        $this->get(route('booking.staycationAvailability', [
+            'checkin' => '2026-10-20',
+            'checkout' => '2026-10-23',
+        ]))->assertOk();
+
+        $inventoryQueries = array_filter($queries, fn (string $sql): bool => str_contains($sql, 'staycation_inventories'));
+        $peakPeriodQueries = array_filter($queries, fn (string $sql): bool => str_contains($sql, 'peak_periods'));
+
+        $this->assertCount(1, $inventoryQueries);
+        $this->assertCount(1, $peakPeriodQueries);
+    }
+
+    public function test_availability_renders_pricing_settings_without_extra_api_requests(): void
+    {
+        $this->room('Test Room', 1000, 1);
+        BookingSetting::create([
+            'key' => 'mattress_price_per_night',
+            'label' => 'Mattress price per night',
+            'value' => 1800,
+            'category' => 'pricing',
+        ]);
+        BookingSetting::create([
+            'key' => 'pet_price',
+            'label' => 'Pet price',
+            'value' => 500,
+            'category' => 'pricing',
+        ]);
+
+        $response = $this->get(route('booking.staycationAvailability', [
+            'checkin' => '2026-10-20',
+            'checkout' => '2026-10-21',
+        ]))
+            ->assertOk()
+            ->assertViewHas('pricingSettings', fn (array $settings): bool => $settings === [
+                'mattress_price_per_night' => 1800.0,
+                'pet_price' => 500.0,
+            ]);
+
+        $this->assertStringNotContainsString('/api/booking/settings', $response->getContent());
+        $this->assertStringNotContainsString('/api/vat-rate', $response->getContent());
     }
 
     public function test_food_sorts_items_and_packages_by_their_displayed_prices(): void

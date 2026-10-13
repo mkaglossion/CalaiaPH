@@ -1446,9 +1446,9 @@
                 roomDetailsMap: @json($roomDetails),
 
                 bookingSettings: {
-                    mattress_price_per_night: 1250,
-                    additional_adult_price_per_night: 1200,
-                    pet_price: 2000,
+                    mattress_price_per_night: @js($pricingSettings['mattress_price_per_night'] ?? 1250),
+                    additional_adult_price_per_night: @js(($pricingSettings['mattress_price_per_night'] ?? 1250) ?: 1200),
+                    pet_price: @js($pricingSettings['pet_price'] ?? 2000),
                 },
 
                 calendarModal: false,
@@ -3031,27 +3031,6 @@
                     return allBreakdowns;
                 },
 
-                fetchBookingSettings() {
-                    fetch('/api/booking/settings')
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.mattress_price_per_night !== undefined) this.bookingSettings.mattress_price_per_night = data.mattress_price_per_night;
-                            this.bookingSettings.additional_adult_price_per_night = this.bookingSettings.mattress_price_per_night || 1200;
-                            if (data.pet_price !== undefined) this.bookingSettings.pet_price = data.pet_price;
-                        })
-                        .catch(error => console.error('Failed to fetch booking settings:', error));
-                },
-
-                fetchVatRate() {
-                    fetch('/api/vat-rate')
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.rate !== undefined) this.vatRate = data.rate;
-                            if (data.rate_percentage !== undefined) this.vatRatePercentage = data.rate_percentage;
-                        })
-                        .catch(error => console.error('Failed to fetch VAT rate:', error));
-                },
-
                 hydrateSelectedRoomsFromSession() {
                     const bookingAccommodations = @json(session('booking.accommodations', []));
                     const staycations = @json($staycations);
@@ -3128,8 +3107,6 @@
                             });
                     }
 
-                    this.fetchBookingSettings();
-                    this.fetchVatRate();
                     this.hydrateSelectedRoomsFromSession();
                 },
 
