@@ -9,6 +9,8 @@ use App\Models\WeatherModel;
 
 class Weather extends Component
 {
+    private const CACHE_KEY = 'weather_widget:' . 'calaiaph';
+
     public array $data;
 
     /**
@@ -16,17 +18,48 @@ class Weather extends Component
      */
     public function __construct()
     {
-        $cacheKey = 'weather_widget:' . sha1(implode('|', [
+        $this->data = Cache::get($this->cacheKey(), $this->unavailableData());
+    }
+
+    public function refreshWeatherData(): array
+    {
+        $this->data = $this->buildWeatherData(new WeatherModel());
+
+        if ($this->data['now']['available']) {
+            Cache::put(
+                $this->cacheKey(),
+                $this->data,
+                now()->addMinutes(max(1, (int) config('weather.cache_minutes', 30)))
+            );
+        }
+
+        return $this->data;
+    }
+
+    private function cacheKey(): string
+    {
+        return self::CACHE_KEY . ':' . sha1(implode('|', [
             config('weather.latitude'),
             config('weather.longitude'),
             config('weather.api_key'),
         ]));
+    }
 
-        $this->data = Cache::remember(
-            $cacheKey,
-            now()->addMinutes(max(1, (int) config('weather.cache_minutes', 30))),
-            fn (): array => $this->buildWeatherData(new WeatherModel())
-        );
+    private function unavailableData(): array
+    {
+        return [
+            'location' => config('weather.city', 'Calaia Nature Park'),
+            'now' => [
+                'available' => false,
+                'temp' => null,
+                'condition' => 'Weather data unavailable',
+                'feels_like' => null,
+                'humidity' => null,
+                'rain' => null,
+            ],
+            'hourly' => [],
+            'tips' => ['Live weather information is temporarily unavailable. Please check again shortly.'],
+        ];
     }
 
     private function buildWeatherData(WeatherModel $weatherModel): array

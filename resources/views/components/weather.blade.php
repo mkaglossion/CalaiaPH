@@ -1,4 +1,4 @@
-<section class="max-w-4xl mx-auto my-12 px-4">
+<section class="max-w-4xl mx-auto my-12 px-4" data-weather-widget data-weather-endpoint="{{ route('weather.data') }}">
   {{-- CARD --}}
   <div class="bg-white overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.12)] text-slate-800 rounded-t-[22px] rounded-b-[22px]">
 
@@ -17,21 +17,21 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                   d="M19.5 10.5c0 5.25-7.5 11.25-7.5 11.25S4.5 15.75 4.5 10.5a7.5 7.5 0 1115 0z"/>
           </svg>
-          <span class="uppercase tracking-wide font-semibold" style="font-size:13px;">
+          <span data-weather-location class="uppercase tracking-wide font-semibold" style="font-size:13px;">
             {{ $data['location'] }}
           </span>
         </div>
       </div>
 
       <div class="mt-4">
-        <div class="font-bold text-slate-900 leading-none" style="font-size:22px;">
+        <div data-weather-temperature class="font-bold text-slate-900 leading-none" style="font-size:22px;">
           @if($data['now']['available'])
             {{ $data['now']['temp'] }}&deg;C
           @else
             --
           @endif
         </div>
-        <div class="text-slate-600 mt-1" style="font-size:11.5px;">
+        <div data-weather-condition class="text-slate-600 mt-1" style="font-size:11.5px;">
           {{ $data['now']['condition'] }}
         </div>
       </div>
@@ -43,7 +43,7 @@
 
       {{-- 3-HOUR FORECAST ROW --}}
       <div class="mt-3 overflow-x-auto">
-        <div class="flex gap-8 min-w-max pb-2 justify-center">
+        <div data-weather-hourly class="flex gap-8 min-w-max pb-2 justify-center">
           @forelse($data['hourly'] as $hour)
             <div class="text-center">
               <div class="text-slate-500" style="font-size:17px;">
@@ -70,7 +70,7 @@
 
     {{-- TIPS PANEL (dark teal like screenshot) --}}
     <div class="bg-[#3F6771] px-6 sm:px-8 py-6 rounded-b-[22px]">
-      <ul class="space-y-3">
+      <ul data-weather-tips class="space-y-3">
         @foreach($data['tips'] as $tip)
           <li class="flex items-start gap-3 text-white/90">
             {{-- leaf icon --}}
@@ -88,3 +88,62 @@
 
   </div>
 </section>
+
+<script>
+(() => {
+  const widget = document.querySelector('[data-weather-widget]');
+  if (!widget) return;
+
+  fetch(widget.dataset.weatherEndpoint, {
+    headers: { Accept: 'application/json' },
+    credentials: 'same-origin',
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error(`Weather request failed with ${response.status}`);
+      return response.json();
+    })
+    .then((data) => {
+      const location = widget.querySelector('[data-weather-location]');
+      const temperature = widget.querySelector('[data-weather-temperature]');
+      const condition = widget.querySelector('[data-weather-condition]');
+      const hourly = widget.querySelector('[data-weather-hourly]');
+      const tips = widget.querySelector('[data-weather-tips]');
+
+      if (location) location.textContent = data.location;
+      if (temperature) temperature.textContent = data.now.available ? `${data.now.temp}\u00b0C` : '--';
+      if (condition) condition.textContent = data.now.condition;
+      if (hourly) {
+        hourly.replaceChildren();
+        if (data.hourly.length === 0) {
+          const message = document.createElement('div');
+          message.className = 'text-slate-500 py-4';
+          message.textContent = 'Live forecast is temporarily unavailable.';
+          hourly.append(message);
+        } else {
+          data.hourly.forEach((hour) => {
+            const item = document.createElement('div');
+            item.className = 'text-center';
+            item.innerHTML = '<div class="text-slate-500" style="font-size:17px"></div><div class="font-bold text-slate-900 mt-1" style="font-size:22px"></div><div class="mt-1 inline-flex items-center justify-center rounded-full px-3 py-0.5 bg-[#566057] text-white/95" style="font-size:14px"></div>';
+            const [time, temp, rain] = item.children;
+            time.textContent = hour.time;
+            temp.textContent = `${hour.temp}\u00b0C`;
+            rain.textContent = `${hour.rain}%`;
+            hourly.append(item);
+          });
+        }
+      }
+      if (tips && data.tips.length) {
+        tips.replaceChildren(...data.tips.map((tip) => {
+          const item = document.createElement('li');
+          item.className = 'flex items-start gap-3 text-white/90';
+          const text = document.createElement('span');
+          text.style.cssText = 'font-size:11.5px;line-height:1.7';
+          text.textContent = tip;
+          item.append(text);
+          return item;
+        }));
+      }
+    })
+    .catch((error) => console.warn('Weather forecast refresh failed:', error));
+})();
+</script>

@@ -56,6 +56,11 @@ class WeatherController extends Controller
         return view('weather', compact('data'));
     }
 
+    public function data()
+    {
+        return response()->json(app(\App\View\Components\Weather::class)->refreshWeatherData());
+    }
+
     /**
      * Get current weather data
      * @return array Weather data
