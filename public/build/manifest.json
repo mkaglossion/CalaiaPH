@@ -1,6 +1,21 @@
 {
+  "node_modules/laravel-echo/dist/echo.js": {
+    "file": "assets/echo-DkL-jTv6.js",
+    "name": "echo",
+    "src": "node_modules/laravel-echo/dist/echo.js",
+    "isDynamicEntry": true
+  },
+  "node_modules/pusher-js/dist/web/pusher.js": {
+    "file": "assets/pusher-Cvjs16-K.js",
+    "name": "pusher",
+    "src": "node_modules/pusher-js/dist/web/pusher.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
   "resources/js/admin/bookingConfirmation.js": {
-    "file": "assets/bookingConfirmation-CEhg5LYe.js",
+    "file": "assets/bookingConfirmation-DXVO7ntC.js",
     "name": "bookingConfirmation",
     "src": "resources/js/admin/bookingConfirmation.js",
     "isDynamicEntry": true,
@@ -21,7 +36,7 @@
     "isDynamicEntry": true
   },
   "resources/js/admin/dashboard.js": {
-    "file": "assets/dashboard-OaKqta_S.js",
+    "file": "assets/dashboard-DpmU91Qi.js",
     "name": "dashboard",
     "src": "resources/js/admin/dashboard.js",
     "isDynamicEntry": true,
@@ -42,20 +57,22 @@
     "isDynamicEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-DHKjFpOV.js",
+    "file": "assets/app-BefdZ1hP.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "dynamicImports": [
+      "node_modules/laravel-echo/dist/echo.js",
+      "node_modules/pusher-js/dist/web/pusher.js",
       "resources/js/admin/dashboard.js",
       "resources/js/admin/bookingConfirmation.js",
       "resources/js/admin/bookingSettings.js",
-      "resources/js/admin/flash.js",
       "resources/js/admin/seasonDurations.js",
-      "resources/js/admin/cms-manager.js"
+      "resources/js/admin/cms-manager.js",
+      "resources/js/admin/flash.js"
     ],
     "css": [
-      "assets/app-CBgM91RC.css"
+      "assets/app-BlL0w_2F.css"
     ]
   },
   "resources/js/booking/staycation.js": {
