@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
-
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -24,7 +22,7 @@ html {
   text-size-adjust: 100%;
 }
 
-/* Font loading handled by Google Fonts import above */
+/* Montserrat is loaded by the page layout with font-display: swap. */
 /* Additional weights will fall back to 400 if not available */
 /* TODO: Add Gotham-Medium.woff2, Gotham-Bold.woff2 when available */
 

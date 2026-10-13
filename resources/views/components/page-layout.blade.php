@@ -19,17 +19,15 @@
     <meta name="keywords" content="{{ $keywords }}">
     <meta name="author" content="CalaiaPH">
     
-    {{-- Prevent caching issues --}}
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    
     {{-- Vite handles all app CSS/JS. Do not hardcode asset links. --}}
     @vite(['resources/js/app.js'])
     @if($includeStaycationScript)
         @vite(['resources/js/booking/staycation.js'])
     @endif
     <title>{{ $title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     {{-- policy styles moved to resources/css/app.css --}}
@@ -75,37 +73,6 @@
                 }
             }, 100);
         });
-    </script>
-    
-    {{-- Clear browser cache to prevent ERR_CACHE_OPERATION_NOT_SUPPORTED errors --}}
-    <script>
-        (function() {
-            // Clear any problematic caches
-            if ('caches' in window) {
-                caches.keys().then(function(cacheNames) {
-                    cacheNames.forEach(function(cacheName) {
-                        if (cacheName.includes('workbox') || cacheName.includes('vite')) {
-                            caches.delete(cacheName);
-                            console.log('Cleared cache:', cacheName);
-                        }
-                    });
-                }).catch(function(err) {
-                    console.log('Cache clear skipped:', err);
-                });
-            }
-            
-            // Unregister service workers that might cause cache issues
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    registrations.forEach(function(registration) {
-                        registration.unregister();
-                        console.log('Unregistered service worker');
-                    });
-                }).catch(function(err) {
-                    console.log('Service worker unregister skipped:', err);
-                });
-            }
-        })();
     </script>
     
     {{-- Flash Messages --}}
