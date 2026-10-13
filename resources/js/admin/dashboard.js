@@ -26,7 +26,7 @@ Alpine.data('dashboard', (initialRange = 'today', initialSalesView = 'daily', in
       if (!this.isLoading && document.visibilityState === 'visible') {
         window.location.reload()
       }
-    }, 30000)
+    }, 120000)
   },
 
   stopAutoRefresh() {
