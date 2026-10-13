@@ -38,4 +38,12 @@ class HeaderMobileStoreCartTest extends TestCase
         $this->assertStringContainsString('storeCartCount: 3', $header);
         $this->assertSame(1, substr_count($header, 'x-data="cartDropdown'));
     }
+
+    public function test_cart_dropdown_fetches_items_only_when_opened(): void
+    {
+        $cart = view('components.cart')->render();
+
+        $this->assertStringContainsString('if (this.open) this.loadCart()', $cart);
+        $this->assertStringNotContainsString("init() {\n                this.loadCart();", $cart);
+    }
 }
