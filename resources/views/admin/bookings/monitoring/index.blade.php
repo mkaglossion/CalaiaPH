@@ -76,9 +76,9 @@
                     @forelse($rows as $row)
                         <tr class="{{ $row->row_class ?? '' }}">
                             @foreach($columns as $column)
-                                <td class="px-6 py-4 align-top">
-                                    {!! $row->{$column['key']} ?? '' !!}
-                                </td>
+<td class="px-6 py-4 align-top">
+    {!! $row->{$column['key']} ?? '' !!}
+</td>
                             @endforeach
                         </tr>
                     @empty
