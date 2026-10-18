@@ -363,13 +363,13 @@
       {!! json_encode([
           'day-visit' => $settings->day_visit_capacity ?? 10,
           'room' => $settings->room_capacity ?? 5
-      ]) !!}
+      ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) !!}
   </script>
   <script type="application/json" id="inventory-data">
-      {!! json_encode($inventory ?? []) !!}
+      {!! json_encode($inventory ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) !!}
   </script>
   <script type="application/json" id="booking-type-data">
-      {!! json_encode($type) !!}
+      {!! json_encode($type, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) !!}
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>

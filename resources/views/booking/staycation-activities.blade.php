@@ -259,8 +259,8 @@
 
     <script>
         // Pass prefill data into safe globals to avoid Alpine parsing errors
-        window.__initialActivities = {!! json_encode($selectedActivities ?? []) !!};
-        window.__initialActivityPackages = {!! json_encode($selectedActivityPackages ?? []) !!};
+        window.__initialActivities = {!! json_encode($selectedActivities ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) !!};
+        window.__initialActivityPackages = {!! json_encode($selectedActivityPackages ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) !!};
 
         function staycationActivitiesSelection(accommodationTotal = 0, foodTotal = 0, nights = 1, vatRate = 0.0, vatRatePercentage = 0) {
             return {

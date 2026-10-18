@@ -216,8 +216,8 @@
 
             {{-- Pass prefill data into safe globals to avoid Alpine parsing errors --}}
             <script>
-                window.__initialSelected = {!! json_encode($booking['selected_foods'] ?? []) !!};
-                window.__foodLookup = {!! json_encode($foodLookup) !!};
+                window.__initialSelected = {!! json_encode($booking['selected_foods'] ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) !!};
+                window.__foodLookup = {!! json_encode($foodLookup, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) !!};
             </script>
 
             <div
