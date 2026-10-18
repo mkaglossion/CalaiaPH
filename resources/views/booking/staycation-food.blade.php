@@ -520,11 +520,11 @@
 
                                                          <button type="button"
                                                                  class="w-full mt-auto py-2 rounded-lg font-semibold transition"
-                                                                 :class="{
-                                                                     'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
-                                                                     'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
-                                                                     'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
-                                                                 }"
+:class="{
+    'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
+    'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
+    'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
+}"
                                                                  :disabled="{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'true' : 'false' }}"
                                                                  @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
                                                              <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>
@@ -668,11 +668,11 @@
 
                                                          <button type="button"
                                                                  class="w-full mt-auto py-2 rounded-lg font-semibold transition"
-                                                                 :class="{
-                                                                     'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
-                                                                     'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
-                                                                     'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
-                                                                 }"
+:class="{
+    'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isSelected({{ $food->id }}),
+    'bg-gray-300 text-gray-500 cursor-not-allowed': !isSelected({{ $food->id }}) && {{ $food->is_inventory_managed ? 'true' : 'false' }} && {{ $food->stock_quantity }} <= 0,
+    'bg-gray-100 text-gray-700 hover:bg-gray-200': !isSelected({{ $food->id }}) && (!{{ $food->is_inventory_managed ? 'true' : 'false' }} || {{ $food->stock_quantity }} > 0)
+}"
                                                                  :disabled="{{ $food->is_inventory_managed && $food->stock_quantity <= 0 ? 'true' : 'false' }}"
                                                                  @click.stop="toggleFood({{ $food->id }}, '{{ $food->name }}', '{{ $category }}', {{ $food->price ?? 0 }})">
                                                              <i :class="isSelected({{ $food->id }}) ? 'bi bi-check' : 'bi bi-plus'" class="mr-2"></i>

@@ -16,6 +16,25 @@
     .settings-accordion[open] .settings-chevron {
         transform: rotate(180deg);
     }
+    /* Table horizontal scrollbar */
+    .overflow-x-auto {
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 #f1f5f9;
+    }
+    .overflow-x-auto::-webkit-scrollbar {
+        height: 6px;
+    }
+    .overflow-x-auto::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+    .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
 </style>
 
 @php
@@ -252,8 +271,8 @@
         </div>
 
         {{-- Activity Packages Table --}}
-        <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
-            <div class="overflow-x-auto md:overflow-visible">
+        <div class="rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+            <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs sm:text-sm">
                     <thead class="bg-gray-100/70 backdrop-blur">
                         <tr>
@@ -264,7 +283,7 @@
                             <th class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Activities</th>
                             <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Image</th>
                             <th class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700">Status</th>
-                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-right">Actions</th>
+                            <th class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 font-semibold text-gray-700 text-right sticky right-0 bg-gray-100/70 z-20">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200" x-html="packagesHtml"></tbody>
@@ -335,7 +354,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Image</label>
+                    <label for="package_image" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Image</label>
                     <div
                         class="rounded-2xl border-2 border-dashed border-blue-400 bg-blue-50/60 px-4 py-8 sm:px-6 sm:py-10 text-center cursor-pointer hover:bg-blue-50 transition"
                         @click="$refs.packageImageInput.click()"
@@ -559,7 +578,7 @@
         </div>
 
     {{-- Activities Table --}}
-    <div class="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white/80 backdrop-blur">
+    <div class="rounded-2xl border border-gray-200 shadow-sm bg-white/80 backdrop-blur">
         <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead class="bg-gray-100/70 backdrop-blur">
@@ -571,6 +590,7 @@
                         <th class="hidden lg:table-cell px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Duration</th>
                         <th class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Pricing</th>
                         <th class="hidden xl:table-cell px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Uploaded</th>
+                        <th class="hidden md:table-cell px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900 text-center">Status</th>
                         <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900 text-right">Actions</th>
                     </tr>
                 </thead>
@@ -580,9 +600,9 @@
                     <tr 
                         class="hover:bg-gray-50/70 transition"
                         x-show="!searchQuery || 
-                            '{{ ($act->name ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            '{{ ($act->category ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            '{{ ($act->description ?? '') }}'.toLowerCase().includes(searchQuery.toLowerCase())"
+                            {{ json_encode($act->name ?? '') }}.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            {{ json_encode($act->category ?? '') }}.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            {{ json_encode($act->description ?? '') }}.toLowerCase().includes(searchQuery.toLowerCase())"
                         x-cloak
                     >
                         <td class="px-3 sm:px-4 lg:px-6 py-4 text-gray-700">
@@ -597,14 +617,20 @@
                         <td class="hidden lg:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $act->duration ?? 'N/A' }}</td>
                         <td class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $act->price ? '₱' . number_format($act->price, 2) : 'N/A' }}</td>
                         <td class="hidden xl:table-cell px-3 sm:px-4 lg:px-6 py-4 text-gray-700">{{ $act->created_at->format('Y-m-d') }}</td>
-                        <td class="px-3 sm:px-4 lg:px-6 py-4 text-right">
+                        <td class="hidden md:table-cell px-3 sm:px-4 lg:px-6 py-4">
+                            <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full {{ $act->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                <i data-lucide="{{ $act->is_active ? 'check-circle' : 'x-circle' }}" class="w-3 h-3 mr-1"></i>
+                                <span class="hidden sm:inline">{{ $act->is_active ? 'Active' : 'Inactive' }}</span><span class="sm:hidden">{{ $act->is_active ? 'âœ“' : 'âœ•' }}</span>
+                            </span>
+                        </td>
+                        <td class="px-3 sm:px-4 lg:px-6 py-4 text-right sticky right-0 z-20 bg-white">
                             <div class="inline-flex items-center justify-end gap-1 sm:gap-2 whitespace-nowrap">
                                 <button
                                     type="button"
                                     class="text-blue-600 font-semibold hover:text-blue-700 hover:underline transition text-xs sm:text-sm"
                                     @click="editActivity({{ $act->id }})"
                                 >
-                                    Edit
+                                    <span class="hidden sm:inline">Edit</span><span class="inline sm:hidden"><i data-lucide="pencil" class="w-4 h-4"></i></span>
                                 </button>
 
                                 <button
@@ -613,7 +639,7 @@
                                     @click="deleteActivity({{ $act->id }})"
                                     :id="`undo_click_${{{ $act->id }}}`"
                                 >
-                                    Delete
+                                    <span class="hidden sm:inline">Delete</span><span class="inline sm:hidden"><i data-lucide="trash-2" class="w-4 h-4"></i></span>
                                 </button>
                             </div>
                         </td>
@@ -740,15 +766,27 @@
                         :required="!editModeActivity"
                     >
                     <small class="text-gray-500">Supported formats: JPG, PNG, GIF. Max size: 5MB</small>
-                    <template x-if="form.imagePreview">
-                        <div class="mt-2">
-                            <img :src="form.imagePreview" alt="Image preview" class="w-32 h-20 object-cover rounded border">
-                            <button type="button" @click="removeImage()" class="ml-2 text-red-500 hover:underline">Remove</button>
-                        </div>
-                    </template>
-                </div>
+                <template x-if="form.imagePreview">
+                    <div class="mt-2">
+                        <img :src="form.imagePreview" alt="Image preview" class="w-32 h-20 object-cover rounded border">
+                        <button type="button" @click="removeImage()" class="ml-2 text-red-500 hover:underline">Remove</button>
+                    </div>
+                </template>
+            </div>
 
-                <div class="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
+        <div class="space-y-3 p-3 sm:p-4 bg-green-50 rounded-lg border border-green-200">
+            <label class="flex items-center gap-2 sm:gap-3 cursor-pointer">
+                <input type="checkbox" x-model="form.is_active" id="activity_is_active" name="is_active"
+                       autocomplete="off"
+                       class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                <div>
+                    <p class="font-semibold text-xs sm:text-sm text-gray-900">Active Status</p>
+                    <p class="text-xs text-gray-600">When checked, this activity will be visible on the booking page</p>
+                </div>
+            </label>
+        </div>
+
+        <div class="flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
                     <button type="button" @click="showActivityModal = false; resetForm()" class="{{ $adminModalCancelButton }}">Cancel</button>
                     <button type="submit" :disabled="isLoading || isEditHydrating" class="{{ $adminPrimaryButton }} disabled:opacity-60">
                         <span x-text="editModeActivity ? 'Update' : 'Add'"></span>
@@ -786,7 +824,7 @@
                             <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Activity Name</th>
                             <th class="hidden sm:table-cell px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Title</th>
                             <th class="hidden md:table-cell px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900">Uploaded</th>
-                            <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900 text-right">Actions</th>
+                        <th class="px-3 sm:px-4 lg:px-6 py-4 font-medium text-gray-900 text-right sticky right-0 bg-gray-100/70 z-20">Actions</th>
                         </tr>
                     </thead>
 
@@ -1201,6 +1239,7 @@ function activityManager() {
                 label: '',
                 text: '',
                 title: '',
+                is_active: true,
                 image: null,
                 imagePreview: null,
             };
@@ -1299,6 +1338,7 @@ function activityManager() {
                 this.form.duration = activity.duration || '';
                 this.form.price = activity.price || '';
                 this.form.category = activity.category || '';
+                this.form.is_active = activity.is_active ?? true;
                 this.form.image = null;
 
                 // Handle image preview
@@ -1455,6 +1495,7 @@ function activityManager() {
             formData.append('duration', this.form.duration);
             formData.append('price', this.form.price);
             formData.append('category', this.form.category);
+            formData.append('is_active', this.form.is_active ? 1 : 0);
 
             if (this.form.image) {
                 formData.append('image', this.form.image);
@@ -1965,13 +2006,22 @@ function activityManager() {
                     <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm text-gray-600">
                         ${pkg.image_url || pkg.image ? `<img src="${pkg.image_url || pkg.image}" alt="${pkg.name || 'Package image'}" class="h-8 w-8 rounded object-cover" loading="lazy">` : '<span class="text-gray-400 text-xs">No image</span>'}
                     </td>
-                    <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm"><span class="px-2 py-1 text-gray-700 rounded text-xs font-semibold">${pkg.is_active ? 'Active' : 'Inactive'}</span></td>
-                    <td class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm space-x-2">
-                        <button onclick="window.__alpineApp.editActivityPackage(${pkg.id})" class="text-blue-600 hover:text-blue-700 font-semibold">Edit</button>
-                        <button onclick="window.__alpineApp.deleteActivityPackage(${pkg.id})" class="text-red-600 hover:text-red-700 font-semibold">Delete</button>
+                    <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-3 sm:py-4 text-sm"><span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full ${pkg.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}"><i data-lucide="${pkg.is_active ? 'check-circle' : 'x-circle'}" class="w-3 h-3 mr-1"></i><span class="hidden sm:inline">${pkg.is_active ? 'Active' : 'Inactive'}</span><span class="sm:hidden">${pkg.is_active ? 'âœ“' : 'âœ•'}</span></span></td>
+                    <td class="px-2 sm:px-3 md:px-6 py-3 sm:py-4 whitespace-nowrap text-right sticky right-0 z-20 bg-white text-sm space-x-2">
+                        <button onclick="window.__alpineApp.editActivityPackage(${pkg.id})" class="text-blue-600 hover:text-blue-700 font-semibold whitespace-nowrap">
+                            <span class="hidden sm:inline">Edit</span><span class="inline sm:hidden"><i data-lucide="pencil" class="w-4 h-4"></i></span>
+                        </button>
+                        <button onclick="window.__alpineApp.deleteActivityPackage(${pkg.id})" class="text-red-600 hover:text-red-700 font-semibold whitespace-nowrap">
+                            <span class="hidden sm:inline">Delete</span><span class="inline sm:hidden"><i data-lucide="trash-2" class="w-4 h-4"></i></span>
+                        </button>
                     </td>
                 </tr>
             `).join('');
+            this.$nextTick(() => {
+                if (window.lucide?.createIcons) {
+                    window.lucide.createIcons();
+                }
+            });
         },
     };
 }

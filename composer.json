@@ -29,7 +29,7 @@
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
         "phpunit/phpunit": "^11.5.3",
-        "squeak/rat": "^1.2"
+        "squeak/rat": "dev-main"
     },
     "autoload": {
         "psr-4": {
@@ -114,5 +114,10 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "repositories": [{
+        "name": "squeak-rat",
+        "type": "vcs",
+        "url": "https://github.com/CodeWithTeds/squeak-rat.git"
+    }]
 }

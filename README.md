@@ -179,12 +179,16 @@ If the application is deployed in a different directory, replace the `cd` path. 
 Run the optional RAT (`squeak/rat`) security scanner:
 
 ```bash
-# Quick scan
+# Scans maintained application code, using the scope and analyzers in config/rat.php
 php artisan rat
 
-# Deep analysis
-php artisan rat --deep
+# Override the configured paths when needed
+php artisan rat --path=app,bootstrap,config,database,resources,routes,tools
 ```
+
+On Windows systems where the Python command resolves to the Microsoft Store alias, set `RAT_USE_PHP=1` in `.env` and run `php artisan config:clear`. RAT will use its built-in PHP analyzer for deep scans.
+
+In the installed RAT version, `--deep` forces the scan path to the whole repository, overriding `config/rat.php`. The project config enables deep/security analysis while keeping the scan scoped to maintained application code; run `php artisan rat` to use it.
 
 Review scan output against the current code and configuration; results can change as the project changes.
 

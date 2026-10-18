@@ -41,6 +41,25 @@
     .settings-accordion[open] .settings-chevron {
         transform: rotate(180deg);
     }
+    /* Table horizontal scrollbar */
+    .overflow-x-auto {
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 #f1f5f9;
+    }
+    .overflow-x-auto::-webkit-scrollbar {
+        height: 6px;
+    }
+    .overflow-x-auto::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+    .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
 </style>
 <div
     x-data="foodCrud()"
@@ -297,7 +316,7 @@
             </button>
         </div>
 
-        <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
+        <div class="rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/60 backdrop-blur">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs sm:text-sm">
                     <thead class="bg-gray-100/70 backdrop-blur">
@@ -342,7 +361,7 @@
         </div>
 
     {{-- Food Items Table --}}
-    <div class="overflow-hidden rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/80 backdrop-blur">
+    <div class="rounded-lg sm:rounded-2xl border border-gray-200 shadow-sm bg-white/80 backdrop-blur">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs sm:text-sm">
                 <thead class="bg-gray-100/70 backdrop-blur">
@@ -412,17 +431,17 @@
                                 <span class="text-gray-400 text-xs">No image</span>
                             @endif
                         </td>
-                        <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
-                            @if ($food->is_active)
-                                <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                    <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> <span class="hidden sm:inline">Active</span><span class="sm:hidden">âœ“</span>
-                                </span>
-                            @else
-                                <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                    <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i> <span class="hidden sm:inline">Inactive</span><span class="sm:hidden">âœ•</span>
-                                </span>
-                            @endif
-                        </td>
+                                <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
+                                    @if ($food->is_active)
+                                        <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                            <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> <span class="hidden sm:inline">Active</span><span class="sm:hidden"><i data-lucide="check" class="w-3 h-3"></i></span>
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                            <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i> <span class="hidden sm:inline">Inactive</span><span class="sm:hidden"><i data-lucide="x" class="w-3 h-3"></i></span>
+                                        </span>
+                                    @endif
+                                </td>
                         <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
                             @if ($food->is_special_option)
                                 <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
@@ -434,19 +453,19 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-right sticky right-0 bg-white/60 md:bg-transparent z-10 md:z-auto">
-                            <div class="flex justify-end gap-2 sm:gap-3 md:gap-4 flex-nowrap">
+                        <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-right sticky right-0 z-20 bg-white">
+                            <div class="flex justify-end gap-1 sm:gap-2 flex-nowrap">
                                 <button type="button"
                                         class="text-blue-600 font-semibold hover:text-blue-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline"
                                         @click="openEdit({{ $food->id }})"
                                         title="Edit">
-                                    <span class="hidden sm:inline">Edit</span><span class="sm:hidden">âœŽ</span>
+                                    <span class="hidden sm:inline">Edit</span><span class="inline sm:hidden"><i data-lucide="pencil" class="w-4 h-4"></i></span>
                                 </button>
                                 <button type="button"
                                         class="text-red-600 font-semibold hover:text-red-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline"
                                         @click="deleteFood({{ $food->id }}, '{{ $food->name }}')"
                                         title="Delete">
-                                    <span class="hidden sm:inline">Delete</span><span class="sm:hidden">âœ•</span>
+                                    <span class="hidden sm:inline">Delete</span><span class="inline sm:hidden"><i data-lucide="trash-2" class="w-4 h-4"></i></span>
                                 </button>
                             </div>
                         </td>
@@ -702,7 +721,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Image</label>
+                    <label for="package_image" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Image</label>
                     <div
                         class="rounded-2xl border-2 border-dashed border-blue-400 bg-blue-50/60 px-4 py-8 sm:px-6 sm:py-10 text-center cursor-pointer hover:bg-blue-50 transition"
                         @click="$refs.packageImageInput.click()"
@@ -1240,13 +1259,13 @@
                                 </td>
                                 <td class="hidden md:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">${statusHtml}</td>
                                 <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">${specialHtml}</td>
-                                <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-right sticky right-0 bg-white/60 md:bg-transparent z-10 md:z-auto">
-                                    <div class="flex justify-end gap-2 sm:gap-3 md:gap-4 flex-nowrap">
+                                <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-right sticky right-0 bg-white z-20">
+                                    <div class="flex justify-end gap-1 sm:gap-2 flex-nowrap">
                                         <button type="button" class="text-blue-600 font-semibold hover:text-blue-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline" onclick='window.foodCrudInstance.openEdit(${Number(food.id)})'>
-                                            <span class="hidden sm:inline">Edit</span><span class="sm:hidden">Edit</span>
+                                            <span class="hidden sm:inline">Edit</span><span class="inline sm:hidden"><i data-lucide="pencil" class="w-4 h-4"></i></span>
                                         </button>
                                         <button type="button" class="text-red-600 font-semibold hover:text-red-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline" onclick='window.foodCrudInstance.deleteFood(${Number(food.id)}, ${encodedName})'>
-                                            <span class="hidden sm:inline">Delete</span><span class="sm:hidden">Delete</span>
+                                            <span class="hidden sm:inline">Delete</span><span class="inline sm:hidden"><i data-lucide="trash-2" class="w-4 h-4"></i></span>
                                         </button>
                                     </div>
                                 </td>
@@ -1459,20 +1478,25 @@
                                 </span>
                             </td>
                             <td class="hidden lg:table-cell px-2 sm:px-3 md:px-6 py-2 sm:py-4">
-                                ${pkg.is_active ? '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i data-lucide="check-circle" class="w-3 h-3 mr-1"></i><span class="hidden sm:inline">Active</span><span class="sm:hidden">âœ“</span></span>' : '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i data-lucide="x-circle" class="w-3 h-3 mr-1"></i><span class="hidden sm:inline">Inactive</span><span class="sm:hidden">âœ•</span></span>'}
+                                ${pkg.is_active ? '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i data-lucide="check-circle" class="w-3 h-3 mr-1"></i><span class="hidden sm:inline">Active</span></span>' : '<span class="inline-flex items-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i data-lucide="x-circle" class="w-3 h-3 mr-1"></i><span class="hidden sm:inline">Inactive</span></span>'}
                             </td>
                             <td class="px-2 sm:px-3 md:px-6 py-2 sm:py-4 text-right sticky right-0 bg-white/60 md:bg-transparent z-10 md:z-auto">
-                                <div class="flex justify-end gap-2 sm:gap-3 md:gap-4 flex-nowrap">
+                                <div class="flex justify-end gap-1 sm:gap-2 flex-nowrap">
                                     <button type="button" class="text-blue-600 font-semibold hover:text-blue-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline" @click="openEditPackage(${pkg.id})">
-                                        <span class="hidden sm:inline">Edit</span><span class="sm:hidden">âœŽ</span>
+                                        <span class="hidden sm:inline">Edit</span><span class="inline sm:hidden"><i data-lucide="pencil" class="w-4 h-4"></i></span>
                                     </button>
                                     <button type="button" class="text-red-600 font-semibold hover:text-red-700 transition text-xs sm:text-sm whitespace-nowrap hover:underline" @click="deletePackage(${pkg.id}, '${pkg.name.replace(/'/g, '\\u0027')}')" title="Delete">
-                                        <span class="hidden sm:inline">Delete</span><span class="sm:hidden">âœ•</span>
+                                        <span class="hidden sm:inline">Delete</span><span class="inline sm:hidden"><i data-lucide="trash-2" class="w-4 h-4"></i></span>
                                     </button>
                                 </div>
                             </td>
                         </tr>
                     `).join('');
+                    this.$nextTick(() => {
+                        if (window.lucide?.createIcons) {
+                            window.lucide.createIcons();
+                        }
+                    });
                 },
 
                 formatCategoryLabel(category) {

@@ -1,12 +1,12 @@
 {
   "node_modules/laravel-echo/dist/echo.js": {
-    "file": "assets/echo-DkL-jTv6.js",
+    "file": "assets/echo-Jm5KkVKc.js",
     "name": "echo",
     "src": "node_modules/laravel-echo/dist/echo.js",
     "isDynamicEntry": true
   },
   "node_modules/pusher-js/dist/web/pusher.js": {
-    "file": "assets/pusher-Cvjs16-K.js",
+    "file": "assets/pusher-B5IITpnu.js",
     "name": "pusher",
     "src": "node_modules/pusher-js/dist/web/pusher.js",
     "isDynamicEntry": true,
@@ -15,7 +15,7 @@
     ]
   },
   "resources/js/admin/bookingConfirmation.js": {
-    "file": "assets/bookingConfirmation-DXVO7ntC.js",
+    "file": "assets/bookingConfirmation-CUrnTzIZ.js",
     "name": "bookingConfirmation",
     "src": "resources/js/admin/bookingConfirmation.js",
     "isDynamicEntry": true,
@@ -24,19 +24,19 @@
     ]
   },
   "resources/js/admin/bookingSettings.js": {
-    "file": "assets/bookingSettings-CDlVOQFv.js",
+    "file": "assets/bookingSettings-DOnQETvV.js",
     "name": "bookingSettings",
     "src": "resources/js/admin/bookingSettings.js",
     "isDynamicEntry": true
   },
   "resources/js/admin/cms-manager.js": {
-    "file": "assets/cms-manager-4v-oh95v.js",
+    "file": "assets/cms-manager-Cg62VtDF.js",
     "name": "cms-manager",
     "src": "resources/js/admin/cms-manager.js",
     "isDynamicEntry": true
   },
   "resources/js/admin/dashboard.js": {
-    "file": "assets/dashboard-DpmU91Qi.js",
+    "file": "assets/dashboard-Bpz4yV_u.js",
     "name": "dashboard",
     "src": "resources/js/admin/dashboard.js",
     "isDynamicEntry": true,
@@ -45,7 +45,7 @@
     ]
   },
   "resources/js/admin/flash.js": {
-    "file": "assets/flash-Dplzc5WC.js",
+    "file": "assets/flash-Dj_-9Dvy.js",
     "name": "flash",
     "src": "resources/js/admin/flash.js",
     "isDynamicEntry": true
@@ -57,7 +57,7 @@
     "isDynamicEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-BefdZ1hP.js",
+    "file": "assets/app-BPO-goim.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -72,7 +72,7 @@
       "resources/js/admin/flash.js"
     ],
     "css": [
-      "assets/app-BlL0w_2F.css"
+      "assets/app-SuGX7K7w.css"
     ]
   },
   "resources/js/booking/staycation.js": {

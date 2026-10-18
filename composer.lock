@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0af82af54bcbbbf0a3f090b3d4cfe85f",
+    "content-hash": "ccafbb74afbcf0f3a086ef5bfe5834d4",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -9980,16 +9980,16 @@
         },
         {
             "name": "squeak/rat",
-            "version": "v1.2.1",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CodeWithTeds/squeak-rat.git",
-                "reference": "abc95cced0772fbed656ea78cf25509475097e40"
+                "reference": "6634499616229cd24ef4dc90205948ccb82da348"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CodeWithTeds/squeak-rat/zipball/abc95cced0772fbed656ea78cf25509475097e40",
-                "reference": "abc95cced0772fbed656ea78cf25509475097e40",
+                "url": "https://api.github.com/repos/CodeWithTeds/squeak-rat/zipball/6634499616229cd24ef4dc90205948ccb82da348",
+                "reference": "6634499616229cd24ef4dc90205948ccb82da348",
                 "shasum": ""
             },
             "require": {
@@ -10010,6 +10010,7 @@
                 "ext-imagick": "Alternative image handling",
                 "ext-posix": "For TTY detection (vendor exclusion always works without it)"
             },
+            "default-branch": true,
             "bin": [
                 "bin/rat"
             ],
@@ -10026,7 +10027,16 @@
                     "Rat\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "autoload-dev": {
+                "psr-4": {
+                    "Rat\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "post-autoload-dump": [
+                    "@php -r \"file_exists('bin/rat') && chmod('bin/rat', 0755);\""
+                ]
+            },
             "license": [
                 "MIT"
             ],
@@ -10046,10 +10056,10 @@
                 "terminal"
             ],
             "support": {
-                "issues": "https://github.com/CodeWithTeds/squeak-rat/issues",
-                "source": "https://github.com/CodeWithTeds/squeak-rat/tree/v1.2.1"
+                "source": "https://github.com/CodeWithTeds/squeak-rat/tree/main",
+                "issues": "https://github.com/CodeWithTeds/squeak-rat/issues"
             },
-            "time": "2026-09-07T08:31:18+00:00"
+            "time": "2026-09-09T06:40:13+00:00"
         },
         {
             "name": "staabm/side-effects-detector",
@@ -10232,7 +10242,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "squeak/rat": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

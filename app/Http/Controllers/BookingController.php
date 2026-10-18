@@ -930,6 +930,25 @@ class BookingController extends Controller
                 ], 422);
             }
 
+            // Enforce inventory availability - step 4 concept: cannot select activity packages without available stock
+            $unavailablePackages = [];
+            foreach ($selectedActivities as $item) {
+                if (!empty($item['is_package']) && !empty($item['package_id'])) {
+                    $qty = max(1, (int)($item['quantity'] ?? 1));
+                    $package = ActivityPackage::where('is_active', true)->find($item['package_id']);
+                    if ($package && $package->is_inventory_managed && (int)$package->stock_quantity < $qty) {
+                        $unavailablePackages[] = $package->name . ' (only ' . (int)$package->stock_quantity . ' left)';
+                    }
+                }
+            }
+
+            if (!empty($unavailablePackages)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot proceed: the following activity packages are out of stock or have insufficient inventory - ' . implode(', ', $unavailablePackages),
+                ], 422);
+            }
+
             // Store in booking session
             $booking['selected_activities'] = $activities;
             $booking['selected_activity_packages'] = $activityPackages;
@@ -4202,6 +4221,30 @@ class BookingController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid food selection.'
+                ], 422);
+            }
+
+            // Enforce inventory availability - step 3 concept: cannot select without available stock
+            $unavailableFoods = [];
+            foreach ($selectedFoods as $food) {
+                $qty = max(1, (int)($food['quantity'] ?? 1));
+                if (!empty($food['is_package']) && !empty($food['package_id'])) {
+                    $package = FoodPackage::where('is_active', true)->find($food['package_id']);
+                    if ($package && $package->is_inventory_managed && (int)$package->stock_quantity < $qty) {
+                        $unavailableFoods[] = $package->name . ' (only ' . (int)$package->stock_quantity . ' left)';
+                    }
+                } else {
+                    $foodItem = Food::where('is_active', true)->find($food['id']);
+                    if ($foodItem && $foodItem->is_inventory_managed && (int)$foodItem->stock_quantity < $qty) {
+                        $unavailableFoods[] = $foodItem->name . ' (only ' . (int)$foodItem->stock_quantity . ' left)';
+                    }
+                }
+            }
+
+            if (!empty($unavailableFoods)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot proceed: the following items are out of stock or have insufficient inventory - ' . implode(', ', $unavailableFoods),
                 ], 422);
             }
 

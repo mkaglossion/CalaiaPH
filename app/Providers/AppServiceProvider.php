@@ -27,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (config('rat.use_php')) {
+            putenv('RAT_USE_PHP=1');
+        }
+
         Gate::policy(Booking::class, BookingPolicy::class);
 
         // Disable Vite preload tags to fix unused CSS preload warning
