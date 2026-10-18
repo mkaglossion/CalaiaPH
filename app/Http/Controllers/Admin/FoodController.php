@@ -28,8 +28,14 @@ class FoodController extends Controller
         'newest' => 'Date, new to old',
     ];
 
+    private static bool $orderingColumnsEnsured = false;
+
     private function ensureFoodOrderingColumns(): void
     {
+        if (self::$orderingColumnsEnsured) {
+            return;
+        }
+
         if (!Schema::hasColumn('foods', 'meal_type')) {
             Schema::table('foods', function (Blueprint $table) {
                 $table->string('meal_type', 20)->default('all_day')->after('subcategory');
@@ -43,6 +49,8 @@ class FoodController extends Controller
                 $table->index('sort_order');
             });
         }
+
+        self::$orderingColumnsEnsured = true;
     }
 
     private function hasFoodColumn(string $column): bool
@@ -58,6 +66,19 @@ class FoodController extends Controller
 
     private function applyFoodSort(\Illuminate\Database\Eloquent\Builder $foodsQuery, string $sortBy)
     {
+        static $mealTypeColumnCache = null;
+        static $sortOrderColumnCache = null;
+
+        if ($mealTypeColumnCache === null) {
+            $mealTypeColumnCache = Schema::hasColumn('foods', 'meal_type');
+        }
+        if ($sortOrderColumnCache === null) {
+            $sortOrderColumnCache = Schema::hasColumn('foods', 'sort_order');
+        }
+
+        $hasMealType = $mealTypeColumnCache;
+        $hasSortOrder = $sortOrderColumnCache;
+
         switch ($sortBy) {
             case 'name_asc':
                 $foodsQuery->orderBy('name', 'asc');
@@ -80,7 +101,7 @@ class FoodController extends Controller
             case 'featured':
             default:
                 $foodsQuery->orderBy('category');
-                if (Schema::hasColumn('foods', 'meal_type') && Schema::hasColumn('foods', 'sort_order')) {
+                if ($hasMealType && $hasSortOrder) {
                     $foodsQuery
                         ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
                         ->orderBy('sort_order');
