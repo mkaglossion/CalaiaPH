@@ -26,8 +26,8 @@ class ActivityController extends Controller
     public function index()
     {
         $activities = Activity::latest()->paginate(10);
-        $allActivities = Activity::all(['id', 'name', 'description', 'price']);  // For the package modal
-        $activityPackages = ActivityPackage::with('activities')->latest()->get();
+        $allActivities = Activity::select(['id', 'name', 'description', 'price'])->where('is_active', true)->limit(200)->get();  // For the package modal
+        $activityPackages = ActivityPackage::with('activities')->latest()->paginate(10);
         return view('admin.whatToDo.activities', compact('activities', 'allActivities', 'activityPackages'));
     }
 
