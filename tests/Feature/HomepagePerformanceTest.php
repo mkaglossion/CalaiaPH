@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class HomepagePerformanceTest extends TestCase
@@ -39,5 +40,18 @@ class HomepagePerformanceTest extends TestCase
 
         $this->assertSame(1, substr_count($html, 'swiper-bundle.min.css'));
         $this->assertSame(1, substr_count($html, 'swiper-bundle.min.js'));
+    }
+
+    public function test_homepage_renders_without_waiting_for_weather_api(): void
+    {
+        config()->set('weather.api_key', 'test-key');
+        Http::fake();
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('data-weather-widget', false)
+            ->assertSee(route('weather.data'), false);
+
+        Http::assertNothingSent();
     }
 }

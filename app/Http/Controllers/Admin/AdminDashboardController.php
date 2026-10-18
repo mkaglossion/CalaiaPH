@@ -18,13 +18,14 @@ use App\Models\AdminActivityLog;
 use App\Services\PaymentService;
 use App\Services\PaymongoWebhookService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Builder;
 
 class AdminDashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $this->reconcileRecentPendingPaymongoPayments();
+        $this->schedulePendingPaymongoReconciliation();
 
         [$start, $end, $rangeLabel, $range] = $this->resolveDateRange($request);
         $defaultChartView = $this->chartViewFromRange($range, 'daily');
@@ -393,6 +394,23 @@ class AdminDashboardController extends Controller
                     $paymentStatus['paid_amount_centavos'] ?? null
                 );
             });
+    }
+
+    private function schedulePendingPaymongoReconciliation(): void
+    {
+        if (app()->environment('testing')) {
+            $this->reconcileRecentPendingPaymongoPayments();
+
+            return;
+        }
+
+        if (! Cache::add('admin-dashboard:paymongo-reconciliation', true, now()->addMinute())) {
+            return;
+        }
+
+        app()->terminating(function (): void {
+            $this->reconcileRecentPendingPaymongoPayments();
+        });
     }
 
     private function buildDashboardViewData(Request $request, array $data): array

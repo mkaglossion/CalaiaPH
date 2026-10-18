@@ -15,7 +15,7 @@
     </div>
 
     <div class="rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-sm backdrop-blur md:p-6">
-        <form id="bookingSettingsForm" action="{{ route('admin.booking-settings.update') }}" method="POST">
+        <form id="bookingSettingsForm" data-booking-settings action="{{ route('admin.booking-settings.update') }}" method="POST">
             @csrf
 
             {{-- Fee and Pet Settings --}}

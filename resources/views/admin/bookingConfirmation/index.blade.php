@@ -23,6 +23,7 @@
 
 <div
     class="space-y-6"
+    data-booking-confirmation-cms
     x-data="bookingConfirmationCms(@js($initialTab))"
 >
     <div class="flex flex-col gap-2">

@@ -56,6 +56,7 @@ class BookingController extends Controller
     protected PaymentService $paymentService;
     protected InventoryService $inventoryService;
     protected PricingService $pricingService;
+    private ?Collection $fallbackPricingConfigsByUnitType = null;
 
     public function __construct(
         BookingService $bookingService,
@@ -199,14 +200,17 @@ class BookingController extends Controller
     /**
      * Get season type for a specific date
      */
-    private function getSeasonTypeForDate(\Carbon\Carbon $date): string
+    private function getSeasonTypeForDate(\Carbon\Carbon $date, ?Collection $peakPeriods = null): string
     {
-        $overlappingPeriods = PeakPeriod::where(function($query) use ($date) {
-            $query->where('start_date', '<=', $date->toDateString())
-                  ->where('end_date', '>=', $date->toDateString());
-        })
-        ->with('peakType')
-        ->get();
+        $overlappingPeriods = $peakPeriods === null
+            ? PeakPeriod::where('start_date', '<=', $date->toDateString())
+                ->where('end_date', '>=', $date->toDateString())
+                ->with('peakType')
+                ->get()
+            : $peakPeriods->filter(function (PeakPeriod $period) use ($date): bool {
+                return $period->start_date <= $date->toDateString()
+                    && $period->end_date >= $date->toDateString();
+            });
 
         $seasonType = 'Non-Peak';
         $highestPriority = -1;
@@ -242,7 +246,7 @@ class BookingController extends Controller
      * FIXED: Now determines season type for EACH individual day instead of using
      * a single season key for the entire range.
      */
-    private function calculatePriceRangeForDateRange(Staycation $staycation, string $checkinDate, string $checkoutDate, string $seasonKey = null): array
+    private function calculatePriceRangeForDateRange(Staycation $staycation, string $checkinDate, string $checkoutDate, ?Collection $peakPeriods = null): array
     {
         $checkin = \Carbon\Carbon::parse($checkinDate);
         $checkout = \Carbon\Carbon::parse($checkoutDate);
@@ -252,7 +256,7 @@ class BookingController extends Controller
         
         while ($current->lt($checkout)) {
             // Determine the season type for THIS specific day (not the whole range)
-            $daySeasonType = $this->getSeasonTypeForDate($current);
+            $daySeasonType = $this->getSeasonTypeForDate($current, $peakPeriods);
             $daySeasonKey = $this->mapSeasonToKey($daySeasonType);
             
             $rate = $this->pricingService->getStaycationRate($staycation, $current, $daySeasonKey);
@@ -923,6 +927,25 @@ class BookingController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid activity selection.',
+                ], 422);
+            }
+
+            // Enforce inventory availability - step 4 concept: cannot select activity packages without available stock
+            $unavailablePackages = [];
+            foreach ($selectedActivities as $item) {
+                if (!empty($item['is_package']) && !empty($item['package_id'])) {
+                    $qty = max(1, (int)($item['quantity'] ?? 1));
+                    $package = ActivityPackage::where('is_active', true)->find($item['package_id']);
+                    if ($package && $package->is_inventory_managed && (int)$package->stock_quantity < $qty) {
+                        $unavailablePackages[] = $package->name . ' (only ' . (int)$package->stock_quantity . ' left)';
+                    }
+                }
+            }
+
+            if (!empty($unavailablePackages)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot proceed: the following activity packages are out of stock or have insufficient inventory - ' . implode(', ', $unavailablePackages),
                 ], 422);
             }
 
@@ -3644,12 +3667,22 @@ class BookingController extends Controller
         // Per-night pricing still resolves each date independently below.
         $checkinCarbon = \Carbon\Carbon::parse($checkin);
         $checkoutCarbon = \Carbon\Carbon::parse($checkout);
-        $currentSeason = $this->getSeasonTypeForDate($checkinCarbon);
+        $lastNight = $checkoutCarbon->copy()->subDay()->toDateString();
+        $peakPeriods = PeakPeriod::with('peakType')
+            ->where('start_date', '<=', $lastNight)
+            ->where('end_date', '>=', $checkinCarbon->toDateString())
+            ->get();
+        $currentSeason = $this->getSeasonTypeForDate($checkinCarbon, $peakPeriods);
 
         // Get all staycations from admin panel
         $staycationsQuery = Staycation::with([
             'texts',
-            'swiperImages'
+            'swiperImages',
+            'inventories' => fn ($query) => $query
+                ->whereBetween('date', [$checkinCarbon->toDateString(), $lastNight])
+                ->where('is_blocked', false)
+                ->orderBy('date')
+                ->select(['id', 'staycation_id', 'date', 'available_quantity']),
         ]);
 
         switch ($sortBy) {
@@ -3717,11 +3750,8 @@ class BookingController extends Controller
             $totalNights = $checkinCarbon->diffInDays($checkoutCarbon);
 
             // Fetch inventory for this staycation in the selected range
-            $inventories = StaycationInventory::where('staycation_id', $staycation->id)
-                ->whereBetween('date', [$checkinCarbon->format('Y-m-d'), $checkoutCarbon->copy()->subDay()->format('Y-m-d')])
-                ->where('is_blocked', false)
-                ->get(['date', 'available_quantity'])
-                ->keyBy(function ($i) { return \Carbon\Carbon::parse($i->date)->format('Y-m-d'); });
+            $inventories = $staycation->inventories
+                ->keyBy(fn (StaycationInventory $inventory): string => Carbon::parse($inventory->date)->format('Y-m-d'));
 
             $inventoryDetails = [];
             $current = $checkinCarbon->copy();
@@ -3790,7 +3820,7 @@ class BookingController extends Controller
 
             // Calculate the rate per night using the pricing service
             // FIXED: Use the check-in date's specific season, not the overall range season
-            $checkinSeasonType = $this->getSeasonTypeForDate($checkinCarbon);
+            $checkinSeasonType = $this->getSeasonTypeForDate($checkinCarbon, $peakPeriods);
             $checkinSeasonKey = $this->mapSeasonToKey($checkinSeasonType);
             $currentRate = $this->pricingService->getStaycationRate($staycation, $checkinCarbon, $checkinSeasonKey);
 
@@ -3806,7 +3836,7 @@ class BookingController extends Controller
 
             // Calculate price range for the selected date range
             // FIXED: No longer passing $seasonKey - calculatePriceRangeForDateRange now determines season per-day
-            $priceRange = $this->calculatePriceRangeForDateRange($staycation, $checkin, $checkout);
+            $priceRange = $this->calculatePriceRangeForDateRange($staycation, $checkin, $checkout, $peakPeriods);
             
             // Build date_pricing array for JavaScript
             $datePricing = [];
@@ -3831,7 +3861,7 @@ class BookingController extends Controller
                 'price' => $currentRate, // Per night rate for current season
                 'price_range' => $priceRange, // NEW: Price range for displayed dates
                 'price_configs' => $staycation->price_configs ?? [],
-                'peak_periods' => $this->getPeakPeriodsForStaycation($staycation, $checkin, $checkout),
+                'peak_periods' => $this->getPeakPeriodsForStaycation($staycation, $checkin, $checkout, $peakPeriods),
                 'day_type_pricing' => $this->getDayTypePricingForStaycation($staycation),
                 'date_pricing' => $datePricing // Date-specific pricing for JavaScript
             ];
@@ -3857,39 +3887,42 @@ class BookingController extends Controller
         $childrenTotal = $booking['children_total'] ?? 0;
         $rooms = $booking['rooms'] ?? [['adults' => 1, 'children' => 0]];
 
-        // Get dynamic max pets per room setting
-        $maxPetsPerRoom = BookingSetting::getValue('max_pets_per_room', 2);
+        $bookingSettings = BookingSetting::query()
+            ->where(function ($query): void {
+                $query->where(function ($pricing): void {
+                    $pricing->where('category', 'pricing')
+                        ->whereIn('key', ['mattress_price_per_night', 'pet_price']);
+                })->orWhere('key', 'max_pets_per_room');
+            })
+            ->get(['key', 'value', 'category']);
+        $pricingSettings = $bookingSettings
+            ->where('category', 'pricing')
+            ->mapWithKeys(fn (BookingSetting $setting): array => [$setting->key => (float) $setting->value])
+            ->all();
+        $maxPetsPerRoom = (int) ($bookingSettings->firstWhere('key', 'max_pets_per_room')?->value ?? 2);
 
         // Get dynamic VAT rate
         $vatService = app(\App\Services\VatService::class);
         $vatRate = $vatService->getCurrentVatRate();
         $vatRatePercentage = $vatService->getCurrentVatRatePercentage();
 
-        return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'currentSeason', 'roomsCount', 'adultsTotal', 'childrenTotal', 'rooms', 'maxPetsPerRoom', 'vatRate', 'vatRatePercentage', 'sortBy', 'sortOptions'));
+        return view('booking.staycation-availability', compact('staycations', 'availability', 'roomDetails', 'checkin', 'checkout', 'currentSeason', 'roomsCount', 'adultsTotal', 'childrenTotal', 'rooms', 'maxPetsPerRoom', 'pricingSettings', 'vatRate', 'vatRatePercentage', 'sortBy', 'sortOptions'));
     }
 
     /**
      * Get peak periods that apply to a staycation for the given date range
      */
-    private function getPeakPeriodsForStaycation(Staycation $staycation, string $checkin, string $checkout)
+    private function getPeakPeriodsForStaycation(Staycation $staycation, string $checkin, string $checkout, Collection $peakPeriods): array
     {
         $checkinCarbon = Carbon::parse($checkin);
-        $checkoutCarbon = Carbon::parse($checkout);
+        $lastNight = Carbon::parse($checkout)->subDay()->toDateString();
 
-        return PeakPeriod::where(function($query) use ($checkinCarbon, $checkoutCarbon) {
-            $query->whereBetween('start_date', [$checkinCarbon->format('Y-m-d'), $checkoutCarbon->subDay()->format('Y-m-d')])
-                  ->orWhereBetween('end_date', [$checkinCarbon->format('Y-m-d'), $checkoutCarbon->subDay()->format('Y-m-d')])
-                  ->orWhere(function($q) use ($checkinCarbon, $checkoutCarbon) {
-                      $q->where('start_date', '<=', $checkinCarbon->format('Y-m-d'))
-                        ->where('end_date', '>=', $checkoutCarbon->subDay()->format('Y-m-d'));
-                  });
+        return $peakPeriods
+        ->filter(function (PeakPeriod $period) use ($checkinCarbon, $lastNight): bool {
+            return $period->start_date <= $lastNight
+                && $period->end_date >= $checkinCarbon->toDateString();
         })
-        ->with('peakType')
-        ->orderBy(
-            PeakType::select('priority')->whereColumn('peak_types.id', 'peak_periods.peak_type_id'),
-            'desc'
-        )
-        ->get()
+        ->sortByDesc(fn (PeakPeriod $period): int => (int) ($period->peakType->priority ?? 0))
         ->map(function($period) {
             return [
                 'id' => $period->id,
@@ -3899,7 +3932,8 @@ class BookingController extends Controller
                 'name' => $period->name
             ];
         })
-        ->toArray();
+        ->values()
+        ->all();
     }
 
     /**
@@ -3974,9 +4008,10 @@ class BookingController extends Controller
         // Fallback to PricingConfig table
         $unitType = strpos(strtolower($staycation->name), 'glamping') !== false ? 'glamping' : 'camping';
         
-        $pricingConfigs = PricingConfig::where('unit_type', $unitType)
-            ->with(['peakType', 'dayType'])
-            ->get();
+        $this->fallbackPricingConfigsByUnitType ??= PricingConfig::with(['peakType', 'dayType'])
+            ->get()
+            ->groupBy('unit_type');
+        $pricingConfigs = $this->fallbackPricingConfigsByUnitType->get($unitType, collect());
         
         foreach ($pricingConfigs as $config) {
             $seasonName = $config->peakType->name;
@@ -4186,6 +4221,30 @@ class BookingController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid food selection.'
+                ], 422);
+            }
+
+            // Enforce inventory availability - step 3 concept: cannot select without available stock
+            $unavailableFoods = [];
+            foreach ($selectedFoods as $food) {
+                $qty = max(1, (int)($food['quantity'] ?? 1));
+                if (!empty($food['is_package']) && !empty($food['package_id'])) {
+                    $package = FoodPackage::where('is_active', true)->find($food['package_id']);
+                    if ($package && $package->is_inventory_managed && (int)$package->stock_quantity < $qty) {
+                        $unavailableFoods[] = $package->name . ' (only ' . (int)$package->stock_quantity . ' left)';
+                    }
+                } else {
+                    $foodItem = Food::where('is_active', true)->find($food['id']);
+                    if ($foodItem && $foodItem->is_inventory_managed && (int)$foodItem->stock_quantity < $qty) {
+                        $unavailableFoods[] = $foodItem->name . ' (only ' . (int)$foodItem->stock_quantity . ' left)';
+                    }
+                }
+            }
+
+            if (!empty($unavailableFoods)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot proceed: the following items are out of stock or have insufficient inventory - ' . implode(', ', $unavailableFoods),
                 ], 422);
             }
 

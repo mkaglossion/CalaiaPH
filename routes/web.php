@@ -152,6 +152,7 @@ Route::get('/cookies-policy', [PagesController::class, 'cookiesPolicy'])->name('
 Route::get('/terms-service', [PagesController::class, 'termsService'])->name('terms-service');
 
 Route::get('/weather', [WeatherController::class, 'show'])->name('weather.show');
+Route::get('/weather/data', [WeatherController::class, 'data'])->name('weather.data');
 
 // Booking Routes
 Route::get('/booking', [BookingController::class, 'create'])->name('booking.create');

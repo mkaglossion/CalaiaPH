@@ -11,6 +11,7 @@ use App\Models\PeakType;
 use App\Models\PricingConfig;
 use App\Services\PricingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class PricingServiceTest extends TestCase
@@ -81,6 +82,31 @@ class PricingServiceTest extends TestCase
 
         $this->assertFalse($missing['success']);
         $this->assertFalse($invalid['success']);
+    }
+
+    public function test_reuses_pricing_lookups_for_repeated_nightly_rate_calculations(): void
+    {
+        $this->seedPricingMatrix();
+        $queries = [];
+        DB::listen(function ($query) use (&$queries): void {
+            $queries[] = strtolower($query->sql);
+        });
+
+        $first = $this->pricingService->calculateNightlyRate('cabin', '2030-01-07');
+        $second = $this->pricingService->calculateNightlyRate('cabin', '2030-01-07');
+
+        $this->assertSame($first, $second);
+        foreach ([
+            'pricing_configs' => 1,
+            'holidays' => 1,
+            'day_types' => 2,
+            'day_type_days' => 1,
+            'peak_types' => 3,
+            'peak_periods' => 1,
+        ] as $table => $expectedCount) {
+            $tableQueries = array_filter($queries, fn (string $sql): bool => str_contains($sql, $table));
+            $this->assertCount($expectedCount, $tableQueries, "Unexpected number of {$table} queries.");
+        }
     }
 
     private function seedPricingMatrix(): void

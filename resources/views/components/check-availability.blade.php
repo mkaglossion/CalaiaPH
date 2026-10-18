@@ -19,13 +19,12 @@
             totalDayTourQuantity: @json($totalDayTourQuantity ?? 0),
         })'
         x-init="initDatepickers()"
-        x-cloak
     >
         <!-- Spacing -->
         <div class="mb-4 md:mb-6"></div>
 
         <!-- Booking Form for Room -->
-        <form id="booking-form" method="POST" :action="formAction" novalidate>
+        <form id="booking-form" method="POST" action="{{ url('/booking/staycation') }}" x-bind:action="formAction" novalidate>
             @csrf
             <input type="hidden" name="type" x-ref="type" value="room">
 
@@ -648,10 +647,13 @@
 
             submitBooking() {
                 this.isLoading = true;
-                // Small delay to show loading state visually
-                setTimeout(() => {
-                    document.getElementById('booking-form').submit();
-                }, 500);
+                this.$nextTick(() => {
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            document.getElementById('booking-form').submit();
+                        });
+                    });
+                });
             },
 
             setTab(type) {

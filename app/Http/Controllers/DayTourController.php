@@ -6,7 +6,7 @@ use App\Models\Activity;
 use App\Models\DayTour;
 use App\Models\DayTourSwiperImage;
 use App\Models\DayTourText;
-use App\Facades\Cloudinary;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;

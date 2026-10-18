@@ -71,13 +71,19 @@
   $hasConfiguredInventory = $futureInventory->isNotEmpty();
   $hasAvailableInventory = $availableFutureInventory->isNotEmpty();
   $isFrontendUnavailable = $variant === 'frontend' && (!$hasConfiguredInventory || !$hasAvailableInventory);
-  $packagePayload = array_merge($package->toArray(), [
+  $packagePayload = [
+    'id' => $package->id,
+    'name' => $package->name,
+    'price' => (float) $package->price,
+    'max_guests' => $package->max_guests,
+    'pricing_type' => $package->pricing_type,
+    'sessions' => $package->sessions ?? [],
     'is_unavailable' => $isFrontendUnavailable,
     'next_available_groups' => $nextAvailableGroups,
-  ]);
+  ];
 @endphp
 
-<div class="package-card {{ $cardClass }} rounded-2xl overflow-hidden transition flex flex-col h-full" x-data="packageCardData({{ json_encode($packagePayload) }})">
+<div class="package-card {{ $cardClass }} rounded-2xl overflow-hidden transition flex flex-col h-full" x-data="packageCardData(@js($packagePayload))">
   <!-- Package Image -->
   <div class="relative h-40 sm:h-48 md:h-56 overflow-hidden bg-gray-200 shrink-0">
     <img 
@@ -499,4 +505,3 @@ function packageCardData(pkg) {
     };
 }
 </script>
-

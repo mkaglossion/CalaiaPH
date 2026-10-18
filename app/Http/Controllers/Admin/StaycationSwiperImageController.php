@@ -8,7 +8,7 @@ use App\Models\Staycation;
 use App\Models\StaycationSwiperImage;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use App\Facades\Cloudinary;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 
 class StaycationSwiperImageController extends Controller

@@ -112,12 +112,6 @@ if (token) {
   };
 })();
 
-// ========== PUSHER/LARAVEL ECHO - REAL-TIME BROADCASTING ==========
-// Configured for real-time inventory updates and event broadcasting
-import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
-window.Pusher = Pusher;
-
 const pusherKey = import.meta.env.VITE_PUSHER_APP_KEY;
 const pusherCluster = import.meta.env.VITE_PUSHER_APP_CLUSTER;
 const host = window.location.hostname;
@@ -126,7 +120,11 @@ const allowLocalEcho = String(import.meta.env.VITE_ENABLE_ECHO_LOCAL || 'false')
 const shouldInitEcho = !!pusherKey && !!pusherCluster && (!isLocalhost || allowLocalEcho);
 
 if (shouldInitEcho) {
-    try {
+    Promise.all([
+        import('laravel-echo'),
+        import('pusher-js'),
+    ]).then(([{ default: Echo }, { default: Pusher }]) => {
+        window.Pusher = Pusher;
         window.Echo = new Echo({
             broadcaster: 'pusher',
             key: pusherKey,
@@ -134,10 +132,10 @@ if (shouldInitEcho) {
             forceTLS: true,
             enabledTransports: ['ws', 'wss'],
         });
-    } catch (error) {
+    }).catch((error) => {
         console.warn('Echo initialization skipped:', error);
         window.Echo = null;
-    }
+    });
 } else {
     window.Echo = null;
 }

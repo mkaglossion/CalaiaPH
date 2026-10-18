@@ -90,4 +90,40 @@ class WeatherForecastAccuracyTest extends TestCase
         $this->assertSame($successful, $fallback);
         Http::assertSentCount(2);
     }
+
+    public function test_weather_data_endpoint_returns_live_weather_and_forecast(): void
+    {
+        Cache::flush();
+        config()->set('weather.api_key', 'test-key');
+        config()->set('weather.cache_minutes', 30);
+
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), '/weather?')) {
+                return Http::response([
+                    'cod' => 200,
+                    'name' => 'Calaca',
+                    'main' => ['temp' => 30, 'feels_like' => 32, 'humidity' => 70],
+                    'weather' => [['main' => 'Clouds', 'description' => 'scattered clouds', 'icon' => '03d']],
+                    'wind' => ['speed' => 2],
+                    'clouds' => ['all' => 50],
+                ]);
+            }
+
+            return Http::response([
+                'list' => [[
+                    'dt' => now()->timestamp,
+                    'main' => ['temp' => 30, 'humidity' => 70],
+                    'weather' => [['main' => 'Clouds', 'icon' => '03d']],
+                    'pop' => 0.2,
+                ]],
+            ]);
+        });
+
+        $this->getJson(route('weather.data'))
+            ->assertOk()
+            ->assertJsonPath('location', 'Calaca')
+            ->assertJsonPath('now.available', true)
+            ->assertJsonPath('now.temp', 30)
+            ->assertJsonPath('hourly.0.rain', 20);
+    }
 }

@@ -123,7 +123,23 @@ class WeatherModel {
             ['seconds' => $this->timeoutSeconds + 1]
         );
 
-        return isset($data['__weather_unavailable']) ? null : $data;
+        if (isset($data['__weather_unavailable'])) {
+            // Do not let an old outage cache hide a recovered weather service.
+            // Retry once so a previously unavailable response can recover
+            // without requiring a manual cache clear.
+            $freshData = $this->fetchApiData($url);
+
+            if ($freshData !== null) {
+                Cache::put($lastSuccessKey, $freshData, now()->addMinutes($this->staleMinutes));
+                Cache::put($cacheKey, $freshData, now()->addMinutes($this->cacheMinutes));
+
+                return $freshData;
+            }
+
+            return null;
+        }
+
+        return $data;
     }
 
     /**

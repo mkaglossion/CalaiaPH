@@ -1018,7 +1018,15 @@ class PagesController extends Controller
 
     public function packages()
     {
-        $packages = Package::with(['contents', 'images', 'inventory'])
+        $today = now()->toDateString();
+        $packages = Package::with([
+            'contents',
+            'images',
+            'inventory' => fn ($query) => $query
+                ->where('date', '>=', $today)
+                ->select(['id', 'package_id', 'date', 'available_groups', 'is_blocked'])
+                ->orderBy('date'),
+        ])
             ->ordered()
             ->where('is_active', true)
             ->get();

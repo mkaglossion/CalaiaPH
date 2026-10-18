@@ -39,6 +39,21 @@
                 {{ $categoryLabel }}
             </span>
         </div>
+
+        @if($package->is_inventory_managed && $package->stock_quantity <= 0)
+            <div class="absolute bottom-4 right-4 z-10">
+                <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full">
+                    Out of Stock
+                </span>
+            </div>
+        @elseif($package->is_inventory_managed && $package->stock_quantity <= 5)
+            <div class="absolute bottom-4 right-4 z-10">
+                <span class="availability-badge px-2 py-1 bg-red-600 text-white text-xs font-semibold rounded-full animate-pulse">
+                    Only {{ $package->stock_quantity }} left
+                </span>
+            </div>
+        @endif
+
     </div>
 
     <div class="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
@@ -66,7 +81,7 @@
                 <div class="flex items-center justify-between gap-4">
                     <div class="flex items-center gap-2">
                         <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="decreaseActivityPackageQty({{ $package->id }})">−</button>
-                        <input type="number" min="1" max="20" :id="'package-qty-card-' + {{ $package->id }}" class="w-12 text-center border border-gray-300 rounded-lg py-1 text-sm font-semibold focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54]" :value="getActivityPackageQuantity({{ $package->id }})" @change.stop="setActivityPackageField({{ $package->id }}, 'quantity', $event.target.value)">
+                        <input type="number" min="1" max="{{ $package->is_inventory_managed ? min(20, max(1, $package->stock_quantity)) : 20 }}" :id="'package-qty-card-' + {{ $package->id }}" class="w-12 text-center border border-gray-300 rounded-lg py-1 text-sm font-semibold focus:ring-1 focus:ring-[#8f5d54] focus:border-[#8f5d54]" :value="getActivityPackageQuantity({{ $package->id }})" @change.stop="setActivityPackageField({{ $package->id }}, 'quantity', $event.target.value)">
                         <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-semibold" @click.stop="increaseActivityPackageQty({{ $package->id }})">+</button>
                     </div>
                     <div class="text-right">
@@ -90,11 +105,16 @@
         <button
             type="button"
             class="w-full mt-auto py-2.5 md:py-3 rounded-xl text-xs sm:text-sm md:text-base font-semibold transition flex items-center justify-center gap-2"
-            :class="isActivityPackageSelected({{ $package->id }}) ? 'bg-[#8f5d54] text-white hover:bg-[#7a4e48]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+:class="{
+    'bg-[#8f5d54] text-white hover:bg-[#7a4e48]': isActivityPackageSelected({{ $package->id }}),
+    'bg-gray-300 text-gray-500 cursor-not-allowed': !isActivityPackageSelected({{ $package->id }}) && {{ $package->is_inventory_managed ? 'true' : 'false' }} && {{ $package->stock_quantity }} <= 0,
+    'bg-gray-100 text-gray-700 hover:bg-gray-200': !isActivityPackageSelected({{ $package->id }}) && (!{{ $package->is_inventory_managed ? 'true' : 'false' }} || {{ $package->stock_quantity }} > 0)
+}"
+            :disabled="{{ $package->is_inventory_managed && $package->stock_quantity <= 0 ? 'true' : 'false' }}"
             @click.stop="toggleActivityPackage({{ $package->id }}, @js($package->name), {{ $package->getEffectivePrice() }}, @js($packageActivities))"
         >
             <i :class="isActivityPackageSelected({{ $package->id }}) ? 'bi bi-check' : 'bi bi-plus'"></i>
-            <span x-text="isActivityPackageSelected({{ $package->id }}) ? 'Added to Cart' : 'Add to Cart'"></span>
+            <span x-text="isActivityPackageSelected({{ $package->id }}) ? 'Added to Cart' : '{{ $package->is_inventory_managed && $package->stock_quantity <= 0 ? 'Out of Stock' : 'Add to Cart' }}'"></span>
         </button>
     </div>
 </div>

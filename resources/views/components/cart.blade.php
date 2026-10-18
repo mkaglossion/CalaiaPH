@@ -285,8 +285,9 @@
             },
 
             init() {
-                this.loadCart();
-                window.addEventListener('cart:refresh', () => this.loadCart());
+                window.addEventListener('cart:refresh', () => {
+                    if (this.open) this.loadCart();
+                });
             }
         }
     }

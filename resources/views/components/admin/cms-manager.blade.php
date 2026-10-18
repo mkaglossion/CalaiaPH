@@ -16,6 +16,7 @@
 ])
 
 <div
+    data-cms-manager
     x-data="cmsManager({
         images: @js($images),
         texts: @js($texts),

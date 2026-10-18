@@ -7,7 +7,7 @@
           const heartbeatIntervalMs = Math.min(60000, Math.max(10000, Math.floor(timeoutMs / 2)));
           const heartbeatTimeoutMs = 5000; // 5 second timeout for heartbeat requests
           const logoutUrl = @json(route('logout'));
-          const heartbeatUrl = @json(route('session.keep-alive'));
+          const heartbeatUrl = @json(url('/session/keep-alive'));
           const loginUrl = @json(auth()->user()->user_type === 'admin'
             ? route('admin.login', ['idle' => 1])
             : route('home', ['idle' => 1]));
