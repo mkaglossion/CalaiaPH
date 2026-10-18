@@ -3203,7 +3203,7 @@
             Swal.fire({
                 icon: 'success',
                 title: 'Saved',
-                text: {!! json_encode(session('booking_prefill_saved')) !!},
+                text: {!! json_encode(session('booking_prefill_saved'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) !!},
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
