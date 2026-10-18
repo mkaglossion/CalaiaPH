@@ -4067,6 +4067,15 @@ class BookingController extends Controller
 
         // Pull food items from database with images and texts
         // Filter for staycation: only messhall, cook_your_own, and special options
+        static $foodMealTypeColumnCache = null;
+        static $foodSortOrderColumnCache = null;
+        if ($foodMealTypeColumnCache === null) {
+            $foodMealTypeColumnCache = Schema::hasColumn('foods', 'meal_type');
+        }
+        if ($foodSortOrderColumnCache === null) {
+            $foodSortOrderColumnCache = Schema::hasColumn('foods', 'sort_order');
+        }
+
         $foodMenusQuery = Food::with(['swiperImages', 'texts'])
             ->where('is_active', true)
             ->where(function ($query) {
@@ -4096,7 +4105,7 @@ class BookingController extends Controller
             case 'featured':
             default:
                 $foodMenusQuery->orderBy('category');
-                if (Schema::hasColumn('foods', 'meal_type') && Schema::hasColumn('foods', 'sort_order')) {
+                if ($foodMealTypeColumnCache && $foodSortOrderColumnCache) {
                     $foodMenusQuery
                         ->orderByRaw("CASE meal_type WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END")
                         ->orderBy('sort_order');
@@ -4112,6 +4121,11 @@ class BookingController extends Controller
         );
 
         // Fetch food packages for staycation
+        static $foodPackageSortOrderCache = null;
+        if ($foodPackageSortOrderCache === null) {
+            $foodPackageSortOrderCache = Schema::hasColumn('food_packages', 'sort_order');
+        }
+
         $foodPackagesQuery = FoodPackage::with(['foods' => function($q) {
             $q->select('foods.id', 'foods.name', 'foods.price', 'foods.category');
         }])
@@ -4140,7 +4154,7 @@ class BookingController extends Controller
             case 'featured':
             default:
                 $foodPackagesQuery->orderBy('category');
-                if (Schema::hasColumn('food_packages', 'sort_order')) {
+                if ($foodPackageSortOrderCache) {
                     $foodPackagesQuery->orderBy('sort_order');
                 }
                 $foodPackagesQuery->orderBy('name');
