@@ -48,7 +48,14 @@ class PackagesPagePerformanceTest extends TestCase
             'created_at' => $now,
             'updated_at' => $now,
         ];
-        DB::table('package_inventory')->insert($inventoryRows);
+
+        // Insert in batches to avoid SQLite's SQL variable limit (999 per statement)
+        // Each row has 8 columns, so 20 rows = 160 bindings (well under 999)
+        $batchSize = 20;
+        for ($i = 0; $i < count($inventoryRows); $i += $batchSize) {
+            $batch = array_slice($inventoryRows, $i, $batchSize);
+            DB::table('package_inventory')->insert($batch);
+        }
 
         $response = $this->get('/packages')->assertOk();
         $html = $response->getContent();
