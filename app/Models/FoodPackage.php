@@ -75,6 +75,9 @@ class FoodPackage extends Model
                     return $items->sum(function ($item) use ($foodPrices) {
                         $foodId = (int) ($item['food_id'] ?? 0);
                         $food = $foodPrices->get($foodId);
+                        if (!$food) {
+                            return 0;
+                        }
                         $quantity = max(1, (int) ($item['quantity'] ?? 1));
 
                         return ((float) ($food->price ?? 0)) * $quantity;
@@ -85,7 +88,7 @@ class FoodPackage extends Model
         return $this->foods()
             ->get()
             ->sum(function ($food) {
-                return $food->price * $food->pivot->quantity;
+                return (float) ($food->price ?? 0) * max(1, (int) ($food->pivot->quantity ?? 1));
             });
     }
 
