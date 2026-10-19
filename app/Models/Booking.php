@@ -355,16 +355,23 @@ class Booking extends Model
                         Log::info("Reduced food inventory for food {$foodId} by {$quantity}");
                     } else {
                         $message = "Insufficient stock or food not found for food {$foodId}";
-                        Log::warning($message);
-                        if ($strict) {
-                            throw new \Exception($message);
-                        }
+                        Log::warning($message, [
+                            'booking_id' => $this->id,
+                            'food_id'    => $foodId,
+                            'quantity'   => $quantity,
+                            'available'  => $food ? $food->stock_quantity : null,
+                        ]);
+                        // Food inventory reduction is best-effort — never throw, even in strict mode,
+                        // so that payment confirmation and dashboard reconciliation don't crash
+                        // when a food item is out of stock or has been removed.
+                        continue;
                     }
                 } catch (\Exception $e) {
-                    Log::error("Failed to reduce food inventory for booking {$this->id}: " . $e->getMessage());
-                    if ($strict) {
-                        throw $e;
-                    }
+                    Log::error("Failed to reduce food inventory for booking {$this->id}: " . $e->getMessage(), [
+                        'food_id' => $foodId,
+                    ]);
+                    // Never re-throw — food inventory errors must not break payment/dashboard flows
+                    continue;
                 }
             }
         }
