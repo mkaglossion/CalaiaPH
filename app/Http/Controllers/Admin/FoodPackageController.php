@@ -528,10 +528,17 @@ class FoodPackageController extends Controller
      */
     public function getPackageDetails(FoodPackage $package)
     {
-        $packageData = $this->packageToArray($package);
-        $packageData['savings'] = $package->getSavings();
+        try {
+            $packageData = $this->packageToArray($package);
+            $packageData['savings'] = $package->getSavings();
 
-        return response()->json($packageData);
+            return response()->json($packageData);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load package details: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

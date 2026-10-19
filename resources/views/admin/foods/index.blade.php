@@ -702,12 +702,6 @@
                                placeholder="0.00">
                         <div class="mt-1 flex items-center justify-between gap-3">
                             <p class="text-xs text-gray-500">Suggested total: &#8369;<span x-text="getPackageTotal()"></span></p>
-                            <button type="button"
-                                    @click="packagePriceManualOverride = false; syncPackagePrice(true)"
-                                    x-show="packagePriceManualOverride"
-                                    class="text-xs font-semibold text-green-600 hover:text-green-700">
-                                Use Suggested
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -1563,10 +1557,8 @@
                                 ? ''
                                 : Number(pkg.price).toFixed(2);
 
-                            this.packagePriceManualOverride = savedPrice !== '' && savedPrice !== suggestedPrice;
-                            if (!this.packagePriceManualOverride) {
-                                this.packageForm.price = suggestedPrice;
-                            }
+                            this.packagePriceManualOverride = true;
+                            this.packageForm.price = savedPrice !== '' ? savedPrice : suggestedPrice;
                         } else {
                             this.showToast('Package not found', 'error');
                         }
@@ -1816,12 +1808,10 @@
                 },
 
                 syncPackagePrice(force = false) {
-                    const computedPrice = this.getPackageTotal();
-                    if ((force || !this.packagePriceManualOverride) && String(this.packageForm.price ?? '') !== computedPrice) {
-                        this.packageForm.price = computedPrice;
-                    }
-
-                    return computedPrice;
+                    // Always allow manual override - don't auto-sync
+                    return this.packageForm.price === '' || this.packageForm.price === null
+                        ? this.getPackageTotal()
+                        : this.packageForm.price;
                 },
 
                 handlePackageFile(event) {
@@ -1912,9 +1902,9 @@
                     if (this.loading) return;
                     this.loading = true;
 
-                    const resolvedPackagePrice = this.packagePriceManualOverride
-                        ? (this.packageForm.price === '' || this.packageForm.price === null ? this.getPackageTotal() : this.packageForm.price)
-                        : this.syncPackagePrice(true);
+                    const resolvedPackagePrice = this.packageForm.price === '' || this.packageForm.price === null
+                        ? this.getPackageTotal()
+                        : this.packageForm.price;
 
                     const formData = new FormData();
                     formData.append('name', this.packageForm.name);
