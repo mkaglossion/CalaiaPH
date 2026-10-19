@@ -21,6 +21,7 @@ class PackagesPagePerformanceTest extends TestCase
             'pricing_type' => 'per_group',
             'is_active' => true,
         ]);
+
         $now = now();
         $inventoryRows = [];
 
@@ -59,4 +60,3 @@ class PackagesPagePerformanceTest extends TestCase
         $this->assertLessThan(350_000, strlen($html));
     }
 }
-    
