@@ -744,10 +744,15 @@ class PagesController extends Controller
         ], 'Browse our curated packages and choose the one that fits your stay.');
 
         // Temporarily merge packages into activities page (shown first).
-        $packages = Package::with(['contents', 'images', 'inventory'])
+        $today = now()->toDateString();
+        $packages = Package::with(['contents', 'images'])
             ->where('is_active', true)
             ->ordered()
             ->get();
+        $packages->load(['inventory' => function ($query) use ($today) {
+            $query->whereDate('date', '>=', $today)
+                ->orderBy('date', 'asc');
+        }]);
 
         $data = compact('swiperImages', 'texts', 'heroTexts', 'packages', 'packagesSectionTitle', 'packagesSectionIntro');
         $data['active'] = 'activities';
