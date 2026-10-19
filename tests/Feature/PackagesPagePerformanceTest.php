@@ -49,7 +49,13 @@ class PackagesPagePerformanceTest extends TestCase
             'created_at' => $now,
             'updated_at' => $now,
         ];
-        DB::table('package_inventory')->insert($inventoryRows);
+
+        // SQLite (and some other drivers) cap the number of bind parameters
+        // per statement (default 999 for SQLite). Insert in chunks so we
+        // never exceed that limit.
+        foreach (array_chunk($inventoryRows, 100) as $chunk) {
+            DB::table('package_inventory')->insert($chunk);
+        }
 
         $response = $this->get('/packages')->assertOk();
         $html = $response->getContent();
